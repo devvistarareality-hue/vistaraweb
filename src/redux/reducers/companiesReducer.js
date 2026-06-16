@@ -1,6 +1,7 @@
 import {
   COMPANIES_FETCH_REQUEST, COMPANIES_FETCH_SUCCESS, COMPANIES_FETCH_FAILURE,
   COMPANY_UPDATE_REQUEST, COMPANY_UPDATE_SUCCESS, COMPANY_UPDATE_FAILURE, COMPANY_UPDATE_RESET,
+  COMPANY_CREATE_REQUEST, COMPANY_CREATE_SUCCESS, COMPANY_CREATE_FAILURE, COMPANY_CREATE_RESET,
 } from '../types/companiesTypes';
 
 const initialState = {
@@ -10,6 +11,9 @@ const initialState = {
   updating:      false,
   updateError:   null,
   updateSuccess: false,
+  creating:      false,
+  createError:   null,
+  createSuccess: false,
 };
 
 export default function companiesReducer(state = initialState, action) {
@@ -34,6 +38,15 @@ export default function companiesReducer(state = initialState, action) {
       return { ...state, updating: false, updateError: action.payload };
     case COMPANY_UPDATE_RESET:
       return { ...state, updating: false, updateError: null, updateSuccess: false };
+
+    case COMPANY_CREATE_REQUEST:
+      return { ...state, creating: true, createError: null, createSuccess: false };
+    case COMPANY_CREATE_SUCCESS:
+      return { ...state, creating: false, createSuccess: true, companies: [...state.companies, action.payload] };
+    case COMPANY_CREATE_FAILURE:
+      return { ...state, creating: false, createError: action.payload };
+    case COMPANY_CREATE_RESET:
+      return { ...state, creating: false, createError: null, createSuccess: false };
 
     default:
       return state;
