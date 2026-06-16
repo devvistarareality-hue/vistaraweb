@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { createUser, resetCreateUser } from '../../../../redux/actions/userManagementActions';
+import { fetchDesignations } from '../../../../redux/actions/designationActions';
 import Toast from '../../../../components/Toast';
 
 const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
-const ROLES       = ['Admin', 'Manager', 'Sales Executive', 'STM', 'Employee'];
+const ROLES       = ['Admin', 'Manager', 'Employee'];
 
-// Exact same logic as the mobile app (CreateUserScreen.js)
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
 
 function firstConsonantFrom(str, startIdx) {
@@ -32,6 +32,7 @@ export default function CreateUserPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
   const { creating, createError, createSuccess } = useSelector((s) => s.userManagement);
+  const { designations } = useSelector((s) => s.designations);
   const loggedInUser   = useSelector((s) => s.auth.user);
   const userCodePrefix = generateUserCodePrefix(loggedInUser?.company_code);
 
@@ -40,10 +41,13 @@ export default function CreateUserPage() {
     email:           '',
     password:        '',
     role:            'Employee',
+    designation:     '',
     modules:         [],
     manager_modules: [],
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+
+  useEffect(() => { dispatch(fetchDesignations()); }, []);
 
   useEffect(() => {
     if (createSuccess) {
@@ -56,6 +60,16 @@ export default function CreateUserPage() {
       dispatch(resetCreateUser());
     }
   }, [createSuccess, createError]);
+
+  // Designations available for currently selected modules
+  const availableDesignations = designations.filter((d) => form.modules.includes(d.module));
+
+  // Reset designation if it no longer matches selected modules
+  useEffect(() => {
+    if (form.designation && !availableDesignations.find((d) => d.name === form.designation)) {
+      setForm((f) => ({ ...f, designation: '' }));
+    }
+  }, [form.modules]);
 
   const toggleModule = (mod, field) => {
     setForm((f) => ({
@@ -138,6 +152,29 @@ export default function CreateUserPage() {
                 System will assign full code, e.g.&nbsp;<strong>{userCodePrefix}001</strong>
               </p>
             </div>
+            <div>
+              <label style={s.label}>
+                Designation
+                {form.modules.length === 0 && (
+                  <span style={s.hintInline}> — select modules first</span>
+                )}
+              </label>
+              <select
+                value={form.designation}
+                onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
+                style={{ ...s.input, color: form.designation ? '#1A1A2E' : '#8492A6' }}
+                disabled={availableDesignations.length === 0}
+              >
+                <option value="">
+                  {availableDesignations.length === 0
+                    ? form.modules.length === 0 ? 'Select modules first' : 'No designations for selected modules'
+                    : '— Select designation —'}
+                </option>
+                {availableDesignations.map((d) => (
+                  <option key={d.id} value={d.name}>{d.name} ({d.module})</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div style={{ marginTop: 24, marginBottom: 20 }}>
@@ -197,10 +234,11 @@ const s = {
     boxShadow:       '0 4px 12px rgba(184,196,214,0.18)',
     maxWidth:        780,
   },
-  grid2:     { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 24px' },
-  label:     { display: 'block', fontSize: 13, fontWeight: 600, color: '#8492A6', marginBottom: 6 },
-  input:     { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14 },
-  hint:      { fontSize: 11, color: '#8492A6', marginTop: 5 },
+  grid2:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 24px' },
+  label:      { display: 'block', fontSize: 13, fontWeight: 600, color: '#8492A6', marginBottom: 6 },
+  hintInline: { fontSize: 11, fontWeight: 500, color: '#9CA3AF' },
+  input:      { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14, boxSizing: 'border-box' },
+  hint:       { fontSize: 11, color: '#8492A6', marginTop: 5 },
   prefixBox: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '10px 12px', borderRadius: 8,
@@ -209,9 +247,9 @@ const s = {
   },
   prefixValue: { fontWeight: 700, color: '#1A1A2E', letterSpacing: 2 },
   prefixAuto:  { fontSize: 11, fontWeight: 600, color: '#8492A6', backgroundColor: '#E0E6F0', borderRadius: 4, padding: '2px 7px' },
-  checkGrid: { display: 'flex', flexWrap: 'wrap', gap: '10px 20px' },
-  checkLabel:{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer' },
-  formFooter:{ display: 'flex', justifyContent: 'flex-end', gap: 12 },
-  cancelBtn: { padding: '10px 20px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  saveBtn:   { padding: '10px 28px', backgroundColor: '#182350', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  checkGrid:  { display: 'flex', flexWrap: 'wrap', gap: '10px 20px' },
+  checkLabel: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer' },
+  formFooter: { display: 'flex', justifyContent: 'flex-end', gap: 12 },
+  cancelBtn:  { padding: '10px 20px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  saveBtn:    { padding: '10px 28px', backgroundColor: '#182350', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
 };

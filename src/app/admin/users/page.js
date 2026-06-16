@@ -3,10 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { fetchUsers, updateUser, deleteUser, resetUpdateUser } from '../../../redux/actions/userManagementActions';
+import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 
 const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
-const ROLES       = ['Admin', 'Manager', 'Sales Executive', 'STM', 'Employee'];
+const ROLES       = ['Admin', 'Manager', 'Employee'];
 
 function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {
   if (!open) return null;
@@ -38,6 +39,7 @@ export default function UserManagementPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
   const { users, loading, error, updating, updateSuccess, updateError } = useSelector((s) => s.userManagement);
+  const { designations } = useSelector((s) => s.designations);
 
   const [search,    setSearch]    = useState('');
   const [editUser,  setEditUser]  = useState(null);
@@ -46,7 +48,7 @@ export default function UserManagementPage() {
   const [dialog,    setDialog]    = useState({ open: false });
   const opLabel = useRef('updated');
 
-  useEffect(() => { dispatch(fetchUsers()); }, []);
+  useEffect(() => { dispatch(fetchUsers()); dispatch(fetchDesignations()); }, []);
 
   useEffect(() => {
     if (updateSuccess) {
@@ -72,6 +74,7 @@ export default function UserManagementPage() {
       user_code:       u.user_code       || '',
       password:        '',
       role:            u.role            || 'Employee',
+      designation:     u.designation     || '',
       modules:         u.modules         || [],
       manager_modules: u.manager_modules || [],
       is_active:       u.is_active,
@@ -301,6 +304,26 @@ export default function UserManagementPage() {
                 >
                   {ROLES.map((r) => <option key={r}>{r}</option>)}
                 </select>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={s.label}>Designation</label>
+                {(() => {
+                  const avail = designations.filter((d) => (form.modules || []).includes(d.module));
+                  return (
+                    <select
+                      value={form.designation || ''}
+                      onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
+                      style={s.input}
+                      disabled={avail.length === 0}
+                    >
+                      <option value="">{avail.length === 0 ? 'No designations for selected modules' : '— Select designation —'}</option>
+                      {avail.map((d) => (
+                        <option key={d.id} value={d.name}>{d.name} ({d.module})</option>
+                      ))}
+                    </select>
+                  );
+                })()}
               </div>
 
               <div style={{ marginBottom: 16 }}>

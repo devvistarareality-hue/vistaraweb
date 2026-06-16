@@ -46,10 +46,15 @@ function IconLogout() {
   return <SvgIcon><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
 }
 
+function IconDesignation() {
+  return <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
+}
+
 const NAV_ITEMS = [
-  { label: 'Dashboard',          href: '/admin',           icon: <IconDashboard /> },
-  { label: 'User Management',    href: '/admin/users',     icon: <IconUsers /> },
-  { label: 'Company Management', href: '/admin/companies', icon: <IconBuilding /> },
+  { label: 'Dashboard',          href: '/admin',                icon: <IconDashboard /> },
+  { label: 'User Management',    href: '/admin/users',          icon: <IconUsers /> },
+  { label: 'Company Management', href: '/admin/companies',      icon: <IconBuilding /> },
+  { label: 'Designation Master', href: '/admin/designations',   icon: <IconDesignation /> },
 ];
 
 const PARKED_ITEMS = [
