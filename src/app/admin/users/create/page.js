@@ -152,29 +152,6 @@ export default function CreateUserPage() {
                 System will assign full code, e.g.&nbsp;<strong>{userCodePrefix}001</strong>
               </p>
             </div>
-            <div>
-              <label style={s.label}>
-                Designation
-                {form.modules.length === 0 && (
-                  <span style={s.hintInline}> — select modules first</span>
-                )}
-              </label>
-              <select
-                value={form.designation}
-                onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
-                style={{ ...s.input, color: form.designation ? '#1A1A2E' : '#8492A6' }}
-                disabled={availableDesignations.length === 0}
-              >
-                <option value="">
-                  {availableDesignations.length === 0
-                    ? form.modules.length === 0 ? 'Select modules first' : 'No designations for selected modules'
-                    : '— Select designation —'}
-                </option>
-                {availableDesignations.map((d) => (
-                  <option key={d.id} value={d.name}>{d.name} ({d.module})</option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <div style={{ marginTop: 24, marginBottom: 20 }}>
@@ -191,6 +168,30 @@ export default function CreateUserPage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={s.label}>
+              Designation
+              {form.modules.length === 0 && (
+                <span style={s.hintInline}> — select modules first</span>
+              )}
+            </label>
+            <select
+              value={form.designation}
+              onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
+              style={{ ...s.input, maxWidth: 360, color: form.designation ? '#1A1A2E' : '#8492A6' }}
+              disabled={availableDesignations.length === 0}
+            >
+              <option value="">
+                {availableDesignations.length === 0
+                  ? form.modules.length === 0 ? 'Select modules first' : 'No designations for selected modules'
+                  : '— Select designation —'}
+              </option>
+              {availableDesignations.map((d) => (
+                <option key={d.id} value={d.name}>{d.name} ({d.module})</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ marginBottom: 28 }}>
