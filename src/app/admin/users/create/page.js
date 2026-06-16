@@ -8,19 +8,40 @@ import Toast from '../../../../components/Toast';
 const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Sales Executive', 'STM', 'Employee'];
 
+// Exact same logic as the mobile app (CreateUserScreen.js)
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
+
+function firstConsonantFrom(str, startIdx) {
+  for (let i = startIdx; i < str.length; i++) {
+    if (!VOWELS.has(str[i])) return str[i];
+  }
+  return str[startIdx] || 'X';
+}
+
+function generateUserCodePrefix(companyCode) {
+  const code = (companyCode || '').toLowerCase().replace(/[^a-z]/g, '');
+  if (code.length < 3) return (code + 'XXX').slice(0, 3).toUpperCase();
+  const n  = code.length;
+  const c1 = firstConsonantFrom(code, 0);
+  const c2 = firstConsonantFrom(code, Math.floor(n * 0.4));
+  const c3 = firstConsonantFrom(code, Math.floor(n * 0.8));
+  return (c1 + c2 + c3).toUpperCase();
+}
+
 export default function CreateUserPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
   const { creating, createError, createSuccess } = useSelector((s) => s.userManagement);
+  const loggedInUser   = useSelector((s) => s.auth.user);
+  const userCodePrefix = generateUserCodePrefix(loggedInUser?.company_code);
 
   const [form, setForm] = useState({
-    name:             '',
-    email:            '',
-    password:         '',
-    role:             'Employee',
-    modules:          [],
-    manager_modules:  [],
-    user_code_prefix: 'USR',
+    name:            '',
+    email:           '',
+    password:        '',
+    role:            'Employee',
+    modules:         [],
+    manager_modules: [],
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
@@ -47,7 +68,7 @@ export default function CreateUserPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(createUser(form));
+    dispatch(createUser({ ...form, user_code_prefix: userCodePrefix }));
   };
 
   return (
@@ -109,15 +130,13 @@ export default function CreateUserPage() {
             </div>
             <div>
               <label style={s.label}>User Code Prefix</label>
-              <input
-                type="text"
-                value={form.user_code_prefix}
-                onChange={(e) => setForm((f) => ({ ...f, user_code_prefix: e.target.value.toUpperCase() }))}
-                style={s.input}
-                placeholder="USR"
-                maxLength={10}
-              />
-              <p style={s.hint}>Code auto-generated, e.g. USR001</p>
+              <div style={s.prefixBox}>
+                <span style={s.prefixValue}>{userCodePrefix}</span>
+                <span style={s.prefixAuto}>auto</span>
+              </div>
+              <p style={s.hint}>
+                System will assign full code, e.g.&nbsp;<strong>{userCodePrefix}001</strong>
+              </p>
             </div>
           </div>
 
@@ -182,6 +201,14 @@ const s = {
   label:     { display: 'block', fontSize: 13, fontWeight: 600, color: '#8492A6', marginBottom: 6 },
   input:     { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14 },
   hint:      { fontSize: 11, color: '#8492A6', marginTop: 5 },
+  prefixBox: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '10px 12px', borderRadius: 8,
+    border: '1.5px solid #E0E6F0', backgroundColor: '#F5F6FA',
+    fontSize: 14,
+  },
+  prefixValue: { fontWeight: 700, color: '#1A1A2E', letterSpacing: 2 },
+  prefixAuto:  { fontSize: 11, fontWeight: 600, color: '#8492A6', backgroundColor: '#E0E6F0', borderRadius: 4, padding: '2px 7px' },
   checkGrid: { display: 'flex', flexWrap: 'wrap', gap: '10px 20px' },
   checkLabel:{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer' },
   formFooter:{ display: 'flex', justifyContent: 'flex-end', gap: 12 },
