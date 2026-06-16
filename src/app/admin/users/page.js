@@ -8,6 +8,32 @@ import Toast from '../../../components/Toast';
 const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Sales Executive', 'STM', 'Employee'];
 
+function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {
+  if (!open) return null;
+  return (
+    <div style={s.overlay} onClick={onCancel}>
+      <div style={{ ...s.modal, maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <div style={s.modalHeader}>
+          <h3 style={{ ...s.modalTitle, fontSize: 16 }}>{title}</h3>
+          <button onClick={onCancel} style={s.closeBtn}>✕</button>
+        </div>
+        <div style={{ padding: '20px 24px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
+          {message}
+        </div>
+        <div style={{ ...s.modalFooter, paddingTop: 0 }}>
+          <button onClick={onCancel} style={s.cancelBtn}>Cancel</button>
+          <button
+            onClick={onConfirm}
+            style={{ ...s.saveBtn, backgroundColor: confirmColor || '#0C1E3C' }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UserManagementPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
@@ -17,6 +43,7 @@ export default function UserManagementPage() {
   const [editUser,  setEditUser]  = useState(null);
   const [form,      setForm]      = useState({});
   const [toast,     setToast]     = useState({ visible: false, message: '', type: 'success' });
+  const [dialog,    setDialog]    = useState({ open: false });
   const opLabel = useRef('updated');
 
   useEffect(() => { dispatch(fetchUsers()); }, []);
@@ -58,22 +85,51 @@ export default function UserManagementPage() {
     dispatch(updateUser(editUser.id, payload));
   };
 
+  const closeDialog = () => setDialog({ open: false });
+
   const handleDeactivate = (u) => {
-    if (!confirm(`Deactivate ${u.name}? They will no longer be able to log in.`)) return;
-    opLabel.current = 'deactivated';
-    dispatch(updateUser(u.id, { is_active: false }));
+    setDialog({
+      open:         true,
+      title:        'Deactivate User',
+      message:      `Deactivate ${u.name}? They will no longer be able to log in.`,
+      confirmLabel: 'Deactivate',
+      confirmColor: '#EA580C',
+      onConfirm:    () => {
+        opLabel.current = 'deactivated';
+        dispatch(updateUser(u.id, { is_active: false }));
+        closeDialog();
+      },
+    });
   };
 
   const handleActivate = (u) => {
-    if (!confirm(`Reactivate ${u.name}? They will regain access to the system.`)) return;
-    opLabel.current = 'reactivated';
-    dispatch(updateUser(u.id, { is_active: true }));
+    setDialog({
+      open:         true,
+      title:        'Reactivate User',
+      message:      `Reactivate ${u.name}? They will regain access to the system.`,
+      confirmLabel: 'Activate',
+      confirmColor: '#15803D',
+      onConfirm:    () => {
+        opLabel.current = 'reactivated';
+        dispatch(updateUser(u.id, { is_active: true }));
+        closeDialog();
+      },
+    });
   };
 
   const handleDelete = (u) => {
-    if (!confirm(`Permanently delete ${u.name}? This cannot be undone and all their data will be removed.`)) return;
-    dispatch(deleteUser(u.id));
-    showToast(`${u.name} permanently deleted.`, 'error');
+    setDialog({
+      open:         true,
+      title:        'Delete User',
+      message:      `Permanently delete ${u.name}? This cannot be undone and all their data will be removed.`,
+      confirmLabel: 'Delete',
+      confirmColor: '#DC2626',
+      onConfirm:    () => {
+        dispatch(deleteUser(u.id));
+        showToast(`${u.name} permanently deleted.`, 'error');
+        closeDialog();
+      },
+    });
   };
 
   const toggleModule = (mod, field) => {
@@ -98,6 +154,7 @@ export default function UserManagementPage() {
   return (
     <div style={s.page}>
       <Toast {...toast} onHide={() => setToast((t) => ({ ...t, visible: false }))} />
+      <ConfirmModal {...dialog} onCancel={closeDialog} />
 
       {/* ── Header ── */}
       <div style={s.pageHeader}>
