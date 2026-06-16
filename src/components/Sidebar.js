@@ -75,9 +75,15 @@ const CSS = `
 `;
 
 export default function Sidebar({ user }) {
-  const pathname = usePathname();
-  const dispatch = useDispatch();
-  const router   = useRouter();
+  const pathname    = usePathname();
+  const dispatch    = useDispatch();
+  const router      = useRouter();
+  const isVRLAdmin  = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
+
+  const visibleNav = NAV_ITEMS.filter((item) => {
+    if (item.href === '/admin/companies') return isVRLAdmin;
+    return true;
+  });
 
   const isActive = (href) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
@@ -98,7 +104,7 @@ export default function Sidebar({ user }) {
         </div>
         <div>
           <div style={s.logoName}>Vistara ERP</div>
-          <div style={s.logoSub}>Admin Portal</div>
+          <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
         </div>
       </div>
 
@@ -106,7 +112,7 @@ export default function Sidebar({ user }) {
       <div className="sidebar-scroll" style={s.scroll}>
 
         <div style={s.sectionLabel}>NAVIGATION</div>
-        {NAV_ITEMS.map((item) => {
+        {visibleNav.map((item) => {
           const active = isActive(item.href);
           return (
             <Link

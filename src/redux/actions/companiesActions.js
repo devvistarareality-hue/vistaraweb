@@ -58,6 +58,7 @@ export const createCompany = (payload) => async (dispatch) => {
     const data = await res.json();
     if (res.ok) {
       dispatch({ type: COMPANY_CREATE_SUCCESS, payload: data });
+      dispatch(fetchCompanies());
     } else {
       const msg = data.code?.[0] || data.detail || JSON.stringify(data);
       dispatch({ type: COMPANY_CREATE_FAILURE, payload: msg });

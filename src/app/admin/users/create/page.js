@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { createUser, resetCreateUser } from '../../../../redux/actions/userManagementActions';
 import { fetchDesignations } from '../../../../redux/actions/designationActions';
+import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 
 const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
@@ -33,8 +34,16 @@ export default function CreateUserPage() {
   const router   = useRouter();
   const { creating, createError, createSuccess } = useSelector((s) => s.userManagement);
   const { designations } = useSelector((s) => s.designations);
-  const loggedInUser   = useSelector((s) => s.auth.user);
-  const userCodePrefix = generateUserCodePrefix(loggedInUser?.company_code);
+  const { companies }    = useSelector((s) => s.companies);
+  const loggedInUser     = useSelector((s) => s.auth.user);
+  const isVRLAdmin       = loggedInUser?.company_code === 'VRL' && (loggedInUser?.role === 'Admin' || loggedInUser?.is_staff);
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+
+  const selectedCompany    = companies.find((c) => String(c.id) === String(selectedCompanyId)) || null;
+  const userCodePrefix     = generateUserCodePrefix(
+    isVRLAdmin && selectedCompany ? selectedCompany.code : loggedInUser?.company_code
+  );
 
   const [form, setForm] = useState({
     name:            '',
@@ -47,7 +56,10 @@ export default function CreateUserPage() {
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
-  useEffect(() => { dispatch(fetchDesignations()); }, []);
+  useEffect(() => {
+    dispatch(fetchDesignations());
+    if (isVRLAdmin) dispatch(fetchCompanies());
+  }, []);
 
   useEffect(() => {
     if (createSuccess) {
@@ -61,10 +73,8 @@ export default function CreateUserPage() {
     }
   }, [createSuccess, createError]);
 
-  // Designations available for currently selected modules
   const availableDesignations = designations.filter((d) => form.modules.includes(d.module));
 
-  // Reset designation if it no longer matches selected modules
   useEffect(() => {
     if (form.designation && !availableDesignations.find((d) => d.name === form.designation)) {
       setForm((f) => ({ ...f, designation: '' }));
@@ -82,7 +92,13 @@ export default function CreateUserPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(createUser({ ...form, user_code_prefix: userCodePrefix }));
+    if (isVRLAdmin && !selectedCompanyId) {
+      setToast({ visible: true, message: 'Please select a company.', type: 'error' });
+      return;
+    }
+    const payload = { ...form, user_code_prefix: userCodePrefix };
+    if (isVRLAdmin && selectedCompanyId) payload.company_id = Number(selectedCompanyId);
+    dispatch(createUser(payload));
   };
 
   return (
@@ -96,6 +112,34 @@ export default function CreateUserPage() {
 
       <div style={s.card}>
         <form onSubmit={handleSubmit}>
+
+          {/* Company selector — VRL admin only */}
+          {isVRLAdmin && (
+            <div style={{ marginBottom: 24 }}>
+              <label style={s.label}>
+                Company <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <select
+                required
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                style={{ ...s.input, maxWidth: 420, color: selectedCompanyId ? '#1A1A2E' : '#8492A6' }}
+              >
+                <option value="">— Select a company —</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.code} — {c.name}
+                  </option>
+                ))}
+              </select>
+              {selectedCompany && (
+                <p style={s.hint}>
+                  User will be created under <strong>{selectedCompany.name}</strong>.
+                  Code prefix: <strong>{userCodePrefix}</strong>
+                </p>
+              )}
+            </div>
+          )}
 
           <div style={s.grid2}>
             <div>
