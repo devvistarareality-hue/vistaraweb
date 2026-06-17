@@ -30,7 +30,7 @@ const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
   { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> },
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding /> },
-  { label: 'Lead Sources', href: '/sales/sources',       icon: <IconSource /> },
+  { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource /> },
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers /> },
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute /> },
   { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
