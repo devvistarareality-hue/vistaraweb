@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { createUser, resetCreateUser } from '../../../../redux/actions/userManagementActions';
+import { createUser, resetCreateUser, fetchUsers } from '../../../../redux/actions/userManagementActions';
 import { fetchDesignations } from '../../../../redux/actions/designationActions';
 import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
@@ -32,13 +32,14 @@ function generateUserCodePrefix(companyCode) {
 export default function CreateUserPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
-  const { creating, createError, createSuccess } = useSelector((s) => s.userManagement);
+  const { creating, createError, createSuccess, users } = useSelector((s) => s.userManagement);
   const { designations } = useSelector((s) => s.designations);
   const { companies }    = useSelector((s) => s.companies);
   const loggedInUser     = useSelector((s) => s.auth.user);
   const isVRLAdmin       = loggedInUser?.company_code === 'VRL' && (loggedInUser?.role === 'Admin' || loggedInUser?.is_staff);
 
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [managerSearch,     setManagerSearch]     = useState('');
 
   const selectedCompany    = companies.find((c) => String(c.id) === String(selectedCompanyId)) || null;
   const userCodePrefix     = generateUserCodePrefix(
@@ -46,20 +47,28 @@ export default function CreateUserPage() {
   );
 
   const [form, setForm] = useState({
-    name:            '',
-    email:           '',
-    password:        '',
-    role:            'Employee',
-    designation:     '',
-    modules:         [],
-    manager_modules: [],
+    name:                 '',
+    email:                '',
+    password:             '',
+    role:                 'Employee',
+    designation:          '',
+    modules:              [],
+    manager_modules:      [],
+    reporting_manager_id: null,
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   useEffect(() => {
     dispatch(fetchDesignations());
+    dispatch(fetchUsers());
     if (isVRLAdmin) dispatch(fetchCompanies());
   }, []);
+
+  // Clear reporting manager when company changes (VRL admin)
+  useEffect(() => {
+    setForm((f) => ({ ...f, reporting_manager_id: null }));
+    setManagerSearch('');
+  }, [selectedCompanyId]);
 
   useEffect(() => {
     if (createSuccess) {
@@ -74,6 +83,11 @@ export default function CreateUserPage() {
   }, [createSuccess, createError]);
 
   const availableDesignations = designations.filter((d) => form.modules.includes(d.module));
+
+  const availableManagers = users.filter((u) => {
+    if (isVRLAdmin && selectedCompany) return u.company_code === selectedCompany.code;
+    return true;
+  });
 
   useEffect(() => {
     if (form.designation && !availableDesignations.find((d) => d.name === form.designation)) {
@@ -96,7 +110,7 @@ export default function CreateUserPage() {
       setToast({ visible: true, message: 'Please select a company.', type: 'error' });
       return;
     }
-    const payload = { ...form, user_code_prefix: userCodePrefix };
+    const payload = { ...form, user_code_prefix: userCodePrefix, reporting_manager_id: form.reporting_manager_id ? Number(form.reporting_manager_id) : null };
     if (isVRLAdmin && selectedCompanyId) payload.company_id = Number(selectedCompanyId);
     dispatch(createUser(payload));
   };
@@ -236,6 +250,43 @@ export default function CreateUserPage() {
                 <option key={d.id} value={d.name}>{d.name} ({d.module})</option>
               ))}
             </select>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={s.label}>
+              Reporting Manager <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(optional)</span>
+            </label>
+            {isVRLAdmin && !selectedCompanyId ? (
+              <p style={s.hint}>Select a company first to see available managers</p>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Search by name or user code…"
+                  value={managerSearch}
+                  onChange={(e) => setManagerSearch(e.target.value)}
+                  style={{ ...s.input, marginBottom: 6 }}
+                />
+                <select
+                  value={form.reporting_manager_id || ''}
+                  onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value || null }))}
+                  style={{ ...s.input, maxWidth: 420 }}
+                >
+                  <option value="">— None —</option>
+                  {availableManagers
+                    .filter((u) => {
+                      if (!managerSearch) return true;
+                      const q = managerSearch.toLowerCase();
+                      return u.name?.toLowerCase().includes(q) || u.user_code?.toLowerCase().includes(q);
+                    })
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}  ·  {u.user_code}  ·  {u.role}{u.designation ? `  ·  ${u.designation}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </>
+            )}
           </div>
 
           <div style={{ marginBottom: 28 }}>
