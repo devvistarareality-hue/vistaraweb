@@ -167,7 +167,7 @@ export default function LeadSetupPage() {
 
       {/* ─── META TAB ─── */}
       {tab === 'meta' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'stretch' }}>
 
           {/* Left: Config */}
           <div>
@@ -291,8 +291,8 @@ export default function LeadSetupPage() {
             </div>
           </div>
 
-          {/* Right: Guide — sticky so it stays visible while left scrolls */}
-          <div style={{ ...card, position: 'sticky', top: 24, maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+          {/* Right: Guide */}
+          <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
             <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 20 }}>Follow these steps to connect Meta Lead Ads</p>
 
