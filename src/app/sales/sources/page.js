@@ -36,7 +36,7 @@ function CopyBtn({ text }) {
 
 function Step({ n, title, children }) {
   return (
-    <div style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
+    <div style={{ display: 'flex', gap: 14 }}>
       <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: NAVY, color: '#fff', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>{n}</div>
       <div>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E', marginBottom: 4 }}>{title}</div>
@@ -293,16 +293,17 @@ export default function LeadSetupPage() {
 
           {/* Right: Guide */}
           <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
-              <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16 }}>Follow these steps to connect Meta Lead Ads</p>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 2 }}>Setup Guide</div>
+            <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 0 }}>Follow these steps to connect Meta Lead Ads</p>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', paddingTop: 4 }}>
               <Step n="1" title="Create a Meta App">Go to <strong>developers.facebook.com</strong> → My Apps → Create App. Choose <strong>Business</strong> type.</Step>
-              <Step n="2" title="Add Webhooks Product">In your app dashboard, click <strong>Add Product</strong> → select <strong>Webhooks</strong> → choose <strong>Page</strong>.</Step>
-              <Step n="3" title="Configure Webhook URL">Click <strong>Subscribe to this object</strong>. Paste the <strong>Webhook URL</strong> and <strong>Verify Token</strong> from the left. Click <strong>Verify and Save</strong>.</Step>
-              <Step n="4" title="Subscribe to leadgen field">After verification, find the <strong>leadgen</strong> field in the list and click <strong>Subscribe</strong>.</Step>
-              <Step n="5" title="Get Page Access Token">Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate a long-lived token and paste it on the left.</Step>
-              <Step n="6" title="Map forms to projects">Use the <strong>Form → Project Routing</strong> section to map each lead form to the correct project by Form ID.</Step>
-              <Step n="7" title="Test it">Use Meta's <strong>Lead Ads Testing Tool</strong> to send a test lead — it should appear in <strong>All Leads</strong> with the correct project assigned.</Step>
+              <Step n="2" title="Add Webhooks Product">Click <strong>Add Product</strong> → select <strong>Webhooks</strong> → choose <strong>Page</strong> as subscription object.</Step>
+              <Step n="3" title="Configure Webhook URL">Paste the <strong>Webhook URL</strong> and <strong>Verify Token</strong> from the left panel. Click <strong>Verify and Save</strong>.</Step>
+              <Step n="4" title="Subscribe to leadgen field">After verification, find the <strong>leadgen</strong> field and click <strong>Subscribe</strong>.</Step>
+              <Step n="5" title="Get Page Access Token">Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate and paste the token on the left.</Step>
+              <Step n="6" title="Map forms to projects">Use <strong>Form → Project Routing</strong> below to map each lead form to the correct project by Form ID.</Step>
+              <Step n="7" title="Test it">Use Meta's <strong>Lead Ads Testing Tool</strong> — the lead should appear in <strong>All Leads</strong> with the correct project within seconds.</Step>
             </div>
 
             <div style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
