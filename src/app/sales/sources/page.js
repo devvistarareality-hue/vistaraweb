@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { SALES_ENDPOINTS } from '../../../constants/api';
+import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -17,9 +18,11 @@ export default function SourcesPage() {
   const [err,     setErr]     = useState('');
 
   useEffect(() => {
+    const cached = getCache('sources');
+    if (cached) { setSources(cached); setLoading(false); return; }
     fetch(SALES_ENDPOINTS.sources, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setSources(Array.isArray(d) ? d : []); setLoading(false); })
+      .then((d) => { const list = Array.isArray(d) ? d : []; setCache('sources', list); setSources(list); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -34,6 +37,7 @@ export default function SourcesPage() {
     const data = await res.json();
     setAdding(false);
     if (!res.ok) { setErr(data.detail || JSON.stringify(data)); return; }
+    bustCache('sources');
     setSources((prev) => [...prev, data]);
     setNewName('');
   }

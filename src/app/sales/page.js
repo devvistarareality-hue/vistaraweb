@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { SALES_ENDPOINTS } from '../../constants/api';
+import { getCache, setCache } from './_cache';
 
 function SvgIcon({ children, size = 20 }) {
   return (
@@ -54,9 +55,11 @@ export default function SalesDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const cached = getCache('stats');
+    if (cached) { setStats(cached); setLoading(false); return; }
     fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setStats(d); setLoading(false); })
+      .then((d) => { setCache('stats', d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS } from '../../../constants/api';
+import { getCache, setCache } from '../../sales/_cache';
 
 const PAGE_SIZE = 25;
 
@@ -265,13 +266,23 @@ export default function SalesLeadsPage() {
   const [deleting,    setDeleting]    = useState(false);
 
   const loadMeta = useCallback(async () => {
+    // Serve from cache instantly, fetch in background to keep fresh
+    const cachedP = getCache('projects');
+    const cachedS = getCache('sources');
+    if (cachedP) setProjects(cachedP);
+    if (cachedS) setSources(cachedS);
+    if (cachedP && cachedS) return; // both cached — skip fetch
     const [pRes, sRes, tRes] = await Promise.all([
       fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.sources,    { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.sources,     { headers: authHeaders() }).then((r) => r.json()),
       fetch(SALES_ENDPOINTS.telecallers, { headers: authHeaders() }).then((r) => r.json()),
     ]);
-    setProjects(Array.isArray(pRes) ? pRes : []);
-    setSources(Array.isArray(sRes) ? sRes : []);
+    const projects = Array.isArray(pRes) ? pRes : [];
+    const sources  = Array.isArray(sRes) ? sRes : [];
+    setCache('projects', projects);
+    setCache('sources',  sources);
+    setProjects(projects);
+    setSources(sources);
     setTelecallers(Array.isArray(tRes) ? tRes : []);
   }, []);
 
@@ -395,7 +406,15 @@ export default function SalesLeadsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} style={{ textAlign: 'center', padding: '40px 0', color: '#8492A6' }}>Loading…</td></tr>
+                [...Array(8)].map((_, i) => (
+                  <tr key={i}>
+                    {[...Array(9)].map((__, j) => (
+                      <td key={j} style={{ padding: '12px 14px' }}>
+                        <div className="s-skel" style={{ height: 14, width: j === 0 ? 16 : j === 1 ? 120 : j === 7 ? 60 : 80, borderRadius: 6 }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : leads.length === 0 ? (
                 <tr><td colSpan={9} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (

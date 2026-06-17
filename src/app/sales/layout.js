@@ -40,6 +40,8 @@ const NAV = [
 const CSS = `
   .s-nav-link { transition: background 0.14s, color 0.14s; }
   .s-nav-link:hover { background: rgba(255,255,255,0.07) !important; color: rgba(255,255,255,0.9) !important; }
+  @keyframes s-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .s-skel { animation: s-pulse 1.4s ease infinite; background:#E8ECF4; border-radius:8px; }
   .s-logout:hover { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.4) !important; }
   .s-scroll::-webkit-scrollbar { width: 0; }
   .s-scroll { scrollbar-width: none; }

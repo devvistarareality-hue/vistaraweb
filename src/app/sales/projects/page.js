@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { SALES_ENDPOINTS } from '../../../constants/api';
+import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -84,9 +85,11 @@ export default function ProjectsPage() {
   const [modal,    setModal]    = useState(null); // null | 'add' | project obj
 
   useEffect(() => {
+    const cached = getCache('projects');
+    if (cached) { setProjects(cached); setLoading(false); return; }
     fetch(SALES_ENDPOINTS.projects, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setProjects(Array.isArray(d) ? d : []); setLoading(false); })
+      .then((d) => { const list = Array.isArray(d) ? d : []; setCache('projects', list); setProjects(list); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -95,16 +98,17 @@ export default function ProjectsPage() {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ is_active: !p.is_active }),
     });
     const data = await res.json();
-    if (res.ok) setProjects((prev) => prev.map((x) => x.id === p.id ? data : x));
+    if (res.ok) { bustCache('projects'); setProjects((prev) => prev.map((x) => x.id === p.id ? data : x)); }
   }
 
   async function deleteProject(p) {
     if (!window.confirm(`Delete "${p.name}"? All linked leads will lose their project.`)) return;
     const res = await fetch(SALES_ENDPOINTS.project(p.id), { method: 'DELETE', headers: authHeaders() });
-    if (res.ok) setProjects((prev) => prev.filter((x) => x.id !== p.id));
+    if (res.ok) { bustCache('projects'); setProjects((prev) => prev.filter((x) => x.id !== p.id)); }
   }
 
   function onSaved(data) {
+    bustCache('projects');
     setProjects((prev) => {
       const idx = prev.findIndex((x) => x.id === data.id);
       return idx >= 0 ? prev.map((x) => x.id === data.id ? data : x) : [data, ...prev];
@@ -122,7 +126,9 @@ export default function ProjectsPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: '#8492A6', textAlign: 'center', marginTop: 60 }}>Loading…</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 16 }}>
+          {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 140 }} />)}
+        </div>
       ) : projects.length === 0 ? (
         <div style={{ textAlign: 'center', marginTop: 80, color: '#8492A6' }}>
           <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>No projects yet</p>
