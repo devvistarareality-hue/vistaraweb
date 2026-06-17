@@ -144,7 +144,7 @@ export default function SalesUsersPage() {
         fetch(USER_ENDPOINTS.list,  { headers: authHeaders() }).then(safeJson),
         fetch(SALES_ENDPOINTS.team, { headers: authHeaders() }).then(safeJson).catch(() => []),
       ]);
-      const users   = Array.isArray(uRes) ? uRes : (uRes.results || []);
+      const users   = (Array.isArray(uRes) ? uRes : (uRes.results || [])).filter((u) => u.role !== 'Admin');
       const members = Array.isArray(mRes) ? mRes : [];
       setErpUsers(users);
       const map = {};
