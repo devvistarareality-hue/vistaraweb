@@ -27,14 +27,14 @@ export default function DistributionPage() {
   const [result,     setResult]     = useState(null);
 
   const load = useCallback(async () => {
-    const [pRes, tRes, lRes, sRes] = await Promise.all([
+    const [pRes, uRes, lRes, sRes] = await Promise.all([
       fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.team, { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.distLog, { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.usersSlim, { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.distLog,   { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.stats,     { headers: authHeaders() }).then((r) => r.json()),
     ]);
     setProjects(Array.isArray(pRes) ? pRes : []);
-    setTeamMembers(Array.isArray(tRes) ? tRes : []);
+    setTeamMembers(Array.isArray(uRes) ? uRes : []);
     setLog(Array.isArray(lRes) ? lRes : []);
     if (sRes && !sRes.detail) {
       setStats({ unassigned_tc: sRes.new_leads || 0, unassigned_stm: 0 });
@@ -66,8 +66,12 @@ export default function DistributionPage() {
     setClearingLog(false);
   }
 
-  const tcMembers  = teamMembers.filter((m) => m.crm_role === 'telecaller');
-  const stmMembers = teamMembers.filter((m) => m.crm_role === 'stm');
+  const tcMembers  = teamMembers.filter((m) => (m.designation || '').toUpperCase() === 'TELECALLER');
+  const stmMembers = teamMembers.filter((m) => (m.designation || '').toUpperCase() === 'STM');
+  const managers   = teamMembers.filter((m) => {
+    const d = (m.designation || '').toUpperCase();
+    return d !== 'TELECALLER' && d !== 'STM';
+  });
   const activeRole = distType === 'telecaller' ? tcMembers : stmMembers;
 
   return (
@@ -166,9 +170,9 @@ export default function DistributionPage() {
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
                 {[
-                  { label: 'Telecallers', value: tcMembers.length, color: '#F9A825' },
+                  { label: 'Telecallers', value: tcMembers.length,  color: '#F9A825' },
                   { label: 'STMs',        value: stmMembers.length, color: '#3D5AFE' },
-                  { label: 'Managers',    value: teamMembers.filter((m) => m.crm_role === 'manager').length, color: '#2E7D32' },
+                  { label: 'Others',      value: managers.length,   color: '#2E7D32' },
                   { label: 'Unassigned Leads', value: stats.unassigned_tc, color: '#EF4444' },
                 ].map((s) => (
                   <div key={s.label} style={{ backgroundColor: '#F8FAFD', borderRadius: 10, padding: '12px 14px' }}>
@@ -189,8 +193,8 @@ export default function DistributionPage() {
                         {(m.name || 'U')[0].toUpperCase()}
                       </div>
                       <span style={{ flex: 1, fontSize: 13, color: '#1A1A2E', fontWeight: 500 }}>{m.name}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, backgroundColor: '#E8EEFF', color: '#3D5AFE', textTransform: 'capitalize' }}>
-                        {m.crm_role}
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, backgroundColor: '#E8EEFF', color: '#3D5AFE', textTransform: 'uppercase' }}>
+                        {m.designation || '—'}
                       </span>
                     </div>
                   ))}
