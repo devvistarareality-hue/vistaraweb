@@ -178,24 +178,8 @@ export default function DistributionPage() {
                 ))}
               </div>
 
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>All Members</p>
-              {teamMembers.length === 0 ? (
-                <p style={{ fontSize: 12, color: '#8492A6' }}>No team members yet. Go to Users → Add Team Member.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {teamMembers.map((m) => (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', backgroundColor: '#F8FAFD', borderRadius: 8 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#E8EEFF', color: '#3D5AFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
-                        {(m.name || 'U')[0].toUpperCase()}
-                      </div>
-                      <span style={{ flex: 1, fontSize: 13, color: '#1A1A2E', fontWeight: 500 }}>{m.name}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, backgroundColor: '#E8EEFF', color: '#3D5AFE', textTransform: 'uppercase' }}>
-                        {m.designation || '—'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>Total Members</p>
+              <p style={{ fontSize: 20, fontWeight: 800, color: '#182350' }}>{teamMembers.length}</p>
             </>
           )}
         </div>
