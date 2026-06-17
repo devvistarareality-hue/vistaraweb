@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { SALES_ENDPOINTS, AUTH_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, USER_ENDPOINTS } from '../../../constants/api';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -143,7 +143,7 @@ export default function SalesUsersPage() {
   const load = useCallback(async () => {
     const [mRes, uRes] = await Promise.all([
       fetch(SALES_ENDPOINTS.team, { headers: authHeaders() }).then((r) => r.json()),
-      fetch(AUTH_ENDPOINTS.me.replace('/me/', '/users/'), { headers: authHeaders() }).then((r) => r.json()).catch(() => []),
+      fetch(USER_ENDPOINTS.list, { headers: authHeaders() }).then((r) => r.json()).catch(() => []),
     ]);
     setMembers(Array.isArray(mRes) ? mRes : []);
     setErpUsers(Array.isArray(uRes) ? uRes : []);
@@ -198,7 +198,7 @@ export default function SalesUsersPage() {
             <table style={tbl}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
                 <tr>
-                  {['Name', 'User Code', 'Phone', 'CRM Role', 'Status', 'Actions'].map((h) => (
+                  {['Name', 'User Code', 'Department', 'Phone', 'CRM Role', 'Status', 'Actions'].map((h) => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
@@ -213,6 +213,7 @@ export default function SalesUsersPage() {
                       </div>
                     </td>
                     <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }}>{m.user_code}</td>
+                    <td style={{ ...td, color: '#8492A6' }}>{m.department || '—'}</td>
                     <td style={{ ...td, color: '#8492A6' }}>{m.phone || '—'}</td>
                     <td style={td}><RoleBadge role={m.crm_role} /></td>
                     <td style={td}>
