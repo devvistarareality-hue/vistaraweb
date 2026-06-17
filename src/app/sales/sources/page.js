@@ -16,7 +16,14 @@ const GREEN = '#2E7D32';
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   function copy() {
-    navigator.clipboard.writeText(text);
+    if (!text) return;
+    try {
+      navigator.clipboard.writeText(text);
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = text; document.body.appendChild(el); el.select();
+      document.execCommand('copy'); document.body.removeChild(el);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
