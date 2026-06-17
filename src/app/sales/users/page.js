@@ -60,15 +60,20 @@ export default function SalesUsersPage() {
       )
     : users;
 
-  // Count by designation keyword
-  const count = (kw) => users.filter((u) => u.designation?.toUpperCase().includes(kw)).length;
+  // Dynamic chips — one per unique designation, counts always sum to total
+  const designationCounts = users.reduce((acc, u) => {
+    const key = (u.designation || 'Other').toUpperCase();
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
-  const chips = [
-    { label: 'Telecallers',  kw: 'TELECALLER', color: '#F9A825', bg: '#FFF8E1' },
-    { label: 'STMs',         kw: 'STM',        color: '#3D5AFE', bg: '#E8EEFF' },
-    { label: 'Sales Heads',  kw: 'SALES',      color: '#6A1B9A', bg: '#EDE7F6' },
-    { label: 'Regional',     kw: 'REGIONAL',   color: '#2E7D32', bg: '#E8F5E9' },
-  ];
+  const chips = Object.entries(designationCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([desig, cnt]) => {
+      const c = Object.entries(DESIG_STYLE).find(([k]) => desig.includes(k))?.[1]
+                || { bg: '#F0F3FA', color: '#8492A6' };
+      return { label: desig, cnt, color: c.color, bg: c.bg };
+    });
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -80,8 +85,8 @@ export default function SalesUsersPage() {
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {chips.map((c) => (
-            <div key={c.kw} style={{ padding: '6px 14px', borderRadius: 20, backgroundColor: c.bg, color: c.color, fontSize: 12, fontWeight: 700 }}>
-              {c.label}: {count(c.kw)}
+            <div key={c.label} style={{ padding: '5px 12px', borderRadius: 20, backgroundColor: c.bg, color: c.color, fontSize: 11, fontWeight: 700 }}>
+              {c.label}: {c.cnt}
             </div>
           ))}
         </div>
