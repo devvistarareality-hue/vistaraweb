@@ -58,7 +58,7 @@ const NAV_ITEMS = [
 ];
 
 const PARKED_ITEMS = [
-  { label: 'Sales',     href: '/placeholder?title=Sales',     icon: <IconTrending /> },
+  { label: 'Sales',     href: '/sales',                       icon: <IconTrending />, live: true },
   { label: 'HR',        href: '/placeholder?title=HR',        icon: <IconPeople /> },
   { label: 'Execution', href: '/placeholder?title=Execution', icon: <IconChecklist /> },
   { label: 'Purchase',  href: '/placeholder?title=Purchase',  icon: <IconCart /> },
@@ -134,9 +134,10 @@ export default function Sidebar({ user }) {
         <div style={{ ...s.sectionLabel, marginTop: 22 }}>MODULES</div>
         {PARKED_ITEMS.map((item) => (
           <Link key={item.href} href={item.href} className="nav-link" style={s.navItem}>
-            <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.28)' }}>{item.icon}</span>
-            <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{item.label}</span>
-            <span style={s.soonChip}>SOON</span>
+            <span style={{ ...s.iconWrap, color: item.live ? 'rgba(255,255,255,0.52)' : 'rgba(255,255,255,0.28)' }}>{item.icon}</span>
+            <span style={{ flex: 1, fontSize: 13, fontWeight: item.live ? 600 : 500 }}>{item.label}</span>
+            {!item.live && <span style={s.soonChip}>SOON</span>}
+            {item.live && <span style={s.liveChip}>LIVE</span>}
           </Link>
         ))}
       </div>
@@ -208,6 +209,11 @@ const s = {
   soonChip: {
     fontSize: 8, fontWeight: 800, letterSpacing: 0.8,
     color: 'rgba(255,107,43,0.6)', backgroundColor: 'rgba(255,107,43,0.1)',
+    borderRadius: 4, padding: '2px 5px', flexShrink: 0,
+  },
+  liveChip: {
+    fontSize: 8, fontWeight: 800, letterSpacing: 0.8,
+    color: 'rgba(46,125,50,0.9)', backgroundColor: 'rgba(46,125,50,0.12)',
     borderRadius: 4, padding: '2px 5px', flexShrink: 0,
   },
 

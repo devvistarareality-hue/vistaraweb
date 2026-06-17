@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { MODULE_ACCENT } from '../../constants/theme';
 
 const MODULE_CONFIG = {
-  'Sales':     { accent: MODULE_ACCENT.Sales,     href: '/placeholder?title=Sales',     sub: 'Leads & Pipeline' },
+  'Sales':     { accent: MODULE_ACCENT.Sales,     href: '/sales',                       sub: 'Leads & Pipeline' },
   'HR':        { accent: MODULE_ACCENT.HR,        href: '/placeholder?title=HR',        sub: 'People & Attendance' },
   'Execution': { accent: MODULE_ACCENT.Execution, href: '/placeholder?title=Execution', sub: 'Tasks & Progress' },
   'Purchase':  { accent: MODULE_ACCENT.Purchase,  href: '/placeholder?title=Purchase',  sub: 'Vendors & Orders' },

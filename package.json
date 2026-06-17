@@ -8,11 +8,14 @@
     "start": "next start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "next": "^14.2.0",
+    "pdfjs-dist": "^5.6.205",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-redux": "^9.1.0",
     "redux": "^5.0.1",
-    "redux-thunk": "^3.1.0"
+    "redux-thunk": "^3.1.0",
+    "xlsx": "^0.18.5"
   }
 }
