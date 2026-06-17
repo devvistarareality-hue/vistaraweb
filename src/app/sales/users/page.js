@@ -1,6 +1,22 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { USER_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS } from '../../../constants/api';
+
+const CACHE_KEY = 'sales_team_users';
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+function readCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(CACHE_KEY); return null; }
+    return data;
+  } catch { return null; }
+}
+function writeCache(data) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -35,14 +51,18 @@ export default function SalesUsersPage() {
   const [apiError, setApiError] = useState('');
   const [search,   setSearch]   = useState('');
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (bust = false) => {
     setApiError('');
+    if (!bust) {
+      const cached = readCache();
+      if (cached) { setUsers(cached); setLoading(false); return; }
+    }
     try {
-      const res  = await fetch(USER_ENDPOINTS.list, { headers: authHeaders() });
+      const res  = await fetch(SALES_ENDPOINTS.usersSlim, { headers: authHeaders() });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const data = await res.json();
-      const all  = Array.isArray(data) ? data : (data.results || []);
-      setUsers(all.filter((u) => u.role !== 'Admin'));
+      writeCache(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       setApiError(err.message || 'Failed to load users');
     } finally {
@@ -79,9 +99,12 @@ export default function SalesUsersPage() {
     <div style={{ padding: '24px 28px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Sales Team</h1>
-          <p style={{ fontSize: 13, color: '#8492A6' }}>{users.length} team members</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Sales Team</h1>
+            <p style={{ fontSize: 13, color: '#8492A6' }}>{users.length} team members</p>
+          </div>
+          <button onClick={() => { setLoading(true); load(true); }} title="Refresh" style={{ background: 'none', border: '1.5px solid #E0E6F0', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: '#8492A6' }}>↺</button>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {chips.map((c) => (
