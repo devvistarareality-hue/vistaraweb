@@ -2,7 +2,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS } from '../../../constants/api';
-import { getCache, setCache } from '../../sales/_cache';
+import { getCache, setCache, bustCache } from '../../sales/_cache';
+
+function bustLeadsCache() {
+  // Remove all leads_* keys from sessionStorage
+  if (typeof window === 'undefined') return;
+  Object.keys(sessionStorage).filter((k) => k.startsWith('sc_leads_')).forEach((k) => sessionStorage.removeItem(k));
+}
 
 const PAGE_SIZE = 25;
 
@@ -293,9 +299,13 @@ export default function SalesLeadsPage() {
     if (filters.status)     params.set('status',     filters.status);
     if (filters.project_id) params.set('project_id', filters.project_id);
     if (filters.source_id)  params.set('source_id',  filters.source_id);
+    const cacheKey = `leads_${params.toString()}`;
+    const cached = getCache(cacheKey);
+    if (cached) { setLeads(cached.results); setTotal(cached.count); setLoading(false); return; }
 
     const res  = await fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() });
     const data = await res.json();
+    setCache(cacheKey, { results: data.results ?? [], count: data.count ?? 0 });
     setLeads(data.results ?? []);
     setTotal(data.count ?? 0);
     setLoading(false);
@@ -314,6 +324,7 @@ export default function SalesLeadsPage() {
   async function deleteLead(id) {
     if (!window.confirm('Delete this lead permanently?')) return;
     await fetch(SALES_ENDPOINTS.lead(id), { method: 'DELETE', headers: authHeaders() });
+    bustLeadsCache();
     loadLeads();
   }
 
@@ -327,6 +338,7 @@ export default function SalesLeadsPage() {
     });
     setSelectedIds(new Set());
     setDeleting(false);
+    bustLeadsCache();
     loadLeads();
   }
 

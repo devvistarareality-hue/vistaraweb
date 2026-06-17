@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { SALES_ENDPOINTS } from '../../../constants/api';
+import { getCache, setCache } from '../../sales/_cache';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -24,14 +25,24 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const cached = getCache('reports');
+    if (cached) { setData(cached); setLoading(false); return; }
     fetch(SALES_ENDPOINTS.reports, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
+      .then((d) => { setCache('reports', d); setData(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: 40, color: '#8492A6', textAlign: 'center' }}>Loading reports…</div>;
-  if (!data)   return <div style={{ padding: 40, color: '#EF4444', textAlign: 'center' }}>Failed to load reports.</div>;
+  if (loading) return (
+    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="s-skel" style={{ height: 28, width: 200 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+        {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 88 }} />)}
+      </div>
+      {[...Array(3)].map((_, i) => <div key={i} className="s-skel" style={{ height: 180 }} />)}
+    </div>
+  );
+  if (!data) return <div style={{ padding: 40, color: '#EF4444', textAlign: 'center' }}>Failed to load reports.</div>;
 
   const { summary, campaigns, telecallers, stms, closures } = data;
 
