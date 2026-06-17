@@ -106,7 +106,7 @@ export default function LeadSetupPage() {
     setSaving(true); setMetaMsg('');
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ action: 'save', page_access_token: pat, default_project_id: projectId || null }),
+      body: JSON.stringify({ action: 'save', page_access_token: pat }),
     });
     const d = await res.json();
     setSaving(false);
@@ -229,17 +229,6 @@ export default function LeadSetupPage() {
                 rows={3}
                 style={{ ...inp, width: '100%', resize: 'vertical', fontFamily: 'monospace', fontSize: 11, padding: '8px 10px' }}
               />
-
-              <div style={{ marginTop: 14 }}>
-                <div style={fieldLabel}>DEFAULT PROJECT FOR META LEADS</div>
-                <select value={projectId} onChange={e => setProjectId(e.target.value)}
-                  style={{ ...inp, width: '100%', marginTop: 6 }}>
-                  <option value="">— Auto-assign to no project —</option>
-                  {(cfg?.projects || []).map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
 
               <button onClick={saveMetaConfig} disabled={saving} style={{ ...saveBtn, marginTop: 16, width: '100%', justifyContent: 'center' }}>
                 {saving ? 'Saving…' : '💾 Save Configuration'}
