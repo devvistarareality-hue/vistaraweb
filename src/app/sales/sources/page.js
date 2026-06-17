@@ -246,93 +246,82 @@ export default function LeadSetupPage() {
               </button>
               {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
             </div>
-          </div>
 
-          {/* Form → Project Mapping */}
-          <div style={{ ...card, marginTop: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Form → Project Routing</div>
-            <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16, lineHeight: 1.6 }}>
-              Each Meta Lead Ads form has a unique Form ID. Map each form to a project so leads are auto-classified when they arrive.
-            </p>
-
-            {/* Existing mappings */}
-            {mappings.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                {mappings.map(m => (
-                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
-                      <div style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</div>
+            {/* Form → Project Mapping */}
+            <div style={{ ...card, marginTop: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Form → Project Routing</div>
+              <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16, lineHeight: 1.6 }}>
+                Map each Meta Lead Ads form to a project so leads are auto-classified on arrival.
+              </p>
+              {mappings.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  {mappings.map(m => (
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
+                        <div style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>→</span>
+                        <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#E8EEFF', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
+                        <span style={{ fontSize: 11, color: '#8492A6' }}>{m.total_leads} leads</span>
+                      </div>
+                      <button onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 16 }}>→</span>
-                      <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#E8EEFF', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
-                      <span style={{ fontSize: 11, color: '#8492A6' }}>{m.total_leads} leads</span>
-                    </div>
-                    <button onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 16, padding: '2px 6px' }}>×</button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <input value={mapFormId} onChange={e => setMapFormId(e.target.value)} placeholder="Form ID (e.g. 1234567890)" style={{ ...inp, width: '100%' }} />
+                <input value={mapFormName} onChange={e => setMapFormName(e.target.value)} placeholder="Form label (e.g. Kalrav Form)" style={{ ...inp, width: '100%' }} />
               </div>
-            )}
-
-            {/* Add new mapping */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-              <input value={mapFormId} onChange={e => setMapFormId(e.target.value)} placeholder="Form ID (e.g. 1234567890)" style={{ ...inp, width: '100%' }} />
-              <input value={mapFormName} onChange={e => setMapFormName(e.target.value)} placeholder="Form name (e.g. Kalrav Form)" style={{ ...inp, width: '100%' }} />
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <select value={mapProject} onChange={e => setMapProject(e.target.value)} style={{ ...inp, flex: 1 }}>
-                <option value="">— Select Project —</option>
-                {(cfg?.projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <button onClick={addMapping} disabled={mapSaving || !mapFormId || !mapProject} style={{ ...saveBtn, opacity: (!mapFormId || !mapProject) ? 0.5 : 1 }}>
-                {mapSaving ? '…' : '+ Add'}
-              </button>
-            </div>
-            <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, backgroundColor: '#F0F7FF', border: '1px solid #C7DAFF' }}>
-              <div style={{ fontSize: 11, color: '#3D5AFE', fontWeight: 700, marginBottom: 3 }}>How to get your Form ID</div>
-              <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The Form ID is in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>...form_id=XXXXXXXX</code></div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={mapProject} onChange={e => setMapProject(e.target.value)} style={{ ...inp, flex: 1 }}>
+                  <option value="">— Select Project —</option>
+                  {(cfg?.projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                <button onClick={addMapping} disabled={mapSaving || !mapFormId || !mapProject} style={{ ...saveBtn, opacity: (!mapFormId || !mapProject) ? 0.5 : 1 }}>
+                  {mapSaving ? '…' : '+ Add'}
+                </button>
+              </div>
+              <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 8, backgroundColor: '#F0F7FF', border: '1px solid #C7DAFF' }}>
+                <div style={{ fontSize: 11, color: '#3D5AFE', fontWeight: 700, marginBottom: 3 }}>How to find your Form ID</div>
+                <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right: Guide */}
-        <div style={card}>
+          {/* Right: Guide */}
+          <div style={card}>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
             <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 20 }}>Follow these steps to connect Meta Lead Ads</p>
 
             <Step n="1" title="Create a Meta App">
               Go to <strong>developers.facebook.com</strong> → My Apps → Create App. Choose <strong>Business</strong> type and follow the setup wizard.
             </Step>
-
             <Step n="2" title="Add Webhooks Product">
               In your app dashboard, click <strong>Add Product</strong> and select <strong>Webhooks</strong>. Then choose <strong>Page</strong> as the subscription object.
             </Step>
-
             <Step n="3" title="Configure Webhook URL">
               Click <strong>Subscribe to this object</strong>. Paste the <strong>Webhook URL</strong> and <strong>Verify Token</strong> from the left panel. Click <strong>Verify and Save</strong>.
             </Step>
-
             <Step n="4" title="Subscribe to leadgen field">
-              After verification, find the <strong>leadgen</strong> field in the subscription list and click <strong>Subscribe</strong>.
+              After verification, find the <strong>leadgen</strong> field and click <strong>Subscribe</strong>.
             </Step>
-
             <Step n="5" title="Get Page Access Token">
-              Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate a long-lived token for your Facebook Page and paste it in the field on the left.
+              Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate a long-lived token and paste it on the left.
             </Step>
-
-            <Step n="6" title="Connect your Facebook Page">
-              In the Webhooks section, subscribe your <strong>Facebook Page</strong> to the webhook. Make sure your page has at least one active Lead Ads form.
+            <Step n="6" title="Map your forms to projects">
+              Use the <strong>Form → Project Routing</strong> panel below the config to map each lead form to the correct project.
             </Step>
-
             <Step n="7" title="Test it">
-              Use Meta's <strong>Lead Ads Testing Tool</strong> (in the Leads Center or via the Test button in Webhooks) to send a test lead. It should appear in <strong>All Leads</strong> within seconds.
+              Use Meta's <strong>Lead Ads Testing Tool</strong> to send a test lead. It should appear in <strong>All Leads</strong> within seconds with the correct project assigned.
             </Step>
 
             <div style={{ marginTop: 4, padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#E65100', marginBottom: 4 }}>Important</div>
               <div style={{ fontSize: 12, color: '#7A5000', lineHeight: 1.6 }}>
-                The webhook URL must be publicly accessible (HTTPS). It cannot be <code>localhost</code>. Your Railway deployment URL is used automatically.
+                The webhook URL must be HTTPS and publicly accessible — <code>localhost</code> will not work. Your Railway deployment URL is used automatically.
               </div>
             </div>
           </div>
