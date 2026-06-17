@@ -292,33 +292,20 @@ export default function LeadSetupPage() {
           </div>
 
           {/* Right: Guide */}
-          <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
-            <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 20 }}>Follow these steps to connect Meta Lead Ads</p>
+          <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
+              <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16 }}>Follow these steps to connect Meta Lead Ads</p>
+              <Step n="1" title="Create a Meta App">Go to <strong>developers.facebook.com</strong> → My Apps → Create App. Choose <strong>Business</strong> type.</Step>
+              <Step n="2" title="Add Webhooks Product">In your app dashboard, click <strong>Add Product</strong> → select <strong>Webhooks</strong> → choose <strong>Page</strong>.</Step>
+              <Step n="3" title="Configure Webhook URL">Click <strong>Subscribe to this object</strong>. Paste the <strong>Webhook URL</strong> and <strong>Verify Token</strong> from the left. Click <strong>Verify and Save</strong>.</Step>
+              <Step n="4" title="Subscribe to leadgen field">After verification, find the <strong>leadgen</strong> field in the list and click <strong>Subscribe</strong>.</Step>
+              <Step n="5" title="Get Page Access Token">Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate a long-lived token and paste it on the left.</Step>
+              <Step n="6" title="Map forms to projects">Use the <strong>Form → Project Routing</strong> section to map each lead form to the correct project by Form ID.</Step>
+              <Step n="7" title="Test it">Use Meta's <strong>Lead Ads Testing Tool</strong> to send a test lead — it should appear in <strong>All Leads</strong> with the correct project assigned.</Step>
+            </div>
 
-            <Step n="1" title="Create a Meta App">
-              Go to <strong>developers.facebook.com</strong> → My Apps → Create App. Choose <strong>Business</strong> type and follow the setup wizard.
-            </Step>
-            <Step n="2" title="Add Webhooks Product">
-              In your app dashboard, click <strong>Add Product</strong> and select <strong>Webhooks</strong>. Then choose <strong>Page</strong> as the subscription object.
-            </Step>
-            <Step n="3" title="Configure Webhook URL">
-              Click <strong>Subscribe to this object</strong>. Paste the <strong>Webhook URL</strong> and <strong>Verify Token</strong> from the left panel. Click <strong>Verify and Save</strong>.
-            </Step>
-            <Step n="4" title="Subscribe to leadgen field">
-              After verification, find the <strong>leadgen</strong> field and click <strong>Subscribe</strong>.
-            </Step>
-            <Step n="5" title="Get Page Access Token">
-              Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate a long-lived token and paste it on the left.
-            </Step>
-            <Step n="6" title="Map your forms to projects">
-              Use the <strong>Form → Project Routing</strong> panel below the config to map each lead form to the correct project.
-            </Step>
-            <Step n="7" title="Test it">
-              Use Meta's <strong>Lead Ads Testing Tool</strong> to send a test lead. It should appear in <strong>All Leads</strong> within seconds with the correct project assigned.
-            </Step>
-
-            <div style={{ marginTop: 'auto', paddingTop: 16, padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
+            <div style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#E65100', marginBottom: 4 }}>Important</div>
               <div style={{ fontSize: 12, color: '#7A5000', lineHeight: 1.6 }}>
                 The webhook URL must be HTTPS and publicly accessible — <code>localhost</code> will not work. Your Railway deployment URL is used automatically.
