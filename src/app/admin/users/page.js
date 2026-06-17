@@ -41,11 +41,12 @@ export default function UserManagementPage() {
   const { users, loading, error, updating, updateSuccess, updateError } = useSelector((s) => s.userManagement);
   const { designations } = useSelector((s) => s.designations);
 
-  const [search,    setSearch]    = useState('');
-  const [editUser,  setEditUser]  = useState(null);
-  const [form,      setForm]      = useState({});
-  const [toast,     setToast]     = useState({ visible: false, message: '', type: 'success' });
-  const [dialog,    setDialog]    = useState({ open: false });
+  const [search,            setSearch]            = useState('');
+  const [editUser,          setEditUser]          = useState(null);
+  const [form,              setForm]              = useState({});
+  const [toast,             setToast]             = useState({ visible: false, message: '', type: 'success' });
+  const [dialog,            setDialog]            = useState({ open: false });
+  const [editManagerSearch, setEditManagerSearch] = useState('');
   const opLabel = useRef('updated');
 
   useEffect(() => { dispatch(fetchUsers()); dispatch(fetchDesignations()); }, []);
@@ -68,16 +69,18 @@ export default function UserManagementPage() {
 
   const openEdit = (u) => {
     setEditUser(u);
+    setEditManagerSearch('');
     setForm({
-      name:            u.name            || '',
-      email:           u.email           || '',
-      user_code:       u.user_code       || '',
-      password:        '',
-      role:            u.role            || 'Employee',
-      designation:     u.designation     || '',
-      modules:         u.modules         || [],
-      manager_modules: u.manager_modules || [],
-      is_active:       u.is_active,
+      name:                 u.name            || '',
+      email:                u.email           || '',
+      user_code:            u.user_code       || '',
+      password:             '',
+      role:                 u.role            || 'Employee',
+      designation:          u.designation     || '',
+      modules:              u.modules         || [],
+      manager_modules:      u.manager_modules || [],
+      is_active:            u.is_active,
+      reporting_manager_id: u.reporting_manager?.id ?? null,
     });
   };
 
@@ -324,6 +327,39 @@ export default function UserManagementPage() {
                     </select>
                   );
                 })()}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={s.label}>
+                  Reporting Manager <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by name or user code…"
+                  value={editManagerSearch}
+                  onChange={(e) => setEditManagerSearch(e.target.value)}
+                  style={{ ...s.input, marginBottom: 6 }}
+                />
+                <select
+                  value={form.reporting_manager_id || ''}
+                  onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value ? Number(e.target.value) : null }))}
+                  style={s.input}
+                >
+                  <option value="">— None —</option>
+                  {users
+                    .filter((u) => {
+                      if (u.id === editUser?.id) return false;
+                      if (u.company_code !== editUser?.company_code) return false;
+                      if (!editManagerSearch) return true;
+                      const q = editManagerSearch.toLowerCase();
+                      return u.name?.toLowerCase().includes(q) || u.user_code?.toLowerCase().includes(q);
+                    })
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}  ·  {u.user_code}  ·  {u.role}{u.designation ? `  ·  ${u.designation}` : ''}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div style={{ marginBottom: 16 }}>
