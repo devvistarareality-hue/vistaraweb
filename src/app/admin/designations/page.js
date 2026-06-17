@@ -4,11 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchDesignations, createDesignation, deleteDesignation } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 
-const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
+const ALL_MODULES = ['Sales', 'HR', 'Execution', 'Purchase', 'Land'];
 
 const MODULE_COLOR = {
   Sales:      { bg: '#FFF8E1', text: '#E6960A', dot: '#F9A825' },
-  'Pre-Sales':{ bg: '#E0F7FA', text: '#0097A7', dot: '#0097A7' },
   HR:         { bg: '#E8EEFF', text: '#3D5AFE', dot: '#3D5AFE' },
   Execution:  { bg: '#FFF0E6', text: '#EA580C', dot: '#EA580C' },
   Purchase:   { bg: '#F3E5F5', text: '#7B1FA2', dot: '#7B1FA2' },

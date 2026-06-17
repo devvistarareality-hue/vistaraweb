@@ -34,7 +34,6 @@ export const CARD_SHADOW = '0 4px 12px rgba(184,196,214,0.20)';
 export const MODULE_ACCENT = {
   HR:          { bg: '#E8EEFF', icon: '#3D5AFE' },
   Sales:       { bg: '#FFF8E1', icon: '#F9A825' },
-  PreSales:    { bg: '#E0F7FA', icon: '#0097A7' },
   Execution:   { bg: '#E8F5E9', icon: '#2E7D32' },
   Purchase:    { bg: '#FFF3E0', icon: '#E65100' },
   Land:        { bg: '#F3E5F5', icon: '#7B1FA2' },

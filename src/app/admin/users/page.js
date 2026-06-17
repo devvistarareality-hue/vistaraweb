@@ -6,7 +6,7 @@ import { fetchUsers, updateUser, deleteUser, resetUpdateUser } from '../../../re
 import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 
-const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
+const ALL_MODULES = ['Sales', 'HR', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Employee'];
 
 function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {

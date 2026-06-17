@@ -58,7 +58,6 @@ const NAV_ITEMS = [
 ];
 
 const PARKED_ITEMS = [
-  { label: 'Pre-Sales', href: '/placeholder?title=Pre-Sales', icon: <IconClock /> },
   { label: 'Sales',     href: '/placeholder?title=Sales',     icon: <IconTrending /> },
   { label: 'HR',        href: '/placeholder?title=HR',        icon: <IconPeople /> },
   { label: 'Execution', href: '/placeholder?title=Execution', icon: <IconChecklist /> },

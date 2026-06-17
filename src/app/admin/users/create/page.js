@@ -7,7 +7,7 @@ import { fetchDesignations } from '../../../../redux/actions/designationActions'
 import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 
-const ALL_MODULES = ['Sales', 'Pre-Sales', 'HR', 'Execution', 'Purchase', 'Land'];
+const ALL_MODULES = ['Sales', 'HR', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Employee'];
 
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
