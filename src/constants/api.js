@@ -36,4 +36,10 @@ export const SALES_ENDPOINTS = {
   siteVisit: (id)  => `${BASE_URL}/api/sales/site-visits/${id}/`,
   get closures()   { return `${BASE_URL}/api/sales/closures/`; },
   get telecallers(){ return `${BASE_URL}/api/sales/users/telecallers/`; },
+  get team()       { return `${BASE_URL}/api/sales/team/`; },
+  teamMember: (id) => `${BASE_URL}/api/sales/team/${id}/`,
+  get distribute() { return `${BASE_URL}/api/sales/distribute/`; },
+  get distLog()    { return `${BASE_URL}/api/sales/distribution-log/`; },
+  get import_()    { return `${BASE_URL}/api/sales/leads/import/`; },
+  get reports()    { return `${BASE_URL}/api/sales/reports/`; },
 };

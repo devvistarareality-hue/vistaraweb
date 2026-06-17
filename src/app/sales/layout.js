@@ -16,18 +16,25 @@ function SvgIcon({ children, size = 16 }) {
   );
 }
 
-function IconDashboard()  { return <SvgIcon><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></SvgIcon>; }
-function IconLeads()      { return <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></SvgIcon>; }
-function IconBuilding()   { return <SvgIcon><path d="M3 21h18M9 8h.01M9 12h.01M9 16h.01M15 8h.01M15 12h.01M15 16h.01M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16"/></SvgIcon>; }
-function IconSource()     { return <SvgIcon><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></SvgIcon>; }
-function IconBack()       { return <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>; }
-function IconLogout()     { return <SvgIcon><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>; }
+function IconDashboard()    { return <SvgIcon><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></SvgIcon>; }
+function IconLeads()        { return <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></SvgIcon>; }
+function IconBuilding()     { return <SvgIcon><path d="M3 21h18M9 8h.01M9 12h.01M9 16h.01M15 8h.01M15 12h.01M15 16h.01M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16"/></SvgIcon>; }
+function IconSource()       { return <SvgIcon><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></SvgIcon>; }
+function IconUsers()        { return <SvgIcon><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="22" y1="21" x2="22" y2="19"/><line x1="19" y1="19" x2="25" y2="19"/><path d="M22 9a3 3 0 000 6"/></SvgIcon>; }
+function IconDistribute()   { return <SvgIcon><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></SvgIcon>; }
+function IconImport()       { return <SvgIcon><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></SvgIcon>; }
+function IconReports()      { return <SvgIcon><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></SvgIcon>; }
+function IconBack()         { return <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>; }
 
 const NAV = [
-  { label: 'Dashboard',    href: '/sales',          icon: <IconDashboard /> },
-  { label: 'All Leads',    href: '/sales/leads',    icon: <IconLeads /> },
-  { label: 'Projects',     href: '/sales/projects', icon: <IconBuilding /> },
-  { label: 'Lead Sources', href: '/sales/sources',  icon: <IconSource /> },
+  { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
+  { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> },
+  { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding /> },
+  { label: 'Lead Sources', href: '/sales/sources',       icon: <IconSource /> },
+  { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers /> },
+  { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute /> },
+  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
+  { label: 'Reports',      href: '/sales/reports',       icon: <IconReports /> },
 ];
 
 const CSS = `
