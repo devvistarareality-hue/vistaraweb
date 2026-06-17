@@ -21,3 +21,19 @@ export const USER_ENDPOINTS = {
   get list()   { return `${BASE_URL}/api/auth/users/`; },
   detail: (id) => `${BASE_URL}/api/auth/users/${id}/`,
 };
+
+export const SALES_ENDPOINTS = {
+  get stats()      { return `${BASE_URL}/api/sales/stats/`; },
+  get leads()      { return `${BASE_URL}/api/sales/leads/`; },
+  get bulkDelete() { return `${BASE_URL}/api/sales/leads/bulk-delete/`; },
+  lead: (id)       => `${BASE_URL}/api/sales/leads/${id}/`,
+  get projects()   { return `${BASE_URL}/api/sales/projects/`; },
+  project: (id)    => `${BASE_URL}/api/sales/projects/${id}/`,
+  get sources()    { return `${BASE_URL}/api/sales/sources/`; },
+  get followUps()  { return `${BASE_URL}/api/sales/follow-ups/`; },
+  followUp: (id)   => `${BASE_URL}/api/sales/follow-ups/${id}/`,
+  get siteVisits() { return `${BASE_URL}/api/sales/site-visits/`; },
+  siteVisit: (id)  => `${BASE_URL}/api/sales/site-visits/${id}/`,
+  get closures()   { return `${BASE_URL}/api/sales/closures/`; },
+  get telecallers(){ return `${BASE_URL}/api/sales/users/telecallers/`; },
+};
