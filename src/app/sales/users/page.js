@@ -224,7 +224,7 @@ export default function SalesUsersPage() {
             <table style={tbl}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
                 <tr>
-                  {['Name', 'User Code', 'Department', 'Role (ERP)', 'Phone', 'CRM Role', 'Actions'].map((h) => (
+                  {['Name', 'User Code', 'Designation', 'Role (ERP)', 'Phone', 'CRM Role', 'Actions'].map((h) => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
@@ -241,7 +241,7 @@ export default function SalesUsersPage() {
                         </div>
                       </td>
                       <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6', fontSize: 12 }}>{u.user_code}</td>
-                      <td style={{ ...td, color: '#8492A6' }}>{u.department || '—'}</td>
+                      <td style={{ ...td, color: '#8492A6' }}>{u.designation || '—'}</td>
                       <td style={{ ...td, color: '#8492A6' }}>{u.role || '—'}</td>
                       <td style={{ ...td, color: '#8492A6' }}>{u.phone || '—'}</td>
                       <td style={td}>
