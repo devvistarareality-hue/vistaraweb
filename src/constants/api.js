@@ -41,6 +41,9 @@ export const SALES_ENDPOINTS = {
   teamMember: (id) => `${BASE_URL}/api/sales/team/${id}/`,
   get distribute() { return `${BASE_URL}/api/sales/distribute/`; },
   get distLog()    { return `${BASE_URL}/api/sales/distribution-log/`; },
-  get import_()    { return `${BASE_URL}/api/sales/leads/import/`; },
-  get reports()    { return `${BASE_URL}/api/sales/reports/`; },
+  get import_()      { return `${BASE_URL}/api/sales/leads/import/`; },
+  get reports()      { return `${BASE_URL}/api/sales/reports/`; },
+  get distSettings() { return `${BASE_URL}/api/sales/dist-settings/`; },
+  get availability() { return `${BASE_URL}/api/sales/availability/`; },
+  get distWeight()   { return `${BASE_URL}/api/sales/dist-weight/`; },
 };
