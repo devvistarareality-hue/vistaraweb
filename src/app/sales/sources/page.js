@@ -292,7 +292,7 @@ export default function LeadSetupPage() {
           </div>
 
           {/* Right: Guide */}
-          <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
+          <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
             <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 20 }}>Follow these steps to connect Meta Lead Ads</p>
 
@@ -318,7 +318,7 @@ export default function LeadSetupPage() {
               Use Meta's <strong>Lead Ads Testing Tool</strong> to send a test lead. It should appear in <strong>All Leads</strong> within seconds with the correct project assigned.
             </Step>
 
-            <div style={{ marginTop: 4, padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
+            <div style={{ marginTop: 'auto', paddingTop: 16, padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#E65100', marginBottom: 4 }}>Important</div>
               <div style={{ fontSize: 12, color: '#7A5000', lineHeight: 1.6 }}>
                 The webhook URL must be HTTPS and publicly accessible — <code>localhost</code> will not work. Your Railway deployment URL is used automatically.
