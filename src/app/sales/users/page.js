@@ -137,17 +137,28 @@ export default function SalesUsersPage() {
   const [members,  setMembers]  = useState([]);
   const [erpUsers, setErpUsers] = useState([]);
   const [loading,  setLoading]  = useState(true);
+  const [apiError, setApiError] = useState('');
   const [addModal, setAddModal] = useState(false);
   const [editMember, setEditMember] = useState(null);
 
   const load = useCallback(async () => {
-    const [mRes, uRes] = await Promise.all([
-      fetch(SALES_ENDPOINTS.team, { headers: authHeaders() }).then((r) => r.json()),
-      fetch(USER_ENDPOINTS.list, { headers: authHeaders() }).then((r) => r.json()).catch(() => []),
-    ]);
-    setMembers(Array.isArray(mRes) ? mRes : []);
-    setErpUsers(Array.isArray(uRes) ? uRes : []);
-    setLoading(false);
+    setApiError('');
+    try {
+      const safeJson = async (res) => {
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        return res.json();
+      };
+      const [mRes, uRes] = await Promise.all([
+        fetch(SALES_ENDPOINTS.team, { headers: authHeaders() }).then(safeJson),
+        fetch(USER_ENDPOINTS.list,  { headers: authHeaders() }).then(safeJson).catch(() => []),
+      ]);
+      setMembers(Array.isArray(mRes) ? mRes : []);
+      setErpUsers(Array.isArray(uRes) ? uRes : []);
+    } catch (err) {
+      setApiError(err.message || 'Failed to load team');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -185,6 +196,11 @@ export default function SalesUsersPage() {
         <button onClick={() => setAddModal(true)} style={saveBtn}>+ Add Team Member</button>
       </div>
 
+      {apiError && (
+        <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '12px 16px', marginBottom: 20, color: '#EF4444', fontSize: 13 }}>
+          API error: {apiError}
+        </div>
+      )}
       {loading ? (
         <p style={{ color: '#8492A6', textAlign: 'center', marginTop: 60 }}>Loading…</p>
       ) : members.length === 0 ? (
