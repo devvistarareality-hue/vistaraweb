@@ -284,7 +284,7 @@ export default function LeadSetupPage() {
                   {mapSaving ? '…' : '+ Add'}
                 </button>
               </div>
-              <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 8, backgroundColor: '#F0F7FF', border: '1px solid #C7DAFF' }}>
+              <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 8, backgroundColor: '#F0F7FF', border: '1px solid #C7DAFF', minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div style={{ fontSize: 11, color: '#3D5AFE', fontWeight: 700, marginBottom: 3 }}>How to find your Form ID</div>
                 <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
               </div>
@@ -306,7 +306,7 @@ export default function LeadSetupPage() {
               <Step n="7" title="Test it">Use Meta's <strong>Lead Ads Testing Tool</strong> — the lead should appear in <strong>All Leads</strong> with the correct project within seconds.</Step>
             </div>
 
-            <div style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
+            <div style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082', minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#E65100', marginBottom: 4 }}>Important</div>
               <div style={{ fontSize: 12, color: '#7A5000', lineHeight: 1.6 }}>
                 The webhook URL must be HTTPS and publicly accessible — <code>localhost</code> will not work. Your Railway deployment URL is used automatically.
