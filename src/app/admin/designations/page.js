@@ -126,7 +126,7 @@ export default function DesignationMasterPage() {
 }
 
 const s = {
-  page:        { padding: '32px 36px', minHeight: '100vh', backgroundColor: '#F4F6FB' },
+  page:        { padding: '32px 36px', minHeight: '100vh', backgroundColor: '#DFE4EE' },
   pageHeader:  { marginBottom: 24 },
   pageTitle:   { fontSize: 24, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 },
   pageSubtitle:{ fontSize: 13, color: '#8492A6', margin: 0 },

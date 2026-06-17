@@ -215,7 +215,7 @@ export default function DistributionPage() {
                 { role: 'Telecaller', signin: settings.tc_signin_time, signout: settings.tc_signout_time },
                 { role: 'STM',        signin: settings.stm_signin_time, signout: settings.stm_signout_time },
               ].map(({ role, signin, signout }) => (
-                <div key={role} style={{ backgroundColor: '#F8FAFD', borderRadius: 10, padding: '12px 14px' }}>
+                <div key={role} style={{ backgroundColor: '#E8ECF2', borderRadius: 10, padding: '12px 14px' }}>
                   <p style={sectionLabel}>{role}</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>

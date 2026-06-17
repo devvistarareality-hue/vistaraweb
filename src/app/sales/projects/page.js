@@ -230,28 +230,24 @@ export default function ProjectsPage() {
             const pct = total ? Math.round(sold / total * 100) : 0;
             return (
               <div key={p.id} style={card}>
-                {/* Top image / placeholder with overlay badge */}
-                  <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 14, border: '1px solid #D1D9E6', background: '#fff' }}>
-                  {/* white framed inner wrapper to avoid visible bars and give a framed look */}
-                  <div style={{ padding: 10, background: '#fff' }}>
-                    {p.cover_image_url ? (
-                      <img src={p.cover_image_url} alt={p.name}
-                        style={{ width: '100%', height: 180, objectFit: 'cover', objectPosition: 'center', display: 'block', borderRadius: 10, backgroundColor: '#F8FAFD' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: 180, background: 'linear-gradient(180deg,#FBFDFF,#FFFFFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9AA6B6', padding: 10, borderRadius: 8 }}>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ width: 64, height: 64, borderRadius: 10, background: '#F0F6FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)' }}>
-                            <img src="/images/placeholder-image.svg" alt="placeholder" style={{ width: 44, height: 44, objectFit: 'cover' }} />
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', marginTop: 6 }}>No cover image</div>
-                          <div style={{ fontSize: 12, color: '#B0BAC9' }}>{p.name}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 11, fontWeight: 800, padding: '6px 10px', borderRadius: 18, backgroundColor: p.is_active ? '#E8F5E9' : '#FEF2F2', color: p.is_active ? '#2E7D32' : '#C62828', boxShadow: '0 6px 18px rgba(16,24,40,0.06)', border: '1px solid rgba(0,0,0,0.04)' }}>{p.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
+                {/* Full-bleed image */}
+                <div style={{ position: 'relative' }}>
+                  {p.cover_image_url ? (
+                    <img src={p.cover_image_url} alt={p.name}
+                      style={{ width: '100%', height: 200, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: 200, background: '#EEF1F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C0C8D8" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      <span style={{ fontSize: 12, color: '#B0BAC9' }}>No cover image</span>
+                    </div>
+                  )}
+                  <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 18, backgroundColor: p.is_active ? '#E8F5E9' : '#FEF2F2', color: p.is_active ? '#2E7D32' : '#C62828', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                    {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
                 </div>
+
+                {/* Card content */}
+                <div style={{ padding: '16px 18px' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -260,13 +256,6 @@ export default function ProjectsPage() {
                     {p.tagline && <p style={{ fontSize: 11, color: '#8492A6', fontStyle: 'italic', marginBottom: 2 }}>{p.tagline}</p>}
                     {p.location && <p style={{ fontSize: 12, color: '#8492A6' }}>📍 {p.location}</p>}
                   </div>
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, flexShrink: 0, marginLeft: 8,
-                    backgroundColor: p.is_active ? '#E8F5E9' : '#FEE2E2',
-                    color: p.is_active ? '#2E7D32' : '#EF4444',
-                  }}>
-                    {p.is_active ? 'ACTIVE' : 'INACTIVE'}
-                  </span>
                 </div>
 
                 {/* Meta */}
@@ -311,6 +300,7 @@ export default function ProjectsPage() {
                   </button>
                   <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#EF4444', borderColor: '#EF4444' }}>✕</button>
                 </div>
+                </div>{/* end card content */}
               </div>
             );
           })}
@@ -334,7 +324,7 @@ const saveBtn        = { padding: '9px 20px', backgroundColor: '#182350', color:
 const cancelBtn      = { padding: '9px 16px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 const outlineBtn     = { padding: '7px 12px', backgroundColor: '#fff', border: '1.5px solid #C6D0DB', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1A1A2E', cursor: 'pointer' };
 const primaryOutlineBtn = { padding: '7px 12px', backgroundColor: '#F0F3FF', border: '1.5px solid #3D5AFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#3D5AFE', cursor: 'pointer' };
-const card           = { backgroundColor: '#fff', borderRadius: 16, padding: '18px 20px', boxShadow: '0 10px 30px rgba(16,24,40,0.06)', border: '1px solid #D1D9E6' };
+const card           = { backgroundColor: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(100,120,160,0.18)', border: '1px solid #C8D0E0', overflow: 'hidden' };
 const overlay        = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal          = { backgroundColor: '#fff', borderRadius: 16, width: '90%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader    = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F0F3FA' };

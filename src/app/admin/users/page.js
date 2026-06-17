@@ -435,7 +435,7 @@ export default function UserManagementPage() {
 }
 
 const s = {
-  page:      { padding: '32px 36px', minHeight: '100vh', backgroundColor: '#F4F6FB' },
+  page:      { padding: '32px 36px', minHeight: '100vh', backgroundColor: '#DFE4EE' },
   pageHeader:{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   pageTitle: { fontSize: 24, fontWeight: 800, color: '#1A1A2E', marginBottom: 8 },
   statRow:   { display: 'flex', gap: 10 },

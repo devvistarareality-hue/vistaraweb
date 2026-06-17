@@ -69,7 +69,7 @@ export default function SalesLayout({ children }) {
   const isActive = (href) => href === '/sales' ? pathname === '/sales' : pathname.startsWith(href);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F5F6FA' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#DFE4EE' }}>
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ── Sales Sidebar ── */}

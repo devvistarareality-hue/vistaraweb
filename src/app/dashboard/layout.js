@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F5F6FA' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#DFE4EE' }}>
       {/* Top Navbar */}
       <nav style={s.navbar}>
         <div style={s.navLeft}>

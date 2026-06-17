@@ -31,7 +31,7 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F5F6FA' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#DFE4EE' }}>
       <Sidebar user={user} />
       <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
         {children}

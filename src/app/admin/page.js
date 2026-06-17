@@ -32,13 +32,13 @@ function ModuleIcon({ type, size = 20 }) {
 }
 
 const MODULES = [
-  { name: 'User Management',    desc: 'Manage employees, roles and access',          icon: 'users',     accent: { bg: '#E8EEFF', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.08)'  }, href: '/admin/users',                    soon: false },
-  { name: 'Company Management', desc: 'Workspaces, settings and company data',        icon: 'building',  accent: { bg: '#E0F7FA', icon: '#0097A7', gradient: 'rgba(0,151,167,0.08)'  }, href: '/admin/companies',                soon: false },
-  { name: 'Sales',              desc: 'Revenue tracking and deal management',         icon: 'trending',  accent: { bg: '#FFF8E1', icon: '#F9A825', gradient: 'rgba(249,168,37,0.08)' }, href: '/placeholder?title=Sales',        soon: true  },
-  { name: 'HR',                 desc: 'Attendance, leave and people management',      icon: 'people',    accent: { bg: '#E8EEFF', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.07)'  }, href: '/placeholder?title=HR',           soon: true  },
-  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#E8F5E9', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.07)'  }, href: '/placeholder?title=Execution',    soon: true  },
-  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFF3E0', icon: '#E65100', gradient: 'rgba(230,81,0,0.07)'   }, href: '/placeholder?title=Purchase',     soon: true  },
-  { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#F3E5F5', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.07)' }, href: '/placeholder?title=Land',         soon: true  },
+  { name: 'User Management',    desc: 'Manage employees, roles and access',          icon: 'users',     accent: { bg: '#9FABF8', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.22)'  }, href: '/admin/users',                    soon: false },
+  { name: 'Company Management', desc: 'Workspaces, settings and company data',        icon: 'building',  accent: { bg: '#7DD4DE', icon: '#0097A7', gradient: 'rgba(0,151,167,0.22)'  }, href: '/admin/companies',                soon: false },
+  { name: 'Sales',              desc: 'Revenue tracking and deal management',         icon: 'trending',  accent: { bg: '#FFC837', icon: '#F9A825', gradient: 'rgba(249,168,37,0.22)' }, href: '/sales',                          soon: false },
+  { name: 'HR',                 desc: 'Attendance, leave and people management',      icon: 'people',    accent: { bg: '#9FABF8', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.13)'  }, href: '/placeholder?title=HR',           soon: true  },
+  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.13)'  }, href: '/placeholder?title=Execution',    soon: true  },
+  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.13)'   }, href: '/placeholder?title=Purchase',     soon: true  },
+  { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#BA68C8', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.13)' }, href: '/placeholder?title=Land',         soon: true  },
 ];
 
 const openMods = MODULES.filter((m) => !m.soon);
@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
               style={{ ...s.openCard, textDecoration: 'none', animationDelay: `${i * 80}ms` }}
             >
               {/* Gradient header band */}
-              <div style={{ ...s.openBand, background: `linear-gradient(135deg, ${mod.accent.gradient}, transparent)` }}>
+              <div style={{ ...s.openBand, background: `linear-gradient(to bottom, ${mod.accent.gradient} 0%, rgba(255,255,255,0) 100%)` }}>
                 <div style={{ ...s.openIcon, backgroundColor: mod.accent.bg, color: mod.accent.icon }}>
                   <ModuleIcon type={mod.icon} size={26} />
                 </div>
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
 }
 
 const s = {
-  page: { minHeight: '100vh', backgroundColor: '#F4F6FB' },
+  page: { minHeight: '100vh', backgroundColor: '#DFE4EE' },
 
   /* ── Hero ── */
   hero: {
