@@ -8,7 +8,7 @@ import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 
 const ALL_MODULES = ['Sales', 'HR', 'Execution', 'Purchase', 'Land'];
-const ROLES       = ['Admin', 'Manager', 'Employee'];
+const ROLES       = ['Admin', 'Manager', 'Employee', 'Intern'];
 
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
 
@@ -247,7 +247,7 @@ export default function CreateUserPage() {
                   : '— Select designation —'}
               </option>
               {availableDesignations.map((d) => (
-                <option key={d.id} value={d.name}>{d.name} ({d.module})</option>
+                <option key={d.id} value={d.name}>{d.name}</option>
               ))}
             </select>
           </div>
@@ -333,13 +333,13 @@ const s = {
   grid2:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 24px' },
   label:      { display: 'block', fontSize: 13, fontWeight: 600, color: '#8492A6', marginBottom: 6 },
   hintInline: { fontSize: 11, fontWeight: 500, color: '#9CA3AF' },
-  input:      { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14, boxSizing: 'border-box' },
+  input:      { width: '100%', height: 44, padding: '0 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14, boxSizing: 'border-box' },
   hint:       { fontSize: 11, color: '#8492A6', marginTop: 5 },
   prefixBox: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '10px 12px', borderRadius: 8,
+    height: 44, padding: '0 12px', borderRadius: 8,
     border: '1.5px solid #E0E6F0', backgroundColor: '#F5F6FA',
-    fontSize: 14,
+    fontSize: 14, boxSizing: 'border-box',
   },
   prefixValue: { fontWeight: 700, color: '#1A1A2E', letterSpacing: 2 },
   prefixAuto:  { fontSize: 11, fontWeight: 600, color: '#8492A6', backgroundColor: '#E0E6F0', borderRadius: 4, padding: '2px 7px' },
