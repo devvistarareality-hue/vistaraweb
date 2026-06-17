@@ -109,15 +109,11 @@ export default function DistributionPage() {
               {distType === 'telecaller' ? 'Telecaller' : 'STM'} Team
             </p>
             {activeRole.length === 0 ? (
-              <p style={{ fontSize: 12, color: '#EF4444' }}>No {distType === 'telecaller' ? 'telecallers' : 'STMs'} in team. Add members first.</p>
+              <p style={{ fontSize: 12, color: '#EF4444' }}>No {distType === 'telecaller' ? 'telecallers' : 'STMs'} found.</p>
             ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {activeRole.map((m) => (
-                  <span key={m.id} style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#E8EEFF', color: '#3D5AFE', fontSize: 12, fontWeight: 600 }}>
-                    {m.name}
-                  </span>
-                ))}
-              </div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#182350' }}>
+                {activeRole.length} {distType === 'telecaller' ? 'telecaller' : 'STM'}{activeRole.length !== 1 ? 's' : ''} available
+              </p>
             )}
           </div>
 
