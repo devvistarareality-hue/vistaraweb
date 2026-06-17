@@ -57,13 +57,20 @@ export default function LeadSetupPage() {
   const [srcErr,  setSrcErr]        = useState('');
 
   // Meta tab
-  const [cfg,      setCfg]      = useState(null);
+  const [cfg,        setCfg]        = useState(null);
   const [loadingCfg, setLoadingCfg] = useState(true);
-  const [pat,      setPat]      = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [saving,   setSaving]   = useState(false);
-  const [metaMsg,  setMetaMsg]  = useState('');
-  const [regen,    setRegen]    = useState(false);
+  const [pat,        setPat]        = useState('');
+  const [projectId,  setProjectId]  = useState('');
+  const [saving,     setSaving]     = useState(false);
+  const [metaMsg,    setMetaMsg]    = useState('');
+  const [regen,      setRegen]      = useState(false);
+
+  // Form mappings
+  const [mappings,    setMappings]   = useState([]);
+  const [mapFormId,   setMapFormId]  = useState('');
+  const [mapFormName, setMapFormName]= useState('');
+  const [mapProject,  setMapProject] = useState('');
+  const [mapSaving,   setMapSaving]  = useState(false);
 
   useEffect(() => {
     // Sources
@@ -74,10 +81,13 @@ export default function LeadSetupPage() {
         .then(r => r.json()).then(d => { const l = Array.isArray(d) ? d : []; setCache('sources', l); setSources(l); setLoadingSrc(false); })
         .catch(() => setLoadingSrc(false));
     }
-    // Meta config
+    // Meta config + mappings
     fetch(SALES_ENDPOINTS.metaWebhookConfig, { headers: authHeaders() })
       .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
+    fetch(SALES_ENDPOINTS.metaMappings, { headers: authHeaders() })
+      .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
+      .catch(() => {});
   }, []);
 
   async function addSource(name) {
@@ -113,6 +123,23 @@ export default function LeadSetupPage() {
     const d = await res.json();
     setRegen(false);
     if (res.ok) setCfg(prev => ({ ...prev, verify_token: d.verify_token }));
+  }
+
+  async function addMapping() {
+    if (!mapFormId.trim() || !mapProject) return;
+    setMapSaving(true);
+    const res = await fetch(SALES_ENDPOINTS.metaMappings, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ form_id: mapFormId.trim(), form_name: mapFormName.trim(), project_id: mapProject }),
+    });
+    const d = await res.json();
+    setMapSaving(false);
+    if (res.ok) { setMappings(prev => { const idx = prev.findIndex(m => m.form_id === d.form_id); return idx >= 0 ? prev.map((m, i) => i === idx ? d : m) : [...prev, d]; }); setMapFormId(''); setMapFormName(''); setMapProject(''); }
+  }
+
+  async function deleteMapping(id) {
+    await fetch(SALES_ENDPOINTS.metaMappings, { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) });
+    setMappings(prev => prev.filter(m => m.id !== id));
   }
 
   const webhookUrl = `${RAILWAY_URL}/api/sales/webhooks/meta/`;
@@ -221,8 +248,56 @@ export default function LeadSetupPage() {
             </div>
           </div>
 
-          {/* Right: Guide */}
-          <div style={card}>
+          {/* Form → Project Mapping */}
+          <div style={{ ...card, marginTop: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Form → Project Routing</div>
+            <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16, lineHeight: 1.6 }}>
+              Each Meta Lead Ads form has a unique Form ID. Map each form to a project so leads are auto-classified when they arrive.
+            </p>
+
+            {/* Existing mappings */}
+            {mappings.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                {mappings.map(m => (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
+                      <div style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 16 }}>→</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#E8EEFF', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
+                      <span style={{ fontSize: 11, color: '#8492A6' }}>{m.total_leads} leads</span>
+                    </div>
+                    <button onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 16, padding: '2px 6px' }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add new mapping */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <input value={mapFormId} onChange={e => setMapFormId(e.target.value)} placeholder="Form ID (e.g. 1234567890)" style={{ ...inp, width: '100%' }} />
+              <input value={mapFormName} onChange={e => setMapFormName(e.target.value)} placeholder="Form name (e.g. Kalrav Form)" style={{ ...inp, width: '100%' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select value={mapProject} onChange={e => setMapProject(e.target.value)} style={{ ...inp, flex: 1 }}>
+                <option value="">— Select Project —</option>
+                {(cfg?.projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <button onClick={addMapping} disabled={mapSaving || !mapFormId || !mapProject} style={{ ...saveBtn, opacity: (!mapFormId || !mapProject) ? 0.5 : 1 }}>
+                {mapSaving ? '…' : '+ Add'}
+              </button>
+            </div>
+            <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, backgroundColor: '#F0F7FF', border: '1px solid #C7DAFF' }}>
+              <div style={{ fontSize: 11, color: '#3D5AFE', fontWeight: 700, marginBottom: 3 }}>How to get your Form ID</div>
+              <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The Form ID is in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>...form_id=XXXXXXXX</code></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Guide */}
+        <div style={card}>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Setup Guide</div>
             <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 20 }}>Follow these steps to connect Meta Lead Ads</p>
 
