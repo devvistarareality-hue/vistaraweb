@@ -3,6 +3,7 @@ import {
   COMPANIES_FETCH_REQUEST, COMPANIES_FETCH_SUCCESS, COMPANIES_FETCH_FAILURE,
   COMPANY_UPDATE_REQUEST, COMPANY_UPDATE_SUCCESS, COMPANY_UPDATE_FAILURE, COMPANY_UPDATE_RESET,
   COMPANY_CREATE_REQUEST, COMPANY_CREATE_SUCCESS, COMPANY_CREATE_FAILURE, COMPANY_CREATE_RESET,
+  COMPANY_DELETE_SUCCESS,
 } from '../types/companiesTypes';
 
 const authHeaders = () => {
@@ -69,3 +70,14 @@ export const createCompany = (payload) => async (dispatch) => {
 };
 
 export const resetCreateCompany = () => ({ type: COMPANY_CREATE_RESET });
+
+export const deleteCompany = (id) => async (dispatch) => {
+  try {
+    const res = await fetch(COMPANY_ENDPOINTS.detail(id), { method: 'DELETE', headers: authHeaders() });
+    if (res.ok || res.status === 204) {
+      dispatch({ type: COMPANY_DELETE_SUCCESS, payload: id });
+    }
+  } catch {
+    // silently ignore — list will re-sync on next poll
+  }
+};

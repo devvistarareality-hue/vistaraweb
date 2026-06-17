@@ -2,6 +2,7 @@ import {
   COMPANIES_FETCH_REQUEST, COMPANIES_FETCH_SUCCESS, COMPANIES_FETCH_FAILURE,
   COMPANY_UPDATE_REQUEST, COMPANY_UPDATE_SUCCESS, COMPANY_UPDATE_FAILURE, COMPANY_UPDATE_RESET,
   COMPANY_CREATE_REQUEST, COMPANY_CREATE_SUCCESS, COMPANY_CREATE_FAILURE, COMPANY_CREATE_RESET,
+  COMPANY_DELETE_SUCCESS,
 } from '../types/companiesTypes';
 
 const initialState = {
@@ -47,6 +48,9 @@ export default function companiesReducer(state = initialState, action) {
       return { ...state, creating: false, createError: action.payload };
     case COMPANY_CREATE_RESET:
       return { ...state, creating: false, createError: null, createSuccess: false };
+
+    case COMPANY_DELETE_SUCCESS:
+      return { ...state, companies: state.companies.filter((c) => c.id !== action.payload) };
 
     default:
       return state;

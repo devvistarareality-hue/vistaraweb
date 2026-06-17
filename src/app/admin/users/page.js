@@ -49,7 +49,14 @@ export default function UserManagementPage() {
   const [editManagerSearch, setEditManagerSearch] = useState('');
   const opLabel = useRef('updated');
 
-  useEffect(() => { dispatch(fetchUsers()); dispatch(fetchDesignations()); }, []);
+  useEffect(() => {
+    dispatch(fetchUsers());
+    dispatch(fetchDesignations());
+    const interval = setInterval(() => dispatch(fetchUsers()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRefresh = () => { dispatch(fetchUsers()); dispatch(fetchDesignations()); };
 
   useEffect(() => {
     if (updateSuccess) {
@@ -179,9 +186,19 @@ export default function UserManagementPage() {
             )}
           </div>
         </div>
-        <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>
-          + Create User
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Refresh"
+            style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}
+          >
+            ↻
+          </button>
+          <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>
+            + Create User
+          </button>
+        </div>
       </div>
 
       {/* ── Search ── */}
@@ -193,11 +210,11 @@ export default function UserManagementPage() {
         style={s.searchInput}
       />
 
-      {loading && <p style={s.info}>Loading users…</p>}
+      {loading && users.length === 0 && <p style={s.info}>Loading users…</p>}
       {error   && <p style={s.errorTxt}>{error}</p>}
 
       {/* ── Table ── */}
-      {!loading && (
+      {(users.length > 0 || !loading) && (
         <div style={s.tableWrap}>
           <table style={s.table}>
             <thead>
@@ -424,7 +441,8 @@ const s = {
   statRow:   { display: 'flex', gap: 10 },
   statChip:  { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#6B7280', backgroundColor: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, padding: '4px 10px' },
   statDot:   { width: 7, height: 7, borderRadius: '50%', flexShrink: 0 },
-  createBtn: { padding: '10px 20px', backgroundColor: '#0C1E3C', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  createBtn:  { padding: '10px 20px', backgroundColor: '#0C1E3C', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  refreshBtn: { padding: '10px 14px', backgroundColor: '#F0F3FA', color: '#0C1E3C', border: '1.5px solid #DDE3F0', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer', lineHeight: 1 },
   searchInput:{ width: '100%', maxWidth: 380, padding: '10px 14px', borderRadius: 10, border: '1.5px solid #E0E6F0', fontSize: 14, marginBottom: 20, display: 'block', backgroundColor: '#fff' },
   info:      { color: '#8492A6', fontSize: 14, padding: '20px 0' },
   errorTxt:  { color: '#EF4444', fontSize: 14, padding: '20px 0' },
