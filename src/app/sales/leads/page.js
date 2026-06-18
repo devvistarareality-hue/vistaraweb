@@ -227,21 +227,27 @@ function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpda
           </div>
 
           {/* Meta Ads Info */}
-          {(lead.meta_campaign_name || lead.meta_ad_name) && (
+          {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
             <>
               <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
               <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>Meta Ads Info</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {lead.meta_campaign_name && (
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, marginBottom: 3 }}>CAMPAIGN</div>
-                    <div style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_campaign_name}</div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, minWidth: 72, paddingTop: 2 }}>CAMPAIGN</span>
+                    <span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_campaign_name}</span>
+                  </div>
+                )}
+                {lead.meta_adset_name && (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, minWidth: 72, paddingTop: 2 }}>AD SET</span>
+                    <span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_adset_name}</span>
                   </div>
                 )}
                 {lead.meta_ad_name && (
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, marginBottom: 3 }}>AD NAME</div>
-                    <div style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_ad_name}</div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, minWidth: 72, paddingTop: 2 }}>AD NAME</span>
+                    <span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_ad_name}</span>
                   </div>
                 )}
               </div>
@@ -459,8 +465,15 @@ export default function SalesLeadsPage() {
                     <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}>
-                    <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
-                    {l.is_duplicate && <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 700, marginLeft: 6 }}>DUP</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
+                      {l.is_duplicate && <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 700 }}>DUP</span>}
+                    </div>
+                    {(l.meta_campaign_name || l.meta_adset_name || l.meta_ad_name) && (
+                      <div style={{ fontSize: 10, color: '#8492A6', marginTop: 2, lineHeight: 1.4 }}>
+                        {[l.meta_campaign_name, l.meta_adset_name, l.meta_ad_name].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                   </td>
                   <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.phone}</td>
                   <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
