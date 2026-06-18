@@ -448,7 +448,8 @@ export default function SalesLeadsPage() {
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} /></td>
                   <td style={{ ...td, color: '#8492A6', fontSize: 12 }} onClick={() => loadDetail(l)}>
-                    {new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    <div>{new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>
+                    <div style={{ fontSize: 11, color: '#B0BAC9' }}>{new Date(l.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                   </td>
                   <td style={td}>
                     <button onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
