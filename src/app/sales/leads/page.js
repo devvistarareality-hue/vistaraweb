@@ -226,6 +226,28 @@ function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpda
               rows={2} style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
           </div>
 
+          {/* Meta Ads Info */}
+          {(lead.meta_campaign_name || lead.meta_ad_name) && (
+            <>
+              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>Meta Ads Info</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
+                {lead.meta_campaign_name && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, marginBottom: 3 }}>CAMPAIGN</div>
+                    <div style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_campaign_name}</div>
+                  </div>
+                )}
+                {lead.meta_ad_name && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', letterSpacing: 0.8, marginBottom: 3 }}>AD NAME</div>
+                    <div style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_ad_name}</div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {/* History */}
           {lead.history?.length > 0 && (
             <>

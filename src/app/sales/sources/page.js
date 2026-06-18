@@ -66,13 +66,16 @@ export default function LeadSetupPage() {
   const [srcErr,  setSrcErr]        = useState('');
 
   // Meta tab
-  const [cfg,        setCfg]        = useState(null);
-  const [loadingCfg, setLoadingCfg] = useState(true);
-  const [pat,        setPat]        = useState('');
-  const [projectId,  setProjectId]  = useState('');
-  const [saving,     setSaving]     = useState(false);
-  const [metaMsg,    setMetaMsg]    = useState('');
-  const [regen,      setRegen]      = useState(false);
+  const [cfg,             setCfg]             = useState(null);
+  const [loadingCfg,      setLoadingCfg]      = useState(true);
+  const [pat,             setPat]             = useState('');
+  const [projectId,       setProjectId]       = useState('');
+  const [saving,          setSaving]          = useState(false);
+  const [metaMsg,         setMetaMsg]         = useState('');
+  const [regen,           setRegen]           = useState(false);
+  const [subscribedPages, setSubscribedPages] = useState([]);
+  const [failedPages,     setFailedPages]     = useState([]);
+  const [pagesData,       setPagesData]       = useState([]);
 
   // Form mappings
   const [mappings,    setMappings]   = useState([]);
@@ -92,7 +95,7 @@ export default function LeadSetupPage() {
     }
     // Meta config + mappings
     fetch(SALES_ENDPOINTS.metaWebhookConfig, { headers: authHeaders() })
-      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setLoadingCfg(false); })
+      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
     fetch(SALES_ENDPOINTS.metaMappings, { headers: authHeaders() })
       .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
@@ -112,15 +115,20 @@ export default function LeadSetupPage() {
   }
 
   async function saveMetaConfig() {
-    setSaving(true); setMetaMsg('');
+    setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]);
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
       body: JSON.stringify({ action: 'save', page_access_token: pat }),
     });
     const d = await res.json();
     setSaving(false);
-    if (res.ok) { setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat })); setMetaMsg('Saved successfully!'); }
-    else setMetaMsg('Error saving.');
+    if (res.ok) {
+      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat }));
+      setSubscribedPages(d.subscribed_pages || []);
+      setFailedPages(d.failed_pages || []);
+      setPagesData(d.pages_data || []);
+      setMetaMsg('Saved!');
+    } else setMetaMsg('Error saving.');
   }
 
   async function regenerateToken() {
@@ -243,6 +251,12 @@ export default function LeadSetupPage() {
                 {saving ? 'Saving…' : '💾 Save Configuration'}
               </button>
               {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
+              {metaMsg === 'Saved!' && failedPages.length > 0 && (
+                <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, backgroundColor: '#FFF3F3', border: '1px solid #FFCDD2', fontSize: 12 }}>
+                  <span style={{ color: '#EF4444', fontWeight: 700 }}>Failed to subscribe: </span>
+                  {failedPages.join(', ')}
+                </div>
+              )}
             </div>
 
             {/* Form → Project Mapping */}
@@ -257,7 +271,10 @@ export default function LeadSetupPage() {
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
-                        <div style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <code style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</code>
+                          <CopyBtn text={m.form_id} />
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>→</span>
@@ -287,6 +304,46 @@ export default function LeadSetupPage() {
                 <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
               </div>
             </div>
+
+            {/* Connected Pages Cards */}
+            {pagesData.length > 0 && (
+              <div style={{ ...card, marginTop: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 12 }}>Connected Pages & Forms</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {pagesData.map(pg => {
+                    const mappingMap = {};
+                    mappings.forEach(m => { mappingMap[m.form_id] = m; });
+                    return (
+                      <details key={pg.page_id} style={{ borderRadius: 8, border: '1.5px solid #E4E8F0', overflow: 'hidden' }}>
+                        <summary style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', backgroundColor: '#F5F7FC', cursor: 'pointer', listStyle: 'none', userSelect: 'none' }}>
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: GREEN, flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#182350', flex: 1 }}>{pg.page_name}</span>
+                          <span style={{ fontSize: 11, color: '#8492A6', backgroundColor: '#E8EEFF', padding: '2px 8px', borderRadius: 10 }}>{pg.forms.length} forms</span>
+                        </summary>
+                        {pg.forms.length > 0 && (
+                          <div style={{ padding: '6px 10px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            {pg.forms.map(f => {
+                              const mapped = mappingMap[f.id];
+                              return (
+                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, backgroundColor: mapped ? '#F0FFF4' : '#FAFAFA' }}>
+                                  <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name || 'Unnamed'}</span>
+                                  <code style={{ fontSize: 10, color: '#B0BAC9', fontFamily: 'monospace', flexShrink: 0 }}>{f.id}</code>
+                                  <CopyBtn text={f.id} />
+                                  {mapped
+                                    ? <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
+                                    : <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#F3F4F6', color: '#9CA3AF', fontSize: 10, flexShrink: 0 }}>No project</span>
+                                  }
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </details>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Guide */}
