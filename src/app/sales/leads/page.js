@@ -638,8 +638,9 @@ export default function SalesLeadsPage() {
       {/* Filters */}
       {(() => {
         const sf = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
-        const today = new Date().toISOString().slice(0, 10);
-        const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+        const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const today = localDate(new Date());
+        const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
         const TC_STATUSES  = ['hot','warm','cold','not_interested','not_reachable','callback'];
         const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed'];
         const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
