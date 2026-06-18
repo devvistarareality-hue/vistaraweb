@@ -49,6 +49,7 @@ export default function CreateUserPage() {
   const [form, setForm] = useState({
     name:                 '',
     email:                '',
+    phone:                '',
     password:             '',
     role:                 'Employee',
     designation:          '',
@@ -176,6 +177,16 @@ export default function CreateUserPage() {
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 style={s.input}
                 placeholder="jane@company.com"
+              />
+            </div>
+            <div>
+              <label style={s.label}>Phone Number</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                style={s.input}
+                placeholder="+91 98765 43210"
               />
             </div>
             <div>
