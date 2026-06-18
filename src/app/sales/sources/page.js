@@ -66,13 +66,15 @@ export default function LeadSetupPage() {
   const [srcErr,  setSrcErr]        = useState('');
 
   // Meta tab
-  const [cfg,        setCfg]        = useState(null);
-  const [loadingCfg, setLoadingCfg] = useState(true);
-  const [pat,        setPat]        = useState('');
-  const [projectId,  setProjectId]  = useState('');
-  const [saving,     setSaving]     = useState(false);
-  const [metaMsg,    setMetaMsg]    = useState('');
-  const [regen,      setRegen]      = useState(false);
+  const [cfg,             setCfg]             = useState(null);
+  const [loadingCfg,      setLoadingCfg]      = useState(true);
+  const [pat,             setPat]             = useState('');
+  const [projectId,       setProjectId]       = useState('');
+  const [saving,          setSaving]          = useState(false);
+  const [metaMsg,         setMetaMsg]         = useState('');
+  const [regen,           setRegen]           = useState(false);
+  const [subscribedPages, setSubscribedPages] = useState([]);
+  const [failedPages,     setFailedPages]     = useState([]);
 
   // Form mappings
   const [mappings,    setMappings]   = useState([]);
@@ -92,7 +94,7 @@ export default function LeadSetupPage() {
     }
     // Meta config + mappings
     fetch(SALES_ENDPOINTS.metaWebhookConfig, { headers: authHeaders() })
-      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setLoadingCfg(false); })
+      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
     fetch(SALES_ENDPOINTS.metaMappings, { headers: authHeaders() })
       .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
@@ -112,15 +114,19 @@ export default function LeadSetupPage() {
   }
 
   async function saveMetaConfig() {
-    setSaving(true); setMetaMsg('');
+    setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]);
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
       body: JSON.stringify({ action: 'save', page_access_token: pat }),
     });
     const d = await res.json();
     setSaving(false);
-    if (res.ok) { setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat })); setMetaMsg('Saved successfully!'); }
-    else setMetaMsg('Error saving.');
+    if (res.ok) {
+      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat }));
+      setSubscribedPages(d.subscribed_pages || []);
+      setFailedPages(d.failed_pages || []);
+      setMetaMsg('Saved!');
+    } else setMetaMsg('Error saving.');
   }
 
   async function regenerateToken() {
@@ -243,6 +249,23 @@ export default function LeadSetupPage() {
                 {saving ? 'Saving…' : '💾 Save Configuration'}
               </button>
               {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
+              {(subscribedPages.length > 0 || failedPages.length > 0) && (
+                <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 8, border: '1px solid #E4E8F0', backgroundColor: '#F9FAFB', fontSize: 12 }}>
+                  <div style={{ fontWeight: 700, color: '#1A1A2E', marginBottom: 6 }}>Subscribed Pages</div>
+                  {subscribedPages.map(p => (
+                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ color: GREEN, fontWeight: 700 }}>✓</span>
+                      <span style={{ color: '#3A3A5C' }}>{p}</span>
+                    </div>
+                  ))}
+                  {failedPages.map(p => (
+                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ color: '#EF4444', fontWeight: 700 }}>✗</span>
+                      <span style={{ color: '#3A3A5C' }}>{p}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Form → Project Mapping */}
@@ -257,7 +280,10 @@ export default function LeadSetupPage() {
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
-                        <div style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <code style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</code>
+                          <CopyBtn text={m.form_id} />
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>→</span>
