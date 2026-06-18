@@ -66,13 +66,15 @@ export default function LeadSetupPage() {
   const [srcErr,  setSrcErr]        = useState('');
 
   // Meta tab
-  const [cfg,        setCfg]        = useState(null);
-  const [loadingCfg, setLoadingCfg] = useState(true);
-  const [pat,        setPat]        = useState('');
-  const [projectId,  setProjectId]  = useState('');
-  const [saving,     setSaving]     = useState(false);
-  const [metaMsg,    setMetaMsg]    = useState('');
-  const [regen,      setRegen]      = useState(false);
+  const [cfg,           setCfg]           = useState(null);
+  const [loadingCfg,    setLoadingCfg]    = useState(true);
+  const [pat,           setPat]           = useState('');
+  const [projectId,     setProjectId]     = useState('');
+  const [saving,        setSaving]        = useState(false);
+  const [metaMsg,       setMetaMsg]       = useState('');
+  const [regen,         setRegen]         = useState(false);
+  const [subscribedPages, setSubscribedPages] = useState([]);
+  const [failedPages,     setFailedPages]     = useState([]);
 
   // Form mappings
   const [mappings,    setMappings]   = useState([]);
@@ -112,15 +114,19 @@ export default function LeadSetupPage() {
   }
 
   async function saveMetaConfig() {
-    setSaving(true); setMetaMsg('');
+    setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]);
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
       body: JSON.stringify({ action: 'save', page_access_token: pat }),
     });
     const d = await res.json();
     setSaving(false);
-    if (res.ok) { setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat })); setMetaMsg('Saved successfully!'); }
-    else setMetaMsg('Error saving.');
+    if (res.ok) {
+      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat }));
+      setSubscribedPages(d.subscribed_pages || []);
+      setFailedPages(d.failed_pages || []);
+      setMetaMsg('Saved successfully!');
+    } else setMetaMsg('Error saving.');
   }
 
   async function regenerateToken() {
@@ -243,6 +249,22 @@ export default function LeadSetupPage() {
                 {saving ? 'Saving…' : '💾 Save Configuration'}
               </button>
               {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
+              {(subscribedPages.length > 0 || failedPages.length > 0) && (
+                <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 8, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', fontSize: 12 }}>
+                  {subscribedPages.length > 0 && (
+                    <div style={{ marginBottom: failedPages.length > 0 ? 6 : 0 }}>
+                      <span style={{ color: GREEN, fontWeight: 700 }}>✓ Subscribed: </span>
+                      <span style={{ color: '#3A3A5C' }}>{subscribedPages.join(', ')}</span>
+                    </div>
+                  )}
+                  {failedPages.length > 0 && (
+                    <div>
+                      <span style={{ color: '#E65100', fontWeight: 700 }}>✗ Failed: </span>
+                      <span style={{ color: '#3A3A5C' }}>{failedPages.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Form → Project Mapping */}
@@ -257,7 +279,10 @@ export default function LeadSetupPage() {
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
-                        <div style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <code style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</code>
+                          <CopyBtn text={m.form_id} />
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>→</span>
