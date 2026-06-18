@@ -1,5 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 
 function authHeaders() {
@@ -44,6 +46,13 @@ function applyMapping(raw, m) {
 const BATCH = 200;
 
 export default function ImportPage() {
+  const router  = useRouter();
+  const user    = useSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+  }, [user]);
+
   const fileRef = useRef(null);
   const [step,      setStep]      = useState(1);
   const [projects,  setProjects]  = useState([]);

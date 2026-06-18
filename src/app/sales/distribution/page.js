@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 
 function authHeaders() {
@@ -34,6 +36,13 @@ function WeightBar({ pct, color }) {
 }
 
 export default function DistributionPage() {
+  const router = useRouter();
+  const user   = useSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+  }, [user]);
+
   // Settings
   const [settings, setSettings]       = useState({ tc_signin_time: '10:20', tc_signout_time: '22:00', stm_signin_time: '10:20', stm_signout_time: '22:00' });
   const [settingsForm, setSettingsForm] = useState(null); // null = not editing

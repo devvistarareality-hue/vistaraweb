@@ -1,8 +1,9 @@
 'use client';
 import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { logout } from '../../redux/actions/authActions';
 
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -29,11 +30,11 @@ function IconBack()         { return <SvgIcon><polyline points="15 18 9 12 15 6"
 const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
   { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> },
-  { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding /> },
-  { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource /> },
-  { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers /> },
-  { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute /> },
-  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
+  { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true },
+  { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true },
+  { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
+  { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
+  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport />,    adminOnly: true },
   { label: 'Reports',      href: '/sales/reports',       icon: <IconReports /> },
 ];
 
@@ -41,6 +42,7 @@ const CSS = `
   .s-nav-link { transition: background 0.14s, color 0.14s; }
   .s-nav-link:hover { background: rgba(255,255,255,0.07) !important; color: rgba(255,255,255,0.9) !important; }
   @keyframes s-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   .s-skel { animation: s-pulse 1.4s ease infinite; background:#E8ECF4; border-radius:8px; }
   .s-logout:hover { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.4) !important; }
   .s-scroll::-webkit-scrollbar { width: 0; }
@@ -48,9 +50,15 @@ const CSS = `
 `;
 
 export default function SalesLayout({ children }) {
-  const user   = useSelector((s) => s.auth.user);
-  const router = useRouter();
+  const user     = useSelector((s) => s.auth.user);
+  const dispatch = useDispatch();
+  const router   = useRouter();
   const pathname = usePathname();
+
+  function handleLogout() {
+    dispatch(logout());
+    router.replace('/company');
+  }
 
   useEffect(() => {
     if (user === null) return;
@@ -66,6 +74,7 @@ export default function SalesLayout({ children }) {
     );
   }
 
+  const isAdmin  = user?.role === 'Admin' || user?.is_staff;
   const isActive = (href) => href === '/sales' ? pathname === '/sales' : pathname.startsWith(href);
 
   return (
@@ -88,7 +97,7 @@ export default function SalesLayout({ children }) {
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
           <div style={s.sectionLabel}>SALES MENU</div>
-          {NAV.map((item) => {
+          {NAV.filter(item => !item.adminOnly || isAdmin).map((item) => {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} className="s-nav-link"
@@ -102,11 +111,15 @@ export default function SalesLayout({ children }) {
             );
           })}
 
-          <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
-          <Link href="/admin" className="s-nav-link" style={s.navItem}>
-            <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
-            <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Admin</span>
-          </Link>
+          {isAdmin && (
+            <>
+              <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
+              <Link href="/admin" className="s-nav-link" style={s.navItem}>
+                <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Admin</span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* User */}
@@ -119,6 +132,12 @@ export default function SalesLayout({ children }) {
               <div style={s.userBadge}>{user?.role || 'Admin'}</div>
             </div>
           </div>
+          <button onClick={handleLogout} className="s-logout" style={s.logoutBtn}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign Out
+          </button>
         </div>
       </div>
 
@@ -188,4 +207,10 @@ const s = {
   },
   userName:  { fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   userBadge: { fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 },
+  logoutBtn: {
+    marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+    padding: '9px 0', borderRadius: 9, border: '1px solid rgba(239,68,68,0.3)',
+    background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.85)',
+    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  },
 };

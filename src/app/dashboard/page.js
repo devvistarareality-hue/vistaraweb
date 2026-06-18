@@ -1,6 +1,8 @@
 'use client';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { MODULE_ACCENT } from '../../constants/theme';
 
 const MODULE_CONFIG = {
@@ -12,8 +14,17 @@ const MODULE_CONFIG = {
 };
 
 export default function DashboardPage() {
-  const user = useSelector((s) => s.auth.user);
+  const user        = useSelector((s) => s.auth.user);
+  const router      = useRouter();
   const userModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m]);
+
+  useEffect(() => {
+    if (userModules.length === 1) {
+      router.replace(MODULE_CONFIG[userModules[0]].href);
+    }
+  }, [userModules.length]);
+
+  if (userModules.length === 1) return null;
 
   return (
     <div>

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../../constants/api';
 import MediaUpload from '../../../../components/MediaUpload';
@@ -605,6 +606,12 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
 export default function ManagePlotsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const user   = useSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+  }, [user]);
+
   const [project, setProject] = useState(null);
   const [plots,   setPlots]   = useState([]);
   const [filter,  setFilter]  = useState('all');

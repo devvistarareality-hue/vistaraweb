@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, RAILWAY_URL } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 
@@ -47,6 +49,13 @@ function Step({ n, title, children }) {
 }
 
 export default function LeadSetupPage() {
+  const router = useRouter();
+  const user   = useSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+  }, [user]);
+
   const [tab, setTab] = useState('meta');
 
   // Sources tab

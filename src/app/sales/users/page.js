@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 
 const CACHE_KEY = 'sales_team_users';
@@ -46,6 +48,13 @@ function DesigBadge({ desig }) {
 }
 
 export default function SalesUsersPage() {
+  const router = useRouter();
+  const user   = useSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+  }, [user]);
+
   const [users,    setUsers]    = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [apiError, setApiError] = useState('');
