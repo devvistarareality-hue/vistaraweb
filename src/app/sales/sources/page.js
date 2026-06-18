@@ -75,6 +75,7 @@ export default function LeadSetupPage() {
   const [regen,           setRegen]           = useState(false);
   const [subscribedPages, setSubscribedPages] = useState([]);
   const [failedPages,     setFailedPages]     = useState([]);
+  const [pagesData,       setPagesData]       = useState([]);
 
   // Form mappings
   const [mappings,    setMappings]   = useState([]);
@@ -94,7 +95,7 @@ export default function LeadSetupPage() {
     }
     // Meta config + mappings
     fetch(SALES_ENDPOINTS.metaWebhookConfig, { headers: authHeaders() })
-      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setLoadingCfg(false); })
+      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
     fetch(SALES_ENDPOINTS.metaMappings, { headers: authHeaders() })
       .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
@@ -125,6 +126,7 @@ export default function LeadSetupPage() {
       setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat }));
       setSubscribedPages(d.subscribed_pages || []);
       setFailedPages(d.failed_pages || []);
+      setPagesData(d.pages_data || []);
       setMetaMsg('Saved!');
     } else setMetaMsg('Error saving.');
   }
@@ -249,21 +251,10 @@ export default function LeadSetupPage() {
                 {saving ? 'Saving…' : '💾 Save Configuration'}
               </button>
               {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
-              {(subscribedPages.length > 0 || failedPages.length > 0) && (
-                <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 8, border: '1px solid #E4E8F0', backgroundColor: '#F9FAFB', fontSize: 12 }}>
-                  <div style={{ fontWeight: 700, color: '#1A1A2E', marginBottom: 6 }}>Subscribed Pages</div>
-                  {subscribedPages.map(p => (
-                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                      <span style={{ color: GREEN, fontWeight: 700 }}>✓</span>
-                      <span style={{ color: '#3A3A5C' }}>{p}</span>
-                    </div>
-                  ))}
-                  {failedPages.map(p => (
-                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                      <span style={{ color: '#EF4444', fontWeight: 700 }}>✗</span>
-                      <span style={{ color: '#3A3A5C' }}>{p}</span>
-                    </div>
-                  ))}
+              {metaMsg === 'Saved!' && failedPages.length > 0 && (
+                <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, backgroundColor: '#FFF3F3', border: '1px solid #FFCDD2', fontSize: 12 }}>
+                  <span style={{ color: '#EF4444', fontWeight: 700 }}>Failed to subscribe: </span>
+                  {failedPages.join(', ')}
                 </div>
               )}
             </div>
@@ -313,6 +304,55 @@ export default function LeadSetupPage() {
                 <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
               </div>
             </div>
+
+            {/* Connected Pages Cards */}
+            {pagesData.length > 0 && (
+              <div style={{ ...card, marginTop: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Connected Pages & Forms</div>
+                <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16, lineHeight: 1.6 }}>
+                  Pages subscribed to receive leads. Forms shown with project mapping if configured.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {pagesData.map(pg => {
+                    const mappingMap = {};
+                    mappings.forEach(m => { mappingMap[m.form_id] = m; });
+                    return (
+                      <div key={pg.page_id} style={{ borderRadius: 10, border: '1.5px solid #E4E8F0', overflow: 'hidden' }}>
+                        {/* Page header */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', backgroundColor: '#F0F4FF', borderBottom: pg.forms.length > 0 ? '1px solid #E4E8F0' : 'none' }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: GREEN, flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#182350' }}>{pg.page_name}</span>
+                          <span style={{ fontSize: 11, color: '#8492A6', marginLeft: 'auto' }}>{pg.forms.length} forms</span>
+                        </div>
+                        {/* Forms list */}
+                        {pg.forms.length > 0 && (
+                          <div style={{ padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {pg.forms.map(f => {
+                              const mapped = mappingMap[f.id];
+                              return (
+                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, backgroundColor: mapped ? '#F0FFF4' : '#F9FAFB', border: `1px solid ${mapped ? '#A7F3C9' : '#EAECF0'}` }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A2E', marginBottom: 2 }}>{f.name || 'Unnamed Form'}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                      <code style={{ fontSize: 10, color: '#8492A6', fontFamily: 'monospace' }}>{f.id}</code>
+                                      <CopyBtn text={f.id} />
+                                    </div>
+                                  </div>
+                                  {mapped
+                                    ? <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
+                                    : <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#F3F4F6', color: '#9CA3AF', fontSize: 11, flexShrink: 0 }}>No project</span>
+                                  }
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Guide */}
