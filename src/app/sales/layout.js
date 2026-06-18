@@ -108,6 +108,13 @@ export default function SalesLayout({ children }) {
   const isAdmin  = user?.role === 'Admin' || user?.is_staff;
   const isActive = (href) => href === '/sales' ? pathname === '/sales' : pathname.startsWith(href);
 
+  const des = (user?.designation || '').toLowerCase();
+  const portalTitle = des.includes('telecaller') || des.includes('tele caller')
+    ? 'Telecaller Portal'
+    : des.includes('stm') || des.includes('sales team') || des.includes('sales executive')
+    ? 'Sales Executive'
+    : 'Sales CRM';
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#DFE4EE' }}>
       <style suppressHydrationWarning>{CSS}</style>
@@ -120,7 +127,7 @@ export default function SalesLayout({ children }) {
             <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div>
-            <div style={s.logoName}>Sales CRM</div>
+            <div style={s.logoName}>{portalTitle}</div>
             <div style={s.logoSub}>Vistara Realty</div>
           </div>
         </div>
