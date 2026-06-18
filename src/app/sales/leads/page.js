@@ -465,8 +465,15 @@ export default function SalesLeadsPage() {
                     <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}>
-                    <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
-                    {l.is_duplicate && <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 700, marginLeft: 6 }}>DUP</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
+                      {l.is_duplicate && <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 700 }}>DUP</span>}
+                    </div>
+                    {(l.meta_campaign_name || l.meta_adset_name || l.meta_ad_name) && (
+                      <div style={{ fontSize: 10, color: '#8492A6', marginTop: 2, lineHeight: 1.4 }}>
+                        {[l.meta_campaign_name, l.meta_adset_name, l.meta_ad_name].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                   </td>
                   <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.phone}</td>
                   <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
