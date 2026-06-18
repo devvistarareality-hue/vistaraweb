@@ -506,31 +506,29 @@ export default function SalesLeadsPage() {
   const [sources,     setSources]     = useState([]);
   const [telecallers, setTelecallers] = useState([]);
   const [stms,        setStms]        = useState([]);
-  const [filters,     setFilters]     = useState({ search: '', status: '', project_id: '', source_id: '' });
+  const [filters, setFilters] = useState({
+    search: '', status: '', project_id: '', source_id: '',
+    telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
+    campaign: '', is_duplicate: false, date_from: '', date_to: '',
+  });
   const [addModal,    setAddModal]    = useState(false);
   const [selected,    setSelected]    = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [deleting,    setDeleting]    = useState(false);
 
   const loadMeta = useCallback(async () => {
-    // Serve from cache instantly, fetch in background to keep fresh
     const cachedP = getCache('projects');
     const cachedS = getCache('sources');
     if (cachedP) setProjects(cachedP);
     if (cachedS) setSources(cachedS);
-    if (cachedP && cachedS) return; // both cached — skip fetch
     const [pRes, sRes, tRes, sRes2] = await Promise.all([
-      fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.sources,     { headers: authHeaders() }).then((r) => r.json()),
+      cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()),
+      cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources,     { headers: authHeaders() }).then((r) => r.json()),
       fetch(SALES_ENDPOINTS.telecallers, { headers: authHeaders() }).then((r) => r.json()),
       fetch(SALES_ENDPOINTS.stms,        { headers: authHeaders() }).then((r) => r.json()),
     ]);
-    const projects = Array.isArray(pRes) ? pRes : [];
-    const sources  = Array.isArray(sRes) ? sRes : [];
-    setCache('projects', projects);
-    setCache('sources',  sources);
-    setProjects(projects);
-    setSources(sources);
+    if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache('projects', p); setProjects(p); }
+    if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache('sources',  s); setSources(s);  }
     setTelecallers(Array.isArray(tRes)  ? tRes  : []);
     setStms(       Array.isArray(sRes2) ? sRes2 : []);
   }, []);
@@ -538,10 +536,18 @@ export default function SalesLeadsPage() {
   const loadLeads = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page });
-    if (filters.search)     params.set('search',     filters.search);
-    if (filters.status)     params.set('status',     filters.status);
-    if (filters.project_id) params.set('project_id', filters.project_id);
-    if (filters.source_id)  params.set('source_id',  filters.source_id);
+    if (filters.search)          params.set('search',           filters.search);
+    if (filters.status)          params.set('status',           filters.status);
+    if (filters.project_id)      params.set('project_id',       filters.project_id);
+    if (filters.source_id)       params.set('source_id',        filters.source_id);
+    if (filters.telecaller_id)   params.set('telecaller_id',    filters.telecaller_id);
+    if (filters.stm_id)          params.set('stm_id',           filters.stm_id);
+    if (filters.telecaller_status) params.set('telecaller_status', filters.telecaller_status);
+    if (filters.stm_status)      params.set('stm_status',       filters.stm_status);
+    if (filters.campaign)        params.set('campaign',         filters.campaign);
+    if (filters.is_duplicate)    params.set('is_duplicate',     'true');
+    if (filters.date_from)       params.set('date_from',        filters.date_from);
+    if (filters.date_to)         params.set('date_to',          filters.date_to);
     const cacheKey = `leads_${params.toString()}`;
     const cached = getCache(cacheKey);
     if (cached) { setLeads(cached.results); setTotal(cached.count); setLoading(false); return; }
@@ -630,29 +636,81 @@ export default function SalesLeadsPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-        <input
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          placeholder="Search name, phone, email…"
-          style={{ ...inp, width: 220 }}
-        />
-        <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} style={{ ...inp, width: 160 }}>
-          <option value="">All statuses</option>
-          {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
-        </select>
-        <select value={filters.project_id} onChange={(e) => setFilters({ ...filters, project_id: e.target.value })} style={{ ...inp, width: 180 }}>
-          <option value="">All projects</option>
-          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-        <select value={filters.source_id} onChange={(e) => setFilters({ ...filters, source_id: e.target.value })} style={{ ...inp, width: 160 }}>
-          <option value="">All sources</option>
-          {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
-        </select>
-        {(filters.search || filters.status || filters.project_id || filters.source_id) && (
-          <button onClick={() => setFilters({ search: '', status: '', project_id: '', source_id: '' })} style={cancelBtn}>Clear</button>
-        )}
-      </div>
+      {(() => {
+        const sf = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
+        const today = new Date().toISOString().slice(0, 10);
+        const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+        const TC_STATUSES  = ['hot','warm','cold','not_interested','not_reachable','callback'];
+        const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed'];
+        const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
+          filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
+          filters.campaign || filters.is_duplicate || filters.date_from || filters.date_to;
+        const clearAll = () => setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, date_from:'', date_to:'' });
+        const fBox = { backgroundColor: '#fff', borderRadius: 12, border: '1.5px solid #E8ECF4', padding: '14px 16px', marginBottom: 16 };
+        const fRow = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' };
+        const fSel = { height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 12, background: '#fff', cursor: 'pointer', outline: 'none' };
+        const qBtn = (active) => ({ height: 34, padding: '0 14px', borderRadius: 8, border: '1.5px solid ' + (active ? '#3D5AFE' : '#E0E6F0'), fontSize: 12, fontWeight: 600, cursor: 'pointer', background: active ? '#EEF0FF' : '#fff', color: active ? '#3D5AFE' : '#8492A6' });
+        return (
+          <div style={fBox}>
+            {/* Row 1: Search */}
+            <input value={filters.search} onChange={(e) => sf('search', e.target.value)}
+              placeholder="🔍  Search name, phone, email…"
+              style={{ ...fSel, width: '100%', marginBottom: 10, height: 38, fontSize: 13 }} />
+
+            {/* Row 2: Date + Project + TC Status + STM Status + Clear */}
+            <div style={{ ...fRow, marginBottom: 8 }}>
+              <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 140 }} />
+              <span style={{ fontSize: 12, color: '#8492A6' }}>to</span>
+              <input type="date" value={filters.date_to}   onChange={(e) => sf('date_to',   e.target.value)} style={{ ...fSel, width: 140 }} />
+              <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
+              <button onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
+              <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
+              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={fSel}>
+                <option value="">All Projects</option>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={fSel}>
+                <option value="">TC Status</option>
+                {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+              </select>
+              <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={fSel}>
+                <option value="">STM Status</option>
+                {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+              </select>
+              {anyFilter && (
+                <button onClick={clearAll} style={{ ...fSel, color: '#EF4444', borderColor: '#FCA5A5', background: '#FFF5F5', fontWeight: 600 }}>✕ Clear</button>
+              )}
+            </div>
+
+            {/* Row 3: Status + Source + Telecaller + STM + Campaign + Duplicates */}
+            <div style={fRow}>
+              <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={fSel}>
+                <option value="">All Statuses</option>
+                {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+              </select>
+              <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={fSel}>
+                <option value="">All Sources</option>
+                {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
+              </select>
+              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={fSel}>
+                <option value="">All Telecallers</option>
+                {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={fSel}>
+                <option value="">All STMs</option>
+                {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+              <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
+                placeholder="Campaign name…"
+                style={{ ...fSel, width: 180 }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3A3A5C', cursor: 'pointer', userSelect: 'none' }}>
+                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 15, height: 15 }} />
+                Duplicates only
+              </label>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Table */}
       <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflow: 'hidden' }}>
@@ -663,7 +721,7 @@ export default function SalesLeadsPage() {
                 <th style={th}>
                   <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />
                 </th>
-                {['Name', 'Phone', 'Project', 'Source', 'TC Status', 'Status', 'Received', ''].map((h) => (
+                {['Name', 'Phone', 'Project', 'Source', 'Telecaller', 'STM', 'TC Status', 'STM Status', 'Overall', 'Received', ''].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>
@@ -672,15 +730,15 @@ export default function SalesLeadsPage() {
               {loading ? (
                 [...Array(8)].map((_, i) => (
                   <tr key={i}>
-                    {[...Array(9)].map((__, j) => (
+                    {[...Array(12)].map((__, j) => (
                       <td key={j} style={{ padding: '12px 14px' }}>
-                        <div className="s-skel" style={{ height: 14, width: j === 0 ? 16 : j === 1 ? 120 : j === 7 ? 60 : 80, borderRadius: 6 }} />
+                        <div className="s-skel" style={{ height: 14, width: j === 0 ? 16 : j === 1 ? 120 : 80, borderRadius: 6 }} />
                       </td>
                     ))}
                   </tr>
                 ))
               ) : leads.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
+                <tr><td colSpan={12} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (
                 <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FAFBFE'}
@@ -702,8 +760,13 @@ export default function SalesLeadsPage() {
                   <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.phone}</td>
                   <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
                   <td style={{ ...td, color: '#8492A6', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
+                  <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>
+                  <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>
                   <td style={td} onClick={() => loadDetail(l)}>
                     {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
+                  </td>
+                  <td style={td} onClick={() => loadDetail(l)}>
+                    {l.stm_status ? <StatusBadge status={l.stm_status} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} /></td>
                   <td style={{ ...td, color: '#8492A6', fontSize: 12 }} onClick={() => loadDetail(l)}>
