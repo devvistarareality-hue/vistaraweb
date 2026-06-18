@@ -116,7 +116,7 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
 }
 
 // ── Lead Detail Modal ───────────────────────────────────────────────────────
-function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpdated }) {
+function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, onUpdated }) {
   const [form, setForm]   = useState({
     name: lead.name || '', alt_phone: lead.alt_phone || '',
     status: lead.status, telecaller: lead.telecaller || '', telecaller_status: lead.telecaller_status || '',
@@ -226,7 +226,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpda
               <label style={lbl}>Assign STM</label>
               <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={inp}>
                 <option value="">— None —</option>
-                {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
+                {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
               </select>
             </div>
             <div>
@@ -310,6 +310,7 @@ export default function SalesLeadsPage() {
   const [projects,    setProjects]    = useState([]);
   const [sources,     setSources]     = useState([]);
   const [telecallers, setTelecallers] = useState([]);
+  const [stms,        setStms]        = useState([]);
   const [filters,     setFilters]     = useState({ search: '', status: '', project_id: '', source_id: '' });
   const [addModal,    setAddModal]    = useState(false);
   const [selected,    setSelected]    = useState(null);
@@ -323,10 +324,11 @@ export default function SalesLeadsPage() {
     if (cachedP) setProjects(cachedP);
     if (cachedS) setSources(cachedS);
     if (cachedP && cachedS) return; // both cached — skip fetch
-    const [pRes, sRes, tRes] = await Promise.all([
+    const [pRes, sRes, tRes, sRes2] = await Promise.all([
       fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()),
       fetch(SALES_ENDPOINTS.sources,     { headers: authHeaders() }).then((r) => r.json()),
       fetch(SALES_ENDPOINTS.telecallers, { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.stms,        { headers: authHeaders() }).then((r) => r.json()),
     ]);
     const projects = Array.isArray(pRes) ? pRes : [];
     const sources  = Array.isArray(sRes) ? sRes : [];
@@ -334,7 +336,8 @@ export default function SalesLeadsPage() {
     setCache('sources',  sources);
     setProjects(projects);
     setSources(sources);
-    setTelecallers(Array.isArray(tRes) ? tRes : []);
+    setTelecallers(Array.isArray(tRes)  ? tRes  : []);
+    setStms(       Array.isArray(sRes2) ? sRes2 : []);
   }, []);
 
   const loadLeads = useCallback(async () => {
@@ -553,7 +556,7 @@ export default function SalesLeadsPage() {
           onClose={() => setAddModal(false)} onAdded={() => { loadLeads(); }} />
       )}
       {selected && (
-        <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers}
+        <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}
           onClose={() => setSelected(null)} onUpdated={loadLeads} />
       )}
     </div>
