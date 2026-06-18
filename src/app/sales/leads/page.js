@@ -343,6 +343,15 @@ export default function SalesLeadsPage() {
   useEffect(() => { loadLeads(); }, [loadLeads]);
   useEffect(() => { setPage(1); }, [filters]);
 
+  // Auto-refresh every 30 seconds to pick up new incoming leads
+  useEffect(() => {
+    const id = setInterval(() => {
+      bustLeadsCache();
+      loadLeads();
+    }, 30000);
+    return () => clearInterval(id);
+  }, [loadLeads]);
+
   async function loadDetail(lead) {
     const res  = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
     const data = await res.json();
