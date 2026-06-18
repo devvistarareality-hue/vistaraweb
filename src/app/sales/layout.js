@@ -1,9 +1,10 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { logout } from '../../redux/actions/authActions';
+import { AUTH_ENDPOINTS } from '../../constants/api';
 
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -45,6 +46,8 @@ const CSS = `
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   .s-skel { animation: s-pulse 1.4s ease infinite; background:#E8ECF4; border-radius:8px; }
   .s-logout:hover { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.4) !important; }
+  .s-profile-btn { background: none; border: none; cursor: pointer; width: 100%; }
+  .s-profile-btn:hover { background: rgba(255,255,255,0.07) !important; }
   .s-scroll::-webkit-scrollbar { width: 0; }
   .s-scroll { scrollbar-width: none; }
 `;
@@ -55,10 +58,38 @@ export default function SalesLayout({ children }) {
   const router   = useRouter();
   const pathname = usePathname();
 
+  const [profileOpen,    setProfileOpen]    = useState(false);
+  const [profileData,    setProfileData]    = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
   function handleLogout() {
     dispatch(logout());
     router.replace('/company');
   }
+
+  async function openProfile() {
+    setProfileOpen(true);
+    setProfileLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const res = await fetch(AUTH_ENDPOINTS.me, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setProfileData(await res.json());
+    } catch (_) {}
+    setProfileLoading(false);
+  }
+
+  const PROFILE_FIELDS = [
+    { label: 'Full Name',         value: profileData?.name },
+    { label: 'Employee Code',     value: profileData?.user_code },
+    { label: 'Phone',             value: profileData?.phone },
+    { label: 'Email',             value: profileData?.email },
+    { label: 'Organisation',      value: profileData?.company_name },
+    { label: 'Department',        value: profileData?.department },
+    { label: 'Designation',       value: profileData?.designation },
+    { label: 'Reporting Manager', value: profileData?.reporting_manager?.name },
+  ];
 
   useEffect(() => {
     if (user === null) return;
@@ -125,13 +156,16 @@ export default function SalesLayout({ children }) {
         {/* User */}
         <div style={s.bottomArea}>
           <div style={s.divider} />
-          <div style={s.userRow}>
+          <button onClick={openProfile} className="s-profile-btn" style={s.userRow}>
             <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
               <div style={s.userName}>{user?.name || 'User'}</div>
               <div style={s.userBadge}>{user?.role || 'Admin'}</div>
             </div>
-          </div>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
           <button onClick={handleLogout} className="s-logout" style={s.logoutBtn}>
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
@@ -140,6 +174,72 @@ export default function SalesLayout({ children }) {
           </button>
         </div>
       </div>
+
+      {/* ── Profile Modal ── */}
+      {profileOpen && (
+        <div onClick={() => setProfileOpen(false)} style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: 300, marginLeft: 16, marginBottom: 20,
+            backgroundColor: '#fff', borderRadius: 18,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
+            overflow: 'hidden',
+          }}>
+            {/* Header */}
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F0F3FA' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 13,
+                  backgroundColor: 'rgba(255,107,43,0.12)',
+                  border: '1.5px solid rgba(255,107,43,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, fontWeight: 800, color: ORANGE, flexShrink: 0,
+                }}>
+                  {(user?.name || 'A')[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>{user?.name}</div>
+                  <div style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>{user?.designation || user?.role}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fields */}
+            <div style={{ padding: '6px 0' }}>
+              {profileLoading ? (
+                <div style={{ padding: '28px 0', textAlign: 'center', color: '#8492A6', fontSize: 13 }}>Loading…</div>
+              ) : PROFILE_FIELDS.map((f, i) => (
+                <div key={i} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '9px 20px',
+                  borderBottom: i < PROFILE_FIELDS.length - 1 ? '1px solid #F5F6FA' : 'none',
+                }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E', maxWidth: 160, textAlign: 'right', wordBreak: 'break-all' }}>{f.value || '—'}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Sign Out */}
+            <div style={{ padding: '12px 16px 16px' }}>
+              <button onClick={handleLogout} style={{
+                width: '100%', padding: '10px 0', borderRadius: 10,
+                border: '1.5px solid #FECACA', backgroundColor: '#FEF2F2',
+                color: '#EF4444', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              }}>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Main content ── */}
       <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
