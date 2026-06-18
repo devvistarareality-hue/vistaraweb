@@ -80,6 +80,7 @@ export default function UserManagementPage() {
     setForm({
       name:                 u.name            || '',
       email:                u.email           || '',
+      phone:                u.phone           || '',
       user_code:            u.user_code       || '',
       password:             '',
       role:                 u.role            || 'Employee',
@@ -300,6 +301,7 @@ export default function UserManagementPage() {
                 {[
                   { label: 'Full Name',    key: 'name',      type: 'text' },
                   { label: 'Email',        key: 'email',     type: 'email' },
+                  { label: 'Phone Number', key: 'phone',     type: 'tel' },
                   { label: 'User Code',    key: 'user_code', type: 'text' },
                   { label: 'New Password (leave blank to keep)', key: 'password', type: 'password' },
                 ].map(({ label, key, type }) => (
