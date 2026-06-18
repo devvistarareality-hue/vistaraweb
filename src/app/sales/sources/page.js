@@ -308,46 +308,37 @@ export default function LeadSetupPage() {
             {/* Connected Pages Cards */}
             {pagesData.length > 0 && (
               <div style={{ ...card, marginTop: 12 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Connected Pages & Forms</div>
-                <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16, lineHeight: 1.6 }}>
-                  Pages subscribed to receive leads. Forms shown with project mapping if configured.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 12 }}>Connected Pages & Forms</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {pagesData.map(pg => {
                     const mappingMap = {};
                     mappings.forEach(m => { mappingMap[m.form_id] = m; });
                     return (
-                      <div key={pg.page_id} style={{ borderRadius: 10, border: '1.5px solid #E4E8F0', overflow: 'hidden' }}>
-                        {/* Page header */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', backgroundColor: '#F0F4FF', borderBottom: pg.forms.length > 0 ? '1px solid #E4E8F0' : 'none' }}>
-                          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: GREEN, flexShrink: 0 }} />
-                          <span style={{ fontSize: 13, fontWeight: 800, color: '#182350' }}>{pg.page_name}</span>
-                          <span style={{ fontSize: 11, color: '#8492A6', marginLeft: 'auto' }}>{pg.forms.length} forms</span>
-                        </div>
-                        {/* Forms list */}
+                      <details key={pg.page_id} style={{ borderRadius: 8, border: '1.5px solid #E4E8F0', overflow: 'hidden' }}>
+                        <summary style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', backgroundColor: '#F5F7FC', cursor: 'pointer', listStyle: 'none', userSelect: 'none' }}>
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: GREEN, flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#182350', flex: 1 }}>{pg.page_name}</span>
+                          <span style={{ fontSize: 11, color: '#8492A6', backgroundColor: '#E8EEFF', padding: '2px 8px', borderRadius: 10 }}>{pg.forms.length} forms</span>
+                        </summary>
                         {pg.forms.length > 0 && (
-                          <div style={{ padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div style={{ padding: '6px 10px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
                             {pg.forms.map(f => {
                               const mapped = mappingMap[f.id];
                               return (
-                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, backgroundColor: mapped ? '#F0FFF4' : '#F9FAFB', border: `1px solid ${mapped ? '#A7F3C9' : '#EAECF0'}` }}>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A2E', marginBottom: 2 }}>{f.name || 'Unnamed Form'}</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                      <code style={{ fontSize: 10, color: '#8492A6', fontFamily: 'monospace' }}>{f.id}</code>
-                                      <CopyBtn text={f.id} />
-                                    </div>
-                                  </div>
+                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, backgroundColor: mapped ? '#F0FFF4' : '#FAFAFA' }}>
+                                  <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name || 'Unnamed'}</span>
+                                  <code style={{ fontSize: 10, color: '#B0BAC9', fontFamily: 'monospace', flexShrink: 0 }}>{f.id}</code>
+                                  <CopyBtn text={f.id} />
                                   {mapped
-                                    ? <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
-                                    : <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#F3F4F6', color: '#9CA3AF', fontSize: 11, flexShrink: 0 }}>No project</span>
+                                    ? <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
+                                    : <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#F3F4F6', color: '#9CA3AF', fontSize: 10, flexShrink: 0 }}>No project</span>
                                   }
                                 </div>
                               );
                             })}
                           </div>
                         )}
-                      </div>
+                      </details>
                     );
                   })}
                 </div>
