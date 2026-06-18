@@ -118,6 +118,7 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
 // ── Lead Detail Modal ───────────────────────────────────────────────────────
 function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpdated }) {
   const [form, setForm]   = useState({
+    name: lead.name || '', alt_phone: lead.alt_phone || '',
     status: lead.status, telecaller: lead.telecaller || '', telecaller_status: lead.telecaller_status || '',
     telecaller_remarks: lead.telecaller_remarks || '',
     stm: lead.stm || '', stm_status: lead.stm_status || '', stm_remarks: lead.stm_remarks || '',
@@ -128,6 +129,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpda
   async function save() {
     setSaving(true);
     const body = { status: form.status, telecaller_remarks: form.telecaller_remarks, stm_remarks: form.stm_remarks };
+    if (form.name)    body.name      = form.name;
+    body.alt_phone = form.alt_phone || '';
     if (form.telecaller) body.telecaller = form.telecaller;
     if (form.telecaller_status) body.telecaller_status = form.telecaller_status;
     if (form.stm) body.stm = form.stm;
@@ -157,6 +160,20 @@ function LeadDetailModal({ lead, projects, sources, telecallers, onClose, onUpda
         </div>
 
         <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Contact info */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+            <div>
+              <label style={lbl}>Name</label>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Alternate Phone</label>
+              <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={inp} placeholder="Alt. number" />
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
+
           {/* Overall status + project + source */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
             <div>
