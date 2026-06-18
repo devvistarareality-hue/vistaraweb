@@ -4,44 +4,31 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 
-const CACHE_KEY = 'sales_team_users';
-const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
-
-function readCache() {
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const { ts, data } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(CACHE_KEY); return null; }
-    return data;
-  } catch { return null; }
-}
-function writeCache(data) {
-  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
-}
-
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
-const DESIG_STYLE = {
-  TELECALLER:       { bg: '#FFF8E1', color: '#F9A825' },
-  STM:              { bg: '#E8EEFF', color: '#3D5AFE' },
-  'SALES CLUSTER HEAD': { bg: '#EDE7F6', color: '#6A1B9A' },
-  'REGIONAL HEAD':  { bg: '#E8F5E9', color: '#2E7D32' },
-  CMO:              { bg: '#FCE4EC', color: '#C62828' },
-  'CP CLUSTER HEAD':{ bg: '#E3F2FD', color: '#1565C0' },
-  MANAGER:          { bg: '#E8F5E9', color: '#2E7D32' },
-};
+const CRM_ROLES = [
+  { value: 'telecaller', label: 'Telecaller', bg: '#FFF8E1', color: '#F9A825' },
+  { value: 'stm',        label: 'STM (Sales)', bg: '#E8EEFF', color: '#3D5AFE' },
+  { value: 'manager',    label: 'Manager',     bg: '#E8F5E9', color: '#2E7D32' },
+];
+
+function CrmRoleBadge({ role }) {
+  const r = CRM_ROLES.find(r => r.value === role);
+  if (!r) return <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>;
+  return (
+    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: r.bg, color: r.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+      {r.label}
+    </span>
+  );
+}
 
 function DesigBadge({ desig }) {
   if (!desig) return <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>;
-  const d = desig.toUpperCase();
-  const c = Object.entries(DESIG_STYLE).find(([k]) => d.includes(k))?.[1]
-            || { bg: '#F0F3FA', color: '#8492A6' };
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: '#F0F3FA', color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {desig}
     </span>
   );
@@ -55,25 +42,22 @@ export default function SalesUsersPage() {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
   }, [user]);
 
-  const [users,    setUsers]    = useState([]);
+  const [members,  setMembers]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [apiError, setApiError] = useState('');
   const [search,   setSearch]   = useState('');
+  const [saving,   setSaving]   = useState(null); // member id being saved
 
-  const load = useCallback(async (bust = false) => {
+  const load = useCallback(async () => {
     setApiError('');
-    if (!bust) {
-      const cached = readCache();
-      if (cached) { setUsers(cached); setLoading(false); return; }
-    }
+    setLoading(true);
     try {
-      const res  = await fetch(SALES_ENDPOINTS.usersSlim, { headers: authHeaders() });
+      const res  = await fetch(SALES_ENDPOINTS.team, { headers: authHeaders() });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const data = await res.json();
-      writeCache(data);
-      setUsers(Array.isArray(data) ? data : []);
+      setMembers(Array.isArray(data) ? data : []);
     } catch (err) {
-      setApiError(err.message || 'Failed to load users');
+      setApiError(err.message || 'Failed to load team');
     } finally {
       setLoading(false);
     }
@@ -81,28 +65,38 @@ export default function SalesUsersPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = search.trim()
-    ? users.filter((u) =>
-        u.name?.toLowerCase().includes(search.toLowerCase()) ||
-        u.user_code?.toLowerCase().includes(search.toLowerCase()) ||
-        u.designation?.toLowerCase().includes(search.toLowerCase())
-      )
-    : users;
+  const updateRole = async (memberId, newRole) => {
+    setSaving(memberId);
+    try {
+      const res = await fetch(SALES_ENDPOINTS.teamMember(memberId), {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ crm_role: newRole }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      setMembers(prev => prev.map(m => m.id === memberId ? { ...m, crm_role: newRole } : m));
+    } catch {
+      alert('Could not update CRM role. Please try again.');
+    } finally {
+      setSaving(null);
+    }
+  };
 
-  // Dynamic chips — one per unique designation, counts always sum to total
-  const designationCounts = users.reduce((acc, u) => {
-    const key = (u.designation || 'Other').toUpperCase();
+  const filtered = search.trim()
+    ? members.filter((m) =>
+        m.name?.toLowerCase().includes(search.toLowerCase()) ||
+        m.user_code?.toLowerCase().includes(search.toLowerCase()) ||
+        m.designation?.toLowerCase().includes(search.toLowerCase()) ||
+        m.crm_role?.toLowerCase().includes(search.toLowerCase())
+      )
+    : members;
+
+  // Count by CRM role
+  const roleCounts = members.reduce((acc, m) => {
+    const key = m.crm_role || 'unset';
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
-
-  const chips = Object.entries(designationCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([desig, cnt]) => {
-      const c = Object.entries(DESIG_STYLE).find(([k]) => desig.includes(k))?.[1]
-                || { bg: '#F0F3FA', color: '#8492A6' };
-      return { label: desig, cnt, color: c.color, bg: c.bg };
-    });
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -111,17 +105,21 @@ export default function SalesUsersPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Sales Team</h1>
-            <p style={{ fontSize: 13, color: '#8492A6' }}>{users.length} team members</p>
+            <p style={{ fontSize: 13, color: '#8492A6' }}>{members.length} team members</p>
           </div>
-          <button onClick={() => { setLoading(true); load(true); }} title="Refresh" style={{ background: 'none', border: '1.5px solid #E0E6F0', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: '#8492A6' }}>↺</button>
+          <button onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid #E0E6F0', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: '#8492A6' }}>↺</button>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {chips.map((c) => (
-            <div key={c.label} style={{ padding: '5px 12px', borderRadius: 20, backgroundColor: c.bg, color: c.color, fontSize: 11, fontWeight: 700 }}>
-              {c.label}: {c.cnt}
+          {CRM_ROLES.map(r => (
+            <div key={r.value} style={{ padding: '5px 12px', borderRadius: 20, backgroundColor: r.bg, color: r.color, fontSize: 11, fontWeight: 700 }}>
+              {r.label}: {roleCounts[r.value] || 0}
             </div>
           ))}
         </div>
+      </div>
+
+      <div style={{ backgroundColor: '#FFF8E1', border: '1px solid #F9A825', borderRadius: 10, padding: '10px 16px', marginBottom: 16, fontSize: 13, color: '#92600A' }}>
+        <b>Tip:</b> Set the <b>CRM Role</b> for each team member so the app knows who is a Telecaller and who is an STM.
       </div>
 
       {/* Search */}
@@ -152,27 +150,42 @@ export default function SalesUsersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
                 <tr>
-                  {['Name', 'User Code', 'Designation', 'Phone', 'Email'].map((h) => (
+                  {['Name', 'User Code', 'Designation', 'CRM Role', 'Phone', 'Email'].map((h) => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
+                {filtered.map((m) => (
+                  <tr key={m.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
                     <td style={td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={avatarStyle}>{(u.name || 'U')[0].toUpperCase()}</div>
+                        <div style={avatarStyle}>{(m.name || 'U')[0].toUpperCase()}</div>
                         <div>
-                          <div style={{ fontWeight: 600, color: '#1A1A2E' }}>{u.name}</div>
-                          <div style={{ fontSize: 11, color: '#8492A6', marginTop: 1 }}>{u.role}</div>
+                          <div style={{ fontWeight: 600, color: '#1A1A2E' }}>{m.name}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6', fontSize: 12 }}>{u.user_code}</td>
-                    <td style={td}><DesigBadge desig={u.designation} /></td>
-                    <td style={{ ...td, color: '#8492A6' }}>{u.phone || '—'}</td>
-                    <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>{u.email || '—'}</td>
+                    <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6', fontSize: 12 }}>{m.user_code}</td>
+                    <td style={td}><DesigBadge desig={m.designation} /></td>
+                    <td style={td}>
+                      {saving === m.id ? (
+                        <span style={{ fontSize: 12, color: '#8492A6' }}>Saving…</span>
+                      ) : (
+                        <select
+                          value={m.crm_role || ''}
+                          onChange={(e) => updateRole(m.id, e.target.value)}
+                          style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1.5px solid #E0E6F0', backgroundColor: '#fff', color: '#1A1A2E', cursor: 'pointer' }}
+                        >
+                          <option value="">— Select Role —</option>
+                          {CRM_ROLES.map(r => (
+                            <option key={r.value} value={r.value}>{r.label}</option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                    <td style={{ ...td, color: '#8492A6' }}>{m.phone || '—'}</td>
+                    <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>{m.email || '—'}</td>
                   </tr>
                 ))}
               </tbody>
