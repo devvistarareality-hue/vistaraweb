@@ -853,15 +853,10 @@ export default function SalesLeadsPage() {
                 <tr><td colSpan={12} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (
                 <tr key={l.id}
-                  style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FFFBFB' : '' }}
+                  style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FFFBFB' : '', borderLeft: l.is_duplicate ? '3px solid #DC2626' : '3px solid transparent' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FFF5F5' : '#FAFBFE'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FFFBFB' : ''}>
-                  {l.is_duplicate && (
-                    <td style={{ ...td, padding: 0, width: 3 }}>
-                      <div style={{ width: 3, height: '100%', minHeight: 48, backgroundColor: '#DC2626', borderRadius: '2px 0 0 2px' }} />
-                    </td>
-                  )}
-                  <td style={td} colSpan={l.is_duplicate ? undefined : undefined} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
+                  <td style={td} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
                     <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}>
