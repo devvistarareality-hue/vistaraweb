@@ -207,174 +207,143 @@ function ProjectModal({ project, onClose, onSaved }) {
     onClose();
   }
 
+  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
+  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
+  const mSec = { fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 4 };
+
   return (
     <div style={overlay}>
-      <div style={{ ...modal, maxWidth: 560, maxHeight: '92vh', overflowY: 'auto' }}>
-        <div style={modalHeader}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>{isEdit ? 'Edit Project' : 'Add Project'}</h2>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 580, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+
+        {/* Gradient Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>{isEdit ? 'Edit Project' : 'Add Project'}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{isEdit ? 'Update project details' : 'Fill in details to create a new project'}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <form onSubmit={submit} style={{ padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* Name */}
-          <div>
-            <label style={lbl}>Project Name *</label>
-            <input value={form.name} onChange={e => set('name', e.target.value)} style={inp} placeholder="e.g. Vistara Heights Phase 1" />
-          </div>
+        <form onSubmit={submit} style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', flex: 1 }}>
 
-          {/* Tagline */}
-          <div>
-            <label style={lbl}>Tagline</label>
-            <input value={form.tagline} onChange={e => set('tagline', e.target.value)} style={inp} placeholder="Where Nature Meets Luxury" />
-          </div>
-
-          {/* Location + Type */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {/* Basic Info */}
+          <div style={mSec}>Basic Info</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
             <div>
-              <label style={lbl}>Location</label>
-              <input value={form.location} onChange={e => set('location', e.target.value)} style={inp} placeholder="Pune, Maharashtra" />
+              <label style={mLbl}>Project Name <span style={{ color: '#EF4444' }}>*</span></label>
+              <input value={form.name} onChange={e => set('name', e.target.value)} style={mInp} placeholder="e.g. Vistara Heights Phase 1"
+                onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
             </div>
             <div>
-              <label style={lbl}>Type</label>
-              <select value={form.project_type} onChange={e => set('project_type', e.target.value)} style={inp}>
-                {['residential','commercial','plots','villa','apartment','industrial'].map(t => (
-                  <option key={t} value={t} style={{ textTransform: 'capitalize' }}>{t}</option>
-                ))}
-              </select>
+              <label style={mLbl}>Tagline</label>
+              <input value={form.tagline} onChange={e => set('tagline', e.target.value)} style={mInp} placeholder="Where Nature Meets Luxury"
+                onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
             </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={mLbl}>Location</label>
+                <input value={form.location} onChange={e => set('location', e.target.value)} style={mInp} placeholder="Pune, Maharashtra"
+                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              </div>
+              <div>
+                <label style={mLbl}>Type</label>
+                <select value={form.project_type} onChange={e => set('project_type', e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
+                  {['residential','commercial','plots','villa','apartment','industrial'].map(t => (
+                    <option key={t} value={t} style={{ textTransform: 'capitalize' }}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={mLbl}>RERA Number</label>
+                <input value={form.rera} onChange={e => set('rera', e.target.value)} style={mInp} placeholder="RERA/PNE/2024/001"
+                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              </div>
+              <div>
+                <label style={mLbl}>Total Area</label>
+                <input value={form.total_area} onChange={e => set('total_area', e.target.value)} style={mInp} placeholder="25 Acres"
+                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={mLbl}>Price Range</label>
+                <input value={form.price_range} onChange={e => set('price_range', e.target.value)} style={mInp} placeholder="₹45L – ₹1.2Cr"
+                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              </div>
+              <div>
+                <label style={mLbl}>Possession Date</label>
+                <input value={form.possession} onChange={e => set('possession', e.target.value)} style={mInp} placeholder="Dec 2026"
+                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              </div>
+            </div>
+            <div>
+              <label style={mLbl}>Description</label>
+              <textarea value={form.description} onChange={e => set('description', e.target.value)}
+                rows={3} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.is_active ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.is_active ? '#F0FFF4' : '#FAFAFA' }}>
+              <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} style={{ accentColor: '#2E7D32' }} />
+              <span style={{ fontWeight: 600, color: form.is_active ? '#2E7D32' : '#6B7280' }}>Active project</span>
+            </label>
           </div>
 
-          {/* RERA + Total Area */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>RERA Number</label>
-              <input value={form.rera} onChange={e => set('rera', e.target.value)} style={inp} placeholder="RERA/PNE/2024/001" />
-            </div>
-            <div>
-              <label style={lbl}>Total Area</label>
-              <input value={form.total_area} onChange={e => set('total_area', e.target.value)} style={inp} placeholder="25 Acres" />
-            </div>
+          {/* Media */}
+          <div style={mSec}>Media</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+            <MediaUpload label="Cover Image" value={form.cover_image_url} onChange={v => set('cover_image_url', v)}
+              folder="erp/projects/covers" accept="image/*" hint="Upload project cover image (JPG / PNG)" />
+            <MediaUpload label="Master Plan" value={form.master_plan_url} onChange={v => set('master_plan_url', v)}
+              folder="erp/projects/masterplans" accept="image/*,application/pdf" hint="Upload master plan image or PDF" />
           </div>
 
-          {/* Price Range + Possession (+ Total Plots for edit mode only) */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>Price Range</label>
-              <input value={form.price_range} onChange={e => set('price_range', e.target.value)} style={inp} placeholder="₹45L – ₹1.2Cr" />
-            </div>
-            <div>
-              <label style={lbl}>Possession Date</label>
-              <input value={form.possession} onChange={e => set('possession', e.target.value)} style={inp} placeholder="Dec 2026" />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label style={lbl}>Description</label>
-            <textarea value={form.description} onChange={e => set('description', e.target.value)}
-              rows={3} style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
-          </div>
-
-          {/* Cover Image */}
-          <MediaUpload label="Cover Image" value={form.cover_image_url} onChange={v => set('cover_image_url', v)}
-            folder="erp/projects/covers" accept="image/*" hint="Upload project cover image (JPG / PNG)" />
-
-          {/* Master Plan */}
-          <MediaUpload label="Master Plan" value={form.master_plan_url} onChange={v => set('master_plan_url', v)}
-            folder="erp/projects/masterplans" accept="image/*,application/pdf" hint="Upload master plan image or PDF" />
-
-          {/* Active */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer' }}>
-            <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} />
-            Active project
-          </label>
-
-          {/* ── Plot Setup ── */}
-          <div style={{ borderTop: '1.5px solid #F0F3FA', paddingTop: 16 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-              Plot Setup
-            </p>
-
+          {/* Plot Setup */}
+          <div style={mSec}>Plot Setup</div>
+          <div style={{ marginBottom: 20 }}>
             {isEdit ? (
-              /* ── EDIT MODE: show existing info + total count + optional add-more ── */
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Editable type names */}
                 {editableTypes.length > 0 && (
                   <div>
-                    <label style={lbl}>Plot Types — click to rename</label>
+                    <label style={mLbl}>Plot Types — click to rename</label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
                       {editableTypes.map((t, i) => (
                         <div key={i} style={{ position: 'relative' }}>
-                          <input
-                            value={t.current}
+                          <input value={t.current}
                             onChange={e => setEditableTypes(prev => prev.map((x, xi) => xi === i ? { ...x, current: e.target.value } : x))}
-                            style={{
-                              fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20,
-                              background: t.original !== t.current ? '#FFF7ED' : '#EDE7F6',
-                              color: t.original !== t.current ? '#C2410C' : '#673AB7',
-                              border: `1.5px solid ${t.original !== t.current ? '#FED7AA' : '#C4B5E0'}`,
-                              outline: 'none', minWidth: 70, textAlign: 'center',
-                            }}
-                          />
+                            style={{ fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20, background: t.original !== t.current ? '#FFF7ED' : '#EDE7F6', color: t.original !== t.current ? '#C2410C' : '#673AB7', border: `1.5px solid ${t.original !== t.current ? '#FED7AA' : '#C4B5E0'}`, outline: 'none', minWidth: 70, textAlign: 'center' }} />
                           {t.original !== t.current && (
-                            <span style={{ position: 'absolute', top: -6, right: -4, fontSize: 9, background: '#C2410C', color: '#fff', borderRadius: 10, padding: '1px 5px', fontWeight: 700 }}>
-                              renamed
-                            </span>
+                            <span style={{ position: 'absolute', top: -6, right: -4, fontSize: 9, background: '#C2410C', color: '#fff', borderRadius: 10, padding: '1px 5px', fontWeight: 700 }}>renamed</span>
                           )}
                         </div>
                       ))}
                     </div>
                     {editableTypes.some(t => t.original !== t.current) && (
-                      <p style={{ fontSize: 11, color: '#C2410C', marginTop: 6 }}>
-                        ⚠ Renaming will update all plots with that type name.
-                      </p>
+                      <p style={{ fontSize: 11, color: '#C2410C', marginTop: 6 }}>⚠ Renaming will update all plots with that type name.</p>
                     )}
                   </div>
                 )}
-
-                {/* Total plots editable */}
                 <div style={{ maxWidth: 200 }}>
-                  <label style={lbl}>Total Plots / Units</label>
-                  <input type="number" min="0" value={form.total_plots}
-                    onChange={e => set('total_plots', e.target.value)}
-                    style={inp} placeholder="e.g. 36" />
+                  <label style={mLbl}>Total Plots / Units</label>
+                  <input type="number" min="0" value={form.total_plots} onChange={e => set('total_plots', e.target.value)} style={mInp} placeholder="e.g. 36" />
                 </div>
-
-                {/* Add more plots toggle */}
-                <div>
-                  <button type="button" onClick={() => setAddingMore(m => !m)}
-                    style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#EF4444' : '#3D5AFE', background: 'none', border: `1.5px dashed ${addingMore ? '#EF4444' : '#3D5AFE'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
-                    {addingMore ? '✕ Cancel adding plots' : '+ Add More Plots'}
-                  </button>
-                </div>
-
-                {addingMore && <PlotWizard
-                  hasTypes={hasTypes} setHasTypes={setHasTypes}
-                  noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots}
-                  plotTypes={plotTypes} setPlotTypes={setPlotTypes}
-                  addType={addType} removeType={removeType} updateType={updateType}
-                  validTypes={validTypes} totalTypePlots={totalTypePlots}
-                  inp={inp} lbl={lbl}
-                />}
+                <button type="button" onClick={() => setAddingMore(m => !m)}
+                  style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#EF4444' : '#3D5AFE', background: 'none', border: `1.5px dashed ${addingMore ? '#EF4444' : '#3D5AFE'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer', width: 'fit-content' }}>
+                  {addingMore ? '✕ Cancel adding plots' : '+ Add More Plots'}
+                </button>
+                {addingMore && <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} />}
               </div>
             ) : (
-              /* ── ADD MODE: full wizard ── */
-              <PlotWizard
-                hasTypes={hasTypes} setHasTypes={setHasTypes}
-                noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots}
-                plotTypes={plotTypes} setPlotTypes={setPlotTypes}
-                addType={addType} removeType={removeType} updateType={updateType}
-                validTypes={validTypes} totalTypePlots={totalTypePlots}
-                inp={inp} lbl={lbl}
-              />
+              <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} />
             )}
           </div>
 
-          {err && <p style={{ color: '#EF4444', fontSize: 12 }}>{err}</p>}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
-            <button type="button" onClick={onClose} style={cancelBtn}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ ...saveBtn, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Creating…' : isEdit ? 'Save Changes' : 'Add Project'}
+          {err && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: '#DC2626' }}>{err}</div>}
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
+              {saving ? 'Saving…' : isEdit ? 'Save Changes' : '+ Add Project'}
             </button>
           </div>
         </form>

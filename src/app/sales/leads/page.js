@@ -307,126 +307,134 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 
   const fuStatusColor = { pending: '#F9A825', completed: '#2E7D32', missed: '#B71C1C', rescheduled: '#0097A7' };
 
+  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
+  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
+  const mSec = { fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 };
+
   return (
     <div style={overlay}>
-      <div style={{ ...modal, maxWidth: 600, maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ ...modalHeader, flexShrink: 0 }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '92%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+        {/* Gradient Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>{lead.name}</h2>
-            <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</p>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {lead.name}
+              {lead.is_duplicate && <span style={{ fontSize: 9, fontWeight: 800, backgroundColor: '#DC2626', color: '#fff', padding: '2px 7px', borderRadius: 6 }}>⚠ DUP</span>}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
           </div>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', flexShrink: 0, backgroundColor: '#FAFBFF' }}>
           {[['detail','Detail'],['history','History'],['followups','Follow-ups']].map(([k,label]) => (
             <button key={k} onClick={() => setActiveTab(k)} style={tabStyle(k)}>{label}</button>
           ))}
         </div>
 
         {/* Tab content */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
+        <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px' }}>
 
           {/* ── DETAIL TAB ── */}
           {activeTab === 'detail' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Contact */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+              {/* Contact Info */}
+              <div style={mSec}>Contact Info</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
-                  <label style={lbl}>Name</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inp} />
+                  <label style={mLbl}>Name</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={mInp}
+                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
                 </div>
                 <div>
-                  <label style={lbl}>Alternate Phone</label>
-                  <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={inp} placeholder="Alt. number" />
+                  <label style={mLbl}>Alternate Phone</label>
+                  <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
+                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+              {/* Assignment */}
+              <div style={mSec}>Assignment</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
-                  <label style={lbl}>Overall Status</label>
-                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inp}>
+                  <label style={mLbl}>Overall Status</label>
+                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>Project</label>
-                  <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={inp}>
+                  <label style={mLbl}>Project</label>
+                  <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">—</option>
                     {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>Telecaller (Pre-Sales)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+              {/* Telecaller */}
+              <div style={mSec}>Telecaller (Pre-Sales)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
                 <div>
-                  <label style={lbl}>Assign Telecaller</label>
-                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={inp}>
+                  <label style={mLbl}>Assign Telecaller</label>
+                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>TC Status</label>
-                  <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={inp}>
+                  <label style={mLbl}>TC Status</label>
+                  <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={lbl}>TC Remarks</label>
+              <div style={{ marginBottom: 18 }}>
+                <label style={mLbl}>TC Remarks</label>
                 <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
-                  rows={2} style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
+                  rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>STM (Sales)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+              {/* STM */}
+              <div style={mSec}>STM (Sales)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
                 <div>
-                  <label style={lbl}>Assign STM</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={inp}>
+                  <label style={mLbl}>Assign STM</label>
+                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>STM Status</label>
-                  <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={inp}>
+                  <label style={mLbl}>STM Status</label>
+                  <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={lbl}>STM Remarks</label>
+              <div style={{ marginBottom: 18 }}>
+                <label style={mLbl}>STM Remarks</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
-                  rows={2} style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
+                  rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
 
               {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
-                <>
-                  <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>Meta Ads Info</p>
+                <div style={{ background: '#F8FAFD', borderRadius: 10, padding: '12px 14px', marginBottom: 18 }}>
+                  <div style={mSec}>Meta Ads Info</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {lead.meta_campaign_name && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', minWidth: 72 }}>CAMPAIGN</span><span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_campaign_name}</span></div>}
                     {lead.meta_adset_name    && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', minWidth: 72 }}>AD SET</span><span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_adset_name}</span></div>}
                     {lead.meta_ad_name       && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', minWidth: 72 }}>AD NAME</span><span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_ad_name}</span></div>}
                   </div>
-                </>
+                </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-                <button onClick={onClose} style={cancelBtn}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ ...saveBtn, opacity: saving ? 0.6 : 1 }}>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
+                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
@@ -489,30 +497,30 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {/* Add new followup */}
               <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Schedule Follow-up</p>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 10 }}>
                   <div>
-                    <label style={lbl}>Role</label>
-                    <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={inp}>
+                    <label style={mLbl}>Role</label>
+                    <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                       <option value="telecaller">Telecaller</option>
                       <option value="stm">STM</option>
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>Date & Time</label>
+                    <label style={mLbl}>Date & Time</label>
                     <input type="datetime-local" value={fuForm.scheduled_at}
-                      onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={inp} />
+                      onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={mInp} />
                   </div>
                 </div>
                 <div style={{ marginBottom: 10 }}>
-                  <label style={lbl}>Remarks</label>
+                  <label style={mLbl}>Remarks</label>
                   <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
                     placeholder="Call notes, instructions…" rows={2}
-                    style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
+                    style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
                 </div>
-                {fuErr && <p style={{ color: '#EF4444', fontSize: 12, marginBottom: 8 }}>{fuErr}</p>}
+                {fuErr && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 12, color: '#DC2626' }}>{fuErr}</div>}
                 <button onClick={addFollowup} disabled={savingFu}
-                  style={{ ...saveBtn, width: '100%', opacity: savingFu ? 0.6 : 1 }}>
+                  style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: savingFu ? 0.7 : 1 }}>
                   {savingFu ? 'Saving…' : '+ Add Follow-up'}
                 </button>
               </div>
