@@ -615,9 +615,18 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
 }
 
 /* ─── Plot Type Floor Plans Editor ─── */
-function PlotTypePlansEditor({ project, onProjectUpdate }) {
+function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
   const id = project.id;
-  const [plans, setPlans] = useState(project.plot_type_plans || []);
+
+  // Seed from cluster types on plots if plot_type_plans is empty
+  const seedPlans = () => {
+    const saved = project.plot_type_plans || [];
+    if (saved.length > 0) return saved;
+    const types = [...new Set(plots.map(p => p.cluster_type).filter(Boolean))].sort();
+    return types.map(name => ({ name, floor_plans: [] }));
+  };
+
+  const [plans, setPlans] = useState(seedPlans);
   const [activeType, setActiveType] = useState(0);
   const [newTypeName, setNewTypeName] = useState('');
   const [addingType, setAddingType] = useState(false);
@@ -913,7 +922,7 @@ export default function ManagePlotsPage() {
       </div>
 
       {/* Plot Type Floor Plans */}
-      <PlotTypePlansEditor project={project} onProjectUpdate={setProject} />
+      <PlotTypePlansEditor project={project} onProjectUpdate={setProject} plots={plots} />
 
       {/* Interactive Site Map */}
       <SiteMapEditor project={project} plots={plots} onProjectUpdate={setProject} />
