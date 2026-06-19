@@ -1,11 +1,11 @@
 import { DESIG_FETCH_SUCCESS, DESIG_CREATE_SUCCESS, DESIG_DELETE_SUCCESS, DESIG_ERROR } from '../actions/designationActions';
 
-const init = { designations: [], error: null };
+const init = { designations: [], error: null, lastFetched: null };
 
 export default function designationReducer(state = init, action) {
   switch (action.type) {
     case DESIG_FETCH_SUCCESS:
-      return { ...state, designations: action.payload, error: null };
+      return { ...state, designations: action.payload, error: null, lastFetched: Date.now() };
     case DESIG_CREATE_SUCCESS:
       return { ...state, designations: [...state.designations, action.payload], error: null };
     case DESIG_DELETE_SUCCESS:

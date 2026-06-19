@@ -48,11 +48,9 @@ export default function CompanyManagementPage() {
 
   useEffect(() => {
     dispatch(fetchCompanies());
-    const interval = setInterval(() => dispatch(fetchCompanies()), 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const handleRefresh = () => dispatch(fetchCompanies());
+  const handleRefresh = () => dispatch(fetchCompanies(true));
 
   useEffect(() => {
     if (updateSuccess) {
