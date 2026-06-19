@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
@@ -32,6 +32,35 @@ function StatusBadge({ status }) {
     <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: color + '18', color }}>
       {status?.replace(/_/g, ' ').toUpperCase()}
     </span>
+  );
+}
+
+function DupBadge({ count }) {
+  return (
+    <span title={`Duplicate phone — seen ${count || 1} time(s) before`}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 800, backgroundColor: '#FFF1F1', color: '#DC2626', border: '1px solid #FECACA', letterSpacing: 0.3 }}>
+      ⚠ DUP
+    </span>
+  );
+}
+
+/* ── Toast Notification ── */
+function DupToast({ toasts, onDismiss }) {
+  if (!toasts.length) return null;
+  return (
+    <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360 }}>
+      {toasts.map((t) => (
+        <div key={t.id} style={{ backgroundColor: '#fff', border: '1.5px solid #FECACA', borderLeft: '4px solid #DC2626', borderRadius: 12, padding: '12px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'slideIn 0.25s ease' }}>
+          <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#DC2626', marginBottom: 2 }}>Duplicate Lead</div>
+            <div style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+            <div style={{ fontSize: 11, color: '#8492A6', marginTop: 1 }}>{t.phone} · already in system</div>
+          </div>
+          <button onClick={() => onDismiss(t.id)} style={{ background: 'none', border: 'none', color: '#B0BAC9', cursor: 'pointer', fontSize: 16, flexShrink: 0, padding: 0 }}>✕</button>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -551,6 +580,14 @@ export default function SalesLeadsPage() {
   const [selected,    setSelected]    = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [deleting,    setDeleting]    = useState(false);
+  const [dupToasts,   setDupToasts]   = useState([]);
+
+  function showDupToast(lead) {
+    const id = Date.now() + Math.random();
+    setDupToasts((t) => [...t, { id, name: lead.name, phone: lead.phone }]);
+    setTimeout(() => setDupToasts((t) => t.filter((x) => x.id !== id)), 6000);
+  }
+  function dismissToast(id) { setDupToasts((t) => t.filter((x) => x.id !== id)); }
 
   const loadMeta = useCallback(async () => {
     const cachedP = getCache('projects');
@@ -600,10 +637,24 @@ export default function SalesLeadsPage() {
   useEffect(() => { loadLeads(); }, [loadLeads]);
   useEffect(() => { setPage(1); }, [filters]);
 
-  // Auto-refresh every 30 seconds to pick up new incoming leads
+  // Auto-refresh every 30 seconds — notify on newly arrived duplicates
+  const knownIdsRef = React.useRef(new Set());
   useEffect(() => {
-    const id = setInterval(() => {
+    knownIdsRef.current = new Set(leads.map((l) => l.id));
+  }, [leads]);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
       bustLeadsCache();
+      // Fetch page 1 to check for new duplicates
+      const params = new URLSearchParams({ page: 1, is_duplicate: 'true' });
+      try {
+        const res  = await fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() });
+        const data = await res.json();
+        (data.results ?? []).forEach((l) => {
+          if (!knownIdsRef.current.has(l.id)) showDupToast(l);
+        });
+      } catch { /* ignore */ }
       loadLeads();
     }, 30000);
     return () => clearInterval(id);
@@ -652,6 +703,7 @@ export default function SalesLeadsPage() {
 
   return (
     <div style={{ padding: '24px 28px' }}>
+      <DupToast toasts={dupToasts} onDismiss={dismissToast} />
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
@@ -800,16 +852,22 @@ export default function SalesLeadsPage() {
               ) : leads.length === 0 ? (
                 <tr><td colSpan={12} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (
-                <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FAFBFE'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>
-                  <td style={td} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
+                <tr key={l.id}
+                  style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FFFBFB' : '' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FFF5F5' : '#FAFBFE'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FFFBFB' : ''}>
+                  {l.is_duplicate && (
+                    <td style={{ ...td, padding: 0, width: 3 }}>
+                      <div style={{ width: 3, height: '100%', minHeight: 48, backgroundColor: '#DC2626', borderRadius: '2px 0 0 2px' }} />
+                    </td>
+                  )}
+                  <td style={td} colSpan={l.is_duplicate ? undefined : undefined} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
                     <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
-                      {l.is_duplicate && <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 700 }}>DUP</span>}
+                      {l.is_duplicate && <DupBadge count={l.duplicate_count} />}
                     </div>
                     {(l.meta_campaign_name || l.meta_adset_name || l.meta_ad_name) && (
                       <div style={{ fontSize: 10, color: '#8492A6', marginTop: 2, lineHeight: 1.4 }}>
@@ -871,7 +929,7 @@ export default function SalesLeadsPage() {
       {/* Modals */}
       {addModal && (
         <AddLeadModal projects={projects} sources={sources}
-          onClose={() => setAddModal(false)} onAdded={() => { loadLeads(); }} />
+          onClose={() => setAddModal(false)} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}
