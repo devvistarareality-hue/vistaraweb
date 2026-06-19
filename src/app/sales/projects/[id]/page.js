@@ -530,10 +530,10 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
           {cfg.label}
         </span>
       </div>
-      {/* Size sub-row */}
-      {plot.size && (
-        <div style={{ padding: '0 14px 8px', fontSize: 11, color: '#A0AABA' }}>{plot.size}</div>
-      )}
+      {/* Size sub-row — always rendered so all cards stay the same height */}
+      <div style={{ padding: '0 14px 8px', fontSize: 11, color: '#A0AABA', minHeight: 20 }}>
+        {plot.size || ''}
+      </div>
 
       {/* Status toggles */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 12px' }}>
