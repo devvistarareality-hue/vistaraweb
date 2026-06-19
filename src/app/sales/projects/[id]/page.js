@@ -501,31 +501,33 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
   const inpStyle = { width: '100%', padding: '7px 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, outline: 'none', boxSizing: 'border-box', background: '#fff' };
   const lblStyle = { fontSize: 10, fontWeight: 700, color: '#B0BAC9', textTransform: 'uppercase', marginBottom: 4, display: 'block' };
 
+  // Strip the type prefix from the display number (e.g. "Ananda1" → "1", "A10" → "10", "1" → "1")
+  const displayNum = plot.cluster_type
+    ? plot.number.replace(new RegExp('^' + plot.cluster_type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), '')
+    : plot.number;
+
   return (
     <div style={{
-      backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden',
-      boxShadow: '0 2px 8px rgba(184,196,214,0.18)',
-      border: `1.5px solid ${editing ? '#3D5AFE40' : cfg.border + '30'}`,
-      opacity: saving ? 0.75 : 1, transition: 'opacity 0.2s, border-color 0.2s',
+      backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden',
+      boxShadow: '0 2px 10px rgba(184,196,214,0.18)',
+      border: `1.5px solid ${editing ? '#3D5AFE40' : '#E8ECF4'}`,
+      opacity: saving ? 0.75 : 1, transition: 'opacity 0.2s',
     }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#FAFBFF', borderBottom: '1px solid #F0F3FA' }}>
-        <span style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>#{plot.number}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
-          <button onClick={() => editing ? setEditing(false) : openEdit()}
-            style={{ background: editing ? '#182350' : '#F0F3FA', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 700, color: editing ? '#fff' : '#8492A6', cursor: 'pointer' }}>
-            {editing ? '✕' : '✎ Edit'}
-          </button>
-        </div>
+      {/* Header row: #num | type badge | size | status badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 10px' }}>
+        <span style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>#{displayNum}</span>
+        {plot.cluster_type && (
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: '#EDE7F6', color: '#673AB7' }}>
+            {plot.cluster_type}
+          </span>
+        )}
+        {plot.size && (
+          <span style={{ fontSize: 12, color: '#8492A6', marginLeft: 2 }}>{plot.size}</span>
+        )}
+        <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color }}>
+          {cfg.label}
+        </span>
       </div>
-
-      {/* Info row — only show size, not cluster_type (already encoded in plot number) */}
-      {!editing && plot.size && (
-        <div style={{ padding: '6px 14px', fontSize: 11, color: '#8492A6', display: 'flex', flexWrap: 'wrap', gap: '2px 8px', borderBottom: '1px solid #F0F3FA' }}>
-          <span>{plot.size}</span>
-        </div>
-      )}
 
       {/* Edit panel — 4 fields only */}
       {editing && (
@@ -582,20 +584,28 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
       )}
 
       {/* Status toggles */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, padding: '10px 14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 10px' }}>
         {Object.entries(STATUS_CFG).map(([s, c]) => (
           <button key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
             style={{
-              padding: '6px 4px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+              padding: '8px 4px', borderRadius: 10, fontSize: 12, fontWeight: 700,
               cursor: plot.status === s ? 'default' : 'pointer',
-              background: plot.status === s ? c.bg : '#fff',
-              color: plot.status === s ? c.color : '#8492A6',
-              border: `1.5px solid ${plot.status === s ? c.border + '70' : '#E0E6F0'}`,
+              background: plot.status === s ? c.bg : '#F5F6FA',
+              color: plot.status === s ? c.color : '#B0BAC9',
+              border: `1.5px solid ${plot.status === s ? c.border + '60' : 'transparent'}`,
               transition: 'all 0.15s',
             }}>
             {c.label}
           </button>
         ))}
+      </div>
+
+      {/* Edit Info button */}
+      <div style={{ borderTop: '1px solid #F0F3FA', padding: '10px 14px' }}>
+        <button onClick={() => editing ? setEditing(false) : openEdit()}
+          style={{ width: '100%', padding: '9px', background: '#F8F9FB', border: '1px solid #E8ECF4', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#8492A6', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          {editing ? '✕ Cancel' : '✏ Edit Info'}
+        </button>
       </div>
     </div>
   );
