@@ -366,77 +366,80 @@ export default function ProjectsPage() {
             const pct = total ? Math.round(sold / total * 100) : 0;
             return (
               <div key={p.id} style={card}>
-                {/* Full-bleed image */}
-                <div style={{ position: 'relative' }}>
+                {/* Image area — contain so nothing is cropped */}
+                <div style={{ position: 'relative', background: '#F2F4F8', height: 180, overflow: 'hidden' }}>
                   {p.cover_image_url ? (
                     <img src={p.cover_image_url} alt={p.name}
-                      style={{ width: '100%', height: 200, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
                   ) : (
-                    <div style={{ width: '100%', height: 200, background: '#EEF1F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C0C8D8" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                      <span style={{ fontSize: 12, color: '#B0BAC9' }}>No cover image</span>
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C0C8D8" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      <span style={{ fontSize: 12, color: '#C0C8D8' }}>No cover image</span>
                     </div>
                   )}
-                  <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 18, backgroundColor: p.is_active ? '#E8F5E9' : '#FEF2F2', color: p.is_active ? '#2E7D32' : '#C62828', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
-                    {p.is_active ? 'ACTIVE' : 'INACTIVE'}
-                  </span>
+                  {/* Status badge + type chip overlaid */}
+                  <div style={{ position: 'absolute', top: 10, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: '#8492A6', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
+                      {p.project_type}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: p.is_active ? '#E8F5E9' : '#FEF2F2', color: p.is_active ? '#2E7D32' : '#C62828', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
+                      {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Card content */}
-                <div style={{ padding: '16px 18px', borderTop: '1.5px solid #EEF1F7' }}>
+                <div style={{ padding: '14px 16px 16px' }}>
+                  {/* Name + location */}
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E', marginBottom: 2 }}>{p.name}</p>
+                  {p.location && <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 6 }}>📍 {p.location}</p>}
+                  {p.tagline && <p style={{ fontSize: 11, color: '#A0AABA', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
 
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 2 }}>{p.name}</p>
-                    {p.tagline && <p style={{ fontSize: 11, color: '#8492A6', fontStyle: 'italic', marginBottom: 2 }}>{p.tagline}</p>}
-                    {p.location && <p style={{ fontSize: 12, color: '#8492A6' }}>📍 {p.location}</p>}
-                  </div>
-                </div>
-
-                {/* Meta */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginBottom: 10, fontSize: 12, color: '#8492A6' }}>
-                  <span style={{ textTransform: 'capitalize' }}>{p.project_type}</span>
-                  {p.total_area && <span>• {p.total_area}</span>}
-                  {p.price_range && <span>• {p.price_range}</span>}
-                  {p.possession && <span>• {p.possession}</span>}
-                  {p.rera && <span>• {p.rera}</span>}
-                </div>
-
-                {/* Plot progress */}
-                {total > 0 && (
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8492A6', marginBottom: 4 }}>
-                      <span>{total} plots</span>
-                      <span style={{ display: 'flex', gap: 8 }}>
-                        <span style={{ color: '#2E7D32' }}>✓ {pc.available} avail</span>
-                        <span style={{ color: '#E65100' }}>⏸ {pc.hold} hold</span>
-                        <span style={{ color: '#EF4444' }}>✕ {pc.sold} sold</span>
-                      </span>
+                  {/* Meta chips */}
+                  {(p.total_area || p.price_range || p.possession) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                      {p.total_area   && <span style={metaChip}>{p.total_area}</span>}
+                      {p.price_range  && <span style={metaChip}>{p.price_range}</span>}
+                      {p.possession   && <span style={metaChip}>📅 {p.possession}</span>}
                     </div>
-                    <div style={{ height: 5, borderRadius: 4, background: '#F0F3FA', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#3D5AFE,#E91E63)', borderRadius: 4, transition: 'width 0.4s' }} />
-                    </div>
-                    <div style={{ fontSize: 10, color: '#8492A6', marginTop: 2 }}>{pct}% sold</div>
-                  </div>
-                )}
-
-                <p style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 600, marginBottom: 12 }}>{p.lead_count} leads</p>
-
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {total > 0 && (
-                    <button onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
-                      Manage Plots
-                    </button>
                   )}
-                  <button onClick={() => setShowModal(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
-                  <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#E65100' : '#2E7D32' }}>
-                    {p.is_active ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#EF4444', borderColor: '#EF4444' }}>✕</button>
+
+                  {/* Plot stats */}
+                  {total > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8492A6', marginBottom: 5 }}>
+                        <span style={{ fontWeight: 600 }}>{total} plots</span>
+                        <span style={{ display: 'flex', gap: 10 }}>
+                          <span style={{ color: '#2E7D32', fontWeight: 600 }}>✓ {pc.available}</span>
+                          <span style={{ color: '#E65100', fontWeight: 600 }}>⏸ {pc.hold}</span>
+                          <span style={{ color: '#EF4444', fontWeight: 600 }}>✕ {pc.sold}</span>
+                        </span>
+                      </div>
+                      <div style={{ height: 4, borderRadius: 4, background: '#EEF1F7', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#3D5AFE,#E91E63)', borderRadius: 4 }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Leads */}
+                  <p style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 700, marginBottom: 12 }}>
+                    {p.lead_count} {p.lead_count === 1 ? 'lead' : 'leads'}
+                  </p>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {total > 0 && (
+                      <button onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
+                        Manage Plots
+                      </button>
+                    )}
+                    <button onClick={() => setShowModal(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
+                    <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#E65100' : '#2E7D32', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
+                      {p.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#EF4444', borderColor: '#EF444440', padding: '7px 10px' }}>✕</button>
+                  </div>
                 </div>
-                </div>{/* end card content */}
               </div>
             );
           })}
@@ -461,6 +464,7 @@ const cancelBtn      = { padding: '9px 16px', backgroundColor: '#F0F3FA', color:
 const outlineBtn     = { padding: '7px 12px', backgroundColor: '#fff', border: '1.5px solid #C6D0DB', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1A1A2E', cursor: 'pointer' };
 const primaryOutlineBtn = { padding: '7px 12px', backgroundColor: '#F0F3FF', border: '1.5px solid #3D5AFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#3D5AFE', cursor: 'pointer' };
 const card           = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(100,120,160,0.16)', border: '1.5px solid #DDE3EE', overflow: 'hidden' };
+const metaChip       = { fontSize: 11, fontWeight: 600, color: '#6B7A90', backgroundColor: '#F0F3F8', padding: '3px 8px', borderRadius: 6 };
 const overlay        = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal          = { backgroundColor: '#fff', borderRadius: 16, width: '90%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader    = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F0F3FA' };
