@@ -109,6 +109,10 @@ function ProjectModal({ project, onClose, onSaved }) {
   const [plotTypes,   setPlotTypes]   = useState([{ name: '', from: '1', to: '' }]);
   // For edit: track whether the "add more plots" section is expanded
   const [addingMore,  setAddingMore]  = useState(false);
+  // For edit: editable type names — [{original, current}]
+  const [editableTypes, setEditableTypes] = useState(
+    () => (project?.plot_type_plans || []).map(pt => ({ original: pt.name, current: pt.name }))
+  );
 
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
@@ -157,12 +161,33 @@ function ProjectModal({ project, onClose, onSaved }) {
 
     if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
 
+    // Rename cluster_types on plots if type names changed (edit only)
+    if (isEdit) {
+      const renames = editableTypes.filter(t => t.original !== t.current && t.current.trim());
+      for (const r of renames) {
+        await fetch(SALES_ENDPOINTS.plotsRenameType, {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ project_id: data.id, old_name: r.original, new_name: r.current.trim() }),
+        });
+      }
+      // Also update plot_type_plans names to match
+      if (renames.length > 0) {
+        const updatedPlans = (project.plot_type_plans || []).map(pt => {
+          const rename = renames.find(r => r.original === pt.name);
+          return rename ? { ...pt, name: rename.current.trim() } : pt;
+        });
+        await fetch(SALES_ENDPOINTS.project(data.id), {
+          method: 'PATCH', headers: authHeaders(),
+          body: JSON.stringify({ plot_type_plans: updatedPlans }),
+        });
+      }
+    }
+
     if (plots.length > 0) {
       await fetch(SALES_ENDPOINTS.plotsBulk, {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ project_id: data.id, plots }),
       });
-      // Update total_plots to the real count now that plots are created
       const newTotal = isEdit ? totalPlots + plots.length : plots.length;
       await fetch(SALES_ENDPOINTS.project(data.id), {
         method: 'PATCH', headers: authHeaders(),
@@ -273,15 +298,37 @@ function ProjectModal({ project, onClose, onSaved }) {
             {isEdit ? (
               /* ── EDIT MODE: show existing info + total count + optional add-more ── */
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Existing types chips */}
-                {(project?.plot_type_plans || []).length > 0 && (
+                {/* Editable type names */}
+                {editableTypes.length > 0 && (
                   <div>
-                    <label style={lbl}>Existing Plot Types</label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                      {(project.plot_type_plans || []).map(pt => (
-                        <span key={pt.name} style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: '#EDE7F6', color: '#673AB7' }}>{pt.name}</span>
+                    <label style={lbl}>Plot Types — click to rename</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                      {editableTypes.map((t, i) => (
+                        <div key={i} style={{ position: 'relative' }}>
+                          <input
+                            value={t.current}
+                            onChange={e => setEditableTypes(prev => prev.map((x, xi) => xi === i ? { ...x, current: e.target.value } : x))}
+                            style={{
+                              fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20,
+                              background: t.original !== t.current ? '#FFF7ED' : '#EDE7F6',
+                              color: t.original !== t.current ? '#C2410C' : '#673AB7',
+                              border: `1.5px solid ${t.original !== t.current ? '#FED7AA' : '#C4B5E0'}`,
+                              outline: 'none', minWidth: 70, textAlign: 'center',
+                            }}
+                          />
+                          {t.original !== t.current && (
+                            <span style={{ position: 'absolute', top: -6, right: -4, fontSize: 9, background: '#C2410C', color: '#fff', borderRadius: 10, padding: '1px 5px', fontWeight: 700 }}>
+                              renamed
+                            </span>
+                          )}
+                        </div>
                       ))}
                     </div>
+                    {editableTypes.some(t => t.original !== t.current) && (
+                      <p style={{ fontSize: 11, color: '#C2410C', marginTop: 6 }}>
+                        ⚠ Renaming will update all plots with that type name.
+                      </p>
+                    )}
                   </div>
                 )}
 
