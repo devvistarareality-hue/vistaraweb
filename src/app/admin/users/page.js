@@ -52,11 +52,9 @@ export default function UserManagementPage() {
   useEffect(() => {
     dispatch(fetchUsers());
     dispatch(fetchDesignations());
-    const interval = setInterval(() => dispatch(fetchUsers()), 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const handleRefresh = () => { dispatch(fetchUsers()); dispatch(fetchDesignations()); };
+  const handleRefresh = () => { dispatch(fetchUsers(true)); dispatch(fetchDesignations(true)); };
 
   useEffect(() => {
     if (updateSuccess) {
