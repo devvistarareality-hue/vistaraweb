@@ -453,7 +453,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
   );
 }
 
-const UNITS = ['sqft', 'sqmtr', 'sqyrds', 'bigha'];
+const UNITS = ['sqft', 'sqyrd', 'sqmtr', 'bigha'];
 
 function parseSizeUnit(sizeStr) {
   if (!sizeStr) return { sizeVal: '', unit: 'sqft' };
@@ -473,13 +473,17 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
     ? plot.number.replace(new RegExp('^' + plot.cluster_type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), '')
     : plot.number;
 
-  // Edit state — size as plain string, type and numeric number separately
-  const [sizeLabel, setSizeLabel] = useState(plot.size || '');
-  const [editType,  setEditType]  = useState(plot.cluster_type || '');
-  const [editNum,   setEditNum]   = useState(displayNum);
+  // Edit state
+  const parsedSize = parseSizeUnit(plot.size);
+  const [sizeVal,  setSizeVal]  = useState(parsedSize.sizeVal);
+  const [sizeUnit, setSizeUnit] = useState(UNITS.includes(parsedSize.unit) ? parsedSize.unit : 'sqft');
+  const [editType, setEditType] = useState(plot.cluster_type || '');
+  const [editNum,  setEditNum]  = useState(displayNum);
 
   function openEdit() {
-    setSizeLabel(plot.size || '');
+    const p = parseSizeUnit(plot.size);
+    setSizeVal(p.sizeVal);
+    setSizeUnit(UNITS.includes(p.unit) ? p.unit : 'sqft');
     setEditType(plot.cluster_type || '');
     setEditNum(displayNum);
     setEditing(true);
@@ -494,10 +498,11 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
 
   async function saveEdit() {
     setSaving(true);
-    const newNumber = editType.trim() ? `${editType.trim()}${editNum}` : editNum;
+    const newNumber  = editType.trim() ? `${editType.trim()}${editNum}` : editNum;
+    const combinedSize = sizeVal.trim() ? `${sizeVal.trim()} ${sizeUnit}` : '';
     const res = await fetch(SALES_ENDPOINTS.plot(plot.id), {
       method: 'PATCH', headers: authHeaders(),
-      body: JSON.stringify({ number: newNumber, size: sizeLabel.trim(), cluster_type: editType.trim() }),
+      body: JSON.stringify({ number: newNumber, size: combinedSize, cluster_type: editType.trim() }),
     });
     if (res.ok) { onPlotUpdate(await res.json()); setEditing(false); }
     setSaving(false);
@@ -557,11 +562,18 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
       {/* Expandable edit form */}
       {editing && (
         <div style={{ borderTop: '1px solid #F0F3FA', padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 12, background: '#FAFBFF' }}>
-          {/* Size / Label */}
+          {/* Size value + unit */}
           <div>
             <label style={lblStyle}>Label / Size</label>
-            <input value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
-              placeholder="e.g. 1948 sq ft" style={inpStyle} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input value={sizeVal} onChange={e => setSizeVal(e.target.value)}
+                placeholder="e.g. 5000" type="number" min="0"
+                style={{ ...inpStyle, flex: 1 }} />
+              <select value={sizeUnit} onChange={e => setSizeUnit(e.target.value)}
+                style={{ ...inpStyle, width: 90, flex: 'none', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238492A6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', paddingRight: 28 }}>
+                {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
           </div>
           {/* Cluster/Type + Number */}
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 10 }}>
