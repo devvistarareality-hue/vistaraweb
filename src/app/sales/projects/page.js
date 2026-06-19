@@ -11,6 +11,79 @@ function authHeaders() {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
+function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTypes, setPlotTypes, addType, removeType, updateType, validTypes, totalTypePlots, inp, lbl }) {
+  return (
+    <div>
+      {/* Has types toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 600 }}>Does this project have plot types?</span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[['No', false], ['Yes', true]].map(([label, val]) => (
+            <button key={label} type="button" onClick={() => setHasTypes(val)}
+              style={{ padding: '5px 16px', borderRadius: 7, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                borderColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#E0E6F0',
+                backgroundColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#fff',
+                color: hasTypes === val ? '#fff' : '#8492A6' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {!hasTypes ? (
+        <div>
+          <label style={lbl}>Number of Plots</label>
+          <input type="number" min="0" max="9999" value={noTypePlots}
+            onChange={e => setNoTypePlots(e.target.value)}
+            style={{ ...inp, maxWidth: 160 }} placeholder="e.g. 20" />
+          {Number(noTypePlots) > 0 && (
+            <div style={{ marginTop: 8, fontSize: 12, color: '#3D5AFE', background: '#F0F3FF', padding: '8px 12px', borderRadius: 8 }}>
+              Will create <strong>{noTypePlots}</strong> plots numbered <strong>1</strong> to <strong>{noTypePlots}</strong>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 6 }}>
+            <span style={lbl}>Type Name</span>
+            <span style={lbl}>From #</span>
+            <span style={lbl}>To #</span>
+            <span />
+          </div>
+          {plotTypes.map((pt, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+              <input value={pt.name} onChange={e => updateType(i, 'name', e.target.value)} style={inp} placeholder="e.g. A" />
+              <input type="number" min="1" value={pt.from} onChange={e => updateType(i, 'from', e.target.value)} style={inp} placeholder="1" />
+              <input type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)} style={inp} placeholder="10" />
+              <button type="button" onClick={() => removeType(i)}
+                style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? '#EF4444' : '#D1D5DB', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
+                disabled={plotTypes.length === 1}>✕</button>
+            </div>
+          ))}
+          <button type="button" onClick={addType}
+            style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: 'none', border: '1.5px dashed #3D5AFE', borderRadius: 8, padding: '6px 16px', cursor: 'pointer', marginBottom: 10 }}>
+            + Add Type
+          </button>
+          {validTypes.length > 0 && (
+            <div style={{ background: '#F8FAFD', borderRadius: 10, padding: '12px 14px', fontSize: 12, color: '#8492A6' }}>
+              {validTypes.map(pt => (
+                <div key={pt.name} style={{ marginBottom: 3 }}>
+                  <span style={{ fontWeight: 700, color: '#1A1A2E' }}>{pt.name}</span>{': '}
+                  <span style={{ color: '#3D5AFE' }}>{pt.name}{pt.from} → {pt.name}{pt.to}</span>
+                  <span style={{ marginLeft: 6 }}>({Number(pt.to) - Number(pt.from) + 1} plots)</span>
+                </div>
+              ))}
+              <div style={{ marginTop: 6, fontWeight: 700, color: '#182350', borderTop: '1px solid #E8ECF4', paddingTop: 6 }}>
+                Total: {totalTypePlots} plots
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProjectModal({ project, onClose, onSaved }) {
   const isEdit = !!project;
 
@@ -30,10 +103,12 @@ function ProjectModal({ project, onClose, onSaved }) {
     master_plan_url: project?.master_plan_url || '',
   });
 
-  // Plot setup (new projects only)
+  // Plot setup state (used for both Add and Edit)
   const [hasTypes,    setHasTypes]    = useState(false);
   const [noTypePlots, setNoTypePlots] = useState('');
   const [plotTypes,   setPlotTypes]   = useState([{ name: '', from: '1', to: '' }]);
+  // For edit: track whether the "add more plots" section is expanded
+  const [addingMore,  setAddingMore]  = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
@@ -68,13 +143,12 @@ function ProjectModal({ project, onClose, onSaved }) {
     e.preventDefault();
     if (!form.name.trim()) { setErr('Project name is required.'); return; }
 
-    const plots      = !isEdit ? buildPlots() : [];
+    // For new: build plots from wizard. For edit+addingMore: also build additional plots.
+    const plots      = (!isEdit || addingMore) ? buildPlots() : [];
     const totalPlots = isEdit ? (form.total_plots === '' ? 0 : Number(form.total_plots)) : plots.length;
 
     setSaving(true); setErr('');
 
-    // Send total_plots=0 on new project so the backend _sync_plots() creates nothing.
-    // We'll bulk-create plots ourselves, then PATCH total_plots to the real count.
     const payload = { ...form, total_plots: isEdit ? totalPlots : 0 };
     const url    = isEdit ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
     const method = isEdit ? 'PATCH' : 'POST';
@@ -83,15 +157,16 @@ function ProjectModal({ project, onClose, onSaved }) {
 
     if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
 
-    if (!isEdit && plots.length > 0) {
+    if (plots.length > 0) {
       await fetch(SALES_ENDPOINTS.plotsBulk, {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ project_id: data.id, plots }),
       });
       // Update total_plots to the real count now that plots are created
+      const newTotal = isEdit ? totalPlots + plots.length : plots.length;
       await fetch(SALES_ENDPOINTS.project(data.id), {
         method: 'PATCH', headers: authHeaders(),
-        body: JSON.stringify({ total_plots: totalPlots }),
+        body: JSON.stringify({ total_plots: newTotal }),
       });
     }
 
@@ -168,13 +243,6 @@ function ProjectModal({ project, onClose, onSaved }) {
             </div>
           </div>
 
-          {isEdit && (
-            <div style={{ maxWidth: 200 }}>
-              <label style={lbl}>Total Plots / Units</label>
-              <input type="number" min="0" value={form.total_plots} onChange={e => set('total_plots', e.target.value)} style={inp} placeholder="240" />
-            </div>
-          )}
-
           {/* Description */}
           <div>
             <label style={lbl}>Description</label>
@@ -196,91 +264,64 @@ function ProjectModal({ project, onClose, onSaved }) {
             Active project
           </label>
 
-          {/* ── Plot Setup (new projects only) ── */}
-          {!isEdit && (
-            <div style={{ borderTop: '1.5px solid #F0F3FA', paddingTop: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-                Plot Setup
-              </p>
+          {/* ── Plot Setup ── */}
+          <div style={{ borderTop: '1.5px solid #F0F3FA', paddingTop: 16 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+              Plot Setup
+            </p>
 
-              {/* Has types toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 600 }}>Does this project have plot types?</span>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {[['No', false], ['Yes', true]].map(([label, val]) => (
-                    <button key={label} type="button" onClick={() => setHasTypes(val)}
-                      style={{ padding: '5px 16px', borderRadius: 7, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                        borderColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#E0E6F0',
-                        backgroundColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#fff',
-                        color: hasTypes === val ? '#fff' : '#8492A6' }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {!hasTypes ? (
-                /* No types — simple count */
-                <div>
-                  <label style={lbl}>Number of Plots</label>
-                  <input type="number" min="0" max="9999" value={noTypePlots}
-                    onChange={e => setNoTypePlots(e.target.value)}
-                    style={{ ...inp, maxWidth: 160 }} placeholder="e.g. 20" />
-                  {Number(noTypePlots) > 0 && (
-                    <div style={{ marginTop: 8, fontSize: 12, color: '#3D5AFE', background: '#F0F3FF', padding: '8px 12px', borderRadius: 8 }}>
-                      Will create <strong>{noTypePlots}</strong> plots numbered <strong>1</strong> to <strong>{noTypePlots}</strong>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* With types */
-                <div>
-                  {/* Header labels */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 6 }}>
-                    <span style={lbl}>Type Name</span>
-                    <span style={lbl}>From #</span>
-                    <span style={lbl}>To #</span>
-                    <span />
-                  </div>
-                  {plotTypes.map((pt, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                      <input value={pt.name} onChange={e => updateType(i, 'name', e.target.value)}
-                        style={inp} placeholder='e.g. A' />
-                      <input type="number" min="1" value={pt.from} onChange={e => updateType(i, 'from', e.target.value)}
-                        style={inp} placeholder="1" />
-                      <input type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)}
-                        style={inp} placeholder="10" />
-                      <button type="button" onClick={() => removeType(i)}
-                        style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? '#EF4444' : '#D1D5DB', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
-                        disabled={plotTypes.length === 1}>✕</button>
-                    </div>
-                  ))}
-
-                  <button type="button" onClick={addType}
-                    style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: 'none', border: '1.5px dashed #3D5AFE', borderRadius: 8, padding: '6px 16px', cursor: 'pointer', marginBottom: 10 }}>
-                    + Add Type
-                  </button>
-
-                  {/* Preview */}
-                  {validTypes.length > 0 && (
-                    <div style={{ background: '#F8FAFD', borderRadius: 10, padding: '12px 14px', fontSize: 12, color: '#8492A6' }}>
-                      {validTypes.map(pt => (
-                        <div key={pt.name} style={{ marginBottom: 3 }}>
-                          <span style={{ fontWeight: 700, color: '#1A1A2E' }}>{pt.name}</span>
-                          {': '}
-                          <span style={{ color: '#3D5AFE' }}>{pt.name}{pt.from} → {pt.name}{pt.to}</span>
-                          <span style={{ marginLeft: 6 }}>({Number(pt.to) - Number(pt.from) + 1} plots)</span>
-                        </div>
+            {isEdit ? (
+              /* ── EDIT MODE: show existing info + total count + optional add-more ── */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Existing types chips */}
+                {(project?.plot_type_plans || []).length > 0 && (
+                  <div>
+                    <label style={lbl}>Existing Plot Types</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                      {(project.plot_type_plans || []).map(pt => (
+                        <span key={pt.name} style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: '#EDE7F6', color: '#673AB7' }}>{pt.name}</span>
                       ))}
-                      <div style={{ marginTop: 6, fontWeight: 700, color: '#182350', borderTop: '1px solid #E8ECF4', paddingTop: 6 }}>
-                        Total: {totalTypePlots} plots
-                      </div>
                     </div>
-                  )}
+                  </div>
+                )}
+
+                {/* Total plots editable */}
+                <div style={{ maxWidth: 200 }}>
+                  <label style={lbl}>Total Plots / Units</label>
+                  <input type="number" min="0" value={form.total_plots}
+                    onChange={e => set('total_plots', e.target.value)}
+                    style={inp} placeholder="e.g. 36" />
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Add more plots toggle */}
+                <div>
+                  <button type="button" onClick={() => setAddingMore(m => !m)}
+                    style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#EF4444' : '#3D5AFE', background: 'none', border: `1.5px dashed ${addingMore ? '#EF4444' : '#3D5AFE'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
+                    {addingMore ? '✕ Cancel adding plots' : '+ Add More Plots'}
+                  </button>
+                </div>
+
+                {addingMore && <PlotWizard
+                  hasTypes={hasTypes} setHasTypes={setHasTypes}
+                  noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots}
+                  plotTypes={plotTypes} setPlotTypes={setPlotTypes}
+                  addType={addType} removeType={removeType} updateType={updateType}
+                  validTypes={validTypes} totalTypePlots={totalTypePlots}
+                  inp={inp} lbl={lbl}
+                />}
+              </div>
+            ) : (
+              /* ── ADD MODE: full wizard ── */
+              <PlotWizard
+                hasTypes={hasTypes} setHasTypes={setHasTypes}
+                noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots}
+                plotTypes={plotTypes} setPlotTypes={setPlotTypes}
+                addType={addType} removeType={removeType} updateType={updateType}
+                validTypes={validTypes} totalTypePlots={totalTypePlots}
+                inp={inp} lbl={lbl}
+              />
+            )}
+          </div>
 
           {err && <p style={{ color: '#EF4444', fontSize: 12 }}>{err}</p>}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
