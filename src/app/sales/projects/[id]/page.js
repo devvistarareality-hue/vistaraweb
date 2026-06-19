@@ -602,6 +602,147 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
   );
 }
 
+/* ─── Plot Type Floor Plans Editor ─── */
+function PlotTypePlansEditor({ project, onProjectUpdate }) {
+  const id = project.id;
+  const [plans, setPlans] = useState(project.plot_type_plans || []);
+  const [activeType, setActiveType] = useState(0);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [addingType, setAddingType] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newFloorLabel, setNewFloorLabel] = useState('');
+
+  async function persist(updated) {
+    setSaving(true);
+    const res = await fetch(SALES_ENDPOINTS.project(id), {
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ plot_type_plans: updated }),
+    });
+    if (res.ok) { const p = await res.json(); onProjectUpdate(p); }
+    setSaving(false);
+  }
+
+  function addType() {
+    const name = newTypeName.trim();
+    if (!name) return;
+    const updated = [...plans, { name, floor_plans: [] }];
+    setPlans(updated);
+    setActiveType(updated.length - 1);
+    setNewTypeName('');
+    setAddingType(false);
+    persist(updated);
+  }
+
+  function removeType(idx) {
+    if (!window.confirm(`Remove plot type "${plans[idx].name}" and all its floor plans?`)) return;
+    const updated = plans.filter((_, i) => i !== idx);
+    setPlans(updated);
+    setActiveType(Math.max(0, activeType - (idx <= activeType ? 1 : 0)));
+    persist(updated);
+  }
+
+  function addFloor(typeIdx, url) {
+    const label = newFloorLabel.trim() || `Floor ${plans[typeIdx].floor_plans.length + 1}`;
+    const updated = plans.map((t, i) => i === typeIdx
+      ? { ...t, floor_plans: [...t.floor_plans, { label, url }] }
+      : t);
+    setPlans(updated);
+    setNewFloorLabel('');
+    persist(updated);
+  }
+
+  function removeFloor(typeIdx, floorIdx) {
+    const updated = plans.map((t, i) => i === typeIdx
+      ? { ...t, floor_plans: t.floor_plans.filter((_, fi) => fi !== floorIdx) }
+      : t);
+    setPlans(updated);
+    persist(updated);
+  }
+
+  const current = plans[activeType];
+
+  return (
+    <div style={{ backgroundColor: '#fff', borderRadius: 12, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Plot Type Floor Plans
+        </div>
+        {saving && <span style={{ fontSize: 11, color: '#3D5AFE' }}>Saving…</span>}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {plans.map((t, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+            <button onClick={() => setActiveType(i)} style={{
+              padding: '7px 14px', borderRadius: '8px 0 0 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              background: activeType === i ? '#182350' : '#F0F3FA',
+              color: activeType === i ? '#fff' : '#8492A6',
+              border: `1.5px solid ${activeType === i ? '#182350' : '#E0E6F0'}`, borderRight: 'none',
+            }}>
+              {t.name} <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 4 }}>{t.floor_plans.length}</span>
+            </button>
+            <button onClick={() => removeType(i)} style={{
+              padding: '7px 8px', borderRadius: '0 8px 8px 0', fontSize: 11, cursor: 'pointer',
+              background: activeType === i ? '#1e2d63' : '#F0F3FA',
+              color: activeType === i ? '#fff' : '#8492A6',
+              border: `1.5px solid ${activeType === i ? '#182350' : '#E0E6F0'}`,
+            }}>✕</button>
+          </div>
+        ))}
+        {addingType ? (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input autoFocus value={newTypeName} onChange={e => setNewTypeName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') addType(); if (e.key === 'Escape') { setAddingType(false); setNewTypeName(''); } }}
+              placeholder="Type name (e.g. Type A)" style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #3D5AFE', fontSize: 12, width: 160, outline: 'none' }} />
+            <button onClick={addType} style={{ height: 34, padding: '0 12px', background: '#182350', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Add</button>
+            <button onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 34, padding: '0 10px', background: '#F0F3FA', color: '#8492A6', border: '1px solid #E0E6F0', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setAddingType(true)} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#F0F3FF', color: '#3D5AFE', border: '1.5px dashed #3D5AFE80' }}>
+            + Add Type
+          </button>
+        )}
+      </div>
+
+      {plans.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '24px', color: '#B0BAC9', fontSize: 13 }}>
+          No plot types yet. Add a type (e.g. "Type A", "Villa 3BHK") to upload floor plans.
+        </div>
+      )}
+
+      {current && (
+        <div>
+          {current.floor_plans.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+              {current.floor_plans.map((fp, fi) => (
+                <div key={fi} style={{ borderRadius: 10, overflow: 'hidden', border: '1.5px solid #E0E6F0', background: '#FAFBFF' }}>
+                  <img src={fp.url} alt={fp.label} style={{ width: '100%', height: 130, objectFit: 'contain', background: '#f4f6fb', display: 'block' }} />
+                  <div style={{ padding: '7px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1A1A2E', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{fp.label}</span>
+                    <button onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 13, padding: 0 }}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ background: '#F8F9FF', borderRadius: 10, padding: '14px', border: '1px solid #E8ECF8' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.06em' }}>
+              Add Floor Plan to "{current.name}"
+            </div>
+            <input value={newFloorLabel} onChange={e => setNewFloorLabel(e.target.value)}
+              placeholder="Floor label (e.g. Ground Floor, 1st Floor…)"
+              style={{ width: '100%', height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 12, marginBottom: 10, boxSizing: 'border-box' }} />
+            <MediaUpload value="" label=""
+              onChange={url => addFloor(activeType, url)}
+              folder={`erp/projects/${id}/floor-plans`}
+              accept="image/*"
+              hint="Upload floor plan image (JPG / PNG)" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main Page ─── */
 export default function ManagePlotsPage() {
   const { id } = useParams();
@@ -756,6 +897,9 @@ export default function ManagePlotsPage() {
             folder="erp/projects/masterplans" accept="image/*,application/pdf" hint="Upload master plan — image or PDF" />
         )}
       </div>
+
+      {/* Plot Type Floor Plans */}
+      <PlotTypePlansEditor project={project} onProjectUpdate={setProject} />
 
       {/* Interactive Site Map */}
       <SiteMapEditor project={project} plots={plots} onProjectUpdate={setProject} />
