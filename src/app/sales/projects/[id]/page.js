@@ -805,7 +805,9 @@ export default function ManagePlotsPage() {
     setSavingMaster(false);
   }
 
-  const filtered = filter === 'all' ? plots : plots.filter(p => p.status === filter);
+  const filtered = (filter === 'all' ? plots : plots.filter(p => p.status === filter))
+    .slice()
+    .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true, sensitivity: 'base' }));
   const counts = {
     all:       plots.length,
     available: plots.filter(p => p.status === 'available').length,
