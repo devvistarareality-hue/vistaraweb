@@ -520,11 +520,10 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
         </div>
       </div>
 
-      {/* Info row */}
-      {!editing && (plot.size || plot.cluster_type) && (
+      {/* Info row — only show size, not cluster_type (already encoded in plot number) */}
+      {!editing && plot.size && (
         <div style={{ padding: '6px 14px', fontSize: 11, color: '#8492A6', display: 'flex', flexWrap: 'wrap', gap: '2px 8px', borderBottom: '1px solid #F0F3FA' }}>
-          {plot.size && <span>{plot.size}</span>}
-          {plot.cluster_type && <span>• {plot.cluster_type}</span>}
+          <span>{plot.size}</span>
         </div>
       )}
 
