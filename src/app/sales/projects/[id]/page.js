@@ -463,7 +463,7 @@ function parseSizeUnit(sizeStr) {
 }
 
 /* ─── Plot Card ─── */
-function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
+function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
   const cfg = STATUS_CFG[plot.status] || STATUS_CFG.available;
   const [saving,  setSaving]  = useState(false);
   const [editing, setEditing] = useState(false);
@@ -567,8 +567,16 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 10 }}>
             <div>
               <label style={{ ...lblStyle, whiteSpace: 'nowrap' }}>Cluster / Type</label>
-              <input value={editType} onChange={e => setEditType(e.target.value)}
-                placeholder="e.g. Ananda" style={inpStyle} />
+              {clusterTypes.length > 0 ? (
+                <select value={editType} onChange={e => setEditType(e.target.value)}
+                  style={{ ...inpStyle, cursor: 'pointer' }}>
+                  <option value="">— None —</option>
+                  {clusterTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              ) : (
+                <input value={editType} onChange={e => setEditType(e.target.value)}
+                  placeholder="e.g. Ananda" style={inpStyle} />
+              )}
             </div>
             <div>
               <label style={lblStyle}>Number</label>
@@ -924,7 +932,8 @@ export default function ManagePlotsPage() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12, alignItems: 'start' }}>
           {filtered.map(plot => (
-            <PlotCard key={plot.id} plot={plot} onStatusChange={handleStatusChange} onPlotUpdate={handlePlotUpdate} />
+            <PlotCard key={plot.id} plot={plot} onStatusChange={handleStatusChange} onPlotUpdate={handlePlotUpdate}
+              clusterTypes={[...new Set(plots.map(p => p.cluster_type).filter(Boolean))]} />
           ))}
         </div>
       )}
