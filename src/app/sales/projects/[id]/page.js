@@ -531,8 +531,8 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
         </span>
       </div>
       {/* Size sub-row — always rendered so all cards stay the same height */}
-      <div style={{ padding: '0 14px 4px', fontSize: 11, color: '#A0AABA', minHeight: 14 }}>
-        {plot.size || ''}
+      <div style={{ padding: '0 14px 4px', fontSize: 11, minHeight: 14, color: plot.size ? '#A0AABA' : '#D1D5DB', fontStyle: plot.size ? 'normal' : 'italic' }}>
+        {plot.size || 'Area not set'}
       </div>
 
       {/* Status toggles */}
