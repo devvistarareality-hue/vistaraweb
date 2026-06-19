@@ -77,7 +77,7 @@ function ProjectModal({ project, onClose, onSaved }) {
             <div>
               <label style={lbl}>Type</label>
               <select value={form.project_type} onChange={e => set('project_type', e.target.value)} style={inp}>
-                {['residential','commercial','plots','villa','apartment'].map(t => (
+                {['residential','commercial','plots','villa','apartment','industrial'].map(t => (
                   <option key={t} value={t} style={{ textTransform: 'capitalize' }}>{t}</option>
                 ))}
               </select>
