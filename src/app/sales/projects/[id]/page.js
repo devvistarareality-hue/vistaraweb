@@ -468,15 +468,20 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
   const [saving,  setSaving]  = useState(false);
   const [editing, setEditing] = useState(false);
 
-  const parsed = parseSizeUnit(plot.size);
-  const [plotNo,  setPlotNo]  = useState(plot.number);
-  const [sizeVal, setSizeVal] = useState(parsed.sizeVal);
-  const [unit,    setUnit]    = useState(parsed.unit);
-  const [type,    setType]    = useState(plot.cluster_type || '');
+  // Strip cluster_type prefix → displayNum (e.g. "Ananda1" → "1")
+  const displayNum = plot.cluster_type
+    ? plot.number.replace(new RegExp('^' + plot.cluster_type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), '')
+    : plot.number;
+
+  // Edit state — size as plain string, type and numeric number separately
+  const [sizeLabel, setSizeLabel] = useState(plot.size || '');
+  const [editType,  setEditType]  = useState(plot.cluster_type || '');
+  const [editNum,   setEditNum]   = useState(displayNum);
 
   function openEdit() {
-    const p = parseSizeUnit(plot.size);
-    setPlotNo(plot.number); setSizeVal(p.sizeVal); setUnit(p.unit); setType(plot.cluster_type || '');
+    setSizeLabel(plot.size || '');
+    setEditType(plot.cluster_type || '');
+    setEditNum(displayNum);
     setEditing(true);
   }
 
@@ -489,31 +494,26 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
 
   async function saveEdit() {
     setSaving(true);
-    const combinedSize = sizeVal ? `${sizeVal} ${unit}` : '';
+    const newNumber = editType.trim() ? `${editType.trim()}${editNum}` : editNum;
     const res = await fetch(SALES_ENDPOINTS.plot(plot.id), {
       method: 'PATCH', headers: authHeaders(),
-      body: JSON.stringify({ number: plotNo, size: combinedSize, cluster_type: type }),
+      body: JSON.stringify({ number: newNumber, size: sizeLabel.trim(), cluster_type: editType.trim() }),
     });
     if (res.ok) { onPlotUpdate(await res.json()); setEditing(false); }
     setSaving(false);
   }
 
-  const inpStyle = { width: '100%', padding: '7px 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, outline: 'none', boxSizing: 'border-box', background: '#fff' };
-  const lblStyle = { fontSize: 10, fontWeight: 700, color: '#B0BAC9', textTransform: 'uppercase', marginBottom: 4, display: 'block' };
-
-  // Strip the type prefix from the display number (e.g. "Ananda1" → "1", "A10" → "10", "1" → "1")
-  const displayNum = plot.cluster_type
-    ? plot.number.replace(new RegExp('^' + plot.cluster_type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), '')
-    : plot.number;
+  const inpStyle = { width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid #E8C97A', fontSize: 14, outline: 'none', boxSizing: 'border-box', background: '#fff' };
+  const lblStyle = { fontSize: 10, fontWeight: 700, color: '#B0BAC9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, display: 'block' };
 
   return (
     <div style={{
       backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden',
       boxShadow: '0 2px 10px rgba(184,196,214,0.18)',
-      border: `1.5px solid ${editing ? '#3D5AFE40' : '#E8ECF4'}`,
+      border: '1.5px solid #E8ECF4',
       opacity: saving ? 0.75 : 1, transition: 'opacity 0.2s',
     }}>
-      {/* Header row: #num | type badge | size | status badge */}
+      {/* Header: #num | type badge | size | status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 10px' }}>
         <span style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>#{displayNum}</span>
         {plot.cluster_type && (
@@ -522,69 +522,15 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
           </span>
         )}
         {plot.size && (
-          <span style={{ fontSize: 12, color: '#8492A6', marginLeft: 2 }}>{plot.size}</span>
+          <span style={{ fontSize: 12, color: '#8492A6' }}>{plot.size}</span>
         )}
         <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color }}>
           {cfg.label}
         </span>
       </div>
 
-      {/* Edit panel — 4 fields only */}
-      {editing && (
-        <div style={{ padding: '12px 14px', borderBottom: '1px solid #F0F3FA', display: 'flex', flexDirection: 'column', gap: 10, background: '#FAFBFF' }}>
-          {/* Plot No */}
-          <div>
-            <label style={lblStyle}>Plot No.</label>
-            <input value={plotNo} onChange={e => setPlotNo(e.target.value)} placeholder="e.g. D-1, A1" style={inpStyle} />
-          </div>
-          {/* Size + Unit on one row */}
-          <div>
-            <label style={lblStyle}>Size</label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <input value={sizeVal} onChange={e => setSizeVal(e.target.value)} placeholder="5000" type="number" min="0"
-                style={{ ...inpStyle, flex: '1 1 0', minWidth: 0 }} />
-              <select value={unit} onChange={e => setUnit(e.target.value)}
-                style={{ padding: '7px 8px', borderRadius: 8, border: '1.5px solid #3D5AFE30', fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: '#F0F3FF', cursor: 'pointer', outline: 'none', flexShrink: 0 }}>
-                {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-            </div>
-          </div>
-          {/* Block */}
-          <div>
-            <label style={lblStyle}>Block</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['A','B','C','D','E','F','G','H'].map(b => (
-                <button key={b} type="button" onClick={() => setType(type === b ? '' : b)}
-                  style={{
-                    width: 34, height: 34, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer', border: 'none',
-                    background: type === b ? '#182350' : '#F0F3FA',
-                    color:      type === b ? '#fff'    : '#8492A6',
-                    transition: 'all 0.12s',
-                  }}>
-                  {b}
-                </button>
-              ))}
-              <input value={!['A','B','C','D','E','F','G','H'].includes(type) ? type : ''}
-                onChange={e => setType(e.target.value)} placeholder="Other"
-                style={{ ...inpStyle, width: 72, flexShrink: 0, fontSize: 12 }} />
-            </div>
-          </div>
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={saveEdit} disabled={saving}
-              style={{ flex: 1, padding: '8px', background: '#182350', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button onClick={() => setEditing(false)}
-              style={{ padding: '8px 14px', background: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Status toggles */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 12px' }}>
         {Object.entries(STATUS_CFG).map(([s, c]) => (
           <button key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
             style={{
@@ -601,12 +547,48 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
       </div>
 
       {/* Edit Info button */}
-      <div style={{ borderTop: '1px solid #F0F3FA', padding: '10px 14px' }}>
+      <div style={{ borderTop: '1px solid #F0F3FA', padding: '10px 14px 12px' }}>
         <button onClick={() => editing ? setEditing(false) : openEdit()}
-          style={{ width: '100%', padding: '9px', background: '#F8F9FB', border: '1px solid #E8ECF4', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#8492A6', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          {editing ? '✕ Cancel' : '✏ Edit Info'}
+          style={{ width: '100%', padding: '11px', background: '#182350', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+          ✏ Edit Info
         </button>
       </div>
+
+      {/* Expandable edit form */}
+      {editing && (
+        <div style={{ borderTop: '1px solid #F0F3FA', padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 12, background: '#FAFBFF' }}>
+          {/* Size / Label */}
+          <div>
+            <label style={lblStyle}>Label / Size</label>
+            <input value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
+              placeholder="e.g. 1948 sq ft" style={inpStyle} />
+          </div>
+          {/* Cluster/Type + Number */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={lblStyle}>Cluster / Type</label>
+              <input value={editType} onChange={e => setEditType(e.target.value)}
+                placeholder="e.g. Ananda" style={inpStyle} />
+            </div>
+            <div>
+              <label style={lblStyle}>Number</label>
+              <input value={editNum} onChange={e => setEditNum(e.target.value)}
+                placeholder="e.g. 1" style={inpStyle} />
+            </div>
+          </div>
+          {/* Save + Cancel */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+            <button onClick={saveEdit} disabled={saving}
+              style={{ flex: 1, padding: '12px', background: '#C9A84C', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            <button onClick={() => setEditing(false)}
+              style={{ padding: '12px 20px', background: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
