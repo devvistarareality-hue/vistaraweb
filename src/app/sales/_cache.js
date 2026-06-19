@@ -2,7 +2,7 @@
 // Key → { ts, data }  |  TTL in ms
 
 const TTLS = {
-  stats:    30 * 1000,        // 30s  — changes often
+  stats:    2 * 60 * 1000,    // 2 min
   projects: 5 * 60 * 1000,   // 5 min
   sources:  5 * 60 * 1000,
   team:     2 * 60 * 1000,
