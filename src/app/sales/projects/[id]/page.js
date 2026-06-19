@@ -569,7 +569,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
               <label style={{ ...lblStyle, whiteSpace: 'nowrap' }}>Cluster / Type</label>
               {clusterTypes.length > 0 ? (
                 <select value={editType} onChange={e => setEditType(e.target.value)}
-                  style={{ ...inpStyle, cursor: 'pointer' }}>
+                  style={{ ...inpStyle, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238492A6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 }}>
                   <option value="">— None —</option>
                   {clusterTypes.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
