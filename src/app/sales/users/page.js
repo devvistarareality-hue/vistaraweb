@@ -63,18 +63,19 @@ function AssignProjectsModal({ member, projects, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 18, width: 420, maxWidth: '92vw', boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 22px 16px' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+
+        {/* Gradient Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Assign Projects</div>
-            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{member.name} · {member.designation}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Assign Projects</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{member.name} · {member.designation}</div>
           </div>
-          <button onClick={() => onClose(null)} style={{ background: 'none', border: 'none', fontSize: 18, color: '#8492A6', cursor: 'pointer', padding: '4px 8px', borderRadius: 8 }}>✕</button>
+          <button onClick={() => onClose(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
         {/* Project list */}
-        <div style={{ padding: '0 22px', maxHeight: 380, overflowY: 'auto' }}>
+        <div style={{ padding: '16px 22px', maxHeight: 380, overflowY: 'auto' }}>
           {loading ? (
             <p style={{ textAlign: 'center', color: '#8492A6', padding: '30px 0' }}>Loading…</p>
           ) : projects.length === 0 ? (
@@ -84,7 +85,7 @@ function AssignProjectsModal({ member, projects, onClose }) {
               const checked = selected.includes(p.id);
               return (
                 <div key={p.id} onClick={() => toggle(p.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#3D5AFE' : '#E8ECF4'}`, backgroundColor: checked ? '#F0F3FF' : '#fff', transition: 'all 0.15s' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 12, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#3D5AFE' : '#E8ECF4'}`, backgroundColor: checked ? '#F0F3FF' : '#FAFAFA', transition: 'all 0.15s' }}>
                   <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#3D5AFE' : '#C8D0E0'}`, backgroundColor: checked ? '#3D5AFE' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
                     {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</span>}
                   </div>
@@ -99,9 +100,9 @@ function AssignProjectsModal({ member, projects, onClose }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 22px 20px', borderTop: '1px solid #F0F3FA' }}>
-          <button onClick={() => onClose(null)} style={{ padding: '9px 18px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ padding: '9px 22px', backgroundColor: '#182350', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid #F0F3FA' }}>
+          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
