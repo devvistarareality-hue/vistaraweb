@@ -349,7 +349,7 @@ export default function ProjectsPage() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 24 }}>
           {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 200 }} />)}
         </div>
       ) : projects.length === 0 ? (
@@ -358,7 +358,7 @@ export default function ProjectsPage() {
           <p style={{ fontSize: 13 }}>Add your first real estate project to start assigning leads.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 24 }}>
           {projects.map(p => {
             const pc = p.plot_counts || {};
             const total = pc.total || 0;
@@ -383,7 +383,7 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Card content */}
-                <div style={{ padding: '16px 18px' }}>
+                <div style={{ padding: '16px 18px', borderTop: '1.5px solid #EEF1F7' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -460,7 +460,7 @@ const saveBtn        = { padding: '9px 20px', backgroundColor: '#182350', color:
 const cancelBtn      = { padding: '9px 16px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 const outlineBtn     = { padding: '7px 12px', backgroundColor: '#fff', border: '1.5px solid #C6D0DB', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1A1A2E', cursor: 'pointer' };
 const primaryOutlineBtn = { padding: '7px 12px', backgroundColor: '#F0F3FF', border: '1.5px solid #3D5AFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#3D5AFE', cursor: 'pointer' };
-const card           = { backgroundColor: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(100,120,160,0.18)', border: '1px solid #C8D0E0', overflow: 'hidden' };
+const card           = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(100,120,160,0.16)', border: '1.5px solid #DDE3EE', overflow: 'hidden' };
 const overlay        = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal          = { backgroundColor: '#fff', borderRadius: 16, width: '90%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader    = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F0F3FA' };
