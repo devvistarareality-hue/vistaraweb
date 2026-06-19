@@ -564,16 +564,16 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate }) {
               placeholder="e.g. 1948 sq ft" style={inpStyle} />
           </div>
           {/* Cluster/Type + Number */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 10 }}>
             <div>
-              <label style={lblStyle}>Cluster / Type</label>
+              <label style={{ ...lblStyle, whiteSpace: 'nowrap' }}>Cluster / Type</label>
               <input value={editType} onChange={e => setEditType(e.target.value)}
                 placeholder="e.g. Ananda" style={inpStyle} />
             </div>
             <div>
               <label style={lblStyle}>Number</label>
               <input value={editNum} onChange={e => setEditNum(e.target.value)}
-                placeholder="e.g. 1" style={inpStyle} />
+                placeholder="1" style={inpStyle} />
             </div>
           </div>
           {/* Save + Cancel */}
@@ -922,7 +922,7 @@ export default function ManagePlotsPage() {
           <p style={{ fontWeight: 600 }}>No plots with this status.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px,1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12, alignItems: 'start' }}>
           {filtered.map(plot => (
             <PlotCard key={plot.id} plot={plot} onStatusChange={handleStatusChange} onPlotUpdate={handlePlotUpdate} />
           ))}
