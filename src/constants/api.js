@@ -49,6 +49,7 @@ export const SALES_ENDPOINTS = {
   get distWeight()   { return `${BASE_URL}/api/sales/dist-weight/`; },
   get plots()           { return `${BASE_URL}/api/sales/plots/`; },
   get plotsBulk()       { return `${BASE_URL}/api/sales/plots/bulk/`; },
+  get plotsBulkDelete() { return `${BASE_URL}/api/sales/plots/bulk-delete/`; },
   get plotsRenameType() { return `${BASE_URL}/api/sales/plots/rename-type/`; },
   plot: (id)            => `${BASE_URL}/api/sales/plots/${id}/`,
   get metaWebhook()      { return `${BASE_URL}/api/sales/webhooks/meta/`; },
