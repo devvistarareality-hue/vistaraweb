@@ -68,45 +68,81 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
 
   return (
     <div style={overlay}>
-      <div style={modal}>
-        <div style={modalHeader}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>Add Manual Lead</h2>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Add Manual Lead</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details to create a new lead</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <form onSubmit={submit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px', marginBottom: 14 }}>
+
+        <form onSubmit={submit} style={{ padding: '22px 24px 24px' }}>
+          {/* Contact Info */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 18 }}>
             {[
-              { label: 'Full Name *', key: 'name', type: 'text', placeholder: 'Client name' },
-              { label: 'Phone *',     key: 'phone', type: 'text', placeholder: '+91 99999 99999' },
-              { label: 'Alt. Phone',  key: 'alt_phone', type: 'text', placeholder: '' },
-              { label: 'Email',       key: 'email', type: 'email', placeholder: '' },
-            ].map(({ label, key, type, placeholder }) => (
+              { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Client name', required: true },
+              { label: 'Phone',     key: 'phone', type: 'text', placeholder: '+91 99999 99999', required: true },
+              { label: 'Alt. Phone', key: 'alt_phone', type: 'text', placeholder: 'Optional' },
+              { label: 'Email',     key: 'email', type: 'email', placeholder: 'Optional' },
+            ].map(({ label, key, type, placeholder, required }) => (
               <div key={key}>
-                <label style={lbl}>{label}</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>
+                  {label}{required && <span style={{ color: '#EF4444', marginLeft: 2 }}>*</span>}
+                </label>
                 <input type={type} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  placeholder={placeholder} style={inp} />
+                  placeholder={placeholder}
+                  style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', transition: 'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = '#3D5AFE'}
+                  onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                />
               </div>
             ))}
           </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={lbl}>Project</label>
-            <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={inp}>
-              <option value="">— Select project —</option>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+
+          {/* Project & Source */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Assignment</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 20 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Project</label>
+              <div style={{ position: 'relative' }}>
+                <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })}
+                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.project ? '#1A1A2E' : '#9CA3AF' }}>
+                  <option value="">Select project</option>
+                  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Source</label>
+              <div style={{ position: 'relative' }}>
+                <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
+                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.source ? '#1A1A2E' : '#9CA3AF', textTransform: 'capitalize' }}>
+                  <option value="">Select source</option>
+                  {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
+                </select>
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
+              </div>
+            </div>
           </div>
-          <div style={{ marginBottom: 18 }}>
-            <label style={lbl}>Source</label>
-            <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} style={inp}>
-              <option value="">— Select source —</option>
-              {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
-            </select>
-          </div>
-          {err && <p style={{ color: '#EF4444', fontSize: 12, marginBottom: 12 }}>{err}</p>}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-            <button type="button" onClick={onClose} style={cancelBtn}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ ...saveBtn, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Adding…' : 'Add Lead'}
+
+          {err && (
+            <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: '#DC2626' }}>
+              {err}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button type="button" onClick={onClose}
+              style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+              {saving ? 'Adding…' : '+ Add Lead'}
             </button>
           </div>
         </form>
