@@ -518,21 +518,22 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
       border: '1.5px solid #E8ECF4',
       opacity: saving ? 0.75 : 1, transition: 'opacity 0.2s',
     }}>
-      {/* Header: #num | type badge | size | status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 10px' }}>
+      {/* Header: #num | type badge | status (status always right-aligned) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 6px' }}>
         <span style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>#{displayNum}</span>
         {plot.cluster_type && (
-          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: '#EDE7F6', color: '#673AB7' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: '#EDE7F6', color: '#673AB7', whiteSpace: 'nowrap' }}>
             {plot.cluster_type}
           </span>
         )}
-        {plot.size && (
-          <span style={{ fontSize: 12, color: '#8492A6' }}>{plot.size}</span>
-        )}
-        <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color }}>
+        <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
           {cfg.label}
         </span>
       </div>
+      {/* Size sub-row */}
+      {plot.size && (
+        <div style={{ padding: '0 14px 8px', fontSize: 11, color: '#A0AABA' }}>{plot.size}</div>
+      )}
 
       {/* Status toggles */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 12px' }}>
