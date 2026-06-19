@@ -9,6 +9,7 @@ const initialState = {
   users:         [],
   loading:       false,
   error:         null,
+  lastFetched:   null,
   creating:      false,
   createError:   null,
   createSuccess: false,
@@ -22,7 +23,7 @@ export default function userManagementReducer(state = initialState, action) {
     case USERS_FETCH_REQUEST:
       return { ...state, loading: true, error: null };
     case USERS_FETCH_SUCCESS:
-      return { ...state, loading: false, users: action.payload };
+      return { ...state, loading: false, users: action.payload, lastFetched: Date.now() };
     case USERS_FETCH_FAILURE:
       return { ...state, loading: false, error: action.payload };
 

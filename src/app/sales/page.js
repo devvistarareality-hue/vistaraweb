@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { SALES_ENDPOINTS } from '../../constants/api';
-import { getCache, setCache } from './_cache';
+import { getCacheWithStatus, setCache } from './_cache';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -85,8 +85,8 @@ function AdminDashboard({ user }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const cached = getCache('stats');
-    if (cached) { setStats(cached); setLoading(false); return; }
+    const { data: cached, fresh } = getCacheWithStatus('stats');
+    if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
     fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => { setCache('stats', d); setStats(d); setLoading(false); })

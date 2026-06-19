@@ -9,6 +9,7 @@ const initialState = {
   companies:     [],
   loading:       false,
   error:         null,
+  lastFetched:   null,
   updating:      false,
   updateError:   null,
   updateSuccess: false,
@@ -22,7 +23,7 @@ export default function companiesReducer(state = initialState, action) {
     case COMPANIES_FETCH_REQUEST:
       return { ...state, loading: true, error: null };
     case COMPANIES_FETCH_SUCCESS:
-      return { ...state, loading: false, companies: action.payload };
+      return { ...state, loading: false, companies: action.payload, lastFetched: Date.now() };
     case COMPANIES_FETCH_FAILURE:
       return { ...state, loading: false, error: action.payload };
 
