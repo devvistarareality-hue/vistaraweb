@@ -645,28 +645,34 @@ export default function SalesLeadsPage() {
   useEffect(() => { loadLeads(); }, [loadLeads]);
   useEffect(() => { setPage(1); }, [filters]);
 
-  // Auto-refresh every 30 seconds — notify on newly arrived duplicates
-  const knownIdsRef = React.useRef(new Set());
+  // Track latest lead ID to detect new arrivals on tab focus
+  const lastLeadIdRef  = React.useRef(null);
+  const [newLeadBanner, setNewLeadBanner] = React.useState(0);
+
   useEffect(() => {
-    knownIdsRef.current = new Set(leads.map((l) => l.id));
+    if (leads.length && page === 1) {
+      lastLeadIdRef.current = leads[0].id;
+      setNewLeadBanner(0);
+    }
   }, [leads]);
 
   useEffect(() => {
-    const id = setInterval(async () => {
-      bustLeadsCache();
-      // Fetch page 1 to check for new duplicates
-      const params = new URLSearchParams({ page: 1, is_duplicate: 'true' });
+    const checkNewLeads = async () => {
+      if (lastLeadIdRef.current === null) return;
       try {
-        const res  = await fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() });
+        const res  = await fetch(`${SALES_ENDPOINTS.leads}?page=1&page_size=5`, { headers: authHeaders() });
         const data = await res.json();
-        (data.results ?? []).forEach((l) => {
-          if (!knownIdsRef.current.has(l.id)) showDupToast(l);
-        });
+        const results = data.results ?? [];
+        if (results.length && results[0].id !== lastLeadIdRef.current) {
+          const count = results.filter(r => r.id > lastLeadIdRef.current).length;
+          setNewLeadBanner(count || 1);
+        }
       } catch { /* ignore */ }
-      loadLeads();
-    }, 30000);
-    return () => clearInterval(id);
-  }, [loadLeads]);
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') checkNewLeads(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   async function loadDetail(lead) {
     const res  = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
@@ -712,6 +718,25 @@ export default function SalesLeadsPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <DupToast toasts={dupToasts} onDismiss={dismissToast} />
+
+      {/* New leads notification banner */}
+      {newLeadBanner > 0 && (
+        <div style={{ backgroundColor: '#182350', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🔔</span>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
+              {newLeadBanner} new lead{newLeadBanner > 1 ? 's' : ''} arrived
+            </span>
+          </div>
+          <button
+            onClick={() => { bustLeadsCache(); setPage(1); loadLeads(); setNewLeadBanner(0); }}
+            style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '5px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
