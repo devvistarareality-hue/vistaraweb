@@ -683,65 +683,88 @@ export default function SalesLeadsPage() {
           filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
           filters.campaign || filters.is_duplicate || filters.date_from || filters.date_to;
         const clearAll = () => setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, date_from:'', date_to:'' });
-        const fBox = { backgroundColor: '#fff', borderRadius: 12, border: '1.5px solid #E8ECF4', padding: '14px 16px', marginBottom: 16 };
-        const fRow = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' };
-        const fSel = { height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 12, background: '#fff', cursor: 'pointer', outline: 'none' };
-        const qBtn = (active) => ({ height: 34, padding: '0 14px', borderRadius: 8, border: '1.5px solid ' + (active ? '#3D5AFE' : '#E0E6F0'), fontSize: 12, fontWeight: 600, cursor: 'pointer', background: active ? '#EEF0FF' : '#fff', color: active ? '#3D5AFE' : '#8492A6' });
-        return (
-          <div style={fBox}>
-            {/* Row 1: Search */}
-            <input value={filters.search} onChange={(e) => sf('search', e.target.value)}
-              placeholder="🔍  Search name, phone, email…"
-              style={{ ...fSel, width: '100%', marginBottom: 10, height: 38, fontSize: 13 }} />
 
-            {/* Row 2: Date + Project + TC Status + STM Status + Clear */}
-            <div style={{ ...fRow, marginBottom: 8 }}>
-              <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 140 }} />
-              <span style={{ fontSize: 12, color: '#8492A6' }}>to</span>
-              <input type="date" value={filters.date_to}   onChange={(e) => sf('date_to',   e.target.value)} style={{ ...fSel, width: 140 }} />
+        const fSel = {
+          height: 36, padding: '0 10px', borderRadius: 8,
+          border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD',
+          cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500,
+        };
+        const activeSelStyle = (val) => val ? { ...fSel, borderColor: '#3D5AFE', background: '#EEF0FF', color: '#3D5AFE', fontWeight: 600 } : fSel;
+        const qBtn = (active) => ({
+          height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+          cursor: 'pointer', border: 'none',
+          background: active ? '#182350' : '#F0F2F8',
+          color: active ? '#fff' : '#8492A6',
+          transition: 'all 0.15s',
+        });
+        const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
+
+        return (
+          <div style={{ backgroundColor: '#fff', borderRadius: 14, border: '1.5px solid #E8ECF4', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+
+            {/* Search bar */}
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F3FA' }}>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
+                <input value={filters.search} onChange={(e) => sf('search', e.target.value)}
+                  placeholder="Search name, phone, email…"
+                  style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 10, border: '1.5px solid #E8ECF4', fontSize: 13, background: '#F8FAFD', outline: 'none', boxSizing: 'border-box', color: '#1A1A2E' }} />
+              </div>
+            </div>
+
+            {/* Row 1: Date range + quick buttons + project + tc/stm status */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #F0F3FA' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#B0BAD0', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+              <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
+              <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
+              <input type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
+              <div style={divider} />
               <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
               <button onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
               <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
-              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={fSel}>
+              <div style={divider} />
+              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
                 <option value="">All Projects</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={fSel}>
+              <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>
                 {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
-              <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={fSel}>
+              <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
                 <option value="">STM Status</option>
                 {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               {anyFilter && (
-                <button onClick={clearAll} style={{ ...fSel, color: '#EF4444', borderColor: '#FCA5A5', background: '#FFF5F5', fontWeight: 600 }}>✕ Clear</button>
+                <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: '#FFF5F5', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
+                  ✕ Clear all
+                </button>
               )}
             </div>
 
-            {/* Row 3: Status + Source + Telecaller + STM + Campaign + Duplicates */}
-            <div style={fRow}>
-              <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={fSel}>
+            {/* Row 2: Status + Source + Telecaller + STM + Campaign + Duplicates */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px' }}>
+              <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
                 <option value="">All Statuses</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
-              <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={fSel}>
+              <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={activeSelStyle(filters.source_id)}>
                 <option value="">All Sources</option>
                 {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
               </select>
-              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={fSel}>
+              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={activeSelStyle(filters.telecaller_id)}>
                 <option value="">All Telecallers</option>
                 {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
-              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={fSel}>
+              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
                 <option value="">All STMs</option>
                 {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
               <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"
-                style={{ ...fSel, width: 180 }} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3A3A5C', cursor: 'pointer', userSelect: 'none' }}>
-                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 15, height: 15 }} />
+                style={{ ...fSel, width: 170, background: filters.campaign ? '#EEF0FF' : '#F8FAFD', borderColor: filters.campaign ? '#3D5AFE' : '#E8ECF4', color: filters.campaign ? '#3D5AFE' : '#1A1A2E' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? '#3D5AFE' : '#8492A6', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? '#3D5AFE' : '#E8ECF4'}`, background: filters.is_duplicate ? '#EEF0FF' : '#F8FAFD' }}>
+                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 14, height: 14, accentColor: '#3D5AFE' }} />
                 Duplicates only
               </label>
             </div>
