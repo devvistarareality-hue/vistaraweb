@@ -12,6 +12,8 @@ function authHeaders() {
 }
 
 function ProjectModal({ project, onClose, onSaved }) {
+  const isEdit = !!project;
+
   const [form, setForm] = useState({
     name:            project?.name            || '',
     description:     project?.description     || '',
@@ -27,22 +29,66 @@ function ProjectModal({ project, onClose, onSaved }) {
     cover_image_url: project?.cover_image_url || '',
     master_plan_url: project?.master_plan_url || '',
   });
+
+  // Plot setup (new projects only)
+  const [hasTypes,    setHasTypes]    = useState(false);
+  const [noTypePlots, setNoTypePlots] = useState('');
+  const [plotTypes,   setPlotTypes]   = useState([{ name: '', from: '1', to: '' }]);
+
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  function addType()              { setPlotTypes(p => [...p, { name: '', from: '1', to: '' }]); }
+  function removeType(i)          { setPlotTypes(p => p.filter((_, idx) => idx !== i)); }
+  function updateType(i, k, v)    { setPlotTypes(p => p.map((t, idx) => idx === i ? { ...t, [k]: v } : t)); }
+
+  function buildPlots() {
+    if (hasTypes) {
+      const arr = [];
+      for (const pt of plotTypes) {
+        const name = pt.name.trim();
+        const from = Number(pt.from);
+        const to   = Number(pt.to);
+        if (!name || !from || !to || to < from) continue;
+        for (let n = from; n <= to; n++) arr.push({ number: `${name}${n}`, cluster_type: name });
+      }
+      return arr;
+    }
+    const count = Number(noTypePlots);
+    if (!count || count < 1) return [];
+    return Array.from({ length: count }, (_, i) => ({ number: String(i + 1), cluster_type: '' }));
+  }
+
+  const validTypes    = plotTypes.filter(pt => pt.name.trim() && Number(pt.from) && Number(pt.to) && Number(pt.to) >= Number(pt.from));
+  const totalTypePlots = validTypes.reduce((s, pt) => s + Number(pt.to) - Number(pt.from) + 1, 0);
+
   async function submit(e) {
     e.preventDefault();
     if (!form.name.trim()) { setErr('Project name is required.'); return; }
-    setSaving(true);
-    const payload = { ...form, total_plots: form.total_plots === '' ? 0 : Number(form.total_plots) };
-    const url    = project ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
-    const method = project ? 'PATCH' : 'POST';
+
+    const plots      = !isEdit ? buildPlots() : [];
+    const totalPlots = !isEdit ? plots.length : (form.total_plots === '' ? 0 : Number(form.total_plots));
+
+    setSaving(true); setErr('');
+
+    const payload = { ...form, total_plots: totalPlots };
+    const url    = isEdit ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
+    const method = isEdit ? 'PATCH' : 'POST';
     const res    = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
     const data   = await res.json();
+
+    if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
+
+    if (!isEdit && plots.length > 0) {
+      await fetch(SALES_ENDPOINTS.plotsBulk, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ project_id: data.id, plots }),
+      });
+    }
+
     setSaving(false);
-    if (!res.ok) { setErr(data.detail || JSON.stringify(data)); return; }
     onSaved(data);
     onClose();
   }
@@ -51,24 +97,24 @@ function ProjectModal({ project, onClose, onSaved }) {
     <div style={overlay}>
       <div style={{ ...modal, maxWidth: 560, maxHeight: '92vh', overflowY: 'auto' }}>
         <div style={modalHeader}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>{project ? 'Edit Project' : 'Add Project'}</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>{isEdit ? 'Edit Project' : 'Add Project'}</h2>
           <button onClick={onClose} style={closeBtn}>✕</button>
         </div>
         <form onSubmit={submit} style={{ padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* Row: Name */}
+          {/* Name */}
           <div>
             <label style={lbl}>Project Name *</label>
             <input value={form.name} onChange={e => set('name', e.target.value)} style={inp} placeholder="e.g. Vistara Heights Phase 1" />
           </div>
 
-          {/* Row: Tagline */}
+          {/* Tagline */}
           <div>
             <label style={lbl}>Tagline</label>
             <input value={form.tagline} onChange={e => set('tagline', e.target.value)} style={inp} placeholder="Where Nature Meets Luxury" />
           </div>
 
-          {/* Row: Location + Type side by side */}
+          {/* Location + Type */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label style={lbl}>Location</label>
@@ -84,7 +130,7 @@ function ProjectModal({ project, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Row: RERA + Total Area */}
+          {/* RERA + Total Area */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label style={lbl}>RERA Number</label>
@@ -96,23 +142,24 @@ function ProjectModal({ project, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Row: Total Plots + Price Range */}
+          {/* Price Range + Possession (+ Total Plots for edit mode only) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>Total Plots / Units</label>
-              <input type="number" min="0" value={form.total_plots} onChange={e => set('total_plots', e.target.value)} style={inp} placeholder="240" />
-            </div>
             <div>
               <label style={lbl}>Price Range</label>
               <input value={form.price_range} onChange={e => set('price_range', e.target.value)} style={inp} placeholder="₹45L – ₹1.2Cr" />
             </div>
+            <div>
+              <label style={lbl}>Possession Date</label>
+              <input value={form.possession} onChange={e => set('possession', e.target.value)} style={inp} placeholder="Dec 2026" />
+            </div>
           </div>
 
-          {/* Row: Possession */}
-          <div>
-            <label style={lbl}>Possession Date</label>
-            <input value={form.possession} onChange={e => set('possession', e.target.value)} style={inp} placeholder="Dec 2026" />
-          </div>
+          {isEdit && (
+            <div style={{ maxWidth: 200 }}>
+              <label style={lbl}>Total Plots / Units</label>
+              <input type="number" min="0" value={form.total_plots} onChange={e => set('total_plots', e.target.value)} style={inp} placeholder="240" />
+            </div>
+          )}
 
           {/* Description */}
           <div>
@@ -122,24 +169,12 @@ function ProjectModal({ project, onClose, onSaved }) {
           </div>
 
           {/* Cover Image */}
-          <MediaUpload
-            label="Cover Image"
-            value={form.cover_image_url}
-            onChange={v => set('cover_image_url', v)}
-            folder="erp/projects/covers"
-            accept="image/*"
-            hint="Upload project cover image (JPG / PNG)"
-          />
+          <MediaUpload label="Cover Image" value={form.cover_image_url} onChange={v => set('cover_image_url', v)}
+            folder="erp/projects/covers" accept="image/*" hint="Upload project cover image (JPG / PNG)" />
 
           {/* Master Plan */}
-          <MediaUpload
-            label="Master Plan"
-            value={form.master_plan_url}
-            onChange={v => set('master_plan_url', v)}
-            folder="erp/projects/masterplans"
-            accept="image/*,application/pdf"
-            hint="Upload master plan image or PDF"
-          />
+          <MediaUpload label="Master Plan" value={form.master_plan_url} onChange={v => set('master_plan_url', v)}
+            folder="erp/projects/masterplans" accept="image/*,application/pdf" hint="Upload master plan image or PDF" />
 
           {/* Active */}
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer' }}>
@@ -147,17 +182,97 @@ function ProjectModal({ project, onClose, onSaved }) {
             Active project
           </label>
 
-          {Number(form.total_plots) > 0 && !project && (
-            <p style={{ fontSize: 12, color: '#3D5AFE', background: '#F0F3FF', padding: '8px 12px', borderRadius: 8 }}>
-              {form.total_plots} plots will be auto-generated when you save. You can mark them sold/available from "Manage Plots".
-            </p>
+          {/* ── Plot Setup (new projects only) ── */}
+          {!isEdit && (
+            <div style={{ borderTop: '1.5px solid #F0F3FA', paddingTop: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+                Plot Setup
+              </p>
+
+              {/* Has types toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 600 }}>Does this project have plot types?</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[['No', false], ['Yes', true]].map(([label, val]) => (
+                    <button key={label} type="button" onClick={() => setHasTypes(val)}
+                      style={{ padding: '5px 16px', borderRadius: 7, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                        borderColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#E0E6F0',
+                        backgroundColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#fff',
+                        color: hasTypes === val ? '#fff' : '#8492A6' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {!hasTypes ? (
+                /* No types — simple count */
+                <div>
+                  <label style={lbl}>Number of Plots</label>
+                  <input type="number" min="0" max="9999" value={noTypePlots}
+                    onChange={e => setNoTypePlots(e.target.value)}
+                    style={{ ...inp, maxWidth: 160 }} placeholder="e.g. 20" />
+                  {Number(noTypePlots) > 0 && (
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#3D5AFE', background: '#F0F3FF', padding: '8px 12px', borderRadius: 8 }}>
+                      Will create <strong>{noTypePlots}</strong> plots numbered <strong>1</strong> to <strong>{noTypePlots}</strong>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* With types */
+                <div>
+                  {/* Header labels */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 6 }}>
+                    <span style={lbl}>Type Name</span>
+                    <span style={lbl}>From #</span>
+                    <span style={lbl}>To #</span>
+                    <span />
+                  </div>
+                  {plotTypes.map((pt, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                      <input value={pt.name} onChange={e => updateType(i, 'name', e.target.value)}
+                        style={inp} placeholder='e.g. A' />
+                      <input type="number" min="1" value={pt.from} onChange={e => updateType(i, 'from', e.target.value)}
+                        style={inp} placeholder="1" />
+                      <input type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)}
+                        style={inp} placeholder="10" />
+                      <button type="button" onClick={() => removeType(i)}
+                        style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? '#EF4444' : '#D1D5DB', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
+                        disabled={plotTypes.length === 1}>✕</button>
+                    </div>
+                  ))}
+
+                  <button type="button" onClick={addType}
+                    style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: 'none', border: '1.5px dashed #3D5AFE', borderRadius: 8, padding: '6px 16px', cursor: 'pointer', marginBottom: 10 }}>
+                    + Add Type
+                  </button>
+
+                  {/* Preview */}
+                  {validTypes.length > 0 && (
+                    <div style={{ background: '#F8FAFD', borderRadius: 10, padding: '12px 14px', fontSize: 12, color: '#8492A6' }}>
+                      {validTypes.map(pt => (
+                        <div key={pt.name} style={{ marginBottom: 3 }}>
+                          <span style={{ fontWeight: 700, color: '#1A1A2E' }}>{pt.name}</span>
+                          {': '}
+                          <span style={{ color: '#3D5AFE' }}>{pt.name}{pt.from} → {pt.name}{pt.to}</span>
+                          <span style={{ marginLeft: 6 }}>({Number(pt.to) - Number(pt.from) + 1} plots)</span>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: 6, fontWeight: 700, color: '#182350', borderTop: '1px solid #E8ECF4', paddingTop: 6 }}>
+                        Total: {totalTypePlots} plots
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {err && <p style={{ color: '#EF4444', fontSize: 12 }}>{err}</p>}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
             <button type="button" onClick={onClose} style={cancelBtn}>Cancel</button>
             <button type="submit" disabled={saving} style={{ ...saveBtn, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Saving…' : project ? 'Save Changes' : 'Add Project'}
+              {saving ? 'Creating…' : isEdit ? 'Save Changes' : 'Add Project'}
             </button>
           </div>
         </form>
