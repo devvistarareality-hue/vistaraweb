@@ -11,7 +11,11 @@ const authHeaders = () => {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 };
 
-export const fetchCompanies = () => async (dispatch) => {
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+export const fetchCompanies = (force = false) => async (dispatch, getState) => {
+  const { lastFetched, companies } = getState().companies;
+  if (!force && lastFetched && companies.length > 0 && Date.now() - lastFetched < CACHE_TTL) return;
   dispatch({ type: COMPANIES_FETCH_REQUEST });
   try {
     const res  = await fetch(COMPANY_ENDPOINTS.list, { headers: authHeaders() });

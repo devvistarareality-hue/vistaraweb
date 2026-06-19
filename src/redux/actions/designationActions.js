@@ -15,7 +15,11 @@ export const DESIG_CREATE_SUCCESS = 'DESIG_CREATE_SUCCESS';
 export const DESIG_DELETE_SUCCESS = 'DESIG_DELETE_SUCCESS';
 export const DESIG_ERROR          = 'DESIG_ERROR';
 
-export const fetchDesignations = () => async (dispatch) => {
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — designations rarely change
+
+export const fetchDesignations = (force = false) => async (dispatch, getState) => {
+  const { lastFetched, designations } = getState().designations;
+  if (!force && lastFetched && designations.length > 0 && Date.now() - lastFetched < CACHE_TTL) return;
   try {
     const res  = await fetch(DESIGNATION_ENDPOINTS.list, { headers: authHeaders() });
     const data = await res.json();
