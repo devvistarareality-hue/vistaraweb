@@ -69,11 +69,13 @@ function ProjectModal({ project, onClose, onSaved }) {
     if (!form.name.trim()) { setErr('Project name is required.'); return; }
 
     const plots      = !isEdit ? buildPlots() : [];
-    const totalPlots = !isEdit ? plots.length : (form.total_plots === '' ? 0 : Number(form.total_plots));
+    const totalPlots = isEdit ? (form.total_plots === '' ? 0 : Number(form.total_plots)) : plots.length;
 
     setSaving(true); setErr('');
 
-    const payload = { ...form, total_plots: totalPlots };
+    // Send total_plots=0 on new project so the backend _sync_plots() creates nothing.
+    // We'll bulk-create plots ourselves, then PATCH total_plots to the real count.
+    const payload = { ...form, total_plots: isEdit ? totalPlots : 0 };
     const url    = isEdit ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
     const method = isEdit ? 'PATCH' : 'POST';
     const res    = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -86,10 +88,22 @@ function ProjectModal({ project, onClose, onSaved }) {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ project_id: data.id, plots }),
       });
+      // Update total_plots to the real count now that plots are created
+      await fetch(SALES_ENDPOINTS.project(data.id), {
+        method: 'PATCH', headers: authHeaders(),
+        body: JSON.stringify({ total_plots: totalPlots }),
+      });
     }
 
+    // Fetch the project fresh so plot_counts reflects the new plots
+    let finalData = data;
+    try {
+      const r = await fetch(SALES_ENDPOINTS.project(data.id), { headers: authHeaders() });
+      if (r.ok) finalData = await r.json();
+    } catch { /* use original data */ }
+
     setSaving(false);
-    onSaved(data);
+    onSaved(finalData);
     onClose();
   }
 
