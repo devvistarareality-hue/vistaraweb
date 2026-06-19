@@ -685,15 +685,19 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
         {plans.map((t, i) => {
           const active = activeType === i;
+          const count  = t.floor_plans.length;
           return (
             <button key={i} onClick={() => setActiveType(i)} style={{
-              padding: '14px 28px', borderRadius: 14, border: `2px solid ${active ? '#EDE7F6' : '#E8ECF4'}`,
-              background: active ? '#F5F0FF' : '#fff', cursor: 'pointer', textAlign: 'center', minWidth: 120,
+              padding: '14px 28px', borderRadius: 14,
+              border: `2px solid ${active ? '#C4B5E0' : '#E8ECF4'}`,
+              background: active ? '#F0EBF8' : '#FAFBFF',
+              cursor: 'pointer', textAlign: 'center', minWidth: 130,
+              boxShadow: active ? '0 2px 10px rgba(103,58,183,0.10)' : 'none',
               transition: 'all 0.15s',
             }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: active ? '#673AB7' : '#1A1A2E', marginBottom: 3 }}>{t.name}</div>
-              <div style={{ fontSize: 11, color: active ? '#9C6FD6' : '#A0AABA', fontWeight: 600 }}>
-                {t.floor_plans.length}/{t.floor_plans.length || '—'}
+              <div style={{ fontSize: 15, fontWeight: 800, color: active ? '#5E35B1' : '#1A1A2E', marginBottom: 4 }}>{t.name}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: active ? '#9C6FD6' : '#A0AABA' }}>
+                {count > 0 ? `${count} plan${count > 1 ? 's' : ''}` : 'No plans yet'}
               </div>
             </button>
           );
@@ -710,8 +714,8 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
           </div>
         ) : (
           <button onClick={() => setAddingType(true)} style={{
-            padding: '14px 22px', borderRadius: 14, border: '2px dashed #C4B5E0', background: '#FAF8FF',
-            color: '#9C6FD6', fontSize: 13, fontWeight: 700, cursor: 'pointer', minWidth: 110,
+            padding: '14px 28px', borderRadius: 14, border: '2px dashed #C4B5E0', background: '#FAF8FF',
+            color: '#9C6FD6', fontSize: 14, fontWeight: 700, cursor: 'pointer', minWidth: 130,
           }}>+ Add Type</button>
         )}
       </div>
