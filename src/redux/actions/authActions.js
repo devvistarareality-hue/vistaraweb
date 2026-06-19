@@ -1,4 +1,5 @@
-import { COMPANY_ENDPOINTS, AUTH_ENDPOINTS } from '../../constants/api';
+import { COMPANY_ENDPOINTS, AUTH_ENDPOINTS, SALES_ENDPOINTS } from '../../constants/api';
+import { setCache } from '../../app/sales/_cache';
 import {
   COMPANY_VERIFY_REQUEST, COMPANY_VERIFY_SUCCESS, COMPANY_VERIFY_FAILURE,
   LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, CLEAR_COMPANY,
@@ -44,6 +45,11 @@ export const login = (companyCode, userCode, password) => async (dispatch) => {
       localStorage.setItem('refresh_token', data.tokens.refresh);
       localStorage.setItem('user',          JSON.stringify(data.user));
       dispatch({ type: LOGIN_SUCCESS, payload: data.user });
+      // Prefetch sales stats in background so Sales page loads instantly
+      fetch(SALES_ENDPOINTS.stats, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.tokens.access}` } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d) setCache('stats', d); })
+        .catch(() => {});
     } else {
       dispatch({ type: LOGIN_FAILURE, payload: data.detail || 'Invalid credentials.' });
     }
