@@ -234,7 +234,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const [saving,    setSaving]    = useState(false);
 
   // Followup form
-  const [fuForm,    setFuForm]    = useState({ role_context: 'telecaller', scheduled_at: '', remarks: '' });
+  const [fuForm,    setFuForm]    = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
   const [savingFu,  setSavingFu]  = useState(false);
   const [fuErr,     setFuErr]     = useState('');
 
@@ -275,7 +275,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
     setSaving(false);
-    if (res.ok) { onUpdated(); onClose(); }
+    if (res.ok) {
+      let updated = null;
+      try { updated = await res.json(); } catch { /* ignore */ }
+      onUpdated(updated);
+      onClose();
+    }
   }
 
   async function addFollowup() {
@@ -301,7 +306,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     if (res.ok) {
       const newFu = await res.json();
       setDetail(d => ({ ...d, follow_ups: [newFu, ...(d?.follow_ups || [])] }));
-      setFuForm({ role_context: 'telecaller', scheduled_at: '', remarks: '' });
+      setFuForm({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
     } else {
       const err = await res.json().catch(() => ({}));
       setFuErr(JSON.stringify(err));
@@ -551,14 +556,17 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
               {/* Add new followup */}
               <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 10 }}>
-                  <div>
-                    <label style={mLbl}>Role</label>
-                    <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
-                      <option value="telecaller">Telecaller</option>
-                      <option value="stm">STM</option>
-                    </select>
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
+                  {/* Role picker only for admins/managers — telecaller/STM portals auto-set their own role */}
+                  {canAssign && (
+                    <div>
+                      <label style={mLbl}>Role</label>
+                      <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                        <option value="telecaller">Telecaller</option>
+                        <option value="stm">STM</option>
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label style={mLbl}>Date & Time</label>
                     <input type="datetime-local" value={fuForm.scheduled_at}
@@ -588,7 +596,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
-                        color: fuForm.role_context === 'stm' ? '#FF6B2B' : '#0097A7' }}>
+                        color: fu.role_context === 'stm' ? '#FF6B2B' : '#0097A7' }}>
                         {fu.role_context?.toUpperCase()}
                       </span>
                       <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
@@ -627,10 +635,13 @@ export default function SalesLeadsPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Telecallers & Sales Executives (STM) cannot delete leads — only admins/managers.
   const _desig = (user?.designation || '').toLowerCase();
-  const canDelete = !(
-    _desig.includes('telecaller') || _desig.includes('tele caller') ||
-    _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive')
-  );
+  const isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
+  const isStm        = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
+  const isCaller     = isTelecaller || isStm;
+  const canDelete    = !isCaller;
+  // Telecaller / STM portals split their assigned leads into "To Call" (pending) vs
+  // "Called" (already actioned) so they can tell what's left to work.
+  const [workTab,     setWorkTab]     = useState('pending'); // 'pending' | 'called'
   const [leads,       setLeads]       = useState([]);
   const [total,       setTotal]       = useState(0);
   const [page,        setPage]        = useState(1);
@@ -681,6 +692,12 @@ export default function SalesLeadsPage() {
   const loadLeads = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page });
+    if (isCaller) {
+      params.set('work', workTab);
+      // Pending = oldest-first (FIFO) so new leads queue at the bottom and never
+      // bury the lead being worked; Called = most recently actioned first.
+      params.set('ordering', workTab === 'pending' ? 'created_at' : '-updated_at');
+    }
     if (companyId)               params.set('company_id',       companyId);
     if (filters.search)          params.set('search',           filters.search);
     if (filters.status)          params.set('status',           filters.status);
@@ -704,22 +721,35 @@ export default function SalesLeadsPage() {
     setLeads(data.results ?? []);
     setTotal(data.count ?? 0);
     setLoading(false);
-  }, [page, filters, companyId]);
+  }, [page, filters, companyId, isCaller, workTab]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
   useEffect(() => { loadLeads(); }, [loadLeads]);
-  useEffect(() => { setPage(1); }, [filters, companyId]);
+  useEffect(() => { setPage(1); }, [filters, companyId, workTab]);
 
   // Track latest lead ID to detect new arrivals on tab focus
   const lastLeadIdRef  = React.useRef(null);
   const [newLeadBanner, setNewLeadBanner] = React.useState(0);
 
   useEffect(() => {
-    if (leads.length && page === 1) {
+    if (page !== 1) return;
+    // Baseline for the new-leads banner = newest assigned lead id. The pending tab is
+    // ordered oldest-first, so leads[0] is NOT the newest there — fetch it separately.
+    if (isCaller) {
+      (async () => {
+        try {
+          const res  = await fetch(`${SALES_ENDPOINTS.leads}?page=1&page_size=1`, { headers: authHeaders() });
+          const data = await res.json();
+          const results = data.results ?? [];
+          lastLeadIdRef.current = results.length ? results[0].id : 0;
+          setNewLeadBanner(0);
+        } catch { /* ignore */ }
+      })();
+    } else if (leads.length) {
       lastLeadIdRef.current = leads[0].id;
       setNewLeadBanner(0);
     }
-  }, [leads]);
+  }, [leads, isCaller, page]);
 
   useEffect(() => {
     const checkNewLeads = async () => {
@@ -743,6 +773,20 @@ export default function SalesLeadsPage() {
     const res  = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
     const data = await res.json();
     setSelected(data);
+  }
+
+  // Update the saved lead in place so the list never re-sorts and the row the user
+  // just worked stays put. In the caller "To Call" tab, an actioned lead drops out.
+  function onLeadUpdated(updated) {
+    bustLeadsCache();
+    if (!updated) { loadLeads(); return; }
+    const actioned = isTelecaller ? !!updated.telecaller_status : isStm ? !!updated.stm_status : false;
+    if (isCaller && workTab === 'pending' && actioned) {
+      setLeads((prev) => prev.filter((l) => l.id !== updated.id));
+      setTotal((t) => Math.max(0, t - 1));
+    } else {
+      setLeads((prev) => prev.map((l) => (l.id === updated.id ? { ...l, ...updated } : l)));
+    }
   }
 
   async function deleteLead(id) {
@@ -807,7 +851,7 @@ export default function SalesLeadsPage() {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>All Leads</h1>
           <p style={{ fontSize: 13, color: '#8492A6' }}>
-            {total.toLocaleString()} total leads
+            {total.toLocaleString()} {isCaller ? (workTab === 'pending' ? 'to call' : 'called') : 'total leads'}
             {selectedIds.size > 0 && <span style={{ marginLeft: 8, color: '#3D5AFE', fontWeight: 600 }}>· {selectedIds.size} selected</span>}
           </p>
         </div>
@@ -820,6 +864,22 @@ export default function SalesLeadsPage() {
           <button onClick={() => setAddModal(true)} style={saveBtn}>+ Add Lead</button>
         </div>
       </div>
+
+      {/* To Call / Called split — telecaller & STM portals only */}
+      {isCaller && (
+        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E4E8F0', marginBottom: 18 }}>
+          {[['pending', 'To Call'], ['called', 'Called']].map(([key, label]) => {
+            const active = workTab === key;
+            return (
+              <button key={key} onClick={() => setWorkTab(key)}
+                style={{ padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none',
+                  color: active ? '#3D5AFE' : '#8492A6', borderBottom: active ? '2px solid #3D5AFE' : '2px solid transparent' }}>
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Filters */}
       {(() => {
@@ -1028,7 +1088,7 @@ export default function SalesLeadsPage() {
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}
-          onClose={() => setSelected(null)} onUpdated={() => { bustLeadsCache(); loadLeads(); }} />
+          onClose={() => setSelected(null)} onUpdated={onLeadUpdated} />
       )}
     </div>
   );
