@@ -72,12 +72,12 @@ export default function AdminDashboardPage() {
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ═══ HERO ═══ */}
-      <div style={s.hero}>
+      <div style={s.hero} className="admin-hero">
         <div style={s.heroDots} />
         <div style={s.heroGlowTR} />
         <div style={s.heroGlowBL} />
 
-        <div style={s.heroInner}>
+        <div style={s.heroInner} className="admin-hero-inner">
           {/* Left: greeting */}
           <div>
             <div style={s.heroGreet}>{greeting || 'Welcome back'}</div>
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ═══ QUICK ACCESS ═══ */}
-      <div style={s.section}>
+      <div style={s.section} className="admin-section">
         <div style={s.sectionHead}>
           <div style={s.sectionLabel}>QUICK ACCESS</div>
           <div style={s.sectionSub}>Your enabled modules</div>

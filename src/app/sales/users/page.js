@@ -112,8 +112,9 @@ function AssignProjectsModal({ member, projects, onClose }) {
 }
 
 export default function SalesUsersPage() {
-  const router = useRouter();
-  const user   = useSelector((s) => s.auth.user);
+  const router    = useRouter();
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
 
   useEffect(() => {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
@@ -131,10 +132,11 @@ export default function SalesUsersPage() {
   const load = useCallback(async () => {
     setApiError('');
     setLoading(true);
+    const cq = companyId ? `?company_id=${companyId}` : '';
     try {
       const [teamRes, projRes] = await Promise.all([
-        fetch(SALES_ENDPOINTS.team,     { headers: authHeaders() }).then(r => r.json()),
-        fetch(SALES_ENDPOINTS.projects, { headers: authHeaders() }).then(r => r.json()),
+        fetch(SALES_ENDPOINTS.team     + cq, { headers: authHeaders() }).then(r => r.json()),
+        fetch(SALES_ENDPOINTS.projects + cq, { headers: authHeaders() }).then(r => r.json()),
       ]);
       const teamList = Array.isArray(teamRes) ? teamRes : [];
       setMembers(teamList);
@@ -158,7 +160,7 @@ export default function SalesUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [companyId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -216,9 +218,9 @@ export default function SalesUsersPage() {
           {search ? 'No users match your search.' : 'No team members found.'}
         </p>
       ) : (
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflowX: 'auto' }}>
+          <div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
                 <tr>
                   {['Name', 'User Code', 'Designation', 'Role', 'Projects', 'Phone', 'Email'].map((h) => (

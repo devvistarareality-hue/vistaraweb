@@ -58,8 +58,9 @@ function WeightBar({ pct, color }) {
 }
 
 export default function DistributionPage() {
-  const router = useRouter();
-  const user   = useSelector((s) => s.auth.user);
+  const router    = useRouter();
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
 
   useEffect(() => {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
@@ -92,12 +93,13 @@ export default function DistributionPage() {
   const [result, setResult]             = useState(null);
 
   const load = useCallback(async () => {
+    const cq = companyId ? `?company_id=${companyId}` : '';
     const [sRes, aRes, wRes, stRes, logRes] = await Promise.all([
-      fetch(SALES_ENDPOINTS.distSettings, { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.availability,  { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.distWeight,    { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.stats,         { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.distLog,       { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.distSettings + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.availability  + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.distWeight    + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.stats         + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.distLog       + cq, { headers: authHeaders() }).then(r => r.json()),
     ]);
     if (sRes && !sRes.detail) setSettings(sRes);
     if (Array.isArray(aRes))  setAvailability(aRes);
@@ -113,7 +115,7 @@ export default function DistributionPage() {
       setUnassignedStm(stRes.sv_done  ?? 0); // warm_transferred leads
     }
     if (Array.isArray(logRes)) setLog(logRes);
-  }, []);
+  }, [companyId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -136,8 +138,9 @@ export default function DistributionPage() {
 
   async function saveSettings() {
     setSavingSettings(true);
+    const body = companyId ? { ...settingsForm, company_id: companyId } : settingsForm;
     await fetch(SALES_ENDPOINTS.distSettings, {
-      method: 'PUT', headers: authHeaders(), body: JSON.stringify(settingsForm),
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
     });
     setSettings(settingsForm);
     setSettingsForm(null);
@@ -147,7 +150,7 @@ export default function DistributionPage() {
   async function toggleAvail(user_id, current) {
     const res = await fetch(SALES_ENDPOINTS.availability, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ user_id, is_available: !current }),
+      body: JSON.stringify({ user_id, is_available: !current, ...(companyId ? { company_id: companyId } : {}) }),
     });
     if (res.ok) {
       setAvailability(prev => prev.map(a => a.user_id === user_id ? { ...a, is_available: !current } : a));
@@ -158,7 +161,7 @@ export default function DistributionPage() {
     setSavingWeights(true);
     const updates = Object.entries(weights).map(([user_id, weight]) => ({ user_id: parseInt(user_id), weight }));
     const res = await fetch(SALES_ENDPOINTS.distWeight, {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ updates }),
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ updates, ...(companyId ? { company_id: companyId } : {}) }),
     });
     if (res.ok) setSavedWeights({ ...weights });
     setSavingWeights(false);
@@ -168,7 +171,7 @@ export default function DistributionPage() {
     setDistributing(type);
     setResult(null);
     const res  = await fetch(SALES_ENDPOINTS.distribute, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ type }),
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ type, ...(companyId ? { company_id: companyId } : {}) }),
     });
     const data = await res.json();
     setDistributing(null);
@@ -179,14 +182,15 @@ export default function DistributionPage() {
   async function clearHistory() {
     if (!window.confirm('Clear all distribution history? This cannot be undone.')) return;
     setClearingLog(true);
-    await fetch(SALES_ENDPOINTS.distLog, { method: 'DELETE', headers: authHeaders() });
+    const cq = companyId ? `?company_id=${companyId}` : '';
+    await fetch(SALES_ENDPOINTS.distLog + cq, { method: 'DELETE', headers: authHeaders() });
     setLog([]);
     setClearingLog(false);
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="page-pad" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Lead Distribution</h1>
@@ -194,7 +198,7 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 1: Settings + Availability */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
 
         {/* Settings */}
         <div style={card}>
@@ -207,7 +211,7 @@ export default function DistributionPage() {
 
           {settingsForm ? (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
                 {/* TC */}
                 <div>
                   <p style={sectionLabel}>Telecaller</p>
@@ -241,7 +245,7 @@ export default function DistributionPage() {
               </div>
             </>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
               {[
                 { role: 'Telecaller', signin: settings.tc_signin_time, signout: settings.tc_signout_time },
                 { role: 'STM',        signin: settings.stm_signin_time, signout: settings.stm_signout_time },
@@ -267,7 +271,7 @@ export default function DistributionPage() {
         {/* Today's Availability */}
         <div style={card}>
           <h2 style={{ ...cardTitle, marginBottom: 16 }}>👥 Today's Availability</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
             {/* Telecallers */}
             <div>
               <p style={{ ...sectionLabel, marginBottom: 8 }}>
@@ -336,7 +340,7 @@ export default function DistributionPage() {
             {savingWeights ? 'Saving…' : 'Save Weights'}
           </button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           {/* Telecallers weight */}
           <div style={{ border: '1.5px solid #BBF7D0', borderRadius: 12, padding: '14px 16px', backgroundColor: '#F0FDF4' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
@@ -410,7 +414,7 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 3: Distribution Actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
         {[
           {
             type: 'telecaller',
@@ -526,7 +530,7 @@ export default function DistributionPage() {
           ? <p style={{ textAlign: 'center', color: '#8492A6', padding: '40px 0', fontSize: 13 }}>No distributions run yet</p>
           : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #F0F3FA' }}>
                     {['Type', 'Leads', 'Triggered By', 'When', 'Details'].map(h => (

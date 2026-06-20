@@ -1,0 +1,1 @@
+export const SET_ADMIN_COMPANY = 'SET_ADMIN_COMPANY';

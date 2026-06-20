@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 import { getCache, setCache } from '../../sales/_cache';
 
@@ -21,17 +22,20 @@ function pct(num, denom) {
 }
 
 export default function ReportsPage() {
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const cached = getCache('reports');
+    const cacheKey = `reports_${companyId || 'all'}`;
+    const cached = getCache(cacheKey);
     if (cached) { setData(cached); setLoading(false); return; }
-    fetch(SALES_ENDPOINTS.reports, { headers: authHeaders() })
+    const url = companyId ? `${SALES_ENDPOINTS.reports}?company_id=${companyId}` : SALES_ENDPOINTS.reports;
+    fetch(url, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setCache('reports', d); setData(d); setLoading(false); })
+      .then((d) => { setCache(cacheKey, d); setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [companyId]);
 
   if (loading) return (
     <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -54,7 +58,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px,1fr))', gap: 14 }}>
         {[
           { label: 'Total Site Visits',    value: summary.total_sv,       sub: `${summary.completed_sv} completed` },
           { label: 'Closures',             value: summary.total_closures,  sub: 'all time' },
@@ -190,7 +194,7 @@ export default function ReportsPage() {
 
 const card        = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' };
 const sectionTitle = { fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 14 };
-const tbl         = { width: '100%', borderCollapse: 'collapse' };
+const tbl         = { width: '100%', borderCollapse: 'collapse', minWidth: 700 };
 const th          = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '8px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td          = { padding: '10px 14px', fontSize: 13, color: '#1A1A2E' };
 const empty       = { color: '#8492A6', fontSize: 13, textAlign: 'center', padding: '28px 0' };

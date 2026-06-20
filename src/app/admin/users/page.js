@@ -366,7 +366,7 @@ const s = {
   info:      { color: '#8492A6', fontSize: 14, padding: '20px 0' },
   errorTxt:  { color: '#EF4444', fontSize: 14, padding: '20px 0' },
   tableWrap: { overflowX: 'auto', backgroundColor: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #EEF1F7' },
-  table:     { width: '100%', borderCollapse: 'collapse' },
+  table:     { width: '100%', borderCollapse: 'collapse', minWidth: 800 },
   th:        { padding: '14px 16px', fontSize: 11, fontWeight: 700, color: '#8492A6', textAlign: 'left', letterSpacing: 0.6, borderBottom: '1px solid #EEF1F7', whiteSpace: 'nowrap', backgroundColor: '#FAFBFD' },
   tr:        { borderBottom: '1px solid #F3F4F6', transition: 'background 0.1s' },
   td:        { padding: '13px 16px', fontSize: 13, verticalAlign: 'middle' },

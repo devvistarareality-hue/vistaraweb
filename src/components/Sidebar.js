@@ -1,8 +1,11 @@
 'use client';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/actions/authActions';
+import { fetchCompanies } from '../redux/actions/companiesActions';
+import { setAdminCompany, restoreAdminFilter } from '../redux/reducers/adminFilterReducer';
 
 const ORANGE = '#FF6B2B';
 
@@ -71,13 +74,22 @@ const CSS = `
   .logout-btn:hover { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.4) !important; }
   .sidebar-scroll::-webkit-scrollbar { width: 0; }
   .sidebar-scroll { scrollbar-width: none; }
+  .sidebar-close-x { display: none; }
+  @media (max-width: 768px) { .sidebar-close-x { display: block !important; } }
 `;
 
-export default function Sidebar({ user }) {
+export default function Sidebar({ user, onClose, className }) {
   const pathname    = usePathname();
   const dispatch    = useDispatch();
   const router      = useRouter();
   const isVRLAdmin  = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
+  const companies   = useSelector((s) => s.companies.companies || []);
+  const companyId   = useSelector((s) => s.adminFilter?.companyId);
+
+  useEffect(() => {
+    dispatch(restoreAdminFilter());
+    if (isVRLAdmin) dispatch(fetchCompanies());
+  }, [isVRLAdmin]);
 
   const visibleNav = NAV_ITEMS.filter((item) => {
     if (item.href === '/admin/companies') return isVRLAdmin;
@@ -87,24 +99,35 @@ export default function Sidebar({ user }) {
   const isActive = (href) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 
+  function handleCompanyChange(e) {
+    const val = e.target.value;
+    dispatch(setAdminCompany(val ? parseInt(val, 10) : null));
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).filter(k => k.startsWith('sc_')).forEach(k => localStorage.removeItem(k));
+    }
+  }
+
   const handleLogout = () => {
     dispatch(logout());
     router.replace('/company');
   };
 
   return (
-    <div style={s.sidebar}>
+    <div style={s.sidebar} className={className || ''}>
       <style suppressHydrationWarning>{CSS}</style>
 
-      {/* ── Logo ── */}
-      <div style={s.logoRow}>
-        <div style={s.logoCircle}>
-          <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+      {/* ── Logo + close button (mobile) ── */}
+      <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={s.logoCircle}>
+            <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <div style={s.logoName}>Vistara ERP</div>
+            <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
+          </div>
         </div>
-        <div>
-          <div style={s.logoName}>Vistara ERP</div>
-          <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
-        </div>
+        <button onClick={onClose} className="sidebar-close-x" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 20, padding: '2px 4px', lineHeight: 1 }}>✕</button>
       </div>
 
       {/* ── Navigation ── */}
@@ -130,6 +153,43 @@ export default function Sidebar({ user }) {
             </Link>
           );
         })}
+
+        {isVRLAdmin && companies.length > 0 && (
+          <div style={{ marginTop: 18, marginBottom: 4 }}>
+            <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={companyId ?? ''}
+                onChange={handleCompanyChange}
+                style={{
+                  width: '100%', appearance: 'none', WebkitAppearance: 'none',
+                  backgroundColor: 'rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 9, padding: '8px 28px 8px 12px',
+                  color: companyId ? '#fff' : 'rgba(255,255,255,0.45)',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none',
+                }}
+              >
+                <option value="" style={{ backgroundColor: '#0C1E3C', color: 'rgba(255,255,255,0.5)' }}>All Companies</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.id} style={{ backgroundColor: '#0C1E3C', color: '#fff' }}>{c.name}</option>
+                ))}
+              </select>
+              <svg style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+            {companyId && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 6, backgroundColor: 'rgba(255,107,43,0.12)', border: '1px solid rgba(255,107,43,0.22)' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ORANGE, flexShrink: 0 }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: ORANGE }}>
+                  {companies.find(c => c.id === companyId)?.name || 'Filtered'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{ ...s.sectionLabel, marginTop: 22 }}>MODULES</div>
         {PARKED_ITEMS.map((item) => (
