@@ -168,7 +168,7 @@ export default function DistributionPage() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="page-pad" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Lead Distribution</h1>
@@ -176,7 +176,7 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 1: Settings + Availability */}
-      <div className="rg-2" style={{ gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
 
         {/* Settings */}
         <div style={card}>
@@ -189,7 +189,7 @@ export default function DistributionPage() {
 
           {settingsForm ? (
             <>
-              <div className="rg-2" style={{ gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
                 {/* TC */}
                 <div>
                   <p style={sectionLabel}>Telecaller</p>
@@ -223,7 +223,7 @@ export default function DistributionPage() {
               </div>
             </>
           ) : (
-            <div className="rg-2" style={{ gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
               {[
                 { role: 'Telecaller', signin: settings.tc_signin_time, signout: settings.tc_signout_time },
                 { role: 'STM',        signin: settings.stm_signin_time, signout: settings.stm_signout_time },
@@ -249,7 +249,7 @@ export default function DistributionPage() {
         {/* Today's Availability */}
         <div style={card}>
           <h2 style={{ ...cardTitle, marginBottom: 16 }}>👥 Today's Availability</h2>
-          <div className="rg-2" style={{ gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
             {/* Telecallers */}
             <div>
               <p style={{ ...sectionLabel, marginBottom: 8 }}>
@@ -298,7 +298,7 @@ export default function DistributionPage() {
             {savingWeights ? 'Saving…' : 'Save Weights'}
           </button>
         </div>
-        <div className="rg-2" style={{ gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           {/* Telecallers weight */}
           <div style={{ border: '1.5px solid #BBF7D0', borderRadius: 12, padding: '14px 16px', backgroundColor: '#F0FDF4' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
@@ -372,7 +372,7 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 3: Distribution Actions */}
-      <div className="rg-2" style={{ gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
         {[
           {
             type: 'telecaller',
