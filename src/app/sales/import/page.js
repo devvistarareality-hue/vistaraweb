@@ -299,7 +299,7 @@ export default function ImportPage() {
       {/* ── Step 2: Preview ── */}
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="rg-3" style={{ gap: 12 }}>
             {[
               { label: 'Total rows', value: rawRows.length, color: '#1A1A2E' },
               { label: 'Ready to import', value: totalValid, color: '#2E7D32' },
@@ -365,7 +365,7 @@ export default function ImportPage() {
           ) : result && (
             <>
               <p style={{ fontSize: 16, fontWeight: 700, color: '#2E7D32' }}>✓ Import complete</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div className="rg-3" style={{ gap: 12 }}>
                 {[
                   { label: 'New leads imported', value: result.imported, color: '#2E7D32' },
                   { label: 'Duplicates flagged', value: result.duplicates, color: '#F9A825' },

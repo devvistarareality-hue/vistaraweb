@@ -189,7 +189,7 @@ export default function DistributionPage() {
 
           {settingsForm ? (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="rg-2" style={{ gap: 14 }}>
                 {/* TC */}
                 <div>
                   <p style={sectionLabel}>Telecaller</p>
@@ -223,7 +223,7 @@ export default function DistributionPage() {
               </div>
             </>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="rg-2" style={{ gap: 14 }}>
               {[
                 { role: 'Telecaller', signin: settings.tc_signin_time, signout: settings.tc_signout_time },
                 { role: 'STM',        signin: settings.stm_signin_time, signout: settings.stm_signout_time },
@@ -249,7 +249,7 @@ export default function DistributionPage() {
         {/* Today's Availability */}
         <div style={card}>
           <h2 style={{ ...cardTitle, marginBottom: 16 }}>👥 Today's Availability</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="rg-2" style={{ gap: 14 }}>
             {/* Telecallers */}
             <div>
               <p style={{ ...sectionLabel, marginBottom: 8 }}>

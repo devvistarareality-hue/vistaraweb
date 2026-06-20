@@ -386,7 +386,7 @@ export default function LeadSetupPage() {
 
       {/* ─── SOURCES TAB ─── */}
       {tab === 'sources' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div className="rg-2" style={{ gap: 20 }}>
           <div style={card}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E', marginBottom: 14 }}>Active Sources</div>
             {loadingSrc ? (
