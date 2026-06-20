@@ -31,3 +31,161 @@ button:disabled { cursor: not-allowed; }
 ::-webkit-scrollbar-thumb { background: #DDE3F0; border-radius: 3px; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Responsive Layout ─────────────────────────────────────────── */
+
+/* App shell: sidebar + content */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: #DFE4EE;
+}
+
+/* Sidebar — desktop: sticky column; mobile: fixed drawer */
+.app-sidebar {
+  width: 240px;
+  min-width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 200;
+  transition: transform 0.25s ease;
+}
+
+.app-main {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+}
+
+/* Mobile header bar (hamburger) — hidden on desktop */
+.mobile-header {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #0C1E3C;
+  position: sticky;
+  top: 0;
+  z-index: 190;
+  flex-shrink: 0;
+}
+
+.hamburger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.hamburger-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* Sidebar overlay (mobile only) */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 199;
+}
+
+/* ─── Responsive grid utilities ─────────────────────────────────── */
+
+/* 2-column → 1-column on mobile */
+.rg-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+/* 3-column → 1-column on mobile */
+.rg-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+/* 4-column → 2-column on tablet → 1-column on mobile */
+.rg-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+/* Page padding — tighter on small screens */
+.page-pad { padding: 24px 28px; }
+
+/* Overflow tables */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ─── Breakpoints ───────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Sidebar becomes a fixed drawer */
+  .app-sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    height: 100%;
+    transform: translateX(-100%);
+    z-index: 200;
+  }
+  .app-sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Show overlay when sidebar is open */
+  .sidebar-open-active .sidebar-overlay {
+    display: block;
+  }
+
+  /* Show mobile header */
+  .mobile-header {
+    display: flex;
+  }
+
+  /* Grids collapse to 1 column */
+  .rg-2, .rg-3, .rg-4 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Tighter page padding */
+  .page-pad { padding: 16px; }
+
+  /* Hide elements on mobile if needed */
+  .hide-mobile { display: none !important; }
+
+  /* Full-width buttons on mobile */
+  .full-mobile { width: 100% !important; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Tablet: 4-col → 2-col */
+  .rg-4 { grid-template-columns: repeat(2, 1fr); }
+  /* 3-col → 2-col on tablet */
+  .rg-3 { grid-template-columns: repeat(2, 1fr); }
+
+  .page-pad { padding: 20px 22px; }
+}
+
+/* Page content — reduce padding on mobile */
+@media (max-width: 768px) {
+  /* Admin dashboard hero */
+  .admin-hero-inner { padding: 24px 18px 18px !important; }
+  .admin-section { padding: 18px 14px 0 !important; }
+  .admin-hero { margin: 12px 12px 0 !important; }
+
+  /* Generic padding reduction for page wrappers */
+  .app-main main > div[style*="padding: '24px 28px'"],
+  .app-main main > div[style*='padding:"24px 28px"'] {
+    padding: 14px !important;
+  }
+
+  /* Tables scrollable */
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+}
+
+/* Sales skeleton */
+.s-skel {
+  background: linear-gradient(90deg, #e8ecf4 25%, #f2f5fa 50%, #e8ecf4 75%);
+  background-size: 200% 100%;
+  animation: skel 1.4s ease infinite;
+  border-radius: 10px;
+}
+
+@keyframes skel {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

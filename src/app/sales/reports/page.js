@@ -58,7 +58,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px,1fr))', gap: 14 }}>
         {[
           { label: 'Total Site Visits',    value: summary.total_sv,       sub: `${summary.completed_sv} completed` },
           { label: 'Closures',             value: summary.total_closures,  sub: 'all time' },

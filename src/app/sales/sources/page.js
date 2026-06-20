@@ -197,7 +197,7 @@ export default function LeadSetupPage() {
 
       {/* ─── META TAB ─── */}
       {tab === 'meta' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'stretch' }}>
+        <div className="rg-2" style={{ gap: 20, alignItems: 'stretch' }}>
 
           {/* Left: Config */}
           <div>

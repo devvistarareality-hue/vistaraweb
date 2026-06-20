@@ -74,9 +74,11 @@ const CSS = `
   .logout-btn:hover { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.4) !important; }
   .sidebar-scroll::-webkit-scrollbar { width: 0; }
   .sidebar-scroll { scrollbar-width: none; }
+  .sidebar-close-x { display: none; }
+  @media (max-width: 768px) { .sidebar-close-x { display: block !important; } }
 `;
 
-export default function Sidebar({ user }) {
+export default function Sidebar({ user, onClose }) {
   const pathname    = usePathname();
   const dispatch    = useDispatch();
   const router      = useRouter();
@@ -111,18 +113,21 @@ export default function Sidebar({ user }) {
   };
 
   return (
-    <div style={s.sidebar}>
+    <div style={s.sidebar} className="app-sidebar">
       <style suppressHydrationWarning>{CSS}</style>
 
-      {/* ── Logo ── */}
-      <div style={s.logoRow}>
-        <div style={s.logoCircle}>
-          <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+      {/* ── Logo + close button (mobile) ── */}
+      <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={s.logoCircle}>
+            <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <div style={s.logoName}>Vistara ERP</div>
+            <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
+          </div>
         </div>
-        <div>
-          <div style={s.logoName}>Vistara ERP</div>
-          <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
-        </div>
+        <button onClick={onClose} className="sidebar-close-x" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 20, padding: '2px 4px', lineHeight: 1 }}>✕</button>
       </div>
 
       {/* ── Navigation ── */}

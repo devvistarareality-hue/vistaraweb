@@ -176,7 +176,7 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 1: Settings + Availability */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="rg-2" style={{ gap: 20 }}>
 
         {/* Settings */}
         <div style={card}>
@@ -298,7 +298,7 @@ export default function DistributionPage() {
             {savingWeights ? 'Saving…' : 'Save Weights'}
           </button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="rg-2" style={{ gap: 16 }}>
           {/* Telecallers weight */}
           <div style={{ border: '1.5px solid #BBF7D0', borderRadius: 12, padding: '14px 16px', backgroundColor: '#F0FDF4' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
@@ -372,7 +372,7 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 3: Distribution Actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="rg-2" style={{ gap: 16 }}>
         {[
           {
             type: 'telecaller',

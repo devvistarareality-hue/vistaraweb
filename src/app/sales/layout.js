@@ -52,6 +52,7 @@ const CSS = `
   .s-profile-btn:hover { background: rgba(255,255,255,0.07) !important; }
   .s-scroll::-webkit-scrollbar { width: 0; }
   .s-scroll { scrollbar-width: none; }
+  @media (max-width: 768px) { .sidebar-close-btn { display: block !important; } }
 `;
 
 export default function SalesLayout({ children }) {
@@ -64,6 +65,7 @@ export default function SalesLayout({ children }) {
 
   const isVRLAdmin = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
 
+  const [sidebarOpen,    setSidebarOpen]    = useState(false);
   const [profileOpen,    setProfileOpen]    = useState(false);
   const [profileData,    setProfileData]    = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -136,20 +138,26 @@ export default function SalesLayout({ children }) {
     : 'Sales CRM';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#DFE4EE' }}>
+    <div className={`app-shell ${sidebarOpen ? 'sidebar-open-active' : ''}`}>
       <style suppressHydrationWarning>{CSS}</style>
 
+      {/* Mobile overlay */}
+      <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+
       {/* ── Sales Sidebar ── */}
-      <div style={s.sidebar}>
+      <div style={s.sidebar} className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         {/* Logo */}
-        <div style={s.logoRow}>
-          <div style={s.logoCircle}>
-            <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={s.logoCircle}>
+              <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+            <div>
+              <div style={s.logoName}>{portalTitle}</div>
+              <div style={s.logoSub}>Vistara Realty</div>
+            </div>
           </div>
-          <div>
-            <div style={s.logoName}>{portalTitle}</div>
-            <div style={s.logoSub}>Vistara Realty</div>
-          </div>
+          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn">✕</button>
         </div>
 
         {/* Nav */}
@@ -309,9 +317,20 @@ export default function SalesLayout({ children }) {
       )}
 
       {/* ── Main content ── */}
-      <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
-        {children}
-      </main>
+      <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Mobile header */}
+        <div className="mobile-header">
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{portalTitle}</span>
+        </div>
+        <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
