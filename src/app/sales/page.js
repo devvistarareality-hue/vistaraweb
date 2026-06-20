@@ -10,6 +10,62 @@ function authHeaders() {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
+// ─────────────────────────────────────────────
+// AVAILABILITY TOGGLE (Telecaller / STM self sign-in)
+// Marking available auto-resets after the server's TTL (12h).
+// Reflected in the admin Lead Distribution module.
+// ─────────────────────────────────────────────
+function AvailabilityToggle() {
+  const [state, setState] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetch(SALES_ENDPOINTS.availabilityMe, { headers: authHeaders() })
+      .then((r) => r.json()).then(setState).catch(() => {});
+  }, []);
+
+  async function toggle(makeAvailable) {
+    setBusy(true);
+    try {
+      const res = await fetch(SALES_ENDPOINTS.availabilityMe, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ is_available: makeAvailable }),
+      });
+      if (res.ok) setState(await res.json());
+    } finally { setBusy(false); }
+  }
+
+  const resetsLabel = () => {
+    if (!state?.expires_at) return '';
+    const ms = new Date(state.expires_at) - new Date();
+    if (ms <= 0) return '';
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    return h > 0 ? `resets in ${h}h ${m}m` : `resets in ${m}m`;
+  };
+
+  if (state?.is_available) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '7px 12px', borderRadius: 20 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} />
+          Available today{resetsLabel() ? ` · ${resetsLabel()}` : ''}
+        </span>
+        <button onClick={() => toggle(false)} disabled={busy}
+          style={{ padding: '7px 14px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: busy ? 'default' : 'pointer' }}>
+          {busy ? '…' : 'Mark Unavailable'}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <button onClick={() => toggle(true)} disabled={busy}
+      style={{ marginLeft: 'auto', padding: '9px 18px', background: 'linear-gradient(135deg,#16A34A,#22C55E)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+      {busy ? 'Saving…' : '✓ Mark Available Today'}
+    </button>
+  );
+}
+
 function SvgIcon({ children, size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -209,6 +265,7 @@ function TelecallerDashboard({ user }) {
           </h1>
           <p style={{ fontSize: 13, color: '#8492A6' }}>Telecaller · Your call queue & lead pipeline</p>
         </div>
+        <AvailabilityToggle />
       </div>
 
       {/* Stats */}
@@ -360,6 +417,7 @@ function STMDashboard({ user }) {
           </h1>
           <p style={{ fontSize: 13, color: '#8492A6' }}>Sales Executive · Your pipeline & site visits</p>
         </div>
+        <AvailabilityToggle />
       </div>
 
       {/* Stats */}
