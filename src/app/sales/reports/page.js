@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 import { getCache, setCache } from '../../sales/_cache';
 
@@ -21,17 +22,20 @@ function pct(num, denom) {
 }
 
 export default function ReportsPage() {
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const cached = getCache('reports');
+    const cacheKey = `reports_${companyId || 'all'}`;
+    const cached = getCache(cacheKey);
     if (cached) { setData(cached); setLoading(false); return; }
-    fetch(SALES_ENDPOINTS.reports, { headers: authHeaders() })
+    const url = companyId ? `${SALES_ENDPOINTS.reports}?company_id=${companyId}` : SALES_ENDPOINTS.reports;
+    fetch(url, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setCache('reports', d); setData(d); setLoading(false); })
+      .then((d) => { setCache(cacheKey, d); setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [companyId]);
 
   if (loading) return (
     <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>

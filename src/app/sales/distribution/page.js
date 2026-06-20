@@ -36,8 +36,9 @@ function WeightBar({ pct, color }) {
 }
 
 export default function DistributionPage() {
-  const router = useRouter();
-  const user   = useSelector((s) => s.auth.user);
+  const router    = useRouter();
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
 
   useEffect(() => {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
@@ -70,12 +71,13 @@ export default function DistributionPage() {
   const [result, setResult]             = useState(null);
 
   const load = useCallback(async () => {
+    const cq = companyId ? `?company_id=${companyId}` : '';
     const [sRes, aRes, wRes, stRes, logRes] = await Promise.all([
-      fetch(SALES_ENDPOINTS.distSettings, { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.availability,  { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.distWeight,    { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.stats,         { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.distLog,       { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.distSettings + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.availability  + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.distWeight    + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.stats         + cq, { headers: authHeaders() }).then(r => r.json()),
+      fetch(SALES_ENDPOINTS.distLog       + cq, { headers: authHeaders() }).then(r => r.json()),
     ]);
     if (sRes && !sRes.detail) setSettings(sRes);
     if (Array.isArray(aRes))  setAvailability(aRes);
@@ -91,7 +93,7 @@ export default function DistributionPage() {
       setUnassignedStm(stRes.sv_done  ?? 0); // warm_transferred leads
     }
     if (Array.isArray(logRes)) setLog(logRes);
-  }, []);
+  }, [companyId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -114,8 +116,9 @@ export default function DistributionPage() {
 
   async function saveSettings() {
     setSavingSettings(true);
+    const body = companyId ? { ...settingsForm, company_id: companyId } : settingsForm;
     await fetch(SALES_ENDPOINTS.distSettings, {
-      method: 'PUT', headers: authHeaders(), body: JSON.stringify(settingsForm),
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
     });
     setSettings(settingsForm);
     setSettingsForm(null);
@@ -125,7 +128,7 @@ export default function DistributionPage() {
   async function toggleAvail(user_id, current) {
     const res = await fetch(SALES_ENDPOINTS.availability, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ user_id, is_available: !current }),
+      body: JSON.stringify({ user_id, is_available: !current, ...(companyId ? { company_id: companyId } : {}) }),
     });
     if (res.ok) {
       setAvailability(prev => prev.map(a => a.user_id === user_id ? { ...a, is_available: !current } : a));
@@ -136,7 +139,7 @@ export default function DistributionPage() {
     setSavingWeights(true);
     const updates = Object.entries(weights).map(([user_id, weight]) => ({ user_id: parseInt(user_id), weight }));
     const res = await fetch(SALES_ENDPOINTS.distWeight, {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ updates }),
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ updates, ...(companyId ? { company_id: companyId } : {}) }),
     });
     if (res.ok) setSavedWeights({ ...weights });
     setSavingWeights(false);
@@ -146,7 +149,7 @@ export default function DistributionPage() {
     setDistributing(type);
     setResult(null);
     const res  = await fetch(SALES_ENDPOINTS.distribute, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ type }),
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ type, ...(companyId ? { company_id: companyId } : {}) }),
     });
     const data = await res.json();
     setDistributing(null);
@@ -157,7 +160,8 @@ export default function DistributionPage() {
   async function clearHistory() {
     if (!window.confirm('Clear all distribution history? This cannot be undone.')) return;
     setClearingLog(true);
-    await fetch(SALES_ENDPOINTS.distLog, { method: 'DELETE', headers: authHeaders() });
+    const cq = companyId ? `?company_id=${companyId}` : '';
+    await fetch(SALES_ENDPOINTS.distLog + cq, { method: 'DELETE', headers: authHeaders() });
     setLog([]);
     setClearingLog(false);
   }

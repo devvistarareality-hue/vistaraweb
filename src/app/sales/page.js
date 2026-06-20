@@ -81,17 +81,20 @@ function SkeletonGrid({ count = 6 }) {
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────
 function AdminDashboard({ user }) {
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: cached, fresh } = getCacheWithStatus('stats');
+    const cacheKey = `stats_${companyId || 'all'}`;
+    const { data: cached, fresh } = getCacheWithStatus(cacheKey);
     if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
-    fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() })
+    const url = companyId ? `${SALES_ENDPOINTS.stats}?company_id=${companyId}` : SALES_ENDPOINTS.stats;
+    fetch(url, { headers: authHeaders() })
       .then((r) => r.json())
-      .then((d) => { setCache('stats', d); setStats(d); setLoading(false); })
+      .then((d) => { setCache(cacheKey, d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [companyId]);
 
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },

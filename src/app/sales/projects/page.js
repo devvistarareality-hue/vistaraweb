@@ -353,8 +353,11 @@ function ProjectModal({ project, onClose, onSaved }) {
 }
 
 export default function ProjectsPage() {
-  const router = useRouter();
-  const user   = useSelector((s) => s.auth.user);
+  const router    = useRouter();
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const cKey      = `projects_${companyId || 'all'}`;
+  const cq        = companyId ? `?company_id=${companyId}` : '';
 
   useEffect(() => {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
@@ -365,30 +368,30 @@ export default function ProjectsPage() {
   const [showModal, setShowModal] = useState(null); // null | 'add' | project obj
 
   useEffect(() => {
-    const cached = getCache('projects');
+    const cached = getCache(cKey);
     if (cached) { setProjects(cached); setLoading(false); return; }
-    fetch(SALES_ENDPOINTS.projects, { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.projects + cq, { headers: authHeaders() })
       .then(r => r.json())
-      .then(d => { const list = Array.isArray(d) ? d : []; setCache('projects', list); setProjects(list); setLoading(false); })
+      .then(d => { const list = Array.isArray(d) ? d : []; setCache(cKey, list); setProjects(list); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [companyId]);
 
   async function toggleActive(p) {
     const res  = await fetch(SALES_ENDPOINTS.project(p.id), {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ is_active: !p.is_active }),
     });
     const data = await res.json();
-    if (res.ok) { bustCache('projects'); setProjects(prev => prev.map(x => x.id === p.id ? data : x)); }
+    if (res.ok) { bustCache(cKey); setProjects(prev => prev.map(x => x.id === p.id ? data : x)); }
   }
 
   async function deleteProject(p) {
     if (!window.confirm(`Delete "${p.name}"? All linked leads will lose their project.`)) return;
     const res = await fetch(SALES_ENDPOINTS.project(p.id), { method: 'DELETE', headers: authHeaders() });
-    if (res.ok) { bustCache('projects'); setProjects(prev => prev.filter(x => x.id !== p.id)); }
+    if (res.ok) { bustCache(cKey); setProjects(prev => prev.filter(x => x.id !== p.id)); }
   }
 
   function onSaved(data) {
-    bustCache('projects');
+    bustCache(cKey);
     setProjects(prev => {
       const idx = prev.findIndex(x => x.id === data.id);
       return idx >= 0 ? prev.map(x => x.id === data.id ? data : x) : [data, ...prev];

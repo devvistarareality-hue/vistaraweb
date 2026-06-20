@@ -49,8 +49,11 @@ function Step({ n, title, children }) {
 }
 
 export default function LeadSetupPage() {
-  const router = useRouter();
-  const user   = useSelector((s) => s.auth.user);
+  const router    = useRouter();
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const cq        = companyId ? `?company_id=${companyId}` : '';
+  const srcKey    = `sources_${companyId || 'all'}`;
 
   useEffect(() => {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
@@ -86,27 +89,27 @@ export default function LeadSetupPage() {
 
   useEffect(() => {
     // Sources
-    const cached = getCache('sources');
+    const cached = getCache(srcKey);
     if (cached) { setSources(cached); setLoadingSrc(false); }
     else {
-      fetch(SALES_ENDPOINTS.sources, { headers: authHeaders() })
-        .then(r => r.json()).then(d => { const l = Array.isArray(d) ? d : []; setCache('sources', l); setSources(l); setLoadingSrc(false); })
+      fetch(SALES_ENDPOINTS.sources + cq, { headers: authHeaders() })
+        .then(r => r.json()).then(d => { const l = Array.isArray(d) ? d : []; setCache(srcKey, l); setSources(l); setLoadingSrc(false); })
         .catch(() => setLoadingSrc(false));
     }
     // Meta config + mappings
-    fetch(SALES_ENDPOINTS.metaWebhookConfig, { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.metaWebhookConfig + cq, { headers: authHeaders() })
       .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
-    fetch(SALES_ENDPOINTS.metaMappings, { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.metaMappings + cq, { headers: authHeaders() })
       .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
       .catch(() => {});
-  }, []);
+  }, [companyId]);
 
   async function deleteSource(id) {
     if (!confirm('Delete this source?')) return;
-    const res = await fetch(SALES_ENDPOINTS.source(id), { method: 'DELETE', headers: authHeaders() });
+    const res = await fetch(SALES_ENDPOINTS.source(id) + cq, { method: 'DELETE', headers: authHeaders() });
     if (res.ok || res.status === 204) {
-      bustCache('sources');
+      bustCache(srcKey);
       setSources(prev => prev.filter(s => s.id !== id));
     }
   }
@@ -116,18 +119,19 @@ export default function LeadSetupPage() {
     if (!n) { setSrcErr('Source name is required.'); return; }
     if (sources.find(s => s.name === n)) { setSrcErr('Source already exists.'); return; }
     setAdding(true); setSrcErr('');
-    const res  = await fetch(SALES_ENDPOINTS.sources, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: n }) });
+    const body = companyId ? { name: n, company_id: companyId } : { name: n };
+    const res  = await fetch(SALES_ENDPOINTS.sources, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
     const data = await res.json();
     setAdding(false);
     if (!res.ok) { setSrcErr(data.detail || JSON.stringify(data)); return; }
-    bustCache('sources'); setSources(prev => [...prev, data]); setNewName('');
+    bustCache(srcKey); setSources(prev => [...prev, data]); setNewName('');
   }
 
   async function saveMetaConfig() {
     setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]);
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ action: 'save', page_access_token: pat }),
+      body: JSON.stringify({ action: 'save', page_access_token: pat, ...(companyId ? { company_id: companyId } : {}) }),
     });
     const d = await res.json();
     setSaving(false);
@@ -156,7 +160,7 @@ export default function LeadSetupPage() {
     setMapSaving(true);
     const res = await fetch(SALES_ENDPOINTS.metaMappings, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ form_id: mapFormId.trim(), form_name: mapFormName.trim(), project_id: mapProject }),
+      body: JSON.stringify({ form_id: mapFormId.trim(), form_name: mapFormName.trim(), project_id: mapProject, ...(companyId ? { company_id: companyId } : {}) }),
     });
     const d = await res.json();
     setMapSaving(false);
@@ -164,7 +168,7 @@ export default function LeadSetupPage() {
   }
 
   async function deleteMapping(id) {
-    await fetch(SALES_ENDPOINTS.metaMappings, { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) });
+    await fetch(SALES_ENDPOINTS.metaMappings, { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id, ...(companyId ? { company_id: companyId } : {}) }) });
     setMappings(prev => prev.filter(m => m.id !== id));
   }
 

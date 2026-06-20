@@ -4,6 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { logout } from '../../redux/actions/authActions';
+import { fetchCompanies } from '../../redux/actions/companiesActions';
+import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminFilterReducer';
 import { AUTH_ENDPOINTS } from '../../constants/api';
 
 const ORANGE = '#FF6B2B';
@@ -53,18 +55,36 @@ const CSS = `
 `;
 
 export default function SalesLayout({ children }) {
-  const user     = useSelector((s) => s.auth.user);
-  const dispatch = useDispatch();
-  const router   = useRouter();
-  const pathname = usePathname();
+  const user      = useSelector((s) => s.auth.user);
+  const companies = useSelector((s) => s.companies.companies || []);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const dispatch  = useDispatch();
+  const router    = useRouter();
+  const pathname  = usePathname();
+
+  const isVRLAdmin = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
 
   const [profileOpen,    setProfileOpen]    = useState(false);
   const [profileData,    setProfileData]    = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
+  useEffect(() => {
+    dispatch(restoreAdminFilter());
+    if (isVRLAdmin) dispatch(fetchCompanies());
+  }, [isVRLAdmin]);
+
   function handleLogout() {
     dispatch(logout());
     router.replace('/company');
+  }
+
+  function handleCompanyChange(e) {
+    const val = e.target.value;
+    dispatch(setAdminCompany(val ? parseInt(val, 10) : null));
+    // Bust sales cache so pages reload with new company data
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).filter(k => k.startsWith('sc_')).forEach(k => localStorage.removeItem(k));
+    }
   }
 
   async function openProfile() {
@@ -148,6 +168,46 @@ export default function SalesLayout({ children }) {
               </Link>
             );
           })}
+
+          {isVRLAdmin && companies.length > 0 && (
+            <div style={{ marginTop: 18, marginBottom: 4 }}>
+              <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
+              <div style={{ position: 'relative' }}>
+                <select
+                  value={companyId ?? ''}
+                  onChange={handleCompanyChange}
+                  style={{
+                    width: '100%', appearance: 'none', WebkitAppearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    borderRadius: 9, padding: '8px 28px 8px 12px',
+                    color: companyId ? '#fff' : 'rgba(255,255,255,0.45)',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="" style={{ backgroundColor: '#0C1E3C', color: 'rgba(255,255,255,0.5)' }}>All Companies</option>
+                  {companies.map(c => (
+                    <option key={c.id} value={c.id} style={{ backgroundColor: '#0C1E3C', color: '#fff' }}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <svg style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                  width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              {companyId && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 6, backgroundColor: 'rgba(255,107,43,0.12)', border: '1px solid rgba(255,107,43,0.22)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ORANGE, flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: ORANGE }}>
+                    {companies.find(c => c.id === companyId)?.name || 'Filtered'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {isAdmin && (
             <>

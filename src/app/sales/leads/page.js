@@ -570,7 +570,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 
 // ── Main Leads Page ─────────────────────────────────────────────────────────
 export default function SalesLeadsPage() {
-  const user = useSelector((s) => s.auth.user);
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [leads,       setLeads]       = useState([]);
   const [total,       setTotal]       = useState(0);
   const [page,        setPage]        = useState(1);
@@ -598,25 +599,30 @@ export default function SalesLeadsPage() {
   function dismissToast(id) { setDupToasts((t) => t.filter((x) => x.id !== id)); }
 
   const loadMeta = useCallback(async () => {
-    const cachedP = getCache('projects');
-    const cachedS = getCache('sources');
+    const cq = companyId ? `?company_id=${companyId}` : '';
+    const cqExtra = companyId ? `?active_only=true&company_id=${companyId}` : '?active_only=true';
+    const pKey = `projects_${companyId || 'all'}`;
+    const sKey = `sources_${companyId || 'all'}`;
+    const cachedP = getCache(pKey);
+    const cachedS = getCache(sKey);
     if (cachedP) setProjects(cachedP);
     if (cachedS) setSources(cachedS);
     const [pRes, sRes, tRes, sRes2] = await Promise.all([
-      cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()),
-      cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources,     { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.telecallers, { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.stms,        { headers: authHeaders() }).then((r) => r.json()),
+      cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + cqExtra, { headers: authHeaders() }).then((r) => r.json()),
+      cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.telecallers + cq, { headers: authHeaders() }).then((r) => r.json()),
+      fetch(SALES_ENDPOINTS.stms        + cq, { headers: authHeaders() }).then((r) => r.json()),
     ]);
-    if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache('projects', p); setProjects(p); }
-    if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache('sources',  s); setSources(s);  }
+    if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache(pKey, p); setProjects(p); }
+    if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache(sKey, s); setSources(s);  }
     setTelecallers(Array.isArray(tRes)  ? tRes  : []);
     setStms(       Array.isArray(sRes2) ? sRes2 : []);
-  }, []);
+  }, [companyId]);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page });
+    if (companyId)               params.set('company_id',       companyId);
     if (filters.search)          params.set('search',           filters.search);
     if (filters.status)          params.set('status',           filters.status);
     if (filters.project_id)      params.set('project_id',       filters.project_id);
@@ -639,11 +645,11 @@ export default function SalesLeadsPage() {
     setLeads(data.results ?? []);
     setTotal(data.count ?? 0);
     setLoading(false);
-  }, [page, filters]);
+  }, [page, filters, companyId]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
   useEffect(() => { loadLeads(); }, [loadLeads]);
-  useEffect(() => { setPage(1); }, [filters]);
+  useEffect(() => { setPage(1); }, [filters, companyId]);
 
   // Track latest lead ID to detect new arrivals on tab focus
   const lastLeadIdRef  = React.useRef(null);

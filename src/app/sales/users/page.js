@@ -112,8 +112,9 @@ function AssignProjectsModal({ member, projects, onClose }) {
 }
 
 export default function SalesUsersPage() {
-  const router = useRouter();
-  const user   = useSelector((s) => s.auth.user);
+  const router    = useRouter();
+  const user      = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
 
   useEffect(() => {
     if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
@@ -131,10 +132,11 @@ export default function SalesUsersPage() {
   const load = useCallback(async () => {
     setApiError('');
     setLoading(true);
+    const cq = companyId ? `?company_id=${companyId}` : '';
     try {
       const [teamRes, projRes] = await Promise.all([
-        fetch(SALES_ENDPOINTS.team,     { headers: authHeaders() }).then(r => r.json()),
-        fetch(SALES_ENDPOINTS.projects, { headers: authHeaders() }).then(r => r.json()),
+        fetch(SALES_ENDPOINTS.team     + cq, { headers: authHeaders() }).then(r => r.json()),
+        fetch(SALES_ENDPOINTS.projects + cq, { headers: authHeaders() }).then(r => r.json()),
       ]);
       const teamList = Array.isArray(teamRes) ? teamRes : [];
       setMembers(teamList);
@@ -158,7 +160,7 @@ export default function SalesUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [companyId]);
 
   useEffect(() => { load(); }, [load]);
 
