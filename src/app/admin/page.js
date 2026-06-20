@@ -36,8 +36,8 @@ const MODULES = [
   { name: 'Company Management', desc: 'Workspaces, settings and company data',        icon: 'building',  accent: { bg: '#7DD4DE', icon: '#0097A7', gradient: 'rgba(0,151,167,0.22)'  }, href: '/admin/companies',                soon: false },
   { name: 'Sales',              desc: 'Revenue tracking and deal management',         icon: 'trending',  accent: { bg: '#FFC837', icon: '#F9A825', gradient: 'rgba(249,168,37,0.22)' }, href: '/sales',                          soon: false },
   { name: 'HR',                 desc: 'Attendance, leave and people management',      icon: 'people',    accent: { bg: '#9FABF8', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.13)'  }, href: '/placeholder?title=HR',           soon: true  },
-  { name: 'Execution',          desc: 'PR, MB, RA bills and site work management',   icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.13)'  }, href: '/erp/execution',                  soon: false },
-  { name: 'Purchase',           desc: 'PO, GRN, stock, vendor invoices & payments',  icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.13)'   }, href: '/erp/purchase',                   soon: false },
+  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.13)'  }, href: '/placeholder?title=Execution',    soon: true  },
+  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.13)'   }, href: '/placeholder?title=Purchase',     soon: true  },
   { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#BA68C8', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.13)' }, href: '/placeholder?title=Land',         soon: true  },
 ];
 
