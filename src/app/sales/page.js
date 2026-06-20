@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { SALES_ENDPOINTS } from '../../constants/api';
-import { getCacheWithStatus, setCache } from './_cache';
+import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';

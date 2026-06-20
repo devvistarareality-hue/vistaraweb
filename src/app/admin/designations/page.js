@@ -56,35 +56,31 @@ export default function DesignationMasterPage() {
       </div>
 
       {/* Create form */}
-      <div style={s.card}>
-        <h3 style={s.cardTitle}>Add New Designation</h3>
-        <form onSubmit={handleCreate} style={s.formRow}>
-          <div style={{ flex: 1 }}>
-            <label style={s.label}>Module</label>
-            <select
-              value={form.module}
-              onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
-              style={s.select}
-            >
+      <div style={{ backgroundColor: '#fff', borderRadius: 16, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #EEF1F7', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '18px 24px 16px' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>Add New Designation</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Define designations per module for user profiles</div>
+        </div>
+        <form onSubmit={handleCreate} style={{ padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Module</label>
+            <select value={form.module} onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
+              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, backgroundColor: '#FAFAFA', outline: 'none', cursor: 'pointer' }}>
               {ALL_MODULES.map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
-          <div style={{ flex: 2 }}>
-            <label style={s.label}>Designation Name</label>
-            <input
-              required
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="e.g. Site Team Manager, Channel Partner, HR Executive"
-              style={s.input}
-            />
+          <div style={{ flex: 2, minWidth: 200 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Designation Name</label>
+            <input required type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="e.g. Site Team Manager, HR Executive"
+              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' }}
+              onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
           </div>
-          <div style={{ alignSelf: 'flex-end' }}>
-            <button type="submit" style={s.addBtn}>+ Add</button>
+          <div>
+            <button type="submit" style={{ height: 40, padding: '0 22px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
           </div>
         </form>
-        {error && <p style={{ color: '#DC2626', fontSize: 13, marginTop: 8 }}>{error}</p>}
+        {error && <div style={{ margin: '0 24px 16px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#DC2626' }}>{error}</div>}
       </div>
 
       {/* Designations grouped by module */}

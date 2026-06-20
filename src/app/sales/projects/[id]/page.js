@@ -927,8 +927,8 @@ export default function ManagePlotsPage() {
       {/* Interactive Site Map */}
       <SiteMapEditor project={project} plots={plots} onProjectUpdate={setProject} />
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      {/* Filter tabs + Delete All */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         {[
           { key: 'all',       label: 'All',      color: '#1A1A2E', bg: '#F0F3FF', border: '#1A1A2E' },
           { key: 'available', label: 'Available', color: '#2E7D32', bg: '#E8F5E9', border: '#2E7D32' },
@@ -946,6 +946,20 @@ export default function ManagePlotsPage() {
             {label} <span style={{ opacity: 0.65 }}>({counts[key]})</span>
           </button>
         ))}
+        {plots.length > 0 && (
+          <button onClick={async () => {
+            if (!window.confirm(`Delete all ${plots.length} plots for this project? This cannot be undone.`)) return;
+            const res = await fetch(SALES_ENDPOINTS.plotsBulkDelete, {
+              method: 'DELETE', headers: authHeaders(),
+              body: JSON.stringify({ project_id: project.id }),
+            });
+            if (res.ok) { setPlots([]); }
+            else { const e = await res.json(); alert(e.detail || 'Failed to delete plots'); }
+          }}
+            style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#FFF5F5', color: '#DC2626', border: '1.5px solid #FECACA' }}>
+            🗑 Delete All Plots
+          </button>
+        )}
       </div>
 
       {/* Plot grid */}

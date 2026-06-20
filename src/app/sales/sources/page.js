@@ -102,6 +102,15 @@ export default function LeadSetupPage() {
       .catch(() => {});
   }, []);
 
+  async function deleteSource(id) {
+    if (!confirm('Delete this source?')) return;
+    const res = await fetch(SALES_ENDPOINTS.source(id), { method: 'DELETE', headers: authHeaders() });
+    if (res.ok || res.status === 204) {
+      bustCache('sources');
+      setSources(prev => prev.filter(s => s.id !== id));
+    }
+  }
+
   async function addSource(name) {
     const n = name.trim().toLowerCase();
     if (!n) { setSrcErr('Source name is required.'); return; }
@@ -383,8 +392,13 @@ export default function LeadSetupPage() {
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {sources.map(s => (
-                  <span key={s.id} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, backgroundColor: '#F0F3FA', color: '#182350', textTransform: 'capitalize' }}>
+                  <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, backgroundColor: '#F0F3FA', color: '#182350', textTransform: 'capitalize' }}>
                     {s.name}
+                    <button onClick={() => deleteSource(s.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8492A6', fontSize: 14, lineHeight: 1, padding: '0 2px', display: 'flex', alignItems: 'center' }}
+                      title="Delete source">
+                      ×
+                    </button>
                   </span>
                 ))}
               </div>
