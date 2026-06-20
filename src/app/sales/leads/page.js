@@ -655,6 +655,16 @@ export default function SalesLeadsPage() {
     telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
     campaign: '', is_duplicate: false, date_from: '', date_to: '',
   });
+  // Search box is debounced: typing updates `searchText` instantly (responsive UI)
+  // but only commits to `filters.search` (which triggers the fetch) after a pause —
+  // so typing "ramesh" fires one request, not six.
+  const [searchText, setSearchText] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFilters((f) => (f.search === searchText ? f : { ...f, search: searchText }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchText]);
   const [addModal,    setAddModal]    = useState(false);
   const [selected,    setSelected]    = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -677,17 +687,19 @@ export default function SalesLeadsPage() {
     const cachedS = getCache(sKey);
     if (cachedP) setProjects(cachedP);
     if (cachedS) setSources(cachedS);
+    // Telecaller / STM portals never show the assign dropdowns, so don't fetch the
+    // (potentially large) telecaller & STM user lists for them — two fewer requests.
     const [pRes, sRes, tRes, sRes2] = await Promise.all([
       cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + cqExtra, { headers: authHeaders() }).then((r) => r.json()),
       cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.telecallers + cq, { headers: authHeaders() }).then((r) => r.json()),
-      fetch(SALES_ENDPOINTS.stms        + cq, { headers: authHeaders() }).then((r) => r.json()),
+      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cq, { headers: authHeaders() }).then((r) => r.json()),
+      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cq, { headers: authHeaders() }).then((r) => r.json()),
     ]);
     if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache(pKey, p); setProjects(p); }
     if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache(sKey, s); setSources(s);  }
-    setTelecallers(Array.isArray(tRes)  ? tRes  : []);
-    setStms(       Array.isArray(sRes2) ? sRes2 : []);
-  }, [companyId]);
+    if (tRes)  setTelecallers(Array.isArray(tRes)  ? tRes  : []);
+    if (sRes2) setStms(       Array.isArray(sRes2) ? sRes2 : []);
+  }, [companyId, isCaller]);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -892,7 +904,7 @@ export default function SalesLeadsPage() {
         const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
           filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
           filters.campaign || filters.is_duplicate || filters.date_from || filters.date_to;
-        const clearAll = () => setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, date_from:'', date_to:'' });
+        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, date_from:'', date_to:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -916,7 +928,7 @@ export default function SalesLeadsPage() {
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F3FA' }}>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
-                <input value={filters.search} onChange={(e) => sf('search', e.target.value)}
+                <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search name, phone, email…"
                   style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 10, border: '1.5px solid #E8ECF4', fontSize: 13, background: '#F8FAFD', outline: 'none', boxSizing: 'border-box', color: '#1A1A2E' }} />
               </div>
