@@ -194,7 +194,7 @@ export default function ReportsPage() {
 
 const card        = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' };
 const sectionTitle = { fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 14 };
-const tbl         = { width: '100%', borderCollapse: 'collapse' };
+const tbl         = { width: '100%', borderCollapse: 'collapse', minWidth: 700 };
 const th          = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '8px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td          = { padding: '10px 14px', fontSize: 13, color: '#1A1A2E' };
 const empty       = { color: '#8492A6', fontSize: 13, textAlign: 'center', padding: '28px 0' };

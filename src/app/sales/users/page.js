@@ -218,9 +218,9 @@ export default function SalesUsersPage() {
           {search ? 'No users match your search.' : 'No team members found.'}
         </p>
       ) : (
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflowX: 'auto' }}>
+          <div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
                 <tr>
                   {['Name', 'User Code', 'Designation', 'Role', 'Projects', 'Phone', 'Email'].map((h) => (

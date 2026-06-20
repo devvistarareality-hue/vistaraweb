@@ -722,7 +722,7 @@ export default function SalesLeadsPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div style={{ padding: '24px 28px' }}>
+    <div className="page-pad">
       <DupToast toasts={dupToasts} onDismiss={dismissToast} />
 
       {/* New leads notification banner */}
@@ -864,8 +864,8 @@ export default function SalesLeadsPage() {
       })()}
 
       {/* Table */}
-      <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflowX: 'auto' }}>
+        <div>
           <table style={tbl}>
             <thead style={{ backgroundColor: '#F8FAFD' }}>
               <tr>
@@ -976,7 +976,7 @@ export default function SalesLeadsPage() {
 // Shared styles
 const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
 const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 5 };
-const tbl = { width: '100%', borderCollapse: 'collapse' };
+const tbl = { width: '100%', borderCollapse: 'collapse', minWidth: 960 };
 const th  = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '10px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td  = { padding: '10px 14px', fontSize: 13 };
 const pgBtn = { padding: '5px 12px', borderRadius: 7, border: '1.5px solid #E0E6F0', backgroundColor: '#fff', fontSize: 12, color: '#1A1A2E', cursor: 'pointer' };
