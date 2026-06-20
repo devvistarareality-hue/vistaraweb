@@ -31,16 +31,32 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open-active' : ''}`}>
+      <style suppressHydrationWarning>{`
+        .app-shell { display: flex; min-height: 100vh; background: #DFE4EE; }
+        .mobile-header { display: none; align-items: center; gap: 12px; padding: 12px 16px; background: #0C1E3C; position: sticky; top: 0; z-index: 190; flex-shrink: 0; }
+        .hamburger-btn { background: none; border: none; cursor: pointer; color: #fff; padding: 4px; display: flex; align-items: center; border-radius: 6px; }
+        .hamburger-btn:hover { background: rgba(255,255,255,0.1); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 199; }
+        .sidebar-open-active .sidebar-overlay { display: block; }
+        @media (max-width: 768px) {
+          .app-sidebar { position: fixed !important; left: 0; top: 0; height: 100% !important; transform: translateX(-100%); transition: transform 0.25s ease; z-index: 200; }
+          .app-sidebar.sidebar-open { transform: translateX(0) !important; }
+          .mobile-header { display: flex !important; }
+          .rg-2, .rg-3, .rg-4 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       {/* Mobile overlay */}
       <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
 
-      {/* Sidebar */}
-      <div className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <Sidebar user={user} onClose={() => setSidebarOpen(false)} />
-      </div>
+      {/* Sidebar — className drives mobile drawer via globals.css */}
+      <Sidebar
+        user={user}
+        onClose={() => setSidebarOpen(false)}
+        className={`app-sidebar${sidebarOpen ? ' sidebar-open' : ''}`}
+      />
 
       {/* Main content */}
-      <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, overflow: 'auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {/* Mobile header */}
         <div className="mobile-header">
           <button className="hamburger-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">

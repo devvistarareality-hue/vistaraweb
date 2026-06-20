@@ -78,7 +78,7 @@ const CSS = `
   @media (max-width: 768px) { .sidebar-close-x { display: block !important; } }
 `;
 
-export default function Sidebar({ user, onClose }) {
+export default function Sidebar({ user, onClose, className }) {
   const pathname    = usePathname();
   const dispatch    = useDispatch();
   const router      = useRouter();
@@ -113,7 +113,7 @@ export default function Sidebar({ user, onClose }) {
   };
 
   return (
-    <div style={s.sidebar} className="app-sidebar">
+    <div style={s.sidebar} className={className || ''}>
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ── Logo + close button (mobile) ── */}

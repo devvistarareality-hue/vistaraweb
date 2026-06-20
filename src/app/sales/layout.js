@@ -52,7 +52,13 @@ const CSS = `
   .s-profile-btn:hover { background: rgba(255,255,255,0.07) !important; }
   .s-scroll::-webkit-scrollbar { width: 0; }
   .s-scroll { scrollbar-width: none; }
-  @media (max-width: 768px) { .sidebar-close-btn { display: block !important; } }
+  @media (max-width: 768px) {
+    .sidebar-close-btn { display: block !important; }
+    .app-sidebar { position: fixed !important; left: 0; top: 0; height: 100% !important; transform: translateX(-100%); z-index: 200; }
+    .app-sidebar.sidebar-open { transform: translateX(0) !important; }
+    .mobile-header { display: flex !important; }
+    .sidebar-open-active .sidebar-overlay { display: block; }
+  }
 `;
 
 export default function SalesLayout({ children }) {
