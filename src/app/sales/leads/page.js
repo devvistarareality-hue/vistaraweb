@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
@@ -32,6 +32,35 @@ function StatusBadge({ status }) {
     <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: color + '18', color }}>
       {status?.replace(/_/g, ' ').toUpperCase()}
     </span>
+  );
+}
+
+function DupBadge({ count }) {
+  return (
+    <span title={`Duplicate phone — seen ${count || 1} time(s) before`}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 800, backgroundColor: '#FFF1F1', color: '#DC2626', border: '1px solid #FECACA', letterSpacing: 0.3 }}>
+      ⚠ DUP
+    </span>
+  );
+}
+
+/* ── Toast Notification ── */
+function DupToast({ toasts, onDismiss }) {
+  if (!toasts.length) return null;
+  return (
+    <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360 }}>
+      {toasts.map((t) => (
+        <div key={t.id} style={{ backgroundColor: '#fff', border: '1.5px solid #FECACA', borderLeft: '4px solid #DC2626', borderRadius: 12, padding: '12px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'slideIn 0.25s ease' }}>
+          <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#DC2626', marginBottom: 2 }}>Duplicate Lead</div>
+            <div style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+            <div style={{ fontSize: 11, color: '#8492A6', marginTop: 1 }}>{t.phone} · already in system</div>
+          </div>
+          <button onClick={() => onDismiss(t.id)} style={{ background: 'none', border: 'none', color: '#B0BAC9', cursor: 'pointer', fontSize: 16, flexShrink: 0, padding: 0 }}>✕</button>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -68,45 +97,81 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
 
   return (
     <div style={overlay}>
-      <div style={modal}>
-        <div style={modalHeader}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>Add Manual Lead</h2>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Add Manual Lead</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details to create a new lead</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <form onSubmit={submit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px', marginBottom: 14 }}>
+
+        <form onSubmit={submit} style={{ padding: '22px 24px 24px' }}>
+          {/* Contact Info */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 18 }}>
             {[
-              { label: 'Full Name *', key: 'name', type: 'text', placeholder: 'Client name' },
-              { label: 'Phone *',     key: 'phone', type: 'text', placeholder: '+91 99999 99999' },
-              { label: 'Alt. Phone',  key: 'alt_phone', type: 'text', placeholder: '' },
-              { label: 'Email',       key: 'email', type: 'email', placeholder: '' },
-            ].map(({ label, key, type, placeholder }) => (
+              { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Client name', required: true },
+              { label: 'Phone',     key: 'phone', type: 'text', placeholder: '+91 99999 99999', required: true },
+              { label: 'Alt. Phone', key: 'alt_phone', type: 'text', placeholder: 'Optional' },
+              { label: 'Email',     key: 'email', type: 'email', placeholder: 'Optional' },
+            ].map(({ label, key, type, placeholder, required }) => (
               <div key={key}>
-                <label style={lbl}>{label}</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>
+                  {label}{required && <span style={{ color: '#EF4444', marginLeft: 2 }}>*</span>}
+                </label>
                 <input type={type} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  placeholder={placeholder} style={inp} />
+                  placeholder={placeholder}
+                  style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', transition: 'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = '#3D5AFE'}
+                  onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                />
               </div>
             ))}
           </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={lbl}>Project</label>
-            <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={inp}>
-              <option value="">— Select project —</option>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+
+          {/* Project & Source */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Assignment</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 20 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Project</label>
+              <div style={{ position: 'relative' }}>
+                <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })}
+                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.project ? '#1A1A2E' : '#9CA3AF' }}>
+                  <option value="">Select project</option>
+                  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Source</label>
+              <div style={{ position: 'relative' }}>
+                <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
+                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.source ? '#1A1A2E' : '#9CA3AF', textTransform: 'capitalize' }}>
+                  <option value="">Select source</option>
+                  {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
+                </select>
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
+              </div>
+            </div>
           </div>
-          <div style={{ marginBottom: 18 }}>
-            <label style={lbl}>Source</label>
-            <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} style={inp}>
-              <option value="">— Select source —</option>
-              {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
-            </select>
-          </div>
-          {err && <p style={{ color: '#EF4444', fontSize: 12, marginBottom: 12 }}>{err}</p>}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-            <button type="button" onClick={onClose} style={cancelBtn}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ ...saveBtn, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Adding…' : 'Add Lead'}
+
+          {err && (
+            <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: '#DC2626' }}>
+              {err}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button type="button" onClick={onClose}
+              style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+              {saving ? 'Adding…' : '+ Add Lead'}
             </button>
           </div>
         </form>
@@ -242,126 +307,134 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 
   const fuStatusColor = { pending: '#F9A825', completed: '#2E7D32', missed: '#B71C1C', rescheduled: '#0097A7' };
 
+  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
+  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
+  const mSec = { fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 };
+
   return (
     <div style={overlay}>
-      <div style={{ ...modal, maxWidth: 600, maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ ...modalHeader, flexShrink: 0 }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '92%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+        {/* Gradient Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>{lead.name}</h2>
-            <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</p>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {lead.name}
+              {lead.is_duplicate && <span style={{ fontSize: 9, fontWeight: 800, backgroundColor: '#DC2626', color: '#fff', padding: '2px 7px', borderRadius: 6 }}>⚠ DUP</span>}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
           </div>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', flexShrink: 0, backgroundColor: '#FAFBFF' }}>
           {[['detail','Detail'],['history','History'],['followups','Follow-ups']].map(([k,label]) => (
             <button key={k} onClick={() => setActiveTab(k)} style={tabStyle(k)}>{label}</button>
           ))}
         </div>
 
         {/* Tab content */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
+        <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px' }}>
 
           {/* ── DETAIL TAB ── */}
           {activeTab === 'detail' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Contact */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+              {/* Contact Info */}
+              <div style={mSec}>Contact Info</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
-                  <label style={lbl}>Name</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inp} />
+                  <label style={mLbl}>Name</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={mInp}
+                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
                 </div>
                 <div>
-                  <label style={lbl}>Alternate Phone</label>
-                  <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={inp} placeholder="Alt. number" />
+                  <label style={mLbl}>Alternate Phone</label>
+                  <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
+                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+              {/* Assignment */}
+              <div style={mSec}>Assignment</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
-                  <label style={lbl}>Overall Status</label>
-                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inp}>
+                  <label style={mLbl}>Overall Status</label>
+                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>Project</label>
-                  <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={inp}>
+                  <label style={mLbl}>Project</label>
+                  <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">—</option>
                     {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>Telecaller (Pre-Sales)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+              {/* Telecaller */}
+              <div style={mSec}>Telecaller (Pre-Sales)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
                 <div>
-                  <label style={lbl}>Assign Telecaller</label>
-                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={inp}>
+                  <label style={mLbl}>Assign Telecaller</label>
+                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>TC Status</label>
-                  <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={inp}>
+                  <label style={mLbl}>TC Status</label>
+                  <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={lbl}>TC Remarks</label>
+              <div style={{ marginBottom: 18 }}>
+                <label style={mLbl}>TC Remarks</label>
                 <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
-                  rows={2} style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
+                  rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>STM (Sales)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+              {/* STM */}
+              <div style={mSec}>STM (Sales)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
                 <div>
-                  <label style={lbl}>Assign STM</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={inp}>
+                  <label style={mLbl}>Assign STM</label>
+                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>STM Status</label>
-                  <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={inp}>
+                  <label style={mLbl}>STM Status</label>
+                  <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={lbl}>STM Remarks</label>
+              <div style={{ marginBottom: 18 }}>
+                <label style={mLbl}>STM Remarks</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
-                  rows={2} style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
+                  rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
 
               {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
-                <>
-                  <hr style={{ border: 'none', borderTop: '1px solid #F0F3FA' }} />
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8 }}>Meta Ads Info</p>
+                <div style={{ background: '#F8FAFD', borderRadius: 10, padding: '12px 14px', marginBottom: 18 }}>
+                  <div style={mSec}>Meta Ads Info</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {lead.meta_campaign_name && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', minWidth: 72 }}>CAMPAIGN</span><span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_campaign_name}</span></div>}
                     {lead.meta_adset_name    && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', minWidth: 72 }}>AD SET</span><span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_adset_name}</span></div>}
                     {lead.meta_ad_name       && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#B0BAC9', minWidth: 72 }}>AD NAME</span><span style={{ fontSize: 12, color: '#3A3A5C', fontWeight: 600 }}>{lead.meta_ad_name}</span></div>}
                   </div>
-                </>
+                </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-                <button onClick={onClose} style={cancelBtn}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ ...saveBtn, opacity: saving ? 0.6 : 1 }}>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
+                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
@@ -424,30 +497,30 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {/* Add new followup */}
               <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Schedule Follow-up</p>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 10 }}>
                   <div>
-                    <label style={lbl}>Role</label>
-                    <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={inp}>
+                    <label style={mLbl}>Role</label>
+                    <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                       <option value="telecaller">Telecaller</option>
                       <option value="stm">STM</option>
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>Date & Time</label>
+                    <label style={mLbl}>Date & Time</label>
                     <input type="datetime-local" value={fuForm.scheduled_at}
-                      onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={inp} />
+                      onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={mInp} />
                   </div>
                 </div>
                 <div style={{ marginBottom: 10 }}>
-                  <label style={lbl}>Remarks</label>
+                  <label style={mLbl}>Remarks</label>
                   <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
                     placeholder="Call notes, instructions…" rows={2}
-                    style={{ ...inp, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
+                    style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
                 </div>
-                {fuErr && <p style={{ color: '#EF4444', fontSize: 12, marginBottom: 8 }}>{fuErr}</p>}
+                {fuErr && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 12, color: '#DC2626' }}>{fuErr}</div>}
                 <button onClick={addFollowup} disabled={savingFu}
-                  style={{ ...saveBtn, width: '100%', opacity: savingFu ? 0.6 : 1 }}>
+                  style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: savingFu ? 0.7 : 1 }}>
                   {savingFu ? 'Saving…' : '+ Add Follow-up'}
                 </button>
               </div>
@@ -515,6 +588,14 @@ export default function SalesLeadsPage() {
   const [selected,    setSelected]    = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [deleting,    setDeleting]    = useState(false);
+  const [dupToasts,   setDupToasts]   = useState([]);
+
+  function showDupToast(lead) {
+    const id = Date.now() + Math.random();
+    setDupToasts((t) => [...t, { id, name: lead.name, phone: lead.phone }]);
+    setTimeout(() => setDupToasts((t) => t.filter((x) => x.id !== id)), 6000);
+  }
+  function dismissToast(id) { setDupToasts((t) => t.filter((x) => x.id !== id)); }
 
   const loadMeta = useCallback(async () => {
     const cachedP = getCache('projects');
@@ -564,14 +645,34 @@ export default function SalesLeadsPage() {
   useEffect(() => { loadLeads(); }, [loadLeads]);
   useEffect(() => { setPage(1); }, [filters]);
 
-  // Auto-refresh every 30 seconds to pick up new incoming leads
+  // Track latest lead ID to detect new arrivals on tab focus
+  const lastLeadIdRef  = React.useRef(null);
+  const [newLeadBanner, setNewLeadBanner] = React.useState(0);
+
   useEffect(() => {
-    const id = setInterval(() => {
-      bustLeadsCache();
-      loadLeads();
-    }, 30000);
-    return () => clearInterval(id);
-  }, [loadLeads]);
+    if (leads.length && page === 1) {
+      lastLeadIdRef.current = leads[0].id;
+      setNewLeadBanner(0);
+    }
+  }, [leads]);
+
+  useEffect(() => {
+    const checkNewLeads = async () => {
+      if (lastLeadIdRef.current === null) return;
+      try {
+        const res  = await fetch(`${SALES_ENDPOINTS.leads}?page=1&page_size=5`, { headers: authHeaders() });
+        const data = await res.json();
+        const results = data.results ?? [];
+        if (results.length && results[0].id !== lastLeadIdRef.current) {
+          const count = results.filter(r => r.id > lastLeadIdRef.current).length;
+          setNewLeadBanner(count || 1);
+        }
+      } catch { /* ignore */ }
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') checkNewLeads(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   async function loadDetail(lead) {
     const res  = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
@@ -616,6 +717,26 @@ export default function SalesLeadsPage() {
 
   return (
     <div style={{ padding: '24px 28px' }}>
+      <DupToast toasts={dupToasts} onDismiss={dismissToast} />
+
+      {/* New leads notification banner */}
+      {newLeadBanner > 0 && (
+        <div style={{ backgroundColor: '#182350', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🔔</span>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
+              {newLeadBanner} new lead{newLeadBanner > 1 ? 's' : ''} arrived
+            </span>
+          </div>
+          <button
+            onClick={() => { bustLeadsCache(); setPage(1); loadLeads(); setNewLeadBanner(0); }}
+            style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '5px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
@@ -647,65 +768,88 @@ export default function SalesLeadsPage() {
           filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
           filters.campaign || filters.is_duplicate || filters.date_from || filters.date_to;
         const clearAll = () => setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, date_from:'', date_to:'' });
-        const fBox = { backgroundColor: '#fff', borderRadius: 12, border: '1.5px solid #E8ECF4', padding: '14px 16px', marginBottom: 16 };
-        const fRow = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' };
-        const fSel = { height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 12, background: '#fff', cursor: 'pointer', outline: 'none' };
-        const qBtn = (active) => ({ height: 34, padding: '0 14px', borderRadius: 8, border: '1.5px solid ' + (active ? '#3D5AFE' : '#E0E6F0'), fontSize: 12, fontWeight: 600, cursor: 'pointer', background: active ? '#EEF0FF' : '#fff', color: active ? '#3D5AFE' : '#8492A6' });
-        return (
-          <div style={fBox}>
-            {/* Row 1: Search */}
-            <input value={filters.search} onChange={(e) => sf('search', e.target.value)}
-              placeholder="🔍  Search name, phone, email…"
-              style={{ ...fSel, width: '100%', marginBottom: 10, height: 38, fontSize: 13 }} />
 
-            {/* Row 2: Date + Project + TC Status + STM Status + Clear */}
-            <div style={{ ...fRow, marginBottom: 8 }}>
-              <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 140 }} />
-              <span style={{ fontSize: 12, color: '#8492A6' }}>to</span>
-              <input type="date" value={filters.date_to}   onChange={(e) => sf('date_to',   e.target.value)} style={{ ...fSel, width: 140 }} />
+        const fSel = {
+          height: 36, padding: '0 10px', borderRadius: 8,
+          border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD',
+          cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500,
+        };
+        const activeSelStyle = (val) => val ? { ...fSel, borderColor: '#3D5AFE', background: '#EEF0FF', color: '#3D5AFE', fontWeight: 600 } : fSel;
+        const qBtn = (active) => ({
+          height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+          cursor: 'pointer', border: 'none',
+          background: active ? '#182350' : '#F0F2F8',
+          color: active ? '#fff' : '#8492A6',
+          transition: 'all 0.15s',
+        });
+        const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
+
+        return (
+          <div style={{ backgroundColor: '#fff', borderRadius: 14, border: '1.5px solid #E8ECF4', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+
+            {/* Search bar */}
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F3FA' }}>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
+                <input value={filters.search} onChange={(e) => sf('search', e.target.value)}
+                  placeholder="Search name, phone, email…"
+                  style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 10, border: '1.5px solid #E8ECF4', fontSize: 13, background: '#F8FAFD', outline: 'none', boxSizing: 'border-box', color: '#1A1A2E' }} />
+              </div>
+            </div>
+
+            {/* Row 1: Date range + quick buttons + project + tc/stm status */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #F0F3FA' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#B0BAD0', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+              <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
+              <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
+              <input type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
+              <div style={divider} />
               <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
               <button onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
               <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
-              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={fSel}>
+              <div style={divider} />
+              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
                 <option value="">All Projects</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={fSel}>
+              <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>
                 {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
-              <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={fSel}>
+              <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
                 <option value="">STM Status</option>
                 {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               {anyFilter && (
-                <button onClick={clearAll} style={{ ...fSel, color: '#EF4444', borderColor: '#FCA5A5', background: '#FFF5F5', fontWeight: 600 }}>✕ Clear</button>
+                <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: '#FFF5F5', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
+                  ✕ Clear all
+                </button>
               )}
             </div>
 
-            {/* Row 3: Status + Source + Telecaller + STM + Campaign + Duplicates */}
-            <div style={fRow}>
-              <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={fSel}>
+            {/* Row 2: Status + Source + Telecaller + STM + Campaign + Duplicates */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px' }}>
+              <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
                 <option value="">All Statuses</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
-              <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={fSel}>
+              <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={activeSelStyle(filters.source_id)}>
                 <option value="">All Sources</option>
                 {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
               </select>
-              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={fSel}>
+              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={activeSelStyle(filters.telecaller_id)}>
                 <option value="">All Telecallers</option>
                 {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
-              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={fSel}>
+              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
                 <option value="">All STMs</option>
                 {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
               <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"
-                style={{ ...fSel, width: 180 }} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3A3A5C', cursor: 'pointer', userSelect: 'none' }}>
-                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 15, height: 15 }} />
+                style={{ ...fSel, width: 170, background: filters.campaign ? '#EEF0FF' : '#F8FAFD', borderColor: filters.campaign ? '#3D5AFE' : '#E8ECF4', color: filters.campaign ? '#3D5AFE' : '#1A1A2E' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? '#3D5AFE' : '#8492A6', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? '#3D5AFE' : '#E8ECF4'}`, background: filters.is_duplicate ? '#EEF0FF' : '#F8FAFD' }}>
+                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 14, height: 14, accentColor: '#3D5AFE' }} />
                 Duplicates only
               </label>
             </div>
@@ -741,16 +885,17 @@ export default function SalesLeadsPage() {
               ) : leads.length === 0 ? (
                 <tr><td colSpan={12} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (
-                <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FAFBFE'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>
+                <tr key={l.id}
+                  style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FFFBFB' : '', borderLeft: l.is_duplicate ? '3px solid #DC2626' : '3px solid transparent' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FFF5F5' : '#FAFBFE'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FFFBFB' : ''}>
                   <td style={td} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
                     <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
-                      {l.is_duplicate && <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 700 }}>DUP</span>}
+                      {l.is_duplicate && <DupBadge count={l.duplicate_count} />}
                     </div>
                     {(l.meta_campaign_name || l.meta_adset_name || l.meta_ad_name) && (
                       <div style={{ fontSize: 10, color: '#8492A6', marginTop: 2, lineHeight: 1.4 }}>
@@ -812,7 +957,7 @@ export default function SalesLeadsPage() {
       {/* Modals */}
       {addModal && (
         <AddLeadModal projects={projects} sources={sources}
-          onClose={() => setAddModal(false)} onAdded={() => { loadLeads(); }} />
+          onClose={() => setAddModal(false)} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}

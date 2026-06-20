@@ -125,8 +125,12 @@ export default function CreateUserPage() {
         <h1 style={s.pageTitle}>Create New User</h1>
       </div>
 
-      <div style={s.card}>
-        <form onSubmit={handleSubmit}>
+      <div style={{ ...s.card, padding: 0, overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 28px 20px' }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>New User</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details below to create a new user account</div>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '24px 28px 28px' }}>
 
           {/* Company selector — VRL admin only */}
           {isVRLAdmin && (
@@ -316,9 +320,9 @@ export default function CreateUserPage() {
             </div>
           </div>
 
-          <div style={s.formFooter}>
-            <button type="button" onClick={() => router.back()} style={s.cancelBtn}>Cancel</button>
-            <button type="submit" disabled={creating} style={{ ...s.saveBtn, opacity: creating ? 0.6 : 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+            <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={creating} style={{ padding: '10px 28px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: creating ? 0.7 : 1, minWidth: 130 }}>
               {creating ? 'Creating…' : 'Create User'}
             </button>
           </div>

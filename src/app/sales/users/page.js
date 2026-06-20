@@ -33,6 +33,84 @@ function DesigBadge({ desig }) {
   );
 }
 
+const ASSIGN_DESIGS = ['TELECALLER', 'STM'];
+
+function AssignProjectsModal({ member, projects, onClose }) {
+  const [selected, setSelected]  = useState([]);
+  const [loading,  setLoading]   = useState(true);
+  const [saving,   setSaving]    = useState(false);
+
+  useEffect(() => {
+    fetch(`${SALES_ENDPOINTS.userProjects}?user_id=${member.id}`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : [])
+      .then(ids => { setSelected(Array.isArray(ids) ? ids : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [member.id]);
+
+  function toggle(pid) {
+    setSelected(prev => prev.includes(pid) ? prev.filter(id => id !== pid) : [...prev, pid]);
+  }
+
+  async function save() {
+    setSaving(true);
+    await fetch(SALES_ENDPOINTS.userProjects, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ user_id: member.id, project_ids: selected }),
+    });
+    setSaving(false);
+    onClose(selected);
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+
+        {/* Gradient Header */}
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Assign Projects</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{member.name} · {member.designation}</div>
+          </div>
+          <button onClick={() => onClose(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+
+        {/* Project list */}
+        <div style={{ padding: '16px 22px', maxHeight: 380, overflowY: 'auto' }}>
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#8492A6', padding: '30px 0' }}>Loading…</p>
+          ) : projects.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#8492A6', padding: '30px 0' }}>No projects found.</p>
+          ) : (
+            projects.map(p => {
+              const checked = selected.includes(p.id);
+              return (
+                <div key={p.id} onClick={() => toggle(p.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 12, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#3D5AFE' : '#E8ECF4'}`, backgroundColor: checked ? '#F0F3FF' : '#FAFAFA', transition: 'all 0.15s' }}>
+                  <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#3D5AFE' : '#C8D0E0'}`, backgroundColor: checked ? '#3D5AFE' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                    {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</span>}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{p.name}</div>
+                    {p.location && <div style={{ fontSize: 12, color: '#8492A6', marginTop: 1 }}>{p.location}</div>}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid #F0F3FA' }}>
+          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SalesUsersPage() {
   const router = useRouter();
   const user   = useSelector((s) => s.auth.user);
@@ -42,18 +120,39 @@ export default function SalesUsersPage() {
   }, [user]);
 
   const [members,  setMembers]  = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [apiError, setApiError] = useState('');
   const [search,   setSearch]   = useState('');
+  const [assignMember, setAssignMember] = useState(null); // member being assigned
+  // track assigned project counts per user
+  const [projectCounts, setProjectCounts] = useState({}); // {user_id: count}
 
   const load = useCallback(async () => {
     setApiError('');
     setLoading(true);
     try {
-      const res  = await fetch(SALES_ENDPOINTS.team, { headers: authHeaders() });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const data = await res.json();
-      setMembers(Array.isArray(data) ? data : []);
+      const [teamRes, projRes] = await Promise.all([
+        fetch(SALES_ENDPOINTS.team,     { headers: authHeaders() }).then(r => r.json()),
+        fetch(SALES_ENDPOINTS.projects, { headers: authHeaders() }).then(r => r.json()),
+      ]);
+      const teamList = Array.isArray(teamRes) ? teamRes : [];
+      setMembers(teamList);
+      setProjects(Array.isArray(projRes) ? projRes : []);
+
+      // Load project counts for TELECALLER/STM users (best-effort — backend may not be deployed yet)
+      const assignable = teamList.filter(m => ASSIGN_DESIGS.includes(m.designation?.toUpperCase()));
+      const counts = {};
+      await Promise.allSettled(assignable.map(async m => {
+        try {
+          const r = await fetch(`${SALES_ENDPOINTS.userProjects}?user_id=${m.id}`, { headers: authHeaders() });
+          if (r.ok) {
+            const ids = await r.json();
+            counts[m.id] = Array.isArray(ids) ? ids.length : 0;
+          }
+        } catch { counts[m.id] = 0; }
+      }));
+      setProjectCounts(counts);
     } catch (err) {
       setApiError(err.message || 'Failed to load team');
     } finally {
@@ -63,6 +162,13 @@ export default function SalesUsersPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  function handleAssignClose(newIds) {
+    setAssignMember(null);
+    if (newIds !== null && assignMember) {
+      setProjectCounts(prev => ({ ...prev, [assignMember.id]: newIds.length }));
+    }
+  }
+
   const filtered = search.trim()
     ? members.filter((m) =>
         m.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,6 +177,8 @@ export default function SalesUsersPage() {
         m.role?.toLowerCase().includes(search.toLowerCase())
       )
     : members;
+
+  const isAssignable = (m) => ASSIGN_DESIGS.includes(m.designation?.toUpperCase());
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -113,7 +221,7 @@ export default function SalesUsersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
                 <tr>
-                  {['Name', 'User Code', 'Designation', 'Role', 'Phone', 'Email'].map((h) => (
+                  {['Name', 'User Code', 'Designation', 'Role', 'Projects', 'Phone', 'Email'].map((h) => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
@@ -130,6 +238,16 @@ export default function SalesUsersPage() {
                     <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6', fontSize: 12 }}>{m.user_code}</td>
                     <td style={td}><DesigBadge desig={m.designation} /></td>
                     <td style={td}><RoleBadge role={m.role} /></td>
+                    <td style={td}>
+                      {isAssignable(m) ? (
+                        <button onClick={() => setAssignMember(m)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid #3D5AFE', backgroundColor: '#F0F3FF', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                          🗂 {projectCounts[m.id] > 0 ? `${projectCounts[m.id]} assigned` : 'Assign'}
+                        </button>
+                      ) : (
+                        <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>
+                      )}
+                    </td>
                     <td style={{ ...td, color: '#8492A6' }}>{m.phone || '—'}</td>
                     <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>{m.email || '—'}</td>
                   </tr>
@@ -138,6 +256,14 @@ export default function SalesUsersPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {assignMember && (
+        <AssignProjectsModal
+          member={assignMember}
+          projects={projects}
+          onClose={handleAssignClose}
+        />
       )}
     </div>
   );

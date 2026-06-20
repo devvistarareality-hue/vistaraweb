@@ -1,7 +1,9 @@
 import { RAILWAY_URL, setBaseUrl } from '../constants/api';
 
 const LOCAL_URL = 'http://localhost:8000';
-const PROBE_PATH = '/api/auth/login/';
+// Probe the dedicated health endpoint (GET, no auth, returns JSON) instead of
+// the POST-only login endpoint — the latter logs a 405 on every probe.
+const PROBE_PATH = '/health/';
 const TIMEOUT_MS = 2000;
 
 async function probeUrl(url) {
@@ -10,8 +12,7 @@ async function probeUrl(url) {
     const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
     const res = await fetch(`${url}${PROBE_PATH}`, { signal: controller.signal });
     clearTimeout(id);
-    const ct = res.headers.get('content-type') || '';
-    return ct.includes('application/json');
+    return res.ok;
   } catch {
     return false;
   }
