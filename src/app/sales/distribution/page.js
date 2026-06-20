@@ -26,6 +26,28 @@ function CheckIcon({ on }) {
     : <span style={{ color: '#CBD5E1', fontSize: 14, fontWeight: 800 }}>✗</span>;
 }
 
+// Format an ISO timestamp to a local time like "5:04 PM".
+function fmtTime(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// ── Assigned-project chips shown under each availability name ──────────────────
+function ProjectTags({ projects }) {
+  if (!projects || projects.length === 0) {
+    return <span style={{ fontSize: 10, color: '#B0BAC9' }}>No project assigned</span>;
+  }
+  return (
+    <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      {projects.map((p, i) => (
+        <span key={i} style={{ fontSize: 10, fontWeight: 700, color: '#3D5AFE', background: '#EEF2FF', padding: '1px 7px', borderRadius: 20 }}>
+          {p}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 // ── Mini progress bar ─────────────────────────────────────────────────────────
 function WeightBar({ pct, color }) {
   return (
@@ -255,9 +277,19 @@ export default function DistributionPage() {
                 ? <p style={{ fontSize: 12, color: '#8492A6' }}>No telecallers</p>
                 : allTc.map(a => (
                   <button key={a.user_id} onClick={() => toggleAvail(a.user_id, a.is_available)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 8, width: '100%', background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>
                     <CheckIcon on={a.is_available} />
-                    <span style={{ fontSize: 13, color: a.is_available ? '#1A1A2E' : '#8492A6' }}>{a.name}</span>
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, color: a.is_available ? '#1A1A2E' : '#8492A6' }}>{a.name}</span>
+                        {a.is_available && a.checked_in_at && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '1px 7px', borderRadius: 20 }}>
+                            ⏱ {fmtTime(a.checked_in_at)}
+                          </span>
+                        )}
+                      </span>
+                      <ProjectTags projects={a.projects} />
+                    </span>
                   </button>
                 ))
               }
@@ -271,9 +303,19 @@ export default function DistributionPage() {
                 ? <p style={{ fontSize: 12, color: '#8492A6' }}>No STMs</p>
                 : allStm.map(a => (
                   <button key={a.user_id} onClick={() => toggleAvail(a.user_id, a.is_available)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 8, width: '100%', background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>
                     <CheckIcon on={a.is_available} />
-                    <span style={{ fontSize: 13, color: a.is_available ? '#1A1A2E' : '#8492A6' }}>{a.name}</span>
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, color: a.is_available ? '#1A1A2E' : '#8492A6' }}>{a.name}</span>
+                        {a.is_available && a.checked_in_at && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '1px 7px', borderRadius: 20 }}>
+                            ⏱ {fmtTime(a.checked_in_at)}
+                          </span>
+                        )}
+                      </span>
+                      <ProjectTags projects={a.projects} />
+                    </span>
                   </button>
                 ))
               }
