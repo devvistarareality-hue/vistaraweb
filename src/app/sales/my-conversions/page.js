@@ -38,6 +38,8 @@ function StatusBadge({ status, colors }) {
 
 export default function MyConversionsPage() {
   const user = useSelector((s) => s.auth.user);
+  const des = (user?.designation || '').toLowerCase();
+  const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const [tab, setTab] = useState('sv');
   const [visits, setVisits] = useState([]);
   const [closures, setClosures] = useState([]);
@@ -70,7 +72,9 @@ export default function MyConversionsPage() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0C1E3C', margin: 0 }}>My Conversions</h1>
         <p style={{ fontSize: 13, color: '#6B7280', margin: '4px 0 0' }}>
-          Track site visits and closures from leads you referred to the sales team
+          {isStm
+            ? 'Track all your site visits and closures across the leads you handle'
+            : 'Track site visits and closures from leads you referred to the sales team'}
         </p>
       </div>
 
@@ -114,7 +118,7 @@ export default function MyConversionsPage() {
         <div style={card}>
           {svCompleted.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>
-              No site visits completed for your referred leads yet.
+              {isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.'}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -125,7 +129,7 @@ export default function MyConversionsPage() {
                   <th style={th}>Project</th>
                   <th style={th}>Visit Date</th>
                   <th style={th}>Status</th>
-                  <th style={th}>STM</th>
+                  <th style={th}>{isStm ? 'Telecaller' : 'STM'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +140,7 @@ export default function MyConversionsPage() {
                     <td style={td}>{v.project_name || '—'}</td>
                     <td style={td}>{v.visited_at ? fmtDate(v.visited_at) : (v.scheduled_at ? fmtDate(v.scheduled_at) : '—')}</td>
                     <td style={td}><StatusBadge status={v.status} colors={SV_COLOR} /></td>
-                    <td style={{ ...td, color: '#6B7280' }}>{v.stm_name || '—'}</td>
+                    <td style={{ ...td, color: '#6B7280' }}>{(isStm ? v.referred_by_telecaller_name : v.stm_name) || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -147,7 +151,7 @@ export default function MyConversionsPage() {
         <div style={card}>
           {allClosures.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>
-              No closures from your referred leads yet.
+              {isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
