@@ -7,7 +7,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 async function saveToken(token) {
   const access = localStorage.getItem('access_token');
   if (!access || !token) return;
-  await fetch(`${API_BASE}/api/notifications/token/`, {
+  await fetch(`${API_BASE}/api/auth/notifications/token/`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access}` },
     body:    JSON.stringify({ token, platform: 'web' }),
