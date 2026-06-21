@@ -37,6 +37,7 @@ export default function UserManagementPage() {
   const router   = useRouter();
   const { users, loading, error, updating, updateSuccess, updateError } = useSelector((s) => s.userManagement);
   const { designations } = useSelector((s) => s.designations);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
 
   const [search,            setSearch]            = useState('');
   const [editUser,          setEditUser]          = useState(null);
@@ -47,11 +48,11 @@ export default function UserManagementPage() {
   const opLabel = useRef('updated');
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    dispatch(fetchUsers(true, companyId));
     dispatch(fetchDesignations());
-  }, []);
+  }, [companyId]);
 
-  const handleRefresh = () => { dispatch(fetchUsers(true)); dispatch(fetchDesignations(true)); };
+  const handleRefresh = () => { dispatch(fetchUsers(true, companyId)); dispatch(fetchDesignations(true)); };
 
   useEffect(() => {
     if (updateSuccess) {

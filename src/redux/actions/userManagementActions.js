@@ -13,12 +13,13 @@ const authHeaders = () => {
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
-export const fetchUsers = (force = false) => async (dispatch, getState) => {
+export const fetchUsers = (force = false, companyId = null) => async (dispatch, getState) => {
   const { lastFetched, users } = getState().userManagement;
   if (!force && lastFetched && users.length > 0 && Date.now() - lastFetched < CACHE_TTL) return;
   dispatch({ type: USERS_FETCH_REQUEST });
   try {
-    const res  = await fetch(USER_ENDPOINTS.list, { headers: authHeaders() });
+    const url  = companyId ? `${USER_ENDPOINTS.list}?company_id=${companyId}` : USER_ENDPOINTS.list;
+    const res  = await fetch(url, { headers: authHeaders() });
     const data = await res.json();
     if (res.ok) {
       dispatch({ type: USERS_FETCH_SUCCESS, payload: data });
