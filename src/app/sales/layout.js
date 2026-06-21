@@ -7,7 +7,7 @@ import { logout } from '../../redux/actions/authActions';
 import { fetchCompanies } from '../../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminFilterReducer';
 import { AUTH_ENDPOINTS } from '../../constants/api';
-
+import { useOneSignal } from '../../lib/useOneSignal';
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
 
@@ -74,6 +74,8 @@ export default function SalesLayout({ children }) {
   const dispatch  = useDispatch();
   const router    = useRouter();
   const pathname  = usePathname();
+
+  useOneSignal(user?.user_code);
 
   const isVRLAdmin = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
 
