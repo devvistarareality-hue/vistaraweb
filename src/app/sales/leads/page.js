@@ -237,6 +237,9 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const [fuForm,    setFuForm]    = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
   const [savingFu,  setSavingFu]  = useState(false);
   const [fuErr,     setFuErr]     = useState('');
+  // Inline "schedule site visit" when STM sets status = sv_scheduled
+  const [svScheduledAt, setSvScheduledAt] = useState('');
+  const [svRemarks,     setSvRemarks]     = useState('');
 
   useEffect(() => {
     setForm({
@@ -249,6 +252,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     });
     setActiveTab('detail');
     setDetail(null);
+    setSvScheduledAt('');
+    setSvRemarks('');
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
       if (res.ok) setDetail(await res.json());
@@ -274,12 +279,57 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     const res = await fetch(SALES_ENDPOINTS.lead(lead.id), {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
-    setSaving(false);
     if (res.ok) {
       let updated = null;
       try { updated = await res.json(); } catch { /* ignore */ }
+
+      // STM scheduled a visit → auto-create the site-visit entry
+      if (form.stm_status === 'sv_scheduled' && svScheduledAt) {
+        try {
+          await fetch(SALES_ENDPOINTS.siteVisits, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({
+              lead: lead.id, project: form.project || null,
+              scheduled_at: new Date(svScheduledAt).toISOString(),
+              status: 'scheduled', stm: form.stm || user?.id,
+              referred_by_telecaller: form.telecaller || null,
+              remarks: svRemarks || '',
+            }),
+          });
+        } catch { /* ignore */ }
+      }
+
+      // STM marked sv_done → complete the latest pending visit (or create a completed one)
+      if (form.stm_status === 'sv_done') {
+        try {
+          const svRes = await fetch(`${SALES_ENDPOINTS.siteVisits}?lead_id=${lead.id}`, { headers: authHeaders() });
+          const list = svRes.ok ? await svRes.json() : [];
+          const pending = (Array.isArray(list) ? list : []).filter(v => v.status === 'scheduled')
+            .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))[0];
+          const now = new Date().toISOString();
+          if (pending) {
+            await fetch(SALES_ENDPOINTS.siteVisit(pending.id), {
+              method: 'PATCH', headers: authHeaders(),
+              body: JSON.stringify({ status: 'completed', visited_at: now }),
+            });
+          } else {
+            await fetch(SALES_ENDPOINTS.siteVisits, {
+              method: 'POST', headers: authHeaders(),
+              body: JSON.stringify({
+                lead: lead.id, project: form.project || null,
+                scheduled_at: now, visited_at: now, status: 'completed',
+                stm: form.stm || user?.id, referred_by_telecaller: form.telecaller || null,
+              }),
+            });
+          }
+        } catch { /* ignore */ }
+      }
+
+      setSaving(false);
       onUpdated(updated);
       onClose();
+    } else {
+      setSaving(false);
     }
   }
 
@@ -462,6 +512,27 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
+
+              {/* Inline site-visit scheduling when STM picks "sv_scheduled" */}
+              {form.stm_status === 'sv_scheduled' && (
+                <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <span style={{ color: '#15803D' }}>📍</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Schedule Site Visit</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Date &amp; Time <span style={{ color: '#DC2626' }}>*</span></label>
+                      <input type="datetime-local" value={svScheduledAt} onChange={(e) => setSvScheduledAt(e.target.value)} style={mInp} />
+                    </div>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Visit Remarks</label>
+                      <input value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…" style={mInp} />
+                    </div>
+                  </div>
+                  {!svScheduledAt && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Set a date &amp; time to create a site visit entry automatically on save.</p>}
+                </div>
+              )}
               </>)}
 
               {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
