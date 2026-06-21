@@ -7,6 +7,7 @@ import { logout } from '../../redux/actions/authActions';
 import { fetchCompanies } from '../../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminFilterReducer';
 import { AUTH_ENDPOINTS } from '../../constants/api';
+import { usePushNotifications } from '../../lib/usePushNotifications';
 
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -70,6 +71,8 @@ export default function SalesLayout({ children }) {
   const dispatch  = useDispatch();
   const router    = useRouter();
   const pathname  = usePathname();
+
+  usePushNotifications();
 
   const isVRLAdmin = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
 
