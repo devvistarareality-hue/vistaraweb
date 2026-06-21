@@ -240,6 +240,9 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   // Inline "schedule site visit" when STM sets status = sv_scheduled
   const [svScheduledAt, setSvScheduledAt] = useState('');
   const [svRemarks,     setSvRemarks]     = useState('');
+  // Inline "record closure" when STM sets status = closed
+  const emptyClosure = () => ({ closure_date: new Date().toISOString().slice(0, 10), unit_no: '', unit_type: '', booking_amount: '', total_amount: '', remarks: '' });
+  const [closureForm, setClosureForm] = useState(emptyClosure);
 
   useEffect(() => {
     setForm({
@@ -254,6 +257,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setDetail(null);
     setSvScheduledAt('');
     setSvRemarks('');
+    setClosureForm(emptyClosure());
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
       if (res.ok) setDetail(await res.json());
@@ -322,6 +326,25 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
               }),
             });
           }
+        } catch { /* ignore */ }
+      }
+
+      // STM marked closed → record a closure (only on transition into closed, with an amount)
+      if (form.stm_status === 'closed' && lead.stm_status !== 'closed' && closureForm.booking_amount) {
+        try {
+          const latestSv = (detail?.site_visits || []).slice()
+            .sort((a, b) => new Date(b.visited_at || b.scheduled_at || b.created_at) - new Date(a.visited_at || a.scheduled_at || a.created_at))[0];
+          await fetch(SALES_ENDPOINTS.closures, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({
+              lead: lead.id, site_visit: latestSv?.id || null, project: form.project || null,
+              stm: form.stm || user?.id, referred_by_telecaller: form.telecaller || null,
+              status: 'booked', closure_date: closureForm.closure_date,
+              unit_no: closureForm.unit_no, unit_type: closureForm.unit_type,
+              booking_amount: closureForm.booking_amount, total_amount: closureForm.total_amount || null,
+              remarks: closureForm.remarks || '',
+            }),
+          });
         } catch { /* ignore */ }
       }
 
@@ -531,6 +554,45 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                     </div>
                   </div>
                   {!svScheduledAt && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Set a date &amp; time to create a site visit entry automatically on save.</p>}
+                </div>
+              )}
+
+              {/* Inline closure recording when STM picks "closed" */}
+              {form.stm_status === 'closed' && (
+                <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <span style={{ color: '#15803D' }}>✅</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Record Closure</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Closure Date <span style={{ color: '#DC2626' }}>*</span></label>
+                      <input type="date" value={closureForm.closure_date} onChange={(e) => setClosureForm({ ...closureForm, closure_date: e.target.value })} style={mInp} />
+                    </div>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Unit No.</label>
+                      <input value={closureForm.unit_no} onChange={(e) => setClosureForm({ ...closureForm, unit_no: e.target.value })} placeholder="A-101" style={mInp} />
+                    </div>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Unit Type</label>
+                      <input value={closureForm.unit_type} onChange={(e) => setClosureForm({ ...closureForm, unit_type: e.target.value })} placeholder="2BHK" style={mInp} />
+                    </div>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Booking Amount <span style={{ color: '#DC2626' }}>*</span></label>
+                      <input type="number" value={closureForm.booking_amount} onChange={(e) => setClosureForm({ ...closureForm, booking_amount: e.target.value })} placeholder="₹" style={mInp} />
+                    </div>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Total Amount</label>
+                      <input type="number" value={closureForm.total_amount} onChange={(e) => setClosureForm({ ...closureForm, total_amount: e.target.value })} placeholder="₹" style={mInp} />
+                    </div>
+                    <div>
+                      <label style={{ ...mLbl, color: '#166534' }}>Remarks</label>
+                      <input value={closureForm.remarks} onChange={(e) => setClosureForm({ ...closureForm, remarks: e.target.value })} placeholder="Notes…" style={mInp} />
+                    </div>
+                  </div>
+                  {lead.stm_status === 'closed'
+                    ? <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>This lead is already closed — a closure was recorded earlier.</p>
+                    : !closureForm.booking_amount && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Enter the booking amount to record a closure automatically on save.</p>}
                 </div>
               )}
               </>)}
