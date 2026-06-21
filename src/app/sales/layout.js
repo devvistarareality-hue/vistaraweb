@@ -31,12 +31,14 @@ function IconReports()      { return <SvgIcon><line x1="18" y1="20" x2="18" y2="
 function IconBack()         { return <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>; }
 function IconCalendar()     { return <SvgIcon><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></SvgIcon>; }
 function IconMapPin()       { return <SvgIcon><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></SvgIcon>; }
+function IconConversion()   { return <SvgIcon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></SvgIcon>; }
 
 const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
   { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> },
   { label: 'Follow-Ups',   href: '/sales/follow-ups',    icon: <IconCalendar /> },
   { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true },
+  { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcPortal: true },
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true },
   { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true },
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
@@ -142,7 +144,8 @@ export default function SalesLayout({ children }) {
 
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
-  const portalTitle = des.includes('telecaller') || des.includes('tele caller')
+  const isTelecaller = des.includes('telecaller') || des.includes('tele caller');
+  const portalTitle = isTelecaller
     ? 'Telecaller Portal'
     : isStm
     ? 'Sales Executive'
@@ -174,7 +177,7 @@ export default function SalesLayout({ children }) {
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
           <div style={s.sectionLabel}>SALES MENU</div>
-          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm)).map((item) => {
+          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm) && (!item.tcPortal || isAdmin || isTelecaller)).map((item) => {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} className="s-nav-link"
