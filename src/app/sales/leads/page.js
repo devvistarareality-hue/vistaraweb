@@ -216,7 +216,7 @@ function fmtDateTime(iso) {
     + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, onUpdated }) {
+function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, onUpdated, initialTab }) {
   const user = useSelector((s) => s.auth.user);
   // Only admins/managers may (re)assign telecaller / STM. Telecaller & Sales Executive
   // portals can update status & remarks but cannot reassign leads.
@@ -228,7 +228,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   // Admins/managers see both.
   const showTC  = canAssign || _isTelecaller;
   const showStm = canAssign || _isStm;
-  const [activeTab, setActiveTab] = useState('detail');
+  const [activeTab, setActiveTab] = useState(initialTab || 'detail');
   const [detail,    setDetail]    = useState(null);
   const [form, setForm] = useState({});
   const [saving,    setSaving]    = useState(false);
@@ -250,7 +250,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       stm: lead.stm || '', stm_status: lead.stm_status || '', stm_remarks: lead.stm_remarks || '',
       project: lead.project || '', source: lead.source || '',
     });
-    setActiveTab('detail');
+    setActiveTab(initialTab || 'detail');
     setDetail(null);
     setSvScheduledAt('');
     setSvRemarks('');
@@ -738,7 +738,26 @@ export default function SalesLeadsPage() {
   }, [searchText]);
   const [addModal,    setAddModal]    = useState(false);
   const [selected,    setSelected]    = useState(null);
+  const [detailTab,   setDetailTab]   = useState('detail');
   const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // Deep-link: /sales/leads?lead=<id>&tab=history opens that lead's detail modal
+  // (used by My Conversions rows to jump straight to a lead's history).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const leadId = params.get('lead');
+    if (!leadId) return;
+    const tab = params.get('tab') || 'history';
+    (async () => {
+      try {
+        const res = await fetch(SALES_ENDPOINTS.lead(leadId), { headers: authHeaders() });
+        if (res.ok) { setDetailTab(tab); setSelected(await res.json()); }
+      } catch { /* ignore */ }
+      // Clean the URL so a refresh / back doesn't re-open the modal.
+      window.history.replaceState(null, '', window.location.pathname);
+    })();
+  }, []);
   const [deleting,    setDeleting]    = useState(false);
   const [dupToasts,   setDupToasts]   = useState([]);
 
@@ -855,6 +874,7 @@ export default function SalesLeadsPage() {
   async function loadDetail(lead) {
     const res  = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
     const data = await res.json();
+    setDetailTab('detail');
     setSelected(data);
   }
 
@@ -1171,7 +1191,7 @@ export default function SalesLeadsPage() {
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}
-          onClose={() => setSelected(null)} onUpdated={onLeadUpdated} />
+          initialTab={detailTab} onClose={() => setSelected(null)} onUpdated={onLeadUpdated} />
       )}
     </div>
   );

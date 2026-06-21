@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 
 function authHeaders() {
@@ -38,9 +39,14 @@ function StatusBadge({ status, colors }) {
 
 export default function MyConversionsPage() {
   const user = useSelector((s) => s.auth.user);
+  const router = useRouter();
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const [tab, setTab] = useState('sv');
+
+  const openLead = (leadId) => {
+    if (leadId) router.push(`/sales/leads?lead=${leadId}&tab=history`);
+  };
   const [visits, setVisits] = useState([]);
   const [closures, setClosures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +140,7 @@ export default function MyConversionsPage() {
               </thead>
               <tbody>
                 {visits.map(v => (
-                  <tr key={v.id} style={{ transition: 'background 0.1s' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                  <tr key={v.id} onClick={() => openLead(v.lead)} style={{ transition: 'background 0.1s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{v.lead_name || '—'}</span></td>
                     <td style={{ ...td, color: '#6B7280' }}>{v.lead_phone || '—'}</td>
                     <td style={td}>{v.project_name || '—'}</td>
@@ -168,7 +174,7 @@ export default function MyConversionsPage() {
               </thead>
               <tbody>
                 {allClosures.map(c => (
-                  <tr key={c.id} style={{ transition: 'background 0.1s' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                  <tr key={c.id} onClick={() => openLead(c.lead)} style={{ transition: 'background 0.1s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{c.lead_name || '—'}</span></td>
                     <td style={{ ...td, color: '#6B7280' }}>{c.lead_phone || '—'}</td>
                     <td style={td}>{c.project_name || '—'}</td>
