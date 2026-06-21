@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/Sidebar';
+import { useOneSignal } from '../../lib/useOneSignal';
 export default function AdminLayout({ children }) {
   const user   = useSelector((s) => s.auth.user);
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useOneSignal(user?.user_code);
 
   useEffect(() => {
     if (user === null) return;
