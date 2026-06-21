@@ -166,7 +166,7 @@ export default function MyConversionsPage() {
                 {allClosures.map(c => (
                   <tr key={c.id} style={{ transition: 'background 0.1s' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{c.lead_name || '—'}</span></td>
-                    <td style={{ ...td, color: '#6B7280' }}>{c.lead?.phone || '—'}</td>
+                    <td style={{ ...td, color: '#6B7280' }}>{c.lead_phone || '—'}</td>
                     <td style={td}>{c.project_name || '—'}</td>
                     <td style={td}>{(c.unit_type || '') + ' ' + (c.unit_no || '')}</td>
                     <td style={{ ...td, fontWeight: 600 }}>{c.total_amount ? '₹' + new Intl.NumberFormat('en-IN').format(c.total_amount) : '—'}</td>

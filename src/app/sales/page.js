@@ -215,24 +215,25 @@ function AdminDashboard({ user }) {
 // TELECALLER DASHBOARD
 // ─────────────────────────────────────────────
 function TelecallerDashboard({ user }) {
+  const [stats,   setStats]   = useState(null);
   const [leads,   setLeads]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.id) return;
-    const cacheKey = `tc_leads_${user.id}`;
+    const cacheKey = `tc_dash_${user.id}`;
     const cached = getCache(cacheKey);
-    if (cached) { setLeads(cached); setLoading(false); return; }
-    const params = new URLSearchParams({ telecaller: user.id, page_size: 100 });
-    fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() })
-      .then((r) => r.json())
-      .then((d) => {
-        const list = Array.isArray(d) ? d : (d.results ?? []);
-        setCache(cacheKey, list);
-        setLeads(list);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    if (cached) { setStats(cached.stats); setLeads(cached.leads); setLoading(false); return; }
+    Promise.all([
+      fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
+      fetch(`${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
+    ]).then(([s, d]) => {
+      s && setStats(s);
+      const list = Array.isArray(d) ? d : (d.results ?? []);
+      setLeads(list);
+      setCache(cacheKey, { stats: s, leads: list });
+      setLoading(false);
+    });
   }, [user?.id]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
@@ -242,15 +243,16 @@ function TelecallerDashboard({ user }) {
   const callback  = count('telecaller_status', 'callback');
   const notReach  = count('telecaller_status', 'not_reachable');
   const cold      = count('telecaller_status', 'cold');
-  const closed    = leads.filter((l) => l.status === 'closed').length;
+  const svDone    = stats?.sv_done ?? 0;
+  const closed    = stats?.closures ?? leads.filter((l) => l.status === 'closed').length;
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350' },
     { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626' },
     { label: 'Warm',           value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C' },
+    { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D' },
     { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED' },
-    { label: 'Not Reachable',  value: notReach, icon: <IconActivity />, color: '#F3F4F6', textColor: '#6B7280' },
-    { label: 'Closed',         value: closed,   icon: <IconCheck />,    color: '#DCFCE7', textColor: '#15803D' },
+    { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E' },
   ];
 
   const recent = [...leads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
@@ -367,24 +369,25 @@ function TelecallerDashboard({ user }) {
 // STM DASHBOARD
 // ─────────────────────────────────────────────
 function STMDashboard({ user }) {
+  const [stats,   setStats]   = useState(null);
   const [leads,   setLeads]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.id) return;
-    const cacheKey = `stm_leads_${user.id}`;
+    const cacheKey = `stm_dash_${user.id}`;
     const cached = getCache(cacheKey);
-    if (cached) { setLeads(cached); setLoading(false); return; }
-    const params = new URLSearchParams({ stm: user.id, page_size: 100 });
-    fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() })
-      .then((r) => r.json())
-      .then((d) => {
-        const list = Array.isArray(d) ? d : (d.results ?? []);
-        setCache(cacheKey, list);
-        setLeads(list);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    if (cached) { setStats(cached.stats); setLeads(cached.leads); setLoading(false); return; }
+    Promise.all([
+      fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
+      fetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
+    ]).then(([s, d]) => {
+      s && setStats(s);
+      const list = Array.isArray(d) ? d : (d.results ?? []);
+      setLeads(list);
+      setCache(cacheKey, { stats: s, leads: list });
+      setLoading(false);
+    });
   }, [user?.id]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
@@ -392,24 +395,14 @@ function STMDashboard({ user }) {
   const hot        = count('stm_status', 'hot');
   const warm       = count('stm_status', 'warm');
   const svSched    = count('stm_status', 'sv_scheduled');
-  const svDone     = count('stm_status', 'sv_done');
-  const closed     = count('stm_status', 'closed');
-
-  const cards = [
-    { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350' },
-    { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626' },
-    { label: 'Warm Leads',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C' },
-    { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309' },
-    { label: 'SV Done',        value: svDone,  icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D' },
-    { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E' },
-  ];
+  const svDone     = stats?.sv_done ?? count('stm_status', 'sv_done');
+  const closed     = stats?.closures ?? count('stm_status', 'closed');
 
   const svUpcoming = leads.filter(l => l.stm_status === 'sv_scheduled');
   const recent     = [...leads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
         <div style={{ width: 46, height: 46, borderRadius: 13, background: 'linear-gradient(135deg,#2E7D32,#0097A7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
           <IconSalesPerson />
@@ -423,14 +416,19 @@ function STMDashboard({ user }) {
         <AvailabilityToggle />
       </div>
 
-      {/* Stats */}
       {loading ? <SkeletonGrid count={6} /> : (
         <div style={statsGrid}>
-          {cards.map((c) => <StatCard key={c.label} {...c} />)}
+          {[
+            { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350' },
+            { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626' },
+            { label: 'Warm Leads',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C' },
+            { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309' },
+            { label: 'SV Done',        value: svDone,  icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D' },
+            { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E' },
+          ].map((c) => <StatCard key={c.label} {...c} />)}
         </div>
       )}
 
-      {/* SV Scheduled — urgent */}
       {!loading && svUpcoming.length > 0 && (
         <div style={{ ...cardWrap, marginBottom: 20, borderLeft: '4px solid #F9A825' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -463,7 +461,6 @@ function STMDashboard({ user }) {
         </div>
       )}
 
-      {/* My Pipeline */}
       <div style={cardWrap}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>My Pipeline</h2>
