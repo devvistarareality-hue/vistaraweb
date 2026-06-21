@@ -17,12 +17,16 @@ function fmtDateTime(iso) {
 
 const SV_COLOR = { scheduled: '#F9A825', completed: '#2E7D32', no_show: '#B71C1C', cancelled: '#9E9E9E' };
 const TABS = [
-  { key: 'all',       label: 'All' },
+  { key: 'today',     label: "Today's" },
   { key: 'scheduled', label: 'Scheduled' },
   { key: 'completed', label: 'Completed' },
   { key: 'no_show',   label: 'No Show' },
   { key: 'cancelled', label: 'Cancelled' },
+  { key: 'all',       label: 'All' },
 ];
+
+const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
 const lbl = { fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4, display: 'block' };
 const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', background: '#FAFAFA' };
@@ -34,7 +38,7 @@ export default function SiteVisitsPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [visits,  setVisits]  = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter,  setFilter]  = useState('all');
+  const [filter,  setFilter]  = useState('today');
 
   // schedule modal
   const [schedOpen, setSchedOpen] = useState(false);
@@ -153,7 +157,14 @@ export default function SiteVisitsPage() {
     setSaving(false);
   }
 
-  const visible = visits.filter((v) => filter === 'all' || v.status === filter);
+  const visible = visits.filter((v) => {
+    if (filter === 'all') return true;
+    if (filter === 'today') {
+      const at = new Date(v.scheduled_at);
+      return v.status === 'scheduled' && at >= startOfToday() && at <= endOfToday();
+    }
+    return v.status === filter;
+  });
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 920 }}>
