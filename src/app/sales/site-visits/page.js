@@ -49,6 +49,13 @@ export default function SiteVisitsPage() {
   const [visits,  setVisits]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  // Allow deep-linking to a tab (e.g. dashboard Site Visits card → ?tab=completed).
+  // Read in an effect — window.location isn't committed yet when a lazy useState
+  // initializer runs during Next client navigation.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (['today', 'scheduled', 'completed', 'no_show', 'cancelled', 'all'].includes(t)) setFilter(t);
+  }, []);
 
   // schedule modal
   const [schedOpen, setSchedOpen] = useState(false);

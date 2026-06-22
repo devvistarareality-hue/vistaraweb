@@ -156,9 +156,9 @@ function AdminDashboard({ user }) {
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
     { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads?date_from=today' },
     { label: 'Unassigned',      value: stats.new_leads,       icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/leads?status=new' },
-    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: '/sales/leads?status=sv_done' },
-    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads?status=closed' },
-    { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/projects' },
+    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: '/sales/my-conversions?tab=sv' },
+    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/my-conversions?tab=closures' },
+    { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/closure' },
   ] : [];
 
   return (
@@ -250,12 +250,12 @@ function TelecallerDashboard({ user }) {
   const closed    = stats?.closures ?? leads.filter((l) => l.status === 'closed').length;
 
   const cards = [
-    { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350' },
-    { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626' },
-    { label: 'Warm',           value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C' },
-    { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D' },
-    { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED' },
-    { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E' },
+    { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
+    { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?telecaller_status=hot' },
+    { label: 'Warm',           value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?telecaller_status=warm' },
+    { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
+    { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?telecaller_status=callback' },
+    { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
   ];
 
   const recent = [...leads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
@@ -424,12 +424,12 @@ function STMDashboard({ user }) {
       {loading ? <SkeletonGrid count={6} /> : (
         <div style={statsGrid}>
           {[
-            { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350' },
-            { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626' },
-            { label: 'Warm Leads',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C' },
-            { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309' },
-            { label: 'SV Done',        value: svDone,  icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D' },
-            { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E' },
+            { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
+            { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
+            { label: 'Warm Leads',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
+            { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
+            { label: 'SV Done',        value: svDone,  icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
+            { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
           ].map((c) => <StatCard key={c.label} {...c} />)}
         </div>
       )}

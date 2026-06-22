@@ -169,6 +169,13 @@ export default function MyConversionsPage() {
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const [tab, setTab] = useState('sv');
+  // Deep-link to a tab (dashboard Closures card → ?tab=closures). Read in an
+  // effect, not a lazy initializer — during client navigation window.location
+  // isn't committed yet when the initializer runs.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (t === 'closures' || t === 'sv') setTab(t);
+  }, []);
   const [historyLead, setHistoryLead] = useState(null); // { id, name, phone, project_name } | null
 
   const openLead = (row) => {

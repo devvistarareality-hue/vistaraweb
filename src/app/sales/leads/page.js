@@ -788,6 +788,28 @@ export default function SalesLeadsPage() {
     telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
     campaign: '', is_duplicate: false, date_from: '', date_to: '',
   });
+  // Seed filters from the URL so dashboard stat cards can deep-link into a
+  // filtered view (?status=new, ?date_from=today, ?telecaller_status=hot, …).
+  // Done in an effect (not a lazy initializer) because during Next client
+  // navigation window.location isn't committed when the initializer runs.
+  // `seeded` gates the first fetch so we don't briefly show all leads.
+  const [seeded, setSeeded] = useState(false);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const today = new Date().toISOString().slice(0, 10);
+    const df = p.get('date_from');
+    setFilters((f) => ({
+      ...f,
+      status:            p.get('status') || '',
+      project_id:        p.get('project_id') || '',
+      source_id:         p.get('source_id') || '',
+      telecaller_status: p.get('telecaller_status') || '',
+      stm_status:        p.get('stm_status') || '',
+      date_from:         df === 'today' ? today : (df || ''),
+      date_to:           df === 'today' ? today : (p.get('date_to') || ''),
+    }));
+    setSeeded(true);
+  }, []);
   // Search box is debounced: typing updates `searchText` instantly (responsive UI)
   // but only commits to `filters.search` (which triggers the fetch) after a pause —
   // so typing "ramesh" fires one request, not six.
@@ -873,7 +895,7 @@ export default function SalesLeadsPage() {
   }, [page, filters, companyId, isCaller, workTab]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
-  useEffect(() => { loadLeads(); }, [loadLeads]);
+  useEffect(() => { if (seeded) loadLeads(); }, [loadLeads, seeded]);
   useEffect(() => { setPage(1); }, [filters, companyId, workTab]);
 
   // Track latest lead ID to detect new arrivals on tab focus
