@@ -140,6 +140,10 @@ function AdminDashboard({ user }) {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  // CP portal (e.g. CP Cluster Head): CP leads are always self-assigned, so
+  // "Unassigned" isn't meaningful.
+  const _des = (user?.designation || '').toLowerCase();
+  const isCp = _des.includes('cp executive') || _des.includes('channel partner') || _des.includes('cp cluster head');
 
   useEffect(() => {
     const cacheKey = `stats_${companyId || 'all'}`;
@@ -155,7 +159,7 @@ function AdminDashboard({ user }) {
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
     { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads?date_from=today' },
-    { label: 'Unassigned',      value: stats.new_leads,       icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/leads?status=new' },
+    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.new_leads, icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/leads?status=new' }]),
     { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: '/sales/my-conversions?tab=sv' },
     { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/my-conversions?tab=closures' },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/closure' },
