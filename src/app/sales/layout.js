@@ -148,6 +148,9 @@ export default function SalesLayout({ children }) {
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const isTelecaller = des.includes('telecaller') || des.includes('tele caller');
+  // Managers oversee the sales floor, so they also get the STM-portal modules
+  // (Site Visits, Booking, My Conversions) — without changing their portal title.
+  const isManager = user?.role === 'Manager';
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
     : isStm
@@ -180,7 +183,7 @@ export default function SalesLayout({ children }) {
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
           <div style={s.sectionLabel}>SALES MENU</div>
-          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm)).map((item) => {
+          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm || isManager) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager)).map((item) => {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} className="s-nav-link"

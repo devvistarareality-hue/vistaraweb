@@ -593,7 +593,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
                 <Field label="Project">
                   <input value={project.name} disabled style={{ ...inp, background: '#F3F4F6', color: '#6B7280' }} />
                 </Field>
-                <Field label="Sales Executive (STM)">
+                <Field label={user?.designation || user?.role || 'Booked By'}>
                   <input value={user?.name || '—'} disabled style={{ ...inp, background: '#F3F4F6', color: '#6B7280' }} />
                 </Field>
               </div>
