@@ -223,10 +223,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
-  const _isCp  = _desig.includes('cp executive') || _desig.includes('channel partner');
+  const _isCp  = _desig.includes('cp executive') || _desig.includes('channel partner') || _desig.includes('cp cluster head');
   const canAssign = !(_isTelecaller || _isStm || _isCp);
-  // Telecallers see only the Telecaller (TC) section; STMs / CP Executives see only
-  // the STM section. Admins/managers see both.
+  // Telecallers see only the Telecaller (TC) section; STMs / CPs (exec + cluster
+  // head) see only the STM/CP section. Admins/managers see both.
   const showTC  = canAssign || _isTelecaller;
   const showStm = canAssign || _isStm || _isCp;
   const [activeTab, setActiveTab] = useState('detail');
@@ -772,12 +772,15 @@ export default function SalesLeadsPage() {
   const isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const isStm        = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
   const isCp         = _desig.includes('cp executive') || _desig.includes('channel partner');
-  const isCaller     = isTelecaller || isStm || isCp;
+  const isCpHead     = _desig.includes('cp cluster head');
+  const isCpAny      = isCp || isCpHead;
+  const isCaller     = isTelecaller || isStm || isCp;       // CP Head sees the full team list (no work split)
   const canDelete    = !isCaller;
   // Each scoped role only sees its own status filter; admins/managers see all.
-  const isAdminMgr   = !isTelecaller && !isStm && !isCp;
+  // CP Cluster Heads use the CP view (no telecaller/STM filters), like CP Execs.
+  const isAdminMgr   = !isTelecaller && !isStm && !isCpAny;
   const showTcStatus = isAdminMgr || isTelecaller;          // telecaller working status
-  const showStmStatus= isAdminMgr || isStm || isCp;         // STM/CP working status
+  const showStmStatus= isAdminMgr || isStm || isCpAny;      // STM/CP working status
   const showAssignees= isAdminMgr;                          // telecaller/STM picker dropdowns
   // Telecaller / STM portals split their assigned leads into "To Call" (pending) vs
   // "Called" (already actioned) so they can tell what's left to work.
@@ -1124,7 +1127,7 @@ export default function SalesLeadsPage() {
               )}
               {showStmStatus && (
               <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
-                <option value="">{isCp ? 'CP Status' : 'STM Status'}</option>
+                <option value="">{isCpAny ? 'CP Status' : 'STM Status'}</option>
                 {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
@@ -1182,9 +1185,9 @@ export default function SalesLeadsPage() {
                 </th>
                 {['Name', 'Phone', 'Project', 'Source',
                   ...(showTcStatus ? ['Telecaller'] : []),
-                  ...(showStmStatus ? [isCp ? 'CP' : 'STM'] : []),
+                  ...(showStmStatus ? [isCpAny ? 'CP' : 'STM'] : []),
                   ...(showTcStatus ? ['TC Status'] : []),
-                  ...(showStmStatus ? [isCp ? 'CP Status' : 'STM Status'] : []),
+                  ...(showStmStatus ? [isCpAny ? 'CP Status' : 'STM Status'] : []),
                   'Overall', 'Received', ''].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
