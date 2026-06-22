@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 
 function authHeaders() {
@@ -34,8 +35,17 @@ const btnPrimary = { padding: '9px 16px', background: 'linear-gradient(135deg, #
 const smBtn = (bg, color, border) => ({ fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${border}`, color, background: bg, cursor: 'pointer' });
 
 export default function SiteVisitsPage() {
+  const router    = useRouter();
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+
+  // Record Closure now opens the project picker → unit map flow. Stash the site
+  // visit so the closure step can POST against the right lead/SV after the STM
+  // picks an available unit. sessionStorage survives the client-side navigation.
+  function startClosure(sv) {
+    try { sessionStorage.setItem('closure_sv', JSON.stringify(sv)); } catch (_) {}
+    router.push(`/sales/closure?sv=${sv.id}`);
+  }
   const [visits,  setVisits]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
@@ -228,7 +238,7 @@ export default function SiteVisitsPage() {
                   </>
                 )}
                 {sv.status === 'completed' && (
-                  <button onClick={() => { setErr(''); setClosureSv(sv); }} style={btnPrimary}>Record Closure</button>
+                  <button onClick={() => startClosure(sv)} style={btnPrimary}>Record Closure</button>
                 )}
               </div>
             </div>

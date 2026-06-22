@@ -401,13 +401,19 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
             {pendingZone && (
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 10, padding: '12px 14px', borderRadius: 10, background: '#F0F3FF', border: '1.5px solid #3D5AFE40' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE' }}>Plot number for this zone:</span>
-                <input ref={plotNumRef} type="text" value={plotInput}
-                  onChange={e => setPlotInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && confirmZone()}
-                  placeholder="e.g. 12" autoFocus
-                  style={{ width: 80, padding: '6px 10px', borderRadius: 8, border: '1.5px solid #3D5AFE60', fontSize: 13, fontWeight: 700, outline: 'none' }}
-                />
-                <button onClick={confirmZone} style={doneBtn}>✓ Save Zone</button>
+                {unmapped.length > 0 ? (
+                  <select ref={plotNumRef} value={plotInput}
+                    onChange={e => setPlotInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && confirmZone()}
+                    autoFocus
+                    style={{ minWidth: 130, padding: '6px 10px', borderRadius: 8, border: '1.5px solid #3D5AFE60', fontSize: 13, fontWeight: 700, outline: 'none', cursor: 'pointer', background: '#fff' }}>
+                    <option value="">Select plot…</option>
+                    {unmapped.map(n => <option key={n} value={String(n)}>Plot {n}</option>)}
+                  </select>
+                ) : (
+                  <span style={{ fontSize: 12, color: '#8492A6' }}>All plots already mapped.</span>
+                )}
+                <button onClick={confirmZone} disabled={!plotInput} style={{ ...doneBtn, opacity: plotInput ? 1 : 0.5, cursor: plotInput ? 'pointer' : 'not-allowed' }}>✓ Save Zone</button>
                 <button onClick={() => { setPendingZone(null); setPlotInput(''); }} style={ghostBtn}>✕ Discard</button>
               </div>
             )}
