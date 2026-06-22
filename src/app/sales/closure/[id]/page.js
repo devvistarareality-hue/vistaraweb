@@ -57,6 +57,7 @@ export default function ClosureViewerPage() {
   const [hovered,  setHovered]  = useState(null);  // hovered zone id
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
+  const [sources,    setSources]    = useState([]);
 
   useEffect(() => {
     try { setSv(JSON.parse(sessionStorage.getItem('closure_sv') || 'null')); } catch (_) {}
@@ -66,9 +67,11 @@ export default function ClosureViewerPage() {
     Promise.all([
       fetch(SALES_ENDPOINTS.project(id), { headers: authHeaders() }).then(r => r.json()).catch(() => null),
       fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
-    ]).then(([p, pl]) => {
+      fetch(SALES_ENDPOINTS.sources, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
+    ]).then(([p, pl, src]) => {
       setProject(p);
       setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []));
+      setSources(Array.isArray(src) ? src : (src?.results ?? []));
       setLoading(false);
     });
   }, [id]);
@@ -310,21 +313,23 @@ export default function ClosureViewerPage() {
           project={project}
           sv={sv}
           user={user}
+          sources={sources}
           onClose={() => setSelected(null)}
-          onClosed={() => { router.push('/sales/site-visits'); }}
+          onClosed={() => { router.push(sv ? '/sales/site-visits' : '/sales/my-conversions'); }}
         />
       )}
     </div>
   );
 }
 
-/* ── Unit detail: floor-plan layouts + record-closure form ── */
-function UnitPanel({ plot, project, sv, user, onClose, onClosed }) {
+/* ── Unit detail: floor-plan layouts + record-closure / direct-booking form ── */
+function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed }) {
   const cfg = STATUS[plot.status] || STATUS.available;
   const typePlans = useMemo(() => {
     const entry = (project.plot_type_plans || []).find(t => t.name === plot.cluster_type);
     return entry?.floor_plans || [];
   }, [project, plot]);
+  const booking = !sv; // no site-visit context → direct booking from the Booking nav
 
   const [viewing, setViewing] = useState(null); // url in lightbox
   const [showForm, setShowForm] = useState(false);
@@ -333,8 +338,42 @@ function UnitPanel({ plot, project, sv, user, onClose, onClosed }) {
     unit_no: String(plot.number), unit_type: plot.cluster_type || '',
     booking_amount: '', total_amount: '', remarks: '',
   });
+  // Direct-booking only: capture a quick lead (project + STM are auto-filled).
+  const [lead, setLead] = useState({ name: '', phone: '', source: '' });
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
+
+  async function recordBooking() {
+    if (!lead.name.trim() || !lead.phone.trim()) { setErr('Customer name and phone are required.'); return; }
+    if (!closure.booking_amount) { setErr('Booking amount is required.'); return; }
+    setSaving(true); setErr('');
+    try {
+      // 1. Create the lead (company is derived server-side from the user).
+      const leadRes = await fetch(SALES_ENDPOINTS.leads, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ name: lead.name.trim(), phone: lead.phone.trim(), project: project.id, source: lead.source || null, status: 'new' }),
+      });
+      const leadData = await leadRes.json();
+      if (!leadRes.ok) { setErr(JSON.stringify(leadData)); setSaving(false); return; }
+      const leadId = leadData.id;
+      // 2. Assign this STM and mark the lead closed.
+      await fetch(SALES_ENDPOINTS.lead(leadId), {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm: user?.id, stm_status: 'closed' }),
+      }).catch(() => {});
+      // 3. Record the closure/booking.
+      const cRes = await fetch(SALES_ENDPOINTS.closures, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({
+          lead: leadId, project: project.id, stm: user?.id, status: 'booked',
+          closure_date: closure.closure_date, unit_no: closure.unit_no, unit_type: closure.unit_type,
+          booking_amount: closure.booking_amount, total_amount: closure.total_amount || null, remarks: closure.remarks,
+        }),
+      });
+      if (cRes.ok) onClosed();
+      else setErr(JSON.stringify(await cRes.json().catch(() => ({}))));
+    } catch (e) { setErr(e.message); }
+    setSaving(false);
+  }
 
   async function recordClosure() {
     if (!sv) { setErr('Missing site-visit context. Go back and start from Record Closure.'); return; }
@@ -447,9 +486,58 @@ function UnitPanel({ plot, project, sv, user, onClose, onClosed }) {
                 </div>
               </div>
             )
+          ) : !showForm ? (
+            <button onClick={() => { setErr(''); setShowForm(true); }} style={primaryBtn}>Book Unit {plot.number}</button>
           ) : (
-            <div style={{ fontSize: 12, color: '#8492A6', textAlign: 'center', padding: '8px 0' }}>
-              Browsing only — start from <strong>Record Closure</strong> on a site visit to book a unit.
+            <div style={{ borderTop: '1px solid #F0F3FA', paddingTop: 16 }}>
+              {/* Customer (new lead) */}
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 10 }}>Customer</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
+                <Field label="Name *">
+                  <input value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} style={inp} placeholder="Customer name" />
+                </Field>
+                <Field label="Phone *">
+                  <input value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} style={inp} placeholder="+91…" />
+                </Field>
+                <Field label="Source">
+                  <select value={lead.source} onChange={(e) => setLead({ ...lead, source: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
+                    <option value="">— Select —</option>
+                    {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Project">
+                  <input value={project.name} disabled style={{ ...inp, background: '#F3F4F6', color: '#6B7280' }} />
+                </Field>
+                <Field label="Sales Executive (STM)">
+                  <input value={user?.name || '—'} disabled style={{ ...inp, background: '#F3F4F6', color: '#6B7280' }} />
+                </Field>
+              </div>
+
+              {/* Booking */}
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#9CA3AF', margin: '6px 0 10px' }}>Booking</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
+                <Field label="Booking Date *">
+                  <input type="date" value={closure.closure_date} onChange={(e) => setClosure({ ...closure, closure_date: e.target.value })} style={inp} />
+                </Field>
+                <Field label="Unit No.">
+                  <input value={closure.unit_no} onChange={(e) => setClosure({ ...closure, unit_no: e.target.value })} style={inp} />
+                </Field>
+                <Field label="Booking Amount *">
+                  <input type="number" value={closure.booking_amount} onChange={(e) => setClosure({ ...closure, booking_amount: e.target.value })} style={inp} placeholder="₹" />
+                </Field>
+                <Field label="Total Amount">
+                  <input type="number" value={closure.total_amount} onChange={(e) => setClosure({ ...closure, total_amount: e.target.value })} style={inp} placeholder="₹" />
+                </Field>
+              </div>
+              <Field label="Remarks">
+                <textarea value={closure.remarks} onChange={(e) => setClosure({ ...closure, remarks: e.target.value })} rows={2}
+                  style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} placeholder="Notes…" />
+              </Field>
+              {err && <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FCA5A5', fontSize: 12, color: '#DC2626' }}>{err}</div>}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
+                <button onClick={() => setShowForm(false)} style={cancelBtn}>Cancel</button>
+                <button onClick={recordBooking} disabled={saving} style={{ ...primaryBtn, width: 'auto', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Confirm Booking'}</button>
+              </div>
             </div>
           )}
         </div>
