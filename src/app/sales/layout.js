@@ -40,6 +40,7 @@ const NAV = [
   { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true },
   { label: 'Booking',      href: '/sales/closure',       icon: <IconBuilding />,  stmPortal: true },
   { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true },
+  { label: 'My Team',      href: '/sales/my-team',       icon: <IconUsers />,     managerOnly: true },
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true },
   { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true },
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
@@ -188,7 +189,7 @@ export default function SalesLayout({ children }) {
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
           <div style={s.sectionLabel}>SALES MENU</div>
-          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp)).map((item) => {
+          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp)).map((item) => {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} className="s-nav-link"

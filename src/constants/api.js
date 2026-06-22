@@ -44,6 +44,7 @@ export const SALES_ENDPOINTS = {
   get distLog()    { return `${BASE_URL}/api/sales/distribution-log/`; },
   get import_()      { return `${BASE_URL}/api/sales/leads/import/`; },
   get reports()      { return `${BASE_URL}/api/sales/reports/`; },
+  get myTeam()       { return `${BASE_URL}/api/sales/my-team/`; },
   get distSettings() { return `${BASE_URL}/api/sales/dist-settings/`; },
   get availability() { return `${BASE_URL}/api/sales/availability/`; },
   get availabilityMe() { return `${BASE_URL}/api/sales/availability/me/`; },
