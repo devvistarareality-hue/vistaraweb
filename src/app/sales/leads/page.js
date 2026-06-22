@@ -1084,6 +1084,7 @@ export default function SalesLeadsPage() {
               <div style={divider} />
               <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
                 <option value="">All Projects</option>
+                <option value="none">— No Project —</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>

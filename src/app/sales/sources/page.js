@@ -79,6 +79,9 @@ export default function LeadSetupPage() {
   const [subscribedPages, setSubscribedPages] = useState([]);
   const [failedPages,     setFailedPages]     = useState([]);
   const [pagesData,       setPagesData]       = useState([]);
+  const [refreshingPages, setRefreshingPages] = useState(false);
+  const [pagesDiag,       setPagesDiag]       = useState('');
+  const [editingToken,    setEditingToken]    = useState(false);
 
   // Form mappings
   const [mappings,    setMappings]   = useState([]);
@@ -128,20 +131,65 @@ export default function LeadSetupPage() {
   }
 
   async function saveMetaConfig() {
-    setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]);
+    // Tokens never contain whitespace; strip any spaces/newlines a paste into the
+    // multi-line box may have introduced (Meta returns "Cannot parse access token").
+    const cleanPat = pat.replace(/\s+/g, '');
+    if (cleanPat !== pat) setPat(cleanPat);
+    setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]); setPagesDiag('');
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ action: 'save', page_access_token: pat, ...(companyId ? { company_id: companyId } : {}) }),
+      body: JSON.stringify({ action: 'save', page_access_token: cleanPat, ...(companyId ? { company_id: companyId } : {}) }),
     });
     const d = await res.json();
     setSaving(false);
     if (res.ok) {
-      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: pat }));
+      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: cleanPat }));
       setSubscribedPages(d.subscribed_pages || []);
       setFailedPages(d.failed_pages || []);
       setPagesData(d.pages_data || []);
       setMetaMsg('Saved!');
+      setEditingToken(false);
     } else setMetaMsg('Error saving.');
+  }
+
+  // Re-fetch Pages & Forms from Meta (the 'save' action repopulates pages_data).
+  // GET only auto-refreshes when stale (>2h), so this gives an on-demand refresh.
+  async function refreshPages() {
+    const cleanPat = pat.replace(/\s+/g, '');
+    if (!cleanPat) { setMetaMsg('Save a Page Access Token first.'); return; }
+    if (cleanPat !== pat) setPat(cleanPat);
+    setRefreshingPages(true); setMetaMsg(''); setPagesDiag('');
+    const cidBody = companyId ? { company_id: companyId } : {};
+    try {
+      const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ action: 'save', page_access_token: cleanPat, ...cidBody }),
+      });
+      const d = await res.json().catch(() => ({}));
+      const pages = d.pages_data || [];
+      setPagesData(pages);
+      setSubscribedPages(d.subscribed_pages || []);
+      if (pages.length) { setMetaMsg('Pages refreshed.'); }
+      else {
+        // No pages → ask Meta why (raw token/permission error) so it's actionable.
+        setMetaMsg('No pages returned.');
+        try {
+          const dg = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ action: 'debug_forms', ...cidBody }),
+          }).then(r => r.json());
+          if (dg.accounts_status && dg.accounts_status !== 200) {
+            const msg = dg.accounts_error?.error?.message || JSON.stringify(dg.accounts_error || {});
+            setPagesDiag(`Meta rejected the token (HTTP ${dg.accounts_status}): ${msg}`);
+          } else if (!(dg.pages || []).length) {
+            setPagesDiag('Token is valid but no Pages are accessible. Use a User/System-User token that manages at least one Page and has the pages_show_list & leads_retrieval permissions (a single Page token won’t list pages).');
+          } else {
+            setPagesDiag('Pages found but their lead forms could not be read — check the leads_retrieval permission on the token.');
+          }
+        } catch { /* diagnostics are best-effort */ }
+      }
+    } catch { setMetaMsg('Error refreshing.'); }
+    setRefreshingPages(false);
   }
 
   async function regenerateToken() {
@@ -249,28 +297,64 @@ export default function LeadSetupPage() {
             </div>
 
             {/* Page Access Token + Project */}
-            <div style={{ ...card, marginTop: 12 }}>
-              <div style={fieldLabel}>PAGE ACCESS TOKEN</div>
-              <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10 }}>From Meta Business Suite → Settings → Page Access Tokens</p>
-              <textarea
-                value={pat}
-                onChange={e => setPat(e.target.value)}
-                placeholder="EAA…your token here…"
-                rows={3}
-                style={{ ...inp, width: '100%', resize: 'vertical', fontFamily: 'monospace', fontSize: 11, padding: '8px 10px' }}
-              />
+            {(() => {
+              const savedTok = pat || cfg?.page_access_token || '';
+              const hasToken = !!savedTok;
+              const editing  = editingToken || !hasToken;   // first-time setup = editable
+              const masked   = savedTok.length > 14
+                ? `${savedTok.slice(0, 8)}${'•'.repeat(18)}${savedTok.slice(-4)}`
+                : '••••••••';
+              return (
+                <div style={{ ...card, marginTop: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={fieldLabel}>ACCESS TOKEN (USER / SYSTEM USER)</div>
+                    {hasToken && !editing && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: GREEN, background: '#E8F8EE', padding: '3px 9px', borderRadius: 20 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} /> Connected
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10, lineHeight: 1.5 }}>
+                    Business Settings → <strong>System Users</strong> → Generate token, with <strong>pages_show_list</strong>, <strong>leads_retrieval</strong> &amp; <strong>pages_read_engagement</strong>. A single Page token won’t work.
+                  </p>
 
-              <button onClick={saveMetaConfig} disabled={saving} style={{ ...saveBtn, marginTop: 16, width: '100%', justifyContent: 'center' }}>
-                {saving ? 'Saving…' : '💾 Save Configuration'}
-              </button>
-              {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
-              {metaMsg === 'Saved!' && failedPages.length > 0 && (
-                <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, backgroundColor: '#FFF3F3', border: '1px solid #FFCDD2', fontSize: 12 }}>
-                  <span style={{ color: '#EF4444', fontWeight: 700 }}>Failed to subscribe: </span>
-                  {failedPages.join(', ')}
+                  {editing ? (
+                    <>
+                      <textarea
+                        value={pat}
+                        onChange={e => setPat(e.target.value)}
+                        placeholder="EAA…your token here…"
+                        rows={3}
+                        autoFocus={editingToken}
+                        style={{ ...inp, width: '100%', resize: 'vertical', fontFamily: 'monospace', fontSize: 11, padding: '8px 10px' }}
+                      />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                        <button onClick={saveMetaConfig} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center' }}>
+                          {saving ? 'Saving…' : '💾 Save Configuration'}
+                        </button>
+                        {hasToken && (
+                          <button onClick={() => { setPat(cfg?.page_access_token || ''); setEditingToken(false); setMetaMsg(''); }}
+                            style={cancelBtn}>Cancel</button>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <code style={{ ...codeBox, flex: 1, fontFamily: 'monospace', letterSpacing: 0.5 }}>{masked}</code>
+                      <button onClick={() => { setEditingToken(true); setMetaMsg(''); setPagesDiag(''); }} style={outlineBtn}>✎ Edit</button>
+                    </div>
+                  )}
+
+                  {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') || metaMsg.includes('No pages') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
+                  {metaMsg === 'Saved!' && failedPages.length > 0 && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, backgroundColor: '#FFF3F3', border: '1px solid #FFCDD2', fontSize: 12 }}>
+                      <span style={{ color: '#EF4444', fontWeight: 700 }}>Failed to subscribe: </span>
+                      {failedPages.join(', ')}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Form → Project Mapping */}
             <div style={{ ...card, marginTop: 12 }}>
@@ -318,10 +402,30 @@ export default function LeadSetupPage() {
               </div>
             </div>
 
-            {/* Connected Pages Cards */}
-            {pagesData.length > 0 && (
-              <div style={{ ...card, marginTop: 12 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 12 }}>Connected Pages & Forms</div>
+            {/* Connected Pages Cards — always shown so the feature stays discoverable
+                even when Meta hasn't returned pages yet (empty state + refresh). */}
+            <div style={{ ...card, marginTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E' }}>Connected Pages & Forms</div>
+                <button onClick={refreshPages} disabled={refreshingPages}
+                  style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: '#F0F3FF', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: refreshingPages ? 'default' : 'pointer', opacity: refreshingPages ? 0.6 : 1 }}>
+                  {refreshingPages ? 'Refreshing…' : '↻ Refresh'}
+                </button>
+              </div>
+              {pagesData.length === 0 ? (
+                <div style={{ padding: '18px 14px', borderRadius: 8, background: '#FAFBFF', border: '1px dashed #D6DEEC', textAlign: 'center' }}>
+                  <p style={{ fontSize: 13, color: '#5C6BC0', fontWeight: 600, marginBottom: 4 }}>No pages loaded for this company yet.</p>
+                  <p style={{ fontSize: 12, color: '#8492A6' }}>
+                    {pat ? 'Click Refresh to fetch your Pages & lead forms from Meta.'
+                         : 'Add and save a valid Page Access Token above, then Refresh.'}
+                  </p>
+                  {pagesDiag && (
+                    <p style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '8px 12px', marginTop: 12, textAlign: 'left', lineHeight: 1.5 }}>
+                      {pagesDiag}
+                    </p>
+                  )}
+                </div>
+              ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {pagesData.map(pg => {
                     const mappingMap = {};
@@ -355,8 +459,8 @@ export default function LeadSetupPage() {
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Right: Guide */}
@@ -369,7 +473,7 @@ export default function LeadSetupPage() {
               <Step n="2" title="Add Webhooks Product">Click <strong>Add Product</strong> → select <strong>Webhooks</strong> → choose <strong>Page</strong> as subscription object.</Step>
               <Step n="3" title="Configure Webhook URL">Paste the <strong>Webhook URL</strong> and <strong>Verify Token</strong> from the left panel. Click <strong>Verify and Save</strong>.</Step>
               <Step n="4" title="Subscribe to leadgen field">After verification, find the <strong>leadgen</strong> field and click <strong>Subscribe</strong>.</Step>
-              <Step n="5" title="Get Page Access Token">Go to <strong>Meta Business Suite → Settings → Advanced → Page Access Tokens</strong>. Generate and paste the token on the left.</Step>
+              <Step n="5" title="Get a System-User Access Token">In <strong>Meta Business Settings → System Users</strong>, add/select a system user, then <strong>Generate token</strong> for your app with <strong>pages_show_list</strong>, <strong>leads_retrieval</strong> &amp; <strong>pages_read_engagement</strong>. Paste it on the left. (A single Page token won’t list your pages.)</Step>
               <Step n="6" title="Map forms to projects">Use <strong>Form → Project Routing</strong> below to map each lead form to the correct project by Form ID.</Step>
               <Step n="7" title="Test it">Use Meta's <strong>Lead Ads Testing Tool</strong> — the lead should appear in <strong>All Leads</strong> with the correct project within seconds.</Step>
             </div>
@@ -441,6 +545,7 @@ const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '20px', 
 const inp       = { height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
 const saveBtn   = { padding: '9px 16px', backgroundColor: NAVY, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 };
 const outlineBtn = { padding: '7px 14px', backgroundColor: '#fff', color: '#5A6A85', border: '1.5px solid #D0D8E8', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' };
+const cancelBtn = { padding: '9px 16px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 const fieldLabel = { fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 1.2, marginBottom: 6 };
 const copyRow   = { display: 'flex', alignItems: 'center', gap: 8 };
 const codeBox   = { flex: 1, fontSize: 11, fontFamily: 'monospace', backgroundColor: '#F5F7FC', padding: '8px 12px', borderRadius: 8, color: '#3D5AFE', wordBreak: 'break-all', border: '1px solid #E4E8F0' };
