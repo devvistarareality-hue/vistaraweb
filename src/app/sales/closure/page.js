@@ -23,8 +23,17 @@ export default function ClosureProjectsPage() {
   const [loading,  setLoading]  = useState(true);
   const [sv,       setSv]       = useState(null);
 
+  // Reached via "Record Closure" → has ?sv=<id> and a stashed site visit.
+  // Reached via the "Booking" nav → no ?sv=, so browse projects/units only
+  // (clear any stale closure context so the viewer doesn't record against it).
   useEffect(() => {
-    try { setSv(JSON.parse(sessionStorage.getItem('closure_sv') || 'null')); } catch (_) {}
+    const hasSv = new URLSearchParams(window.location.search).has('sv');
+    if (hasSv) {
+      try { setSv(JSON.parse(sessionStorage.getItem('closure_sv') || 'null')); } catch (_) {}
+    } else {
+      try { sessionStorage.removeItem('closure_sv'); } catch (_) {}
+      setSv(null);
+    }
   }, []);
 
   useEffect(() => {
