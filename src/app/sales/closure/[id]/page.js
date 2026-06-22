@@ -338,29 +338,58 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
     unit_no: String(plot.number), unit_type: plot.cluster_type || '',
     booking_amount: '', total_amount: '', remarks: '',
   });
-  // Direct-booking only: capture a quick lead (project + STM are auto-filled).
-  const [lead, setLead] = useState({ name: '', phone: '', source: '' });
+  // Direct-booking only: pick an existing lead or capture a new one.
+  const [bookMode, setBookMode]   = useState('existing'); // 'existing' | 'new'
+  const [lead, setLead]           = useState({ name: '', phone: '', source: '' });
+  const [leadSearch, setLeadSearch]   = useState('');
+  const [leadResults, setLeadResults] = useState([]);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
 
+  // Debounced lead search by name / phone.
+  useEffect(() => {
+    if (bookMode !== 'existing' || selectedLead) return;
+    const q = leadSearch.trim();
+    if (!q) { setLeadResults([]); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`${SALES_ENDPOINTS.leads}?search=${encodeURIComponent(q)}`, { headers: authHeaders() });
+        const d = await res.json();
+        setLeadResults((Array.isArray(d) ? d : (d.results || [])).slice(0, 8));
+      } catch { setLeadResults([]); }
+      setSearching(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [leadSearch, bookMode, selectedLead]);
+
   async function recordBooking() {
-    if (!lead.name.trim() || !lead.phone.trim()) { setErr('Customer name and phone are required.'); return; }
+    let leadId = selectedLead?.id;
+    if (bookMode === 'existing') {
+      if (!selectedLead) { setErr('Search and select a lead.'); return; }
+    } else if (!lead.name.trim() || !lead.phone.trim()) {
+      setErr('Customer name and phone are required.'); return;
+    }
     if (!closure.booking_amount) { setErr('Booking amount is required.'); return; }
     setSaving(true); setErr('');
     try {
-      // 1. Create the lead (company is derived server-side from the user).
-      const leadRes = await fetch(SALES_ENDPOINTS.leads, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ name: lead.name.trim(), phone: lead.phone.trim(), project: project.id, source: lead.source || null, status: 'new' }),
-      });
-      const leadData = await leadRes.json();
-      if (!leadRes.ok) { setErr(JSON.stringify(leadData)); setSaving(false); return; }
-      const leadId = leadData.id;
-      // 2. Assign this STM and mark the lead closed.
+      if (bookMode === 'new') {
+        const leadRes = await fetch(SALES_ENDPOINTS.leads, {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ name: lead.name.trim(), phone: lead.phone.trim(), project: project.id, source: lead.source || null, status: 'new' }),
+        });
+        const leadData = await leadRes.json();
+        if (!leadRes.ok) { setErr(JSON.stringify(leadData)); setSaving(false); return; }
+        leadId = leadData.id;
+      }
+      // Assign this STM (and project for existing leads) and mark the lead closed.
       await fetch(SALES_ENDPOINTS.lead(leadId), {
-        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm: user?.id, stm_status: 'closed' }),
+        method: 'PATCH', headers: authHeaders(),
+        body: JSON.stringify({ stm: user?.id, stm_status: 'closed', ...(bookMode === 'existing' ? { project: project.id } : {}) }),
       }).catch(() => {});
-      // 3. Record the closure/booking.
+      // Record the closure/booking.
       const cRes = await fetch(SALES_ENDPOINTS.closures, {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({
@@ -490,21 +519,77 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
             <button onClick={() => { setErr(''); setShowForm(true); }} style={primaryBtn}>Book Unit {plot.number}</button>
           ) : (
             <div style={{ borderTop: '1px solid #F0F3FA', paddingTop: 16 }}>
-              {/* Customer (new lead) */}
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 10 }}>Customer</div>
+              {/* Customer — existing lead or new */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                {[['existing', 'Existing Lead'], ['new', 'New Lead']].map(([m, label]) => {
+                  const active = bookMode === m;
+                  return (
+                    <button key={m} onClick={() => { setBookMode(m); setErr(''); setSelectedLead(null); }}
+                      style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                        border: `1.5px solid ${active ? '#3D5AFE' : '#E0E6F0'}`, background: active ? '#3D5AFE' : '#fff', color: active ? '#fff' : '#8492A6' }}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {bookMode === 'existing' ? (
+                <div style={{ marginBottom: 12 }}>
+                  {selectedLead ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: '#F0FFF4', border: '1.5px solid #A7F3D0' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{selectedLead.name}</div>
+                        <div style={{ fontSize: 12, color: '#8492A6', fontFamily: 'monospace' }}>{selectedLead.phone}</div>
+                      </div>
+                      <button onClick={() => { setSelectedLead(null); setLeadSearch(''); }} style={{ ...cancelBtn, padding: '6px 12px' }}>Change</button>
+                    </div>
+                  ) : (
+                    <>
+                      <Field label="Search lead by name or phone">
+                        <input value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)} style={inp} placeholder="Type a name or number…" autoFocus />
+                      </Field>
+                      {(searching || leadResults.length > 0) && (
+                        <div style={{ marginTop: 6, border: '1px solid #E4E8F0', borderRadius: 10, maxHeight: 180, overflowY: 'auto' }}>
+                          {searching && <div style={{ padding: '10px 12px', fontSize: 12, color: '#8492A6' }}>Searching…</div>}
+                          {!searching && leadResults.map((l) => (
+                            <div key={l.id} onClick={() => { setSelectedLead(l); setLeadResults([]); }}
+                              style={{ padding: '9px 12px', cursor: 'pointer', borderBottom: '1px solid #F0F3FA', display: 'flex', justifyContent: 'space-between', gap: 8 }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#F5F7FC'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span>
+                              <span style={{ fontSize: 12, color: '#8492A6', fontFamily: 'monospace' }}>{l.phone}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {!searching && leadSearch.trim() && leadResults.length === 0 && (
+                        <div style={{ marginTop: 6, fontSize: 12, color: '#8492A6' }}>No leads found. Switch to <strong>New Lead</strong> to create one.</div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 10 }}>Customer</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
+                    <Field label="Name *">
+                      <input value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} style={inp} placeholder="Customer name" />
+                    </Field>
+                    <Field label="Phone *">
+                      <input value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} style={inp} placeholder="+91…" />
+                    </Field>
+                    <Field label="Source">
+                      <select value={lead.source} onChange={(e) => setLead({ ...lead, source: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
+                        <option value="">— Select —</option>
+                        {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                </>
+              )}
+
+              {/* Project + STM (auto) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
-                <Field label="Name *">
-                  <input value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} style={inp} placeholder="Customer name" />
-                </Field>
-                <Field label="Phone *">
-                  <input value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} style={inp} placeholder="+91…" />
-                </Field>
-                <Field label="Source">
-                  <select value={lead.source} onChange={(e) => setLead({ ...lead, source: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
-                    <option value="">— Select —</option>
-                    {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </Field>
                 <Field label="Project">
                   <input value={project.name} disabled style={{ ...inp, background: '#F3F4F6', color: '#6B7280' }} />
                 </Field>
