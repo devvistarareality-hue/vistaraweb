@@ -813,6 +813,10 @@ export default function SalesLeadsPage() {
 
   const loadMeta = useCallback(async () => {
     const cq = companyId ? `?company_id=${companyId}` : '';
+    // Telecaller/STM endpoints already carry `?crm_role=…`, so the company filter
+    // must be appended with `&` — using `?` produces a malformed double-`?` URL
+    // that swallows both crm_role and company_id (backend then returns ALL users).
+    const cqUser = companyId ? `&company_id=${companyId}` : '';
     const cqExtra = companyId ? `?active_only=true&company_id=${companyId}` : '?active_only=true';
     const pKey = `projects_${companyId || 'all'}`;
     const sKey = `sources_${companyId || 'all'}`;
@@ -825,8 +829,8 @@ export default function SalesLeadsPage() {
     const [pRes, sRes, tRes, sRes2] = await Promise.all([
       cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + cqExtra, { headers: authHeaders() }).then((r) => r.json()),
       cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
-      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cq, { headers: authHeaders() }).then((r) => r.json()),
-      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cq, { headers: authHeaders() }).then((r) => r.json()),
+      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }).then((r) => r.json()),
+      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }).then((r) => r.json()),
     ]);
     if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache(pKey, p); setProjects(p); }
     if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache(sKey, s); setSources(s);  }

@@ -237,7 +237,10 @@ function TelecallerDashboard({ user }) {
   }, [user?.id]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
-  const total     = leads.length;
+  // Use the backend's true count (scoped to this telecaller's leads), not the
+  // length of the fetched page — the leads endpoint caps results at PAGE_SIZE
+  // (25), so leads.length stops growing once a telecaller has 25+ leads.
+  const total     = stats?.total_leads ?? leads.length;
   const hot       = count('telecaller_status', 'hot');
   const warm      = count('telecaller_status', 'warm');
   const callback  = count('telecaller_status', 'callback');
@@ -391,7 +394,9 @@ function STMDashboard({ user }) {
   }, [user?.id]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
-  const total      = leads.length;
+  // Backend's true count (scoped to this STM's leads) — the leads endpoint
+  // caps results at PAGE_SIZE (25), so leads.length under-counts past 25.
+  const total      = stats?.total_leads ?? leads.length;
   const hot        = count('stm_status', 'hot');
   const warm       = count('stm_status', 'warm');
   const svSched    = count('stm_status', 'sv_scheduled');
