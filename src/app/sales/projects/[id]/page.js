@@ -344,10 +344,10 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
               <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
                 viewBox="0 0 100 100" preserveAspectRatio="none">
 
-                {/* Saved zones */}
+                {/* Saved zone shapes (labels rendered as HTML pills below — SVG
+                    text gets distorted by preserveAspectRatio="none") */}
                 {zones.map(zone => {
                   const color = getZoneColor(zone.plotNumber);
-                  const { cx, cy } = zoneCenter(zone);
                   const shapeProps = { fill: color + '55', stroke: color, strokeWidth: 0.6 };
                   return (
                     <g key={zone.id}>
@@ -355,11 +355,6 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
                         ? <polygon points={zone.points.map(p => `${p.x},${p.y}`).join(' ')} {...shapeProps} />
                         : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.3} {...shapeProps} />
                       }
-                      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
-                        fontSize="2.8" fontWeight="900" fill="#fff"
-                        style={{ filter: 'drop-shadow(0 0.5px 1.5px rgba(0,0,0,0.8))' }}>
-                        {zone.plotNumber}
-                      </text>
                     </g>
                   );
                 })}
@@ -395,6 +390,23 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
                         fill="rgba(61,90,254,0.25)" stroke="#3D5AFE" strokeWidth="0.7" rx={0.3} />
                 )}
               </svg>
+
+              {/* Zone number labels — HTML pills (crisp, no SVG distortion).
+                  Show just the numeric part so type-prefixed plot numbers
+                  (e.g. "Karuna24") don't overflow tiny plots. */}
+              {zones.map(zone => {
+                const { cx, cy } = zoneCenter(zone);
+                const color = getZoneColor(zone.plotNumber);
+                const labelText = String(zone.plotNumber).replace(/^[^\d]+/, '') || zone.plotNumber;
+                return (
+                  <div key={zone.id + '-lbl'} style={{
+                    position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
+                    pointerEvents: 'none', zIndex: 3, background: 'rgba(255,255,255,0.96)', color: '#1A1A2E',
+                    fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
+                    borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${color}88`, whiteSpace: 'nowrap',
+                  }}>{labelText}</div>
+                );
+              })}
             </div>
 
             {/* Plot number input */}
