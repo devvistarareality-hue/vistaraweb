@@ -49,12 +49,15 @@ export default function ReportsPage() {
   if (!data) return <div style={{ padding: 40, color: '#EF4444', textAlign: 'center' }}>Failed to load reports.</div>;
 
   const { summary, campaigns, telecallers, stms, closures } = data;
+  // Team-performance tables (campaign / telecaller / STM) are management-only.
+  // Personal reports (STM / CP / telecaller) show just their own funnel + closures.
+  const teamView = data.team_view !== false;
 
   return (
     <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Reports & Analytics</h1>
-        <p style={{ fontSize: 13, color: '#8492A6' }}>Lead funnel, campaign performance, team metrics</p>
+        <p style={{ fontSize: 13, color: '#8492A6' }}>{teamView ? 'Lead funnel, campaign performance, team metrics' : 'Your site visits & closures'}</p>
       </div>
 
       {/* Summary cards */}
@@ -73,7 +76,8 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {/* Campaign Performance */}
+      {/* Campaign Performance — team view only */}
+      {teamView && (
       <div style={card}>
         <h2 style={sectionTitle}>Meta / Campaign Performance</h2>
         {campaigns.length === 0 ? (
@@ -102,8 +106,10 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Telecaller Performance */}
+      {/* Telecaller Performance — team view only */}
+      {teamView && (
       <div style={card}>
         <h2 style={sectionTitle}>Telecaller Performance <span style={{ fontSize: 12, fontWeight: 400, color: '#8492A6' }}>incentive tracking</span></h2>
         {telecallers.length === 0 ? (
@@ -130,8 +136,10 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+      )}
 
-      {/* STM Performance */}
+      {/* STM Performance — team view only */}
+      {teamView && (
       <div style={card}>
         <h2 style={sectionTitle}>STM Performance <span style={{ fontSize: 12, fontWeight: 400, color: '#8492A6' }}>site visit & closure tracking</span></h2>
         {stms.length === 0 ? (
@@ -159,6 +167,7 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Recent Closures */}
       <div style={card}>

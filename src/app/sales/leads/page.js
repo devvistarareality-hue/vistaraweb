@@ -223,11 +223,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
-  const canAssign = !(_isTelecaller || _isStm);
-  // Telecallers see only the Telecaller (TC) section; Sales Executives (STM) see only the STM section.
-  // Admins/managers see both.
+  const _isCp  = _desig.includes('cp executive') || _desig.includes('channel partner');
+  const canAssign = !(_isTelecaller || _isStm || _isCp);
+  // Telecallers see only the Telecaller (TC) section; STMs / CP Executives see only
+  // the STM section. Admins/managers see both.
   const showTC  = canAssign || _isTelecaller;
-  const showStm = canAssign || _isStm;
+  const showStm = canAssign || _isStm || _isCp;
   const [activeTab, setActiveTab] = useState('detail');
   const [detail,    setDetail]    = useState(null);
   const [form, setForm] = useState({});
@@ -770,8 +771,14 @@ export default function SalesLeadsPage() {
   const _desig = (user?.designation || '').toLowerCase();
   const isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const isStm        = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
-  const isCaller     = isTelecaller || isStm;
+  const isCp         = _desig.includes('cp executive') || _desig.includes('channel partner');
+  const isCaller     = isTelecaller || isStm || isCp;
   const canDelete    = !isCaller;
+  // Each scoped role only sees its own status filter; admins/managers see all.
+  const isAdminMgr   = !isTelecaller && !isStm && !isCp;
+  const showTcStatus = isAdminMgr || isTelecaller;          // telecaller working status
+  const showStmStatus= isAdminMgr || isStm || isCp;         // STM/CP working status
+  const showAssignees= isAdminMgr;                          // telecaller/STM picker dropdowns
   // Telecaller / STM portals split their assigned leads into "To Call" (pending) vs
   // "Called" (already actioned) so they can tell what's left to work.
   const [workTab,     setWorkTab]     = useState('pending'); // 'pending' | 'called'
@@ -1109,14 +1116,18 @@ export default function SalesLeadsPage() {
                 <option value="none">— No Project —</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
+              {showTcStatus && (
               <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>
                 {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
+              )}
+              {showStmStatus && (
               <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
-                <option value="">STM Status</option>
+                <option value="">{isCp ? 'CP Status' : 'STM Status'}</option>
                 {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
+              )}
               {anyFilter && (
                 <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: '#FFF5F5', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
                   ✕ Clear all
@@ -1126,22 +1137,28 @@ export default function SalesLeadsPage() {
 
             {/* Row 2: Status + Source + Telecaller + STM + Campaign + Duplicates */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px' }}>
+              {showAssignees && (
               <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
                 <option value="">All Statuses</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
+              )}
               <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={activeSelStyle(filters.source_id)}>
                 <option value="">All Sources</option>
                 {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
               </select>
+              {showAssignees && (
               <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={activeSelStyle(filters.telecaller_id)}>
                 <option value="">All Telecallers</option>
                 {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
+              )}
+              {showAssignees && (
               <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
                 <option value="">All STMs</option>
                 {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
+              )}
               <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"
                 style={{ ...fSel, width: 170, background: filters.campaign ? '#EEF0FF' : '#F8FAFD', borderColor: filters.campaign ? '#3D5AFE' : '#E8ECF4', color: filters.campaign ? '#3D5AFE' : '#1A1A2E' }} />
@@ -1163,7 +1180,12 @@ export default function SalesLeadsPage() {
                 <th style={th}>
                   {canDelete && <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />}
                 </th>
-                {['Name', 'Phone', 'Project', 'Source', 'Telecaller', 'STM', 'TC Status', 'STM Status', 'Overall', 'Received', ''].map((h) => (
+                {['Name', 'Phone', 'Project', 'Source',
+                  ...(showTcStatus ? ['Telecaller'] : []),
+                  ...(showStmStatus ? [isCp ? 'CP' : 'STM'] : []),
+                  ...(showTcStatus ? ['TC Status'] : []),
+                  ...(showStmStatus ? [isCp ? 'CP Status' : 'STM Status'] : []),
+                  'Overall', 'Received', ''].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>
@@ -1203,14 +1225,14 @@ export default function SalesLeadsPage() {
                   <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.phone}</td>
                   <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
                   <td style={{ ...td, color: '#8492A6', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
-                  <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>
-                  <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>
-                  <td style={td} onClick={() => loadDetail(l)}>
+                  {showTcStatus && <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>}
+                  {showStmStatus && <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>}
+                  {showTcStatus && <td style={td} onClick={() => loadDetail(l)}>
                     {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
-                  </td>
-                  <td style={td} onClick={() => loadDetail(l)}>
+                  </td>}
+                  {showStmStatus && <td style={td} onClick={() => loadDetail(l)}>
                     {l.stm_status ? <StatusBadge status={l.stm_status} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
-                  </td>
+                  </td>}
                   <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} /></td>
                   <td style={{ ...td, color: '#8492A6', fontSize: 12 }} onClick={() => loadDetail(l)}>
                     <div>{new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>

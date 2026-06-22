@@ -148,11 +148,16 @@ export default function SalesLayout({ children }) {
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const isTelecaller = des.includes('telecaller') || des.includes('tele caller');
+  // CP Executive — a channel partner who works their own leads (no Meta). Gets the
+  // same modules as an STM. (CP Cluster Heads are Managers, covered by isManager.)
+  const isCp = des.includes('cp executive') || des.includes('channel partner');
   // Managers oversee the sales floor, so they also get the STM-portal modules
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
   const isManager = user?.role === 'Manager';
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
+    : (isCp || des.includes('cp cluster head'))
+    ? 'Channel Partner'
     : isStm
     ? 'Sales Executive'
     : 'Sales CRM';
@@ -183,7 +188,7 @@ export default function SalesLayout({ children }) {
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
           <div style={s.sectionLabel}>SALES MENU</div>
-          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm || isManager) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager)).map((item) => {
+          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp)).map((item) => {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} className="s-nav-link"
@@ -255,7 +260,7 @@ export default function SalesLayout({ children }) {
             <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
               <div style={s.userName}>{user?.name || 'User'}</div>
-              <div style={s.userBadge}>{user?.role || 'Admin'}</div>
+              <div style={s.userBadge}>{user?.designation || user?.role || 'Admin'}</div>
             </div>
             <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>

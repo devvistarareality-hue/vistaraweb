@@ -375,6 +375,10 @@ function STMDashboard({ user }) {
   const [stats,   setStats]   = useState(null);
   const [leads,   setLeads]   = useState([]);
   const [loading, setLoading] = useState(true);
+  // CP Executives reuse this dashboard but aren't in the availability/distribution
+  // pool, so the "Mark Available" toggle doesn't apply to them.
+  const _des = (user?.designation || '').toLowerCase();
+  const isCp = _des.includes('cp executive') || _des.includes('channel partner');
 
   useEffect(() => {
     if (!user?.id) return;
@@ -416,9 +420,9 @@ function STMDashboard({ user }) {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 2 }}>
             Welcome, {user?.name?.split(' ')[0] || 'STM'}
           </h1>
-          <p style={{ fontSize: 13, color: '#8492A6' }}>Sales Executive · Your pipeline & site visits</p>
+          <p style={{ fontSize: 13, color: '#8492A6' }}>{isCp ? 'Channel Partner' : 'Sales Executive'} · Your pipeline & site visits</p>
         </div>
-        <AvailabilityToggle />
+        {!isCp && <AvailabilityToggle />}
       </div>
 
       {loading ? <SkeletonGrid count={6} /> : (
@@ -519,7 +523,10 @@ export default function SalesDashboard() {
   if (des.includes('telecaller') || des.includes('tele caller')) {
     return <TelecallerDashboard user={user} />;
   }
-  if (des.includes('stm') || des.includes('sales team') || des.includes('sales executive')) {
+  // CP Executive works like an STM (own pipeline). CP Cluster Heads are Managers
+  // and fall through to the admin/overview dashboard (all CP data).
+  if (des.includes('stm') || des.includes('sales team') || des.includes('sales executive')
+      || des.includes('cp executive') || des.includes('channel partner')) {
     return <STMDashboard user={user} />;
   }
   return <AdminDashboard user={user} />;
