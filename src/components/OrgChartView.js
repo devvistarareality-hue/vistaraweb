@@ -51,13 +51,13 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
     const byParent = {};
     team.forEach((m) => { (byParent[m.reporting_manager_id] = byParent[m.reporting_manager_id] || []).push(m); });
     const build = (u) => ({ ...u, _isMe: u.id === me?.id, children: sortSiblings(byParent[u.id] || []).map(build) });
-    if ((byParent[me?.id] || []).length > 0) {
+    if (!isAdmin && (byParent[me?.id] || []).length > 0) {
       return build({ id: me?.id, name: me?.name, designation: me?.designation, role: me?.role, _root: true });
     }
     let tops = team.filter((m) => m.role === 'Manager' && !m.reporting_manager_id);
     if (!tops.length) tops = team.filter((m) => !m.reporting_manager_id || !byId[m.reporting_manager_id]);
     tops = sortSiblings(tops);
-    if (tops.length === 1) return { ...build(tops[0]), _root: true };
+    // Always show a department/company header so the context is consistent.
     return {
       name: scope === 'all' ? companyName : (module || companyName),
       designation: scope === 'all' ? 'Organisation' : (module ? 'Department' : 'Company'),
