@@ -64,12 +64,12 @@ const NAV_ITEMS = [
 ];
 
 const PARKED_ITEMS = [
-  { label: 'Sales',              href: '/sales',          icon: <IconTrending />,  live: true },
-  { label: 'HR',                 href: '/admin/hr',       icon: <IconPeople />,    live: true },
-  { label: 'Accounts & Finance', href: '/admin/accounts', icon: <IconWallet />,    live: true },
-  { label: 'Execution',          href: '/admin/execution', icon: <IconChecklist />, live: true },
-  { label: 'Purchase',           href: '/admin/purchase', icon: <IconCart />,      live: true },
-  { label: 'Land',               href: '/admin/land',     icon: <IconPin />,       live: true },
+  { label: 'Sales',              href: '/sales',       icon: <IconTrending />,  live: true },
+  { label: 'HR',                 href: '/m/hr',        icon: <IconPeople />,    live: true },
+  { label: 'Accounts & Finance', href: '/m/accounts',  icon: <IconWallet />,    live: true },
+  { label: 'Execution',          href: '/m/execution', icon: <IconChecklist />, live: true },
+  { label: 'Purchase',           href: '/m/purchase',  icon: <IconCart />,      live: true },
+  { label: 'Land',               href: '/m/land',      icon: <IconPin />,       live: true },
 ];
 
 const CSS = `

@@ -72,6 +72,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
   })();
 
   const orgView = !!(tree && !tree._isMe);
+  const showStats = module === 'Sales';   // leads/closures are sales-only
   const n = team.length;
   const subtitle = scope === 'all'
     ? `${n} ${n === 1 ? 'person' : 'people'} across the organisation`
@@ -109,7 +110,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
         </div>
       ) : view === 'chart' ? (
         <div style={{ background: 'radial-gradient(circle at 1px 1px, #E3E9F4 1px, transparent 0) 0 0 / 22px 22px, #FAFBFE', borderRadius: 16, border: '1px solid #E8ECF4', boxShadow: 'inset 0 0 40px rgba(190,200,220,0.18)', padding: '36px 20px', overflowX: 'auto' }}>
-          <div className="org-tree"><ul><OrgNode node={tree} /></ul></div>
+          <div className="org-tree"><ul><OrgNode node={tree} showStats={showStats} /></ul></div>
         </div>
       ) : (
         <>
@@ -119,7 +120,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
                 <thead style={{ backgroundColor: '#F8FAFD' }}>
-                  <tr>{['Name', 'User Code', 'Designation', 'Role', 'Reports To', 'Leads', 'Closures'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+                  <tr>{['Name', 'User Code', 'Designation', 'Role', 'Reports To', ...(showStats ? ['Leads', 'Closures'] : [])].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {visible.map((m) => (
@@ -138,8 +139,8 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
                       <td style={td}><span style={chip}>{m.designation || '—'}</span></td>
                       <td style={{ ...td, color: '#6B7280' }}>{m.role || '—'}</td>
                       <td style={{ ...td, color: '#6B7280' }}>{m.reporting_manager || '—'}</td>
-                      <td style={{ ...td, fontWeight: 700, color: '#3D5AFE' }}>{m.leads}</td>
-                      <td style={{ ...td, fontWeight: 700, color: '#2E7D32' }}>{m.closures}</td>
+                      {showStats && <td style={{ ...td, fontWeight: 700, color: '#3D5AFE' }}>{m.leads}</td>}
+                      {showStats && <td style={{ ...td, fontWeight: 700, color: '#2E7D32' }}>{m.closures}</td>}
                     </tr>
                   ))}
                 </tbody>
@@ -198,7 +199,7 @@ function accentFor(node) {
   return '#64748B';
 }
 
-function OrgNode({ node }) {
+function OrgNode({ node, showStats }) {
   const root = node._root;
   const c = accentFor(node);
   return (
@@ -219,7 +220,7 @@ function OrgNode({ node }) {
             </div>
           </div>
         </div>
-        {(node._isMe || node.leads != null) && (
+        {(node._isMe || (showStats && node.leads != null)) && (
           <div style={{ display: 'flex', gap: 8, marginTop: 8, paddingTop: 8, borderTop: '1px dashed #E6EBF4' }}>
             {node._isMe ? (
               <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8' }}>You · {node.role || ''}</span>
@@ -232,7 +233,7 @@ function OrgNode({ node }) {
           </div>
         )}
       </div>
-      {node.children?.length > 0 && <ul>{node.children.map((c2) => <OrgNode key={c2.id} node={c2} />)}</ul>}
+      {node.children?.length > 0 && <ul>{node.children.map((c2) => <OrgNode key={c2.id} node={c2} showStats={showStats} />)}</ul>}
     </li>
   );
 }
