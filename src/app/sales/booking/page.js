@@ -11,6 +11,12 @@ function authHeaders() {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` };
 }
 
+// <input type="date"> needs a zero-padded yyyy-mm-dd or it throws in Safari.
+function safeDate(s) {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s || ''));
+  return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+}
+
 export default function BookingPageWrapper() {
   return <Suspense fallback={<div style={{ padding: 40 }}>Loading…</div>}><BookingPage /></Suspense>;
 }
@@ -65,15 +71,15 @@ function BookingPage() {
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
-        booking_date: b.booking_date || s.booking_date, cp_name: b.cp_name || '',
+        booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
       if (Array.isArray(b.installments)) {
-        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork).map((i) => ({ date: i.date || '', pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
         const ex = b.installments.find((i) => i.isExtra);
-        if (ex) setExtraDate(ex.date || '');
+        if (ex) setExtraDate(safeDate(ex.date));
       }
       setEw({ desc: b.extra_work_desc || '', amt: b.extra_work_amount ? String(b.extra_work_amount) : '' });
-      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: i.date || '', pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
     });
   }, [reviseId]);
 
@@ -272,8 +278,8 @@ function BookingPage() {
                 <tr key={i}>
                   <td style={td}>{i + 1}</td>
                   <td style={td}><input type="date" value={r.date} onChange={(e) => setInst(i, 'date', e.target.value)} style={inp} /></td>
-                  <td style={td}><input type="number" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
-                  <td style={td}><input type="number" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
+                  <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                  <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
                 </tr>
               ))}
               {v.totalExtra > 0 && (
@@ -303,8 +309,8 @@ function BookingPage() {
                   <tr key={i}>
                     <td style={td}>{i + 1}</td>
                     <td style={td}><input type="date" value={r.date} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} /></td>
-                    <td style={td}><input type="number" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
-                    <td style={td}><input type="number" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
+                    <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                    <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -338,7 +344,11 @@ const Section = ({ title, children }) => (
 );
 const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>{children}</div>;
 const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: '#374151' }}>{children}</label>;
-const In = (p) => <input {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff' }} />;
+const In = ({ type, ...p }) => (
+  // number → plain text + numeric keypad, so scrolling never changes the value (no spinner)
+  <input {...p} type={type === 'number' ? 'text' : (type || 'text')} inputMode={type === 'number' ? 'decimal' : undefined}
+    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff' }} />
+);
 const Sel = ({ opts, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', cursor: 'pointer' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
 const T = ({ label, sub, val, big, subtotal }) => (
   <div style={{
