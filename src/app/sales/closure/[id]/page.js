@@ -323,8 +323,29 @@ export default function ClosureViewerPage() {
 }
 
 /* ── Unit detail: floor-plan layouts + record-closure / direct-booking form ── */
+// Booking web app (records the booking, auto-generates the LOI and stores it in
+// the Google Sheet). Opening it navigates the current tab — no new window.
+const BOOKING_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypnmUmBmBIrL5rC6xqSEbLFDvSw1XvES6D-JyL1beY8-AeEREnfvVM_TbbbV1t1i883g/exec';
+
 function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed }) {
   const cfg = STATUS[plot.status] || STATUS.available;
+
+  function openBookingScript() {
+    const q = new URLSearchParams({
+      unit:         plot.number || '',
+      project:      project?.name || '',
+      project_id:   String(project?.id || ''),
+      cluster:      plot.cluster_type || '',
+      size:         plot.size || '',
+      facing:       plot.facing || '',
+      price:        plot.price || '',
+      sales_person: user?.name || '',
+      sales_code:   user?.user_code || '',
+    });
+    // Same window, no new tab.
+    window.location.href = `${BOOKING_SCRIPT_URL}?${q.toString()}`;
+  }
+
   const typePlans = useMemo(() => {
     const entry = (project.plot_type_plans || []).find(t => t.name === plot.cluster_type);
     return entry?.floor_plans || [];
@@ -516,7 +537,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
               </div>
             )
           ) : !showForm ? (
-            <button onClick={() => { setErr(''); setShowForm(true); }} style={primaryBtn}>Book Unit {plot.number}</button>
+            <button onClick={openBookingScript} style={primaryBtn}>Book Unit {plot.number}</button>
           ) : (
             <div style={{ borderTop: '1px solid #F0F3FA', paddingTop: 16 }}>
               {/* Customer — existing lead or new */}
