@@ -48,6 +48,9 @@ function IconPin() {
 function IconLogout() {
   return <SvgIcon><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
 }
+function IconWallet() {
+  return <SvgIcon><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></SvgIcon>;
+}
 
 function IconDesignation() {
   return <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
@@ -61,11 +64,12 @@ const NAV_ITEMS = [
 ];
 
 const PARKED_ITEMS = [
-  { label: 'Sales',     href: '/sales',                       icon: <IconTrending />, live: true },
-  { label: 'HR',        href: '/placeholder?title=HR',        icon: <IconPeople /> },
-  { label: 'Execution', href: '/placeholder?title=Execution', icon: <IconChecklist /> },
-  { label: 'Purchase',  href: '/placeholder?title=Purchase',  icon: <IconCart /> },
-  { label: 'Land',      href: '/placeholder?title=Land',      icon: <IconPin /> },
+  { label: 'Sales',              href: '/sales',          icon: <IconTrending />,  live: true },
+  { label: 'HR',                 href: '/admin/hr',       icon: <IconPeople />,    live: true },
+  { label: 'Accounts & Finance', href: '/admin/accounts', icon: <IconWallet />,    live: true },
+  { label: 'Execution',          href: '/admin/execution', icon: <IconChecklist />, live: true },
+  { label: 'Purchase',           href: '/admin/purchase', icon: <IconCart />,      live: true },
+  { label: 'Land',               href: '/admin/land',     icon: <IconPin />,       live: true },
 ];
 
 const CSS = `

@@ -6,7 +6,7 @@ import { fetchUsers, updateUser, deleteUser, resetUpdateUser } from '../../../re
 import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 
-const ALL_MODULES = ['Sales', 'HR', 'Execution', 'Purchase', 'Land'];
+const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Employee'];
 
 const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
@@ -185,6 +185,7 @@ export default function UserManagementPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={handleRefresh} disabled={loading} title="Refresh" style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}>↻</button>
+          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: '#fff', color: '#3D5AFE', border: '1.5px solid #C7D2FE' }}>🗂 Org Chart</button>
           <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>+ Create User</button>
         </div>
       </div>

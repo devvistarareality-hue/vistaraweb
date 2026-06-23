@@ -37,6 +37,7 @@ export const MODULE_ACCENT = {
   Execution:   { bg: '#E8F5E9', icon: '#2E7D32' },
   Purchase:    { bg: '#FFF3E0', icon: '#E65100' },
   Land:        { bg: '#F3E5F5', icon: '#7B1FA2' },
+  'Accounts & Finance': { bg: '#E0F2F1', icon: '#0D9488' },
   Reports:     { bg: '#E8F5E9', icon: '#2E7D32' },
   Settings:    { bg: '#F3E5F5', icon: '#7B1FA2' },
   Admin:       { bg: '#E8EEFF', icon: '#3D5AFE' },

@@ -27,6 +27,7 @@ function ModuleIcon({ type, size = 20 }) {
     checklist: <svg {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
     cart:      <svg {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>,
     map:       <svg {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+    wallet:    <svg {...p}><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>,
   };
   return icons[type] || null;
 }
@@ -35,10 +36,11 @@ const MODULES = [
   { name: 'User Management',    desc: 'Manage employees, roles and access',          icon: 'users',     accent: { bg: '#9FABF8', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.22)'  }, href: '/admin/users',                    soon: false },
   { name: 'Company Management', desc: 'Workspaces, settings and company data',        icon: 'building',  accent: { bg: '#7DD4DE', icon: '#0097A7', gradient: 'rgba(0,151,167,0.22)'  }, href: '/admin/companies',                soon: false },
   { name: 'Sales',              desc: 'Revenue tracking and deal management',         icon: 'trending',  accent: { bg: '#FFC837', icon: '#F9A825', gradient: 'rgba(249,168,37,0.22)' }, href: '/sales',                          soon: false },
-  { name: 'HR',                 desc: 'Attendance, leave and people management',      icon: 'people',    accent: { bg: '#9FABF8', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.13)'  }, href: '/placeholder?title=HR',           soon: true  },
-  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.13)'  }, href: '/placeholder?title=Execution',    soon: true  },
-  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.13)'   }, href: '/placeholder?title=Purchase',     soon: true  },
-  { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#BA68C8', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.13)' }, href: '/placeholder?title=Land',         soon: true  },
+  { name: 'HR',                 desc: 'People, org chart and team structure',         icon: 'people',    accent: { bg: '#9FABF8', icon: '#3D5AFE', gradient: 'rgba(61,90,254,0.22)'  }, href: '/admin/hr',                       soon: false },
+  { name: 'Accounts & Finance', desc: 'Accounting, payments and financials',          icon: 'wallet',    accent: { bg: '#7DD4C8', icon: '#0D9488', gradient: 'rgba(13,148,136,0.22)' }, href: '/admin/accounts',                 soon: false },
+  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.22)'  }, href: '/admin/execution',                soon: false },
+  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.22)'   }, href: '/admin/purchase',                 soon: false },
+  { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#BA68C8', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.22)' }, href: '/admin/land',                     soon: false },
 ];
 
 const openMods = MODULES.filter((m) => !m.soon);
@@ -149,6 +151,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ═══ ALL MODULES ═══ */}
+      {soonMods.length > 0 && (
       <div style={{ ...s.section, paddingBottom: 48 }}>
         <div style={s.sectionHead}>
           <div style={s.sectionLabel}>ALL MODULES</div>
@@ -172,6 +175,7 @@ export default function AdminDashboardPage() {
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }
