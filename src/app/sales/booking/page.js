@@ -45,6 +45,9 @@ function BookingPage() {
   });
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   const [insts, setInsts] = useState([]); // [{date,pct,amt}]
+  const [extraDate, setExtraDate] = useState(''); // due date for the Extra Charges line
+  const [ew, setEw] = useState({ desc: '', amt: '' });       // extra work (revise mode)
+  const [ewInsts, setEwInsts] = useState([]);                // [{date,pct,amt}]
   const [loiDone, setLoiDone] = useState(false);
   const [loiFile, setLoiFile] = useState(null); // {name,type,data(base64)}
 
@@ -64,7 +67,13 @@ function BookingPage() {
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
         booking_date: b.booking_date || s.booking_date, cp_name: b.cp_name || '',
       }));
-      if (Array.isArray(b.installments)) setInsts(b.installments.filter((i) => !i.isExtra).map((i) => ({ date: i.date || '', pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      if (Array.isArray(b.installments)) {
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork).map((i) => ({ date: i.date || '', pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        const ex = b.installments.find((i) => i.isExtra);
+        if (ex) setExtraDate(ex.date || '');
+      }
+      setEw({ desc: b.extra_work_desc || '', amt: b.extra_work_amount ? String(b.extra_work_amount) : '' });
+      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: i.date || '', pct: String(i.pct || ''), amt: String(i.amt || '') })));
     });
   }, [reviseId]);
 
@@ -90,10 +99,32 @@ function BookingPage() {
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
     premiumLocation: f.premium_location, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
     applyRegFee: f.apply_reg_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
-  }), [f, formulaSet, project]);
+    extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
+  }), [f, formulaSet, project, ew, reviseId]);
 
   const base = installmentBase(v);
   const pctTotal = insts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  const ewBase = parseFloat(ew.amt) || 0;
+  const ewPctTotal = ewInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  function buildEw(n) {
+    n = parseInt(n, 10) || 0;
+    setEwInsts(Array.from({ length: n }, (_, i) => ewInsts[i] || { date: '', pct: '', amt: '' }));
+  }
+  function setEwInst(i, k, val) {
+    setEwInsts((arr) => arr.map((r, idx) => {
+      if (idx !== i) return r;
+      const nr = { ...r, [k]: val };
+      if (k === 'pct') nr.amt = val && ewBase ? String(Math.round(ewBase * parseFloat(val) / 100)) : '';
+      if (k === 'amt') nr.pct = val && ewBase ? (parseFloat(val) / ewBase * 100).toFixed(2) : '';
+      return nr;
+    }));
+  }
+  const ewArr = () => ewInsts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isExtraWork: true }));
+  const inr = (n) => Number(n || 0).toLocaleString('en-IN');
+  const extraSub = formulaSet === 'ankhol'
+    ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal + Premium'
+    : formulaSet === 'industrial' ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal'
+    : 'Stamp + Reg + GST + Maintenance + Legal';
 
   function buildInsts(n) {
     n = parseInt(n, 10) || 0;
@@ -111,7 +142,7 @@ function BookingPage() {
 
   function instArr() {
     const arr = insts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0 }));
-    arr.push({ no: 'Extra', date: '', amt: Math.round(v.totalExtra), isExtra: true });
+    arr.push({ no: 'Extra', date: extraDate, amt: Math.round(v.totalExtra), isExtra: true });
     return arr;
   }
   async function doDownloadLOI() {
@@ -121,7 +152,7 @@ function BookingPage() {
       project: project?.name, plotNo: plot?.number, bookingDate: f.booking_date,
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name,
     };
-    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
+    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr() }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }
   }
   function onFile(e) {
@@ -154,6 +185,9 @@ function BookingPage() {
       total_extra: Math.round(v.totalExtra), discount: f.discount || 0, final_amount: Math.round(v.finalAmt),
       apply_reg_fee: f.apply_reg_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
       installments: instArr(),
+      extra_work_desc: reviseId ? (ew.desc || '') : '',
+      extra_work_amount: reviseId ? Math.round(parseFloat(ew.amt) || 0) : 0,
+      extra_work_inst: reviseId ? ewArr() : [],
       booking_date: f.booking_date, cp_name: f.cp_name,
       loi_file: loiFile,   // {name,type,data} → saved server-side
       ...(reviseId ? { revision_of: reviseId } : {}),
@@ -213,16 +247,15 @@ function BookingPage() {
         <Row><L>Legal Charges & Others (₹)</L><In type="number" value={f.legal_charges} onChange={(e) => set('legal_charges', e.target.value)} /></Row>
       </Section>
 
-      {/* Live totals */}
+      {/* Live totals — mirrors the GAS "Total Deal" box (breakdowns + Total Basic + Extra Charges) */}
       <div style={totalBox}>
-        <T label="Plot Basic Amount" val={v.plotBasic} />
-        {flags.hasSaleDeed && <T label="Sale Deed" val={v.saleDeed} />}
-        {flags.hasConstructionFields && <T label="Plot Development" val={v.plotDev} />}
-        {flags.hasConstructionFields && <T label="Construction Amount" val={v.constAmt} />}
-        <T label="Stamp Duty" val={v.stampDuty} />
-        <T label="Registration Fees" val={v.regFees} />
-        <T label="GST" val={v.gst} />
-        <T label="Total Extra Charges" val={v.totalExtra} />
+        <T label="Plot Basic Amount" sub={`${inr(v.area)} × ${inr(v.landRate)}`} val={v.plotBasic} />
+        {flags.hasConstructionFields && <T label="Plot Development Amount" sub={`${inr(formulaSet === 'ankhol' ? v.constArea : v.area)} × ${inr(v.devRate)}`} val={v.plotDev} />}
+        {flags.hasConstructionFields && <T label="Construction Amount" sub={`${inr(v.constArea)} × ${inr(v.constRate)}`} val={v.constAmt} />}
+        {flags.hasConstructionFields && <T label="Total Basic Amount" sub="Plot Basic + Plot Dev + Construction" val={v.plotBasic + v.plotDev + v.constAmt} subtotal />}
+        {flags.hasSaleDeed && <T label="Sale Deed" sub={formulaSet === 'ankhol' ? '60% × (Base + Premium − Discount)' : 'Sale Deed Rate × Plot Area'} val={v.saleDeed} />}
+        <T label="Extra Charges" sub={extraSub} val={v.totalExtra} />
+        {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}
         <T label="Discount" val={-v.discount} />
         <T label="FINAL AMOUNT" val={v.finalAmt} big />
       </div>
@@ -243,11 +276,43 @@ function BookingPage() {
                   <td style={td}><input type="number" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
                 </tr>
               ))}
+              {v.totalExtra > 0 && (
+                <tr style={{ background: '#FFF8E1' }}>
+                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
+                  <td style={td}><input type="date" value={extraDate} onChange={(e) => setExtraDate(e.target.value)} style={inp} /></td>
+                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra Charges</td>
+                  <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f0f4ff', color: '#1a73e8', fontWeight: 600 }} /></td>
+                </tr>
+              )}
             </tbody>
           </table>
         )}
         {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}% · Extra Charges {rupee(v.totalExtra)}</div>}
       </Section>
+
+      {reviseId && (
+        <Section title="Extra Work (revise only)">
+          <Row><L>Description</L><In value={ew.desc} onChange={(e) => setEw((s) => ({ ...s, desc: e.target.value }))} /></Row>
+          <Row><L>Total Amount (₹)</L><In type="number" value={ew.amt} onChange={(e) => setEw((s) => ({ ...s, amt: e.target.value }))} /></Row>
+          <Row><L>No. of Installments</L><In type="number" value={ewInsts.length || ''} onChange={(e) => buildEw(e.target.value)} /></Row>
+          {ewInsts.length > 0 && (
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+              <thead><tr>{['#', 'Due Date', '%', 'Amount'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {ewInsts.map((r, i) => (
+                  <tr key={i}>
+                    <td style={td}>{i + 1}</td>
+                    <td style={td}><input type="date" value={r.date} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} /></td>
+                    <td style={td}><input type="number" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                    <td style={td}><input type="number" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {ewInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(ewPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Extra Work Total: {ewPctTotal.toFixed(2)}%</div>}
+        </Section>
+      )}
 
       <Section title="LOI Document">
         <button onClick={doDownloadLOI} style={{ ...submitBtn, background: 'linear-gradient(135deg,#7b2ff7,#5a00d8)', marginBottom: 12 }}>
@@ -275,10 +340,18 @@ const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center
 const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: '#374151' }}>{children}</label>;
 const In = (p) => <input {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff' }} />;
 const Sel = ({ opts, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', cursor: 'pointer' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
-const T = ({ label, val, big }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', padding: big ? '10px 0 0' : '6px 0', borderTop: big ? '2px solid #B3CDF9' : 'none', marginTop: big ? 6 : 0 }}>
-    <span style={{ fontSize: big ? 15 : 13, fontWeight: big ? 800 : 500, color: big ? '#0D47A1' : '#4B5563' }}>{label}</span>
-    <span style={{ fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: big ? '#0D47A1' : '#1F2937' }}>{rupee(val)}</span>
+const T = ({ label, sub, val, big, subtotal }) => (
+  <div style={{
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: big ? '10px 0 0' : subtotal ? '8px 10px' : '6px 0',
+    borderTop: big ? '2px solid #B3CDF9' : 'none', marginTop: big ? 6 : 0,
+    ...(subtotal ? { background: '#DBEAFE', borderRadius: 6, margin: '4px 0' } : {}),
+  }}>
+    <span style={{ fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? '#0D47A1' : '#4B5563' }}>
+      {label}
+      {sub && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub}</small>}
+    </span>
+    <span style={{ fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#0D47A1' : '#1F2937' }}>{rupee(val)}</span>
   </div>
 );
 const totalBox = { background: 'linear-gradient(135deg,#F0F7FF,#E8F0FE)', border: '1.5px solid #C5D8FB', borderRadius: 12, padding: '10px 18px', marginBottom: 14 };
