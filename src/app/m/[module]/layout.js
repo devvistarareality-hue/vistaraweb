@@ -40,11 +40,15 @@ export default function ModuleLayout({ children, params }) {
   }
   useEffect(() => { if (user === null) return; if (!user) router.replace('/company'); }, [user]);
 
+  const isAdmin = user?.role === 'Admin' || user?.is_staff;
+  const isManager = user?.role === 'Manager';
   const base = `/m/${slug}`;
   const NAV = [
-    { label: 'Overview', href: base,            icon: <IconGrid /> },
-    { label: 'My Team',  href: `${base}/team`,  icon: <IconUsers /> },
+    { label: 'Overview', href: base, icon: <IconGrid /> },
+    // My Team is a management view — only managers/admins see it.
+    ...((isManager || isAdmin) ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
   ];
+  const back = isAdmin ? { href: '/admin', label: 'Back to Admin' } : { href: '/dashboard', label: 'Back to Modules' };
   const isActive = (href) => href === base ? pathname === base : pathname.startsWith(href);
 
   if (!meta) {
@@ -96,9 +100,9 @@ export default function ModuleLayout({ children, params }) {
           )}
 
           <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
-          <Link href="/admin" style={s.navItem}>
+          <Link href={back.href} style={s.navItem}>
             <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
-            <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Admin</span>
+            <span style={{ fontSize: 13, fontWeight: 500 }}>{back.label}</span>
           </Link>
         </div>
         <div style={{ padding: '0 10px 18px' }}>

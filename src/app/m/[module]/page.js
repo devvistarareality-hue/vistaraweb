@@ -1,10 +1,13 @@
 'use client';
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
 import { MODULE_META } from './moduleMeta';
 
 export default function ModuleOverview({ params }) {
   const slug = params.module;
   const meta = MODULE_META[slug] || { name: slug, accent: '#3D5AFE', desc: '' };
+  const user = useSelector((s) => s.auth.user);
+  const canSeeTeam = user?.role === 'Manager' || user?.role === 'Admin' || user?.is_staff;
 
   return (
     <div style={{ padding: '28px 32px' }}>
@@ -12,6 +15,7 @@ export default function ModuleOverview({ params }) {
       <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>{meta.desc}</p>
 
       <div style={{ marginTop: 24, display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+        {canSeeTeam && (
         <Link href={`/m/${slug}/team`} style={{ textDecoration: 'none' }}>
           <div style={{ width: 280, background: '#fff', borderRadius: 16, padding: 20, boxShadow: '0 4px 16px rgba(184,196,214,0.22)', border: '1px solid #EDF1F7', cursor: 'pointer' }}>
             <div style={{ width: 46, height: 46, borderRadius: 13, background: `${meta.accent}18`, color: meta.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
@@ -24,6 +28,10 @@ export default function ModuleOverview({ params }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: meta.accent }}>Open →</div>
           </div>
         </Link>
+        )}
+        {!canSeeTeam && (
+          <p style={{ fontSize: 13, color: '#8492A6' }}>No tools available in this module yet.</p>
+        )}
       </div>
     </div>
   );
