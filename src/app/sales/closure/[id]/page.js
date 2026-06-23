@@ -331,19 +331,9 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
   const cfg = STATUS[plot.status] || STATUS.available;
 
   function openBookingScript() {
-    const q = new URLSearchParams({
-      unit:         plot.number || '',
-      project:      project?.name || '',
-      project_id:   String(project?.id || ''),
-      cluster:      plot.cluster_type || '',
-      size:         plot.size || '',
-      facing:       plot.facing || '',
-      price:        plot.price || '',
-      sales_person: user?.name || '',
-      sales_code:   user?.user_code || '',
-    });
+    // The booking web app has its own login + form, so no params are passed.
     // Same window, no new tab.
-    window.location.href = `${BOOKING_SCRIPT_URL}?${q.toString()}`;
+    window.location.href = BOOKING_SCRIPT_URL;
   }
 
   const typePlans = useMemo(() => {
