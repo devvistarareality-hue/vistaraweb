@@ -329,11 +329,17 @@ const BOOKING_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypnmUmBmBIr
 
 function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed }) {
   const cfg = STATUS[plot.status] || STATUS.available;
+  const router = useRouter();
 
   function openBookingScript() {
-    // The booking web app has its own login + form, so no params are passed.
-    // Same window, no new tab.
-    window.location.href = BOOKING_SCRIPT_URL;
+    // Native ERP booking form (replaces the GAS web app).
+    const q = new URLSearchParams({ project: String(project?.id || ''), plot: String(plot?.id || '') });
+    if (sv) {
+      if (sv.lead) q.set('lead', String(sv.lead));
+      if (sv.lead_name)  q.set('client', sv.lead_name);
+      if (sv.lead_phone) q.set('phone', sv.lead_phone);
+    }
+    router.push(`/sales/booking?${q.toString()}`);
   }
 
   const typePlans = useMemo(() => {
