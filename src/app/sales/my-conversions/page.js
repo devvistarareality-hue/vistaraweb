@@ -198,6 +198,14 @@ export default function MyConversionsPage() {
     setLoading(false);
   }, []);
 
+  const cancelClosure = useCallback(async (id) => {
+    if (!window.confirm('Cancel this closure?\nThis frees the unit and permanently deletes its signed LOI from storage. This cannot be undone.')) return;
+    try {
+      const r = await fetch(SALES_ENDPOINTS.closureCancel(id), { method: 'POST', headers: authHeaders() });
+      if (r.ok) { load(); } else { const d = await r.json().catch(() => ({})); alert('Cancel failed: ' + (d.detail || r.status)); }
+    } catch (e) { alert(e.message); }
+  }, [load]);
+
   useEffect(() => { load(); }, [load]);
 
   const svCompleted = visits.filter(v => v.status === 'completed');
@@ -304,6 +312,7 @@ export default function MyConversionsPage() {
                   <th style={th}>Amount</th>
                   <th style={th}>Closure Date</th>
                   <th style={th}>Status</th>
+                  <th style={th}></th>
                 </tr>
               </thead>
               <tbody>
@@ -316,6 +325,9 @@ export default function MyConversionsPage() {
                     <td style={{ ...td, fontWeight: 600 }}>{c.total_amount ? '₹' + new Intl.NumberFormat('en-IN').format(c.total_amount) : '—'}</td>
                     <td style={td}>{c.closure_date ? fmtDate(c.closure_date) : '—'}</td>
                     <td style={td}><StatusBadge status={c.status} colors={CLOSURE_STATUS_COLOR} /></td>
+                    <td style={td} onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => cancelClosure(c.id)} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
