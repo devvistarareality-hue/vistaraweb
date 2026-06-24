@@ -180,11 +180,13 @@ export default function ImportPage() {
   }
 
   async function downloadTemplate(type) {
-    const XLSX = await import('xlsx');
-
-    // Full lifecycle template: every column from lead → telecaller → STM → site visit → closure,
-    // plus a Reference sheet so you know which id/value to put in each column.
+    // Full lifecycle template (exceljs) — every column from lead → telecaller → STM →
+    // site visit → closure, WITH dropdowns on the status / project / source columns,
+    // plus a Reference sheet for the team id ↔ name lookup.
     if (type === 'full') {
+      const xlMod = await import('exceljs/dist/exceljs.min.js');
+      const ExcelJS = xlMod.Workbook ? xlMod : (xlMod.default || xlMod);
+
       const cols = [
         'name', 'phone', 'alt_phone', 'email', 'project', 'source', 'campaign', 'adset', 'ad_name',
         'requirement', 'budget_min', 'budget_max', 'preferred_location', 'lead_date', 'overall_status',
@@ -193,40 +195,77 @@ export default function ImportPage() {
         'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_id', 'sv_remarks',
         'closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks',
       ];
+      const STATUS = {
+        overall_status: 'new,assigned,contacted,not_reachable,warm_transferred,hot,warm,cold,not_interested,sv_scheduled,sv_done,closed,lost',
+        telecaller_status: 'warm,cold,not_interested,not_reachable,callback',
+        stm_status: 'hot,warm,cold,not_interested,sv_scheduled,sv_done,closed',
+        sv_status: 'scheduled,completed,cancelled,no_show',
+        closure_status: 'booked,cancelled,refunded',
+      };
       const tcId = users.find((u) => /tele/i.test(u.designation || u.role || ''))?.id ?? users[0]?.id ?? '';
       const stmId = users.find((u) => /stm|sales|manager/i.test(u.designation || u.role || ''))?.id ?? users[1]?.id ?? users[0]?.id ?? '';
-      const ex1 = { name: 'Rahul Sharma', phone: '9876543210', email: 'rahul@example.com', source: 'meta', campaign: 'Meta - Luxury Homes', ad_name: 'Video 2BHK', lead_date: '01-05-2025', overall_status: 'new', telecaller_id: tcId, telecaller_status: 'callback', telecaller_remarks: 'Call back evening' };
-      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: 'Kalrav', source: 'walk-in', lead_date: '02-04-2025', overall_status: 'closed', telecaller_id: tcId, telecaller_status: 'warm', stm_id: stmId, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: '200000', total_amount: '5000000', closure_remarks: 'Token received' };
-      const fill = (o) => cols.reduce((r, c) => { r[c] = o[c] ?? ''; return r; }, {});
-      const ws = XLSX.utils.json_to_sheet([fill(ex1), fill(ex2)], { header: cols });
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+      const ex1 = { name: 'Rahul Sharma', phone: '9876543210', email: 'rahul@example.com', source: (sources[0]?.name || 'meta'), campaign: 'Meta - Luxury Homes', ad_name: 'Video 2BHK', lead_date: '01-05-2025', overall_status: 'new', telecaller_id: tcId, telecaller_status: 'callback', telecaller_remarks: 'Call back evening' };
+      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: (projects[0]?.name || 'Kalrav'), source: (sources[0]?.name || 'walk-in'), lead_date: '02-04-2025', overall_status: 'closed', telecaller_id: tcId, telecaller_status: 'warm', stm_id: stmId, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: '200000', total_amount: '5000000', closure_remarks: 'Token received' };
 
-      const ref = [
-        { A: '— TEAM — put this id in telecaller_id / stm_id / sv_referred_by_id —' },
-        { A: 'id', B: 'name', C: 'role / designation', D: 'phone' },
-        ...users.map((u) => ({ A: u.id, B: u.name, C: (u.designation || u.role || ''), D: u.phone || '' })),
-        {},
-        { A: '— ALLOWED VALUES (copy exactly) —' },
-        { A: 'overall_status', B: 'new, assigned, contacted, not_reachable, warm_transferred, hot, warm, cold, not_interested, sv_scheduled, sv_done, closed, lost' },
-        { A: 'telecaller_status', B: 'warm, cold, not_interested, not_reachable, callback' },
-        { A: 'stm_status', B: 'hot, warm, cold, not_interested, sv_scheduled, sv_done, closed' },
-        { A: 'sv_status', B: 'scheduled, completed, cancelled, no_show' },
-        { A: 'closure_status', B: 'booked, cancelled, refunded' },
-        {},
-        { A: '— NOTES —' },
-        { A: 'Required: name + phone. Everything else optional.' },
-        { A: 'Dates: dd-mm-yyyy (e.g. 08-04-2025).' },
-        { A: 'project / source are matched by name (must already exist). Leave a cell blank to skip it.' },
-        { A: 'Fill any sv_* column to create a Site Visit. Fill closure_date to create a Closure.' },
-        { A: 'overall_status auto-fills from the furthest stage (closure/SV/STM/TC) if you leave it blank.' },
-      ];
-      const wsRef = XLSX.utils.json_to_sheet(ref, { header: ['A', 'B', 'C', 'D'], skipHeader: true });
-      wsRef['!cols'] = [{ wch: 22 }, { wch: 60 }, { wch: 22 }, { wch: 16 }];
-      XLSX.utils.book_append_sheet(wb, wsRef, 'Reference — IDs & values');
-      XLSX.writeFile(wb, 'vistara_pipeline_import_template.xlsx');
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Leads');
+      const refSheet = wb.addWorksheet('Reference — IDs & values');
+      const lists = wb.addWorksheet('Lists'); lists.state = 'hidden';
+
+      ws.addRow(cols);
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF182350' } };
+      const rowFrom = (o) => cols.map((c) => o[c] ?? '');
+      ws.addRow(rowFrom(ex1));
+      ws.addRow(rowFrom(ex2));
+      ws.columns = cols.map((c) => ({ width: Math.min(26, Math.max(12, c.length + 3)) }));
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+      // Hidden helper ranges feeding the project/source dropdowns.
+      const projNames = projects.map((p) => p.name).filter(Boolean);
+      const srcNames = sources.map((s) => s.name).filter(Boolean);
+      projNames.forEach((n, i) => { lists.getCell(`A${i + 1}`).value = n; });
+      srcNames.forEach((n, i) => { lists.getCell(`B${i + 1}`).value = n; });
+
+      const colLetter = (idx) => { let s = '', n = idx; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+      const colOf = (name) => colLetter(cols.indexOf(name) + 1);
+      const MAXROW = 1000;
+      const addDV = (name, formula) => ws.dataValidations.add(`${colOf(name)}2:${colOf(name)}${MAXROW}`, {
+        type: 'list', allowBlank: true, formulae: [formula], showErrorMessage: true,
+        errorStyle: 'warning', errorTitle: 'Pick from the list', error: 'Use one of the dropdown values.',
+      });
+      for (const [field, vals] of Object.entries(STATUS)) addDV(field, `"${vals}"`);
+      if (projNames.length) addDV('project', `Lists!$A$1:$A$${projNames.length}`);
+      if (srcNames.length) addDV('source', `Lists!$B$1:$B$${srcNames.length}`);
+
+      refSheet.addRow(['— TEAM — put this id in telecaller_id / stm_id / sv_referred_by_id —']);
+      refSheet.addRow(['id', 'name', 'role / designation', 'phone']).font = { bold: true };
+      users.forEach((u) => refSheet.addRow([u.id, u.name, (u.designation || u.role || ''), u.phone || '']));
+      refSheet.addRow([]);
+      refSheet.addRow(['— ALLOWED VALUES (the Leads sheet has dropdowns for these) —']);
+      refSheet.addRow(['overall_status', STATUS.overall_status.replace(/,/g, ', ')]);
+      refSheet.addRow(['telecaller_status', STATUS.telecaller_status.replace(/,/g, ', ')]);
+      refSheet.addRow(['stm_status', STATUS.stm_status.replace(/,/g, ', ')]);
+      refSheet.addRow(['sv_status', STATUS.sv_status.replace(/,/g, ', ')]);
+      refSheet.addRow(['closure_status', STATUS.closure_status.replace(/,/g, ', ')]);
+      refSheet.addRow([]);
+      refSheet.addRow(['— NOTES —']);
+      refSheet.addRow(['Required: name + phone. Everything else optional.']);
+      refSheet.addRow(['Dates: dd-mm-yyyy (e.g. 08-04-2025).']);
+      refSheet.addRow(['project / source: pick from the dropdown (must already exist). Leave blank to skip.']);
+      refSheet.addRow(['Fill any sv_* column to create a Site Visit. Fill closure_date to create a Closure.']);
+      refSheet.addRow(['overall_status auto-fills from the furthest stage if you leave it blank.']);
+      refSheet.columns = [{ width: 24 }, { width: 62 }, { width: 22 }, { width: 16 }];
+
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'vistara_pipeline_import_template.xlsx'; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       return;
     }
+
+    const XLSX = await import('xlsx');
 
     const rows = type === 'meta' ? [
       { full_name: 'Rahul Sharma', phone_number: '9876543210', alt_phone: '', email: 'rahul@example.com', campaign_name: 'Meta - Luxury Homes May 2025', ad_name: 'Video - 2BHK Walkthrough', lead_date: '01-05-2025' },
