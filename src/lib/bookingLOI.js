@@ -199,10 +199,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Total Deal Summary
   chk(75); secHead('Total Deal Summary', P); rowAlt = false;
-  tRow('Plot Basic Amount  (' + num(v.area) + ' x ' + num(v.landRate) + ')', v.plotBasic);
+  tRow('Plot Basic Amount  (Plot Area x Land Rate = ' + num(v.area) + ' x ' + num(v.landRate) + ')', v.plotBasic);
   if (!isIndustrialPdf) {
-    tRow('Plot Development Amount  (' + (isAnkholPdf ? num(v.constArea) : num(v.area)) + ' x ' + num(v.devRate) + ')', v.plotDev);
-    tRow('Construction Amount  (' + num(v.constArea) + ' x ' + num(v.constRate) + ')', v.constAmt);
+    tRow('Plot Development Amount  (' + (isAnkholPdf ? 'Const Area' : 'Plot Area') + ' x Dev Rate = ' + (isAnkholPdf ? num(v.constArea) : num(v.area)) + ' x ' + num(v.devRate) + ')', v.plotDev);
+    tRow('Construction Amount  (Const Area x Const Rate = ' + num(v.constArea) + ' x ' + num(v.constRate) + ')', v.constAmt);
     tRow('Total Basic Amount', v.plotBasic + v.plotDev + v.constAmt, { sub: true });
   }
   tRow((isAnkholPdf && v.premiumLocation > 0) ? 'Extra Charges  (incl. Premium Location Charge)' : 'Extra Charges', v.totalExtra);
