@@ -21,11 +21,25 @@ const AUTO_PATTERNS = {
   date:      /^(date|created|created.?at|submission.?date|timestamp|lead.?date)$/i,
 };
 
+// Lifecycle columns from the Full-Pipeline template — auto-mapped by exact header name.
+const PIPELINE_FIELDS = [
+  'project', 'source', 'requirement', 'budget_min', 'budget_max', 'preferred_location', 'overall_status',
+  'telecaller_id', 'telecaller_status', 'telecaller_remarks',
+  'stm_id', 'stm_status', 'stm_remarks',
+  'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_id', 'sv_remarks',
+  'closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks',
+];
+
 function autoDetect(headers) {
   const m = { name: '', name2: '', phone: '', alt_phone: '', email: '', campaign: '', adset: '', creative: '', date: '' };
   for (const key of Object.keys(AUTO_PATTERNS)) {
     const match = headers.find((h) => AUTO_PATTERNS[key].test(h.trim()));
     if (match) m[key] = match;
+  }
+  // Pipeline columns: exact snake_case header match (as produced by the template).
+  for (const f of PIPELINE_FIELDS) {
+    const match = headers.find((h) => h.trim().toLowerCase() === f);
+    if (match) m[f] = match;
   }
   return m;
 }
@@ -40,7 +54,12 @@ function getCell(raw, col) {
 function applyMapping(raw, m) {
   let name = getCell(raw, m.name);
   if (m.name2) { const last = getCell(raw, m.name2); if (last) name = name ? `${name} ${last}` : last; }
-  return { name, phone: getCell(raw, m.phone), alt_phone: getCell(raw, m.alt_phone), email: getCell(raw, m.email), campaign: getCell(raw, m.campaign), adset: getCell(raw, m.adset), creative: getCell(raw, m.creative), date: getCell(raw, m.date) };
+  const out = {
+    name, phone: getCell(raw, m.phone), alt_phone: getCell(raw, m.alt_phone), email: getCell(raw, m.email),
+    campaign: getCell(raw, m.campaign), adset: getCell(raw, m.adset), creative: getCell(raw, m.creative), date: getCell(raw, m.date),
+  };
+  for (const f of PIPELINE_FIELDS) out[f] = getCell(raw, m[f]);
+  return out;
 }
 
 const BATCH = 200;
@@ -57,6 +76,7 @@ export default function ImportPage() {
   const [step,      setStep]      = useState(1);
   const [projects,  setProjects]  = useState([]);
   const [sources,   setSources]   = useState([]);
+  const [users,     setUsers]     = useState([]);
   const [fileName,  setFileName]  = useState('');
   const [headers,   setHeaders]   = useState([]);
   const [rawRows,   setRawRows]   = useState([]);
@@ -74,6 +94,7 @@ export default function ImportPage() {
   useEffect(() => {
     fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()).then((d) => { if (Array.isArray(d)) setProjects(d); });
     fetch(SALES_ENDPOINTS.sources, { headers: authHeaders() }).then((r) => r.json()).then((d) => { if (Array.isArray(d)) setSources(d); });
+    fetch(SALES_ENDPOINTS.usersSlim, { headers: authHeaders() }).then((r) => r.json()).then((d) => { if (Array.isArray(d)) setUsers(d); }).catch(() => {});
   }, []);
 
   async function handleFile(file) {
@@ -119,13 +140,18 @@ export default function ImportPage() {
     const batches = [];
     for (let i = 0; i < valid.length; i += BATCH) batches.push(valid.slice(i, i + BATCH));
 
-    let imported = 0, duplicates = 0, errors = 0, failed = [];
+    let imported = 0, duplicates = 0, errors = 0, siteVisits = 0, closures = 0, failed = [];
 
     for (let b = 0; b < batches.length; b++) {
-      const leads = batches[b].map((r) => ({
-        name: r.name, phone: r.phone, alt_phone: r.alt_phone || '',
-        email: r.email || '', campaign: r.campaign || '', creative: r.creative || '',
-      }));
+      const leads = batches[b].map((r) => {
+        const lead = {
+          name: r.name, phone: r.phone, alt_phone: r.alt_phone || '',
+          email: r.email || '', campaign: r.campaign || '', adset: r.adset || '',
+          creative: r.creative || '', lead_date: r.date || '',
+        };
+        for (const f of PIPELINE_FIELDS) lead[f] = r[f] || '';
+        return lead;
+      });
       const res  = await fetch(SALES_ENDPOINTS.import_, {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ leads, project_id: projectId || null, source_id: sourceId || null }),
@@ -135,13 +161,15 @@ export default function ImportPage() {
         imported   += data.imported || 0;
         duplicates += data.duplicates || 0;
         errors     += data.errors || 0;
+        siteVisits += data.site_visits || 0;
+        closures   += data.closures || 0;
         failed     = failed.concat(data.failed || []);
       } else {
         errors += batches[b].length;
       }
       setProgress(Math.round(((b + 1) / batches.length) * 100));
     }
-    setResult({ imported, duplicates, errors, failed });
+    setResult({ imported, duplicates, errors, siteVisits, closures, failed });
     setImporting(false);
   }
 
@@ -153,6 +181,53 @@ export default function ImportPage() {
 
   async function downloadTemplate(type) {
     const XLSX = await import('xlsx');
+
+    // Full lifecycle template: every column from lead → telecaller → STM → site visit → closure,
+    // plus a Reference sheet so you know which id/value to put in each column.
+    if (type === 'full') {
+      const cols = [
+        'name', 'phone', 'alt_phone', 'email', 'project', 'source', 'campaign', 'adset', 'ad_name',
+        'requirement', 'budget_min', 'budget_max', 'preferred_location', 'lead_date', 'overall_status',
+        'telecaller_id', 'telecaller_status', 'telecaller_remarks',
+        'stm_id', 'stm_status', 'stm_remarks',
+        'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_id', 'sv_remarks',
+        'closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks',
+      ];
+      const tcId = users.find((u) => /tele/i.test(u.designation || u.role || ''))?.id ?? users[0]?.id ?? '';
+      const stmId = users.find((u) => /stm|sales|manager/i.test(u.designation || u.role || ''))?.id ?? users[1]?.id ?? users[0]?.id ?? '';
+      const ex1 = { name: 'Rahul Sharma', phone: '9876543210', email: 'rahul@example.com', source: 'meta', campaign: 'Meta - Luxury Homes', ad_name: 'Video 2BHK', lead_date: '01-05-2025', overall_status: 'new', telecaller_id: tcId, telecaller_status: 'callback', telecaller_remarks: 'Call back evening' };
+      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: 'Kalrav', source: 'walk-in', lead_date: '02-04-2025', overall_status: 'closed', telecaller_id: tcId, telecaller_status: 'warm', stm_id: stmId, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: '200000', total_amount: '5000000', closure_remarks: 'Token received' };
+      const fill = (o) => cols.reduce((r, c) => { r[c] = o[c] ?? ''; return r; }, {});
+      const ws = XLSX.utils.json_to_sheet([fill(ex1), fill(ex2)], { header: cols });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+
+      const ref = [
+        { A: '— TEAM — put this id in telecaller_id / stm_id / sv_referred_by_id —' },
+        { A: 'id', B: 'name', C: 'role / designation', D: 'phone' },
+        ...users.map((u) => ({ A: u.id, B: u.name, C: (u.designation || u.role || ''), D: u.phone || '' })),
+        {},
+        { A: '— ALLOWED VALUES (copy exactly) —' },
+        { A: 'overall_status', B: 'new, assigned, contacted, not_reachable, warm_transferred, hot, warm, cold, not_interested, sv_scheduled, sv_done, closed, lost' },
+        { A: 'telecaller_status', B: 'warm, cold, not_interested, not_reachable, callback' },
+        { A: 'stm_status', B: 'hot, warm, cold, not_interested, sv_scheduled, sv_done, closed' },
+        { A: 'sv_status', B: 'scheduled, completed, cancelled, no_show' },
+        { A: 'closure_status', B: 'booked, cancelled, refunded' },
+        {},
+        { A: '— NOTES —' },
+        { A: 'Required: name + phone. Everything else optional.' },
+        { A: 'Dates: dd-mm-yyyy (e.g. 08-04-2025).' },
+        { A: 'project / source are matched by name (must already exist). Leave a cell blank to skip it.' },
+        { A: 'Fill any sv_* column to create a Site Visit. Fill closure_date to create a Closure.' },
+        { A: 'overall_status auto-fills from the furthest stage (closure/SV/STM/TC) if you leave it blank.' },
+      ];
+      const wsRef = XLSX.utils.json_to_sheet(ref, { header: ['A', 'B', 'C', 'D'], skipHeader: true });
+      wsRef['!cols'] = [{ wch: 22 }, { wch: 60 }, { wch: 22 }, { wch: 16 }];
+      XLSX.utils.book_append_sheet(wb, wsRef, 'Reference — IDs & values');
+      XLSX.writeFile(wb, 'vistara_pipeline_import_template.xlsx');
+      return;
+    }
+
     const rows = type === 'meta' ? [
       { full_name: 'Rahul Sharma', phone_number: '9876543210', alt_phone: '', email: 'rahul@example.com', campaign_name: 'Meta - Luxury Homes May 2025', ad_name: 'Video - 2BHK Walkthrough', lead_date: '01-05-2025' },
       { full_name: 'Priya Mehta',  phone_number: '9988776655', alt_phone: '', email: '',                  campaign_name: 'Meta - 2BHK Campaign',          ad_name: 'Carousel',             lead_date: '02-05-2025' },
@@ -188,6 +263,7 @@ export default function ImportPage() {
         <div>
           <p style={{ fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 6 }}>Download template</p>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => downloadTemplate('full')} style={{ ...outlineBtn, borderColor: '#3D5AFE', color: '#3D5AFE', fontWeight: 700 }}>↓ Full Pipeline</button>
             <button onClick={() => downloadTemplate('meta')} style={outlineBtn}>↓ Meta Ads</button>
             <button onClick={() => downloadTemplate('general')} style={outlineBtn}>↓ General</button>
           </div>
@@ -273,6 +349,19 @@ export default function ImportPage() {
                 <ColSelect field="campaign"  label="Campaign Name" />
                 <ColSelect field="creative"  label="Ad / Creative Name" />
                 <ColSelect field="date"      label="Lead Date" />
+
+                {(() => {
+                  const detected = PIPELINE_FIELDS.filter((f) => mapping[f]);
+                  if (!detected.length) return null;
+                  return (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #E0E6F0' }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: '#15803D', marginBottom: 8 }}>✓ {detected.length} pipeline columns auto-detected (telecaller, STM, site visit &amp; closure)</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {detected.map((f) => <span key={f} style={{ fontSize: 11, fontWeight: 600, color: '#3D5AFE', background: '#EEF1FF', padding: '3px 8px', borderRadius: 6 }}>{f}</span>)}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Raw preview */}
@@ -377,9 +466,22 @@ export default function ImportPage() {
                   </div>
                 ))}
               </div>
+              {(result.siteVisits > 0 || result.closures > 0) && (
+                <div className="rg-3" style={{ gap: 12 }}>
+                  {[
+                    { label: 'Site visits created', value: result.siteVisits, color: '#0D47A1' },
+                    { label: 'Closures created', value: result.closures, color: '#7C3AED' },
+                  ].map((s) => (
+                    <div key={s.label} style={{ ...card, textAlign: 'center' }}>
+                      <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{(s.value || 0).toLocaleString()}</p>
+                      <p style={{ fontSize: 12, color: '#8492A6', marginTop: 4 }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#1E40AF' }}>
                 <strong>What happens next?</strong><br />
-                All leads are imported with status <strong>new</strong> and unassigned. Use <strong>Distribution</strong> to assign them to your telecallers.
+                Rows that carried a <strong>telecaller_id / stm_id</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
               </div>
               <button onClick={reset} style={outlineBtn}>Import another file</button>
             </>
