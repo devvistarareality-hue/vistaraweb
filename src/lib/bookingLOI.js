@@ -102,15 +102,17 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   function secHead(title, color) { chk(14); sf(color || P); doc.roundedRect(M, y, CW, 8, 1.5, 1.5, 'F'); st([255, 255, 255]); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 4, y + 5.5); y += 12; }
   function tRow(label, n, o) {
-    chk(8); const isTotal = o && o.total, isSub = o && o.sub, isGreen = o && o.green;
-    const h = isTotal ? 10 : 7.5; const LX = M + 3;
+    const subline = o && o.subline;
+    chk(subline ? 13 : 8); const isTotal = o && o.total, isSub = o && o.sub, isGreen = o && o.green;
+    const h = isTotal ? 10 : (subline ? 12 : 7.5); const LX = M + 3;
     if (isTotal) { sf(P); doc.roundedRect(M, y - 5.5, CW, h + 1, 1.5, 1.5, 'F'); st([255, 255, 255]); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
     if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(P2); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
     if (rowAlt) { sf([248, 250, 254]); doc.rect(M, y - 5, CW, h, 'F'); }
     rowAlt = !rowAlt;
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(isGreen ? [22, 163, 74] : MD); doc.text(label, LX, y);
     doc.text('Rs.', RS_COL, y); doc.setFont('helvetica', 'bold'); st(isGreen ? [22, 163, 74] : DK); doc.text(rs(n), NUM_COL, y, { align: 'right' });
-    sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 2, PW - M, y + 2); y += h;
+    if (subline) { doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); st(LT); doc.text(subline, LX + 2, y + 4.5); }
+    sd(LN); doc.setLineWidth(0.2); doc.line(M, y + (subline ? 6.5 : 2), PW - M, y + (subline ? 6.5 : 2)); y += h;
   }
   function infoGrid(pairs2) {
     for (let i = 0; i < pairs2.length; i += 2) {
@@ -175,8 +177,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     infoGrid(rows);
   } else { secHead('Agreement Amount', [71, 85, 105]); infoGrid([['Land Sale Deed', 'Rs. ' + num(v.lsd)], ['Construction Agreement', 'Rs. ' + num(v.constAgr)]]); }
 
-  // Extra Charges
-  chk(55); secHead('Extra Charges', [124, 58, 237]); rowAlt = false;
+  // Extra Charges — reserve the full section height so the Total Extra
+  // Charges sub-row is never split onto the next page.
+  const nExtra = isAnkholPdf ? (6 + (v.premiumLocation > 0 ? 1 : 0)) : isIndustrialPdf ? 6 : 5;
+  chk(14 + nExtra * 7.5 + 12); secHead('Extra Charges', [124, 58, 237]); rowAlt = false;
   if (isAnkholPdf) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : 'Registration Fees (1% of Sale Deed + Rs.1,500)', v.applyRegFee === 'No' ? 0 : v.regFees);
@@ -198,11 +202,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Charges', v.extraWorkAmt); y += 2; }
 
   // Total Deal Summary
-  chk(75); secHead('Total Deal Summary', P); rowAlt = false;
-  tRow('Plot Basic Amount  (Plot Area x Land Rate = ' + num(v.area) + ' x ' + num(v.landRate) + ')', v.plotBasic);
+  chk(isIndustrialPdf ? 58 : 96); secHead('Total Deal Summary', P); rowAlt = false;
+  tRow('Plot Basic Amount  (Plot Area x Land Rate)', v.plotBasic, { subline: num(v.area) + ' x ' + num(v.landRate) });
   if (!isIndustrialPdf) {
-    tRow('Plot Development Amount  (' + (isAnkholPdf ? 'Const Area' : 'Plot Area') + ' x Dev Rate = ' + (isAnkholPdf ? num(v.constArea) : num(v.area)) + ' x ' + num(v.devRate) + ')', v.plotDev);
-    tRow('Construction Amount  (Const Area x Const Rate = ' + num(v.constArea) + ' x ' + num(v.constRate) + ')', v.constAmt);
+    tRow('Plot Development Amount  (' + (isAnkholPdf ? 'Const Area' : 'Plot Area') + ' x Dev Rate)', v.plotDev, { subline: (isAnkholPdf ? num(v.constArea) : num(v.area)) + ' x ' + num(v.devRate) });
+    tRow('Construction Amount  (Const Area x Const Rate)', v.constAmt, { subline: num(v.constArea) + ' x ' + num(v.constRate) });
     tRow('Total Basic Amount', v.plotBasic + v.plotDev + v.constAmt, { sub: true });
   }
   tRow((isAnkholPdf && v.premiumLocation > 0) ? 'Extra Charges  (incl. Premium Location Charge)' : 'Extra Charges', v.totalExtra);
