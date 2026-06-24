@@ -4,6 +4,8 @@ let BASE_URL = process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
 
 export const setBaseUrl = (url) => { BASE_URL = url; };
 export const getBaseUrl = () => BASE_URL;
+// LOI document URL — already absolute when stored in Supabase; otherwise prefix the backend.
+export const loiHref = (doc) => (!doc ? '' : (/^https?:\/\//.test(doc) ? doc : getBaseUrl() + doc));
 
 export const COMPANY_ENDPOINTS = {
   get verify() { return `${BASE_URL}/api/company/verify/`; },

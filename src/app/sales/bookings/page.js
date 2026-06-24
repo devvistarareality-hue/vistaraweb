@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS, getBaseUrl } from '../../../constants/api';
+import { SALES_ENDPOINTS, loiHref } from '../../../constants/api';
 
 function authHeaders() {
   const t = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -113,7 +113,7 @@ export default function BookingsPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                {b.loi_document && <a href={getBaseUrl() + b.loi_document} target="_blank" rel="noreferrer" style={linkBtn}>📄 Signed LOI</a>}
+                {b.loi_document && <a href={loiHref(b.loi_document)} target="_blank" rel="noreferrer" style={linkBtn}>📄 Signed LOI</a>}
                 {b.status === 'pending' && isApprover && (
                   <>
                     <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#16A34A' }}>✓ Approve</button>
