@@ -21,7 +21,7 @@ const ICON = {
   closure: '🏆', overdue: '⏰', mark_available: '🟢', test: '🔔',
 };
 
-export default function NotificationBell({ up = false }) {
+export default function NotificationBell({ up = false, align = 'right' }) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -70,7 +70,7 @@ export default function NotificationBell({ up = false }) {
       </button>
 
       {open && (
-        <div style={{ position: 'absolute', ...(up ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), right: 0, width: 360, maxWidth: '90vw', background: '#fff', borderRadius: 12, border: '1px solid #E4E8F0', boxShadow: '0 12px 40px rgba(60,80,120,0.22)', zIndex: 1000, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', ...(up ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), ...(align === 'left' ? { left: 0 } : { right: 0 }), width: 340, maxWidth: 'min(340px, calc(100vw - 24px))', background: '#fff', borderRadius: 12, border: '1px solid #E4E8F0', boxShadow: '0 12px 40px rgba(60,80,120,0.22)', zIndex: 1000, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid #F0F3FA' }}>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E' }}>Notifications</span>
             <button onClick={markAll} style={{ background: 'none', border: 'none', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
