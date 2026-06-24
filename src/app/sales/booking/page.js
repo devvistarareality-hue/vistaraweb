@@ -127,10 +127,18 @@ function BookingPage() {
   }
   const ewArr = () => ewInsts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isExtraWork: true }));
   const inr = (n) => Number(n || 0).toLocaleString('en-IN');
-  const extraSub = formulaSet === 'ankhol'
-    ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal + Premium'
+  const extraSub = formulaSet === 'ankhol' ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal + Premium'
     : formulaSet === 'industrial' ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal'
     : 'Stamp + Reg + GST + Maintenance + Legal';
+  const extraSub2 = formulaSet === 'ankhol'
+    ? `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maintDeposit)} + ${inr(v.maintAdvance)} + ${inr(v.legal)} + ${inr(v.premiumLocation)}`
+    : formulaSet === 'industrial'
+      ? `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maintDeposit)} + ${inr(v.maintAdvance)} + ${inr(v.legal)}`
+      : `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maint)} + ${inr(v.legal)}`;
+  const saleDeedSub = formulaSet === 'ankhol' ? '60% × (Base + Premium − Discount)' : 'Sale Deed Rate × Plot Area';
+  const saleDeedSub2 = formulaSet === 'ankhol'
+    ? `60% × (${inr(v.plotBasic + v.plotDev + v.constAmt)} + ${inr(v.premiumLocation)} − ${inr(v.discount)})`
+    : `${inr(v.saleDeedRate)} × ${inr(v.area)}`;
   // formula sub-labels shown under each computed value (mirrors GAS)
   const stampSub = (formulaSet === 'ankhol' && f.apply_stamp_duty === 'No') ? 'Not applicable'
     : (formulaSet === 'kalrav' ? '4.9% of Land Sale Deed' : '4.9% of Sale Deed');
@@ -274,12 +282,12 @@ function BookingPage() {
 
       {/* Live totals — mirrors the GAS "Total Deal" box (breakdowns + Total Basic + Extra Charges) */}
       <div style={totalBox}>
-        <T label="Plot Basic Amount" sub={`Plot Area × Land Rate  (${inr(v.area)} × ${inr(v.landRate)})`} val={v.plotBasic} />
-        {flags.hasConstructionFields && <T label="Plot Development Amount" sub={`${formulaSet === 'ankhol' ? 'Construction' : 'Plot'} Area × Dev Rate  (${inr(formulaSet === 'ankhol' ? v.constArea : v.area)} × ${inr(v.devRate)})`} val={v.plotDev} />}
-        {flags.hasConstructionFields && <T label="Construction Amount" sub={`Construction Area × Construction Rate  (${inr(v.constArea)} × ${inr(v.constRate)})`} val={v.constAmt} />}
+        <T label="Plot Basic Amount" sub="Plot Area × Land Rate" sub2={`${inr(v.area)} × ${inr(v.landRate)}`} val={v.plotBasic} />
+        {flags.hasConstructionFields && <T label="Plot Development Amount" sub={`${formulaSet === 'ankhol' ? 'Construction' : 'Plot'} Area × Dev Rate`} sub2={`${inr(formulaSet === 'ankhol' ? v.constArea : v.area)} × ${inr(v.devRate)}`} val={v.plotDev} />}
+        {flags.hasConstructionFields && <T label="Construction Amount" sub="Construction Area × Construction Rate" sub2={`${inr(v.constArea)} × ${inr(v.constRate)}`} val={v.constAmt} />}
         {flags.hasConstructionFields && <T label="Total Basic Amount" sub="Plot Basic + Plot Dev + Construction" val={v.plotBasic + v.plotDev + v.constAmt} subtotal />}
-        {flags.hasSaleDeed && <T label="Sale Deed" sub={formulaSet === 'ankhol' ? '60% × (Base + Premium − Discount)' : 'Sale Deed Rate × Plot Area'} val={v.saleDeed} />}
-        <T label="Extra Charges" sub={extraSub} val={v.totalExtra} />
+        {flags.hasSaleDeed && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
+        <T label="Extra Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
         {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}
         <T label="Discount" val={-v.discount} />
         <T label="FINAL AMOUNT" val={v.finalAmt} big />
@@ -376,18 +384,19 @@ const Calc = ({ label, sub, val }) => (
     <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #C5D8FB', background: '#F0F4FF', color: '#1a73e8' }}>{rupee(val)}</div>
   </Row>
 );
-const T = ({ label, sub, val, big, subtotal }) => (
+const T = ({ label, sub, sub2, val, big, subtotal }) => (
   <div style={{
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: big ? '10px 0 0' : subtotal ? '8px 10px' : '6px 0',
     borderTop: big ? '2px solid #B3CDF9' : 'none', marginTop: big ? 6 : 0,
     ...(subtotal ? { background: '#DBEAFE', borderRadius: 6, margin: '4px 0' } : {}),
   }}>
-    <span style={{ fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? '#0D47A1' : '#4B5563' }}>
+    <span style={{ flex: 1, paddingRight: 12, fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? '#0D47A1' : '#4B5563' }}>
       {label}
       {sub && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub}</small>}
+      {sub2 && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub2}</small>}
     </span>
-    <span style={{ fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#0D47A1' : '#1F2937' }}>{rupee(val)}</span>
+    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#0D47A1' : '#1F2937' }}>{rupee(val)}</span>
   </div>
 );
 const totalBox = { background: 'linear-gradient(135deg,#F0F7FF,#E8F0FE)', border: '1.5px solid #C5D8FB', borderRadius: 12, padding: '10px 18px', marginBottom: 14 };
