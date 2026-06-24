@@ -131,6 +131,19 @@ function BookingPage() {
     ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal + Premium'
     : formulaSet === 'industrial' ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal'
     : 'Stamp + Reg + GST + Maintenance + Legal';
+  // formula sub-labels shown under each computed value (mirrors GAS)
+  const stampSub = (formulaSet === 'ankhol' && f.apply_stamp_duty === 'No') ? 'Not applicable'
+    : (formulaSet === 'kalrav' ? '4.9% of Land Sale Deed' : '4.9% of Sale Deed');
+  const regSub = f.apply_reg_fee === 'No' ? 'Not applicable'
+    : (formulaSet === 'ankhol' ? '1% of Sale Deed + ₹1,500'
+      : formulaSet === 'industrial' ? 'Male: 1% Sale Deed + ₹1,500 | Female: ₹1,500'
+      : 'Male: 1% LSD + ₹1,500 | Female: ₹1,500');
+  const gstSub = (formulaSet === 'ankhol' && f.apply_gst === 'No') ? 'Not applicable'
+    : (formulaSet === 'ankhol' ? '5% of Sale Deed'
+      : formulaSet === 'industrial' ? (v.isTundav ? '18% of 67% of Sale Deed' : '18% of Development Agreement')
+      : '18% of Construction Agreement');
+  const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
+    : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';
 
   function buildInsts(n) {
     n = parseInt(n, 10) || 0;
@@ -246,10 +259,16 @@ function BookingPage() {
 
       <Section title="Extra Charges">
         {formulaSet === 'ankhol' && <Row><L>Apply Stamp Duty?</L><Sel value={f.apply_stamp_duty} onChange={(e) => set('apply_stamp_duty', e.target.value)} opts={['Yes', 'No']} /></Row>}
+        <Calc label="Stamp Duty" sub={stampSub} val={v.stampDuty} />
         <Row><L>Apply Registration Fee?</L><Sel value={f.apply_reg_fee} onChange={(e) => set('apply_reg_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
+        <Calc label="Registration Fees" sub={regSub} val={v.regFees} />
         {formulaSet === 'ankhol' && <Row><L>Apply GST?</L><Sel value={f.apply_gst} onChange={(e) => set('apply_gst', e.target.value)} opts={['Yes', 'No']} /></Row>}
+        <Calc label="GST" sub={gstSub} val={v.gst} />
         <Row><L>Maintenance Rate (₹/{unit}{formulaSet === 'industrial' ? '' : '/mo'})</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
         {formulaSet !== 'industrial' && <Row><L>Maintenance Months</L><In type="number" value={f.maint_months} onChange={(e) => set('maint_months', e.target.value)} /></Row>}
+        <Calc label="Maintenance Amount" sub={maintSub} val={v.maint} />
+        {flags.hasMaintDeposit && <Calc label="Maintenance Deposit" sub="= Maintenance Amount" val={v.maintDeposit} />}
+        {flags.hasMaintAdvance && <Calc label="Maintenance Advance" sub="= Maintenance Amount" val={v.maintAdvance} />}
         <Row><L>Legal Charges & Others (₹)</L><In type="number" value={f.legal_charges} onChange={(e) => set('legal_charges', e.target.value)} /></Row>
       </Section>
 
@@ -350,6 +369,13 @@ const In = ({ type, ...p }) => (
     style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff' }} />
 );
 const Sel = ({ opts, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', cursor: 'pointer' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
+// readonly computed value (auto-calculated) shown under its toggle/inputs
+const Calc = ({ label, sub, val }) => (
+  <Row>
+    <L>{label}{sub && <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400, fontStyle: 'italic' }}>{sub}</span>}</L>
+    <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #C5D8FB', background: '#F0F4FF', color: '#1a73e8' }}>{rupee(val)}</div>
+  </Row>
+);
 const T = ({ label, sub, val, big, subtotal }) => (
   <div style={{
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
