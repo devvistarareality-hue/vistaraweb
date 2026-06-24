@@ -54,6 +54,11 @@ function BookingPage() {
   const [extraDate, setExtraDate] = useState(''); // due date for the Extra Charges line
   const [ew, setEw] = useState({ desc: '', amt: '' });       // extra work (revise mode)
   const [ewInsts, setEwInsts] = useState([]);                // [{date,pct,amt}]
+  const [extraTerms, setExtraTerms] = useState([]);          // [{title,desc}] — appended below default LOI terms
+  const addTerm    = () => setExtraTerms((s) => [...s, { title: '', desc: '' }]);
+  const setTerm    = (i, k, val) => setExtraTerms((s) => s.map((t, j) => (j === i ? { ...t, [k]: val } : t)));
+  const removeTerm = (i) => setExtraTerms((s) => s.filter((_, j) => j !== i));
+  const cleanTerms = () => extraTerms.map((t) => ({ title: (t.title || '').trim(), desc: (t.desc || '').trim() })).filter((t) => t.title || t.desc);
   const [loiDone, setLoiDone] = useState(false);
   const [loiFile, setLoiFile] = useState(null); // {name,type,data(base64)}
 
@@ -80,6 +85,7 @@ function BookingPage() {
       }
       setEw({ desc: b.extra_work_desc || '', amt: b.extra_work_amount ? String(b.extra_work_amount) : '' });
       if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
     });
   }, [reviseId]);
 
@@ -180,7 +186,7 @@ function BookingPage() {
       project: project?.name, plotNo: plot?.number, bookingDate: f.booking_date,
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name,
     };
-    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr() }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
+    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms() }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }
   }
   function onFile(e) {
@@ -216,6 +222,7 @@ function BookingPage() {
       extra_work_desc: reviseId ? (ew.desc || '') : '',
       extra_work_amount: reviseId ? Math.round(parseFloat(ew.amt) || 0) : 0,
       extra_work_inst: reviseId ? ewArr() : [],
+      extra_terms: cleanTerms(),
       booking_date: f.booking_date, cp_name: f.cp_name,
       loi_file: loiFile,   // {name,type,data} → saved server-side
       ...(reviseId ? { revision_of: reviseId } : {}),
@@ -347,6 +354,22 @@ function BookingPage() {
           {ewInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(ewPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Extra Work Total: {ewPctTotal.toFixed(2)}%</div>}
         </Section>
       )}
+
+      <Section title="📝 Extra Terms & Conditions (optional — added below the default terms)">
+        {extraTerms.map((t, i) => (
+          <div key={i} style={{ border: '1px solid #E0E6F0', borderRadius: 10, padding: 12, marginBottom: 10, background: '#FAFBFE' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#8492A6' }}>Term {i + 1}</span>
+              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕ Remove</button>
+            </div>
+            <input value={t.title} onChange={(e) => setTerm(i, 'title', e.target.value)} placeholder="Title (e.g. Possession)"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', marginBottom: 8 }} />
+            <textarea value={t.desc} onChange={(e) => setTerm(i, 'desc', e.target.value)} placeholder="Description / clause text" rows={2}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', resize: 'vertical' }} />
+          </div>
+        ))}
+        <button onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1.5px dashed #3D5AFE', background: '#EEF1FF', color: '#3D5AFE', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
+      </Section>
 
       <Section title="LOI Document">
         <button onClick={doDownloadLOI} style={{ ...submitBtn, background: 'linear-gradient(135deg,#7b2ff7,#5a00d8)', marginBottom: 12 }}>
