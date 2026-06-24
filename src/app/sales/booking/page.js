@@ -294,7 +294,7 @@ function BookingPage() {
       </div>
 
       <Section title="Payment Schedule">
-        <Row><L>Booking Date *</L><In type="date" value={f.booking_date} onChange={(e) => set('booking_date', e.target.value)} /></Row>
+        <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
         <Row><L>CP / Channel Partner</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (
@@ -304,7 +304,7 @@ function BookingPage() {
               {insts.map((r, i) => (
                 <tr key={i}>
                   <td style={td}>{i + 1}</td>
-                  <td style={td}><input type="date" value={r.date} onChange={(e) => setInst(i, 'date', e.target.value)} style={inp} /></td>
+                  <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setInst(i, 'date', e.target.value)} style={inp} /></td>
                   <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
                   <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
                 </tr>
@@ -312,7 +312,7 @@ function BookingPage() {
               {v.totalExtra > 0 && (
                 <tr style={{ background: '#FFF8E1' }}>
                   <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
-                  <td style={td}><input type="date" value={extraDate} onChange={(e) => setExtraDate(e.target.value)} style={inp} /></td>
+                  <td style={td}><input type="date" value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} /></td>
                   <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra Charges</td>
                   <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f0f4ff', color: '#1a73e8', fontWeight: 600 }} /></td>
                 </tr>
@@ -335,7 +335,7 @@ function BookingPage() {
                 {ewInsts.map((r, i) => (
                   <tr key={i}>
                     <td style={td}>{i + 1}</td>
-                    <td style={td}><input type="date" value={r.date} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} /></td>
+                    <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} /></td>
                     <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
                     <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
                   </tr>
