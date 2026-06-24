@@ -88,10 +88,11 @@ function BookingPage() {
       setProject(p);
       setF((s) => ({ ...s, area_unit: (p.formula_set === 'kalrav' ? 'sq.yd' : 'sq.ft') }));
     });
-    fetch(SALES_ENDPOINTS.plots + `?project=${projectId}${cq('&')}`, { headers: authHeaders() }).then(r => r.json()).then((arr) => {
-      const pl = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(plotId));
-      if (pl) { setPlot(pl); setF((s) => ({ ...s, area: (pl.size || '').replace(/[^\d.]/g, ''), villa_type: '', })); }
-    });
+    if (projectId) fetch(SALES_ENDPOINTS.plots + `?project=${projectId}${cq('&')}`, { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : [])).then((arr) => {
+        const pl = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(plotId));
+        if (pl) { setPlot(pl); setF((s) => ({ ...s, area: (pl.size || '').replace(/[^\d.]/g, ''), villa_type: '', })); }
+      }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
   }, [projectId, plotId, companyId]);
 
