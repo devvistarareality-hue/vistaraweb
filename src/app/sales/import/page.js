@@ -205,21 +205,25 @@ export default function ImportPage() {
       const tcId = users.find((u) => /tele/i.test(u.designation || u.role || ''))?.id ?? users[0]?.id ?? '';
       const stmId = users.find((u) => /stm|sales|manager/i.test(u.designation || u.role || ''))?.id ?? users[1]?.id ?? users[0]?.id ?? '';
       const ex1 = { name: 'Rahul Sharma', phone: '9876543210', email: 'rahul@example.com', source: (sources[0]?.name || 'meta'), campaign: 'Meta - Luxury Homes', ad_name: 'Video 2BHK', lead_date: '01-05-2025', overall_status: 'new', telecaller_id: tcId, telecaller_status: 'callback', telecaller_remarks: 'Call back evening' };
-      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: (projects[0]?.name || 'Kalrav'), source: (sources[0]?.name || 'walk-in'), lead_date: '02-04-2025', overall_status: 'closed', telecaller_id: tcId, telecaller_status: 'warm', stm_id: stmId, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: '200000', total_amount: '5000000', closure_remarks: 'Token received' };
+      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: (projects[0]?.name || 'Kalrav'), source: (sources[0]?.name || 'walk-in'), lead_date: '02-04-2025', overall_status: 'closed', telecaller_id: tcId, telecaller_status: 'warm', stm_id: stmId, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: 200000, total_amount: 5000000, closure_remarks: 'Token received' };
 
       const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet('Leads');
+      const ws = wb.addWorksheet('Leads', { views: [{ state: 'frozen', ySplit: 1 }] });
       const refSheet = wb.addWorksheet('Reference — IDs & values');
       const lists = wb.addWorksheet('Lists'); lists.state = 'hidden';
 
-      ws.addRow(cols);
-      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF182350' } };
       const rowFrom = (o) => cols.map((c) => o[c] ?? '');
-      ws.addRow(rowFrom(ex1));
-      ws.addRow(rowFrom(ex2));
-      ws.columns = cols.map((c) => ({ width: Math.min(26, Math.max(12, c.length + 3)) }));
-      ws.views = [{ state: 'frozen', ySplit: 1 }];
+      cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.min(26, Math.max(12, c.length + 3)); });
+      // A real Excel table: bounds the header styling to the actual columns (no full-row
+      // fill), and gives filter buttons + banded rows for a clean, navigable format.
+      ws.addTable({
+        name: 'LeadsImport',
+        ref: 'A1',
+        headerRow: true,
+        style: { theme: 'TableStyleMedium2', showRowStripes: true },
+        columns: cols.map((c) => ({ name: c, filterButton: true })),
+        rows: [rowFrom(ex1), rowFrom(ex2)],
+      });
 
       // Hidden helper ranges feeding the project/source dropdowns.
       const projNames = projects.map((p) => p.name).filter(Boolean);
