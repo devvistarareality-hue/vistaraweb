@@ -236,6 +236,13 @@ export default function ImportPage() {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC62828' } };
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       });
+      // Highlight the closure columns (the "sold" record) in purple — closure_date
+      // is what actually creates the Closure, so the whole group is grouped by colour.
+      ['closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks'].forEach((f) => {
+        const cell = ws.getCell(`${colOf(f)}1`);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF7C3AED' } };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      });
       const MAXROW = 1000;
       const addDV = (name, formula) => ws.dataValidations.add(`${colOf(name)}2:${colOf(name)}${MAXROW}`, {
         type: 'list', allowBlank: true, formulae: [formula], showErrorMessage: true,
@@ -257,7 +264,7 @@ export default function ImportPage() {
       refSheet.addRow(['closure_status', STATUS.closure_status.replace(/,/g, ', ')]);
       refSheet.addRow([]);
       refSheet.addRow(['— NOTES —']);
-      refSheet.addRow(['Required: name + phone (their headers are RED in the Leads sheet). Everything else optional.']);
+      refSheet.addRow(['Header colours: RED = required (name, phone). PURPLE = closure columns (fill closure_date to record a sold deal).']);
       refSheet.addRow(['Dates: dd-mm-yyyy (e.g. 08-04-2025).']);
       refSheet.addRow(['project / source: pick from the dropdown (must already exist). Leave blank to skip.']);
       refSheet.addRow(['Fill any sv_* column to create a Site Visit. Fill closure_date to create a Closure.']);
