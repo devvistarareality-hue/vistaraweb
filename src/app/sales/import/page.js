@@ -229,6 +229,13 @@ export default function ImportPage() {
 
       const colLetter = (idx) => { let s = '', n = idx; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
       const colOf = (name) => colLetter(cols.indexOf(name) + 1);
+
+      // Mark required columns (name, phone) with a red header so they stand out.
+      ['name', 'phone'].forEach((f) => {
+        const cell = ws.getCell(`${colOf(f)}1`);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC62828' } };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      });
       const MAXROW = 1000;
       const addDV = (name, formula) => ws.dataValidations.add(`${colOf(name)}2:${colOf(name)}${MAXROW}`, {
         type: 'list', allowBlank: true, formulae: [formula], showErrorMessage: true,
@@ -250,7 +257,7 @@ export default function ImportPage() {
       refSheet.addRow(['closure_status', STATUS.closure_status.replace(/,/g, ', ')]);
       refSheet.addRow([]);
       refSheet.addRow(['— NOTES —']);
-      refSheet.addRow(['Required: name + phone. Everything else optional.']);
+      refSheet.addRow(['Required: name + phone (their headers are RED in the Leads sheet). Everything else optional.']);
       refSheet.addRow(['Dates: dd-mm-yyyy (e.g. 08-04-2025).']);
       refSheet.addRow(['project / source: pick from the dropdown (must already exist). Leave blank to skip.']);
       refSheet.addRow(['Fill any sv_* column to create a Site Visit. Fill closure_date to create a Closure.']);
