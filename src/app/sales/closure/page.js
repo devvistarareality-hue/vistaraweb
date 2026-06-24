@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 import { getCache, setCache } from '../_cache';
+import { MyBookingsList } from '../_MyBookings';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -22,6 +23,7 @@ export default function ClosureProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [sv,       setSv]       = useState(null);
+  const [view,     setView]     = useState('closures'); // 'closures' | 'mybookings'
 
   // Reached via "Record Closure" → has ?sv=<id> and a stashed site visit.
   // Reached via the "Booking" nav → no ?sv=, so browse projects/units only
@@ -53,15 +55,23 @@ export default function ClosureProjectsPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button onClick={() => router.push('/sales/site-visits')} style={backBtn}>← Back</button>
       </div>
-      <div style={{ marginBottom: 22 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Record Closure — Select Project</h1>
-        <p style={{ fontSize: 13, color: '#8492A6' }}>
+      {/* Toggle: Record Closure ↔ My Bookings */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
+        {[['closures', 'Record Closure'], ['mybookings', 'My Bookings']].map(([k, label]) => (
+          <button key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? '#3D5AFE' : '#EEF1F7', color: view === k ? '#fff' : '#8492A6' }}>{label}</button>
+        ))}
+      </div>
+
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>{view === 'mybookings' ? 'My Bookings' : 'Record Closure — Select Project'}</h1>
+      {view === 'closures' && (
+        <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 22 }}>
           {sv ? <>For <strong style={{ color: '#3D5AFE' }}>{sv.lead_name}</strong> · {sv.lead_phone}. Pick the project, then choose the booked unit.</>
               : <>Pick a project to view its units.</>}
         </p>
-      </div>
+      )}
 
-      {loading ? (
+      {view === 'mybookings' ? <MyBookingsList /> : (
+        loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 24 }}>
           {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 200, borderRadius: 18, background: '#EEF1F7' }} />)}
         </div>
@@ -136,7 +146,7 @@ export default function ClosureProjectsPage() {
             );
           })}
         </div>
-      )}
+      ))}
     </div>
   );
 }

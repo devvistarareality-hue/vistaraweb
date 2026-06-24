@@ -2,40 +2,37 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS, getBaseUrl } from '../../../constants/api';
+import { SALES_ENDPOINTS, getBaseUrl } from '../../constants/api';
 
 function authHeaders() {
   const t = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` };
 }
-
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
-export default function MyBookingsPage() {
+// "My Bookings" — the bookings the logged-in user submitted, grouped project → plot,
+// with a Revise LOI action. Rendered inside the Booking page under a toggle.
+export function MyBookingsList() {
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  function load() {
+  useEffect(() => {
     setLoading(true);
-    const q = '?mine=1' + (companyId ? `&company_id=${companyId}` : '');
-    fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }
-  useEffect(() => { load(); }, [companyId]);
+  }, [companyId]);
 
-  // Group by project → plot
   const groups = {};
   rows.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   projectNames.forEach((pn) => groups[pn].sort((a, b) => String(a.plot_number || a.area).localeCompare(String(b.plot_number || b.area))));
 
   return (
-    <div style={{ padding: '24px 28px' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>My Bookings</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 16 }}>{rows.length} booking{rows.length === 1 ? '' : 's'} you submitted · revise the LOI anytime</p>
+    <>
+      <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>{rows.length} booking{rows.length === 1 ? '' : 's'} you submitted · revise the LOI anytime</p>
 
       {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : projectNames.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>You haven&apos;t booked any units yet.</div>
@@ -72,7 +69,7 @@ export default function MyBookingsPage() {
           </div>
         </div>
       ))}
-    </div>
+    </>
   );
 }
 

@@ -39,7 +39,6 @@ const NAV = [
   { label: 'Follow-Ups',   href: '/sales/follow-ups',    icon: <IconCalendar /> },
   { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true },
   { label: 'Booking',      href: '/sales/closure',       icon: <IconBuilding />,  stmPortal: true },
-  { label: 'My Bookings',  href: '/sales/my-bookings',   icon: <IconBuilding />,  stmPortal: true },
   { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true },
   { label: 'My Team',      href: '/sales/my-team',       icon: <IconUsers />,     managerOnly: true },
   { label: 'Approvals',    href: '/sales/bookings',      icon: <IconBuilding />,  managerOnly: true },
