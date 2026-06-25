@@ -34,6 +34,11 @@ const ICON = {
   booking_approval: '📝', booking_approved: '🎉', booking_rejected: '⛔',
   closure: '🏆', overdue: '⏰', mark_available: '🟢', test: '🔔',
 };
+const TYPE_COLOR = {
+  new_lead: '#2E7D32', followup: '#3D5AFE', sv: '#0D9488', sv_done: '#2E7D32',
+  booking_approval: '#B45309', booking_approved: '#15803D', booking_rejected: '#DC2626',
+  closure: '#7C3AED', overdue: '#DC2626', mark_available: '#15803D', test: '#3D5AFE',
+};
 
 export default function NotificationBell({ up = false, align = 'right' }) {
   const router = useRouter();
@@ -95,16 +100,17 @@ export default function NotificationBell({ up = false, align = 'right' }) {
               <div style={{ padding: 30, textAlign: 'center', color: '#8492A6', fontSize: 13 }}>You're all caught up 🎉</div>
             ) : rows.map((n) => {
               const url = URL_FOR_TYPE[n.type];
+              const color = TYPE_COLOR[n.type] || '#3D5AFE';
               return (
               <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}
-                style={{ display: 'flex', gap: 10, padding: '11px 14px', borderBottom: '1px solid #F5F7FB', background: n.is_read ? '#fff' : '#F3F6FF', cursor: url ? 'pointer' : 'default' }}>
-                <span style={{ fontSize: 18, lineHeight: '20px' }}>{ICON[n.type] || '🔔'}</span>
+                style={{ display: 'flex', gap: 11, padding: '12px 14px', borderBottom: '1px solid #F5F7FB', borderLeft: `3px solid ${n.is_read ? 'transparent' : color}`, background: n.is_read ? '#fff' : '#FAFBFF', cursor: url ? 'pointer' : 'default' }}>
+                <span style={{ width: 34, height: 34, borderRadius: 17, background: color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{ICON[n.type] || '🔔'}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{n.title}</div>
-                  {n.body && <div style={{ fontSize: 12, color: '#5B6B82', marginTop: 2 }}>{n.body}</div>}
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>{ago(n.created_at)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>{n.title}</div>
+                  {n.body && <div style={{ fontSize: 12, color: '#5B6B82', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>{ago(n.created_at)}</div>
                 </div>
-                {!n.is_read && <span style={{ width: 8, height: 8, borderRadius: 4, background: '#3D5AFE', flexShrink: 0, marginTop: 6 }} />}
+                {!n.is_read && <span style={{ width: 8, height: 8, borderRadius: 4, background: color, flexShrink: 0, marginTop: 6 }} />}
               </div>
               );
             })}
