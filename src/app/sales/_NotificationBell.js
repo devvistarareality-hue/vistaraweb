@@ -1,6 +1,20 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AUTH_ENDPOINTS } from '../../constants/api';
+
+// Where each notification type deep-links. booking_approved/rejected → the
+// booker's My Bookings (Booking → My Bookings), not My Conversions.
+const URL_FOR_TYPE = {
+  new_lead: '/sales/leads',
+  followup: '/sales/follow-ups',
+  sv: '/sales/site-visits',
+  sv_done: '/sales/site-visits',
+  booking_approval: '/sales/bookings',
+  booking_approved: '/sales/closure?view=mybookings',
+  booking_rejected: '/sales/closure?view=mybookings',
+  closure: '/sales/my-conversions',
+};
 
 function authHeaders() {
   const t = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -22,6 +36,7 @@ const ICON = {
 };
 
 export default function NotificationBell({ up = false, align = 'right' }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -78,8 +93,11 @@ export default function NotificationBell({ up = false, align = 'right' }) {
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             {rows.length === 0 ? (
               <div style={{ padding: 30, textAlign: 'center', color: '#8492A6', fontSize: 13 }}>You're all caught up 🎉</div>
-            ) : rows.map((n) => (
-              <div key={n.id} style={{ display: 'flex', gap: 10, padding: '11px 14px', borderBottom: '1px solid #F5F7FB', background: n.is_read ? '#fff' : '#F3F6FF' }}>
+            ) : rows.map((n) => {
+              const url = URL_FOR_TYPE[n.type];
+              return (
+              <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}
+                style={{ display: 'flex', gap: 10, padding: '11px 14px', borderBottom: '1px solid #F5F7FB', background: n.is_read ? '#fff' : '#F3F6FF', cursor: url ? 'pointer' : 'default' }}>
                 <span style={{ fontSize: 18, lineHeight: '20px' }}>{ICON[n.type] || '🔔'}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{n.title}</div>
@@ -88,7 +106,8 @@ export default function NotificationBell({ up = false, align = 'right' }) {
                 </div>
                 {!n.is_read && <span style={{ width: 8, height: 8, borderRadius: 4, background: '#3D5AFE', flexShrink: 0, marginTop: 6 }} />}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

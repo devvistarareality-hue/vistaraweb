@@ -29,13 +29,15 @@ export default function ClosureProjectsPage() {
   // Reached via the "Booking" nav → no ?sv=, so browse projects/units only
   // (clear any stale closure context so the viewer doesn't record against it).
   useEffect(() => {
-    const hasSv = new URLSearchParams(window.location.search).has('sv');
-    if (hasSv) {
+    const qs = new URLSearchParams(window.location.search);
+    if (qs.has('sv')) {
       try { setSv(JSON.parse(sessionStorage.getItem('closure_sv') || 'null')); } catch (_) {}
     } else {
       try { sessionStorage.removeItem('closure_sv'); } catch (_) {}
       setSv(null);
     }
+    // Deep-linked from a booking-approved/rejected notification → open My Bookings.
+    if (qs.get('view') === 'mybookings') setView('mybookings');
   }, []);
 
   useEffect(() => {
