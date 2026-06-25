@@ -35,6 +35,12 @@ function DesigBadge({ desig }) {
 
 const ASSIGN_DESIGS = ['TELECALLER', 'STM'];
 
+function FilterChip({ label, active, onClick }) {
+  return (
+    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? '#182350' : '#E0E6F0'}`, background: active ? '#182350' : '#EEF1F7', color: active ? '#fff' : '#8492A6', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+  );
+}
+
 function AssignProjectsModal({ member, projects, onClose }) {
   const [selected, setSelected]  = useState([]);
   const [loading,  setLoading]   = useState(true);
@@ -125,6 +131,8 @@ export default function SalesUsersPage() {
   const [loading,  setLoading]  = useState(true);
   const [apiError, setApiError] = useState('');
   const [search,   setSearch]   = useState('');
+  const [desigFilter, setDesigFilter] = useState(null);
+  const [roleFilter,  setRoleFilter]  = useState(null);
   const [assignMember, setAssignMember] = useState(null); // member being assigned
   // track assigned project counts per user
   const [projectCounts, setProjectCounts] = useState({}); // {user_id: count}
@@ -171,14 +179,20 @@ export default function SalesUsersPage() {
     }
   }
 
-  const filtered = search.trim()
-    ? members.filter((m) =>
-        m.name?.toLowerCase().includes(search.toLowerCase()) ||
-        m.user_code?.toLowerCase().includes(search.toLowerCase()) ||
-        m.designation?.toLowerCase().includes(search.toLowerCase()) ||
-        m.role?.toLowerCase().includes(search.toLowerCase())
-      )
-    : members;
+  const desigs = [...new Set(members.map((m) => m.designation?.toUpperCase()).filter(Boolean))].sort();
+  const roles  = [...new Set(members.map((m) => m.role).filter(Boolean))].sort();
+
+  const filtered = members.filter((m) => {
+    if (search.trim() && !(
+      m.name?.toLowerCase().includes(search.toLowerCase()) ||
+      m.user_code?.toLowerCase().includes(search.toLowerCase()) ||
+      m.designation?.toLowerCase().includes(search.toLowerCase()) ||
+      m.role?.toLowerCase().includes(search.toLowerCase())
+    )) return false;
+    if (desigFilter && m.designation?.toUpperCase() !== desigFilter) return false;
+    if (roleFilter && m.role !== roleFilter) return false;
+    return true;
+  });
 
   const isAssignable = (m) => ASSIGN_DESIGS.includes(m.designation?.toUpperCase());
 
@@ -196,13 +210,25 @@ export default function SalesUsersPage() {
       </div>
 
       {/* Search */}
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 12 }}>
         <input
           placeholder="Search by name, user code or designation…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ width: '100%', maxWidth: 360, height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box' }}
         />
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#9CA3AF', marginRight: 4 }}>ROLE</span>
+        <FilterChip label="All" active={!roleFilter} onClick={() => setRoleFilter(null)} />
+        {roles.map((r) => <FilterChip key={r} label={r} active={roleFilter === r} onClick={() => setRoleFilter(roleFilter === r ? null : r)} />)}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#9CA3AF', marginRight: 4 }}>DESIG</span>
+        <FilterChip label="All" active={!desigFilter} onClick={() => setDesigFilter(null)} />
+        {desigs.map((d) => <FilterChip key={d} label={`${d} (${members.filter((m) => m.designation?.toUpperCase() === d).length})`} active={desigFilter === d} onClick={() => setDesigFilter(desigFilter === d ? null : d)} />)}
       </div>
 
       {apiError && (
