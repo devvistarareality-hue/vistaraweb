@@ -14,6 +14,9 @@ const URL_FOR_TYPE = {
   booking_approved: '/sales/closure?view=mybookings',
   booking_rejected: '/sales/closure?view=mybookings',
   closure: '/sales/my-conversions',
+  followup_overdue: '/sales/follow-ups',
+  sv_overdue: '/sales/site-visits',
+  availability_reminder: '/sales',
 };
 
 function authHeaders() {
@@ -33,11 +36,13 @@ const ICON = {
   new_lead: '👤', followup: '📞', sv: '📍', sv_done: '✅',
   booking_approval: '📝', booking_approved: '🎉', booking_rejected: '⛔',
   closure: '🏆', overdue: '⏰', mark_available: '🟢', test: '🔔',
+  followup_overdue: '⏰', sv_overdue: '⏰', availability_reminder: '🟢',
 };
 const TYPE_COLOR = {
   new_lead: '#2E7D32', followup: '#3D5AFE', sv: '#0D9488', sv_done: '#2E7D32',
   booking_approval: '#B45309', booking_approved: '#15803D', booking_rejected: '#DC2626',
   closure: '#7C3AED', overdue: '#DC2626', mark_available: '#15803D', test: '#3D5AFE',
+  followup_overdue: '#DC2626', sv_overdue: '#DC2626', availability_reminder: '#15803D',
 };
 
 export default function NotificationBell({ up = false, align = 'right' }) {
