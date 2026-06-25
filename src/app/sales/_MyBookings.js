@@ -10,6 +10,16 @@ function authHeaders() {
 }
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
+// Open the confidential LOI via a short-lived signed URL (never a public link).
+async function openLoi(id) {
+  try {
+    const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
+    const d = await r.json();
+    if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
+    else alert('Could not open the LOI.');
+  } catch { alert('Could not open the LOI.'); }
+}
+
 // "My Bookings" — the bookings the logged-in user submitted, grouped project → plot,
 // with a Revise LOI action. Rendered inside the Booking page under a toggle.
 export function MyBookingsList() {
@@ -58,7 +68,7 @@ export function MyBookingsList() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                  {b.loi_document && <a href={loiHref(b.loi_document)} target="_blank" rel="noreferrer" style={linkBtn}>📄 Signed LOI</a>}
+                  {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
                   {b.status === 'sold' && (
                     <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ Revise LOI</button>
                   )}
