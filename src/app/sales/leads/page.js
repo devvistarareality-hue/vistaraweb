@@ -93,9 +93,13 @@ function authHeaders() {
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
 function AddLeadModal({ projects, sources, onClose, onAdded }) {
-  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '' });
+  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '' });
+  const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const addLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
+  const addInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
+  const addSel = { ...addInp, cursor: 'pointer' };
 
   async function submit(e) {
     e.preventDefault();
@@ -106,6 +110,10 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
     if (form.email)     body.email     = form.email;
     if (form.project)   body.project   = form.project;
     if (form.source)    body.source    = form.source;
+    if (form.city)            body.city          = form.city;
+    if (form.address)         body.address       = form.address;
+    if (form.purpose?.length) body.purpose       = form.purpose;
+    if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
 
     const res = await fetch(SALES_ENDPOINTS.leads, {
       method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
@@ -151,6 +159,51 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
                 />
               </div>
             ))}
+          </div>
+
+          {/* Requirement */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Requirement</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
+            <div>
+              <label style={addLbl}>City</label>
+              <select value={cityOther ? 'Other' : (form.city || '')}
+                onChange={(e) => { const v = e.target.value; if (v === 'Other') { setCityOther(true); setForm({ ...form, city: '' }); } else { setCityOther(false); setForm({ ...form, city: v }); } }}
+                style={addSel}>
+                <option value="">— Select —</option>
+                {CITY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="Other">Other</option>
+              </select>
+              {cityOther && (
+                <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Enter city" style={{ ...addInp, marginTop: 8 }} />
+              )}
+            </div>
+            <div>
+              <label style={addLbl}>Budget</label>
+              <select value={form.budget_bucket || ''} onChange={(e) => setForm({ ...form, budget_bucket: e.target.value })} style={addSel}>
+                <option value="">— Select —</option>
+                {BUDGET_OPTIONS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={addLbl}>Address</label>
+            <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address"
+              style={{ ...addInp, height: 56, padding: '8px 12px', resize: 'vertical' }} />
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label style={addLbl}>Purpose</label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+              {PURPOSE_OPTIONS.map((p) => {
+                const on = (form.purpose || []).includes(p.value);
+                return (
+                  <button key={p.value} type="button"
+                    onClick={() => setForm((f) => { const cur = Array.isArray(f.purpose) ? f.purpose : []; return { ...f, purpose: on ? cur.filter((x) => x !== p.value) : [...cur, p.value] }; })}
+                    style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid #3D5AFE' : '1px solid #E5E7EB', background: on ? '#EEF1FF' : '#fff', color: on ? '#2536C9' : '#3A3A5C' }}>
+                    {on ? '✓ ' : ''}{p.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Project & Source */}
