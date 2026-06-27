@@ -92,12 +92,13 @@ function authHeaders() {
 }
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
-function AddLeadModal({ projects, sources, telecallers = [], stms = [], onClose, onAdded }) {
+function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
-  const _isCp = _desig.includes('cp executive') || _desig.includes('channel partner') || _desig.includes('cp cluster head');
+  const _isCpHead = _desig.includes('cp cluster head');
+  const _isCp = _desig.includes('cp executive') || _desig.includes('channel partner') || _isCpHead;
   const _isAdminMgr = !(_isTelecaller || _isStm || _isCp);
   const showTC  = _isAdminMgr || _isTelecaller;
   const showStm = _isAdminMgr || _isStm || _isCp;
@@ -125,8 +126,8 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], onClose,
     if (form.address)         body.address       = form.address;
     if (form.purpose?.length) body.purpose       = form.purpose;
     if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
-    if (_isAdminMgr && form.telecaller)     body.telecaller        = form.telecaller;
-    if (_isAdminMgr && form.stm)            body.stm               = form.stm;
+    if (_isAdminMgr && form.telecaller)         body.telecaller = form.telecaller;
+    if ((_isAdminMgr || _isCpHead) && form.stm) body.stm        = form.stm;
     if (showTC && form.telecaller_status)   body.telecaller_status  = form.telecaller_status;
     if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
     if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
@@ -287,6 +288,15 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], onClose,
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
                     <option value="">— None —</option>
                     {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
+                  </select>
+                </div>
+              )}
+              {_isCpHead && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={addLbl}>Assign CP</label>
+                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
+                    <option value="">— None —</option>
+                    {cps.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
                 </div>
               )}
@@ -1005,6 +1015,7 @@ export default function SalesLeadsPage() {
   const [sources,     setSources]     = useState([]);
   const [telecallers, setTelecallers] = useState([]);
   const [stms,        setStms]        = useState([]);
+  const [cps,         setCps]         = useState([]);
   const [filters, setFilters] = useState({
     search: '', status: '', project_id: '', source_id: '',
     telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
@@ -1070,17 +1081,20 @@ export default function SalesLeadsPage() {
     if (cachedS) setSources(cachedS);
     // Telecaller / STM portals never show the assign dropdowns, so don't fetch the
     // (potentially large) telecaller & STM user lists for them — two fewer requests.
-    const [pRes, sRes, tRes, sRes2] = await Promise.all([
+    const [pRes, sRes, tRes, sRes2, cRes] = await Promise.all([
       cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + cqExtra, { headers: authHeaders() }).then((r) => r.json()),
       cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
       isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }).then((r) => r.json()),
       isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }).then((r) => r.json()),
+      // CP managers (cluster heads) assign leads to their CP executives.
+      isCpHead ? fetch(SALES_ENDPOINTS.cps + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
     ]);
     if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache(pKey, p); setProjects(p); }
     if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache(sKey, s); setSources(s);  }
     if (tRes)  setTelecallers(Array.isArray(tRes)  ? tRes  : []);
     if (sRes2) setStms(       Array.isArray(sRes2) ? sRes2 : []);
-  }, [companyId, isCaller]);
+    if (cRes)  setCps(        Array.isArray(cRes)  ? cRes  : []);
+  }, [companyId, isCaller, isCpHead]);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -1492,7 +1506,7 @@ export default function SalesLeadsPage() {
 
       {/* Modals */}
       {addModal && (
-        <AddLeadModal projects={projects} sources={sources} telecallers={telecallers} stms={stms}
+        <AddLeadModal projects={projects} sources={sources} telecallers={telecallers} stms={stms} cps={cps}
           onClose={() => setAddModal(false)} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
       )}
       {selected && (

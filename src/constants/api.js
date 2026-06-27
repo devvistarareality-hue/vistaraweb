@@ -45,6 +45,7 @@ export const SALES_ENDPOINTS = {
   bookingLoiUrl: (id) => `${BASE_URL}/api/sales/bookings/${id}/loi-url/`,
   get telecallers(){ return `${BASE_URL}/api/sales/users/telecallers/?crm_role=telecaller`; },
   get stms()       { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=stm`; },
+  get cps()        { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp`; },
   get usersSlim()  { return `${BASE_URL}/api/sales/users/slim/`; },
   get team()       { return `${BASE_URL}/api/sales/team/`; },
   teamMember: (id) => `${BASE_URL}/api/sales/team/${id}/`,
