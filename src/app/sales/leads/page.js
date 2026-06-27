@@ -92,7 +92,7 @@ function authHeaders() {
 }
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
-function AddLeadModal({ projects, sources, onClose, onAdded }) {
+function AddLeadModal({ projects, sources, telecallers = [], stms = [], onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
@@ -103,7 +103,7 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
   const showStm = _isAdminMgr || _isStm || _isCp;
   const TC_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback'];
   const STM_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed'];
-  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '' });
+  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '' });
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -125,6 +125,8 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
     if (form.address)         body.address       = form.address;
     if (form.purpose?.length) body.purpose       = form.purpose;
     if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
+    if (_isAdminMgr && form.telecaller)     body.telecaller        = form.telecaller;
+    if (_isAdminMgr && form.stm)            body.stm               = form.stm;
     if (showTC && form.telecaller_status)   body.telecaller_status  = form.telecaller_status;
     if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
     if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
@@ -252,6 +254,15 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
           {showTC && (
             <>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Telecaller (Pre-Sales)</div>
+              {_isAdminMgr && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={addLbl}>Assign Telecaller</label>
+                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={addSel}>
+                    <option value="">— None —</option>
+                    {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
+                  </select>
+                </div>
+              )}
               <div style={{ marginBottom: 12 }}>
                 <label style={addLbl}>TC Status</label>
                 <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={addSel}>
@@ -270,6 +281,15 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
           {showStm && (
             <>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>{_isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
+              {_isAdminMgr && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={addLbl}>Assign STM</label>
+                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
+                    <option value="">— None —</option>
+                    {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
+                  </select>
+                </div>
+              )}
               <div style={{ marginBottom: 12 }}>
                 <label style={addLbl}>{_isCp ? 'CP Status' : 'STM Status'}</label>
                 <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
@@ -1472,7 +1492,7 @@ export default function SalesLeadsPage() {
 
       {/* Modals */}
       {addModal && (
-        <AddLeadModal projects={projects} sources={sources}
+        <AddLeadModal projects={projects} sources={sources} telecallers={telecallers} stms={stms}
           onClose={() => setAddModal(false)} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
       )}
       {selected && (
