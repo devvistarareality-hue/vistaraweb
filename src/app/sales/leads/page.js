@@ -93,13 +93,24 @@ function authHeaders() {
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
 function AddLeadModal({ projects, sources, onClose, onAdded }) {
-  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '' });
+  const user = useSelector((s) => s.auth.user);
+  const _desig = (user?.designation || '').toLowerCase();
+  const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
+  const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
+  const _isCp = _desig.includes('cp executive') || _desig.includes('channel partner') || _desig.includes('cp cluster head');
+  const _isAdminMgr = !(_isTelecaller || _isStm || _isCp);
+  const showTC  = _isAdminMgr || _isTelecaller;
+  const showStm = _isAdminMgr || _isStm || _isCp;
+  const TC_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback'];
+  const STM_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed'];
+  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '' });
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const addLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
   const addInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
   const addSel = { ...addInp, cursor: 'pointer' };
+  const addTa  = { ...addInp, height: 56, padding: '8px 12px', resize: 'vertical' };
 
   async function submit(e) {
     e.preventDefault();
@@ -114,6 +125,10 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
     if (form.address)         body.address       = form.address;
     if (form.purpose?.length) body.purpose       = form.purpose;
     if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
+    if (showTC && form.telecaller_status)   body.telecaller_status  = form.telecaller_status;
+    if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
+    if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
+    if (showStm && form.stm_remarks)        body.stm_remarks        = form.stm_remarks;
 
     const res = await fetch(SALES_ENDPOINTS.leads, {
       method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
@@ -232,6 +247,42 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
               </div>
             </div>
           </div>
+
+          {/* Telecaller (Pre-Sales) */}
+          {showTC && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Telecaller (Pre-Sales)</div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={addLbl}>TC Status</label>
+                <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={addSel}>
+                  <option value="">— None —</option>
+                  {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={addLbl}>TC Remarks</label>
+                <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder="Optional" style={addTa} />
+              </div>
+            </>
+          )}
+
+          {/* STM (Sales) */}
+          {showStm && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>STM (Sales)</div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={addLbl}>STM Status</label>
+                <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
+                  <option value="">— None —</option>
+                  {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={addLbl}>STM Remarks</label>
+                <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder="Optional" style={addTa} />
+              </div>
+            </>
+          )}
 
           {err && (
             <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: '#DC2626' }}>
