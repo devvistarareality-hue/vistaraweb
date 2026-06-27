@@ -14,6 +14,7 @@ function bustLeadsCache() {
 const PAGE_SIZE = 25;
 
 // Lead requirement options (mirror sales/models.py LEAD_PURPOSE_CHOICES + BUDGET_BUCKETS)
+const CITY_OPTIONS = ['Ahmedabad', 'Vadodara'];
 const PURPOSE_OPTIONS = [
   { value: 'investment', label: 'Investment' },
   { value: 'end_use', label: 'End Use' },
@@ -248,6 +249,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const [activeTab, setActiveTab] = useState('detail');
   const [detail,    setDetail]    = useState(null);
   const [form, setForm] = useState({});
+  const [cityOther, setCityOther] = useState(false);  // City = "Other" → free-text box
   const [saving,    setSaving]    = useState(false);
 
   // Followup form
@@ -271,6 +273,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       project: lead.project || '', source: lead.source || '',
       city: '', address: '', purpose: [], budget_bucket: '',
     });
+    setCityOther(false);
     setActiveTab('detail');
     setDetail(null);
     setSvScheduledAt('');
@@ -282,6 +285,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
         const d = await res.json();
         setDetail(d);
         // City/Address/Purpose/Budget live only on the detail payload — merge them in.
+        setCityOther(!!d.city && !CITY_OPTIONS.includes(d.city));
         setForm((f) => ({
           ...f,
           city: d.city || '', address: d.address || '',
@@ -493,8 +497,23 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
                 <div>
                   <label style={mLbl}>City</label>
-                  <input value={form.city || ''} onChange={(e) => setForm({ ...form, city: e.target.value })} style={mInp} placeholder="City"
-                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  <select
+                    value={cityOther ? 'Other' : (form.city || '')}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === 'Other') { setCityOther(true); setForm((f) => ({ ...f, city: '' })); }
+                      else { setCityOther(false); setForm((f) => ({ ...f, city: v })); }
+                    }}
+                    style={{ ...mInp, cursor: 'pointer' }}>
+                    <option value="">— Select —</option>
+                    {CITY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                    <option value="Other">Other</option>
+                  </select>
+                  {cityOther && (
+                    <input value={form.city || ''} onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      style={{ ...mInp, marginTop: 8 }} placeholder="Enter city"
+                      onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  )}
                 </div>
                 <div>
                   <label style={mLbl}>Budget</label>
