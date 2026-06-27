@@ -142,9 +142,9 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
 
   return (
     <div style={overlay}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Add Manual Lead</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details to create a new lead</div>
@@ -152,7 +152,7 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
-        <form onSubmit={submit} style={{ padding: '22px 24px 24px' }}>
+        <form onSubmit={submit} style={{ padding: '22px 24px 24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {/* Contact Info */}
           <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 18 }}>
