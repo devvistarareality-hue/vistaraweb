@@ -13,6 +13,22 @@ function bustLeadsCache() {
 
 const PAGE_SIZE = 25;
 
+// Lead requirement options (mirror sales/models.py LEAD_PURPOSE_CHOICES + BUDGET_BUCKETS)
+const PURPOSE_OPTIONS = [
+  { value: 'investment', label: 'Investment' },
+  { value: 'end_use', label: 'End Use' },
+  { value: 'other', label: 'Other' },
+];
+const BUDGET_OPTIONS = [
+  { value: 'lt_10l', label: 'Less than ₹10 Lakh' },
+  { value: '10_50l', label: '₹10 – 50 Lakh' },
+  { value: '50l_1cr', label: '₹50 Lakh – ₹1 Cr' },
+  { value: '1_2cr', label: '₹1 – 2 Cr' },
+  { value: '2_3cr', label: '₹2 – 3 Cr' },
+  { value: '3_5cr', label: '₹3 – 5 Cr' },
+  { value: 'gt_5cr', label: 'Above ₹5 Cr' },
+];
+
 const STATUS_COLOR = {
   new:              '#3D5AFE',
   assigned:         '#7B1FA2',
@@ -253,6 +269,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       telecaller_remarks: lead.telecaller_remarks || '',
       stm: lead.stm || '', stm_status: lead.stm_status || '', stm_remarks: lead.stm_remarks || '',
       project: lead.project || '', source: lead.source || '',
+      city: '', address: '', purpose: [], budget_bucket: '',
     });
     setActiveTab('detail');
     setDetail(null);
@@ -261,7 +278,17 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setClosureForm(emptyClosure());
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
-      if (res.ok) setDetail(await res.json());
+      if (res.ok) {
+        const d = await res.json();
+        setDetail(d);
+        // City/Address/Purpose/Budget live only on the detail payload — merge them in.
+        setForm((f) => ({
+          ...f,
+          city: d.city || '', address: d.address || '',
+          purpose: Array.isArray(d.purpose) ? d.purpose : [],
+          budget_bucket: d.budget_bucket || '',
+        }));
+      }
     }
     loadDetail();
   }, [lead?.id]);
@@ -273,6 +300,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       alt_phone: form.alt_phone || '',
       telecaller_remarks: form.telecaller_remarks,
       stm_remarks: form.stm_remarks,
+      city: form.city || '',
+      address: form.address || '',
+      purpose: form.purpose || [],
+      budget_bucket: form.budget_bucket || '',
     };
     if (form.name)             body.name             = form.name;
     if (form.telecaller)       body.telecaller       = form.telecaller;
@@ -454,6 +485,51 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                   <label style={mLbl}>Alternate Phone</label>
                   <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
                     onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                </div>
+              </div>
+
+              {/* Requirement */}
+              <div style={mSec}>Requirement</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
+                <div>
+                  <label style={mLbl}>City</label>
+                  <input value={form.city || ''} onChange={(e) => setForm({ ...form, city: e.target.value })} style={mInp} placeholder="City"
+                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                </div>
+                <div>
+                  <label style={mLbl}>Budget</label>
+                  <select value={form.budget_bucket || ''} onChange={(e) => setForm({ ...form, budget_bucket: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                    <option value="">— Select —</option>
+                    {BUDGET_OPTIONS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={mLbl}>Address</label>
+                <textarea value={form.address || ''} onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  style={{ ...mInp, minHeight: 56, resize: 'vertical' }} placeholder="Address"
+                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={mLbl}>Purpose</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                  {PURPOSE_OPTIONS.map((p) => {
+                    const on = (form.purpose || []).includes(p.value);
+                    return (
+                      <button key={p.value} type="button"
+                        onClick={() => setForm((f) => {
+                          const cur = Array.isArray(f.purpose) ? f.purpose : [];
+                          return { ...f, purpose: on ? cur.filter((x) => x !== p.value) : [...cur, p.value] };
+                        })}
+                        style={{
+                          padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                          border: on ? '1px solid #3D5AFE' : '1px solid #E5E7EB',
+                          background: on ? '#EEF1FF' : '#fff', color: on ? '#2536C9' : '#3A3A5C',
+                        }}>
+                        {on ? '✓ ' : ''}{p.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
