@@ -271,9 +271,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       telecaller_remarks: lead.telecaller_remarks || '',
       stm: lead.stm || '', stm_status: lead.stm_status || '', stm_remarks: lead.stm_remarks || '',
       project: lead.project || '', source: lead.source || '',
-      city: '', address: '', purpose: [], budget_bucket: '',
+      // City/Address/Purpose/Budget now ship in the list payload → prefill instantly,
+      // no waiting on the detail fetch.
+      city: lead.city || '', address: lead.address || '',
+      purpose: Array.isArray(lead.purpose) ? lead.purpose : [],
+      budget_bucket: lead.budget_bucket || '',
     });
-    setCityOther(false);
+    setCityOther(!!lead.city && !CITY_OPTIONS.includes(lead.city));
     setActiveTab('detail');
     setDetail(null);
     setSvScheduledAt('');
@@ -281,18 +285,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setClosureForm(emptyClosure());
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
-      if (res.ok) {
-        const d = await res.json();
-        setDetail(d);
-        // City/Address/Purpose/Budget live only on the detail payload — merge them in.
-        setCityOther(!!d.city && !CITY_OPTIONS.includes(d.city));
-        setForm((f) => ({
-          ...f,
-          city: d.city || '', address: d.address || '',
-          purpose: Array.isArray(d.purpose) ? d.purpose : [],
-          budget_bucket: d.budget_bucket || '',
-        }));
-      }
+      if (res.ok) setDetail(await res.json());
     }
     loadDetail();
   }, [lead?.id]);
