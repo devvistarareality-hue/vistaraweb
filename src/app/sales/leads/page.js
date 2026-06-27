@@ -266,19 +266,19 @@ function AddLeadModal({ projects, sources, onClose, onAdded }) {
             </>
           )}
 
-          {/* STM (Sales) */}
+          {/* STM (Sales) — labelled CP for Channel Partners (same underlying field) */}
           {showStm && (
             <>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>STM (Sales)</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>{_isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
               <div style={{ marginBottom: 12 }}>
-                <label style={addLbl}>STM Status</label>
+                <label style={addLbl}>{_isCp ? 'CP Status' : 'STM Status'}</label>
                 <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={addLbl}>STM Remarks</label>
+                <label style={addLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder="Optional" style={addTa} />
               </div>
             </>
@@ -702,9 +702,9 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
               </div>
               </>)}
 
-              {/* STM */}
+              {/* STM — labelled CP for Channel Partners (same underlying field) */}
               {showStm && (<>
-              <div style={mSec}>STM (Sales)</div>
+              <div style={mSec}>{_isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
               <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
                 {canAssign && (
                 <div>
@@ -716,7 +716,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
                 )}
                 <div>
-                  <label style={mLbl}>STM Status</label>
+                  <label style={mLbl}>{_isCp ? 'CP Status' : 'STM Status'}</label>
                   <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -724,7 +724,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={mLbl}>STM Remarks</label>
+                <label style={mLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
