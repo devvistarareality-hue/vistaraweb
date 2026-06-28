@@ -36,8 +36,12 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const isAnkholPdf = formulaSet === 'ankhol';
   const isIndustrialPdf = formulaSet === 'industrial';
   const isTundavPdf = isIndustrialPdf && projNamePdf.trim().toLowerCase() === 'tundav';
+  // Honour the booking form's unit toggle; fall back to the formula default.
+  const chosenUnit = opts.areaUnit || meta.areaUnit || '';
   let areaUnit;
-  if (isAnkholPdf || isIndustrialPdf) areaUnit = 'sq.ft.';
+  if (chosenUnit === 'sq.m') areaUnit = 'sq.mtr';
+  else if (chosenUnit) areaUnit = chosenUnit + '.';        // 'sq.yd' -> 'sq.yd.'
+  else if (isAnkholPdf || isIndustrialPdf) areaUnit = 'sq.ft.';
   else areaUnit = 'sq.yd.';
 
   const P = [13, 47, 97], P2 = [26, 115, 232], P3 = [232, 240, 254];
@@ -137,7 +141,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     infoGrid([
       ['Client Phone', meta.phoneNumber || '—'], ['Booking Date', fmtDate(meta.bookingDate)],
       ['Project', meta.project], ['Plot No', meta.plotNo],
-      ['Plot Area (sq.ft)', v.area + ' sq.ft.'], ['Plot Area (sq.mtr)', areaSqMtr],
+      ...((chosenUnit && chosenUnit !== 'sq.ft')
+        ? [['Plot Area', v.area + ' ' + areaUnit]]
+        : [['Plot Area (sq.ft)', v.area + ' sq.ft.'], ['Plot Area (sq.mtr)', areaSqMtr]]),
       ['CP / Channel Partner', meta.cpName || '—'], ['STM Name', meta.loggedInUser || '—'],
       ['Address', meta.address || '—'],
     ]);
@@ -156,7 +162,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   // Pricing Details
   secHead('Pricing Details', [51, 102, 153]);
   if (isIndustrialPdf) {
-    const rows = [['Land Rate', 'Rs. ' + num(v.landRate) + ' / sq.ft'], ['Sale Deed Rate', 'Rs. ' + num(v.saleDeedRate) + ' / sq.ft']];
+    const landUnit = (chosenUnit && chosenUnit !== 'sq.ft') ? areaUnit.replace('.', '') : 'sq.ft';
+    const rows = [['Land Rate', 'Rs. ' + num(v.landRate) + ' / ' + landUnit], ['Sale Deed Rate', 'Rs. ' + num(v.saleDeedRate) + ' / sq.ft']];
     if (!isTundavPdf) rows.push(['Dev Agreement Rate', 'Rs. ' + num(v.devAgreementRate) + ' / sq.ft']);
     rows.push(['Discount', 'Rs. ' + num(v.discount)]); infoGrid(rows);
   } else {

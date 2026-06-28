@@ -197,8 +197,9 @@ function BookingPage() {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
       project: project?.name, plotNo: plotNumbers || plot?.number, bookingDate: f.booking_date,
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name,
+      areaUnit: f.area_unit || flags.areaUnit,
     };
-    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms() }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
+    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }
   }
   function onFile(e) {
@@ -247,7 +248,9 @@ function BookingPage() {
     setSaving(false);
   }
 
-  const unit = flags.areaUnit;
+  // Area unit follows the STM's toggle (relabel only — values are entered in the
+  // chosen unit); defaults to the project's native unit.
+  const unit = f.area_unit || flags.areaUnit;
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       <button onClick={() => router.back()} style={back}>← Back</button>
@@ -268,6 +271,16 @@ function BookingPage() {
       </Section>
 
       <Section title="Plot & Type">
+        <Row><L>Area Unit</L>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {['sq.yd', 'sq.ft', 'sq.m'].map((u) => (
+              <button key={u} type="button" onClick={() => set('area_unit', u)}
+                style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  border: `1.5px solid ${unit === u ? '#3D5AFE' : '#E5E7EB'}`,
+                  background: unit === u ? '#3D5AFE' : '#fff', color: unit === u ? '#fff' : '#6B7280' }}>{u}</button>
+            ))}
+          </div>
+        </Row>
         <Row><L>Plot Area ({unit})</L><In value={f.area} onChange={(e) => set('area', e.target.value)} /></Row>
         {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} onChange={(e) => set('const_area', e.target.value)} /></Row>}
         {flags.bunglowTypeIsDropdown && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
