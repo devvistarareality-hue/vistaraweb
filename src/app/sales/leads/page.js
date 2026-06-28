@@ -434,7 +434,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     if (form.telecaller)       body.telecaller       = form.telecaller;
     if (form.telecaller_status)body.telecaller_status= form.telecaller_status;
     if (form.stm)              body.stm              = form.stm;
-    if (form.stm_status)       body.stm_status       = form.stm_status;
+    // "closed" is NOT persisted from the dropdown — a lead only becomes CLOSED when
+    // its booking is approved (the backend sets stm_status='closed' on approval).
+    // Picking "closed" here just routes the STM into the booking flow below.
+    if (form.stm_status && form.stm_status !== 'closed') body.stm_status = form.stm_status;
     if (form.project)          body.project          = form.project;
     if (form.source)           body.source           = form.source;
     const res = await fetch(SALES_ENDPOINTS.lead(lead.id), {
