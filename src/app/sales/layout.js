@@ -33,6 +33,7 @@ function IconBack()         { return <SvgIcon><polyline points="15 18 9 12 15 6"
 function IconCalendar()     { return <SvgIcon><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></SvgIcon>; }
 function IconMapPin()       { return <SvgIcon><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></SvgIcon>; }
 function IconConversion()   { return <SvgIcon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></SvgIcon>; }
+function IconTrash()        { return <SvgIcon><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></SvgIcon>; }
 
 const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
@@ -48,6 +49,7 @@ const NAV = [
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
   { label: 'Import Leads', href: '/sales/import',        icon: <IconImport />,    adminOnly: true },
+  { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true },
   { label: 'Reports',      href: '/sales/reports',       icon: <IconReports /> },
 ];
 
