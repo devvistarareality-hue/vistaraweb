@@ -2,12 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS, loiHref } from '../../constants/api';
+import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../constants/api';
 
-function authHeaders() {
-  const t = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` };
-}
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
 // Open the confidential LOI via a short-lived signed URL (never a public link).

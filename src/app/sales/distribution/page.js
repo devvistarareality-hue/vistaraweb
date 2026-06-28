@@ -2,12 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { SALES_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 function fmt(iso) {
   return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });

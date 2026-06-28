@@ -1,13 +1,10 @@
+import { authHeaders } from '../../constants/api';
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const DESIGNATION_ENDPOINTS = {
   list:   `${BASE_URL}/api/auth/designations/`,
   detail: (id) => `${BASE_URL}/api/auth/designations/${id}/`,
-};
-
-const authHeaders = () => {
-  const token = localStorage.getItem('access_token');
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 };
 
 export const DESIG_FETCH_SUCCESS  = 'DESIG_FETCH_SUCCESS';

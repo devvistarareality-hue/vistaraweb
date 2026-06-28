@@ -2,13 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { SALES_ENDPOINTS, RAILWAY_URL } from '../../../constants/api';
+import { SALES_ENDPOINTS, RAILWAY_URL, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 const PRESET_SOURCES = ['meta', 'google', 'referral', 'walk-in', 'ivr', 'portal', 'other'];
 const NAVY = '#182350';

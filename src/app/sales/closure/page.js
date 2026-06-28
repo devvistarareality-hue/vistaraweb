@@ -2,14 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { SALES_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache } from '../_cache';
 import { MyBookingsList } from '../_MyBookings';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 // Read-only project picker for the Record Closure flow. Looks like the admin
 // Projects grid (screenshot) but with no Add/Edit/Deactivate/Manage-Plots — the

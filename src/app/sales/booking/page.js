@@ -2,14 +2,10 @@
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../lib/bookingFormulas';
 import { downloadLOI } from '../../../lib/bookingLOI';
 
-function authHeaders() {
-  const t = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` };
-}
 
 // <input type="date"> needs a zero-padded yyyy-mm-dd or it throws in Safari.
 function safeDate(s) {

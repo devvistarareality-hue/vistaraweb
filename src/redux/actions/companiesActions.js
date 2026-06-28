@@ -1,4 +1,4 @@
-import { COMPANY_ENDPOINTS } from '../../constants/api';
+import { COMPANY_ENDPOINTS, authHeaders } from '../../constants/api';
 import {
   COMPANIES_FETCH_REQUEST, COMPANIES_FETCH_SUCCESS, COMPANIES_FETCH_FAILURE,
   COMPANY_UPDATE_REQUEST, COMPANY_UPDATE_SUCCESS, COMPANY_UPDATE_FAILURE, COMPANY_UPDATE_RESET,
@@ -6,10 +6,6 @@ import {
   COMPANY_DELETE_SUCCESS,
 } from '../types/companiesTypes';
 
-const authHeaders = () => {
-  const token = localStorage.getItem('access_token');
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-};
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 

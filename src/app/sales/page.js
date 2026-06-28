@@ -2,13 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
-import { SALES_ENDPOINTS } from '../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../constants/api';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 // ─────────────────────────────────────────────
 // AVAILABILITY TOGGLE (Telecaller / STM self sign-in)

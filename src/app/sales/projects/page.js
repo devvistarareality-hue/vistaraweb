@@ -2,14 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { SALES_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 import MediaUpload from '../../../components/MediaUpload';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTypes, setPlotTypes, addType, removeType, updateType, validTypes, totalTypePlots, inp, lbl }) {
   return (

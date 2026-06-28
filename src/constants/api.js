@@ -7,6 +7,14 @@ export const getBaseUrl = () => BASE_URL;
 // LOI document URL — already absolute when stored in Supabase; otherwise prefix the backend.
 export const loiHref = (doc) => (!doc ? '' : (/^https?:\/\//.test(doc) ? doc : getBaseUrl() + doc));
 
+// Standard JSON + bearer-token headers for authenticated requests. SSR-safe
+// (localStorage only exists in the browser). Shared so the auth header format
+// lives in one place instead of being redefined in every page/action.
+export function authHeaders() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+}
+
 export const COMPANY_ENDPOINTS = {
   get verify() { return `${BASE_URL}/api/company/verify/`; },
   get list()   { return `${BASE_URL}/api/company/all/`; },

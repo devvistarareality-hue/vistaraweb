@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 function bustLeadsCache() {
@@ -86,10 +86,6 @@ function DupToast({ toasts, onDismiss }) {
   );
 }
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
 function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], onClose, onAdded }) {

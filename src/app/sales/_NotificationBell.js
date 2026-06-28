@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AUTH_ENDPOINTS } from '../../constants/api';
+import { AUTH_ENDPOINTS, authHeaders } from '../../constants/api';
 
 // Where each notification type deep-links. booking_approved/rejected → the
 // booker's My Bookings (Booking → My Bookings), not My Conversions.
@@ -19,10 +19,6 @@ const URL_FOR_TYPE = {
   availability_reminder: '/sales',
 };
 
-function authHeaders() {
-  const t = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` };
-}
 
 function ago(iso) {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);

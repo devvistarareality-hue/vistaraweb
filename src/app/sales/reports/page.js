@@ -1,13 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS } from '../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache } from '../../sales/_cache';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 function fmt(n) {
   if (!n) return '₹0';

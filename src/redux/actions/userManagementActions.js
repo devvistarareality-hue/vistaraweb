@@ -1,4 +1,4 @@
-import { USER_ENDPOINTS } from '../../constants/api';
+import { USER_ENDPOINTS, authHeaders } from '../../constants/api';
 import {
   USERS_FETCH_REQUEST, USERS_FETCH_SUCCESS, USERS_FETCH_FAILURE,
   USER_CREATE_REQUEST, USER_CREATE_SUCCESS, USER_CREATE_FAILURE, USER_CREATE_RESET,
@@ -6,10 +6,6 @@ import {
   USER_DELETE_SUCCESS,
 } from '../types/userManagementTypes';
 
-const authHeaders = () => {
-  const token = localStorage.getItem('access_token');
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-};
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 

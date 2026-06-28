@@ -1,12 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS } from '../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 // Reusable org chart. `module` scopes to a department (admins only); `scope="all"`
 // shows the whole company. Non-admins always get their own reporting subtree.

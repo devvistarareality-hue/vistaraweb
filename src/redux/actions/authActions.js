@@ -1,4 +1,4 @@
-import { COMPANY_ENDPOINTS, AUTH_ENDPOINTS, SALES_ENDPOINTS } from '../../constants/api';
+import { COMPANY_ENDPOINTS, AUTH_ENDPOINTS, SALES_ENDPOINTS, authHeaders } from '../../constants/api';
 import { setCache } from '../../app/sales/_cache';
 import {
   COMPANY_VERIFY_REQUEST, COMPANY_VERIFY_SUCCESS, COMPANY_VERIFY_FAILURE,
@@ -6,10 +6,6 @@ import {
 } from '../types/authTypes';
 
 // localStorage replaces AsyncStorage — synchronous, no await needed
-const authHeaders = () => {
-  const token = localStorage.getItem('access_token');
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-};
 
 export const verifyCompany = (companyCode) => async (dispatch) => {
   dispatch({ type: COMPANY_VERIFY_REQUEST });

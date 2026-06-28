@@ -2,15 +2,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
-import { SALES_ENDPOINTS } from '../../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import MediaUpload from '../../../../components/MediaUpload';
 import { uploadToSupabase } from '../../../../utils/supabaseStorage';
 import { pdfToImageBlob } from '../../../../utils/pdfToImage';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
 
 const STATUS_CFG = {
   available: { label: 'Available', color: '#2E7D32', bg: '#E8F5E9', border: '#2E7D32', zone: '#22c55e' },
