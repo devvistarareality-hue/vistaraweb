@@ -75,4 +75,6 @@ export const SALES_ENDPOINTS = {
   get metaWebhookConfig(){ return `${BASE_URL}/api/sales/webhooks/meta/config/`; },
   get metaMappings()     { return `${BASE_URL}/api/sales/webhooks/meta/mappings/`; },
   get userProjects()     { return `${BASE_URL}/api/sales/user-projects/`; },
+  get mediaUpload()      { return `${BASE_URL}/api/sales/media/upload/`; },
+  get mediaDelete()      { return `${BASE_URL}/api/sales/media/delete/`; },
 };
