@@ -48,7 +48,8 @@ function BookingPage() {
     apply_reg_fee: 'Yes', apply_stamp_duty: 'Yes', apply_gst: 'Yes',
     booking_date: new Date().toISOString().slice(0, 10), cp_name: '',
   });
-  const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
+  const [errs, setErrs] = useState({});   // required-field highlight on Generate/Submit
+  const set = (k, v) => { setF((s) => ({ ...s, [k]: v })); setErrs((e) => (e[k] ? { ...e, [k]: false } : e)); };
   const [insts, setInsts] = useState([]); // [{date,pct,amt}]
   const [extraDate, setExtraDate] = useState(''); // due date for the Extra Charges line
   const [ew, setEw] = useState({ desc: '', amt: '' });       // extra work (revise mode)
@@ -192,7 +193,12 @@ function BookingPage() {
     return arr;
   }
   async function doDownloadLOI() {
-    if (!f.client_name.trim() || !f.phone.trim() || !v.plotBasic) { setMsg('Fill client + pricing before the LOI.'); return; }
+    const e = {};
+    if (!f.client_name.trim()) e.client_name = true;
+    if (!f.phone.trim()) e.phone = true;
+    if (!v.plotBasic) { if (!f.area) e.area = true; if (!f.land_rate) e.land_rate = true; }
+    if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
+    setErrs({});
     const meta = {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
       project: project?.name, plotNo: plotNumbers || plot?.number, bookingDate: f.booking_date,
@@ -210,8 +216,12 @@ function BookingPage() {
   }
 
   async function submit() {
-    if (!f.client_name.trim() || !f.phone.trim()) { setMsg('Client name and phone are required.'); return; }
-    if (!f.land_rate || !v.plotBasic) { setMsg('Land rate / area required.'); return; }
+    const e = {};
+    if (!f.client_name.trim()) e.client_name = true;
+    if (!f.phone.trim()) e.phone = true;
+    if (!f.land_rate || !v.plotBasic) { e.land_rate = true; if (!f.area) e.area = true; }
+    if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
+    setErrs({});
     if (insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
     if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
     setSaving(true); setMsg('');
@@ -263,9 +273,9 @@ function BookingPage() {
       </p>
 
       <Section title="Client">
-        <Row><L>Client Name *</L><In value={f.client_name} onChange={(e) => set('client_name', e.target.value)} /></Row>
+        <Row><L>Client Name *</L><In value={f.client_name} invalid={errs.client_name} onChange={(e) => set('client_name', e.target.value)} /></Row>
         <Row><L>Gender *</L><Sel value={f.gender} onChange={(e) => set('gender', e.target.value)} opts={['', 'Male', 'Female']} /></Row>
-        <Row><L>Phone *</L><In value={f.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
+        <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
         <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...sources.map(s => s.name)]} /></Row>
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
       </Section>
@@ -282,14 +292,14 @@ function BookingPage() {
             ))}
           </div>
         </Row>
-        <Row><L>Plot Area ({unit})</L><In value={f.area} onChange={(e) => set('area', e.target.value)} /></Row>
+        <Row><L>Plot Area ({unit})</L><In value={f.area} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
         {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} onChange={(e) => set('const_area', e.target.value)} /></Row>}
         {flags.bunglowTypeIsDropdown && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
         {flags.bunglowTypeFixed && <Row><L>Bunglow Type</L><In value={flags.bunglowTypeFixed} disabled /></Row>}
       </Section>
 
       <Section title="Pricing">
-        <Row><L>Land Rate (₹/{unit}) *</L><In type="number" value={f.land_rate} onChange={(e) => set('land_rate', e.target.value)} /></Row>
+        <Row><L>Land Rate (₹/{unit}) *</L><In type="number" value={f.land_rate} invalid={errs.land_rate} onChange={(e) => set('land_rate', e.target.value)} /></Row>
         {flags.hasConstructionFields && <Row><L>Development Rate (₹/{unit})</L><In type="number" value={f.dev_rate} onChange={(e) => set('dev_rate', e.target.value)} /></Row>}
         {flags.hasConstructionFields && <Row><L>Construction Rate (₹/{unit})</L><In type="number" value={f.const_rate} onChange={(e) => set('const_rate', e.target.value)} /></Row>}
         {flags.hasSaleDeedRate && <Row><L>Sale Deed Rate (₹/sq.ft)</L><In type="number" value={f.sale_deed_rate} onChange={(e) => set('sale_deed_rate', e.target.value)} /></Row>}
@@ -422,12 +432,12 @@ const Section = ({ title, children }) => (
 );
 const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>{children}</div>;
 const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: '#374151' }}>{children}</label>;
-const In = ({ type, ...p }) => (
+const In = ({ type, invalid, ...p }) => (
   // number → plain text + numeric keypad, so scrolling never changes the value (no spinner)
   <input {...p} type={type === 'number' ? 'text' : (type || 'text')} inputMode={type === 'number' ? 'decimal' : undefined}
-    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff' }} />
+    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', background: p.disabled ? '#F3F4F6' : (invalid ? '#FEF2F2' : '#fff') }} />
 );
-const Sel = ({ opts, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', cursor: 'pointer' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
+const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', cursor: 'pointer', background: invalid ? '#FEF2F2' : '#fff' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>
