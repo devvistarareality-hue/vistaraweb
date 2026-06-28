@@ -380,7 +380,14 @@ export default function LeadSetupPage() {
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                <input value={mapFormId} onChange={e => setMapFormId(e.target.value)} placeholder="Form ID (e.g. 1234567890)" style={{ ...inp, width: '100%' }} />
+                <input value={mapFormId} onChange={e => {
+                  const id = e.target.value; setMapFormId(id);
+                  // Auto-fill the label from the matching connected form's name.
+                  const t = id.trim();
+                  let nm = '';
+                  for (const pg of (pagesData || [])) { const f = (pg.forms || []).find(x => String(x.id) === t); if (f) { nm = f.name || ''; break; } }
+                  if (nm) setMapFormName(nm);
+                }} placeholder="Form ID (e.g. 1234567890)" style={{ ...inp, width: '100%' }} />
                 <input value={mapFormName} onChange={e => setMapFormName(e.target.value)} placeholder="Form label (e.g. Kalrav Form)" style={{ ...inp, width: '100%' }} />
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
