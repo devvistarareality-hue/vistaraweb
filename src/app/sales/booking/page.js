@@ -26,11 +26,14 @@ function BookingPage() {
 
   const reviseId  = qp.get('revise') || '';
   const [projectId, setProjectId] = useState(qp.get('project'));
-  const [plotId,    setPlotId]    = useState(qp.get('plot'));
+  // Multi-plot: `plots` query param is a comma list of ids; fall back to single `plot`.
+  const [plotIds,   setPlotIds]   = useState((qp.get('plots') || qp.get('plot') || '').split(',').map((s) => s.trim()).filter(Boolean));
+  const plotId    = plotIds[0] || '';
   const leadId    = qp.get('lead') || '';
 
   const [project, setProject] = useState(null);
-  const [plot,    setPlot]    = useState(null);
+  const [plot,    setPlot]    = useState(null);   // primary (first) plot
+  const [plots,   setPlots]   = useState([]);     // all selected plots
   const [sources, setSources] = useState([]);
   const [saving,  setSaving]  = useState(false);
   const [msg,     setMsg]     = useState('');
@@ -64,7 +67,8 @@ function BookingPage() {
     fetch(SALES_ENDPOINTS.bookings + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((arr) => {
       const b = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(reviseId));
       if (!b) return;
-      setProjectId(String(b.project)); setPlotId(String(b.plot || ''));
+      setProjectId(String(b.project));
+      setPlotIds(((b.plot_ids && b.plot_ids.length ? b.plot_ids : [b.plot]).filter(Boolean)).map(String));
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: b.source || '',
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
@@ -92,11 +96,23 @@ function BookingPage() {
     });
     if (projectId) fetch(SALES_ENDPOINTS.plots + `?project=${projectId}${cq('&')}`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : [])).then((arr) => {
-        const pl = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(plotId));
-        if (pl) { setPlot(pl); setF((s) => ({ ...s, area: (pl.size || '').replace(/[^\d.]/g, ''), villa_type: '', })); }
+        const all = Array.isArray(arr) ? arr : [];
+        // Resolve every selected plot (preserve the chosen order) and sum their areas.
+        const picked = plotIds.map((pid) => all.find((x) => String(x.id) === String(pid))).filter(Boolean);
+        if (picked.length) {
+          setPlots(picked); setPlot(picked[0]);
+          const sumArea = picked.reduce((a, p) => a + (parseFloat((p.size || '').replace(/[^\d.]/g, '')) || 0), 0);
+          setF((s) => ({ ...s, area: sumArea ? String(+sumArea.toFixed(2)) : s.area, villa_type: '' }));
+        }
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
-  }, [projectId, plotId, companyId]);
+  }, [projectId, plotIds.join(','), companyId]);
+
+  // Comma display of every selected plot ("12, 13, 14").
+  const plotNumbers = useMemo(
+    () => (plots.length ? plots.map((p) => p.number).join(', ') : (plot?.number || '')),
+    [plots, plot],
+  );
 
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
@@ -179,7 +195,7 @@ function BookingPage() {
     if (!f.client_name.trim() || !f.phone.trim() || !v.plotBasic) { setMsg('Fill client + pricing before the LOI.'); return; }
     const meta = {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
-      project: project?.name, plotNo: plot?.number, bookingDate: f.booking_date,
+      project: project?.name, plotNo: plotNumbers || plot?.number, bookingDate: f.booking_date,
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name,
     };
     try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms() }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
@@ -199,7 +215,7 @@ function BookingPage() {
     if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
     setSaving(true); setMsg('');
     const payload = {
-      project: projectId, plot: plotId, lead: leadId || undefined,
+      project: projectId, plot: plotId, plot_ids: plotIds, lead: leadId || undefined,
       client_name: f.client_name.trim(), gender: f.gender, phone: f.phone.trim(), address: f.address, source: f.source,
       formula_set: formulaSet, area: f.area, area_unit: f.area_unit, const_area: f.const_area || '0',
       villa_type: flags.bunglowTypeIsDropdown ? f.villa_type : '', bunglow_type: flags.bunglowTypeFixed || '',
@@ -236,10 +252,11 @@ function BookingPage() {
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       <button onClick={() => router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
-        {reviseId ? 'Revise Booking' : 'Book Unit'} {plot?.number || ''}
+        {reviseId ? 'Revise Booking' : (plots.length > 1 ? 'Book Units' : 'Book Unit')} {plotNumbers}
       </h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>
         {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#3D5AFE' }}>{formulaSet}</span> pricing
+        {plots.length > 1 && <span style={{ color: '#2E7D32', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
       </p>
 
       <Section title="Client">

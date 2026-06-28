@@ -49,7 +49,7 @@ export default function ClosureViewerPage() {
   const [plots,   setPlots]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [sv,      setSv]      = useState(null);
-  const [selected, setSelected] = useState(null); // selected plot
+  const [selectedIds, setSelectedIds] = useState([]); // multi-select: plot ids to book together
   const [hovered,  setHovered]  = useState(null);  // hovered zone id
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
@@ -103,9 +103,32 @@ export default function ClosureViewerPage() {
   const total      = plots.length;
   const pct        = (n) => (total ? Math.round(n / total * 100) : 0);
 
+  // Multi-select: a client can buy several plots in one booking. Tapping an
+  // available unit toggles it; the action bar books all selected together.
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   function pickPlot(plot) {
     if (!plot || plot.status !== 'available') return; // only Available selectable
-    setSelected(plot);
+    setSelectedIds((ids) => (ids.includes(plot.id) ? ids.filter((x) => x !== plot.id) : [...ids, plot.id]));
+  }
+
+  const selPlots = useMemo(
+    () => selectedIds.map((pid) => plots.find((p) => p.id === pid)).filter(Boolean),
+    [selectedIds, plots],
+  );
+  const selArea = useMemo(
+    () => selPlots.reduce((a, p) => a + (parseFloat(String(p.size || '').replace(/[^\d.]/g, '')) || 0), 0),
+    [selPlots],
+  );
+
+  function bookSelected() {
+    if (!selectedIds.length) return;
+    const q = new URLSearchParams({ project: String(project?.id || ''), plots: selectedIds.join(',') });
+    if (sv) {
+      if (sv.lead)       q.set('lead', String(sv.lead));
+      if (sv.lead_name)  q.set('client', sv.lead_name);
+      if (sv.lead_phone) q.set('phone', sv.lead_phone);
+    }
+    router.push(`/sales/booking?${q.toString()}`);
   }
 
   if (loading) {
@@ -185,7 +208,7 @@ export default function ClosureViewerPage() {
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #F0F3FA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
             <div>
               <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>Interactive Unit Map</h2>
-              <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>Tap an available (green) unit to view its layout and record the closure.</p>
+              <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>Tap available (green) units to select — pick one or several to book together.</p>
             </div>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6d1f', background: '#FBF4DF', border: '1px solid #EBD9A3', padding: '5px 12px', borderRadius: 20 }}>
               🏠 Showing {shownCount} of {total} units
@@ -201,8 +224,12 @@ export default function ClosureViewerPage() {
                 const clickable = plot.status === 'available';
                 const dim = isHidden(plot);
                 const isHover = hovered === zone.id;
+                const isSel = selectedSet.has(plot.id);
                 const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
-                const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: isHover ? `drop-shadow(0 0 1.5px ${cfg.dot})` : 'none' };
+                const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
+                const strokeC = isSel ? '#1A237E' : cfg.dot;
+                const sw      = isSel ? 0.95 : (isHover ? 0.7 : 0.45);
+                const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? '#3D5AFE' : cfg.dot})` : 'none' };
                 const ev = {
                   onClick: () => pickPlot(plot),
                   onMouseEnter: () => setHovered(zone.id),
@@ -214,8 +241,8 @@ export default function ClosureViewerPage() {
                       ? <polygon points={pts} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />
                       : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />}
                     {pts
-                      ? <polygon points={pts} fill={cfg.dot + (isHover ? 'cc' : '99')} stroke={cfg.dot} strokeWidth={isHover ? 0.7 : 0.45} style={topStyle} {...ev} />
-                      : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={cfg.dot + (isHover ? 'cc' : '99')} stroke={cfg.dot} strokeWidth={isHover ? 0.7 : 0.45} style={topStyle} {...ev} />}
+                      ? <polygon points={pts} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev} />
+                      : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev} />}
                   </g>
                 );
               })}
@@ -225,6 +252,7 @@ export default function ClosureViewerPage() {
               const plot = plotByNumber[String(zone.plotNumber)];
               if (!plot) return null;
               const cfg = STATUS[plot.status] || STATUS.available;
+              const isSel = selectedSet.has(plot.id);
               const { cx, cy } = zoneCenter(zone);
               // Labels overlap on small plots when the number is type-prefixed
               // (e.g. "Karuna24"). The type is already conveyed by colour/legend,
@@ -234,10 +262,10 @@ export default function ClosureViewerPage() {
                 <div key={zone.id + '-lbl'} style={{
                   position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
                   opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
-                  pointerEvents: 'none', zIndex: 3, background: 'rgba(255,255,255,0.96)', color: cfg.text,
+                  pointerEvents: 'none', zIndex: 3, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
                   fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                  borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${cfg.dot}66`, whiteSpace: 'nowrap',
-                }}>{labelText}</div>
+                  borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
+                }}>{isSel ? `✓ ${labelText}` : labelText}</div>
               );
             })}
 
@@ -286,15 +314,18 @@ export default function ClosureViewerPage() {
               {plots.filter(p => !isHidden(p)).map(plot => {
                 const cfg = STATUS[plot.status] || STATUS.available;
                 const clickable = plot.status === 'available';
+                const isSel = selectedSet.has(plot.id);
                 return (
                   <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
                     title={cfg.label}
                     style={{
-                      minWidth: 56, padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${cfg.dot}`,
-                      background: cfg.dot + (clickable ? '22' : '14'), color: cfg.text, fontWeight: 800, fontSize: 13,
+                      minWidth: 56, padding: '10px 12px', borderRadius: 10,
+                      border: `1.5px solid ${isSel ? '#1A237E' : cfg.dot}`,
+                      background: isSel ? '#3D5AFE' : cfg.dot + (clickable ? '22' : '14'),
+                      color: isSel ? '#fff' : cfg.text, fontWeight: 800, fontSize: 13,
                       cursor: clickable ? 'pointer' : 'not-allowed', opacity: clickable ? 1 : 0.6,
                     }}>
-                    {plot.number}
+                    {isSel ? `✓ ${plot.number}` : plot.number}
                   </button>
                 );
               })}
@@ -303,16 +334,23 @@ export default function ClosureViewerPage() {
         </div>
       )}
 
-      {selected && (
-        <UnitPanel
-          plot={selected}
-          project={project}
-          sv={sv}
-          user={user}
-          sources={sources}
-          onClose={() => setSelected(null)}
-          onClosed={() => { router.push(sv ? '/sales/site-visits' : '/sales/my-conversions'); }}
-        />
+      {/* Multi-select action bar — books all selected plots in one booking. */}
+      {selPlots.length > 0 && (
+        <div style={selBar}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>
+              {selPlots.length} plot{selPlots.length > 1 ? 's' : ''} selected
+              {selArea > 0 && <span style={{ color: '#2E7D32', marginLeft: 8 }}>· {+selArea.toFixed(2)} total area</span>}
+            </div>
+            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {sv ? `${sv.lead_name} · ` : ''}Plot {selPlots.map(p => p.number).join(', ')}
+            </div>
+          </div>
+          <button onClick={() => setSelectedIds([])} style={cancelBtn}>Clear</button>
+          <button onClick={bookSelected} style={primaryBtn2}>
+            {sv ? 'Record Closure' : 'Book'} · {selPlots.length} plot{selPlots.length > 1 ? 's' : ''} →
+          </button>
+        </div>
       )}
     </div>
   );
@@ -432,6 +470,8 @@ const overlay    = { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgb
 const panel      = { background: '#fff', borderRadius: 18, width: '94%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(24,35,80,0.22)' };
 const planBtn    = { padding: '11px', borderRadius: 12, fontSize: 12, fontWeight: 700, color: '#B8960C', background: 'rgba(184,150,12,0.08)', border: '1px solid rgba(184,150,12,0.22)', cursor: 'pointer' };
 const primaryBtn = { width: '100%', padding: '12px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: 'pointer' };
+const primaryBtn2 = { padding: '11px 18px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
+const selBar     = { position: 'fixed', left: '50%', bottom: 20, transform: 'translateX(-50%)', zIndex: 900, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#fff', borderRadius: 14, boxShadow: '0 10px 40px rgba(24,35,80,0.22)', border: '1px solid #E6EBF4', width: 'min(680px, calc(100% - 40px))' };
 const cancelBtn  = { padding: '11px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 const backBtn    = { padding: '7px 14px', backgroundColor: '#F0F3FA', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#5C6BC0', cursor: 'pointer' };
 const lbl        = { fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4, display: 'block' };

@@ -110,7 +110,7 @@ export default function BookingsPage() {
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>
                     {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
                   </div>
-                  <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · {b.project_name} · Unit {b.plot_number || b.area}</div>
+                  <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · {b.project_name} · Unit {b.plot_numbers || b.plot_number || b.area}</div>
                   <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
