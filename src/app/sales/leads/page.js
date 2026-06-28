@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
@@ -364,6 +365,7 @@ function fmtDateTime(iso) {
 }
 
 function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, onUpdated }) {
+  const router = useRouter();
   const user = useSelector((s) => s.auth.user);
   // Only admins/managers may (re)assign telecaller / STM. Telecaller & Sales Executive
   // portals can update status & remarks but cannot reassign leads.
@@ -389,9 +391,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   // Inline "schedule site visit" when STM sets status = sv_scheduled
   const [svScheduledAt, setSvScheduledAt] = useState('');
   const [svRemarks,     setSvRemarks]     = useState('');
-  // Inline "record closure" when STM sets status = closed
-  const emptyClosure = () => ({ closure_date: new Date().toISOString().slice(0, 10), unit_no: '', unit_type: '', booking_amount: '', total_amount: '', remarks: '' });
-  const [closureForm, setClosureForm] = useState(emptyClosure);
 
   useEffect(() => {
     setForm({
@@ -412,7 +411,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setDetail(null);
     setSvScheduledAt('');
     setSvRemarks('');
-    setClosureForm(emptyClosure());
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
       if (res.ok) setDetail(await res.json());
@@ -488,23 +486,21 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
         } catch { /* ignore */ }
       }
 
-      // STM marked closed → record a closure (only on transition into closed, with an amount)
-      if (form.stm_status === 'closed' && lead.stm_status !== 'closed' && closureForm.booking_amount) {
+      // STM marked closed → save the lead, then jump straight into the booking
+      // flow with this lead prefilled. The unit map lets them pick plot(s) and the
+      // booking form records the actual closure/booking.
+      if (form.stm_status === 'closed') {
         try {
-          const latestSv = (detail?.site_visits || []).slice()
-            .sort((a, b) => new Date(b.visited_at || b.scheduled_at || b.created_at) - new Date(a.visited_at || a.scheduled_at || a.created_at))[0];
-          await fetch(SALES_ENDPOINTS.closures, {
-            method: 'POST', headers: authHeaders(),
-            body: JSON.stringify({
-              lead: lead.id, site_visit: latestSv?.id || null, project: form.project || null,
-              stm: form.stm || user?.id, referred_by_telecaller: form.telecaller || null,
-              status: 'booked', closure_date: closureForm.closure_date,
-              unit_no: closureForm.unit_no, unit_type: closureForm.unit_type,
-              booking_amount: closureForm.booking_amount, total_amount: closureForm.total_amount || null,
-              remarks: closureForm.remarks || '',
-            }),
-          });
+          sessionStorage.setItem('closure_sv', JSON.stringify({
+            lead: lead.id, lead_name: form.name || lead.name, lead_phone: lead.phone || '',
+            project: form.project || null,
+          }));
         } catch { /* ignore */ }
+        setSaving(false);
+        onUpdated(updated);
+        onClose();
+        router.push(form.project ? `/sales/closure/${form.project}` : '/sales/closure');
+        return;
       }
 
       setSaving(false);
@@ -776,42 +772,14 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               )}
 
-              {/* Inline closure recording when STM picks "closed" */}
+              {/* STM picked "closed" → the footer button becomes "Record Closure"
+                  and on save jumps into the booking flow with this lead prefilled. */}
               {form.stm_status === 'closed' && (
-                <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                    <span style={{ color: '#15803D' }}>✅</span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Record Closure</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
-                    <div>
-                      <label style={{ ...mLbl, color: '#166534' }}>Closure Date <span style={{ color: '#DC2626' }}>*</span></label>
-                      <input type="date" value={closureForm.closure_date} onChange={(e) => setClosureForm({ ...closureForm, closure_date: e.target.value })} style={mInp} />
-                    </div>
-                    <div>
-                      <label style={{ ...mLbl, color: '#166534' }}>Unit No.</label>
-                      <input value={closureForm.unit_no} onChange={(e) => setClosureForm({ ...closureForm, unit_no: e.target.value })} placeholder="A-101" style={mInp} />
-                    </div>
-                    <div>
-                      <label style={{ ...mLbl, color: '#166534' }}>Unit Type</label>
-                      <input value={closureForm.unit_type} onChange={(e) => setClosureForm({ ...closureForm, unit_type: e.target.value })} placeholder="2BHK" style={mInp} />
-                    </div>
-                    <div>
-                      <label style={{ ...mLbl, color: '#166534' }}>Booking Amount <span style={{ color: '#DC2626' }}>*</span></label>
-                      <input type="number" value={closureForm.booking_amount} onChange={(e) => setClosureForm({ ...closureForm, booking_amount: e.target.value })} placeholder="₹" style={mInp} />
-                    </div>
-                    <div>
-                      <label style={{ ...mLbl, color: '#166534' }}>Total Amount</label>
-                      <input type="number" value={closureForm.total_amount} onChange={(e) => setClosureForm({ ...closureForm, total_amount: e.target.value })} placeholder="₹" style={mInp} />
-                    </div>
-                    <div>
-                      <label style={{ ...mLbl, color: '#166534' }}>Remarks</label>
-                      <input value={closureForm.remarks} onChange={(e) => setClosureForm({ ...closureForm, remarks: e.target.value })} placeholder="Notes…" style={mInp} />
-                    </div>
-                  </div>
-                  {lead.stm_status === 'closed'
-                    ? <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>This lead is already closed — a closure was recorded earlier.</p>
-                    : !closureForm.booking_amount && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Enter the booking amount to record a closure automatically on save.</p>}
+                <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: '12px 14px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#15803D' }}>✅</span>
+                  <span style={{ fontSize: 12, color: '#166534', fontWeight: 600 }}>
+                    Saving takes you to the booking flow — pick the plot(s) and record the booking for this lead.
+                  </span>
                 </div>
               )}
               </>)}
@@ -830,7 +798,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
                 <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                 <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
-                  {saving ? 'Saving…' : 'Save Changes'}
+                  {saving ? 'Saving…' : (form.stm_status === 'closed' ? 'Record Closure →' : 'Save Changes')}
                 </button>
               </div>
             </div>
