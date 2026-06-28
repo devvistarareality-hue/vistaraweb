@@ -272,11 +272,12 @@ function BookingPage() {
 
       <Section title="Plot & Type">
         <Row><L>Area Unit</L>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', flex: 1, gap: 8 }}>
             {['sq.yd', 'sq.ft', 'sq.m'].map((u) => (
               <button key={u} type="button" onClick={() => set('area_unit', u)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                  border: `1.5px solid ${unit === u ? '#3D5AFE' : '#E5E7EB'}`,
+                style={{ flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  transition: 'all 0.12s',
+                  border: `1.5px solid ${unit === u ? '#3D5AFE' : '#E0E6F0'}`,
                   background: unit === u ? '#3D5AFE' : '#fff', color: unit === u ? '#fff' : '#6B7280' }}>{u}</button>
             ))}
           </div>
