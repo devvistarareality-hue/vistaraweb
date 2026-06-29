@@ -61,7 +61,7 @@ export default function ReportsPage() {
         {[
           { label: 'Total Site Visits',    value: summary.total_sv,       sub: `${summary.completed_sv} completed` },
           { label: 'Closures',             value: summary.total_closures,  sub: 'all time' },
-          { label: 'Revenue (Bookings)',   value: fmt(summary.total_revenue), sub: 'booking amounts' },
+          { label: 'Total Revenue',        value: fmt(summary.total_revenue), sub: 'total booking value' },
           { label: 'Meta / Campaign Leads', value: summary.meta_leads,    sub: 'from ads' },
         ].map((s) => (
           <div key={s.label} style={card}>
