@@ -208,7 +208,11 @@ export default function LeadSetupPage() {
     });
     const d = await res.json();
     setMapSaving(false);
-    if (res.ok) { setMappings(prev => { const idx = prev.findIndex(m => m.form_id === d.form_id); return idx >= 0 ? prev.map((m, i) => i === idx ? d : m) : [...prev, d]; }); setMapFormId(''); setMapFormName(''); setMapProject(''); }
+    if (res.ok) {
+      setMappings(prev => { const idx = prev.findIndex(m => m.form_id === d.form_id); return idx >= 0 ? prev.map((m, i) => i === idx ? d : m) : [...prev, d]; });
+      setMapFormId(''); setMapFormName(''); setMapProject('');
+      if (d.backfilled) alert(`Mapped to ${d.project_name}. ${d.backfilled} existing lead(s) updated.`);
+    }
   }
 
   async function deleteMapping(id) {
