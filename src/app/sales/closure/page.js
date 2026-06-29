@@ -20,6 +20,7 @@ export default function ClosureProjectsPage() {
   const [loading,  setLoading]  = useState(true);
   const [sv,       setSv]       = useState(null);
   const [view,     setView]     = useState('closures'); // 'closures' | 'mybookings'
+  const [flash,    setFlash]    = useState(''); // success banner after a booking submit
 
   // Reached via "Record Closure" → has ?sv=<id> and a stashed site visit.
   // Reached via the "Booking" nav → no ?sv=, so browse projects/units only
@@ -34,6 +35,11 @@ export default function ClosureProjectsPage() {
     }
     // Deep-linked from a booking-approved/rejected notification → open My Bookings.
     if (qs.get('view') === 'mybookings') setView('mybookings');
+    // One-time success banner after submitting a booking.
+    try {
+      const f = sessionStorage.getItem('booking_flash');
+      if (f) { setFlash(f); sessionStorage.removeItem('booking_flash'); setTimeout(() => setFlash(''), 6000); }
+    } catch (_) {}
   }, []);
 
   useEffect(() => {
@@ -53,6 +59,11 @@ export default function ClosureProjectsPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <button onClick={() => router.push('/sales/site-visits')} style={backBtn}>← Back</button>
       </div>
+      {flash && (
+        <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', color: '#166534', borderRadius: 12, padding: '12px 16px', marginBottom: 14, fontSize: 14, fontWeight: 600 }}>
+          ✅ {flash}
+        </div>
+      )}
       {/* Toggle: Record Closure ↔ My Bookings */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
         {[['closures', 'Record Closure'], ['mybookings', 'My Bookings']].map(([k, label]) => (

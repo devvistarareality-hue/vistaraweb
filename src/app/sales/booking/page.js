@@ -252,7 +252,11 @@ function BookingPage() {
     };
     try {
       const res = await fetch(SALES_ENDPOINTS.bookings + cq('?'), { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
-      if (res.ok) { setMsg('✅ Booking saved.'); setTimeout(() => router.push(`/sales/closure/${projectId}`), 1200); }
+      if (res.ok) {
+        setMsg('✅ Booking submitted — sent for approval.');
+        try { sessionStorage.setItem('booking_flash', 'Your booking has been submitted and sent for approval.'); } catch {}
+        setTimeout(() => router.push('/sales/closure'), 1000);
+      }
       else setMsg('Error: ' + JSON.stringify(await res.json().catch(() => ({}))));
     } catch (e) { setMsg(e.message); }
     setSaving(false);
