@@ -61,13 +61,13 @@ export default function ReportsPage() {
         {[
           { label: 'Total Site Visits',    value: summary.total_sv,       sub: `${summary.completed_sv} completed` },
           { label: 'Closures',             value: summary.total_closures,  sub: 'all time' },
-          { label: 'Total Revenue',        value: fmt(summary.total_revenue), sub: 'total booking value' },
+          { label: 'Total Revenue',        value: fmt(summary.total_revenue), sub: '' },
           { label: 'Meta / Campaign Leads', value: summary.meta_leads,    sub: 'from ads' },
         ].map((s) => (
           <div key={s.label} style={card}>
             <p style={{ fontSize: 26, fontWeight: 800, color: '#1A1A2E' }}>{s.value}</p>
             <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E', marginTop: 2 }}>{s.label}</p>
-            <p style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>{s.sub}</p>
+            {s.sub && <p style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>{s.sub}</p>}
           </div>
         ))}
       </div>
@@ -174,7 +174,7 @@ export default function ReportsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={tbl}>
               <thead style={{ backgroundColor: '#F8FAFD' }}>
-                <tr>{['Date', 'Lead', 'Project', 'STM', 'Telecaller', 'Booking Amt', 'Total Amt'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+                <tr>{['Date', 'Lead', 'Project', 'STM', 'Telecaller', 'Total Amt'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {closures.map((c) => (
@@ -184,7 +184,6 @@ export default function ReportsPage() {
                     <td style={td}>{c.project_name || '—'}</td>
                     <td style={td}>{c.stm_name || '—'}</td>
                     <td style={td}>{c.referred_by_telecaller || '—'}</td>
-                    <td style={{ ...td, fontWeight: 700 }}>{fmt(c.booking_amount)}</td>
                     <td style={{ ...td, fontWeight: 700 }}>{fmt(c.total_amount)}</td>
                   </tr>
                 ))}
