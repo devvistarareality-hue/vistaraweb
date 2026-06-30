@@ -232,18 +232,25 @@ function TelecallerDashboard({ user }) {
   // Stats re-fetch whenever date filter changes
   useEffect(() => {
     if (!user?.id) return;
-    let active = true;
+    let cancelled = false;
     setStats(null);
     setLoading(true);
-    const params = new URLSearchParams();
-    if (dateFrom) params.set('date_from', dateFrom);
-    if (dateTo)   params.set('date_to',   dateTo);
-    const qs = params.toString() ? `?${params}` : '';
-    fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : null).catch(() => null)
-      .then(s => { if (!active) return; if (s) setStats(s); setLoading(false); })
-      .catch(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (dateFrom) params.set('date_from', dateFrom);
+        if (dateTo)   params.set('date_to',   dateTo);
+        const qs = params.toString() ? `?${params}` : '';
+        const res = await fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders(), cache: 'no-store' });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setStats(data);
+        }
+      } catch (_) {}
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, [user?.id, dateFrom, dateTo]);
 
   // Call Queue loads ALL pending leads — never date-filtered
