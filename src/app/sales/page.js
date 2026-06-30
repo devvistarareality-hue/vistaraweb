@@ -215,20 +215,31 @@ function AdminDashboard({ user }) {
 // TELECALLER DASHBOARD
 // ─────────────────────────────────────────────
 function TelecallerDashboard({ user }) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const today = localDate(new Date());
+  const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
+
   const [stats,    setStats]    = useState(null);
   const [leads,    setLeads]    = useState([]);
   const [loading,  setLoading]  = useState(true);
-  const [dateFrom, setDateFrom] = useState('2026-01-01');
-  const [dateTo,   setDateTo]   = useState(todayStr);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo,   setDateTo]   = useState('');
+
+  const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD', cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500 };
+  const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#182350' : '#F0F2F8', color: active ? '#fff' : '#8492A6' });
+  const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
 
   useEffect(() => {
     if (!user?.id) return;
     setLoading(true);
-    const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo });
+    const params = new URLSearchParams();
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo)   params.set('date_to',   dateTo);
+    const qs = params.toString() ? `?${params}` : '';
+    const leadsQs = params.toString() ? `?telecaller_id=${user.id}&page_size=100&${params}` : `?telecaller_id=${user.id}&page_size=100`;
     Promise.all([
-      fetch(`${SALES_ENDPOINTS.stats}?${params}`, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
-      fetch(`${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100&${params}`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
+      fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
+      fetch(`${SALES_ENDPOINTS.leads}${leadsQs}`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
     ]).then(([s, d]) => {
       s && setStats(s);
       const list = Array.isArray(d) ? d : (d.results ?? []);
@@ -282,19 +293,17 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Date Filter */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#8492A6' }}>Date Range:</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="date" value={dateFrom} max={dateTo} onChange={e => setDateFrom(e.target.value)}
-            style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #E0E6EF', color: '#1A1A2E', background: '#fff', cursor: 'pointer' }} />
-          <span style={{ fontSize: 13, color: '#8492A6' }}>to</span>
-          <input type="date" value={dateTo} min={dateFrom} max={todayStr} onChange={e => setDateTo(e.target.value)}
-            style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #E0E6EF', color: '#1A1A2E', background: '#fff', cursor: 'pointer' }} />
-        </div>
-        <button onClick={() => { setDateFrom('2026-01-01'); setDateTo(todayStr); }}
-          style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, border: '1px solid #E0E6EF', background: '#F7F9FC', color: '#8492A6', cursor: 'pointer', fontWeight: 600 }}>
-          Reset
-        </button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: '#fff', borderRadius: 12, border: '1px solid #F0F3FA' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#B0BAD0', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...fSel, width: 136 }} />
+        <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
+        <div style={divider} />
+        <button onClick={() => { setDateFrom(today); setDateTo(today); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
+        <button onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
+        <button onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
+        <div style={divider} />
+        <button onClick={() => { setDateFrom(''); setDateTo(''); }} style={qBtn(!dateFrom && !dateTo)}>All</button>
       </div>
 
       {/* Stats */}
