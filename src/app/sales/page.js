@@ -249,6 +249,7 @@ function TelecallerDashboard({ user }) {
   const called    = stats?.called_count ?? leads.filter(l => l.telecaller_status && l.telecaller_status !== '').length;
   const svDone    = stats?.sv_done ?? 0;
   const closed    = stats?.closures ?? leads.filter((l) => l.status === 'closed').length;
+  const mqlToSv   = called > 0 ? (svDone / called * 100).toFixed(1) + '%' : '—';
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
@@ -256,6 +257,7 @@ function TelecallerDashboard({ user }) {
     { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?telecaller_status=hot' },
     { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?telecaller_status=warm' },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
+    { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
     { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?telecaller_status=callback' },
     { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
   ];
@@ -279,7 +281,7 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Stats */}
-      {loading ? <SkeletonGrid count={7} /> : (
+      {loading ? <SkeletonGrid count={8} /> : (
         <div style={statsGrid}>
           {cards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
