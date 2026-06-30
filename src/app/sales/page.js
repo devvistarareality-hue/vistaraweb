@@ -215,9 +215,10 @@ function AdminDashboard({ user }) {
 // TELECALLER DASHBOARD
 // ─────────────────────────────────────────────
 function TelecallerDashboard({ user }) {
-  const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const today = localDate(new Date());
-  const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
+  // Always compute dates in IST (matches backend TIME_ZONE = 'Asia/Kolkata')
+  const toIST = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // → 'YYYY-MM-DD'
+  const today = toIST(new Date());
+  const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toIST(d); };
 
   const [stats,    setStats]    = useState(null);
   const [leads,    setLeads]    = useState([]);
@@ -241,6 +242,7 @@ function TelecallerDashboard({ user }) {
         if (dateFrom) params.set('date_from', dateFrom);
         if (dateTo)   params.set('date_to',   dateTo);
         const qs = params.toString() ? `?${params}` : '';
+        console.log('[TelecallerDashboard] fetching stats:', SALES_ENDPOINTS.stats + qs);
         const res = await fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders(), cache: 'no-store' });
         if (cancelled) return;
         if (res.ok) {
@@ -352,7 +354,7 @@ function TelecallerDashboard({ user }) {
                         {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: '#D1D5DB', fontSize: 12 }}>Not called</span>}
                       </td>
                       <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>
-                        {new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        {new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })}
                       </td>
                     </tr>
                   ))}
