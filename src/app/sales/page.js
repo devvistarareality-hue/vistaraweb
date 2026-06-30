@@ -265,6 +265,7 @@ function TelecallerDashboard({ user }) {
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
   const total    = stats?.total_leads    ?? leads.length;
+  const newToday = stats?.leads_today    ?? 0;
   const called   = stats?.called_count   ?? 0;
   const hot      = stats?.hot_count      ?? count('telecaller_status', 'hot');
   const warm     = stats?.warm_count     ?? count('telecaller_status', 'warm');
@@ -275,7 +276,8 @@ function TelecallerDashboard({ user }) {
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-    { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads?tab=called' },
+    { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
+    { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
     { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?telecaller_status=hot' },
     { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?telecaller_status=warm' },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
@@ -317,7 +319,7 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Stats */}
-      {loading ? <SkeletonGrid count={8} /> : (
+      {loading ? <SkeletonGrid count={9} /> : (
         <div style={statsGrid}>
           {cards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
