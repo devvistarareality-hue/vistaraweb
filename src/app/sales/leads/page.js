@@ -1008,6 +1008,7 @@ export default function SalesLeadsPage() {
       date_from:         df === 'today' ? today : (df || ''),
       date_to:           df === 'today' ? today : (p.get('date_to') || ''),
     }));
+    if (p.get('tab') === 'called') setWorkTab('called');
     setSeeded(true);
   }, []);
   // Search box is debounced: typing updates `searchText` instantly (responsive UI)

@@ -252,7 +252,7 @@ function TelecallerDashboard({ user }) {
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-    { label: 'Called',         value: called,   icon: <IconCheck />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads?has_telecaller_status=true' },
+    { label: 'Called',         value: called,   icon: <IconCheck />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads?tab=called' },
     { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?telecaller_status=hot' },
     { label: 'Warm',           value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?telecaller_status=warm' },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
@@ -537,8 +537,8 @@ export default function SalesDashboard() {
 // ─────────────────────────────────────────────
 // Shared styles
 // ─────────────────────────────────────────────
-const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px,1fr))', gap: 16, marginBottom: 28 };
-const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '18px 20px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
+const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
+const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
 const tbl       = { width: '100%', borderCollapse: 'collapse' };
 const th        = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '0 12px 10px', textTransform: 'uppercase', letterSpacing: 0.6 };
