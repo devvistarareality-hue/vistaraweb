@@ -246,7 +246,7 @@ function TelecallerDashboard({ user }) {
   const callback  = count('telecaller_status', 'callback');
   const notReach  = count('telecaller_status', 'not_reachable');
   const cold      = count('telecaller_status', 'cold');
-  const called    = leads.filter(l => l.telecaller_status && l.telecaller_status !== '').length;
+  const called    = stats?.called_count ?? leads.filter(l => l.telecaller_status && l.telecaller_status !== '').length;
   const svDone    = stats?.sv_done ?? 0;
   const closed    = stats?.closures ?? leads.filter((l) => l.status === 'closed').length;
 
