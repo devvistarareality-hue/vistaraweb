@@ -249,19 +249,14 @@ function TelecallerDashboard({ user }) {
   }, [user?.id, dateFrom, dateTo]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
-  // Use the backend's true count (scoped to this telecaller's leads), not the
-  // length of the fetched page — the leads endpoint caps results at PAGE_SIZE
-  // (25), so leads.length stops growing once a telecaller has 25+ leads.
-  const total     = stats?.total_leads ?? leads.length;
-  const hot       = count('telecaller_status', 'hot');
-  const warm      = count('telecaller_status', 'warm');
-  const callback  = count('telecaller_status', 'callback');
-  const notReach  = count('telecaller_status', 'not_reachable');
-  const cold      = count('telecaller_status', 'cold');
-  const called    = stats?.called_count ?? leads.filter(l => l.telecaller_status && l.telecaller_status !== '').length;
-  const svDone    = stats?.sv_done ?? 0;
-  const closed    = stats?.closures ?? leads.filter((l) => l.status === 'closed').length;
-  const mqlToSv   = called > 0 ? (svDone / called * 100).toFixed(1) + '%' : '—';
+  const total    = stats?.total_leads    ?? leads.length;
+  const called   = stats?.called_count   ?? 0;
+  const hot      = stats?.hot_count      ?? count('telecaller_status', 'hot');
+  const warm     = stats?.warm_count     ?? count('telecaller_status', 'warm');
+  const callback = stats?.callback_count ?? count('telecaller_status', 'callback');
+  const svDone   = stats?.sv_done        ?? 0;
+  const closed   = stats?.closures       ?? 0;
+  const mqlToSv  = called > 0 ? (svDone / called * 100).toFixed(1) + '%' : '—';
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
