@@ -252,9 +252,9 @@ function TelecallerDashboard({ user }) {
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-    { label: 'Called',         value: called,   icon: <IconCheck />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads?tab=called' },
+    { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads?tab=called' },
     { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?telecaller_status=hot' },
-    { label: 'Warm',           value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?telecaller_status=warm' },
+    { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?telecaller_status=warm' },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
     { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?telecaller_status=callback' },
     { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
