@@ -215,26 +215,27 @@ function AdminDashboard({ user }) {
 // TELECALLER DASHBOARD
 // ─────────────────────────────────────────────
 function TelecallerDashboard({ user }) {
-  const [stats,   setStats]   = useState(null);
-  const [leads,   setLeads]   = useState([]);
-  const [loading, setLoading] = useState(true);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [stats,    setStats]    = useState(null);
+  const [leads,    setLeads]    = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [dateFrom, setDateFrom] = useState('2026-01-01');
+  const [dateTo,   setDateTo]   = useState(todayStr);
 
   useEffect(() => {
     if (!user?.id) return;
-    const cacheKey = `tc_dash_${user.id}`;
-    const cached = getCache(cacheKey);
-    if (cached) { setStats(cached.stats); setLeads(cached.leads); setLoading(false); return; }
+    setLoading(true);
+    const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo });
     Promise.all([
-      fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
-      fetch(`${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
+      fetch(`${SALES_ENDPOINTS.stats}?${params}`, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
+      fetch(`${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100&${params}`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
     ]).then(([s, d]) => {
       s && setStats(s);
       const list = Array.isArray(d) ? d : (d.results ?? []);
       setLeads(list);
-      setCache(cacheKey, { stats: s, leads: list });
       setLoading(false);
     });
-  }, [user?.id]);
+  }, [user?.id, dateFrom, dateTo]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
   // Use the backend's true count (scoped to this telecaller's leads), not the
@@ -278,6 +279,22 @@ function TelecallerDashboard({ user }) {
           <p style={{ fontSize: 13, color: '#8492A6' }}>Telecaller · Your call queue & lead pipeline</p>
         </div>
         <AvailabilityToggle />
+      </div>
+
+      {/* Date Filter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#8492A6' }}>Date Range:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="date" value={dateFrom} max={dateTo} onChange={e => setDateFrom(e.target.value)}
+            style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #E0E6EF', color: '#1A1A2E', background: '#fff', cursor: 'pointer' }} />
+          <span style={{ fontSize: 13, color: '#8492A6' }}>to</span>
+          <input type="date" value={dateTo} min={dateFrom} max={todayStr} onChange={e => setDateTo(e.target.value)}
+            style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #E0E6EF', color: '#1A1A2E', background: '#fff', cursor: 'pointer' }} />
+        </div>
+        <button onClick={() => { setDateFrom('2026-01-01'); setDateTo(todayStr); }}
+          style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, border: '1px solid #E0E6EF', background: '#F7F9FC', color: '#8492A6', cursor: 'pointer', fontWeight: 600 }}>
+          Reset
+        </button>
       </div>
 
       {/* Stats */}
