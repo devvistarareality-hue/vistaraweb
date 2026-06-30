@@ -19,6 +19,14 @@ async function probeUrl(url) {
 }
 
 export async function discoverServer() {
+  // Only probe for local server when the web app itself is running on localhost.
+  // On Vercel (production), always use Railway — probing localhost would find the
+  // developer's local Django instance and route all requests there with Railway
+  // auth tokens, causing 401 errors on every API call.
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    setBaseUrl(RAILWAY_URL);
+    return;
+  }
   const localAvailable = await probeUrl(LOCAL_URL);
   if (localAvailable) {
     setBaseUrl(LOCAL_URL);
