@@ -231,21 +231,25 @@ function TelecallerDashboard({ user }) {
 
   useEffect(() => {
     if (!user?.id) return;
+    let active = true;
+    setStats(null);
+    setLeads([]);
     setLoading(true);
     const params = new URLSearchParams();
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo)   params.set('date_to',   dateTo);
     const qs = params.toString() ? `?${params}` : '';
-    const leadsQs = params.toString() ? `?telecaller_id=${user.id}&page_size=100&${params}` : `?telecaller_id=${user.id}&page_size=100`;
+    const leadsUrl = `${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100${params.toString() ? `&${params}` : ''}`;
     Promise.all([
-      fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
-      fetch(`${SALES_ENDPOINTS.leads}${leadsQs}`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
+      fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders() }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(leadsUrl, { headers: authHeaders() }).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] })),
     ]).then(([s, d]) => {
-      s && setStats(s);
-      const list = Array.isArray(d) ? d : (d.results ?? []);
-      setLeads(list);
+      if (!active) return;
+      if (s) setStats(s);
+      setLeads(Array.isArray(d) ? d : (d?.results ?? []));
       setLoading(false);
-    });
+    }).catch(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [user?.id, dateFrom, dateTo]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
