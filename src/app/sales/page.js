@@ -229,28 +229,30 @@ function TelecallerDashboard({ user }) {
   const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#182350' : '#F0F2F8', color: active ? '#fff' : '#8492A6' });
   const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
 
+  // Stats re-fetch whenever date filter changes
   useEffect(() => {
     if (!user?.id) return;
     let active = true;
     setStats(null);
-    setLeads([]);
     setLoading(true);
     const params = new URLSearchParams();
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo)   params.set('date_to',   dateTo);
     const qs = params.toString() ? `?${params}` : '';
-    const leadsUrl = `${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100${params.toString() ? `&${params}` : ''}`;
-    Promise.all([
-      fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders() }).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(leadsUrl, { headers: authHeaders() }).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] })),
-    ]).then(([s, d]) => {
-      if (!active) return;
-      if (s) setStats(s);
-      setLeads(Array.isArray(d) ? d : (d?.results ?? []));
-      setLoading(false);
-    }).catch(() => { if (active) setLoading(false); });
+    fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null).catch(() => null)
+      .then(s => { if (!active) return; if (s) setStats(s); setLoading(false); })
+      .catch(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [user?.id, dateFrom, dateTo]);
+
+  // Call Queue loads ALL pending leads — never date-filtered
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] }))
+      .then(d => setLeads(Array.isArray(d) ? d : (d?.results ?? [])));
+  }, [user?.id]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
   const total    = stats?.total_leads    ?? leads.length;
