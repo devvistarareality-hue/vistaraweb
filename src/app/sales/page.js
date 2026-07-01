@@ -223,12 +223,24 @@ function TelecallerDashboard({ user }) {
   const today = toIST(new Date());
   const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toIST(d); };
 
-  const [stats,        setStats]        = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [dateFrom,     setDateFrom]     = useState('');
-  const [dateTo,       setDateTo]       = useState('');
-  const [trend,        setTrend]        = useState(null);
-  const [trendLoading, setTrendLoading] = useState(true);
+  const [stats,            setStats]            = useState(null);
+  const [loading,          setLoading]          = useState(true);
+  const [dateFrom,         setDateFrom]         = useState('');
+  const [dateTo,           setDateTo]           = useState('');
+  const [trend,            setTrend]            = useState(null);
+  const [trendLoading,     setTrendLoading]     = useState(true);
+  const [selectedMonths,   setSelectedMonths]   = useState([]);
+  const [monthTrend,       setMonthTrend]       = useState(null);
+  const [showMonthDrop,    setShowMonthDrop]    = useState(false);
+
+  const monthOptions = Array.from({ length: 24 }, (_, i) => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    const key = toIST(d).slice(0, 7); // 'YYYY-MM'
+    const label = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    return { key, label };
+  });
 
   const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD', cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500 };
   const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#182350' : '#F0F2F8', color: active ? '#fff' : '#8492A6' });
@@ -278,6 +290,25 @@ function TelecallerDashboard({ user }) {
     })();
     return () => { cancelled = true; };
   }, [user?.id, dateFrom, dateTo]);
+
+  // Month-filtered trend fetch (independent of main date filter)
+  useEffect(() => {
+    if (!user?.id || selectedMonths.length === 0) { setMonthTrend(null); return; }
+    let cancelled = false;
+    (async () => {
+      const sorted = [...selectedMonths].sort();
+      const [ey, em] = sorted[0].split('-').map(Number);
+      const [ly, lm] = sorted[sorted.length - 1].split('-').map(Number);
+      const from = `${ey}-${String(em).padStart(2,'0')}-01`;
+      const lastDay = new Date(ly, lm, 0).getDate();
+      const to = `${ly}-${String(lm).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      try {
+        const res = await fetch(`${SALES_ENDPOINTS.statsTrend}?date_from=${from}&date_to=${to}`, { headers: authHeaders(), cache: 'no-store' });
+        if (res.ok && !cancelled) { const d = await res.json(); setMonthTrend(d); }
+      } catch (_) {}
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, selectedMonths]);
 
   const total    = stats?.total_leads    ?? 0;
   const newToday = stats?.leads_today    ?? 0;
@@ -337,7 +368,65 @@ function TelecallerDashboard({ user }) {
       )}
 
       {/* Trend Charts */}
-      <TrendCharts trend={trend} dateFrom={dateFrom} dateTo={dateTo} loading={trendLoading} />
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Trends</span>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowMonthDrop(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${selectedMonths.length > 0 ? '#182350' : '#E8ECF4'}`, background: selectedMonths.length > 0 ? '#182350' : '#F8FAFD', color: selectedMonths.length > 0 ? '#fff' : '#8492A6', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {selectedMonths.length > 0 ? `${selectedMonths.length} Month${selectedMonths.length > 1 ? 's' : ''} Selected` : 'Filter by Month'}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {showMonthDrop && (
+              <>
+                <div onClick={() => setShowMonthDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
+                <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(24,35,80,0.14)', border: '1px solid #F0F3FA', minWidth: 210, maxHeight: 320, overflowY: 'auto', padding: '8px 0' }}>
+                  {selectedMonths.length > 0 && (
+                    <button onClick={() => setSelectedMonths([])}
+                      style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#EF4444', cursor: 'pointer', borderBottom: '1px solid #F0F3FA', marginBottom: 4 }}>
+                      Clear All
+                    </button>
+                  )}
+                  {monthOptions.map(({ key, label }) => {
+                    const sel = selectedMonths.includes(key);
+                    return (
+                      <button key={key} onClick={() => setSelectedMonths(prev => sel ? prev.filter(m => m !== key) : [...prev, key])}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#EFF6FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                        <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${sel ? '#182350' : '#CBD5E1'}`, background: sel ? '#182350' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {sel && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#182350' : '#4B5563' }}>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        {selectedMonths.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+            {[...selectedMonths].sort().map(m => {
+              const [y, mo] = m.split('-').map(Number);
+              const label = new Date(y, mo - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+              return (
+                <span key={m} onClick={() => setSelectedMonths(prev => prev.filter(x => x !== m))}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {label}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <TrendCharts
+        trend={selectedMonths.length > 0 && monthTrend ? monthTrend : trend}
+        dateFrom={selectedMonths.length > 0 && monthTrend ? monthTrend.date_from : dateFrom}
+        dateTo={selectedMonths.length > 0 && monthTrend ? monthTrend.date_to : dateTo}
+        loading={selectedMonths.length > 0 ? !monthTrend : trendLoading}
+      />
 
     </div>
   );
