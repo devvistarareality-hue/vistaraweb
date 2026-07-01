@@ -45,9 +45,8 @@ const CustomTooltip = ({ active, payload, label, color, metricLabel }) => {
 
 function SingleChart({ title, badge, data, color, gradientId, metricLabel, emptyMsg }) {
   const total = data.reduce((s, d) => s + d.count, 0);
-  const displayData = data.length > 14
-    ? data.filter((_, i) => i % Math.ceil(data.length / 14) === 0 || i === data.length - 1)
-    : data;
+  // Keep ALL data points so no spikes are lost — only reduce x-axis label frequency
+  const labelInterval = data.length > 14 ? Math.ceil(data.length / 6) : 0;
 
   return (
     <div style={cardStyle}>
@@ -70,7 +69,7 @@ function SingleChart({ title, badge, data, color, gradientId, metricLabel, empty
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={120}>
-          <AreaChart data={displayData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={color} stopOpacity={0.18} />
@@ -78,7 +77,7 @@ function SingleChart({ title, badge, data, color, gradientId, metricLabel, empty
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#F0F3FA" vertical={false} />
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} interval={labelInterval} />
             <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} width={32} />
             <Tooltip content={<CustomTooltip color={color} metricLabel={metricLabel} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 2' }} />
             <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2.5} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
