@@ -94,18 +94,22 @@ export default function SalesLayout({ children }) {
     if (isVRLAdmin) dispatch(fetchCompanies());
   }, [isVRLAdmin]);
 
-  // Session guard: validate token on mount and whenever the tab regains focus.
+  // Session guard: validate token on mount, on tab focus, and every 30 seconds.
   // If another device has logged in since, the refresh will fail → auto-logout.
   useEffect(() => {
     async function checkSession() {
       if (typeof window === 'undefined') return;
       if (!localStorage.getItem('access_token')) return;
       await apiFetch(AUTH_ENDPOINTS.me);
-      // apiFetch handles 401 internally: tries refresh, then dispatches LOGOUT
+      // apiFetch handles 401 internally: tries refresh, then dispatches LOGOUT + redirect
     }
     checkSession();
     window.addEventListener('focus', checkSession);
-    return () => window.removeEventListener('focus', checkSession);
+    const interval = setInterval(checkSession, 30_000);
+    return () => {
+      window.removeEventListener('focus', checkSession);
+      clearInterval(interval);
+    };
   }, []);
 
   function handleLogout() {
