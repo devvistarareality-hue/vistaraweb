@@ -33,7 +33,7 @@ export const login = (companyCode, userCode, password) => async (dispatch) => {
     const res  = await fetch(AUTH_ENDPOINTS.login, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ company_code: companyCode, user_code: userCode, password }),
+      body:    JSON.stringify({ company_code: companyCode, user_code: userCode, password, platform: 'web' }),
     });
     const data = await res.json();
     if (res.ok) {
