@@ -7,6 +7,7 @@ import { logout } from '../../redux/actions/authActions';
 import { fetchCompanies } from '../../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminFilterReducer';
 import { AUTH_ENDPOINTS } from '../../constants/api';
+import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
@@ -92,6 +93,20 @@ export default function SalesLayout({ children }) {
     dispatch(restoreAdminFilter());
     if (isVRLAdmin) dispatch(fetchCompanies());
   }, [isVRLAdmin]);
+
+  // Session guard: validate token on mount and whenever the tab regains focus.
+  // If another device has logged in since, the refresh will fail → auto-logout.
+  useEffect(() => {
+    async function checkSession() {
+      if (typeof window === 'undefined') return;
+      if (!localStorage.getItem('access_token')) return;
+      await apiFetch(AUTH_ENDPOINTS.me);
+      // apiFetch handles 401 internally: tries refresh, then dispatches LOGOUT
+    }
+    checkSession();
+    window.addEventListener('focus', checkSession);
+    return () => window.removeEventListener('focus', checkSession);
+  }, []);
 
   function handleLogout() {
     dispatch(logout());
