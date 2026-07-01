@@ -223,92 +223,66 @@ function TelecallerDashboard({ user }) {
   const today = toIST(new Date());
   const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toIST(d); };
 
-  const [stats,            setStats]            = useState(null);
-  const [loading,          setLoading]          = useState(true);
-  const [dateFrom,         setDateFrom]         = useState('');
-  const [dateTo,           setDateTo]           = useState('');
-  const [trend,            setTrend]            = useState(null);
-  const [trendLoading,     setTrendLoading]     = useState(true);
-  const [selectedMonths,   setSelectedMonths]   = useState([]);
-  const [monthTrend,       setMonthTrend]       = useState(null);
-  const [showMonthDrop,    setShowMonthDrop]    = useState(false);
+  const [stats,          setStats]          = useState(null);
+  const [loading,        setLoading]        = useState(true);
+  const [dateFrom,       setDateFrom]       = useState('');
+  const [dateTo,         setDateTo]         = useState('');
+  const [trend,          setTrend]          = useState(null);
+  const [trendLoading,   setTrendLoading]   = useState(true);
+  const [selectedMonths, setSelectedMonths] = useState([]);
+  const [showMonthDrop,  setShowMonthDrop]  = useState(false);
 
   const monthOptions = Array.from({ length: 24 }, (_, i) => {
     const d = new Date();
     d.setDate(1);
     d.setMonth(d.getMonth() - i);
-    const key = toIST(d).slice(0, 7); // 'YYYY-MM'
+    const key = toIST(d).slice(0, 7);
     const label = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
     return { key, label };
   });
 
-  const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD', cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500 };
-  const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#182350' : '#F0F2F8', color: active ? '#fff' : '#8492A6' });
-  const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
-
-  // Stats re-fetch whenever date filter changes
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    setStats(null);
-    setLoading(true);
-    (async () => {
-      try {
-        const params = new URLSearchParams();
-        if (dateFrom) params.set('date_from', dateFrom);
-        if (dateTo)   params.set('date_to',   dateTo);
-        const qs = params.toString() ? `?${params}` : '';
-        console.log('[TelecallerDashboard] fetching stats:', SALES_ENDPOINTS.stats + qs);
-        const res = await fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders(), cache: 'no-store' });
-        if (cancelled) return;
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setStats(data);
-        }
-      } catch (_) {}
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [user?.id, dateFrom, dateTo]);
-
-  // Trend charts — re-fetch with same date range
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    setTrendLoading(true);
-    (async () => {
-      try {
-        const params = new URLSearchParams();
-        if (dateFrom) params.set('date_from', dateFrom);
-        if (dateTo)   params.set('date_to',   dateTo);
-        const qs  = params.toString() ? `?${params}` : '';
-        const res = await fetch(`${SALES_ENDPOINTS.statsTrend}${qs}`, { headers: authHeaders(), cache: 'no-store' });
-        if (cancelled) return;
-        if (res.ok) { const data = await res.json(); if (!cancelled) setTrend(data); }
-      } catch (_) {}
-      if (!cancelled) setTrendLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [user?.id, dateFrom, dateTo]);
-
-  // Month-filtered trend fetch (independent of main date filter)
-  useEffect(() => {
-    if (!user?.id || selectedMonths.length === 0) { setMonthTrend(null); return; }
-    let cancelled = false;
-    (async () => {
+  // Compute effective date range: month filter overrides date filter
+  const effectiveDates = (() => {
+    if (selectedMonths.length > 0) {
       const sorted = [...selectedMonths].sort();
       const [ey, em] = sorted[0].split('-').map(Number);
       const [ly, lm] = sorted[sorted.length - 1].split('-').map(Number);
       const from = `${ey}-${String(em).padStart(2,'0')}-01`;
       const lastDay = new Date(ly, lm, 0).getDate();
       const to = `${ly}-${String(lm).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      return { from, to };
+    }
+    return { from: dateFrom, to: dateTo };
+  })();
+
+  const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD', cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500 };
+  const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#182350' : '#F0F2F8', color: active ? '#fff' : '#8492A6' });
+  const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
+
+  // Fetch stats + trend together using effective date range
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    setStats(null); setTrend(null);
+    setLoading(true); setTrendLoading(true);
+    (async () => {
       try {
-        const res = await fetch(`${SALES_ENDPOINTS.statsTrend}?date_from=${from}&date_to=${to}`, { headers: authHeaders(), cache: 'no-store' });
-        if (res.ok && !cancelled) { const d = await res.json(); setMonthTrend(d); }
+        const params = new URLSearchParams();
+        if (effectiveDates.from) params.set('date_from', effectiveDates.from);
+        if (effectiveDates.to)   params.set('date_to',   effectiveDates.to);
+        const qs = params.toString() ? `?${params}` : '';
+        const [statsRes, trendRes] = await Promise.all([
+          fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders(), cache: 'no-store' }),
+          fetch(`${SALES_ENDPOINTS.statsTrend}${qs}`, { headers: authHeaders(), cache: 'no-store' }),
+        ]);
+        if (cancelled) return;
+        if (statsRes.ok) { const d = await statsRes.json(); if (!cancelled) setStats(d); }
+        if (trendRes.ok) { const d = await trendRes.json(); if (!cancelled) setTrend(d); }
       } catch (_) {}
+      if (!cancelled) { setLoading(false); setTrendLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [user?.id, selectedMonths]);
+  }, [user?.id, dateFrom, dateTo, selectedMonths]);
 
   const total    = stats?.total_leads    ?? 0;
   const newToday = stats?.leads_today    ?? 0;
@@ -417,12 +391,7 @@ function TelecallerDashboard({ user }) {
           })}
         </div>
       )}
-      <TrendCharts
-        trend={selectedMonths.length > 0 && monthTrend ? monthTrend : trend}
-        dateFrom={selectedMonths.length > 0 && monthTrend ? monthTrend.date_from : dateFrom}
-        dateTo={selectedMonths.length > 0 && monthTrend ? monthTrend.date_to : dateTo}
-        loading={selectedMonths.length > 0 ? !monthTrend : trendLoading}
-      />
+      <TrendCharts trend={trend} dateFrom={effectiveDates.from} dateTo={effectiveDates.to} loading={trendLoading} />
 
     </div>
   );
