@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { SALES_ENDPOINTS, authHeaders } from '../../constants/api';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
+
+const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 
 
 // ─────────────────────────────────────────────
@@ -220,11 +223,13 @@ function TelecallerDashboard({ user }) {
   const today = toIST(new Date());
   const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toIST(d); };
 
-  const [stats,    setStats]    = useState(null);
-  const [leads,    setLeads]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo,   setDateTo]   = useState('');
+  const [stats,        setStats]        = useState(null);
+  const [leads,        setLeads]        = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [dateFrom,     setDateFrom]     = useState('');
+  const [dateTo,       setDateTo]       = useState('');
+  const [trend,        setTrend]        = useState(null);
+  const [trendLoading, setTrendLoading] = useState(true);
 
   const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD', cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500 };
   const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#182350' : '#F0F2F8', color: active ? '#fff' : '#8492A6' });
@@ -251,6 +256,26 @@ function TelecallerDashboard({ user }) {
         }
       } catch (_) {}
       if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, dateFrom, dateTo]);
+
+  // Trend charts — re-fetch with same date range
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    setTrendLoading(true);
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (dateFrom) params.set('date_from', dateFrom);
+        if (dateTo)   params.set('date_to',   dateTo);
+        const qs  = params.toString() ? `?${params}` : '';
+        const res = await fetch(`${SALES_ENDPOINTS.statsTrend}${qs}`, { headers: authHeaders(), cache: 'no-store' });
+        if (cancelled) return;
+        if (res.ok) { const data = await res.json(); if (!cancelled) setTrend(data); }
+      } catch (_) {}
+      if (!cancelled) setTrendLoading(false);
     })();
     return () => { cancelled = true; };
   }, [user?.id, dateFrom, dateTo]);
@@ -324,6 +349,9 @@ function TelecallerDashboard({ user }) {
           {cards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
       )}
+
+      {/* Trend Charts */}
+      <TrendCharts trend={trend} dateFrom={dateFrom} dateTo={dateTo} loading={trendLoading} />
 
       {/* Call Queue — leads needing follow-up */}
       {!loading && leads.filter(l => !l.telecaller_status || l.telecaller_status === 'not_reachable' || l.telecaller_status === 'callback').length > 0 && (

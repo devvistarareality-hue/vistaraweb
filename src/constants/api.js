@@ -37,6 +37,7 @@ export const USER_ENDPOINTS = {
 
 export const SALES_ENDPOINTS = {
   get stats()      { return `${BASE_URL}/api/sales/stats/`; },
+  get statsTrend() { return `${BASE_URL}/api/sales/stats/trend/`; },
   get leads()      { return `${BASE_URL}/api/sales/leads/`; },
   get bulkDelete() { return `${BASE_URL}/api/sales/leads/bulk-delete/`; },
   lead: (id)       => `${BASE_URL}/api/sales/leads/${id}/`,
