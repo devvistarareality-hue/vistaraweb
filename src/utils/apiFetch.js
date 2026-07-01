@@ -31,6 +31,8 @@ function forceLogout() {
   localStorage.removeItem('user');
   localStorage.removeItem('company');
   store.dispatch({ type: LOGOUT });
+  // Hard-navigate to the base origin so no stale path remains in the URL
+  window.location.replace(window.location.origin + '/company');
 }
 
 // Drop-in fetch wrapper for authenticated web requests.
