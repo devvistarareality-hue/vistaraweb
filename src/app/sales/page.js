@@ -224,7 +224,6 @@ function TelecallerDashboard({ user }) {
   const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toIST(d); };
 
   const [stats,        setStats]        = useState(null);
-  const [leads,        setLeads]        = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [dateFrom,     setDateFrom]     = useState('');
   const [dateTo,       setDateTo]       = useState('');
@@ -280,21 +279,11 @@ function TelecallerDashboard({ user }) {
     return () => { cancelled = true; };
   }, [user?.id, dateFrom, dateTo]);
 
-  // Call Queue loads ALL pending leads — never date-filtered
-  useEffect(() => {
-    if (!user?.id) return;
-    fetch(`${SALES_ENDPOINTS.leads}?telecaller_id=${user.id}&page_size=100`, { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] }))
-      .then(d => setLeads(Array.isArray(d) ? d : (d?.results ?? [])));
-  }, [user?.id]);
-
-  const count = (key, val) => leads.filter((l) => l[key] === val).length;
-  const total    = stats?.total_leads    ?? leads.length;
+  const total    = stats?.total_leads    ?? 0;
   const newToday = stats?.leads_today    ?? 0;
   const called   = stats?.called_count   ?? 0;
-  const hot      = stats?.hot_count      ?? count('telecaller_status', 'hot');
-  const warm     = stats?.warm_count     ?? count('telecaller_status', 'warm');
-  const callback = stats?.callback_count ?? count('telecaller_status', 'callback');
+  const warm     = stats?.warm_count     ?? 0;
+  const callback = stats?.callback_count ?? 0;
   const svDone   = stats?.sv_done        ?? 0;
   const closed   = stats?.closures       ?? 0;
   const mqlToSv  = called > 0 ? (svDone / called * 100).toFixed(1) + '%' : '—';
@@ -303,15 +292,12 @@ function TelecallerDashboard({ user }) {
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
     { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
     { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
-    { label: 'Hot',            value: hot,      icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?tab=called&telecaller_status=hot' },
     { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?tab=called&telecaller_status=warm' },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
     { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
     { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?tab=called&telecaller_status=callback' },
     { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
   ];
-
-  const recent = [...leads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -344,7 +330,7 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Stats */}
-      {loading ? <SkeletonGrid count={9} /> : (
+      {loading ? <SkeletonGrid count={8} /> : (
         <div style={statsGrid}>
           {cards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
@@ -352,47 +338,6 @@ function TelecallerDashboard({ user }) {
 
       {/* Trend Charts */}
       <TrendCharts trend={trend} dateFrom={dateFrom} dateTo={dateTo} loading={trendLoading} />
-
-      {/* Call Queue — leads needing follow-up */}
-      {!loading && leads.filter(l => !l.telecaller_status || l.telecaller_status === 'not_reachable' || l.telecaller_status === 'callback').length > 0 && (
-        <div style={{ ...cardWrap, marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#EF4444', animation: 'pulse 1.4s ease infinite' }} />
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>Call Queue</h2>
-              <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: '#FEE2E2', color: '#DC2626', padding: '2px 8px', borderRadius: 20 }}>
-                Needs attention
-              </span>
-            </div>
-            <Link href="/sales/leads" style={{ fontSize: 13, color: '#3D5AFE', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tbl}>
-              <thead>
-                <tr>{['Name','Phone','Project','TC Status','Received'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {leads
-                  .filter(l => !l.telecaller_status || l.telecaller_status === 'not_reachable' || l.telecaller_status === 'callback')
-                  .slice(0, 10)
-                  .map((l) => (
-                    <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
-                      <td style={td}><span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span></td>
-                      <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }}>{l.phone}</td>
-                      <td style={{ ...td, color: '#8492A6' }}>{l.project_name || '—'}</td>
-                      <td style={td}>
-                        {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: '#D1D5DB', fontSize: 12 }}>Not called</span>}
-                      </td>
-                      <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>
-                        {new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
     </div>
   );
