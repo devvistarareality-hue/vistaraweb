@@ -231,7 +231,7 @@ function TelecallerDashboard({ user }) {
   const [trendLoading,   setTrendLoading]   = useState(true);
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [showMonthDrop,    setShowMonthDrop]    = useState(false);
-  const [selectedQuarter,  setSelectedQuarter]  = useState(null);
+  const [selectedQuarter,  setSelectedQuarter]  = useState([]);
   const [showQuarterDrop,  setShowQuarterDrop]  = useState(false);
 
   const currentYear = new Date().getFullYear();
@@ -252,9 +252,11 @@ function TelecallerDashboard({ user }) {
 
   // Effective date range: quarter > months > date filter
   const effectiveDates = (() => {
-    if (selectedQuarter) {
-      const q = QUARTERS.find(q => q.key === selectedQuarter);
-      return { from: q.from, to: q.to };
+    if (selectedQuarter.length > 0) {
+      const qs = QUARTERS.filter(q => selectedQuarter.includes(q.key));
+      const froms = qs.map(q => q.from).sort();
+      const tos   = qs.map(q => q.to).sort();
+      return { from: froms[0], to: tos[tos.length - 1] };
     }
     if (selectedMonths.length > 0) {
       const sorted = [...selectedMonths].sort();
@@ -340,11 +342,11 @@ function TelecallerDashboard({ user }) {
         <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
         <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
         <div style={divider} />
-        <button onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
-        <button onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter(null); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
-        <button onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter(null); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
+        <button onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
+        <button onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
+        <button onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
         <div style={divider} />
-        <button onClick={() => { setDateFrom(''); setDateTo(''); setSelectedMonths([]); setSelectedQuarter(null); }} style={qBtn(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter)}>All</button>
+        <button onClick={() => { setDateFrom(''); setDateTo(''); setSelectedMonths([]); setSelectedQuarter([]); }} style={qBtn(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length)}>All</button>
         <div style={divider} />
         <div style={{ position: 'relative' }}>
           <button onClick={() => setShowMonthDrop(v => !v)}
@@ -366,7 +368,7 @@ function TelecallerDashboard({ user }) {
                 {monthOptions.map(({ key, label }) => {
                   const sel = selectedMonths.includes(key);
                   return (
-                    <button key={key} onClick={() => { setSelectedQuarter(null); setSelectedMonths(prev => sel ? prev.filter(m => m !== key) : [...prev, key]); }}
+                    <button key={key} onClick={() => { setSelectedQuarter([]); setSelectedMonths(prev => sel ? prev.filter(m => m !== key) : [...prev, key]); }}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#EFF6FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
                       <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? '#182350' : '#CBD5E1'}`, background: sel ? '#182350' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -382,28 +384,32 @@ function TelecallerDashboard({ user }) {
         <div style={divider} />
         {/* Quarter Dropdown */}
         <div style={{ position: 'relative' }}>
-          <button onClick={() => setShowQuarterDrop(v => !v)}
-            style={{ ...qBtn(!!selectedQuarter), display: 'flex', alignItems: 'center', gap: 5 }}>
-            {selectedQuarter ? `${selectedQuarter} (${QUARTERS.find(q=>q.key===selectedQuarter)?.sub})` : 'Quarter'}
+          <button onClick={() => { setShowQuarterDrop(v => !v); setShowMonthDrop(false); }}
+            style={{ ...qBtn(selectedQuarter.length > 0), display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {selectedQuarter.length > 0 ? `${selectedQuarter.length} Quarter${selectedQuarter.length > 1 ? 's' : ''}` : 'Quarter'}
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           {showQuarterDrop && (
             <>
               <div onClick={() => setShowQuarterDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(24,35,80,0.14)', border: '1px solid #F0F3FA', minWidth: 190, padding: '8px 0' }}>
-                {selectedQuarter && (
-                  <button onClick={() => { setSelectedQuarter(null); setShowQuarterDrop(false); }}
+              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(24,35,80,0.14)', border: '1px solid #F0F3FA', minWidth: 210, padding: '8px 0' }}>
+                {selectedQuarter.length > 0 && (
+                  <button onClick={() => setSelectedQuarter([])}
                     style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#EF4444', cursor: 'pointer', borderBottom: '1px solid #F0F3FA', marginBottom: 4 }}>
-                    Clear
+                    Clear All
                   </button>
                 )}
                 {QUARTERS.map(({ key, label, sub }) => {
-                  const sel = selectedQuarter === key;
+                  const sel = selectedQuarter.includes(key);
                   return (
-                    <button key={key} onClick={() => { setSelectedQuarter(sel ? null : key); setSelectedMonths([]); setDateFrom(''); setDateTo(''); setShowQuarterDrop(false); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: sel ? '#EFF6FF' : 'none', border: 'none', cursor: 'pointer' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: sel ? '#182350' : '#1A1A2E' }}>{label}</span>
-                      <span style={{ fontSize: 11, color: '#8492A6' }}>{sub}</span>
+                    <button key={key} onClick={() => { setSelectedQuarter(prev => sel ? prev.filter(k => k !== key) : [...prev, key]); setSelectedMonths([]); setDateFrom(''); setDateTo(''); }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#EFF6FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                      <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? '#182350' : '#CBD5E1'}`, background: sel ? '#182350' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#182350' : '#4B5563' }}>{label}</span>
+                      <span style={{ fontSize: 11, color: '#8492A6', marginLeft: 'auto' }}>{sub}</span>
                     </button>
                   );
                 })}
