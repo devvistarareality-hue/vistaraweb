@@ -232,14 +232,13 @@ function TelecallerDashboard({ user }) {
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [showMonthDrop,  setShowMonthDrop]  = useState(false);
 
-  const monthOptions = Array.from({ length: 24 }, (_, i) => {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - i);
-    const key = toIST(d).slice(0, 7);
-    const label = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const currentYear = new Date().getFullYear();
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(currentYear, i, 1);
+    const key = `${currentYear}-${String(i + 1).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('en-IN', { month: 'long' });
     return { key, label };
-  });
+  }).reverse();
 
   // Compute effective date range: month filter overrides date filter
   const effectiveDates = (() => {
