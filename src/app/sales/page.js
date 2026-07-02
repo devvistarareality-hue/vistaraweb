@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { SALES_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import DateFilter from './_DateFilter';
+import { SingleChart, fillDates } from './_TrendCharts';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
@@ -505,6 +506,7 @@ function TelecallerDashboard({ user }) {
 // ─────────────────────────────────────────────
 function STMDashboard({ user }) {
   const [stats,   setStats]   = useState(null);
+  const [trend,   setTrend]   = useState(null);
   const [leads,   setLeads]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [eff,     setEff]     = useState({ from: '', to: '' }); // date filter range
@@ -524,9 +526,11 @@ function STMDashboard({ user }) {
     Promise.all([
       apiFetch(`${SALES_ENDPOINTS.stats}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
       apiFetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] })),
-    ]).then(([s, d]) => {
+      apiFetch(`${SALES_ENDPOINTS.statsTrend}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([s, d, t]) => {
       if (cancelled) return;
       if (s) setStats(s);
+      if (t) setTrend(t);
       const list = Array.isArray(d) ? d : (d.results ?? []);
       setLeads(list);
       setLoading(false);
@@ -576,6 +580,25 @@ function STMDashboard({ user }) {
             { label: 'SV Done / Low Hanging', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
             { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
           ].map((c) => <StatCard key={c.label} {...c} />)}
+        </div>
+      )}
+
+      {!loading && trend && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+          {[
+            { key: 'stm_hot',  title: 'Hot Leads',   badge: 'Hot Trend',      color: '#DC2626', metric: 'Hot' },
+            { key: 'stm_warm', title: 'Warm Leads',  badge: 'Warm Trend',     color: '#EA580C', metric: 'Warm' },
+            { key: 'stm_cold', title: 'Cold Leads',  badge: 'Cold Trend',     color: '#2563EB', metric: 'Cold' },
+            { key: 'sv',       title: 'Site Visits', badge: 'SV Trend',       color: '#10B981', metric: 'SV' },
+            { key: 'closures', title: 'Closures',    badge: 'Closures Trend', color: '#7C3AED', metric: 'Closures' },
+          ].map((c) => (
+            <div key={c.key} style={{ flex: '1 1 300px', minWidth: 0 }}>
+              <SingleChart title={c.title} badge={c.badge}
+                data={fillDates(trend[c.key] || [], trend.date_from, trend.date_to)}
+                color={c.color} gradientId={`stm_${c.key}`} metricLabel={c.metric}
+                emptyMsg={`No ${c.metric} data for this range`} />
+            </div>
+          ))}
         </div>
       )}
 

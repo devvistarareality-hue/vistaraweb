@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, defs, linearGradient, stop
 } from 'recharts';
 
-function fillDates(rows, dateFrom, dateTo) {
+export function fillDates(rows, dateFrom, dateTo) {
   const map = {};
   rows.forEach(r => { map[r.date] = r.count; });
 
@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload, label, color, metricLabel }) => {
   );
 };
 
-function SingleChart({ title, badge, data, color, gradientId, metricLabel, emptyMsg }) {
+export function SingleChart({ title, badge, data, color, gradientId, metricLabel, emptyMsg }) {
   const total = data.reduce((s, d) => s + d.count, 0);
   // Keep ALL data points so no spikes are lost — only reduce x-axis label frequency
   const labelInterval = data.length > 14 ? Math.ceil(data.length / 6) : 0;
