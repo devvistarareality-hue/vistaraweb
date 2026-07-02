@@ -118,7 +118,7 @@ function StatCard({ label, value, icon, color, textColor, href, loading }) {
         ? <div style={{ height: 28, width: 48, borderRadius: 6, background: '#E8ECF4', animation: 'pulse 1.4s ease infinite' }} />
         : <div style={{ fontSize: 26, fontWeight: 800, color: '#1A1A2E', lineHeight: 1 }}>{(value ?? 0).toLocaleString()}</div>
       }
-      <div style={{ fontSize: 12, color: '#8492A6', marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#8492A6', marginTop: 4, lineHeight: 1.3, minHeight: 31 }}>{label}</div>
     </div>
   );
   return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
