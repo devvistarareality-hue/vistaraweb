@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { SALES_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
+import DateFilter from './_DateFilter';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
@@ -506,6 +507,7 @@ function STMDashboard({ user }) {
   const [stats,   setStats]   = useState(null);
   const [leads,   setLeads]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [eff,     setEff]     = useState({ from: '', to: '' }); // date filter range
   // CP Executives reuse this dashboard but aren't in the availability/distribution
   // pool, so the "Mark Available" toggle doesn't apply to them.
   const _des = (user?.designation || '').toLowerCase();
@@ -513,28 +515,33 @@ function STMDashboard({ user }) {
 
   useEffect(() => {
     if (!user?.id) return;
-    const cacheKey = `stm_dash_${user.id}`;
-    const cached = getCache(cacheKey);
-    if (cached) { setStats(cached.stats); setLeads(cached.leads); setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (eff.from) params.set('date_from', eff.from);
+    if (eff.to)   params.set('date_to',   eff.to);
+    const qs = params.toString() ? `?${params}` : '';
     Promise.all([
-      apiFetch(SALES_ENDPOINTS.stats).then(r => r.json()).catch(() => null),
-      apiFetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`).then(r => r.json()).catch(() => ({ results: [] })),
+      apiFetch(`${SALES_ENDPOINTS.stats}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      apiFetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] })),
     ]).then(([s, d]) => {
-      s && setStats(s);
+      if (cancelled) return;
+      if (s) setStats(s);
       const list = Array.isArray(d) ? d : (d.results ?? []);
       setLeads(list);
-      setCache(cacheKey, { stats: s, leads: list });
       setLoading(false);
     });
-  }, [user?.id]);
+    return () => { cancelled = true; };
+  }, [user?.id, eff.from, eff.to]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
-  // Backend's true count (scoped to this STM's leads) — the leads endpoint
-  // caps results at PAGE_SIZE (25), so leads.length under-counts past 25.
-  const total      = stats?.total_leads ?? leads.length;
-  const hot        = count('stm_status', 'hot');
-  const warm       = count('stm_status', 'warm');
-  const svSched    = count('stm_status', 'sv_scheduled');
+  // Prefer the backend's date-scoped counts (stm_status based); fall back to the
+  // client-side count of the loaded pipeline when stats aren't available.
+  const total      = stats?.total_leads          ?? leads.length;
+  const hot        = stats?.stm_hot_count         ?? count('stm_status', 'hot');
+  const warm       = stats?.stm_warm_count        ?? count('stm_status', 'warm');
+  const cold       = stats?.stm_cold_count        ?? count('stm_status', 'cold');
+  const svSched    = stats?.stm_sv_scheduled_count ?? count('stm_status', 'sv_scheduled');
   const svDone     = stats?.sv_done ?? count('stm_status', 'sv_done');
   const closed     = stats?.closures ?? count('stm_status', 'closed');
 
@@ -556,14 +563,17 @@ function STMDashboard({ user }) {
         {!isCp && <AvailabilityToggle />}
       </div>
 
-      {loading ? <SkeletonGrid count={6} /> : (
+      <DateFilter onChange={setEff} />
+
+      {loading ? <SkeletonGrid count={7} /> : (
         <div style={statsGrid}>
           {[
             { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
             { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
             { label: 'Warm Leads',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
+            { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
             { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
-            { label: 'SV Done',        value: svDone,  icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
+            { label: 'SV Done / Low Hanging', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
             { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
           ].map((c) => <StatCard key={c.label} {...c} />)}
         </div>
