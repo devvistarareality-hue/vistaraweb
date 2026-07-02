@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
-import { SALES_ENDPOINTS, authHeaders } from '../../constants/api';
+import { SALES_ENDPOINTS } from '../../constants/api';
+import { apiFetch } from '../../utils/apiFetch';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
@@ -19,15 +20,15 @@ function AvailabilityToggle() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    fetch(SALES_ENDPOINTS.availabilityMe, { headers: authHeaders() })
+    apiFetch(SALES_ENDPOINTS.availabilityMe)
       .then((r) => r.json()).then(setState).catch(() => {});
   }, []);
 
   async function toggle(makeAvailable) {
     setBusy(true);
     try {
-      const res = await fetch(SALES_ENDPOINTS.availabilityMe, {
-        method: 'POST', headers: authHeaders(),
+      const res = await apiFetch(SALES_ENDPOINTS.availabilityMe, {
+        method: 'POST',
         body: JSON.stringify({ is_available: makeAvailable }),
       });
       if (res.ok) setState(await res.json());
@@ -149,7 +150,7 @@ function AdminDashboard({ user }) {
     const { data: cached, fresh } = getCacheWithStatus(cacheKey);
     if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
     const url = companyId ? `${SALES_ENDPOINTS.stats}?company_id=${companyId}` : SALES_ENDPOINTS.stats;
-    fetch(url, { headers: authHeaders() })
+    apiFetch(url)
       .then((r) => r.json())
       .then((d) => { setCache(cacheKey, d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
@@ -302,8 +303,8 @@ function TelecallerDashboard({ user }) {
         if (effectiveDates.to)   params.set('date_to',   effectiveDates.to);
         const qs = params.toString() ? `?${params}` : '';
         const [statsRes, trendRes] = await Promise.all([
-          fetch(`${SALES_ENDPOINTS.stats}${qs}`, { headers: authHeaders(), cache: 'no-store' }),
-          fetch(`${SALES_ENDPOINTS.statsTrend}${qs}`, { headers: authHeaders(), cache: 'no-store' }),
+          apiFetch(`${SALES_ENDPOINTS.stats}${qs}`, { cache: 'no-store' }),
+          apiFetch(`${SALES_ENDPOINTS.statsTrend}${qs}`, { cache: 'no-store' }),
         ]);
         if (cancelled) return;
         if (statsRes.ok) { const d = await statsRes.json(); if (!cancelled) setStats(d); }
@@ -516,8 +517,8 @@ function STMDashboard({ user }) {
     const cached = getCache(cacheKey);
     if (cached) { setStats(cached.stats); setLeads(cached.leads); setLoading(false); return; }
     Promise.all([
-      fetch(SALES_ENDPOINTS.stats, { headers: authHeaders() }).then(r => r.json()).catch(() => null),
-      fetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ results: [] })),
+      apiFetch(SALES_ENDPOINTS.stats).then(r => r.json()).catch(() => null),
+      apiFetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`).then(r => r.json()).catch(() => ({ results: [] })),
     ]).then(([s, d]) => {
       s && setStats(s);
       const list = Array.isArray(d) ? d : (d.results ?? []);
