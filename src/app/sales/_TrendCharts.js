@@ -95,13 +95,14 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
   const from = dateFrom || defaultFrom;
   const to   = dateTo   || defaultTo;
 
-  const mqlData = trend ? fillDates(trend.mql || [], from, to) : [];
-  const svData  = trend ? fillDates(trend.sv  || [], from, to) : [];
+  const mqlData  = trend ? fillDates(trend.mql  || [], from, to) : [];
+  const svData   = trend ? fillDates(trend.sv   || [], from, to) : [];
+  const warmData = trend ? fillDates(trend.warm || [], from, to) : [];
 
   if (loading) {
     return (
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-        {[1, 2].map(i => (
+        {[1, 2, 3].map(i => (
           <div key={i} style={{ ...cardStyle, height: 196 }}>
             <div style={{ height: 16, width: 120, background: '#F0F3FA', borderRadius: 6, marginBottom: 10 }} />
             <div style={{ height: 28, width: 60, background: '#F0F3FA', borderRadius: 6, marginBottom: 20 }} />
@@ -131,6 +132,15 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
         gradientId="svGrad"
         metricLabel="SV"
         emptyMsg="No SV data for this range"
+      />
+      <SingleChart
+        title="Warm / SQL"
+        badge="Warm Trend"
+        data={warmData}
+        color="#F59E0B"
+        gradientId="warmGrad"
+        metricLabel="Warm"
+        emptyMsg="No warm data for this range"
       />
     </div>
   );
