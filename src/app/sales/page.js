@@ -550,7 +550,6 @@ function STMDashboard({ user }) {
   const closed     = stats?.closures ?? count('stm_status', 'closed');
 
   const svUpcoming = leads.filter(l => l.stm_status === 'sv_scheduled');
-  const recent     = [...leads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -634,45 +633,6 @@ function STMDashboard({ user }) {
         </div>
       )}
 
-      <div style={cardWrap}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>My Pipeline</h2>
-          <Link href="/sales/leads" style={{ fontSize: 13, color: '#B9915E', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
-        </div>
-        {loading ? (
-          <p style={{ textAlign: 'center', color: '#8492A6', padding: '24px 0' }}>Loading…</p>
-        ) : !recent.length ? (
-          <p style={{ textAlign: 'center', color: '#8492A6', padding: '40px 0' }}>No leads assigned to you yet.</p>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tbl}>
-              <thead>
-                <tr>{['Name','Phone','Project','STM Status','Remarks','Received'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {recent.map((l) => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
-                    <td style={td}><span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span></td>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }}>{l.phone}</td>
-                    <td style={{ ...td, color: '#8492A6' }}>{l.project_name || '—'}</td>
-                    <td style={td}>
-                      {l.stm_status ? <StatusBadge status={l.stm_status} /> : <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>}
-                    </td>
-                    <td style={{ ...td, color: '#8492A6', fontSize: 12, maxWidth: 180 }}>
-                      <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {l.stm_remarks || '—'}
-                      </span>
-                    </td>
-                    <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>
-                      {new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
