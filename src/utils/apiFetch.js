@@ -2,7 +2,10 @@ import { LOGOUT } from '../redux/types/authTypes';
 import store from '../redux/store';
 
 const REFRESH_URL = () => {
-  const base = process.env.NEXT_PUBLIC_API_URL || 'https://vistararealtybackend-production.up.railway.app';
+  // Use the same backend the rest of the app talks to (persisted by discoverServer),
+  // so refresh hits the server that signed the token — not a different one.
+  let base = process.env.NEXT_PUBLIC_API_URL || 'https://vistararealtybackend-production.up.railway.app';
+  if (typeof window !== 'undefined') { try { const s = localStorage.getItem('api_base'); if (s) base = s; } catch {} }
   return `${base}/api/auth/token/refresh/`;
 };
 

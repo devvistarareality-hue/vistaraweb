@@ -1,8 +1,20 @@
 export const RAILWAY_URL = 'https://vistararealtybackend-production.up.railway.app';
 
-let BASE_URL = process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
+// Initialise synchronously from the last-discovered backend so the very first
+// request after a hard refresh hits the correct server — otherwise it races the
+// async discoverServer() and hits Railway with a token the local dev backend
+// signed (different SECRET_KEY), 401ing until you navigate.
+let BASE_URL = (() => {
+  if (typeof window !== 'undefined') {
+    try { const saved = localStorage.getItem('api_base'); if (saved) return saved; } catch {}
+  }
+  return process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
+})();
 
-export const setBaseUrl = (url) => { BASE_URL = url; };
+export const setBaseUrl = (url) => {
+  BASE_URL = url;
+  if (typeof window !== 'undefined') { try { localStorage.setItem('api_base', url); } catch {} }
+};
 export const getBaseUrl = () => BASE_URL;
 // LOI document URL — already absolute when stored in Supabase; otherwise prefix the backend.
 export const loiHref = (doc) => (!doc ? '' : (/^https?:\/\//.test(doc) ? doc : getBaseUrl() + doc));
