@@ -4,18 +4,25 @@ import {
 } from 'recharts';
 
 export function fillDates(rows, dateFrom, dateTo) {
-  const map = {};
-  rows.forEach(r => { map[r.date] = r.count; });
+  const map = {}, amtMap = {};
+  rows.forEach(r => { map[r.date] = r.count; if (r.amount != null) amtMap[r.date] = r.amount; });
 
   const result = [];
   const cur = new Date(dateFrom);
   const end = new Date(dateTo);
   while (cur <= end) {
     const key = cur.toISOString().slice(0, 10);
-    result.push({ date: key, count: map[key] ?? 0 });
+    result.push({ date: key, count: map[key] ?? 0, amount: amtMap[key] ?? 0 });
     cur.setDate(cur.getDate() + 1);
   }
   return result;
+}
+
+function fmtAmount(n) {
+  if (!n) return '₹0';
+  if (n >= 1e7) return '₹' + (n / 1e7).toFixed(2).replace(/\.00$/, '') + ' Cr';
+  if (n >= 1e5) return '₹' + (n / 1e5).toFixed(2).replace(/\.00$/, '') + ' L';
+  return '₹' + Math.round(n).toLocaleString('en-IN');
 }
 
 function shortDate(dateStr) {
@@ -33,17 +40,19 @@ const cardStyle = {
   minWidth: 0,
 };
 
-const CustomTooltip = ({ active, payload, label, color, metricLabel }) => {
+const CustomTooltip = ({ active, payload, label, color, metricLabel, showAmount }) => {
   if (!active || !payload?.length) return null;
+  const amt = payload[0].payload?.amount;
   return (
     <div style={{ background: '#1A1A2E', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
       <div style={{ fontWeight: 700, marginBottom: 2 }}>{label ? shortDate(label) : ''}</div>
       <div style={{ color }}>{metricLabel}: <strong>{payload[0].value}</strong></div>
+      {showAmount && <div style={{ color: '#B9915E', marginTop: 2 }}>Amount: <strong>{fmtAmount(amt)}</strong></div>}
     </div>
   );
 };
 
-export function SingleChart({ title, badge, data, color, gradientId, metricLabel, emptyMsg }) {
+export function SingleChart({ title, badge, data, color, gradientId, metricLabel, emptyMsg, showAmount }) {
   const total = data.reduce((s, d) => s + d.count, 0);
   // Keep ALL data points so no spikes are lost — only reduce x-axis label frequency
   const labelInterval = data.length > 14 ? Math.ceil(data.length / 6) : 0;
@@ -79,7 +88,7 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
             <CartesianGrid strokeDasharray="3 3" stroke="#F0F3FA" vertical={false} />
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} interval={labelInterval} />
             <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} width={32} />
-            <Tooltip content={<CustomTooltip color={color} metricLabel={metricLabel} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 2' }} />
+            <Tooltip content={<CustomTooltip color={color} metricLabel={metricLabel} showAmount={showAmount} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 2' }} />
             <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2.5} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>

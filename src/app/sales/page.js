@@ -589,12 +589,13 @@ function STMDashboard({ user }) {
             { key: 'stm_warm', title: 'Warm Leads',  badge: 'Warm Trend',     color: '#EA580C', metric: 'Warm' },
             { key: 'stm_cold', title: 'Cold Leads',  badge: 'Cold Trend',     color: '#2563EB', metric: 'Cold' },
             { key: 'sv',       title: 'Site Visits', badge: 'SV Trend',       color: '#10B981', metric: 'SV' },
-            { key: 'closures', title: 'Closures',    badge: 'Closures Trend', color: '#7C3AED', metric: 'Closures' },
+            { key: 'closures', title: 'Closures',    badge: 'Closures Trend', color: '#7C3AED', metric: 'Closures', showAmount: true },
           ].map((c) => (
             <div key={c.key} style={{ flex: '1 1 300px', minWidth: 0 }}>
               <SingleChart title={c.title} badge={c.badge}
                 data={fillDates(trend[c.key] || [], trend.date_from, trend.date_to)}
                 color={c.color} gradientId={`stm_${c.key}`} metricLabel={c.metric}
+                showAmount={c.showAmount}
                 emptyMsg={`No ${c.metric} data for this range`} />
             </div>
           ))}
