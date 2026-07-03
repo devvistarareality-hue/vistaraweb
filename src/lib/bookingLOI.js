@@ -74,49 +74,46 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     doc.setFont('helvetica', 'bold'); doc.text('Page ' + pageLabel + totalLabel, PW - 12, PH - 5.5, { align: 'right' });
   }
 
-  // ── Letterhead header ──
-  const HDR_H = 34;
-  sf(P); doc.rect(0, 0, PW, HDR_H, 'F');             // navy band
-  sf(G); doc.rect(0, 0, PW, 2.5, 'F');               // gold top accent
-  sf(G); doc.rect(0, HDR_H - 0.8, PW, 0.8, 'F');     // gold bottom hairline
+  // ── Letterhead header (white background) ──
+  const HDR_H = 32;
+  sf(G); doc.rect(0, 0, PW, 2.5, 'F');   // gold accent bar across the page top
 
-  // Company (left) + selected project's logo (right) in slim white chips, centred in the band.
-  const CARD_W = 26, CARD_H = 17, CARD_X = 14, CARD_PAD = 1.5;
-  const CARD_Y = (HDR_H - CARD_H) / 2 + 0.6;
-  function logoCard(logo, cardX) {
+  // Company (left) + selected project's logo (right) placed directly on the white header.
+  function placeLogo(logo, boxX, boxW, boxH, boxY) {
     if (!logo || !logo.dataURL) return;
-    sf([255, 255, 255]); doc.roundedRect(cardX, CARD_Y, CARD_W, CARD_H, 1.5, 1.5, 'F');
-    const availW = CARD_W - CARD_PAD * 2, availH = CARD_H - CARD_PAD * 2;
     const ar = (logo.w || 1) / (logo.h || 1);
-    let w = availW, h = availW / ar;
-    if (h > availH) { h = availH; w = availH * ar; }
-    const x = cardX + (CARD_W - w) / 2, yy = CARD_Y + (CARD_H - h) / 2;
+    let w = boxW, h = boxW / ar;
+    if (h > boxH) { h = boxH; w = boxH * ar; }
+    const x = boxX + (boxW - w) / 2, yy = boxY + (boxH - h) / 2;
     try { doc.addImage(logo.dataURL, 'PNG', x, yy, w, h); } catch (e) {}
   }
-  logoCard(opts.companyLogo, CARD_X);
-  logoCard(opts.projectLogo, PW - CARD_X - CARD_W);
+  const LOGO_W = 32, LOGO_H = 20, LOGO_Y = 7;
+  placeLogo(opts.companyLogo, M - 1, LOGO_W, LOGO_H, LOGO_Y);
+  placeLogo(opts.projectLogo, PW - M + 1 - LOGO_W, LOGO_W, LOGO_H, LOGO_Y);
 
-  // Company name + project
-  st([255, 255, 255]); doc.setFontSize(17); doc.setFont('helvetica', 'bold');
-  doc.text('VISTARA GROUP', PW / 2, 12.5, { align: 'center' });
-  doc.setFontSize(11.5); doc.setFont('helvetica', 'normal'); st([200, 214, 245]);
+  // Company name + project — navy on white
+  st(P); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+  doc.text('VISTARA GROUP', PW / 2, 13, { align: 'center' });
+  st(MD); doc.setFontSize(11.5); doc.setFont('helvetica', 'normal');
   doc.text(meta.project || '', PW / 2, 19.5, { align: 'center' });
 
-  // Document title — gold, letter-spaced, with a short centred accent rule beneath it
-  // (fixed width, so it can never overlap the text).
+  // Document title — gold, letter-spaced (baked-in spaces = exact centering), with a
+  // short centred accent rule beneath it.
   let titleText = isEOI ? 'EXPRESSION OF INTEREST' : 'LETTER OF INTENT';
   if (isRevision) titleText = isEOI ? ('REVISED EOI · R' + revNo) : ('REVISED LOI · R' + revNo);
-  // Bake the letter-spacing into the string (real spaces) so center-alignment is exact
-  // and the accent bar lines up under it. (jsPDF's `charSpace` breaks centered alignment.)
   const spacedTitle = titleText.split('').join(' ');
   doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(G);
-  doc.text(spacedTitle, PW / 2, 27, { align: 'center' });
-  sd(G); doc.setLineWidth(0.5); doc.line(PW / 2 - 18, 29.6, PW / 2 + 18, 29.6);
+  doc.text(spacedTitle, PW / 2, 26.5, { align: 'center' });
+  sd(G); doc.setLineWidth(0.5); doc.line(PW / 2 - 18, 29, PW / 2 + 18, 29);
 
-  // Date — just below the band, right-aligned.
+  // Header/body separator — a navy rule with a thin gold rule under it.
+  sd(P); doc.setLineWidth(0.7); doc.line(M, HDR_H, PW - M, HDR_H);
+  sd(G); doc.setLineWidth(0.4); doc.line(M, HDR_H + 1, PW - M, HDR_H + 1);
+
+  // Date — below the header, right-aligned.
   st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
-  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 5, { align: 'right' });
-  y = HDR_H + 9; drawBorder();
+  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
+  y = HDR_H + 10; drawBorder();
 
   // Client box
   chk(30); sf(P3); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd(P2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
