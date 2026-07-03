@@ -549,6 +549,13 @@ function STMDashboard({ user }) {
   const svDone     = stats?.sv_done ?? count('stm_status', 'sv_done');
   const closed     = stats?.closures ?? count('stm_status', 'closed');
 
+  // Funnel metrics: SQL = leads that reached warm; ratios & avg closure timeline.
+  const sql          = stats?.sql_count ?? warm;
+  const sqlToSv      = sql ? `${Math.round((svDone / sql) * 100)}%` : '—';
+  const sqlToClosure = sql ? `${Math.round((closed / sql) * 100)}%` : '—';
+  const avgCloseMo   = stats?.avg_closure_days != null
+    ? `${(stats.avg_closure_days / 30.44).toFixed(1)} mo` : '—';
+
   const svUpcoming = leads.filter(l => l.stm_status === 'sv_scheduled');
 
   return (
@@ -573,11 +580,14 @@ function STMDashboard({ user }) {
           {[
             { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
             { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
-            { label: 'Warm Leads',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
+            { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
             { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
             { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
             { label: 'SV Done / Low Hanging', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
             { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
+            { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#EEF2FF', textColor: '#4F46E5' },
+            { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: '#F5F3FF', textColor: '#7C3AED' },
+            { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FFF1F2', textColor: '#E11D48' },
           ].map((c) => <StatCard key={c.label} {...c} />)}
         </div>
       )}
