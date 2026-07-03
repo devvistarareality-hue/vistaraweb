@@ -79,7 +79,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   // Logos: company (top-left) + selected project's logo (top-right). Both sit in an
   // identical white card (same size + vertical position) with the image centered inside,
   // so the two sides stay symmetric regardless of each logo's aspect ratio.
-  const CARD_W = 28, CARD_H = 18, CARD_Y = 6, CARD_PAD = 2;
+  // Cards sit clear of the decorative border frame (drawn near y≈6.5 and the side edges)
+  // and are vertically centred in the navy band.
+  const CARD_W = 26, CARD_H = 15, CARD_Y = 8, CARD_X = 12, CARD_PAD = 2;
   function logoCard(logo, cardX) {
     if (!logo || !logo.dataURL) return;
     sf([255, 255, 255]); doc.roundedRect(cardX, CARD_Y, CARD_W, CARD_H, 2, 2, 'F');
@@ -90,8 +92,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const x = cardX + (CARD_W - w) / 2, yy = CARD_Y + (CARD_H - h) / 2;
     try { doc.addImage(logo.dataURL, 'PNG', x, yy, w, h); } catch (e) {}
   }
-  logoCard(opts.companyLogo, 9);
-  logoCard(opts.projectLogo, PW - 9 - CARD_W);
+  logoCard(opts.companyLogo, CARD_X);
+  logoCard(opts.projectLogo, PW - CARD_X - CARD_W);
   st([255, 255, 255]); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
   doc.text('VISTARA GROUP', PW / 2, 13, { align: 'center' });
   doc.setFontSize(13); st([196, 214, 255]); doc.text(meta.project || '', PW / 2, 20.5, { align: 'center' });
