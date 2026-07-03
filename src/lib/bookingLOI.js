@@ -176,7 +176,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
 
   // Agreement Amount
-  if (isAnkholPdf) { secHead('Sale Deed  (60% x Base + Premium - Discount)', [71, 85, 105]); infoGrid([['Sale Deed Amount', 'Rs. ' + num(v.saleDeed)]]); }
+  if (isAnkholPdf) { secHead(`Sale Deed  (${v.saleDeedPct != null ? v.saleDeedPct : 60}% x Base + Premium - Discount)`, [71, 85, 105]); infoGrid([['Sale Deed Amount', 'Rs. ' + num(v.saleDeed)]]); }
   else if (isIndustrialPdf) {
     secHead('Agreement Amount', [71, 85, 105]);
     const rows = [['Sale Deed', 'Rs. ' + num(v.saleDeed) + ' (SD Rate x Plot Area)']];

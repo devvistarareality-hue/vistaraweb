@@ -48,6 +48,8 @@ export function computeFormulas(inp = {}) {
   const premiumLocation = num(inp.premiumLocation);
   const saleDeedRate    = num(inp.saleDeedRate);
   const devAgreementRate = num(inp.devAgreementRate);
+  // Ankhol sale-deed percentage — editable per booking, defaults to 60%.
+  const saleDeedPct = (inp.saleDeedPct === '' || inp.saleDeedPct == null) ? 60 : num(inp.saleDeedPct);
   const devAgreement = devAgreementRate * area;
   const applyRegFee    = inp.applyRegFee    || 'Yes';
   const applyStampDuty = inp.applyStampDuty || 'Yes';
@@ -71,7 +73,7 @@ export function computeFormulas(inp = {}) {
   // Sale Deed / Stamp / Reg / GST per formula set
   let saleDeed = 0, stampDuty = 0, regFees = 0, gst = 0, maintDeposit = 0, maintAdvance = 0;
   if (isAnkhol) {
-    saleDeed     = 0.60 * (plotBasic + constAmt + plotDev + premiumLocation - discount);
+    saleDeed     = (saleDeedPct / 100) * (plotBasic + constAmt + plotDev + premiumLocation - discount);
     stampDuty    = saleDeed * 0.049;
     regFees      = (saleDeed * 0.01) + 1500;
     gst          = saleDeed * 0.05;
@@ -106,7 +108,7 @@ export function computeFormulas(inp = {}) {
   return {
     formulaSet, isTundav, area, landRate, devRate, constArea, constRate, discount,
     lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
-    saleDeedRate, devAgreementRate, devAgreement, stampDuty, regFees, gst,
+    saleDeedRate, saleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
     maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
     applyRegFee, applyStampDuty, applyGst, totalExtra, extraWorkAmt,
     extraWorkDesc: inp.extraWorkDesc || '', finalAmt,

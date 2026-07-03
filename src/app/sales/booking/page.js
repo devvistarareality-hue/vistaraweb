@@ -43,6 +43,7 @@ function BookingPage() {
     client_name: qp.get('client') || '', gender: '', phone: qp.get('phone') || '', address: '', source: '',
     area: '', area_unit: 'sq.yd', const_area: '', villa_type: '',
     land_rate: '', dev_rate: '', const_rate: '', sale_deed_rate: '', dev_agreement_rate: '',
+    sale_deed_pct: '60',
     land_sale_deed: '', const_agreement: '', premium_location: '',
     discount: '0', legal_charges: '', maint_rate: '', maint_months: '',
     apply_reg_fee: 'Yes', apply_stamp_duty: 'Yes', apply_gst: 'Yes',
@@ -74,6 +75,7 @@ function BookingPage() {
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: b.source || '',
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
         land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
@@ -124,6 +126,7 @@ function BookingPage() {
     discount: f.discount, legalCharges: f.legal_charges, maintRate: f.maint_rate, maintMonths: f.maint_months,
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
     premiumLocation: f.premium_location, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
+    saleDeedPct: f.sale_deed_pct,
     applyRegFee: f.apply_reg_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
@@ -155,9 +158,9 @@ function BookingPage() {
     : formulaSet === 'industrial'
       ? `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maintDeposit)} + ${inr(v.maintAdvance)} + ${inr(v.legal)}`
       : `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maint)} + ${inr(v.legal)}`;
-  const saleDeedSub = formulaSet === 'ankhol' ? '60% × (Base + Premium − Discount)' : 'Sale Deed Rate × Plot Area';
+  const saleDeedSub = formulaSet === 'ankhol' ? `${v.saleDeedPct}% × (Base + Premium − Discount)` : 'Sale Deed Rate × Plot Area';
   const saleDeedSub2 = formulaSet === 'ankhol'
-    ? `60% × (${inr(v.plotBasic + v.plotDev + v.constAmt)} + ${inr(v.premiumLocation)} − ${inr(v.discount)})`
+    ? `${v.saleDeedPct}% × (${inr(v.plotBasic + v.plotDev + v.constAmt)} + ${inr(v.premiumLocation)} − ${inr(v.discount)})`
     : `${inr(v.saleDeedRate)} × ${inr(v.area)}`;
   // formula sub-labels shown under each computed value (mirrors GAS)
   const stampSub = (formulaSet === 'ankhol' && f.apply_stamp_duty === 'No') ? 'Not applicable'
@@ -232,6 +235,7 @@ function BookingPage() {
       villa_type: flags.bunglowTypeIsDropdown ? f.villa_type : '', bunglow_type: flags.bunglowTypeFixed || '',
       land_rate: f.land_rate || 0, dev_rate: f.dev_rate || 0, const_rate: f.const_rate || 0,
       sale_deed_rate: f.sale_deed_rate || 0, dev_agreement_rate: f.dev_agreement_rate || 0,
+      sale_deed_pct: f.sale_deed_pct === '' || f.sale_deed_pct == null ? 60 : f.sale_deed_pct,
       maint_rate: f.maint_rate || 0, maint_months: f.maint_months || 0,
       plot_basic: Math.round(v.plotBasic), plot_dev: Math.round(v.plotDev), const_amt: Math.round(v.constAmt),
       sale_deed: Math.round(v.saleDeed), dev_agreement: Math.round(v.devAgreement),
@@ -311,6 +315,7 @@ function BookingPage() {
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
+        {formulaSet === 'ankhol' && <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => set('sale_deed_pct', e.target.value)} /></Row>}
         <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>
       </Section>
 
