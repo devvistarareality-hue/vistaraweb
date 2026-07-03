@@ -23,20 +23,28 @@ export const SLUG_TO_MODULE = {
   hr: 'HR', accounts: 'Accounts & Finance', execution: 'Execution', purchase: 'Purchase', land: 'Land',
 };
 
+// A departmental / module admin = role='Admin' restricted to exactly ONE module
+// (e.g. a Sales Admin). This holds even inside the VRL company.
+export function isModuleAdminUser(user) {
+  return !!(user && user.role === 'Admin' && !user.is_staff && ((user.modules || []).length === 1));
+}
+
 export function isSuperAdmin(user) {
-  return !!(user && (user.is_staff || (user.company_code === 'VRL' && user.role === 'Admin')));
+  if (!user) return false;
+  if (user.is_staff) return true;
+  // VRL company Admin is a platform super-admin UNLESS restricted to a single module.
+  if (user.company_code === 'VRL' && user.role === 'Admin') return !isModuleAdminUser(user);
+  return false;
 }
 
 export function moduleAccess(user) {
   const superAdmin = isSuperAdmin(user);
   const mods = (user && user.modules) || [];
-  // Restricted module admin: Admin, not super, with a proper subset of modules.
-  const isModuleAdmin = !!(user && user.role === 'Admin' && !superAdmin
-    && mods.length > 0 && mods.length < ALL_MODULES.length);
+  const isModuleAdmin = isModuleAdminUser(user) && !superAdmin;
   const allowed = superAdmin ? ALL_MODULES : mods;
   // Where this user should land: super/full-admin → launcher; single-module admin → that module.
   let home = '/admin';
-  if (isModuleAdmin && mods.length === 1 && MODULE_ROUTES[mods[0]]) home = MODULE_ROUTES[mods[0]];
+  if (isModuleAdmin && MODULE_ROUTES[mods[0]]) home = MODULE_ROUTES[mods[0]];
   return { superAdmin, isModuleAdmin, allowed, home };
 }
 
