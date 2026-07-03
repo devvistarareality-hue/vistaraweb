@@ -102,17 +102,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   doc.setFontSize(11.5); doc.setFont('helvetica', 'normal'); st([200, 214, 245]);
   doc.text(meta.project || '', PW / 2, 19.5, { align: 'center' });
 
-  // Document title — gold, flanked by thin gold rules (clean letterhead divider, no pill).
+  // Document title — gold, letter-spaced, with a short centred accent rule beneath it
+  // (fixed width, so it can never overlap the text).
   let titleText = isEOI ? 'EXPRESSION OF INTEREST' : 'LETTER OF INTENT';
   if (isRevision) titleText = isEOI ? ('REVISED EOI · R' + revNo) : ('REVISED LOI · R' + revNo);
-  const ty = 27.5, CS = 1.2;
-  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st(G);
-  doc.text(titleText, PW / 2, ty, { align: 'center', charSpace: CS });
-  const tw = doc.getTextWidth(titleText) + titleText.length * CS;
-  sd(G); doc.setLineWidth(0.4);
-  const RULE_EDGE = 58, RULE_GAP = 5;
-  doc.line(RULE_EDGE, ty - 1.1, PW / 2 - tw / 2 - RULE_GAP, ty - 1.1);
-  doc.line(PW / 2 + tw / 2 + RULE_GAP, ty - 1.1, PW - RULE_EDGE, ty - 1.1);
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(G);
+  doc.text(titleText, PW / 2, 27, { align: 'center', charSpace: 2 });
+  sd(G); doc.setLineWidth(0.5); doc.line(PW / 2 - 16, 29.6, PW / 2 + 16, 29.6);
 
   // Date — just below the band, right-aligned.
   st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
