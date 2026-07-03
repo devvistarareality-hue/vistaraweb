@@ -88,7 +88,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
 
   // ── Minimalist letterhead — matte-blue → white fade, with a small orange accent ──
-  const HDR_H = 33;
+  const HDR_H = 30;
   gradV(0, 0, PW, HDR_H, WASH, WHT);              // soft matte-blue → white wash
   gradH(0, 0, PW, 1.8, MB, MB2);                  // matte-blue gradient bar at the top
   sf(ORG); doc.rect(0, 1.8, PW, 0.4, 'F');        // hairline touch of orange under it
@@ -102,15 +102,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const x = boxX + (boxW - w) / 2, yy = boxY + (boxH - h) / 2;
     try { doc.addImage(logo.dataURL, 'PNG', x, yy, w, h); } catch (e) {}
   }
-  const LOGO_W = 32, LOGO_H = 20, LOGO_Y = 7.5;
+  const LOGO_W = 32, LOGO_H = 19, LOGO_Y = 5.5;
   placeLogo(opts.companyLogo, M - 1, LOGO_W, LOGO_H, LOGO_Y);
   placeLogo(opts.projectLogo, PW - M + 1 - LOGO_W, LOGO_W, LOGO_H, LOGO_Y);
 
-  // Company name + project — matte blue
-  st(MB); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-  doc.text('VISTARA GROUP', PW / 2, 13.5, { align: 'center' });
-  st([120, 134, 156]); doc.setFontSize(11.5); doc.setFont('helvetica', 'normal');
-  doc.text(meta.project || '', PW / 2, 20, { align: 'center' });
+  // Project name — primary heading (the company is already shown by the logo).
+  st(MB); doc.setFontSize(17); doc.setFont('helvetica', 'bold');
+  doc.text(meta.project || '', PW / 2, 16, { align: 'center' });
 
   // Document title — matte blue, letter-spaced (baked-in spaces = exact centering),
   // underscored by a small ORANGE accent bar (the little touch of orange).
@@ -118,8 +116,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (isRevision) titleText = isEOI ? ('REVISED EOI · R' + revNo) : ('REVISED LOI · R' + revNo);
   const spacedTitle = titleText.split('').join(' ');
   doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(MB2);
-  doc.text(spacedTitle, PW / 2, 27, { align: 'center' });
-  sf(ORG); doc.roundedRect(PW / 2 - 12, 28.9, 24, 0.9, 0.45, 0.45, 'F');
+  doc.text(spacedTitle, PW / 2, 24.5, { align: 'center' });
+  sf(ORG); doc.roundedRect(PW / 2 - 12, 26.4, 24, 0.9, 0.45, 0.45, 'F');
 
   // Header/body separator — matte-blue rule that fades out to white at both edges.
   const half = (PW - 2 * M) / 2;
