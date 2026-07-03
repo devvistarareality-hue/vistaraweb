@@ -76,21 +76,22 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Header
   sf(P); doc.rect(0, 0, PW, 30, 'F'); sf(G); doc.rect(0, 0, PW, 2.5, 'F');
-  // Logos: company (top-left) + selected project's logo (top-right). Fit into a box,
-  // preserving aspect ratio; silently skipped if the image failed to load.
-  function placeLogo(logo, boxX, boxY, maxW, maxH, alignRight) {
+  // Logos: company (top-left) + selected project's logo (top-right). Both sit in an
+  // identical white card (same size + vertical position) with the image centered inside,
+  // so the two sides stay symmetric regardless of each logo's aspect ratio.
+  const CARD_W = 28, CARD_H = 18, CARD_Y = 6, CARD_PAD = 2;
+  function logoCard(logo, cardX) {
     if (!logo || !logo.dataURL) return;
+    sf([255, 255, 255]); doc.roundedRect(cardX, CARD_Y, CARD_W, CARD_H, 2, 2, 'F');
+    const availW = CARD_W - CARD_PAD * 2, availH = CARD_H - CARD_PAD * 2;
     const ar = (logo.w || 1) / (logo.h || 1);
-    let w = maxW, h = maxW / ar;
-    if (h > maxH) { h = maxH; w = maxH * ar; }
-    const x = alignRight ? boxX + (maxW - w) : boxX;
-    const yy = boxY + (maxH - h) / 2;
-    // White chip so any logo (incl. dark/transparent) stays visible on the navy header.
-    sf([255, 255, 255]); doc.roundedRect(x - 1.5, yy - 1.5, w + 3, h + 3, 1.5, 1.5, 'F');
+    let w = availW, h = availW / ar;
+    if (h > availH) { h = availH; w = availH * ar; }
+    const x = cardX + (CARD_W - w) / 2, yy = CARD_Y + (CARD_H - h) / 2;
     try { doc.addImage(logo.dataURL, 'PNG', x, yy, w, h); } catch (e) {}
   }
-  placeLogo(opts.companyLogo, 9, 5.5, 26, 20, false);
-  placeLogo(opts.projectLogo, PW - 9 - 26, 5.5, 26, 20, true);
+  logoCard(opts.companyLogo, 9);
+  logoCard(opts.projectLogo, PW - 9 - CARD_W);
   st([255, 255, 255]); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
   doc.text('VISTARA GROUP', PW / 2, 13, { align: 'center' });
   doc.setFontSize(13); st([196, 214, 255]); doc.text(meta.project || '', PW / 2, 20.5, { align: 'center' });
