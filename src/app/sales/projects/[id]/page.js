@@ -584,7 +584,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
             <label style={lblStyle}>Label / Size</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input value={sizeVal} onChange={e => setSizeVal(e.target.value)}
-                placeholder="e.g. 5000" type="number" min="0"
+                placeholder="e.g. 5000" type="text" inputMode="decimal"
                 style={{ ...inpStyle, flex: 1 }} />
               <select value={sizeUnit} onChange={e => setSizeUnit(e.target.value)}
                 style={{ ...inpStyle, width: 90, flex: 'none', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238492A6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', paddingRight: 28 }}>
@@ -596,7 +596,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
           <div>
             <label style={lblStyle}>Construction Area (sq.ft)</label>
             <input value={constArea} onChange={e => setConstArea(e.target.value)}
-              placeholder="e.g. 1200" type="number" min="0" style={inpStyle} />
+              placeholder="e.g. 1200" type="text" inputMode="decimal" style={inpStyle} />
           </div>
           {/* Cluster/Type + Number */}
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 10 }}>
@@ -836,9 +836,17 @@ export default function ManagePlotsPage() {
     setSavingMaster(false);
   }
 
+  // Sort strictly by the numeric plot number (1 → n), ignoring the cluster prefix.
+  const plotNumVal = (p) => {
+    const disp = p.cluster_type
+      ? p.number.replace(new RegExp('^' + p.cluster_type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), '')
+      : p.number;
+    const m = String(disp).match(/\d+/);
+    return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+  };
   const filtered = (filter === 'all' ? plots : plots.filter(p => p.status === filter))
     .slice()
-    .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true, sensitivity: 'base' }));
+    .sort((a, b) => (plotNumVal(a) - plotNumVal(b)) || a.number.localeCompare(b.number, undefined, { numeric: true }));
   const counts = {
     all:       plots.length,
     available: plots.filter(p => p.status === 'available').length,
