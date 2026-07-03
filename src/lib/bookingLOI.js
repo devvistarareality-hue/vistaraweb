@@ -151,7 +151,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const subline = o && o.subline;
     chk(subline ? 13 : 8); const isTotal = o && o.total, isSub = o && o.sub, isGreen = o && o.green;
     const h = isTotal ? 10 : (subline ? 12 : 7.5); const LX = M + 3;
-    if (isTotal) { sf(MB); doc.roundedRect(M, y - 5.5, CW, h + 1, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y - 3.5, 1.7, h - 3, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
+    if (isTotal) { sf(MB); doc.roundedRect(M, y - 5.5, CW, h + 1, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y - 3.5, 1.7, h - 3, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, M + 7, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
     if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
     if (rowAlt) { sf([248, 250, 254]); doc.rect(M, y - 5, CW, h, 'F'); }
     rowAlt = !rowAlt;
