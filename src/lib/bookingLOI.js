@@ -270,7 +270,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   installments.forEach((i) => { if (i.isExtra && Math.round(i.amt || 0) > 0) ordered.push(i); });
 
   if (ordered.length > 0) {
-    chk(22); y += 4; secHead('Payment Schedule', [15, 118, 110]); rowAlt = false;
+    chk(25); y += 4; secHead('Payment Schedule'); y += 3; rowAlt = false;
     const DC_NUM = M + 8, DC_DATE = M + 18, DC_PCT = M + 82, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
     sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
     doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
@@ -298,7 +298,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
     });
     chk(12); sf(WASH); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(MB2); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
-    sf(ORG); doc.rect(M, y - 5, 1.6, 10, 'F');
+    sf(ORG); doc.roundedRect(M + 1.2, y - 3, 1.7, 6, 0.85, 0.85, 'F');
     st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('GRAND TOTAL', DC_DATE, y + 1); doc.text('Rs.', DC_RS, y + 1); doc.text(rs(grand), DC_AMT, y + 1, { align: 'right' });
     y += 16;
   }
