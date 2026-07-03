@@ -493,6 +493,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
   const [sizeUnit, setSizeUnit] = useState(UNITS.includes(parsedSize.unit) ? parsedSize.unit : 'sqft');
   const [editType, setEditType] = useState(plot.cluster_type || '');
   const [editNum,  setEditNum]  = useState(displayNum);
+  const [constArea, setConstArea] = useState(plot.construction_area || '');
 
   function openEdit() {
     const p = parseSizeUnit(plot.size);
@@ -500,6 +501,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
     setSizeUnit(UNITS.includes(p.unit) ? p.unit : 'sqft');
     setEditType(plot.cluster_type || '');
     setEditNum(displayNum);
+    setConstArea(plot.construction_area || '');
     setEditing(true);
   }
 
@@ -516,7 +518,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
     const combinedSize = sizeVal.trim() ? `${sizeVal.trim()} ${sizeUnit}` : '';
     const res = await fetch(SALES_ENDPOINTS.plot(plot.id), {
       method: 'PATCH', headers: authHeaders(),
-      body: JSON.stringify({ number: newNumber, size: combinedSize, cluster_type: editType.trim() }),
+      body: JSON.stringify({ number: newNumber, size: combinedSize, construction_area: constArea.trim(), cluster_type: editType.trim() }),
     });
     if (res.ok) { onPlotUpdate(await res.json()); setEditing(false); }
     setSaving(false);
@@ -589,6 +591,12 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
                 {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
+          </div>
+          {/* Construction Area — auto-maps into the booking form */}
+          <div>
+            <label style={lblStyle}>Construction Area (sq.ft)</label>
+            <input value={constArea} onChange={e => setConstArea(e.target.value)}
+              placeholder="e.g. 1200" type="number" min="0" style={inpStyle} />
           </div>
           {/* Cluster/Type + Number */}
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 10 }}>

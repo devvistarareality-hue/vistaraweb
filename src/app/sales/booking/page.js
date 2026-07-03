@@ -105,7 +105,14 @@ function BookingPage() {
         if (picked.length) {
           setPlots(picked); setPlot(picked[0]);
           const sumArea = picked.reduce((a, p) => a + (parseFloat((p.size || '').replace(/[^\d.]/g, '')) || 0), 0);
-          setF((s) => ({ ...s, area: sumArea ? String(+sumArea.toFixed(2)) : s.area, villa_type: '' }));
+          // Auto-map construction area from the plot definition(s) into the booking.
+          const sumConst = picked.reduce((a, p) => a + (parseFloat((p.construction_area || '').replace(/[^\d.]/g, '')) || 0), 0);
+          setF((s) => ({
+            ...s,
+            area: sumArea ? String(+sumArea.toFixed(2)) : s.area,
+            const_area: sumConst ? String(+sumConst.toFixed(2)) : s.const_area,
+            villa_type: '',
+          }));
         }
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
