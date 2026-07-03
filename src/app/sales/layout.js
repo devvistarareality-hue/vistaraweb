@@ -9,7 +9,7 @@ import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminF
 import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
-import { moduleAccess } from '../../lib/moduleAccess';
+import { moduleAccess, isSuperAdmin } from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -83,7 +83,10 @@ export default function SalesLayout({ children }) {
 
   useOneSignal(user?.user_code);
 
-  const isVRLAdmin = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
+  // Only platform super-admins get the company switcher + "Back to Admin". A Sales
+  // (module) admin is scoped to their own company and stays inside Sales.
+  const superAdmin = isSuperAdmin(user);
+  const isVRLAdmin = superAdmin && user?.company_code === 'VRL';
 
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
   const [profileOpen,    setProfileOpen]    = useState(false);
@@ -271,7 +274,7 @@ export default function SalesLayout({ children }) {
             </div>
           )}
 
-          {isAdmin && (
+          {superAdmin && (
             <>
               <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
               <Link href="/admin" className="s-nav-link" style={s.navItem}>
