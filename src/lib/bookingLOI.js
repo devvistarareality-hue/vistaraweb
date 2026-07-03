@@ -145,13 +145,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   });
   y += 30;
 
-  // Section header — flat matte-blue gradient bar with a thin orange edge accent.
-  function secHead(title) { chk(14); gradH(M, y, CW, 8, MB, MB2); sf(ORG); doc.rect(M, y, 1.6, 8, 'F'); st(WHT); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 5, y + 5.5); y += 12; }
+  // Section header — rounded matte-blue bar with a small inset orange accent.
+  function secHead(title) { chk(14); sf(MB); doc.roundedRect(M, y, CW, 8, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y + 2, 1.7, 4, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 5.5, y + 5.5); y += 12; }
   function tRow(label, n, o) {
     const subline = o && o.subline;
     chk(subline ? 13 : 8); const isTotal = o && o.total, isSub = o && o.sub, isGreen = o && o.green;
     const h = isTotal ? 10 : (subline ? 12 : 7.5); const LX = M + 3;
-    if (isTotal) { gradH(M, y - 5.5, CW, h + 1, MB, MB2); sf(ORG); doc.rect(M, y - 5.5, 1.6, h + 1, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
+    if (isTotal) { sf(MB); doc.roundedRect(M, y - 5.5, CW, h + 1, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y - 3.5, 1.7, h - 3, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
     if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
     if (rowAlt) { sf([248, 250, 254]); doc.rect(M, y - 5, CW, h, 'F'); }
     rowAlt = !rowAlt;
@@ -272,7 +272,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (ordered.length > 0) {
     chk(22); y += 4; secHead('Payment Schedule', [15, 118, 110]); rowAlt = false;
     const DC_NUM = M + 8, DC_DATE = M + 18, DC_PCT = M + 82, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
-    gradH(M, y - 5.5, CW, 9, MB, MB2); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+    sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
     doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
     y += 10; let grand = 0;
     ordered.forEach((inst, idx) => {
