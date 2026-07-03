@@ -47,6 +47,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const P = [13, 47, 97], P2 = [26, 115, 232], P3 = [232, 240, 254];
   const G = [196, 149, 60], G2 = [252, 245, 225];
   const DK = [30, 41, 59], MD = [71, 85, 105], LT = [148, 163, 184], LN = [226, 232, 240];
+  // Minimalist matte-blue / white palette + a small orange accent.
+  const MB = [46, 74, 120], MB2 = [92, 124, 172], WASH = [237, 242, 249], WHT = [255, 255, 255], ORG = [255, 107, 43];
   const M = 15, CW = PW - 2 * M;
   let y = 0, pageNum = 1, rowAlt = false;
   const RS_COL = PW - M - 28, NUM_COL = PW - M - 3;
@@ -54,6 +56,17 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const sf = (a) => doc.setFillColor(a[0], a[1], a[2]);
   const sd = (a) => doc.setDrawColor(a[0], a[1], a[2]);
   const st = (a) => doc.setTextColor(a[0], a[1], a[2]);
+  // Stepped-rectangle gradients (jsPDF has no native gradient) — used for the soft
+  // matte-blue → white fades in the letterhead.
+  const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  function gradH(x, y0, w, h, ca, cb, steps = 60) {
+    const sw = w / steps;
+    for (let i = 0; i < steps; i++) { sf(lerp(ca, cb, i / (steps - 1))); doc.rect(x + sw * i, y0, sw + 0.3, h, 'F'); }
+  }
+  function gradV(x, y0, w, h, ca, cb, steps = 60) {
+    const sh = h / steps;
+    for (let i = 0; i < steps; i++) { sf(lerp(ca, cb, i / (steps - 1))); doc.rect(x, y0 + sh * i, w, sh + 0.3, 'F'); }
+  }
   const chk = (n) => { if (y + n > 272) np(); };
   const num = (n) => Number(n || 0).toLocaleString('en-IN');
   function fmtDate(s) { if (!s) return '—'; const p = String(s).split('-'); if (p.length === 3 && p[0].length === 4) return p[2] + '-' + p[1] + '-' + p[0]; return s; }
@@ -64,21 +77,23 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     return (neg ? '-' : '') + result;
   }
   function np() { drawFooter(); doc.addPage(); pageNum++; y = 18; drawBorder(); }
-  function drawBorder() { sd(P3); doc.setLineWidth(1.2); doc.rect(5, 5, PW - 10, PH - 10, 'S'); sd(G); doc.setLineWidth(0.3); doc.rect(6.5, 6.5, PW - 13, PH - 13, 'S'); }
+  function drawBorder() { sd(P3); doc.setLineWidth(1.2); doc.rect(5, 5, PW - 10, PH - 10, 'S'); sd(MB2); doc.setLineWidth(0.3); doc.rect(6.5, 6.5, PW - 13, PH - 13, 'S'); }
   function drawFooter(cp, tp) {
     const pageLabel = cp || pageNum; const totalLabel = tp ? ' of ' + tp : '';
-    sf(P); doc.rect(0, PH - 11, PW, 11, 'F'); sf(G); doc.rect(0, PH - 11, PW, 0.8, 'F');
+    sf(P); doc.rect(0, PH - 11, PW, 11, 'F'); sf(ORG); doc.rect(0, PH - 11, PW, 0.6, 'F');
     st([255, 255, 255]); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
     const docType = isEOI ? 'Expression of Interest' : 'Letter of Intent';
     doc.text('Vistara Group • ' + docType + ' • ' + new Date().toLocaleDateString('en-IN'), PW / 2, PH - 5.5, { align: 'center' });
     doc.setFont('helvetica', 'bold'); doc.text('Page ' + pageLabel + totalLabel, PW - 12, PH - 5.5, { align: 'right' });
   }
 
-  // ── Letterhead header (white background) ──
-  const HDR_H = 32;
-  sf(G); doc.rect(0, 0, PW, 2.5, 'F');   // gold accent bar across the page top
+  // ── Minimalist letterhead — matte-blue → white fade, with a small orange accent ──
+  const HDR_H = 33;
+  gradV(0, 0, PW, HDR_H, WASH, WHT);              // soft matte-blue → white wash
+  gradH(0, 0, PW, 1.8, MB, MB2);                  // matte-blue gradient bar at the top
+  sf(ORG); doc.rect(0, 1.8, PW, 0.4, 'F');        // hairline touch of orange under it
 
-  // Company (left) + selected project's logo (right) placed directly on the white header.
+  // Company (left) + selected project's logo (right) placed directly on the header.
   function placeLogo(logo, boxX, boxW, boxH, boxY) {
     if (!logo || !logo.dataURL) return;
     const ar = (logo.w || 1) / (logo.h || 1);
@@ -87,28 +102,29 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const x = boxX + (boxW - w) / 2, yy = boxY + (boxH - h) / 2;
     try { doc.addImage(logo.dataURL, 'PNG', x, yy, w, h); } catch (e) {}
   }
-  const LOGO_W = 32, LOGO_H = 20, LOGO_Y = 7;
+  const LOGO_W = 32, LOGO_H = 20, LOGO_Y = 7.5;
   placeLogo(opts.companyLogo, M - 1, LOGO_W, LOGO_H, LOGO_Y);
   placeLogo(opts.projectLogo, PW - M + 1 - LOGO_W, LOGO_W, LOGO_H, LOGO_Y);
 
-  // Company name + project — navy on white
-  st(P); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-  doc.text('VISTARA GROUP', PW / 2, 13, { align: 'center' });
-  st(MD); doc.setFontSize(11.5); doc.setFont('helvetica', 'normal');
-  doc.text(meta.project || '', PW / 2, 19.5, { align: 'center' });
+  // Company name + project — matte blue
+  st(MB); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+  doc.text('VISTARA GROUP', PW / 2, 13.5, { align: 'center' });
+  st([120, 134, 156]); doc.setFontSize(11.5); doc.setFont('helvetica', 'normal');
+  doc.text(meta.project || '', PW / 2, 20, { align: 'center' });
 
-  // Document title — gold, letter-spaced (baked-in spaces = exact centering), with a
-  // short centred accent rule beneath it.
+  // Document title — matte blue, letter-spaced (baked-in spaces = exact centering),
+  // underscored by a small ORANGE accent bar (the little touch of orange).
   let titleText = isEOI ? 'EXPRESSION OF INTEREST' : 'LETTER OF INTENT';
   if (isRevision) titleText = isEOI ? ('REVISED EOI · R' + revNo) : ('REVISED LOI · R' + revNo);
   const spacedTitle = titleText.split('').join(' ');
-  doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(G);
-  doc.text(spacedTitle, PW / 2, 26.5, { align: 'center' });
-  sd(G); doc.setLineWidth(0.5); doc.line(PW / 2 - 18, 29, PW / 2 + 18, 29);
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(MB2);
+  doc.text(spacedTitle, PW / 2, 27, { align: 'center' });
+  sf(ORG); doc.roundedRect(PW / 2 - 12, 28.9, 24, 0.9, 0.45, 0.45, 'F');
 
-  // Header/body separator — a navy rule with a thin gold rule under it.
-  sd(P); doc.setLineWidth(0.7); doc.line(M, HDR_H, PW - M, HDR_H);
-  sd(G); doc.setLineWidth(0.4); doc.line(M, HDR_H + 1, PW - M, HDR_H + 1);
+  // Header/body separator — matte-blue rule that fades out to white at both edges.
+  const half = (PW - 2 * M) / 2;
+  gradH(M, HDR_H, half, 0.6, WHT, MB);
+  gradH(PW / 2, HDR_H, half, 0.6, MB, WHT);
 
   // Date — below the header, right-aligned.
   st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
@@ -117,7 +133,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Client box
   chk(30); sf(P3); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd(P2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
-  sf(G); doc.roundedRect(M, y, 3, 24, 1, 1, 'F');
+  sf(ORG); doc.roundedRect(M, y, 3, 24, 1, 1, 'F');
   st(P); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(meta.clientName || '—', M + 6, y + 8);
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); st(MD);
   if (meta.phoneNumber) doc.text('Ph: ' + meta.phoneNumber, M + 6, y + 14);
