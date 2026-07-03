@@ -553,8 +553,13 @@ function STMDashboard({ user }) {
   const sql          = stats?.sql_count ?? warm;
   const sqlToSv      = sql ? `${Math.round((svDone / sql) * 100)}%` : '—';
   const sqlToClosure = sql ? `${Math.round((closed / sql) * 100)}%` : '—';
-  const avgCloseMo   = stats?.avg_closure_days != null
-    ? `${(stats.avg_closure_days / 30.44).toFixed(1)} mo` : '—';
+  const avgCloseMo   = (() => {
+    const d = stats?.avg_closure_days;
+    if (d == null) return '—';
+    if (d < 1)      return 'Same day';
+    if (d < 30.44)  return `${Math.round(d)} day${Math.round(d) === 1 ? '' : 's'}`;
+    return `${(d / 30.44).toFixed(1)} mo`;
+  })();
 
   const svUpcoming = leads.filter(l => l.stm_status === 'sv_scheduled');
 
