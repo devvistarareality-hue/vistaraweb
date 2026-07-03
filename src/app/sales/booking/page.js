@@ -46,7 +46,7 @@ function BookingPage() {
     sale_deed_pct: '60',
     land_sale_deed: '', const_agreement: '', premium_location: '',
     discount: '0', legal_charges: '', maint_rate: '', maint_months: '',
-    apply_reg_fee: 'Yes', apply_stamp_duty: 'Yes', apply_gst: 'Yes',
+    apply_reg_fee: 'Yes', apply_page_fee: 'Yes', apply_stamp_duty: 'Yes', apply_gst: 'Yes',
     booking_date: new Date().toISOString().slice(0, 10), cp_name: '',
   });
   const [errs, setErrs] = useState({});   // required-field highlight on Generate/Submit
@@ -78,7 +78,7 @@ function BookingPage() {
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
-        apply_reg_fee: b.apply_reg_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
+        apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
       if (Array.isArray(b.installments)) {
@@ -134,7 +134,7 @@ function BookingPage() {
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
     premiumLocation: f.premium_location, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
     saleDeedPct: f.sale_deed_pct,
-    applyRegFee: f.apply_reg_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
+    applyRegFee: f.apply_reg_fee, applyPageFee: f.apply_page_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
 
@@ -172,10 +172,12 @@ function BookingPage() {
   // formula sub-labels shown under each computed value (mirrors GAS)
   const stampSub = (formulaSet === 'ankhol' && f.apply_stamp_duty === 'No') ? 'Not applicable'
     : (formulaSet === 'kalrav' ? '4.9% of Land Sale Deed' : '4.9% of Sale Deed');
+  const pageFeeTxt = f.apply_page_fee === 'No' ? '' : ' + ₹1,500';
+  const femPage = f.apply_page_fee === 'No' ? '₹0' : '₹1,500';
   const regSub = f.apply_reg_fee === 'No' ? 'Not applicable'
-    : (formulaSet === 'ankhol' ? '1% of Sale Deed + ₹1,500'
-      : formulaSet === 'industrial' ? 'Male: 1% Sale Deed + ₹1,500 | Female: ₹1,500'
-      : 'Male: 1% LSD + ₹1,500 | Female: ₹1,500');
+    : (formulaSet === 'ankhol' ? `1% of Sale Deed${pageFeeTxt}`
+      : formulaSet === 'industrial' ? `Male: 1% Sale Deed${pageFeeTxt} | Female: ${femPage}`
+      : `Male: 1% LSD${pageFeeTxt} | Female: ${femPage}`);
   const gstSub = (formulaSet === 'ankhol' && f.apply_gst === 'No') ? 'Not applicable'
     : (formulaSet === 'ankhol' ? '5% of Sale Deed'
       : formulaSet === 'industrial' ? (v.isTundav ? '18% of 67% of Sale Deed' : '18% of Development Agreement')
@@ -251,7 +253,7 @@ function BookingPage() {
       maintenance: Math.round(v.maint), maint_deposit: Math.round(v.maintDeposit), maint_advance: Math.round(v.maintAdvance),
       legal_charges: f.legal_charges || 0, premium_location: f.premium_location || 0,
       total_extra: Math.round(v.totalExtra), discount: f.discount || 0, final_amount: Math.round(v.finalAmt),
-      apply_reg_fee: f.apply_reg_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
+      apply_reg_fee: f.apply_reg_fee, apply_page_fee: f.apply_page_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
       installments: instArr(),
       extra_work_desc: reviseId ? (ew.desc || '') : '',
       extra_work_amount: reviseId ? Math.round(parseFloat(ew.amt) || 0) : 0,
@@ -330,6 +332,7 @@ function BookingPage() {
         {formulaSet === 'ankhol' && <Row><L>Apply Stamp Duty?</L><Sel value={f.apply_stamp_duty} onChange={(e) => set('apply_stamp_duty', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="Stamp Duty" sub={stampSub} val={v.stampDuty} />
         <Row><L>Apply Registration Fee?</L><Sel value={f.apply_reg_fee} onChange={(e) => set('apply_reg_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
+        {f.apply_reg_fee !== 'No' && <Row><L>Apply ₹1,500 Page Fee?</L><Sel value={f.apply_page_fee} onChange={(e) => set('apply_page_fee', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="Registration Fees" sub={regSub} val={v.regFees} />
         {formulaSet === 'ankhol' && <Row><L>Apply GST?</L><Sel value={f.apply_gst} onChange={(e) => set('apply_gst', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="GST" sub={gstSub} val={v.gst} />

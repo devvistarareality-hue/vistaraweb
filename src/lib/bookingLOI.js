@@ -232,18 +232,18 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   chk(14 + nExtra * 7.5 + 12); secHead('Extra Charges', [124, 58, 237]); rowAlt = false;
   if (isAnkholPdf) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
-    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : 'Registration Fees (1% of Sale Deed + Rs.1,500)', v.applyRegFee === 'No' ? 0 : v.regFees);
+    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (1% of Sale Deed' + (v.applyPageFee === 'No' ? ')' : ' + Rs.1,500)')), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (5% of Sale Deed)', v.applyGst === 'No' ? 0 : v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Charges & Others', v.legal);
     if (v.premiumLocation > 0) tRow('Premium Location Charge', v.premiumLocation);
   } else if (isIndustrialPdf) {
     tRow('Stamp Duty (4.9% of Sale Deed)', v.stampDuty);
-    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? 'Female - Rs.1,500' : 'Male - 1% Sale Deed + Rs.1,500') + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
+    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% Sale Deed' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow(isTundavPdf ? 'GST on Sale Deed (18% of 67% of Sale Deed)' : 'GST on Developed Plot (18% of Development Agreement)', v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Charges & Others', v.legal);
   } else {
     tRow('Stamp Duty (4.9% of Land Sale Deed)', v.stampDuty);
-    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? 'Female - Rs.1,500' : 'Male - 1% LSD + Rs.1,500') + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
+    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% LSD' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow('GST (18% of Construction Agreement)', v.gst); tRow('Maintenance', v.maint); tRow('Legal Charges & Others', v.legal);
   }
   y += 2; tRow('Total Extra Charges', v.totalExtra, { sub: true });

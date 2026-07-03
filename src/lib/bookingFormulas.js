@@ -54,6 +54,9 @@ export function computeFormulas(inp = {}) {
   const applyRegFee    = inp.applyRegFee    || 'Yes';
   const applyStampDuty = inp.applyStampDuty || 'Yes';
   const applyGst       = inp.applyGst       || 'Yes';
+  // ₹1,500 fixed page fee inside the registration fee — can be toggled off.
+  const applyPageFee   = inp.applyPageFee   || 'Yes';
+  const pageFee        = applyPageFee === 'No' ? 0 : 1500;
 
   // Plot Basic
   const plotBasic = area * landRate;
@@ -75,18 +78,18 @@ export function computeFormulas(inp = {}) {
   if (isAnkhol) {
     saleDeed     = (saleDeedPct / 100) * (plotBasic + constAmt + plotDev + premiumLocation - discount);
     stampDuty    = saleDeed * 0.049;
-    regFees      = (saleDeed * 0.01) + 1500;
+    regFees      = (saleDeed * 0.01) + pageFee;
     gst          = saleDeed * 0.05;
     maintDeposit = maint; maintAdvance = maint;
   } else if (isIndustrial) {
     saleDeed     = saleDeedRate * area;
     stampDuty    = saleDeed * 0.049;
-    regFees      = gender === 'Female' ? 1500 : (saleDeed * 0.01 + 1500);
+    regFees      = gender === 'Female' ? pageFee : (saleDeed * 0.01 + pageFee);
     gst          = isTundav ? (saleDeed * 0.67 * 0.18) : (devAgreement * 0.18);
     maintDeposit = maint; maintAdvance = maint;
   } else { // kalrav
     stampDuty = lsd * 0.049;
-    regFees   = gender === 'Female' ? 1500 : (lsd * 0.01 + 1500);
+    regFees   = gender === 'Female' ? pageFee : (lsd * 0.01 + pageFee);
     gst       = constAgr * 0.18;
   }
 
@@ -110,7 +113,7 @@ export function computeFormulas(inp = {}) {
     lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
     saleDeedRate, saleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
     maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
-    applyRegFee, applyStampDuty, applyGst, totalExtra, extraWorkAmt,
+    applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
     extraWorkDesc: inp.extraWorkDesc || '', finalAmt,
   };
 }
