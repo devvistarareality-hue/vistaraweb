@@ -74,17 +74,18 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     doc.setFont('helvetica', 'bold'); doc.text('Page ' + pageLabel + totalLabel, PW - 12, PH - 5.5, { align: 'right' });
   }
 
-  // Header
-  sf(P); doc.rect(0, 0, PW, 30, 'F'); sf(G); doc.rect(0, 0, PW, 2.5, 'F');
-  // Logos: company (top-left) + selected project's logo (top-right). Both sit in an
-  // identical white card (same size + vertical position) with the image centered inside,
-  // so the two sides stay symmetric regardless of each logo's aspect ratio.
-  // Cards sit clear of the decorative border frame (drawn near y≈6.5 and the side edges)
-  // and are vertically centred in the navy band.
-  const CARD_W = 27, CARD_H = 15, CARD_Y = 10.75, CARD_X = 16, CARD_PAD = 1;
+  // ── Letterhead header ──
+  const HDR_H = 34;
+  sf(P); doc.rect(0, 0, PW, HDR_H, 'F');             // navy band
+  sf(G); doc.rect(0, 0, PW, 2.5, 'F');               // gold top accent
+  sf(G); doc.rect(0, HDR_H - 0.8, PW, 0.8, 'F');     // gold bottom hairline
+
+  // Company (left) + selected project's logo (right) in slim white chips, centred in the band.
+  const CARD_W = 26, CARD_H = 17, CARD_X = 14, CARD_PAD = 1.5;
+  const CARD_Y = (HDR_H - CARD_H) / 2 + 0.6;
   function logoCard(logo, cardX) {
     if (!logo || !logo.dataURL) return;
-    sf([255, 255, 255]); doc.roundedRect(cardX, CARD_Y, CARD_W, CARD_H, 2, 2, 'F');
+    sf([255, 255, 255]); doc.roundedRect(cardX, CARD_Y, CARD_W, CARD_H, 1.5, 1.5, 'F');
     const availW = CARD_W - CARD_PAD * 2, availH = CARD_H - CARD_PAD * 2;
     const ar = (logo.w || 1) / (logo.h || 1);
     let w = availW, h = availW / ar;
@@ -94,18 +95,29 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
   logoCard(opts.companyLogo, CARD_X);
   logoCard(opts.projectLogo, PW - CARD_X - CARD_W);
-  st([255, 255, 255]); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-  doc.text('VISTARA GROUP', PW / 2, 13, { align: 'center' });
-  doc.setFontSize(13); st([196, 214, 255]); doc.text(meta.project || '', PW / 2, 20.5, { align: 'center' });
-  sf(G); doc.roundedRect(PW / 2 - 35, 23, 70, 9, 1.5, 1.5, 'F');
-  st(P); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+
+  // Company name + project
+  st([255, 255, 255]); doc.setFontSize(17); doc.setFont('helvetica', 'bold');
+  doc.text('VISTARA GROUP', PW / 2, 12.5, { align: 'center', charSpace: 0.5 });
+  doc.setFontSize(11.5); doc.setFont('helvetica', 'normal'); st([200, 214, 245]);
+  doc.text(meta.project || '', PW / 2, 19.5, { align: 'center' });
+
+  // Document title — gold, flanked by thin gold rules (clean letterhead divider, no pill).
   let titleText = isEOI ? 'EXPRESSION OF INTEREST' : 'LETTER OF INTENT';
-  if (isRevision) titleText = isEOI ? ('REVISED EOI - R' + revNo) : ('REVISED LOI - R' + revNo);
-  doc.text(titleText, PW / 2, 28.5, { align: 'center' });
-  // Date — moved just below the header (the top-right corner now holds the project logo).
+  if (isRevision) titleText = isEOI ? ('REVISED EOI · R' + revNo) : ('REVISED LOI · R' + revNo);
+  const ty = 27.5, CS = 1.2;
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st(G);
+  doc.text(titleText, PW / 2, ty, { align: 'center', charSpace: CS });
+  const tw = doc.getTextWidth(titleText) + titleText.length * CS;
+  sd(G); doc.setLineWidth(0.4);
+  const RULE_EDGE = 58, RULE_GAP = 5;
+  doc.line(RULE_EDGE, ty - 1.1, PW / 2 - tw / 2 - RULE_GAP, ty - 1.1);
+  doc.line(PW / 2 + tw / 2 + RULE_GAP, ty - 1.1, PW - RULE_EDGE, ty - 1.1);
+
+  // Date — just below the band, right-aligned.
   st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
-  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - M, 35, { align: 'right' });
-  y = 40; drawBorder();
+  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 5, { align: 'right' });
+  y = HDR_H + 9; drawBorder();
 
   // Client box
   chk(30); sf(P3); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd(P2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
