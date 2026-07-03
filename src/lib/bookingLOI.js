@@ -81,7 +81,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   // so the two sides stay symmetric regardless of each logo's aspect ratio.
   // Cards sit clear of the decorative border frame (drawn near y≈6.5 and the side edges)
   // and are vertically centred in the navy band.
-  const CARD_W = 26, CARD_H = 15, CARD_Y = 8, CARD_X = 12, CARD_PAD = 2;
+  const CARD_W = 28, CARD_H = 16, CARD_Y = 7, CARD_X = 11, CARD_PAD = 1;
   function logoCard(logo, cardX) {
     if (!logo || !logo.dataURL) return;
     sf([255, 255, 255]); doc.roundedRect(cardX, CARD_Y, CARD_W, CARD_H, 2, 2, 'F');
@@ -337,7 +337,7 @@ function loadLogo(url) {
 export async function downloadLOI(meta, v, installments, opts = {}) {
   const jsPDF = await ensureJsPDF();
   const [companyLogo, projectLogo] = await Promise.all([
-    loadLogo('/image-WBG.png'),
+    loadLogo('/vistara-logo.png'),   // whitespace-trimmed company logo
     loadLogo(opts.projectLogoUrl),
   ]);
   const doc = buildLOIPdf(jsPDF, meta, v, installments, { ...opts, companyLogo, projectLogo });
