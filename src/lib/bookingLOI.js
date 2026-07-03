@@ -330,7 +330,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(meta.clientName || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text('Vistara Group', PW - M - BW / 2, y + 22, { align: 'center' });
   doc.setFontSize(8.5); st(MD); doc.text('Date: ________________________', PW / 2, y + 32, { align: 'center' });
   chk(16); y += 40; sf(WASH); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(MB2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
-  sf(ORG); doc.rect(M, y, 1.6, 12, 'F');
+  sf(ORG); doc.roundedRect(M + 1.2, y + 2, 1.7, 8, 0.85, 0.85, 'F');
   doc.setFontSize(8); doc.setFont('helvetica', 'italic'); st(MB);
   doc.text('I hereby declare that I have read, understood, and agreed to all terms and conditions.', PW / 2, y + 7.5, { align: 'center', maxWidth: CW - 10 });
 
