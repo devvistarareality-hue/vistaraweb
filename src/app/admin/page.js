@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
+import { moduleAccess } from '../../lib/moduleAccess';
 
 const NAVY   = '#0C1E3C';
 const ORANGE = '#FF6B2B';
@@ -63,6 +64,9 @@ export default function AdminDashboardPage() {
   const { user, company } = useSelector((s) => s.auth);
   const [greeting, setGreeting] = useState('');
   const [dateStr,  setDateStr]  = useState('');
+  // Module-scoped admins only see their own module tiles (User/Company Mgmt are hidden).
+  const { superAdmin, isModuleAdmin, allowed } = moduleAccess(user);
+  const visibleOpen = (superAdmin || !isModuleAdmin) ? openMods : openMods.filter((m) => allowed.includes(m.name));
 
   useEffect(() => {
     setGreeting(getGreeting());
@@ -96,7 +100,7 @@ export default function AdminDashboardPage() {
             <div style={s.chip}>
               <div style={{ ...s.chipDot, backgroundColor: ORANGE, boxShadow: `0 0 0 4px rgba(255,107,43,0.18)` }} />
               <div>
-                <div style={s.chipNum}>{openMods.length}</div>
+                <div style={s.chipNum}>{visibleOpen.length}</div>
                 <div style={s.chipLabel}>Active Modules</div>
               </div>
             </div>
@@ -125,7 +129,7 @@ export default function AdminDashboardPage() {
           <div style={s.sectionSub}>Your enabled modules</div>
         </div>
         <div style={s.openGrid}>
-          {openMods.map((mod, i) => (
+          {visibleOpen.map((mod, i) => (
             <Link
               key={mod.name}
               href={mod.href}

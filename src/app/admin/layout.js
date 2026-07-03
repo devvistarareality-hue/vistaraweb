@@ -1,15 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '../../components/Sidebar';
 import { useOneSignal } from '../../lib/useOneSignal';
+import { moduleAccess } from '../../lib/moduleAccess';
 export default function AdminLayout({ children }) {
-  const user   = useSelector((s) => s.auth.user);
-  const router = useRouter();
+  const user     = useSelector((s) => s.auth.user);
+  const router   = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useOneSignal(user?.user_code);
+  const { isModuleAdmin, home } = moduleAccess(user);
+  // Module admins (e.g. Sales Admin) can't use platform-admin areas: a single-module
+  // admin is bounced to their module; a multi-module admin may only see the launcher.
+  const blockedHere = isModuleAdmin && (home !== '/admin' || pathname !== '/admin');
 
   useEffect(() => {
     if (user === null) return;
@@ -17,8 +23,10 @@ export default function AdminLayout({ children }) {
       router.replace('/company');
     } else if (user.role !== 'Admin' && !user.is_staff) {
       router.replace('/dashboard');
+    } else if (blockedHere) {
+      router.replace(home !== '/admin' ? home : '/admin');
     }
-  }, [user]);
+  }, [user, pathname]);
 
   if (!user) {
     return (
@@ -30,6 +38,7 @@ export default function AdminLayout({ children }) {
   }
 
   if (user.role !== 'Admin' && !user.is_staff) return null;
+  if (blockedHere) return null;
 
   return (
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open-active' : ''}`}>

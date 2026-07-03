@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { moduleAccess } from '../lib/moduleAccess';
 
 export default function RootPage() {
   const user   = useSelector((s) => s.auth.user);
@@ -12,7 +13,8 @@ export default function RootPage() {
       if (!user) {
         router.replace('/company');
       } else if (user.role === 'Admin' || user.is_staff) {
-        router.replace('/admin');
+        // Module-scoped admins land straight on their module; full/super admins → launcher.
+        router.replace(moduleAccess(user).home);
       } else {
         router.replace('/dashboard');
       }

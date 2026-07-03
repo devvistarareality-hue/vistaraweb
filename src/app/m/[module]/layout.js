@@ -7,6 +7,7 @@ import { logout } from '../../../redux/actions/authActions';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adminFilterReducer';
 import { MODULE_META } from './moduleMeta';
+import { moduleAccess, SLUG_TO_MODULE } from '../../../lib/moduleAccess';
 
 const ORANGE = '#FF6B2B';
 const NAVY = '#0C1E3C';
@@ -38,7 +39,15 @@ export default function ModuleLayout({ children, params }) {
     const val = e.target.value;
     dispatch(setAdminCompany(val ? parseInt(val, 10) : null));
   }
-  useEffect(() => { if (user === null) return; if (!user) router.replace('/company'); }, [user]);
+  // Box module-scoped admins out of modules they don't own.
+  const { isModuleAdmin, home } = moduleAccess(user);
+  const moduleName = SLUG_TO_MODULE[slug];
+  const blockedHere = isModuleAdmin && !(user?.modules || []).includes(moduleName);
+  useEffect(() => {
+    if (user === null) return;
+    if (!user) { router.replace('/company'); return; }
+    if (blockedHere) router.replace(home);
+  }, [user, slug]);
 
   const isAdmin = user?.role === 'Admin' || user?.is_staff;
   const isManager = user?.role === 'Manager';
@@ -54,6 +63,7 @@ export default function ModuleLayout({ children, params }) {
   if (!meta) {
     return <div style={{ padding: 40 }}>Unknown module.</div>;
   }
+  if (blockedHere) return null;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>

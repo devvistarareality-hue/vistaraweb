@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { login, clearCompany } from '../../redux/actions/authActions';
+import { moduleAccess } from '../../lib/moduleAccess';
 
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -33,7 +34,7 @@ export default function LoginScreen() {
   const { loginLoading, loginError, user, company } = useSelector((s) => s.auth);
 
   useEffect(() => {
-    if (user) router.replace(user.role === 'Admin' || user.is_staff ? '/admin' : '/dashboard');
+    if (user) router.replace((user.role === 'Admin' || user.is_staff) ? moduleAccess(user).home : '/dashboard');
   }, [user]);
 
   useEffect(() => {

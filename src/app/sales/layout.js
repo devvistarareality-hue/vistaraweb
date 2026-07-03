@@ -9,6 +9,7 @@ import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminF
 import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
+import { moduleAccess } from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -150,10 +151,16 @@ export default function SalesLayout({ children }) {
     { label: 'Reporting Manager', value: profileData?.reporting_manager?.name },
   ];
 
+  // Box out module-scoped admins who don't own the Sales module (e.g. an HR Admin).
+  const { isModuleAdmin: _isModAdmin, home: _modHome } = moduleAccess(user);
+  const _blockedFromSales = _isModAdmin && !(user?.modules || []).includes('Sales');
   useEffect(() => {
     if (user === null) return;
-    if (!user) router.replace('/company');
+    if (!user) { router.replace('/company'); return; }
+    if (_blockedFromSales) router.replace(_modHome);
   }, [user]);
+
+  if (_blockedFromSales) return null;
 
   if (!user) {
     return (
