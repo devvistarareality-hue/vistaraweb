@@ -96,6 +96,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     price_range:     project?.price_range     || '',
     possession:      project?.possession      || '',
     cover_image_url: project?.cover_image_url || '',
+    logo_url:        project?.logo_url        || '',
     master_plan_url: project?.master_plan_url || '',
   });
 
@@ -290,6 +291,8 @@ function ProjectModal({ project, onClose, onSaved }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
             <MediaUpload label="Cover Image" value={form.cover_image_url} onChange={v => set('cover_image_url', v)}
               folder="erp/projects/covers" accept="image/*" hint="Upload project cover image (JPG / PNG)" />
+            <MediaUpload label="Project Logo" value={form.logo_url} onChange={v => set('logo_url', v)}
+              folder="erp/projects/logos" accept="image/*" hint="Shown top-right in the LOI PDF (PNG with transparent background preferred)" />
             <MediaUpload label="Master Plan" value={form.master_plan_url} onChange={v => set('master_plan_url', v)}
               folder="erp/projects/masterplans" accept="image/*,application/pdf" hint="Upload master plan image or PDF" />
           </div>

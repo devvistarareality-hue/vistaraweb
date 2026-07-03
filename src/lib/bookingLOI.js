@@ -76,6 +76,21 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Header
   sf(P); doc.rect(0, 0, PW, 30, 'F'); sf(G); doc.rect(0, 0, PW, 2.5, 'F');
+  // Logos: company (top-left) + selected project's logo (top-right). Fit into a box,
+  // preserving aspect ratio; silently skipped if the image failed to load.
+  function placeLogo(logo, boxX, boxY, maxW, maxH, alignRight) {
+    if (!logo || !logo.dataURL) return;
+    const ar = (logo.w || 1) / (logo.h || 1);
+    let w = maxW, h = maxW / ar;
+    if (h > maxH) { h = maxH; w = maxH * ar; }
+    const x = alignRight ? boxX + (maxW - w) : boxX;
+    const yy = boxY + (maxH - h) / 2;
+    // White chip so any logo (incl. dark/transparent) stays visible on the navy header.
+    sf([255, 255, 255]); doc.roundedRect(x - 1.5, yy - 1.5, w + 3, h + 3, 1.5, 1.5, 'F');
+    try { doc.addImage(logo.dataURL, 'PNG', x, yy, w, h); } catch (e) {}
+  }
+  placeLogo(opts.companyLogo, 9, 5.5, 26, 20, false);
+  placeLogo(opts.projectLogo, PW - 9 - 26, 5.5, 26, 20, true);
   st([255, 255, 255]); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
   doc.text('VISTARA GROUP', PW / 2, 13, { align: 'center' });
   doc.setFontSize(13); st([196, 214, 255]); doc.text(meta.project || '', PW / 2, 20.5, { align: 'center' });
@@ -84,9 +99,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   let titleText = isEOI ? 'EXPRESSION OF INTEREST' : 'LETTER OF INTENT';
   if (isRevision) titleText = isEOI ? ('REVISED EOI - R' + revNo) : ('REVISED LOI - R' + revNo);
   doc.text(titleText, PW / 2, 28.5, { align: 'center' });
-  st([196, 214, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
-  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - 14, 10, { align: 'right' });
-  y = 38; drawBorder();
+  // Date — moved just below the header (the top-right corner now holds the project logo).
+  st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - M, 35, { align: 'right' });
+  y = 40; drawBorder();
 
   // Client box
   chk(30); sf(P3); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd(P2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
@@ -295,9 +311,33 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   return doc;
 }
 
-export async function downloadLOI(meta, v, installments, opts) {
+// Load an image URL → { dataURL(PNG), w, h } via canvas. Returns null on any failure
+// (missing image, CORS-tainted canvas, …) so the LOI still renders without the logo.
+function loadLogo(url) {
+  return new Promise((resolve) => {
+    if (!url || typeof window === 'undefined') return resolve(null);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve({ dataURL: c.toDataURL('image/png'), w: img.naturalWidth, h: img.naturalHeight });
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+export async function downloadLOI(meta, v, installments, opts = {}) {
   const jsPDF = await ensureJsPDF();
-  const doc = buildLOIPdf(jsPDF, meta, v, installments, opts);
+  const [companyLogo, projectLogo] = await Promise.all([
+    loadLogo('/image-WBG.png'),
+    loadLogo(opts.projectLogoUrl),
+  ]);
+  const doc = buildLOIPdf(jsPDF, meta, v, installments, { ...opts, companyLogo, projectLogo });
   const name = 'LOI_' + (meta.project || '') + '_Plot' + (meta.plotNo || '') + '_' + (meta.clientName || '').replace(/\s+/g, '_') + '.pdf';
   doc.save(name);
   return true;

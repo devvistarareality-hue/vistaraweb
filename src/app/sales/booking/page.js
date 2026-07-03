@@ -215,7 +215,7 @@ function BookingPage() {
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name,
       areaUnit: f.area_unit || flags.areaUnit,
     };
-    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
+    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }
   }
   function onFile(e) {
