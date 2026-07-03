@@ -125,9 +125,9 @@ function StatCard({ label, value, icon, color, textColor, href, loading }) {
   return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
 }
 
-function SkeletonGrid({ count = 6 }) {
+function SkeletonGrid({ count = 6, grid }) {
   return (
-    <div style={statsGrid}>
+    <div style={grid || statsGrid}>
       {[...Array(count)].map((_, i) => (
         <div key={i} style={{ ...card, height: 90, background: '#E8ECF4', animation: 'pulse 1.4s ease infinite' }} />
       ))}
@@ -575,8 +575,8 @@ function STMDashboard({ user }) {
 
       <DateFilter onChange={setEff} />
 
-      {loading ? <SkeletonGrid count={7} /> : (
-        <div style={statsGrid}>
+      {loading ? <SkeletonGrid count={10} grid={stmStatsGrid} /> : (
+        <div style={stmStatsGrid}>
           {[
             { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
             { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
@@ -671,6 +671,8 @@ export default function SalesDashboard() {
 // Shared styles
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
+// STM/CP dashboard has 10 cards — force even rows (5 per row) instead of orphaning the last card.
+const stmStatsGrid = { display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 10, marginBottom: 28 };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
 const tbl       = { width: '100%', borderCollapse: 'collapse' };
