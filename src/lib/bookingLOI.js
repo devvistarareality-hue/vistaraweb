@@ -80,7 +80,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   function drawBorder() { sd(P3); doc.setLineWidth(1.2); doc.rect(5, 5, PW - 10, PH - 10, 'S'); sd(MB2); doc.setLineWidth(0.3); doc.rect(6.5, 6.5, PW - 13, PH - 13, 'S'); }
   function drawFooter(cp, tp) {
     const pageLabel = cp || pageNum; const totalLabel = tp ? ' of ' + tp : '';
-    sf(P); doc.rect(0, PH - 11, PW, 11, 'F'); sf(ORG); doc.rect(0, PH - 11, PW, 0.6, 'F');
+    sf(MB); doc.rect(0, PH - 11, PW, 11, 'F'); sf(ORG); doc.rect(0, PH - 11, PW, 0.6, 'F');
     st([255, 255, 255]); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
     const docType = isEOI ? 'Expression of Interest' : 'Letter of Intent';
     doc.text('Vistara Group • ' + docType + ' • ' + new Date().toLocaleDateString('en-IN'), PW / 2, PH - 5.5, { align: 'center' });
@@ -132,9 +132,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   y = HDR_H + 10; drawBorder();
 
   // Client box
-  chk(30); sf(P3); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd(P2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
+  chk(30); sf(WASH); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd([206, 217, 235]); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
   sf(ORG); doc.roundedRect(M, y, 3, 24, 1, 1, 'F');
-  st(P); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(meta.clientName || '—', M + 6, y + 8);
+  st(MB); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(meta.clientName || '—', M + 6, y + 8);
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); st(MD);
   if (meta.phoneNumber) doc.text('Ph: ' + meta.phoneNumber, M + 6, y + 14);
   const pairs = [['Gender', meta.gender || '—'], ['Project', meta.project || '—'], ['Plot No', meta.plotNo || '—']];
@@ -147,13 +147,14 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   });
   y += 30;
 
-  function secHead(title, color) { chk(14); sf(color || P); doc.roundedRect(M, y, CW, 8, 1.5, 1.5, 'F'); st([255, 255, 255]); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 4, y + 5.5); y += 12; }
+  // Section header — flat matte-blue gradient bar with a thin orange edge accent.
+  function secHead(title) { chk(14); gradH(M, y, CW, 8, MB, MB2); sf(ORG); doc.rect(M, y, 1.6, 8, 'F'); st(WHT); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 5, y + 5.5); y += 12; }
   function tRow(label, n, o) {
     const subline = o && o.subline;
     chk(subline ? 13 : 8); const isTotal = o && o.total, isSub = o && o.sub, isGreen = o && o.green;
     const h = isTotal ? 10 : (subline ? 12 : 7.5); const LX = M + 3;
-    if (isTotal) { sf(P); doc.roundedRect(M, y - 5.5, CW, h + 1, 1.5, 1.5, 'F'); st([255, 255, 255]); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
-    if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(P2); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
+    if (isTotal) { gradH(M, y - 5.5, CW, h + 1, MB, MB2); sf(ORG); doc.rect(M, y - 5.5, 1.6, h + 1, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
+    if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
     if (rowAlt) { sf([248, 250, 254]); doc.rect(M, y - 5, CW, h, 'F'); }
     rowAlt = !rowAlt;
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(isGreen ? [22, 163, 74] : MD); doc.text(label, LX, y);
@@ -273,17 +274,17 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (ordered.length > 0) {
     chk(22); y += 4; secHead('Payment Schedule', [15, 118, 110]); rowAlt = false;
     const DC_NUM = M + 8, DC_DATE = M + 18, DC_PCT = M + 82, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
-    sf(P); doc.rect(M, y - 5.5, CW, 9, 'F'); st([255, 255, 255]); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+    gradH(M, y - 5.5, CW, 9, MB, MB2); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
     doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
     y += 10; let grand = 0;
     ordered.forEach((inst, idx) => {
       chk(10); const amt = Math.round(inst.amt || 0); grand += amt;
       if (inst.isExtra) {
-        sf([255, 248, 225]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([196, 149, 60]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
-        sf([196, 149, 60]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
-        doc.setFontSize(9); st([92, 64, 14]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([160, 120, 40]); doc.text('Extra Charges', DC_PCT, y);
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([92, 64, 14]); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
+        sf([255, 241, 232]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd(ORG); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
+        sf(ORG); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
+        doc.setFontSize(9); st([154, 60, 22]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([176, 84, 44]); doc.text('Extra Charges', DC_PCT, y);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([154, 60, 22]); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
       } else if (inst.isExtraWork) {
         sf([240, 253, 244]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([22, 163, 74]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
         sf([22, 163, 74]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('WORK', M + 7.5, y + 0.3, { align: 'center' });
@@ -292,14 +293,15 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([21, 128, 61]); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
       } else {
         if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
-        sf(P2); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
+        sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
         doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
         doc.setFont('helvetica', 'bold'); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
       }
       sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
     });
-    chk(12); sf(G2); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(G); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
-    st(P); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('GRAND TOTAL', DC_DATE, y + 1); doc.text('Rs.', DC_RS, y + 1); doc.text(rs(grand), DC_AMT, y + 1, { align: 'right' });
+    chk(12); sf(WASH); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(MB2); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
+    sf(ORG); doc.rect(M, y - 5, 1.6, 10, 'F');
+    st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('GRAND TOTAL', DC_DATE, y + 1); doc.text('Rs.', DC_RS, y + 1); doc.text(rs(grand), DC_AMT, y + 1, { align: 'right' });
     y += 16;
   }
 
@@ -318,7 +320,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
     const descLines = doc.splitTextToSize(t[1] || '', CW - 50); const rowH = Math.max(9, descLines.length * 4 + 4);
     chk(rowH); if (idx % 2 === 0) { sf([249, 250, 251]); doc.rect(M, y - 5, CW, rowH, 'F'); }
-    sf(G); doc.circle(M + 3, y - 0.5, 1.2, 'F'); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(P); doc.text(t[0], M + 7, y);
+    sf(ORG); doc.circle(M + 3, y - 0.5, 1.2, 'F'); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(MB); doc.text(t[0], M + 7, y);
     doc.setFont('helvetica', 'normal'); st(MD); doc.text(descLines, M + 48, y); y += rowH;
   });
 
@@ -329,8 +331,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); st(LT); doc.text('BUYER SIGNATURE', M + BW / 2, y + 5, { align: 'center' }); doc.text('SELLER SIGNATURE', PW - M - BW / 2, y + 5, { align: 'center' });
   doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(meta.clientName || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text('Vistara Group', PW - M - BW / 2, y + 22, { align: 'center' });
   doc.setFontSize(8.5); st(MD); doc.text('Date: ________________________', PW / 2, y + 32, { align: 'center' });
-  chk(16); y += 40; sf(G2); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(G); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
-  doc.setFontSize(8); doc.setFont('helvetica', 'italic'); st([100, 80, 20]);
+  chk(16); y += 40; sf(WASH); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(MB2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
+  sf(ORG); doc.rect(M, y, 1.6, 12, 'F');
+  doc.setFontSize(8); doc.setFont('helvetica', 'italic'); st(MB);
   doc.text('I hereby declare that I have read, understood, and agreed to all terms and conditions.', PW / 2, y + 7.5, { align: 'center', maxWidth: CW - 10 });
 
   const total = doc.internal.getNumberOfPages();
