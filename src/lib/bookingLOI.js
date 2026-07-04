@@ -137,7 +137,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   st(MB); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(meta.clientName || '—', M + 6, y + 8);
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); st(MD);
   if (meta.phoneNumber) doc.text('Ph: ' + meta.phoneNumber, M + 6, y + 14);
-  const pairs = [['Gender', meta.gender || '—'], ['Project', meta.project || '—'], ['Plot No', meta.plotNo || '—']];
+  const pairs = [['Gender', meta.gender || '—'], ['Project', meta.project || '—']];
   let cx = M + 6;
   pairs.forEach((p, i) => {
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(LT); doc.text(p[0], cx, y + 18);
