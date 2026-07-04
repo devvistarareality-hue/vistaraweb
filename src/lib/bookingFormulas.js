@@ -127,6 +127,7 @@ export function computeFormulas(inp = {}) {
 // Installment base (what the % installments are computed against) — varies per set.
 export function installmentBase(v) {
   if (v.formulaSet === 'industrial') return v.plotBasic - v.discount;
+  if (v.formulaSet === 'ankhol') return v.saleDeed;
   return v.plotBasic + v.plotDev + v.constAmt - v.discount;
 }
 
