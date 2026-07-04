@@ -103,6 +103,11 @@ export function computeFormulas(inp = {}) {
   else if (isIndustrial) totalExtra = stampDuty + regFees + gst + maintDeposit + maintAdvance + legal;
   else                   totalExtra = stampDuty + regFees + gst + maint + legal;
 
+  // Non-sale deed portion (ankhol only): the remaining % shown at ÷100 of actual value in the LOI.
+  const nonSaleDeed = isAnkhol ? ((plotBasic + constAmt + plotDev + premiumLocation - discount) - saleDeed) : 0;
+  const nonSaleDeedDoc = isAnkhol ? nonSaleDeed / 100 : 0;
+  const docTotal = isAnkhol ? saleDeed + nonSaleDeedDoc : 0;
+
   // Final Amount
   const finalAmt = isIndustrial
     ? (plotBasic + totalExtra + extraWorkAmt - discount)
@@ -114,6 +119,7 @@ export function computeFormulas(inp = {}) {
     saleDeedRate, saleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
     maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
     applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
+    nonSaleDeed, nonSaleDeedDoc, docTotal,
     extraWorkDesc: inp.extraWorkDesc || '', finalAmt,
   };
 }
