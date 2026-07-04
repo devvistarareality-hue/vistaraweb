@@ -353,8 +353,8 @@ function BookingPage() {
         {flags.hasSaleDeed && formulaSet !== 'ankhol' && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
         {formulaSet === 'ankhol' && <>
           <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
-          <T label={`Non-Sale Deed (${100 - (v.saleDeedPct || 60)}% ÷ 100)`} sub={`${inr(v.nonSaleDeed)} ÷ 100`} val={v.nonSaleDeedDoc} />
-          <T label="Total Asset Value" sub="Sale Deed + Non-Sale Deed (÷100)" val={v.docTotal} subtotal />
+          <T label="Non-Sale Deed Amount" val={v.nonSaleDeedDoc} valFmt={'₹ ' + Number(v.nonSaleDeedDoc || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
+          <T label="Total Asset Value" sub="Sale Deed + Non-Sale Deed" val={v.docTotal} valFmt={'₹ ' + Number(v.docTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} subtotal />
         </>}
         <T label="Extra Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
         {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}
@@ -469,7 +469,7 @@ const Calc = ({ label, sub, val }) => (
     <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #C5D8FB', background: '#F0F4FF', color: '#1a73e8' }}>{rupee(val)}</div>
   </Row>
 );
-const T = ({ label, sub, sub2, val, big, subtotal }) => (
+const T = ({ label, sub, sub2, val, valFmt, big, subtotal }) => (
   <div style={{
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: big ? '10px 0 0' : subtotal ? '8px 10px' : '6px 0',
@@ -481,7 +481,7 @@ const T = ({ label, sub, sub2, val, big, subtotal }) => (
       {sub && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub}</small>}
       {sub2 && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub2}</small>}
     </span>
-    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#0D47A1' : '#1F2937' }}>{rupee(val)}</span>
+    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#0D47A1' : '#1F2937' }}>{valFmt || rupee(val)}</span>
   </div>
 );
 const totalBox = { background: 'linear-gradient(135deg,#F0F7FF,#E8F0FE)', border: '1.5px solid #C5D8FB', borderRadius: 12, padding: '10px 18px', marginBottom: 14 };
