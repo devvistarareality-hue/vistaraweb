@@ -373,7 +373,7 @@ function BookingPage() {
           subtotal />}
         {flags.hasSaleDeed && formulaSet !== 'ankhol' && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
         {formulaSet === 'ankhol' && <>
-          <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
+          <T label="Unit Price" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
           <T label="Extra Work Charges" val={v.nonSaleDeed} />
           <T label="Total Asset Value" sub="Sale Deed + Extra Work Charges" val={v.saleDeed + v.nonSaleDeed} subtotal />
         </>}
