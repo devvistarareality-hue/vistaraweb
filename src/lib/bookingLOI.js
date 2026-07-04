@@ -138,12 +138,12 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); st(MD);
   if (meta.phoneNumber) doc.text('Ph: ' + meta.phoneNumber, M + 6, y + 14);
   const pairs = [['Gender', meta.gender || '—'], ['Project', meta.project || '—']];
-  let cx = M + 6;
+  const colW = CW / pairs.length;
   pairs.forEach((p, i) => {
+    const cx = M + 6 + colW * i;
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(LT); doc.text(p[0], cx, y + 18);
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(String(p[1]), cx, y + 22.5);
-    if (i < pairs.length - 1) { sd(LN); doc.setLineWidth(0.3); doc.line(cx + 35, y + 16, cx + 35, y + 24); }
-    cx += 57;
+    if (i < pairs.length - 1) { sd(LN); doc.setLineWidth(0.3); doc.line(M + colW * (i + 1), y + 16, M + colW * (i + 1), y + 24); }
   });
   y += 30;
 
