@@ -148,15 +148,15 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   // Section header — rounded matte-blue bar with a small inset orange accent.
   function secHead(title) { chk(14); sf(MB); doc.roundedRect(M, y, CW, 8, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y + 2, 1.7, 4, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 5.5, y + 5.5); y += 12; }
   function tRow(label, n, o) {
-    const subline = o && o.subline;
+    const subline = o && o.subline; const valStr = o && o.valStr;
     chk(subline ? 13 : 8); const isTotal = o && o.total, isSub = o && o.sub, isGreen = o && o.green;
     const h = isTotal ? 10 : (subline ? 12 : 7.5); const LX = M + 3;
-    if (isTotal) { sf(MB); doc.roundedRect(M, y - 5.5, CW, h + 1, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y - 3.5, 1.7, h - 3, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, M + 7, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
-    if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs.', RS_COL, y); doc.text(rs(n), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
+    if (isTotal) { sf(MB); doc.roundedRect(M, y - 5.5, CW, h + 1, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y - 3.5, 1.7, h - 3, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, M + 7, y); doc.text('Rs. ' + (valStr || rs(n)), NUM_COL, y, { align: 'right' }); y += h + 2; rowAlt = false; return; }
+    if (isSub) { sf(P3); doc.rect(M, y - 5, CW, h, 'F'); st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(label, LX, y); doc.text('Rs. ' + (valStr || rs(n)), NUM_COL, y, { align: 'right' }); y += h + 1; rowAlt = false; return; }
     if (rowAlt) { sf([248, 250, 254]); doc.rect(M, y - 5, CW, h, 'F'); }
     rowAlt = !rowAlt;
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(isGreen ? [22, 163, 74] : MD); doc.text(label, LX, y);
-    doc.text('Rs.', RS_COL, y); doc.setFont('helvetica', 'bold'); st(isGreen ? [22, 163, 74] : DK); doc.text(rs(n), NUM_COL, y, { align: 'right' });
+    doc.setFont('helvetica', 'bold'); st(isGreen ? [22, 163, 74] : DK); doc.text('Rs. ' + (valStr || rs(n)), NUM_COL, y, { align: 'right' });
     if (subline) { doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); st(LT); doc.text(subline, LX + 2, y + 4.5); }
     sd(LN); doc.setLineWidth(0.2); doc.line(M, y + (subline ? 6.5 : 2), PW - M, y + (subline ? 6.5 : 2)); y += h;
   }
@@ -237,14 +237,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Extra Charges — reserve the full section height so the Total Extra
   // Charges sub-row is never split onto the next page.
-  const nExtra = isAnkholPdf ? (6 + (v.premiumLocation > 0 ? 1 : 0)) : isIndustrialPdf ? 6 : 5;
+  const nExtra = isAnkholPdf ? 6 : isIndustrialPdf ? 6 : 5;
   chk(14 + nExtra * 7.5 + 12); secHead('Extra Charges', [124, 58, 237]); rowAlt = false;
   if (isAnkholPdf) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (1% of Sale Deed' + (v.applyPageFee === 'No' ? ')' : ' + Rs.1,500)')), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (5% of Sale Deed)', v.applyGst === 'No' ? 0 : v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Charges & Others', v.legal);
-    if (v.premiumLocation > 0) tRow('Premium Location Charge', v.premiumLocation);
   } else if (isIndustrialPdf) {
     tRow('Stamp Duty (4.9% of Sale Deed)', v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% Sale Deed' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
@@ -260,17 +259,29 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Charges', v.extraWorkAmt); y += 2; }
 
   // Total Deal Summary
+  const fmt2Deal = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   chk(isIndustrialPdf ? 58 : 96); secHead('Total Deal Summary', P); rowAlt = false;
-  tRow('Plot Basic Amount  (Plot Area x Land Rate)', v.plotBasic, { subline: num(v.area) + ' x ' + num(v.landRate) });
-  if (!isIndustrialPdf) {
-    tRow('Plot Development Amount  (' + (isAnkholPdf ? 'Const Area' : 'Plot Area') + ' x Dev Rate)', v.plotDev, { subline: (isAnkholPdf ? num(v.constArea) : num(v.area)) + ' x ' + num(v.devRate) });
-    tRow('Construction Amount  (Const Area x Const Rate)', v.constAmt, { subline: num(v.constArea) + ' x ' + num(v.constRate) });
-    tRow('Total Basic Amount', v.plotBasic + v.plotDev + v.constAmt, { sub: true });
+  let finalAmtForDeal = v.finalAmt;
+  if (isAnkholPdf) {
+    const sdPct = v.saleDeedPct != null ? v.saleDeedPct : 60;
+    const nsdK = (v.nonSaleDeed || 0) / 100;
+    const totalAssetDoc = (v.saleDeed || 0) + nsdK;
+    finalAmtForDeal = totalAssetDoc + (v.totalExtra || 0) + (v.extraWorkAmt || 0);
+    tRow(`Sale Deed  (${sdPct}% x Base + Premium - Discount)`, v.saleDeed);
+    tRow('Extra Work Charges', 0, { valStr: fmt2Deal(nsdK) });
+    tRow('Total Asset Value', 0, { sub: true, valStr: fmt2Deal(totalAssetDoc) });
+  } else {
+    tRow('Plot Basic Amount  (Plot Area x Land Rate)', v.plotBasic, { subline: num(v.area) + ' x ' + num(v.landRate) });
+    if (!isIndustrialPdf) {
+      tRow('Plot Development Amount  (Plot Area x Dev Rate)', v.plotDev, { subline: num(v.area) + ' x ' + num(v.devRate) });
+      tRow('Construction Amount  (Const Area x Const Rate)', v.constAmt, { subline: num(v.constArea) + ' x ' + num(v.constRate) });
+      tRow('Total Basic Amount', v.plotBasic + v.plotDev + v.constAmt, { sub: true });
+    }
+    tRow('Discount', v.discount, { green: true });
   }
-  tRow((isAnkholPdf && v.premiumLocation > 0) ? 'Extra Charges  (incl. Premium Location Charge)' : 'Extra Charges', v.totalExtra);
+  tRow('Extra Charges', v.totalExtra);
   if (v.extraWorkAmt > 0) tRow('Extra Work', v.extraWorkAmt);
-  tRow('Discount', v.discount, { green: true });
-  y += 3; tRow('FINAL AMOUNT', v.finalAmt, { total: true });
+  y += 3; tRow('FINAL AMOUNT', 0, { total: true, valStr: isAnkholPdf ? fmt2Deal(finalAmtForDeal) : rs(finalAmtForDeal) });
 
   // Payment Schedule
   const ordered = [];
@@ -294,7 +305,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         sf([240, 249, 255]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([3, 105, 161]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
         sf([3, 105, 161]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EWC', M + 7.5, y + 0.3, { align: 'center' });
         doc.setFontSize(9); st([3, 105, 161]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
-        doc.setFont('helvetica', 'bold'); doc.text('Rs.', DC_RS, y); doc.text(docStr, DC_AMT, y, { align: 'right' });
+        doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + docStr, DC_AMT, y, { align: 'right' });
       } else {
         const amt = Math.round(inst.amt || 0); grand += amt;
         if (inst.isExtra) {
@@ -302,18 +313,18 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
           sf(ORG); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
           doc.setFontSize(9); st([154, 60, 22]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([176, 84, 44]); doc.text('Extra Charges', DC_PCT, y);
-          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([154, 60, 22]); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
+          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([154, 60, 22]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         } else if (inst.isExtraWork) {
           sf([240, 253, 244]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([22, 163, 74]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
           sf([22, 163, 74]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('WORK', M + 7.5, y + 0.3, { align: 'center' });
           doc.setFontSize(9); st([21, 128, 61]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([34, 134, 67]); doc.text(inst.desc ? (inst.desc.length > 20 ? inst.desc.substring(0, 18) + '…' : inst.desc) : 'Extra Work', DC_PCT, y);
-          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([21, 128, 61]); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
+          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([21, 128, 61]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         } else {
           if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
           sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
           doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
-          doc.setFont('helvetica', 'bold'); doc.text('Rs.', DC_RS, y); doc.text(rs(amt), DC_AMT, y, { align: 'right' });
+          doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         }
       }
       sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
@@ -321,7 +332,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     chk(12); sf(WASH); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(MB2); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
     sf(ORG); doc.roundedRect(M + 1.2, y - 3, 1.7, 6, 0.85, 0.85, 'F');
     const grandStr = grand % 1 === 0 ? rs(grand) : grand.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('GRAND TOTAL', DC_DATE, y + 1); doc.text('Rs.', DC_RS, y + 1); doc.text(grandStr, DC_AMT, y + 1, { align: 'right' });
+    st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('GRAND TOTAL', DC_DATE, y + 1); doc.text('Rs. ' + grandStr, DC_AMT, y + 1, { align: 'right' });
     y += 16;
   }
 

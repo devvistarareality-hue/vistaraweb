@@ -99,7 +99,7 @@ export function computeFormulas(inp = {}) {
 
   // Total Extra Charges
   let totalExtra;
-  if (isAnkhol)          totalExtra = stampDuty + regFees + gst + maintDeposit + maintAdvance + legal + premiumLocation;
+  if (isAnkhol)          totalExtra = stampDuty + regFees + gst + maintDeposit + maintAdvance + legal;
   else if (isIndustrial) totalExtra = stampDuty + regFees + gst + maintDeposit + maintAdvance + legal;
   else                   totalExtra = stampDuty + regFees + gst + maint + legal;
 
@@ -111,6 +111,8 @@ export function computeFormulas(inp = {}) {
   // Final Amount
   const finalAmt = isIndustrial
     ? (plotBasic + totalExtra + extraWorkAmt - discount)
+    : isAnkhol
+    ? (saleDeed + nonSaleDeed + totalExtra + extraWorkAmt)
     : (plotBasic + plotDev + constAmt + totalExtra + extraWorkAmt - discount);
 
   return {
