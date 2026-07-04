@@ -269,7 +269,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     let grand = 0;
 
     if (unitInstPdf.length > 0) {
-      chk(25); y += 4; secHead('Unit Price Payment Schedule'); y += 3; rowAlt = false;
+      // pre-check full section height so it never splits across pages
+      chk(4 + 12 + 3 + 10 + unitInstPdf.length * 10 + 16);
+      y += 4; secHead('Unit Price Payment Schedule'); y += 3; rowAlt = false;
       drawSchedHeader();
       let grandUnit = 0;
       unitInstPdf.forEach((inst, idx) => {
@@ -327,7 +329,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       drawSubTotal('SUB TOTAL', grandLegal);
     }
 
-    drawSubTotal('GRAND TOTAL', grand);
   }
 
   // Terms
