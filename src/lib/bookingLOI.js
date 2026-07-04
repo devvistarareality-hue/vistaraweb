@@ -289,21 +289,20 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       y += 4; secHead('Additional Extra Work Charges Schedule'); y += 3; rowAlt = false;
       drawSchedHeader();
       let grandEwc = 0;
-      ewcRawPdf.forEach((inst) => {
+      ewcRawPdf.forEach((inst, idx) => {
         if (inst.isNsd) {
           const docAmt = (inst.amt || 0) / 100; grandEwc += docAmt; grand += docAmt;
           const docStr = docAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          sf([240, 249, 255]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([3, 105, 161]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
-          sf([3, 105, 161]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EWC', M + 7.5, y + 0.3, { align: 'center' });
-          doc.setFontSize(9); st([3, 105, 161]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+          if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
+          sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
           doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + docStr, DC_AMT, y, { align: 'right' });
         } else {
           const amt = Math.round(inst.amt || 0); grandEwc += amt; grand += amt;
-          sf([240, 253, 244]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([22, 163, 74]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
-          sf([22, 163, 74]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('WORK', M + 7.5, y + 0.3, { align: 'center' });
-          doc.setFontSize(9); st([21, 128, 61]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([34, 134, 67]); doc.text(inst.desc ? (inst.desc.length > 20 ? inst.desc.substring(0, 18) + '…' : inst.desc) : 'Extra Work', DC_PCT, y);
-          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([21, 128, 61]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+          if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
+          sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+          doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         }
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
@@ -315,13 +314,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       y += 4; secHead('Legal & Other Charges Schedule'); y += 3; rowAlt = false;
       drawSchedHeader();
       let grandLegal = 0;
-      legalInstPdf.forEach((inst) => {
+      legalInstPdf.forEach((inst, idx) => {
         const amt = Math.round(inst.amt || 0); grandLegal += amt; grand += amt;
-        sf([255, 241, 232]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd(ORG); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
-        sf(ORG); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
-        doc.setFontSize(9); st([154, 60, 22]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([176, 84, 44]); doc.text('Legal & Other Charges', DC_PCT, y);
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([154, 60, 22]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+        if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
+        sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st(DK); doc.text('Legal & Other Charges', DC_PCT, y);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
       drawSubTotal('SUB TOTAL', grandLegal);
