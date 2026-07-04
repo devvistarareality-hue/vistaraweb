@@ -124,9 +124,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   gradH(M, HDR_H, half, 0.6, WHT, MB);
   gradH(PW / 2, HDR_H, half, 0.6, MB, WHT);
 
-  // Date — below the header, right-aligned.
+  // Booking Date (right) + Plot No (left) — below the header.
   st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
-  doc.text('Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
+  doc.text('Plot No: ' + (meta.plotNo || '—'), M, HDR_H + 6);
+  doc.text('Booking Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
   y = HDR_H + 10; drawBorder();
 
   // Client box
@@ -176,44 +177,26 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     y += 2;
   }
 
-  // Project & Booking Details
-  secHead('Project & Booking Details', P);
+  // Details
+  secHead('Details', P);
   if (isIndustrialPdf) {
     const areaSqMtr = v.area > 0 ? (v.area / 10.764).toFixed(2) + ' sq.mtr' : '—';
     infoGrid([
-      ['Client Phone', meta.phoneNumber || '—'], ['Booking Date', fmtDate(meta.bookingDate)],
-      ['Project', meta.project], ['Plot No', meta.plotNo],
+      ['Plot No', meta.plotNo],
       ...((chosenUnit && chosenUnit !== 'sq.ft')
         ? [['Plot Area', v.area + ' ' + areaUnit]]
         : [['Plot Area (sq.ft)', v.area + ' sq.ft.'], ['Plot Area (sq.mtr)', areaSqMtr]]),
       ['CP / Channel Partner', meta.cpName || '—'], ['STM Name', meta.loggedInUser || '—'],
-      ['Address', meta.address || '—'],
+      ['Source of Inquiry', meta.source || '—'], ['Address', meta.address || '—'],
     ]);
   } else {
     const typeLabel = isAnkholPdf ? 'Bunglow Type' : 'Villa Type';
     const typeValue = isAnkholPdf ? (meta.bunglowType || '5B2HK + SR') : (meta.villaType || '—');
     infoGrid([
-      ['Client Phone', meta.phoneNumber || '—'], ['Booking Date', fmtDate(meta.bookingDate)],
-      ['Project', meta.project], ['Plot No', meta.plotNo],
+      ['Plot No', meta.plotNo],
       ['Plot Area', v.area + ' ' + areaUnit], ['Construction Area', v.constArea + ' ' + areaUnit],
       [typeLabel, typeValue], ['CP / Channel Partner', meta.cpName || '—'],
-      ['STM Name', meta.loggedInUser || '—'], ['Address', meta.address || '—'],
-    ]);
-  }
-
-  // Pricing Details
-  secHead('Pricing Details', [51, 102, 153]);
-  if (isIndustrialPdf) {
-    const landUnit = (chosenUnit && chosenUnit !== 'sq.ft') ? areaUnit.replace('.', '') : 'sq.ft';
-    const rows = [['Land Rate', 'Rs. ' + num(v.landRate) + ' / ' + landUnit], ['Sale Deed Rate', 'Rs. ' + num(v.saleDeedRate) + ' / sq.ft']];
-    if (!isTundavPdf) rows.push(['Dev Agreement Rate', 'Rs. ' + num(v.devAgreementRate) + ' / sq.ft']);
-    rows.push(['Discount', 'Rs. ' + num(v.discount)]); infoGrid(rows);
-  } else {
-    infoGrid([
-      ['Land Rate', 'Rs. ' + num(v.landRate) + ' / ' + areaUnit.replace('.', '')],
-      ['Development Rate', 'Rs. ' + num(v.devRate) + ' / ' + areaUnit.replace('.', '')],
-      ['Construction Rate', 'Rs. ' + num(v.constRate) + ' / ' + areaUnit.replace('.', '')],
-      ['Discount', 'Rs. ' + num(v.discount)],
+      ['STM Name', meta.loggedInUser || '—'], ['Source of Inquiry', meta.source || '—'], ['Address', meta.address || '—'],
     ]);
   }
 
@@ -221,11 +204,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (isAnkholPdf) {
     const sdPct = v.saleDeedPct != null ? v.saleDeedPct : 60;
     const fmt2 = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    secHead(`Sale Deed  (${sdPct}% x Base + Premium - Discount)`, [71, 85, 105]);
+    secHead('Deal Value', [71, 85, 105]);
     infoGrid([
-      ['Sale Deed Amount', 'Rs. ' + num(v.saleDeed)],
-      ['Extra Work Charges', 'Rs. ' + fmt2(v.nonSaleDeedDoc)],
-      ['Total Asset Document Value', 'Rs. ' + fmt2(v.docTotal)],
+      ['Unit Price', 'Rs. ' + num(v.saleDeed)],
+      ['Additional Extra Work Charges', 'Rs. ' + fmt2(v.nonSaleDeedDoc)],
     ]);
   }
   else if (isIndustrialPdf) {
@@ -258,82 +240,94 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Charges', v.extraWorkAmt); y += 2; }
 
-  // Total Deal Summary
-  const fmt2Deal = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  chk(isIndustrialPdf ? 58 : 96); secHead('Total Deal Summary', P); rowAlt = false;
-  let finalAmtForDeal = v.finalAmt;
-  if (isAnkholPdf) {
-    const sdPct = v.saleDeedPct != null ? v.saleDeedPct : 60;
-    const nsdK = (v.nonSaleDeed || 0) / 100;
-    const totalAssetDoc = (v.saleDeed || 0) + nsdK;
-    finalAmtForDeal = totalAssetDoc + (v.totalExtra || 0) + (v.extraWorkAmt || 0);
-    tRow(`Sale Deed  (${sdPct}% x Base + Premium - Discount)`, v.saleDeed);
-    tRow('Extra Work Charges', 0, { valStr: fmt2Deal(nsdK) });
-    tRow('Total Asset Value', 0, { sub: true, valStr: fmt2Deal(totalAssetDoc) });
-  } else {
-    tRow('Plot Basic Amount  (Plot Area x Land Rate)', v.plotBasic, { subline: num(v.area) + ' x ' + num(v.landRate) });
-    if (!isIndustrialPdf) {
-      tRow('Plot Development Amount  (Plot Area x Dev Rate)', v.plotDev, { subline: num(v.area) + ' x ' + num(v.devRate) });
-      tRow('Construction Amount  (Const Area x Const Rate)', v.constAmt, { subline: num(v.constArea) + ' x ' + num(v.constRate) });
-      tRow('Total Basic Amount', v.plotBasic + v.plotDev + v.constAmt, { sub: true });
-    }
-    tRow('Discount', v.discount, { green: true });
-  }
-  tRow('Extra Charges', v.totalExtra);
-  if (v.extraWorkAmt > 0) tRow('Extra Work', v.extraWorkAmt);
-  y += 3; tRow('FINAL AMOUNT', 0, { total: true, valStr: isAnkholPdf ? fmt2Deal(finalAmtForDeal) : rs(finalAmtForDeal) });
+  // Payment Schedule — 3 separate sections
+  const unitInstPdf = installments.filter(i => !i.isExtra && !i.isExtraWork && !i.isNsd);
+  const ewcRawPdf = [
+    ...installments.filter(i => i.isNsd),
+    ...extraWorkInst.map(r => ({ no: 'W' + r.no, date: r.date, pct: r.pct, amt: r.amt, isExtraWork: true, desc: v.extraWorkDesc })),
+  ];
+  const legalInstPdf = installments.filter(i => i.isExtra && Math.round(i.amt || 0) > 0);
+  const hasSchedule = unitInstPdf.length + ewcRawPdf.length + legalInstPdf.length > 0;
 
-  // Payment Schedule
-  const ordered = [];
-  installments.forEach((i) => { if (!i.isExtra && !i.isExtraWork && !i.isNsd) ordered.push(i); });
-  extraWorkInst.forEach((r) => ordered.push({ no: 'W' + r.no, date: r.date, pct: r.pct, amt: r.amt, isExtraWork: true, desc: v.extraWorkDesc }));
-  installments.forEach((i) => { if (i.isNsd) ordered.push(i); });
-  installments.forEach((i) => { if (i.isExtra && Math.round(i.amt || 0) > 0) ordered.push(i); });
-
-  if (ordered.length > 0) {
-    chk(25); y += 4; secHead('Payment Schedule'); y += 3; rowAlt = false;
+  if (hasSchedule) {
     const DC_NUM = M + 8, DC_DATE = M + 18, DC_PCT = M + 82, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
-    sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
-    doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
-    y += 10; let grand = 0;
-    ordered.forEach((inst, idx) => {
-      chk(10);
-      if (inst.isNsd) {
-        const docAmt = (inst.amt || 0) / 100;
-        grand += docAmt;
-        const docStr = docAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        sf([240, 249, 255]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([3, 105, 161]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
-        sf([3, 105, 161]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EWC', M + 7.5, y + 0.3, { align: 'center' });
-        doc.setFontSize(9); st([3, 105, 161]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
-        doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + docStr, DC_AMT, y, { align: 'right' });
-      } else {
-        const amt = Math.round(inst.amt || 0); grand += amt;
-        if (inst.isExtra) {
-          sf([255, 241, 232]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd(ORG); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
-          sf(ORG); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
-          doc.setFontSize(9); st([154, 60, 22]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([176, 84, 44]); doc.text('Extra Charges', DC_PCT, y);
-          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([154, 60, 22]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
-        } else if (inst.isExtraWork) {
+
+    const drawSchedHeader = () => {
+      chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
+      y += 10;
+    };
+
+    const drawSubTotal = (label, n) => {
+      chk(12); sf(WASH); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(MB2); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
+      sf(ORG); doc.roundedRect(M + 1.2, y - 3, 1.7, 6, 0.85, 0.85, 'F');
+      const nStr = n % 1 === 0 ? rs(n) : n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, DC_DATE, y + 1); doc.text('Rs. ' + nStr, DC_AMT, y + 1, { align: 'right' });
+      y += 16;
+    };
+
+    let grand = 0;
+
+    if (unitInstPdf.length > 0) {
+      chk(25); y += 4; secHead('Unit Price Payment Schedule'); y += 3; rowAlt = false;
+      drawSchedHeader();
+      let grandUnit = 0;
+      unitInstPdf.forEach((inst, idx) => {
+        chk(10);
+        const amt = Math.round(inst.amt || 0); grandUnit += amt; grand += amt;
+        if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
+        sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+        doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+        sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
+      });
+      drawSubTotal('SUB TOTAL', grandUnit);
+    }
+
+    if (ewcRawPdf.length > 0) {
+      chk(25); y += 4; secHead('Additional Extra Work Charges Schedule'); y += 3; rowAlt = false;
+      drawSchedHeader();
+      let grandEwc = 0;
+      ewcRawPdf.forEach((inst) => {
+        chk(10);
+        if (inst.isNsd) {
+          const docAmt = (inst.amt || 0) / 100; grandEwc += docAmt; grand += docAmt;
+          const docStr = docAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          sf([240, 249, 255]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([3, 105, 161]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
+          sf([3, 105, 161]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EWC', M + 7.5, y + 0.3, { align: 'center' });
+          doc.setFontSize(9); st([3, 105, 161]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+          doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + docStr, DC_AMT, y, { align: 'right' });
+        } else {
+          const amt = Math.round(inst.amt || 0); grandEwc += amt; grand += amt;
           sf([240, 253, 244]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd([22, 163, 74]); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
           sf([22, 163, 74]); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('WORK', M + 7.5, y + 0.3, { align: 'center' });
           doc.setFontSize(9); st([21, 128, 61]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([34, 134, 67]); doc.text(inst.desc ? (inst.desc.length > 20 ? inst.desc.substring(0, 18) + '…' : inst.desc) : 'Extra Work', DC_PCT, y);
           doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([21, 128, 61]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
-        } else {
-          if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
-          sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
-          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
-          doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         }
-      }
-      sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
-    });
-    chk(12); sf(WASH); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(MB2); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
-    sf(ORG); doc.roundedRect(M + 1.2, y - 3, 1.7, 6, 0.85, 0.85, 'F');
-    const grandStr = grand % 1 === 0 ? rs(grand) : grand.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('GRAND TOTAL', DC_DATE, y + 1); doc.text('Rs. ' + grandStr, DC_AMT, y + 1, { align: 'right' });
-    y += 16;
+        sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
+      });
+      drawSubTotal('SUB TOTAL', grandEwc);
+    }
+
+    if (legalInstPdf.length > 0) {
+      chk(25); y += 4; secHead('Legal & Other Charges Schedule'); y += 3; rowAlt = false;
+      drawSchedHeader();
+      let grandLegal = 0;
+      legalInstPdf.forEach((inst) => {
+        chk(10);
+        const amt = Math.round(inst.amt || 0); grandLegal += amt; grand += amt;
+        sf([255, 241, 232]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd(ORG); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
+        sf(ORG); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
+        doc.setFontSize(9); st([154, 60, 22]); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st([176, 84, 44]); doc.text('Legal & Other Charges', DC_PCT, y);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); st([154, 60, 22]); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+        sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
+      });
+      drawSubTotal('SUB TOTAL', grandLegal);
+    }
+
+    drawSubTotal('GRAND TOTAL', grand);
   }
 
   // Terms

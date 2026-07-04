@@ -229,7 +229,7 @@ function BookingPage() {
     const meta = {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
       project: project?.name, plotNo: plotNumbers || plot?.number, bookingDate: f.booking_date,
-      villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name,
+      villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name, source: f.source,
       areaUnit: f.area_unit || flags.areaUnit,
     };
     try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
