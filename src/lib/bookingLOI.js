@@ -235,7 +235,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% LSD' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow('GST (18% of Construction Agreement)', v.gst); tRow('Maintenance', v.maint); tRow('Legal Charges & Others', v.legal);
   }
-  y += 2; tRow('Total Extra Charges', v.totalExtra, { sub: true });
+  y += 2; tRow('Total Legal & Other Charges', v.totalExtra, { sub: true });
 
   if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Charges', v.extraWorkAmt); y += 2; }
 
