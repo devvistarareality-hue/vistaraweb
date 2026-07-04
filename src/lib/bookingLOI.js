@@ -224,7 +224,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     secHead(`Sale Deed  (${sdPct}% x Base + Premium - Discount)`, [71, 85, 105]);
     infoGrid([
       ['Sale Deed Amount', 'Rs. ' + num(v.saleDeed)],
-      ['Non-Sale Deed Amount', 'Rs. ' + fmt2(v.nonSaleDeedDoc)],
+      ['Extra Work Charges', 'Rs. ' + fmt2(v.nonSaleDeedDoc)],
       ['Total Asset Document Value', 'Rs. ' + fmt2(v.docTotal)],
     ]);
   }
