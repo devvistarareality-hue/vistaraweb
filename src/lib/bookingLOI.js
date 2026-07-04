@@ -330,12 +330,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Terms
   const terms = [
-    ['Payment Mode', 'All payments via cheque or bank transfer only. No cash accepted.'],
-    ['Late Payment', 'Delay >10 days attracts 2% per month penalty on the due installment.'],
-    ['Cancellation', 'Delay >15 days allows developer to cancel; refund after 10% deduction within 3 months.'],
-    ['Extra Charges', 'Extra charges may vary per Govt. Rules. Developer not liable for variation.'],
-    ['Early Payment', '1% per month discount applicable on land cost for early payments.'],
-    ['Plot Area', 'Plot area measured from centre line of compound walls.'],
+    ['Payment Mode', 'All payments are received via cheque or bank transfer only. No cash is accepted.'],
+    ['Late Payment', 'Payment delay of more than 10 days from the due date will attracts 2% per month penalty on the due instalment.'],
+    ['Cancellation', 'In case of delay in payment of more than 30 days from the due date, the developer will have the right to cancel this deal. In such case, the developer will refund the received amount after deduction of 10% of the total deal value within 3 months.'],
+    ['Cancellation', 'In case the buyer cancels the booking after 1 month of the booking date, the developer will refund the received amount after deduction of 10% of the total deal value within 3 months.'],
+    ['Legal Charges', 'Legal charges may vary as per government rules at the time of sale deed. Developer will not be held liable/responsible for any such variation.'],
   ];
   extraTerms.forEach((t) => { if (t.title || t.desc) terms.push([t.title || 'Note', t.desc || '']); });
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
