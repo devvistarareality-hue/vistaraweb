@@ -125,8 +125,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   gradH(PW / 2, HDR_H, half, 0.6, MB, WHT);
 
   // Booking Date (right) + Plot No (left) — below the header.
-  st(MD); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
-  doc.text('Plot No: ' + (meta.plotNo || '—'), M, HDR_H + 6);
+  const plotNumOnly = (meta.plotNo || '—').toString().replace(/^[^0-9]*/, '') || (meta.plotNo || '—');
+  st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.text('Plot No: ' + plotNumOnly, M, HDR_H + 6);
   doc.text('Booking Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
   y = HDR_H + 10; drawBorder();
 
