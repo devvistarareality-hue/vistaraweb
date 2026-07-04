@@ -219,7 +219,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   // Extra Charges — reserve the full section height so the Total Extra
   // Charges sub-row is never split onto the next page.
   const nExtra = isAnkholPdf ? 6 : isIndustrialPdf ? 6 : 5;
-  chk(14 + nExtra * 7.5 + 12); secHead('Extra Charges', [124, 58, 237]); rowAlt = false;
+  chk(14 + nExtra * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
   if (isAnkholPdf) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (1% of Sale Deed' + (v.applyPageFee === 'No' ? ')' : ' + Rs.1,500)')), v.applyRegFee === 'No' ? 0 : v.regFees);
