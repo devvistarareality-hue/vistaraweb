@@ -52,6 +52,7 @@ function BookingPage() {
   const [errs, setErrs] = useState({});   // required-field highlight on Generate/Submit
   const set = (k, v) => { setF((s) => ({ ...s, [k]: v })); setErrs((e) => (e[k] ? { ...e, [k]: false } : e)); };
   const [insts, setInsts] = useState([]); // [{date,pct,amt}]
+  const [nsdInsts, setNsdInsts] = useState([]); // extra work charges installments (ankhol)
   const [extraDate, setExtraDate] = useState(''); // due date for the Extra Charges line
   const [ew, setEw] = useState({ desc: '', amt: '' });       // extra work (revise mode)
   const [ewInsts, setEwInsts] = useState([]);                // [{date,pct,amt}]
@@ -82,7 +83,8 @@ function BookingPage() {
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
       if (Array.isArray(b.installments)) {
-        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
         const ex = b.installments.find((i) => i.isExtra);
         if (ex) setExtraDate(safeDate(ex.date));
       }
@@ -199,8 +201,21 @@ function BookingPage() {
     }));
   }
 
+  const nsdBase = v.nonSaleDeed || 0;
+  const nsdPctTotal = nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  function buildNsdInsts(n) { n = parseInt(n, 10) || 0; setNsdInsts(Array.from({ length: n }, (_, i) => nsdInsts[i] || { date: '', pct: '', amt: '' })); }
+  function setNsdInst(i, k, val) {
+    setNsdInsts((arr) => arr.map((r, idx) => {
+      if (idx !== i) return r;
+      const nr = { ...r, [k]: val };
+      if (k === 'pct') nr.amt = val && nsdBase ? String(Math.round(nsdBase * parseFloat(val) / 100)) : '';
+      if (k === 'amt') nr.pct = val && nsdBase ? (parseFloat(val) / nsdBase * 100).toFixed(2) : '';
+      return nr;
+    }));
+  }
   function instArr() {
     const arr = insts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0 }));
+    nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true }));
     arr.push({ no: 'Extra', date: extraDate, amt: Math.round(v.totalExtra), isExtra: true });
     return arr;
   }
@@ -390,6 +405,29 @@ function BookingPage() {
           </table>
         )}
         {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}% · Extra Charges {rupee(v.totalExtra)}</div>}
+        {formulaSet === 'ankhol' && nsdBase > 0 && (
+          <div style={{ marginTop: 14, borderTop: '1px solid #E5E7EB', paddingTop: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Charges Installments</div>
+            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
+            <Row><L>No. of Installments (Extra Work Charges)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
+            {nsdInsts.length > 0 && (
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+                <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {nsdInsts.map((r, i) => (
+                    <tr key={i}>
+                      <td style={td}>{i + 1}</td>
+                      <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} style={inp} /></td>
+                      <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                      <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} style={inp} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
+          </div>
+        )}
       </Section>
 
       {reviseId && (
