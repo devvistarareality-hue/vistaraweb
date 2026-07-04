@@ -375,7 +375,7 @@ function BookingPage() {
         {formulaSet === 'ankhol' && <>
           <T label="Unit Price" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
           <T label="Extra Work Charges" val={v.nonSaleDeed} />
-          <T label="Total Asset Value" sub="Sale Deed + Extra Work Charges" val={v.saleDeed + v.nonSaleDeed} subtotal />
+          <T label="Total Asset Value" sub="Unit Price + Extra Work Charges" val={v.saleDeed + v.nonSaleDeed} subtotal />
         </>}
         <T label="Extra Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
         {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}
