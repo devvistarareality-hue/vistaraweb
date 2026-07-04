@@ -251,6 +251,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (hasSchedule) {
     const DC_NUM = M + 8, DC_DATE = M + 18, DC_PCT = M + 82, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
 
+    const NO_DATE_PDF = 'Date of Sale Deed or Possession (whichever is earlier)';
+    const drawSchedDate = (d) => {
+      const txt = fmtDate(d);
+      if (txt) { doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(txt, DC_DATE, y); }
+      else { doc.setFontSize(6); doc.setFont('helvetica', 'italic'); st(MD); doc.text(NO_DATE_PDF, DC_DATE, y - 0.5); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); }
+    };
+
     const drawSchedHeader = () => {
       chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
       doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
@@ -277,7 +284,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         const amt = Math.round(inst.amt || 0); grandUnit += amt; grand += amt;
         if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
         sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
-        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+        drawSchedDate(inst.date); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text((inst.pct || 0) + '%', DC_PCT, y);
         doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
@@ -295,13 +302,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
           const docStr = docAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
           sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
-          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+          drawSchedDate(inst.date); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text((inst.pct || 0) + '%', DC_PCT, y);
           doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + docStr, DC_AMT, y, { align: 'right' });
         } else {
           const amt = Math.round(inst.amt || 0); grandEwc += amt; grand += amt;
           if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
           sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
-          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+          drawSchedDate(inst.date); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text((inst.pct || 0) + '%', DC_PCT, y);
           doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         }
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
@@ -318,8 +325,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         const amt = Math.round(inst.amt || 0); grandLegal += amt; grand += amt;
         if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
         sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
-        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); st(DK); doc.text('Legal & Other Charges', DC_PCT, y);
+        drawSchedDate(inst.date);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text('Legal & Other Charges', DC_PCT, y);
         doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
