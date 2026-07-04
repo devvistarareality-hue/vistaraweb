@@ -142,7 +142,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   pairs.forEach((p, i) => {
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(LT); doc.text(p[0], cx, y + 18);
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(String(p[1]), cx, y + 22.5);
-    if (i < 2) { sd(LN); doc.setLineWidth(0.3); doc.line(cx + 35, y + 16, cx + 35, y + 24); }
+    if (i < pairs.length - 1) { sd(LN); doc.setLineWidth(0.3); doc.line(cx + 35, y + 16, cx + 35, y + 24); }
     cx += 57;
   });
   y += 30;
