@@ -183,7 +183,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (isIndustrialPdf) {
     const areaSqMtr = v.area > 0 ? (v.area / 10.764).toFixed(2) + ' sq.mtr' : '—';
     infoGrid([
-      ['Plot No', meta.plotNo],
       ...((chosenUnit && chosenUnit !== 'sq.ft')
         ? [['Plot Area', v.area + ' ' + areaUnit]]
         : [['Plot Area (sq.ft)', v.area + ' sq.ft.'], ['Plot Area (sq.mtr)', areaSqMtr]]),
@@ -194,7 +193,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const typeLabel = isAnkholPdf ? 'Bunglow Type' : 'Villa Type';
     const typeValue = isAnkholPdf ? (meta.bunglowType || '5B2HK + SR') : (meta.villaType || '—');
     infoGrid([
-      ['Plot No', meta.plotNo],
       ['Plot Area', v.area + ' ' + areaUnit], ['Construction Area', v.constArea + ' ' + areaUnit],
       [typeLabel, typeValue], ['CP / Channel Partner', meta.cpName || '—'],
       ['STM Name', meta.loggedInUser || '—'], ['Source of Inquiry', meta.source || '—'], ['Address', meta.address || '—'],
