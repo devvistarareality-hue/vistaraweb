@@ -254,7 +254,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const NO_DATE_PDF = 'Date of Sale Deed or Possession (whichever is earlier)';
     const drawSchedDate = (d) => {
       const txt = fmtDate(d);
-      if (txt) { doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(txt, DC_DATE, y); }
+      if (txt && txt !== '—') { doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(txt, DC_DATE, y); }
       else { doc.setFontSize(6); doc.setFont('helvetica', 'italic'); st(MD); doc.text(NO_DATE_PDF, DC_DATE, y - 0.5); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); }
     };
 
