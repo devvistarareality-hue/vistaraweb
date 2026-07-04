@@ -275,7 +275,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       drawSchedHeader();
       let grandUnit = 0;
       unitInstPdf.forEach((inst, idx) => {
-        chk(10);
         const amt = Math.round(inst.amt || 0); grandUnit += amt; grand += amt;
         if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
         sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
@@ -287,11 +286,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     }
 
     if (ewcRawPdf.length > 0) {
-      chk(25); y += 4; secHead('Additional Extra Work Charges Schedule'); y += 3; rowAlt = false;
+      chk(4 + 12 + 3 + 10 + ewcRawPdf.length * 10 + 16);
+      y += 4; secHead('Additional Extra Work Charges Schedule'); y += 3; rowAlt = false;
       drawSchedHeader();
       let grandEwc = 0;
       ewcRawPdf.forEach((inst) => {
-        chk(10);
         if (inst.isNsd) {
           const docAmt = (inst.amt || 0) / 100; grandEwc += docAmt; grand += docAmt;
           const docStr = docAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -313,11 +312,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     }
 
     if (legalInstPdf.length > 0) {
-      chk(25); y += 4; secHead('Legal & Other Charges Schedule'); y += 3; rowAlt = false;
+      chk(4 + 12 + 3 + 10 + legalInstPdf.length * 10 + 16);
+      y += 4; secHead('Legal & Other Charges Schedule'); y += 3; rowAlt = false;
       drawSchedHeader();
       let grandLegal = 0;
       legalInstPdf.forEach((inst) => {
-        chk(10);
         const amt = Math.round(inst.amt || 0); grandLegal += amt; grand += amt;
         sf([255, 241, 232]); doc.rect(M, y - 5.5, CW, 9, 'F'); sd(ORG); doc.setLineWidth(0.4); doc.rect(M, y - 5.5, CW, 9, 'S');
         sf(ORG); doc.roundedRect(M + 1, y - 4, 13, 6, 1, 1, 'F'); st([255, 255, 255]); doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.text('EXTRA', M + 7.5, y + 0.3, { align: 'center' });
@@ -332,7 +331,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
 
   // Terms
-  chk(60); y += 4; secHead('Terms & Conditions', [71, 85, 105]);
   const terms = [
     ['Payment Mode', 'All payments via cheque or bank transfer only. No cash accepted.'],
     ['Late Payment', 'Delay >10 days attracts 2% per month penalty on the due installment.'],
@@ -342,10 +340,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     ['Plot Area', 'Plot area measured from centre line of compound walls.'],
   ];
   extraTerms.forEach((t) => { if (t.title || t.desc) terms.push([t.title || 'Note', t.desc || '']); });
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+  const termHeights = terms.map(t => Math.max(9, doc.splitTextToSize(t[1] || '', CW - 50).length * 4 + 4));
+  const totalTermsH = 4 + 12 + termHeights.reduce((a, b) => a + b, 0);
+  chk(totalTermsH); y += 4; secHead('Terms & Conditions', [71, 85, 105]);
   terms.forEach((t, idx) => {
-    doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-    const descLines = doc.splitTextToSize(t[1] || '', CW - 50); const rowH = Math.max(9, descLines.length * 4 + 4);
-    chk(rowH); if (idx % 2 === 0) { sf([249, 250, 251]); doc.rect(M, y - 5, CW, rowH, 'F'); }
+    const descLines = doc.splitTextToSize(t[1] || '', CW - 50); const rowH = termHeights[idx];
+    if (idx % 2 === 0) { sf([249, 250, 251]); doc.rect(M, y - 5, CW, rowH, 'F'); }
     sf(ORG); doc.circle(M + 3, y - 0.5, 1.2, 'F'); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); st(MB); doc.text(t[0], M + 7, y);
     doc.setFont('helvetica', 'normal'); st(MD); doc.text(descLines, M + 48, y); y += rowH;
   });
