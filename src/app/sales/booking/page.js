@@ -352,7 +352,7 @@ function BookingPage() {
         <Row><L>Client Name *</L><In value={f.client_name} invalid={errs.client_name} onChange={(e) => set('client_name', e.target.value)} /></Row>
         <Row><L>Gender *</L><Sel value={f.gender} onChange={(e) => set('gender', e.target.value)} opts={['', 'Male', 'Female']} /></Row>
         <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
-        <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...sources.map(s => srcDisplay(s.name))]} /></Row>
+        <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...(() => { const mapped = sources.map(s => srcDisplay(s.name)); const extra = ['Reference', 'Channel Partner', 'Other'].filter(n => !mapped.some(m => m.toLowerCase() === n.toLowerCase())); return [...mapped, ...extra]; })()] } /></Row>
         {/^reference$/i.test(f.source) && <Row><L>Reference Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         {/^other$/i.test(f.source) && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
