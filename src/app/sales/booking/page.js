@@ -366,7 +366,7 @@ function BookingPage() {
         {formulaSet !== 'ankhol' && <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>}
       </Section>
 
-      <Section title="Extra Charges">
+      <Section title="Legal & Other Charges">
         {formulaSet === 'ankhol' && <Row><L>Apply Stamp Duty?</L><Sel value={f.apply_stamp_duty} onChange={(e) => set('apply_stamp_duty', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="Stamp Duty" sub={stampSub} val={v.stampDuty} />
         <Row><L>Apply Registration Fee?</L><Sel value={f.apply_reg_fee} onChange={(e) => set('apply_reg_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
@@ -379,7 +379,7 @@ function BookingPage() {
         <Calc label="Maintenance Amount" sub={maintSub} val={v.maint} />
         {flags.hasMaintDeposit && <Calc label="Maintenance Deposit" sub="= Maintenance Amount" val={v.maintDeposit} />}
         {flags.hasMaintAdvance && <Calc label="Maintenance Advance" sub="= Maintenance Amount" val={v.maintAdvance} />}
-        <Row><L>Legal Charges & Others (₹)</L><In type="number" value={f.legal_charges} onChange={(e) => set('legal_charges', e.target.value)} /></Row>
+        <Row><L>Legal Documentation charge (₹)</L><In type="number" value={f.legal_charges} onChange={(e) => set('legal_charges', e.target.value)} /></Row>
       </Section>
 
       {/* Live totals — mirrors the GAS "Total Deal" box (breakdowns + Total Basic + Extra Charges) */}
@@ -396,15 +396,15 @@ function BookingPage() {
         {flags.hasSaleDeed && formulaSet !== 'ankhol' && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
         {formulaSet === 'ankhol' && <>
           <T label="Unit Price" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
-          <T label="Extra Work Charges" val={v.nonSaleDeed} />
+          <T label="Extra Work Amount" val={v.nonSaleDeed} />
           <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>
-          {v.discount > 0 && <T label="Discounted Amount" sub="Extra Work Charges − Discount" val={v.nonSaleDeed - v.discount} />}
-          <T label="Total Asset Value" sub={v.discount > 0 ? 'Unit Price + Discounted Amount' : 'Unit Price + Extra Work Charges'} val={v.saleDeed + v.nonSaleDeed - v.discount} subtotal />
+          {v.discount > 0 && <T label="Final Extra Work Amount" sub="Extra Work Amount − Discount" val={v.nonSaleDeed - v.discount} />}
+          <T label="Total Unit Price" sub={v.discount > 0 ? 'Unit Price + Final Extra Work Amount' : 'Unit Price + Extra Work Amount'} val={v.saleDeed + v.nonSaleDeed - v.discount} subtotal />
         </>}
-        <T label="Extra Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
+        <T label="Legal & Other Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
         {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}
         {formulaSet !== 'ankhol' && <T label="Discount" val={-v.discount} />}
-        <T label="FINAL AMOUNT" val={v.finalAmt} big />
+        <T label="Total Box Price" val={v.finalAmt} big />
       </div>
 
       <Section title="Payment Schedule">
@@ -427,19 +427,19 @@ function BookingPage() {
                 <tr style={{ background: '#FFF8E1' }}>
                   <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
                   <td style={td}><input type="date" value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} /></td>
-                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra Charges</td>
+                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Legal & Other Charges</td>
                   <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f0f4ff', color: '#1a73e8', fontWeight: 600 }} /></td>
                 </tr>
               )}
             </tbody>
           </table>
         )}
-        {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}% · Extra Charges {rupee(v.totalExtra)}</div>}
+        {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}% · Legal & Other Charges {rupee(v.totalExtra)}</div>}
         {formulaSet === 'ankhol' && nsdBase > 0 && (
           <div style={{ marginTop: 14, borderTop: '1px solid #E5E7EB', paddingTop: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Charges Installments</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Amount Installments</div>
             <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
-            <Row><L>No. of Installments (Extra Work Charges)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
+            <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
             {nsdInsts.length > 0 && (
               <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
                 <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>

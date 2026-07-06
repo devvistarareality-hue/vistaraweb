@@ -206,7 +206,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     secHead('Deal Value', [71, 85, 105]);
     infoGrid([
       ['Unit Price', 'Rs. ' + num(v.saleDeed)],
-      ['Additional Extra Work Charges', 'Rs. ' + fmt2(v.nonSaleDeedDoc)],
+      ['Additional Extra Work Amount', 'Rs. ' + fmt2(v.nonSaleDeedDoc)],
     ]);
   }
   else if (isIndustrialPdf) {
@@ -224,20 +224,20 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (1% of Sale Deed' + (v.applyPageFee === 'No' ? ')' : ' + Rs.1,500)')), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (5% of Sale Deed)', v.applyGst === 'No' ? 0 : v.gst);
-    tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Charges & Others', v.legal);
+    tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Documentation charge', v.legal);
   } else if (isIndustrialPdf) {
     tRow('Stamp Duty (4.9% of Sale Deed)', v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% Sale Deed' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow(isTundavPdf ? 'GST on Sale Deed (18% of 67% of Sale Deed)' : 'GST on Developed Plot (18% of Development Agreement)', v.gst);
-    tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Charges & Others', v.legal);
+    tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Documentation charge', v.legal);
   } else {
     tRow('Stamp Duty (4.9% of Land Sale Deed)', v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% LSD' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
-    tRow('GST (18% of Construction Agreement)', v.gst); tRow('Maintenance', v.maint); tRow('Legal Charges & Others', v.legal);
+    tRow('GST (18% of Construction Agreement)', v.gst); tRow('Maintenance', v.maint); tRow('Legal Documentation charge', v.legal);
   }
   y += 2; tRow('Total Legal & Other Charges', v.totalExtra, { sub: true });
 
-  if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Charges', v.extraWorkAmt); y += 2; }
+  if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Amount', v.extraWorkAmt); y += 2; }
 
   // Payment Schedule — 3 separate sections
   const unitInstPdf = installments.filter(i => !i.isExtra && !i.isExtraWork && !i.isNsd);
@@ -293,7 +293,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
     if (ewcRawPdf.length > 0) {
       chk(4 + 12 + 3 + 10 + ewcRawPdf.length * 10 + 16);
-      y += 4; secHead('Additional Extra Work Charges Schedule'); y += 3; rowAlt = false;
+      y += 4; secHead('Additional Extra Work Amount Schedule'); y += 3; rowAlt = false;
       drawSchedHeader();
       let grandEwc = 0;
       ewcRawPdf.forEach((inst, idx) => {
