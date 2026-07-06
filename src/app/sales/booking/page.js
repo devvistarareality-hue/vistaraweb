@@ -451,7 +451,6 @@ function BookingPage() {
 
       <Section title="Payment Schedule">
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
-        {!/^(reference|channel partner|other)$/i.test(f.source) && <Row><L>CP / Channel Partner</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
