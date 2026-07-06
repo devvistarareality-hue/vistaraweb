@@ -412,7 +412,7 @@ function BookingPage() {
         {formulaSet === 'ankhol' && <Row><L>Apply Stamp Duty?</L><Sel value={f.apply_stamp_duty} onChange={(e) => set('apply_stamp_duty', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="Stamp Duty" sub={stampSub} val={v.stampDuty} />
         <Row><L>Apply Registration Fee?</L><Sel value={f.apply_reg_fee} onChange={(e) => set('apply_reg_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
-        {f.apply_reg_fee !== 'No' && <Row><L>Apply ₹1,500 Page Fee?</L><Sel value={f.apply_page_fee} onChange={(e) => set('apply_page_fee', e.target.value)} opts={['Yes', 'No']} /></Row>}
+        <Row><L>Apply ₹1,500 Page Fee?</L><Sel value={f.apply_page_fee} onChange={(e) => set('apply_page_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
         <Calc label="Registration Fees" sub={regSub} val={v.regFees} />
         {formulaSet === 'ankhol' && <Row><L>Apply GST?</L><Sel value={f.apply_gst} onChange={(e) => set('apply_gst', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="GST" sub={gstSub} val={v.gst} />
