@@ -207,7 +207,7 @@ function BookingPage() {
     }));
   }
 
-  const nsdBase = v.nonSaleDeed || 0;
+  const nsdBase = Math.max(0, (v.nonSaleDeed || 0) - (v.discount || 0));
   const nsdPctTotal = nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   function buildNsdInsts(n) { n = parseInt(n, 10) || 0; setNsdInsts(Array.from({ length: n }, (_, i) => nsdInsts[i] || { date: '', pct: '', amt: '' })); }
   function setNsdInst(i, k, val) {
