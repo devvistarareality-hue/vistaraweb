@@ -165,9 +165,10 @@ function BookingPage() {
       });
       const last = next.length - 1;
       if (last > 0 && i < last) {
-        const usedPct = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
-        const remPct = parseFloat(Math.max(0, 100 - usedPct).toFixed(2));
-        next[last] = { ...next[last], pct: String(remPct), amt: ewBase ? String(Math.round(ewBase * remPct / 100)) : '' };
+        const usedAmt = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
+        const remAmt = Math.max(0, Math.round((ewBase || 0) - usedAmt));
+        const remPct = ewBase ? parseFloat((remAmt / ewBase * 100).toFixed(2)) : 0;
+        next[last] = { ...next[last], amt: String(remAmt), pct: String(remPct) };
       }
       return next;
     });
@@ -217,9 +218,10 @@ function BookingPage() {
       });
       const last = next.length - 1;
       if (last > 0 && i < last) {
-        const usedPct = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
-        const remPct = parseFloat(Math.max(0, 100 - usedPct).toFixed(2));
-        next[last] = { ...next[last], pct: String(remPct), amt: base ? String(Math.round(base * remPct / 100)) : '' };
+        const usedAmt = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
+        const remAmt = Math.max(0, Math.round((base || 0) - usedAmt));
+        const remPct = base ? parseFloat((remAmt / base * 100).toFixed(2)) : 0;
+        next[last] = { ...next[last], amt: String(remAmt), pct: String(remPct) };
       }
       return next;
     });
@@ -239,9 +241,10 @@ function BookingPage() {
       });
       const last = next.length - 1;
       if (last > 0 && i < last) {
-        const usedPct = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
-        const remPct = parseFloat(Math.max(0, 100 - usedPct).toFixed(2));
-        next[last] = { ...next[last], pct: String(remPct), amt: nsdBase ? String(Math.round(nsdBase * remPct / 100)) : '' };
+        const usedAmt = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
+        const remAmt = Math.max(0, Math.round((nsdBase || 0) - usedAmt));
+        const remPct = nsdBase ? parseFloat((remAmt / nsdBase * 100).toFixed(2)) : 0;
+        next[last] = { ...next[last], amt: String(remAmt), pct: String(remPct) };
       }
       return next;
     });
