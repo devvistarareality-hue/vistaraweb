@@ -363,7 +363,7 @@ function BookingPage() {
             />
           </Row>
         </>}
-        <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>
+        {formulaSet !== 'ankhol' && <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>}
       </Section>
 
       <Section title="Extra Charges">
@@ -397,7 +397,7 @@ function BookingPage() {
         {formulaSet === 'ankhol' && <>
           <T label="Unit Price" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
           <T label="Extra Work Charges" val={v.nonSaleDeed} />
-          {v.discount > 0 && <T label="Discount" val={-v.discount} />}
+          <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>
           {v.discount > 0 && <T label="Discounted Amount" sub="Extra Work Charges − Discount" val={v.nonSaleDeed - v.discount} />}
           <T label="Total Asset Value" sub={v.discount > 0 ? 'Unit Price + Discounted Amount' : 'Unit Price + Extra Work Charges'} val={v.saleDeed + v.nonSaleDeed - v.discount} subtotal />
         </>}
