@@ -155,9 +155,9 @@ function BookingPage() {
   }, [v.saleDeed]);
 
   const base = installmentBase(v);
-  const pctTotal = insts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  const pctTotal = base ? insts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / base * 100 : insts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   const ewBase = parseFloat(ew.amt) || 0;
-  const ewPctTotal = ewInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  const ewPctTotal = ewBase ? ewInsts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / ewBase * 100 : ewInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   function buildEw(n) {
     n = parseInt(n, 10) || 0;
     setEwInsts(Array.from({ length: n }, (_, i) => ewInsts[i] || { date: '', pct: '', amt: '' }));
@@ -236,7 +236,7 @@ function BookingPage() {
   }
 
   const nsdBase = Math.max(0, (v.nonSaleDeed || 0) - (v.discount || 0));
-  const nsdPctTotal = nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  const nsdPctTotal = nsdBase ? nsdInsts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / nsdBase * 100 : nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   function buildNsdInsts(n) { n = parseInt(n, 10) || 0; setNsdInsts(Array.from({ length: n }, (_, i) => nsdInsts[i] || { date: '', pct: '', amt: '' })); }
   function setNsdInst(i, k, val) {
     setNsdInsts((arr) => {
