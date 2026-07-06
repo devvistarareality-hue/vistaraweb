@@ -211,7 +211,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const fmt2 = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     secHead('Deal Value', [71, 85, 105]);
     infoGrid([
-      ['Unit Price', 'Rs. ' + num(v.saleDeed)],
+      ['Unit Price', 'Rs. ' + num(Math.round(v.saleDeed))],
       ['Additional Extra Work Amount', 'Rs. ' + fmt2(v.discount > 0 ? (v.nonSaleDeed - v.discount) / 100 : v.nonSaleDeedDoc)],
     ]);
   }
