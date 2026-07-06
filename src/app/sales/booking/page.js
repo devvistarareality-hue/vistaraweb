@@ -155,13 +155,22 @@ function BookingPage() {
     setEwInsts(Array.from({ length: n }, (_, i) => ewInsts[i] || { date: '', pct: '', amt: '' }));
   }
   function setEwInst(i, k, val) {
-    setEwInsts((arr) => arr.map((r, idx) => {
-      if (idx !== i) return r;
-      const nr = { ...r, [k]: val };
-      if (k === 'pct') nr.amt = val && ewBase ? String(Math.round(ewBase * parseFloat(val) / 100)) : '';
-      if (k === 'amt') nr.pct = val && ewBase ? (parseFloat(val) / ewBase * 100).toFixed(2) : '';
-      return nr;
-    }));
+    setEwInsts((arr) => {
+      const next = arr.map((r, idx) => {
+        if (idx !== i) return r;
+        const nr = { ...r, [k]: val };
+        if (k === 'pct') nr.amt = val && ewBase ? String(Math.round(ewBase * parseFloat(val) / 100)) : '';
+        if (k === 'amt') nr.pct = val && ewBase ? (parseFloat(val) / ewBase * 100).toFixed(2) : '';
+        return nr;
+      });
+      const last = next.length - 1;
+      if (last > 0 && i < last) {
+        const usedPct = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+        const remPct = parseFloat(Math.max(0, 100 - usedPct).toFixed(2));
+        next[last] = { ...next[last], pct: String(remPct), amt: ewBase ? String(Math.round(ewBase * remPct / 100)) : '' };
+      }
+      return next;
+    });
   }
   const ewArr = () => ewInsts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isExtraWork: true }));
   const inr = (n) => Number(n || 0).toLocaleString('en-IN');
@@ -198,26 +207,44 @@ function BookingPage() {
     setInsts(Array.from({ length: n }, (_, i) => insts[i] || { date: '', pct: '', amt: '' }));
   }
   function setInst(i, k, val) {
-    setInsts((arr) => arr.map((r, idx) => {
-      if (idx !== i) return r;
-      const nr = { ...r, [k]: val };
-      if (k === 'pct') nr.amt = val && base ? String(Math.round(base * parseFloat(val) / 100)) : '';
-      if (k === 'amt') nr.pct = val && base ? (parseFloat(val) / base * 100).toFixed(2) : '';
-      return nr;
-    }));
+    setInsts((arr) => {
+      const next = arr.map((r, idx) => {
+        if (idx !== i) return r;
+        const nr = { ...r, [k]: val };
+        if (k === 'pct') nr.amt = val && base ? String(Math.round(base * parseFloat(val) / 100)) : '';
+        if (k === 'amt') nr.pct = val && base ? (parseFloat(val) / base * 100).toFixed(2) : '';
+        return nr;
+      });
+      const last = next.length - 1;
+      if (last > 0 && i < last) {
+        const usedPct = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+        const remPct = parseFloat(Math.max(0, 100 - usedPct).toFixed(2));
+        next[last] = { ...next[last], pct: String(remPct), amt: base ? String(Math.round(base * remPct / 100)) : '' };
+      }
+      return next;
+    });
   }
 
   const nsdBase = Math.max(0, (v.nonSaleDeed || 0) - (v.discount || 0));
   const nsdPctTotal = nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   function buildNsdInsts(n) { n = parseInt(n, 10) || 0; setNsdInsts(Array.from({ length: n }, (_, i) => nsdInsts[i] || { date: '', pct: '', amt: '' })); }
   function setNsdInst(i, k, val) {
-    setNsdInsts((arr) => arr.map((r, idx) => {
-      if (idx !== i) return r;
-      const nr = { ...r, [k]: val };
-      if (k === 'pct') nr.amt = val && nsdBase ? String(Math.round(nsdBase * parseFloat(val) / 100)) : '';
-      if (k === 'amt') nr.pct = val && nsdBase ? (parseFloat(val) / nsdBase * 100).toFixed(2) : '';
-      return nr;
-    }));
+    setNsdInsts((arr) => {
+      const next = arr.map((r, idx) => {
+        if (idx !== i) return r;
+        const nr = { ...r, [k]: val };
+        if (k === 'pct') nr.amt = val && nsdBase ? String(Math.round(nsdBase * parseFloat(val) / 100)) : '';
+        if (k === 'amt') nr.pct = val && nsdBase ? (parseFloat(val) / nsdBase * 100).toFixed(2) : '';
+        return nr;
+      });
+      const last = next.length - 1;
+      if (last > 0 && i < last) {
+        const usedPct = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+        const remPct = parseFloat(Math.max(0, 100 - usedPct).toFixed(2));
+        next[last] = { ...next[last], pct: String(remPct), amt: nsdBase ? String(Math.round(nsdBase * remPct / 100)) : '' };
+      }
+      return next;
+    });
   }
   function instArr() {
     const arr = insts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0 }));
