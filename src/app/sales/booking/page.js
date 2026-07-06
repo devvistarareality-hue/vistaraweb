@@ -345,6 +345,9 @@ function BookingPage() {
         <Row><L>Gender *</L><Sel value={f.gender} onChange={(e) => set('gender', e.target.value)} opts={['', 'Male', 'Female']} /></Row>
         <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
         <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...sources.map(s => s.name)]} /></Row>
+        {f.source === 'Reference' && <Row><L>Reference Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
+        {f.source === 'Channel Partner' && <Row><L>Channel Partner Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
+        {f.source === 'Other' && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
       </Section>
 
@@ -439,7 +442,7 @@ function BookingPage() {
 
       <Section title="Payment Schedule">
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
-        <Row><L>CP / Channel Partner</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>
+        {!['Reference', 'Channel Partner', 'Other'].includes(f.source) && <Row><L>CP / Channel Partner</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
