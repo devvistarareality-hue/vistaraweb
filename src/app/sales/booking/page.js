@@ -7,6 +7,14 @@ import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../li
 import { downloadLOI } from '../../../lib/bookingLOI';
 
 
+// Normalise legacy lowercase source names stored in the DB to display equivalents.
+const srcDisplay = (name) => {
+  if (!name) return name;
+  if (/^referral$/i.test(name)) return 'Reference';
+  if (/^other$/i.test(name)) return 'Other';
+  return name;
+};
+
 // <input type="date"> needs a zero-padded yyyy-mm-dd or it throws in Safari.
 function safeDate(s) {
   const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s || ''));
@@ -75,7 +83,7 @@ function BookingPage() {
       setProjectId(String(b.project));
       setPlotIds(((b.plot_ids && b.plot_ids.length ? b.plot_ids : [b.plot]).filter(Boolean)).map(String));
       setF((s) => ({
-        ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: b.source || '',
+        ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
         land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
@@ -344,7 +352,7 @@ function BookingPage() {
         <Row><L>Client Name *</L><In value={f.client_name} invalid={errs.client_name} onChange={(e) => set('client_name', e.target.value)} /></Row>
         <Row><L>Gender *</L><Sel value={f.gender} onChange={(e) => set('gender', e.target.value)} opts={['', 'Male', 'Female']} /></Row>
         <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
-        <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...sources.map(s => s.name)]} /></Row>
+        <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...sources.map(s => srcDisplay(s.name))]} /></Row>
         {/^reference$/i.test(f.source) && <Row><L>Reference Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         {/^other$/i.test(f.source) && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
