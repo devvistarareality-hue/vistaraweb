@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
@@ -63,6 +63,8 @@ function BookingPage() {
   const cleanTerms = () => extraTerms.map((t) => ({ title: (t.title || '').trim(), desc: (t.desc || '').trim() })).filter((t) => t.title || t.desc);
   const [loiDone, setLoiDone] = useState(false);
   const [loiFile, setLoiFile] = useState(null); // {name,type,data(base64)}
+  const [deedAmtStr, setDeedAmtStr] = useState('');
+  const editingAmtRef = useRef(false);
 
   // Revision mode: load the existing booking and prefill the form.
   useEffect(() => {
@@ -139,6 +141,10 @@ function BookingPage() {
     applyRegFee: f.apply_reg_fee, applyPageFee: f.apply_page_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
+
+  useEffect(() => {
+    if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));
+  }, [v.saleDeed]);
 
   const base = installmentBase(v);
   const pctTotal = insts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
@@ -339,7 +345,24 @@ function BookingPage() {
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
-        {formulaSet === 'ankhol' && <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => set('sale_deed_pct', e.target.value)} /></Row>}
+        {formulaSet === 'ankhol' && <>
+          <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => set('sale_deed_pct', e.target.value)} /></Row>
+          <Row>
+            <L>Unit Price (₹)</L>
+            <In
+              type="number"
+              value={deedAmtStr}
+              onFocus={() => { editingAmtRef.current = true; }}
+              onBlur={() => { editingAmtRef.current = false; setDeedAmtStr(String(Math.round(v.saleDeed) || '')); }}
+              onChange={(e) => {
+                setDeedAmtStr(e.target.value);
+                const amt = parseFloat(e.target.value) || 0;
+                const base = v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation - v.discount;
+                if (base > 0) set('sale_deed_pct', String(parseFloat((amt / base * 100).toFixed(4))));
+              }}
+            />
+          </Row>
+        </>}
         <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>
       </Section>
 
