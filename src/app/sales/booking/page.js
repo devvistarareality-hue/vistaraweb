@@ -175,7 +175,7 @@ function BookingPage() {
       : `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maint)} + ${inr(v.legal)}`;
   const saleDeedSub = formulaSet === 'ankhol' ? `${v.saleDeedPct}% × Total Basic Amount` : 'Sale Deed Rate × Plot Area';
   const saleDeedSub2 = formulaSet === 'ankhol'
-    ? `${v.saleDeedPct}% × ${inr(v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation - v.discount)}`
+    ? `${v.saleDeedPct}% × ${inr(v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation)}`
     : `${inr(v.saleDeedRate)} × ${inr(v.area)}`;
   // formula sub-labels shown under each computed value (mirrors GAS)
   const stampSub = (formulaSet === 'ankhol' && f.apply_stamp_duty === 'No') ? 'Not applicable'
@@ -388,17 +388,18 @@ function BookingPage() {
         {flags.hasConstructionFields && <T label="Plot Development Amount" sub={`${formulaSet === 'ankhol' ? 'Construction' : 'Plot'} Area × Dev Rate`} sub2={`${inr(formulaSet === 'ankhol' ? v.constArea : v.area)} × ${inr(v.devRate)}`} val={v.plotDev} />}
         {flags.hasConstructionFields && <T label="Construction Amount" sub="Construction Area × Construction Rate" sub2={`${inr(v.constArea)} × ${inr(v.constRate)}`} val={v.constAmt} />}
         {flags.hasConstructionFields && formulaSet === 'ankhol' && v.premiumLocation > 0 && <T label="Premium Location Charge" val={v.premiumLocation} />}
-        {flags.hasConstructionFields && formulaSet === 'ankhol' && <T label="Discount" val={-v.discount} />}
         {flags.hasConstructionFields && <T
           label="Total Basic Amount"
-          sub={formulaSet === 'ankhol' ? 'Plot Basic + Plot Dev + Construction + Premium − Discount' : 'Plot Basic + Plot Dev + Construction'}
-          val={formulaSet === 'ankhol' ? v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation - v.discount : v.plotBasic + v.plotDev + v.constAmt}
+          sub={formulaSet === 'ankhol' ? 'Plot Basic + Plot Dev + Construction + Premium' : 'Plot Basic + Plot Dev + Construction'}
+          val={formulaSet === 'ankhol' ? v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation : v.plotBasic + v.plotDev + v.constAmt}
           subtotal />}
         {flags.hasSaleDeed && formulaSet !== 'ankhol' && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
         {formulaSet === 'ankhol' && <>
           <T label="Unit Price" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
           <T label="Extra Work Charges" val={v.nonSaleDeed} />
           <T label="Total Asset Value" sub="Unit Price + Extra Work Charges" val={v.saleDeed + v.nonSaleDeed} subtotal />
+          {v.discount > 0 && <T label="Discount" val={-v.discount} />}
+          {v.discount > 0 && <T label="Discounted Amount" sub="Total Asset Value − Discount" val={v.saleDeed + v.nonSaleDeed - v.discount} subtotal />}
         </>}
         <T label="Extra Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
         {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}

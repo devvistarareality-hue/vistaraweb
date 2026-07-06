@@ -76,7 +76,7 @@ export function computeFormulas(inp = {}) {
   // Sale Deed / Stamp / Reg / GST per formula set
   let saleDeed = 0, stampDuty = 0, regFees = 0, gst = 0, maintDeposit = 0, maintAdvance = 0;
   if (isAnkhol) {
-    saleDeed     = (saleDeedPct / 100) * (plotBasic + constAmt + plotDev + premiumLocation - discount);
+    saleDeed     = (saleDeedPct / 100) * (plotBasic + constAmt + plotDev + premiumLocation);
     stampDuty    = saleDeed * 0.049;
     regFees      = (saleDeed * 0.01) + pageFee;
     gst          = saleDeed * 0.05;
@@ -104,7 +104,7 @@ export function computeFormulas(inp = {}) {
   else                   totalExtra = stampDuty + regFees + gst + maint + legal;
 
   // Non-sale deed portion (ankhol only): the remaining % shown at ÷100 of actual value in the LOI.
-  const nonSaleDeed = isAnkhol ? ((plotBasic + constAmt + plotDev + premiumLocation - discount) - saleDeed) : 0;
+  const nonSaleDeed = isAnkhol ? ((plotBasic + constAmt + plotDev + premiumLocation) - saleDeed) : 0;
   const nonSaleDeedDoc = isAnkhol ? nonSaleDeed / 100 : 0;
   const docTotal = isAnkhol ? saleDeed + nonSaleDeedDoc : 0;
 
@@ -112,7 +112,7 @@ export function computeFormulas(inp = {}) {
   const finalAmt = isIndustrial
     ? (plotBasic + totalExtra + extraWorkAmt - discount)
     : isAnkhol
-    ? (saleDeed + nonSaleDeed + totalExtra + extraWorkAmt)
+    ? (saleDeed + nonSaleDeed - discount + totalExtra + extraWorkAmt)
     : (plotBasic + plotDev + constAmt + totalExtra + extraWorkAmt - discount);
 
   return {
