@@ -200,7 +200,8 @@ function BookingPage() {
     : (formulaSet === 'kalrav' ? '4.9% of Land Sale Deed' : '4.9% of Sale Deed');
   const pageFeeTxt = f.apply_page_fee === 'No' ? '' : ' + ₹1,500';
   const femPage = f.apply_page_fee === 'No' ? '₹0' : '₹1,500';
-  const regSub = f.apply_reg_fee === 'No' ? 'Not applicable'
+  const regSub = f.apply_reg_fee === 'No'
+    ? (f.apply_page_fee === 'No' ? 'Not applicable' : 'Page Fee only (₹1,500)')
     : (formulaSet === 'ankhol' ? `1% of Sale Deed${pageFeeTxt}`
       : formulaSet === 'industrial' ? `Male: 1% Sale Deed${pageFeeTxt} | Female: ${femPage}`
       : `Male: 1% LSD${pageFeeTxt} | Female: ${femPage}`);

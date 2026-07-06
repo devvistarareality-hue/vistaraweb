@@ -93,7 +93,7 @@ export function computeFormulas(inp = {}) {
     gst       = constAgr * 0.18;
   }
 
-  if (applyRegFee === 'No') regFees = 0;
+  if (applyRegFee === 'No') regFees = pageFee; // 1% removed but page fee stays independent
   if (isAnkhol && applyStampDuty === 'No') stampDuty = 0;
   if (isAnkhol && applyGst === 'No') gst = 0;
 

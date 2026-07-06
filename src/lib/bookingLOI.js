@@ -222,12 +222,12 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   chk(14 + nExtra * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
   if (isAnkholPdf) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
-    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (1% of Sale Deed' + (v.applyPageFee === 'No' ? ')' : ' + Rs.1,500)')), v.applyRegFee === 'No' ? 0 : v.regFees);
+    tRow(v.applyRegFee === 'No' ? (v.applyPageFee === 'No' ? 'Registration Fees (Not Applicable)' : 'Registration Fees (Not Applicable) + Page Fee (Rs.1,500)') : ('Registration Fees (1% of Sale Deed' + (v.applyPageFee === 'No' ? ')' : ' + Rs.1,500)')), v.regFees);
     tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (5% of Sale Deed)', v.applyGst === 'No' ? 0 : v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Documentation charge', v.legal);
   } else if (isIndustrialPdf) {
     tRow('Stamp Duty (4.9% of Sale Deed)', v.stampDuty);
-    tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% Sale Deed' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
+    tRow(v.applyRegFee === 'No' ? (v.applyPageFee === 'No' ? 'Registration Fees (Not Applicable)' : 'Registration Fees (Not Applicable) + Page Fee (Rs.1,500)') : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% Sale Deed' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.regFees);
     tRow(isTundavPdf ? 'GST on Sale Deed (18% of 67% of Sale Deed)' : 'GST on Developed Plot (18% of Development Agreement)', v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Documentation charge', v.legal);
   } else {
