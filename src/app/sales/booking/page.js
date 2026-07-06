@@ -353,12 +353,12 @@ function BookingPage() {
               type="number"
               value={deedAmtStr}
               onFocus={() => { editingAmtRef.current = true; }}
-              onBlur={() => { editingAmtRef.current = false; setDeedAmtStr(String(Math.round(v.saleDeed) || '')); }}
+              onBlur={() => { editingAmtRef.current = false; }}
               onChange={(e) => {
                 setDeedAmtStr(e.target.value);
                 const amt = parseFloat(e.target.value) || 0;
                 const base = v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation - v.discount;
-                if (base > 0) set('sale_deed_pct', String(parseFloat((amt / base * 100).toFixed(4))));
+                if (base > 0) set('sale_deed_pct', String(amt / base * 100));
               }}
             />
           </Row>
