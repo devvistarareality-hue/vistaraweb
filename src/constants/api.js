@@ -11,12 +11,14 @@ let BASE_URL = (() => {
     if (isLocalhost) {
       // Dev only: honour the last-discovered local/LAN backend.
       try { const saved = localStorage.getItem('api_base'); if (saved) return saved; } catch {}
-    } else {
-      // Production (Vercel): ALWAYS use the deployed backend. A stale api_base
-      // (localhost / LAN IP left over from a dev session) is only reachable on that
-      // one network → "Network error" on mobile data / other Wi-Fi. Purge it.
-      try { localStorage.removeItem('api_base'); } catch {}
+      return process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
     }
+    // Production (Vercel): use a SAME-ORIGIN relative base ('') so every /api/* call
+    // is proxied by Vercel to Railway (see next.config rewrites). The browser then only
+    // resolves vistaraweb.vercel.app — avoiding ISP DNS blocks on *.up.railway.app that
+    // caused "Network error" on mobile data / other Wi-Fi. Purge any stale api_base.
+    try { localStorage.removeItem('api_base'); } catch {}
+    return '';
   }
   return process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
 })();

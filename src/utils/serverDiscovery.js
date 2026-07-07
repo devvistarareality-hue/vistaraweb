@@ -19,12 +19,13 @@ async function probeUrl(url) {
 }
 
 export async function discoverServer() {
-  // Only probe for local server when the web app itself is running on localhost.
-  // On Vercel (production), always use Railway — probing localhost would find the
-  // developer's local Django instance and route all requests there with Railway
-  // auth tokens, causing 401 errors on every API call.
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    setBaseUrl(RAILWAY_URL);
+  // Only probe for a local server when the web app itself runs on localhost.
+  // On production use a same-origin relative base ('') so /api/* is proxied by Vercel
+  // to Railway (next.config rewrites) — the browser never resolves *.up.railway.app,
+  // which some ISPs (e.g. Jio) fail to resolve on mobile data.
+  if (typeof window !== 'undefined'
+      && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    setBaseUrl('');
     return;
   }
   const localAvailable = await probeUrl(LOCAL_URL);

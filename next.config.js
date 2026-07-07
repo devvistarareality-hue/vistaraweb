@@ -1,10 +1,21 @@
 /** @type {import('next').NextConfig} */
+const API_PROXY_TARGET = process.env.API_PROXY_TARGET || 'https://vistararealtybackend-production.up.railway.app';
+
 const nextConfig = {
   images: {
     // Allow next/image to optimize Supabase-hosted assets (project covers, plans, etc.)
     remotePatterns: [
       { protocol: 'https', hostname: 'lftvumbhogcixihjydwx.supabase.co' },
     ],
+  },
+  // Keep the trailing slash on API URLs so Django's APPEND_SLASH is satisfied through
+  // the proxy (otherwise Next 308-redirects /api/x/ -> /api/x before the rewrite runs).
+  skipTrailingSlashRedirect: true,
+  // Proxy all API calls through our own domain so the browser only ever resolves
+  // vistaraweb.vercel.app — not *.up.railway.app, which some ISPs (e.g. Jio) fail to
+  // resolve on mobile data. Vercel forwards these to Railway server-side.
+  async rewrites() {
+    return [{ source: '/api/:path*', destination: `${API_PROXY_TARGET}/api/:path*` }];
   },
 };
 // Only wrap with Sentry when a DSN is configured, so builds without Sentry env
