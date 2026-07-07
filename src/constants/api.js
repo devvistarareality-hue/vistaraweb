@@ -6,7 +6,17 @@ export const RAILWAY_URL = 'https://vistararealtybackend-production.up.railway.a
 // signed (different SECRET_KEY), 401ing until you navigate.
 let BASE_URL = (() => {
   if (typeof window !== 'undefined') {
-    try { const saved = localStorage.getItem('api_base'); if (saved) return saved; } catch {}
+    const host = window.location.hostname;
+    const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+    if (isLocalhost) {
+      // Dev only: honour the last-discovered local/LAN backend.
+      try { const saved = localStorage.getItem('api_base'); if (saved) return saved; } catch {}
+    } else {
+      // Production (Vercel): ALWAYS use the deployed backend. A stale api_base
+      // (localhost / LAN IP left over from a dev session) is only reachable on that
+      // one network → "Network error" on mobile data / other Wi-Fi. Purge it.
+      try { localStorage.removeItem('api_base'); } catch {}
+    }
   }
   return process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
 })();
