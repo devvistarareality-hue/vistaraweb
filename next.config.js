@@ -8,14 +8,15 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lftvumbhogcixihjydwx.supabase.co' },
     ],
   },
-  // Keep the trailing slash on API URLs so Django's APPEND_SLASH is satisfied through
-  // the proxy (otherwise Next 308-redirects /api/x/ -> /api/x before the rewrite runs).
+  // Don't let Next strip the trailing slash before the rewrite runs.
   skipTrailingSlashRedirect: true,
   // Proxy all API calls through our own domain so the browser only ever resolves
   // vistaraweb.vercel.app — not *.up.railway.app, which some ISPs (e.g. Jio) fail to
   // resolve on mobile data. Vercel forwards these to Railway server-side.
+  // The destination ALWAYS ends in "/" — the rewrite's :path* capture otherwise drops
+  // the trailing slash, and Django's APPEND_SLASH then 301-loops through the proxy.
   async rewrites() {
-    return [{ source: '/api/:path*', destination: `${API_PROXY_TARGET}/api/:path*` }];
+    return [{ source: '/api/:path*', destination: `${API_PROXY_TARGET}/api/:path*/` }];
   },
 };
 // Only wrap with Sentry when a DSN is configured, so builds without Sentry env
