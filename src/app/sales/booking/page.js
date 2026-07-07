@@ -400,7 +400,7 @@ function BookingPage() {
                 setDeedAmtStr(e.target.value);
                 const amt = parseFloat(e.target.value) || 0;
                 const base = v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation - v.discount;
-                if (base > 0) set('sale_deed_pct', String(amt / base * 100));
+                if (base > 0) set('sale_deed_pct', parseFloat((amt / base * 100).toFixed(2)));
               }}
             />
           </Row>
