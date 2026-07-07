@@ -132,7 +132,10 @@ function BookingPage() {
 
   // Comma display of every selected plot ("12, 13, 14").
   const plotNumbers = useMemo(
-    () => (plots.length ? plots.map((p) => p.number).join(', ') : (plot?.number || '')),
+    () => {
+      const strip = (n) => { const s = (n || '').toString(); return s.replace(/^[^0-9]*/, '') || s; };
+      return plots.length ? plots.map((p) => strip(p.number)).join(', ') : strip(plot?.number || '');
+    },
     [plots, plot],
   );
 
