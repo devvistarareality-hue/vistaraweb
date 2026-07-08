@@ -158,6 +158,30 @@ function BookingPage() {
     if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));
   }, [v.saleDeed]);
 
+  // Warn before leaving the booking form once meaningful data has been entered
+  // (covers accidental back-button / gesture / refresh / tab-close).
+  const isDirty = !!(f.land_rate || f.dev_rate || f.const_rate || f.premium_location || f.sale_deed_amount
+    || f.legal_charges || f.maint_rate || insts.length || nsdInsts.length || deedAmtStr || loiFile);
+  useEffect(() => {
+    const beforeUnload = (e) => { if (isDirty) { e.preventDefault(); e.returnValue = ''; } };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [isDirty]);
+  useEffect(() => {
+    if (!isDirty) return;
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => {
+      if (window.confirm('Are you sure you want to go back? Your unsaved booking details will be lost.')) {
+        window.removeEventListener('popstate', onPop);
+        router.back();
+      } else {
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isDirty, router]);
+
   const base = installmentBase(v);
   const pctTotal = base ? insts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / base * 100 : insts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   const ewBase = parseFloat(ew.amt) || 0;
@@ -275,6 +299,12 @@ function BookingPage() {
     if (!v.plotBasic) { if (!f.area) e.area = true; if (!f.land_rate) e.land_rate = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
+    // Installments are required before the LOI can be generated.
+    if (!insts.length) { setMsg('Add the payment installments before downloading the LOI.'); return; }
+    if (Math.abs(pctTotal - 100) > 0.01) { setMsg('Payment installments must total 100% before downloading the LOI.'); return; }
+    if (formulaSet === 'ankhol' && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
+      setMsg('Extra Work Amount installments must be filled and total 100% before downloading the LOI.'); return;
+    }
     const meta = {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
       project: project?.name, plotNo: plotNumbers || plot?.number, bookingDate: f.booking_date,
