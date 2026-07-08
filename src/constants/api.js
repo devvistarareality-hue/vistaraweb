@@ -9,9 +9,15 @@ let BASE_URL = (() => {
     const host = window.location.hostname;
     const isLocalhost = host === 'localhost' || host === '127.0.0.1';
     if (isLocalhost) {
-      // Dev only: honour the last-discovered local/LAN backend.
-      try { const saved = localStorage.getItem('api_base'); if (saved) return saved; } catch {}
-      return process.env.NEXT_PUBLIC_API_URL || RAILWAY_URL;
+      // Dev: only trust a saved LOCAL/LAN backend address. A stale Railway value left
+      // by an earlier discovery (when the local backend was momentarily down) would be
+      // DNS-blocked on this network → "no data". Ignore it and default to the dev API.
+      try {
+        const saved = localStorage.getItem('api_base');
+        if (saved && /localhost|127\.0\.0\.1|^https?:\/\/(10\.|192\.168\.|172\.)/.test(saved)) return saved;
+        if (saved) localStorage.removeItem('api_base');
+      } catch {}
+      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     }
     // Production (Vercel): use a SAME-ORIGIN relative base ('') so every /api/* call
     // is proxied by Vercel to Railway (see next.config rewrites). The browser then only
