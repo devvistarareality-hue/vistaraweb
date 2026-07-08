@@ -51,7 +51,7 @@ function BookingPage() {
     client_name: qp.get('client') || '', gender: '', phone: qp.get('phone') || '', address: '', source: '',
     area: '', area_unit: 'sq.yd', const_area: '', villa_type: '',
     land_rate: '', dev_rate: '', const_rate: '', sale_deed_rate: '', dev_agreement_rate: '',
-    sale_deed_pct: '60',
+    sale_deed_pct: '60', sale_deed_amount: '',
     land_sale_deed: '', const_agreement: '', premium_location: '',
     discount: '0', legal_charges: '', maint_rate: '', maint_months: '',
     apply_reg_fee: 'Yes', apply_page_fee: 'Yes', apply_stamp_duty: 'Yes', apply_gst: 'Yes',
@@ -87,6 +87,7 @@ function BookingPage() {
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
         land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
+        sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
@@ -148,7 +149,7 @@ function BookingPage() {
     discount: f.discount, legalCharges: f.legal_charges, maintRate: f.maint_rate, maintMonths: f.maint_months,
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
     premiumLocation: f.premium_location, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
-    saleDeedPct: f.sale_deed_pct,
+    saleDeedPct: f.sale_deed_pct, saleDeedAmount: f.sale_deed_amount,
     applyRegFee: f.apply_reg_fee, applyPageFee: f.apply_page_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
@@ -308,6 +309,7 @@ function BookingPage() {
       land_rate: f.land_rate || 0, dev_rate: f.dev_rate || 0, const_rate: f.const_rate || 0,
       sale_deed_rate: f.sale_deed_rate || 0, dev_agreement_rate: f.dev_agreement_rate || 0,
       sale_deed_pct: f.sale_deed_pct === '' || f.sale_deed_pct == null ? 60 : f.sale_deed_pct,
+      sale_deed_amount: f.sale_deed_amount || 0,
       maint_rate: f.maint_rate || 0, maint_months: f.maint_months || 0,
       plot_basic: Math.round(v.plotBasic), plot_dev: Math.round(v.plotDev), const_amt: Math.round(v.constAmt),
       sale_deed: Math.round(v.saleDeed), dev_agreement: Math.round(v.devAgreement),
@@ -391,7 +393,8 @@ function BookingPage() {
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
         {formulaSet === 'ankhol' && <>
-          <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => set('sale_deed_pct', e.target.value)} /></Row>
+          {/* Editing the % clears the exact Unit Price override so the % drives again. */}
+          <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => setF((s) => ({ ...s, sale_deed_pct: e.target.value, sale_deed_amount: '' }))} /></Row>
           <Row>
             <L>Unit Price (₹)</L>
             <In
@@ -402,8 +405,9 @@ function BookingPage() {
               onChange={(e) => {
                 setDeedAmtStr(e.target.value);
                 const amt = parseFloat(e.target.value) || 0;
-                const base = v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation - v.discount;
-                if (base > 0) set('sale_deed_pct', parseFloat((amt / base * 100).toFixed(2)));
+                const base = v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation;
+                // Keep the exact amount as the source of truth; % is just a rounded display.
+                setF((s) => ({ ...s, sale_deed_amount: e.target.value, sale_deed_pct: base > 0 ? parseFloat((amt / base * 100).toFixed(2)) : s.sale_deed_pct }));
               }}
             />
           </Row>
@@ -454,6 +458,30 @@ function BookingPage() {
 
       <Section title="Payment Schedule">
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
+        {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
+        {formulaSet === 'ankhol' && nsdBase > 0 && (
+          <div style={{ marginBottom: 14, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Amount Installments</div>
+            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
+            <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
+            {nsdInsts.length > 0 && (
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+                <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {nsdInsts.map((r, i) => (
+                    <tr key={i}>
+                      <td style={td}>{i + 1}</td>
+                      <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} style={inp} /></td>
+                      <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                      <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} style={inp} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
+          </div>
+        )}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
@@ -479,29 +507,6 @@ function BookingPage() {
           </table>
         )}
         {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}% · Legal & Other Charges {rupee(v.totalExtra)}</div>}
-        {formulaSet === 'ankhol' && nsdBase > 0 && (
-          <div style={{ marginTop: 14, borderTop: '1px solid #E5E7EB', paddingTop: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Amount Installments</div>
-            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
-            <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
-            {nsdInsts.length > 0 && (
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-                <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {nsdInsts.map((r, i) => (
-                    <tr key={i}>
-                      <td style={td}>{i + 1}</td>
-                      <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} style={inp} /></td>
-                      <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
-                      <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} style={inp} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
-          </div>
-        )}
       </Section>
 
       {reviseId && (

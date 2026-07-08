@@ -280,23 +280,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
     let grand = 0;
 
-    if (unitInstPdf.length > 0) {
-      // pre-check full section height so it never splits across pages
-      chk(4 + 12 + 3 + 10 + unitInstPdf.length * 10 + 16);
-      y += 4; secHead('Unit Price Payment Schedule'); y += 3; rowAlt = false;
-      drawSchedHeader();
-      let grandUnit = 0;
-      unitInstPdf.forEach((inst, idx) => {
-        const amt = Math.round(inst.amt || 0); grandUnit += amt; grand += amt;
-        if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
-        sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
-        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
-        doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
-        sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
-      });
-      drawSubTotal('SUB TOTAL', grandUnit);
-    }
-
     if (ewcRawPdf.length > 0) {
       chk(4 + 12 + 3 + 10 + ewcRawPdf.length * 10 + 16);
       y += 4; secHead('Additional Extra Work Amount Schedule'); y += 3; rowAlt = false;
@@ -320,6 +303,23 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
       drawSubTotal('SUB TOTAL', grandEwc);
+    }
+
+    if (unitInstPdf.length > 0) {
+      // pre-check full section height so it never splits across pages
+      chk(4 + 12 + 3 + 10 + unitInstPdf.length * 10 + 16);
+      y += 4; secHead('Unit Price Payment Schedule'); y += 3; rowAlt = false;
+      drawSchedHeader();
+      let grandUnit = 0;
+      unitInstPdf.forEach((inst, idx) => {
+        const amt = Math.round(inst.amt || 0); grandUnit += amt; grand += amt;
+        if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
+        sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
+        doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+        sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
+      });
+      drawSubTotal('SUB TOTAL', grandUnit);
     }
 
     if (legalInstPdf.length > 0) {
