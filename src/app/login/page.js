@@ -1,9 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { login, clearCompany } from '../../redux/actions/authActions';
+import { clearCompany } from '../../redux/actions/authActions';
 import { moduleAccess } from '../../lib/moduleAccess';
+import { AUTH_ENDPOINTS } from '../../constants/api';
+import { LOGIN_SUCCESS } from '../../redux/types/authTypes';
 
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -22,6 +24,7 @@ const CSS = `
   .signin-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(12,30,60,0.28) !important; }
   .change-ws:hover { background:#F0F2F8 !important; color:${NAVY} !important; }
   .change-ws { transition:all 0.15s; }
+  .resend-link:hover { opacity:0.75; }
   @media (max-width:860px) { .left-panel{display:none!important;} .right-panel{width:100%!important;} }
 `;
 
@@ -29,9 +32,19 @@ export default function LoginScreen() {
   const [userCode, setUserCode] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+
+  // OTP step
+  const [otpStep, setOtpStep]       = useState(false);
+  const [otpToken, setOtpToken]     = useState('');
+  const [otpPhone, setOtpPhone]     = useState('');
+  const [otp, setOtp]               = useState('');
+  const [resendSecs, setResendSecs] = useState(30);
+
   const dispatch = useDispatch();
   const router   = useRouter();
-  const { loginLoading, loginError, user, company } = useSelector((s) => s.auth);
+  const { user, company } = useSelector((s) => s.auth);
 
   useEffect(() => {
     if (user) router.replace((user.role === 'Admin' || user.is_staff) ? moduleAccess(user).home : '/dashboard');
@@ -41,9 +54,110 @@ export default function LoginScreen() {
     if (!company) router.replace('/company');
   }, [company]);
 
-  const handleSubmit = (e) => {
+  // Countdown timer
+  const timerRef = useRef(null);
+  useEffect(() => {
+    if (!otpStep) return;
+    timerRef.current = setInterval(() => {
+      setResendSecs((s) => {
+        if (s <= 1) { clearInterval(timerRef.current); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [otpStep, otpToken]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (company && userCode.trim() && password) dispatch(login(company.code, userCode.trim(), password));
+    if (!company || !userCode.trim() || !password) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res  = await fetch(AUTH_ENDPOINTS.login, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ company_code: company.code, user_code: userCode.trim(), password, platform: 'web' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.otp_required) {
+          setOtpToken(data.otp_token);
+          setOtpPhone(data.phone || '');
+          setOtpStep(true);
+          setResendSecs(30);
+        } else {
+          localStorage.setItem('access_token',  data.tokens.access);
+          localStorage.setItem('refresh_token', data.tokens.refresh);
+          localStorage.setItem('user',          JSON.stringify(data.user));
+          dispatch({ type: LOGIN_SUCCESS, payload: data.user });
+        }
+      } else {
+        setError(data.detail || 'Invalid credentials.');
+      }
+    } catch {
+      setError('Network error. Check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 6) { setError('Enter the 6-digit OTP.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const res  = await fetch(AUTH_ENDPOINTS.otpVerify, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ otp_token: otpToken, code: otp, platform: 'web' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('access_token',  data.tokens.access);
+        localStorage.setItem('refresh_token', data.tokens.refresh);
+        localStorage.setItem('user',          JSON.stringify(data.user));
+        dispatch({ type: LOGIN_SUCCESS, payload: data.user });
+      } else {
+        setError(data.detail || 'Invalid OTP.');
+      }
+    } catch {
+      setError('Network error. Check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res  = await fetch(AUTH_ENDPOINTS.otpResend, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ otp_token: otpToken }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOtpToken(data.otp_token);
+        setOtp('');
+        setResendSecs(30);
+      } else {
+        setError(data.detail || 'Could not resend OTP.');
+      }
+    } catch {
+      setError('Network error. Check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setOtpStep(false);
+    setOtpToken('');
+    setOtpPhone('');
+    setOtp('');
+    setError('');
   };
 
   const handleChangeWorkspace = () => {
@@ -51,7 +165,11 @@ export default function LoginScreen() {
     router.push('/company');
   };
 
-  const canLogin = userCode.trim().length > 0 && password.length > 0 && !loginLoading;
+  const canSubmit = otpStep
+    ? otp.length === 6 && !loading
+    : userCode.trim().length > 0 && password.length > 0 && !loading;
+
+  const stepNum = otpStep ? 3 : 2;
 
   return (
     <div style={s.page}>
@@ -64,8 +182,6 @@ export default function LoginScreen() {
         <div style={{ ...s.glow, bottom:'8%', left:'-8%', width:260, height:260, background:'radial-gradient(circle,rgba(61,90,254,0.09) 0%,transparent 70%)' }} />
 
         <div style={s.leftInner}>
-
-          {/* Concentric rings logo */}
           <div style={s.ringsWrap}>
             <div style={s.ring3}>
               <div style={s.ring2}>
@@ -88,7 +204,6 @@ export default function LoginScreen() {
             <p style={s.taglineSub}>Unified workspace · Role-based access · Enterprise security</p>
           </div>
 
-          {/* Active workspace card */}
           {company && (
             <div style={s.workspaceCard}>
               <div style={s.wsLeft}>
@@ -129,10 +244,19 @@ export default function LoginScreen() {
               <span style={{ fontSize:13, fontWeight:600, color:NAVY }}>Workspace</span>
             </div>
             <div style={s.stepLine} />
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ ...s.stepNum, backgroundColor:NAVY, color:'#fff' }}>2</div>
-              <span style={{ fontSize:13, fontWeight:700, color:NAVY }}>Sign In</span>
+            <div style={{ display:'flex', alignItems:'center', gap:8, opacity: otpStep ? 0.55 : 1 }}>
+              <div style={{ ...s.stepNum, backgroundColor: otpStep ? '#22C55E' : NAVY, color:'#fff' }}>{otpStep ? '✓' : '2'}</div>
+              <span style={{ fontSize:13, fontWeight: otpStep ? 600 : 700, color:NAVY }}>Sign In</span>
             </div>
+            {otpStep && (
+              <>
+                <div style={s.stepLine} />
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ ...s.stepNum, backgroundColor:NAVY, color:'#fff' }}>3</div>
+                  <span style={{ fontSize:13, fontWeight:700, color:NAVY }}>Verify OTP</span>
+                </div>
+              </>
+            )}
           </div>
 
           {company && (
@@ -142,63 +266,131 @@ export default function LoginScreen() {
             </div>
           )}
 
-          <h2 style={s.formTitle}>Welcome back</h2>
-          <p style={s.formDesc}>Sign in with your employee credentials to continue.</p>
+          {otpStep ? (
+            /* ── OTP Step ── */
+            <form onSubmit={handleVerifyOtp}>
+              <h2 style={s.formTitle}>Verify OTP</h2>
+              <p style={s.formDesc}>
+                Code sent to <strong>xxxxxx{otpPhone.slice(-4) || '****'}</strong>. Enter the 6-digit OTP below.
+              </p>
 
-          <form onSubmit={handleSubmit}>
-            <label style={s.label}>USER ID</label>
-            <div className="field-wrap" style={s.inputBox}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="1.8" strokeLinecap="round">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
-              <input className="field-input" type="text" value={userCode}
-                onChange={(e) => setUserCode(e.target.value.toUpperCase())}
-                placeholder="Enter your user ID" style={s.input} autoFocus disabled={loginLoading}
-              />
-            </div>
+              <label style={s.label}>ENTER OTP</label>
+              <div className="field-wrap" style={{ ...s.inputBox, justifyContent:'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="1.8" strokeLinecap="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <input
+                  className="field-input"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => { setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6)); setError(''); }}
+                  placeholder="- - - - - -"
+                  style={{ ...s.input, letterSpacing:12, fontSize:22, fontWeight:800, textAlign:'center' }}
+                  autoFocus
+                  disabled={loading}
+                />
+              </div>
 
-            <label style={{ ...s.label, marginTop:20 }}>PASSWORD</label>
-            <div className="field-wrap" style={s.inputBox}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="1.8" strokeLinecap="round">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
-              <input className="field-input" type={showPass ? 'text' : 'password'} value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password" style={{ ...s.input, flex:1 }} disabled={loginLoading}
-              />
-              <button type="button" onClick={() => setShowPass((v) => !v)} style={s.eyeBtn}>
-                {showPass
-                  ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              {error && (
+                <div style={s.errorBox}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  &nbsp;{error}
+                </div>
+              )}
+
+              <button type="submit" disabled={!canSubmit} className="signin-btn"
+                style={{ ...s.btn, background: canSubmit ? `linear-gradient(135deg,${NAVY} 0%,#051229 100%)` : '#D1D8E4', cursor: canSubmit ? 'pointer' : 'not-allowed', marginTop:22 }}
+              >
+                {loading
+                  ? <span style={s.spinner} />
+                  : <>Verify OTP <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" style={{ marginLeft:8 }}><polyline points="20 6 9 17 4 12"/></svg></>
                 }
               </button>
-            </div>
 
-            {loginError && (
-              <div style={s.errorBox}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {loginError}
+              <div style={{ textAlign:'center', marginTop:18 }}>
+                {resendSecs > 0 ? (
+                  <span style={{ fontSize:13, color:'#7A8599' }}>Resend OTP in {resendSecs}s</span>
+                ) : (
+                  <button type="button" onClick={handleResendOtp} disabled={loading} className="resend-link"
+                    style={{ fontSize:13, fontWeight:700, color:NAVY, background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}
+                  >
+                    Resend OTP
+                  </button>
+                )}
               </div>
-            )}
 
-            <button type="submit" disabled={!canLogin} className="signin-btn"
-              style={{ ...s.btn, background: canLogin ? `linear-gradient(135deg,${NAVY} 0%,#051229 100%)` : '#D1D8E4', cursor: canLogin ? 'pointer' : 'not-allowed' }}
-            >
-              {loginLoading
-                ? <span style={s.spinner} />
-                : <>Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" style={{ marginLeft:8 }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
-              }
-            </button>
-          </form>
+              <div style={s.divider} />
 
-          <div style={s.divider} />
+              <button type="button" onClick={handleBackToLogin} className="change-ws" style={s.changeWsBtn}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight:6 }}>
+                  <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Back to login
+              </button>
+            </form>
+          ) : (
+            /* ── Credentials Step ── */
+            <form onSubmit={handleSubmit}>
+              <h2 style={s.formTitle}>Welcome back</h2>
+              <p style={s.formDesc}>Sign in with your employee credentials to continue.</p>
 
-          <button onClick={handleChangeWorkspace} className="change-ws" style={s.changeWsBtn}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight:6 }}>
-              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-            </svg>
-            Change workspace
-          </button>
+              <label style={s.label}>USER ID</label>
+              <div className="field-wrap" style={s.inputBox}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <input className="field-input" type="text" value={userCode}
+                  onChange={(e) => { setUserCode(e.target.value.toUpperCase()); setError(''); }}
+                  placeholder="Enter your user ID" style={s.input} autoFocus disabled={loading}
+                />
+              </div>
+
+              <label style={{ ...s.label, marginTop:20 }}>PASSWORD</label>
+              <div className="field-wrap" style={s.inputBox}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="1.8" strokeLinecap="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <input className="field-input" type={showPass ? 'text' : 'password'} value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  placeholder="Enter your password" style={{ ...s.input, flex:1 }} disabled={loading}
+                />
+                <button type="button" onClick={() => setShowPass((v) => !v)} style={s.eyeBtn}>
+                  {showPass
+                    ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  }
+                </button>
+              </div>
+
+              {error && (
+                <div style={s.errorBox}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  &nbsp;{error}
+                </div>
+              )}
+
+              <button type="submit" disabled={!canSubmit} className="signin-btn"
+                style={{ ...s.btn, background: canSubmit ? `linear-gradient(135deg,${NAVY} 0%,#051229 100%)` : '#D1D8E4', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+              >
+                {loading
+                  ? <span style={s.spinner} />
+                  : <>Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" style={{ marginLeft:8 }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
+                }
+              </button>
+
+              <div style={s.divider} />
+
+              <button onClick={handleChangeWorkspace} className="change-ws" style={s.changeWsBtn}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight:6 }}>
+                  <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Change workspace
+              </button>
+            </form>
+          )}
 
           <div style={s.secureRow}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B0BAC9" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>

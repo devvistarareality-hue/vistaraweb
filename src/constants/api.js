@@ -52,9 +52,11 @@ export const COMPANY_ENDPOINTS = {
 };
 
 export const AUTH_ENDPOINTS = {
-  get login()   { return `${BASE_URL}/api/auth/login/`; },
-  get me()      { return `${BASE_URL}/api/auth/me/`; },
-  get refresh() { return `${BASE_URL}/api/auth/token/refresh/`; },
+  get login()      { return `${BASE_URL}/api/auth/login/`; },
+  get otpVerify()  { return `${BASE_URL}/api/auth/otp/verify/`; },
+  get otpResend()  { return `${BASE_URL}/api/auth/otp/resend/`; },
+  get me()         { return `${BASE_URL}/api/auth/me/`; },
+  get refresh()    { return `${BASE_URL}/api/auth/token/refresh/`; },
   get notifications()        { return `${BASE_URL}/api/auth/notifications/`; },
   get notificationsReadAll() { return `${BASE_URL}/api/auth/notifications/read/`; },
   notificationRead: (id)     => `${BASE_URL}/api/auth/notifications/${id}/read/`,
