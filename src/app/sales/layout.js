@@ -390,7 +390,7 @@ export default function SalesLayout({ children }) {
         </div>
       )}
 
-      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} />
+      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} onSuccess={handleLogout} />
 
       {/* ── Main content ── */}
       <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>

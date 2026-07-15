@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AUTH_ENDPOINTS, authHeaders } from '../constants/api';
 
 // Self-contained "change my password" modal. Opened from the profile popovers.
-export default function ChangePasswordModal({ open, onClose }) {
+export default function ChangePasswordModal({ open, onClose, onSuccess }) {
   const [cur, setCur]   = useState('');
   const [nw, setNw]     = useState('');
   const [conf, setConf] = useState('');
@@ -24,7 +24,12 @@ export default function ChangePasswordModal({ open, onClose }) {
         body: JSON.stringify({ current_password: cur, new_password: nw }),
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok) { setMsg({ type: 'ok', text: 'Password changed successfully.' }); setCur(''); setNw(''); setConf(''); setTimeout(onClose, 1200); }
+      if (res.ok) {
+        // Password change invalidates all sessions (web + app) → sign out & re-login.
+        setMsg({ type: 'ok', text: 'Password changed. Please sign in again…' });
+        setCur(''); setNw(''); setConf('');
+        setTimeout(() => (onSuccess ? onSuccess() : onClose()), 1400);
+      }
       else setMsg({ type: 'err', text: d.detail || 'Could not change password.' });
     } catch { setMsg({ type: 'err', text: 'Could not change password.' }); }
     setBusy(false);

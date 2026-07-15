@@ -196,7 +196,7 @@ export default function ModuleLayout({ children, params }) {
         </div>
       )}
 
-      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} />
+      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} onSuccess={() => { dispatch(logout()); router.replace('/company'); }} />
     </div>
   );
 }
