@@ -14,17 +14,26 @@ export const DESIG_ERROR          = 'DESIG_ERROR';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — designations rarely change
 
+// Latest-request guard: on load the page first fetches with companyId=null (all companies)
+// and then re-fetches for the restored company. Those requests race, and the larger
+// all-companies response often resolves last and clobbers the company-scoped one — making
+// the list look unfiltered. Only the most recent fetch is allowed to write to the store.
+let latestDesigReq = 0;
+
 export const fetchDesignations = (force = false, companyId = null) => async (dispatch, getState) => {
   const { lastFetched, designations } = getState().designations;
   if (!force && lastFetched && designations.length > 0 && Date.now() - lastFetched < CACHE_TTL) return;
+  const reqId = ++latestDesigReq;
   try {
     // Platform admins pass the selected company so designations are company-specific.
     const url  = DESIGNATION_ENDPOINTS.list + (companyId ? `?company_id=${companyId}` : '');
     const res  = await fetch(url, { headers: authHeaders() });
     const data = await res.json();
+    if (reqId !== latestDesigReq) return; // superseded by a newer fetch — ignore stale response
     if (res.ok) dispatch({ type: DESIG_FETCH_SUCCESS, payload: data });
     else dispatch({ type: DESIG_ERROR, payload: data.detail || 'Failed to load designations.' });
   } catch {
+    if (reqId !== latestDesigReq) return;
     dispatch({ type: DESIG_ERROR, payload: 'Network error.' });
   }
 };
