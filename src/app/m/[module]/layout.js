@@ -8,6 +8,7 @@ import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adminFilterReducer';
 import { MODULE_META } from './moduleMeta';
 import { moduleAccess, SLUG_TO_MODULE } from '../../../lib/moduleAccess';
+import { AUTH_ENDPOINTS } from '../../../constants/api';
 
 const ORANGE = '#FF6B2B';
 const NAVY = '#0C1E3C';
@@ -20,6 +21,7 @@ function SvgIcon({ children, size = 16 }) {
 }
 const IconGrid  = () => <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
 const IconUsers = () => <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></SvgIcon>;
+const IconBook  = () => <SvgIcon><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></SvgIcon>;
 const IconBack  = () => <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>;
 
 export default function ModuleLayout({ children, params }) {
@@ -31,6 +33,29 @@ export default function ModuleLayout({ children, params }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  async function openProfile() {
+    setProfileOpen(true); setProfileLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const res = await fetch(AUTH_ENDPOINTS.me, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setProfileData(await res.json());
+    } catch (_) {}
+    setProfileLoading(false);
+  }
+  const PROFILE_FIELDS = [
+    { label: 'Full Name',         value: profileData?.name },
+    { label: 'Employee Code',     value: profileData?.user_code },
+    { label: 'Phone',             value: profileData?.phone },
+    { label: 'Email',             value: profileData?.email },
+    { label: 'Organisation',      value: profileData?.company_name },
+    { label: 'Department',        value: profileData?.department },
+    { label: 'Designation',       value: profileData?.designation },
+    { label: 'Reporting Manager', value: profileData?.reporting_manager?.name },
+  ];
 
   const isVRLAdmin = user?.company_code === 'VRL' && (user?.role === 'Admin' || user?.is_staff);
   useEffect(() => { dispatch(restoreAdminFilter()); if (isVRLAdmin) dispatch(fetchCompanies()); }, [isVRLAdmin]);
@@ -56,8 +81,15 @@ export default function ModuleLayout({ children, params }) {
     { label: 'Overview', href: base, icon: <IconGrid /> },
     // My Team is a management view — only managers/admins see it.
     ...((isManager || isAdmin) ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
+    // Accounts & Finance: read-only view of all sales bookings (LOI / EOI details).
+    ...(slug === 'accounts' ? [{ label: 'Bookings', href: `${base}/bookings`, icon: <IconBook /> }] : []),
   ];
-  const back = isAdmin ? { href: '/admin', label: 'Back to Admin' } : { href: '/dashboard', label: 'Back to Modules' };
+  // "Back to Modules" only makes sense when the user actually has more than one module
+  // to switch between (or is an admin). A single-module employee is boxed into it.
+  const moduleCount = (user?.modules || []).length;
+  const back = isAdmin ? { href: '/admin', label: 'Back to Admin' }
+    : moduleCount > 1 ? { href: '/dashboard', label: 'Back to Modules' }
+    : null;
   const isActive = (href) => href === base ? pathname === base : pathname.startsWith(href);
 
   if (!meta) {
@@ -109,25 +141,57 @@ export default function ModuleLayout({ children, params }) {
             </div>
           )}
 
-          <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
-          <Link href={back.href} style={s.navItem}>
-            <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
-            <span style={{ fontSize: 13, fontWeight: 500 }}>{back.label}</span>
-          </Link>
+          {back && <>
+            <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
+            <Link href={back.href} style={s.navItem}>
+              <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{back.label}</span>
+            </Link>
+          </>}
         </div>
         <div style={{ padding: '0 10px 18px' }}>
           <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 14 }} />
-          <div style={s.userRow}>
+          <button onClick={openProfile} style={{ ...s.userRow, width: '100%', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'left' }}>
             <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={s.userName}>{user?.name || 'User'}</div>
               <div style={s.userBadge}>{user?.designation || user?.role || 'Admin'}</div>
             </div>
-          </div>
+          </button>
           <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={s.logoutBtn}>Sign Out</button>
         </div>
       </div>
       <main style={{ flex: 1, overflow: 'auto', minWidth: 0, background: '#DFE4EE' }}>{children}</main>
+
+      {/* ── Profile Modal ── */}
+      {profileOpen && (
+        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 300, marginLeft: 16, marginBottom: 20, backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F0F3FA' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: 'rgba(255,107,43,0.12)', border: '1.5px solid rgba(255,107,43,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: ORANGE, flexShrink: 0 }}>{(user?.name || 'A')[0].toUpperCase()}</div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>{user?.name}</div>
+                  <div style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>{user?.designation || user?.role}</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '6px 0' }}>
+              {profileLoading ? (
+                <div style={{ padding: '28px 0', textAlign: 'center', color: '#8492A6', fontSize: 13 }}>Loading…</div>
+              ) : PROFILE_FIELDS.map((f, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 20px', borderBottom: i < PROFILE_FIELDS.length - 1 ? '1px solid #F5F6FA' : 'none' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E', maxWidth: 160, textAlign: 'right', wordBreak: 'break-all' }}>{f.value || '—'}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '12px 16px 16px' }}>
+              <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: '1.5px solid #FECACA', backgroundColor: '#FEF2F2', color: '#EF4444', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

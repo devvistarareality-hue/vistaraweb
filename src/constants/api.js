@@ -83,6 +83,7 @@ export const SALES_ENDPOINTS = {
   get closures()   { return `${BASE_URL}/api/sales/closures/`; },
   closureCancel: (id) => `${BASE_URL}/api/sales/closures/${id}/cancel/`,
   get bookings()   { return `${BASE_URL}/api/sales/bookings/`; },
+  get bookingsAll(){ return `${BASE_URL}/api/sales/bookings/all/`; },
   bookingLoiUrl: (id) => `${BASE_URL}/api/sales/bookings/${id}/loi-url/`,
   get telecallers(){ return `${BASE_URL}/api/sales/users/telecallers/?crm_role=telecaller`; },
   get stms()       { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=stm`; },
