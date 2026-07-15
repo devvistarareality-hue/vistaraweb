@@ -289,10 +289,13 @@ export default function SalesLayout({ children }) {
 
         {/* User */}
         <div style={s.bottomArea}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
-            <NotificationBell up align="left" />
-          </div>
+          {/* Super admins get notifications in the admin dashboard sidebar instead. */}
+          {!superAdmin && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
+              <NotificationBell up align="left" />
+            </div>
+          )}
           <div style={s.divider} />
           <button onClick={openProfile} className="s-profile-btn" style={s.userRow}>
             <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>

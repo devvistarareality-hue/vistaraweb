@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/actions/authActions';
 import { fetchCompanies } from '../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../redux/reducers/adminFilterReducer';
+import NotificationBell from '../app/sales/_NotificationBell';
 
 const ORANGE = '#FF6B2B';
 
@@ -206,8 +207,12 @@ export default function Sidebar({ user, onClose, className }) {
         ))}
       </div>
 
-      {/* ── User + Logout ── */}
+      {/* ── Notifications + User + Logout ── */}
       <div style={s.bottomArea}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
+          <NotificationBell up align="left" />
+        </div>
         <div style={s.divider} />
         <div style={s.userRow}>
           <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
