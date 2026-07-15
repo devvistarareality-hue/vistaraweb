@@ -38,7 +38,6 @@ export default function LoginScreen() {
   // OTP step
   const [otpStep, setOtpStep]       = useState(false);
   const [otpToken, setOtpToken]     = useState('');
-  const [otpPhone, setOtpPhone]     = useState('');
   const [otpEmail, setOtpEmail]     = useState('');
   const [otp, setOtp]               = useState('');
   const [resendSecs, setResendSecs] = useState(30);
@@ -83,7 +82,6 @@ export default function LoginScreen() {
       if (res.ok) {
         if (data.otp_required) {
           setOtpToken(data.otp_token);
-          setOtpPhone(data.phone || '');
           setOtpEmail(data.email || '');
           setOtpStep(true);
           setResendSecs(30);
@@ -274,7 +272,7 @@ export default function LoginScreen() {
             <form onSubmit={handleVerifyOtp}>
               <h2 style={s.formTitle}>Verify OTP</h2>
               <p style={s.formDesc}>
-                Code sent to{otpPhone && <> <strong>{otpPhone}</strong></>}{otpPhone && otpEmail && ' and'}{otpEmail && <> <strong>{otpEmail}</strong></>}. Enter the 6-digit OTP below.
+                Code sent to{otpEmail && <> <strong>{otpEmail}</strong></>}. Enter the 6-digit OTP below.
               </p>
 
               <label style={s.label}>ENTER OTP</label>
