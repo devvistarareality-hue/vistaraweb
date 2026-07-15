@@ -29,6 +29,7 @@ export function computeFormulas(inp = {}) {
   const formulaSet   = inp.formulaSet || 'kalrav';
   const projectName  = (inp.projectName || '').toString().trim().toLowerCase();
   const isAnkhol     = formulaSet === 'ankhol';
+  const isKalrav     = formulaSet === 'kalrav';
   const isIndustrial = formulaSet === 'industrial';
   const isTundav     = isIndustrial && projectName === 'tundav';
 
@@ -85,20 +86,28 @@ export function computeFormulas(inp = {}) {
     gst          = saleDeed * 0.05;
     maintDeposit = maint; maintAdvance = maint;
   } else if (isIndustrial) {
-    saleDeed     = saleDeedRate * area;
-    stampDuty    = saleDeed * 0.049;
-    regFees      = gender === 'Female' ? pageFee : (saleDeed * 0.01 + pageFee);
-    gst          = isTundav ? (saleDeed * 0.67 * 0.18) : (devAgreement * 0.18);
+    // Industrial now uses the sale-deed % split: Unit Price = % of Plot Basic.
+    // Tax is UNCHANGED — still on the Sale Deed value (SD Rate × Area) & Dev Agreement.
+    const saleDeedTax = saleDeedRate * area;
+    saleDeed     = saleDeedAmount > 0 ? saleDeedAmount : (saleDeedPct / 100) * plotBasic;
+    stampDuty    = saleDeedTax * 0.049;
+    regFees      = gender === 'Female' ? pageFee : (saleDeedTax * 0.01 + pageFee);
+    gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
     maintDeposit = maint; maintAdvance = maint;
   } else { // kalrav
+    // Kalrav Unit Price = Land Sale Deed + Construction Agreement (entered directly).
+    // The Sale Deed % is derived from this (read-only in the form). Tax (stamp/reg/GST)
+    // is UNCHANGED — still on the Land Sale Deed & Construction Agreement respectively.
+    saleDeed  = lsd + constAgr;
     stampDuty = lsd * 0.049;
     regFees   = gender === 'Female' ? pageFee : (lsd * 0.01 + pageFee);
     gst       = constAgr * 0.18;
   }
 
   if (applyRegFee === 'No') regFees = pageFee; // 1% removed but page fee stays independent
-  if (isAnkhol && applyStampDuty === 'No') stampDuty = 0;
-  if (isAnkhol && applyGst === 'No') gst = 0;
+  // All three sets can toggle stamp duty / GST off.
+  if (applyStampDuty === 'No') stampDuty = 0;
+  if (applyGst === 'No') gst = 0;
 
   // Total Extra Charges
   let totalExtra;
@@ -106,10 +115,18 @@ export function computeFormulas(inp = {}) {
   else if (isIndustrial) totalExtra = stampDuty + regFees + gst + maintDeposit + maintAdvance + legal;
   else                   totalExtra = stampDuty + regFees + gst + maint + legal;
 
-  // Non-sale deed portion (ankhol only): the remaining % shown at ÷100 of actual value in the LOI.
-  const nonSaleDeed = isAnkhol ? ((plotBasic + constAmt + plotDev + premiumLocation) - saleDeed) : 0;
-  const nonSaleDeedDoc = isAnkhol ? nonSaleDeed / 100 : 0;
-  const docTotal = isAnkhol ? saleDeed + nonSaleDeedDoc : 0;
+  // Non-sale deed portion (all sets): the remaining % shown at ÷100 in the LOI.
+  // Ankhol's basic total includes premium location; Kalrav uses plot+dev+const;
+  // Industrial splits Plot Basic.
+  const hasSaleDeedSplit = isAnkhol || isKalrav || isIndustrial;
+  const saleDeedBase = isAnkhol ? (plotBasic + constAmt + plotDev + premiumLocation)
+    : isKalrav ? (plotBasic + plotDev + constAmt)
+    : isIndustrial ? plotBasic : 0;
+  const nonSaleDeed = hasSaleDeedSplit ? (saleDeedBase - saleDeed) : 0;
+  const nonSaleDeedDoc = hasSaleDeedSplit ? nonSaleDeed / 100 : 0;
+  const docTotal = hasSaleDeedSplit ? saleDeed + nonSaleDeedDoc : 0;
+  // Kalrav's Unit Price is entered (LSD + Const Agreement), so its % is derived for display.
+  const effSaleDeedPct = isKalrav ? (saleDeedBase > 0 ? (saleDeed / saleDeedBase * 100) : 0) : saleDeedPct;
 
   // Final Amount
   const finalAmt = isIndustrial
@@ -121,7 +138,7 @@ export function computeFormulas(inp = {}) {
   return {
     formulaSet, isTundav, area, landRate, devRate, constArea, constRate, discount,
     lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
-    saleDeedRate, saleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
+    saleDeedRate, saleDeedPct: effSaleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
     maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
     applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
     nonSaleDeed, nonSaleDeedDoc, docTotal,
@@ -131,9 +148,8 @@ export function computeFormulas(inp = {}) {
 
 // Installment base (what the % installments are computed against) — varies per set.
 export function installmentBase(v) {
-  if (v.formulaSet === 'industrial') return v.plotBasic - v.discount;
-  if (v.formulaSet === 'ankhol') return v.saleDeed;
-  return v.plotBasic + v.plotDev + v.constAmt - v.discount;
+  // All sets: unit-price installments run on the sale-deed (Unit Price) portion.
+  return v.saleDeed;
 }
 
 export const rupee = (n) => '₹ ' + Math.round(num(n)).toLocaleString('en-IN');

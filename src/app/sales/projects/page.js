@@ -88,6 +88,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     description:     project?.description     || '',
     location:        project?.location        || '',
     project_type:    project?.project_type    || 'residential',
+    formula_set:     project?.formula_set      || 'kalrav',
     is_active:       project?.is_active       ?? true,
     tagline:         project?.tagline         || '',
     rera:            project?.rera            || '',
@@ -98,7 +99,13 @@ function ProjectModal({ project, onClose, onSaved }) {
     cover_image_url: project?.cover_image_url || '',
     logo_url:        project?.logo_url        || '',
     master_plan_url: project?.master_plan_url || '',
+    eoi_unit_types:  project?.eoi_unit_types  || [],
   });
+
+  // EOI standard unit types (pre-approval sizes) — [{type, plot_area, const_area}].
+  const addEoiType    = () => setForm(f => ({ ...f, eoi_unit_types: [...(f.eoi_unit_types || []), { type: '', plot_area: '', const_area: '' }] }));
+  const removeEoiType = (i) => setForm(f => ({ ...f, eoi_unit_types: f.eoi_unit_types.filter((_, idx) => idx !== i) }));
+  const updateEoiType = (i, k, val) => setForm(f => ({ ...f, eoi_unit_types: f.eoi_unit_types.map((t, idx) => idx === i ? { ...t, [k]: val } : t) }));
 
   // Plot setup state (used for both Add and Edit)
   const [hasTypes,    setHasTypes]    = useState(false);
@@ -150,7 +157,8 @@ function ProjectModal({ project, onClose, onSaved }) {
 
     setSaving(true); setErr('');
 
-    const payload = { ...form, total_plots: isEdit ? totalPlots : 0 };
+    const payload = { ...form, total_plots: isEdit ? totalPlots : 0,
+      eoi_unit_types: (form.eoi_unit_types || []).filter(t => (t.type || '').trim()) };
     const url    = isEdit ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
     const method = isEdit ? 'PATCH' : 'POST';
     const res    = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -244,12 +252,25 @@ function ProjectModal({ project, onClose, onSaved }) {
               </div>
               <div>
                 <label style={mLbl}>Type</label>
-                <select value={form.project_type} onChange={e => set('project_type', e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
+                <select value={form.project_type} onChange={e => {
+                  const t = e.target.value;
+                  // Industrial type → industrial pricing by default (still editable below).
+                  setForm(f => ({ ...f, project_type: t, ...(t === 'industrial' ? { formula_set: 'industrial' } : {}) }));
+                }} style={{ ...mInp, cursor: 'pointer' }}>
                   {['residential','commercial','plots','villa','apartment','industrial'].map(t => (
                     <option key={t} value={t} style={{ textTransform: 'capitalize' }}>{t}</option>
                   ))}
                 </select>
               </div>
+            </div>
+            <div>
+              <label style={mLbl}>Pricing Model <span style={{ color: '#EF4444' }}>*</span></label>
+              <select value={form.formula_set} onChange={e => set('formula_set', e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
+                <option value="kalrav">Kalrav (villa / plots)</option>
+                <option value="ankhol">Ankhol (bunglow · sale-deed %)</option>
+                <option value="industrial">Industrial</option>
+              </select>
+              <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Drives the booking / EOI pricing formulas. This is separate from the display Type above.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
@@ -335,6 +356,29 @@ function ProjectModal({ project, onClose, onSaved }) {
             ) : (
               <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} />
             )}
+          </div>
+
+          {/* EOI Unit Types — standard pre-approval sizes used to prefill the EOI form */}
+          <div style={mSec}>EOI Unit Types</div>
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 10 }}>Standard sizes shown when creating an EOI (before plots are approved). Plot Area &amp; Construction Area auto-fill from the chosen type.</p>
+            {(form.eoi_unit_types || []).length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 32px', gap: 8, marginBottom: 6 }}>
+                <span style={mLbl}>Type</span><span style={mLbl}>Plot Area</span><span style={mLbl}>Const. Area</span><span />
+              </div>
+            )}
+            {(form.eoi_unit_types || []).map((t, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <input value={t.type} onChange={e => updateEoiType(i, 'type', e.target.value)} style={mInp} placeholder="e.g. 2 BHK" />
+                <input value={t.plot_area} onChange={e => updateEoiType(i, 'plot_area', e.target.value)} style={mInp} placeholder="585" />
+                <input value={t.const_area} onChange={e => updateEoiType(i, 'const_area', e.target.value)} style={mInp} placeholder="167" />
+                <button type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+              </div>
+            ))}
+            <button type="button" onClick={addEoiType}
+              style={{ fontSize: 12, fontWeight: 700, color: '#E4571A', background: 'none', border: '1.5px dashed #FF6B2B', borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
+              + Add Unit Type
+            </button>
           </div>
 
           {err && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: '#DC2626' }}>{err}</div>}

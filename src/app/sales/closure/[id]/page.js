@@ -128,6 +128,9 @@ export default function ClosureViewerPage() {
       if (sv.lead_name)  q.set('client', sv.lead_name);
       if (sv.lead_phone) q.set('phone', sv.lead_phone);
     }
+    // Converting an EOI into a plot booking — carry the source EOI id through.
+    const convertEoi = new URLSearchParams(window.location.search).get('convertEoi');
+    if (convertEoi) q.set('convertEoi', convertEoi);
     router.push(`/sales/booking?${q.toString()}`);
   }
 
@@ -373,6 +376,8 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
       if (sv.lead_name)  q.set('client', sv.lead_name);
       if (sv.lead_phone) q.set('phone', sv.lead_phone);
     }
+    const convertEoi = new URLSearchParams(window.location.search).get('convertEoi');
+    if (convertEoi) q.set('convertEoi', convertEoi);
     router.push(`/sales/booking?${q.toString()}`);
   }
 

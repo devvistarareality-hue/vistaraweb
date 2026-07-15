@@ -33,11 +33,17 @@ function BookingPage() {
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
 
   const reviseId  = qp.get('revise') || '';
+  const convertEoiId = qp.get('convertEoi') || '';   // converting an EOI into a plot booking
   const [projectId, setProjectId] = useState(qp.get('project'));
   // Multi-plot: `plots` query param is a comma list of ids; fall back to single `plot`.
   const [plotIds,   setPlotIds]   = useState((qp.get('plots') || qp.get('plot') || '').split(',').map((s) => s.trim()).filter(Boolean));
   const plotId    = plotIds[0] || '';
   const leadId    = qp.get('lead') || '';
+  // EOI (Expression of Interest): a booking on a project with no plots yet. No plot is
+  // selected; a sequential per-project EOI code (EOI-1, EOI-2…) stands in for the plot no.
+  const eoiMode   = !reviseId && (qp.get('eoi') === '1' || qp.get('eoi') === 'true');
+  const [eoiNo, setEoiNo] = useState('');
+  const [eoiType, setEoiType] = useState('');   // selected EOI standard unit type
 
   const [project, setProject] = useState(null);
   const [plot,    setPlot]    = useState(null);   // primary (first) plot
@@ -105,6 +111,31 @@ function BookingPage() {
     });
   }, [reviseId]);
 
+  // Convert EOI → LOI: prefill everything from the source EOI. Plot & Plot Area come from
+  // the newly-picked plot (URL); Construction Area comes from the EOI. All fields editable.
+  useEffect(() => {
+    if (!convertEoiId) return;
+    fetch(SALES_ENDPOINTS.bookings + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((arr) => {
+      const b = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(convertEoiId));
+      if (!b) return;
+      setF((s) => ({
+        ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
+        area_unit: b.area_unit || s.area_unit, const_area: b.const_area || '', villa_type: b.villa_type || '',
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
+        land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
+        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
+        apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
+        booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
+      }));
+      if (Array.isArray(b.installments)) {
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      }
+      if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
+    });
+  }, [convertEoiId]);
+
   useEffect(() => {
     if (projectId) fetch(`${SALES_ENDPOINTS.projects}${projectId}/${cq('?')}`, { headers: authHeaders() }).then(r => r.json()).then((p) => {
       setProject(p);
@@ -123,25 +154,32 @@ function BookingPage() {
           setF((s) => ({
             ...s,
             area: sumArea ? String(+sumArea.toFixed(2)) : s.area,
-            const_area: sumConst ? String(+sumConst.toFixed(2)) : s.const_area,
+            // When converting an EOI, Construction Area comes from the EOI, not the plot.
+            const_area: (sumConst && !convertEoiId) ? String(+sumConst.toFixed(2)) : s.const_area,
             villa_type: '',
           }));
         }
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
-  }, [projectId, plotIds.join(','), companyId]);
+    // EOI: fetch the next per-project EOI code to show in the form + the LOI/EOI PDF.
+    if (eoiMode && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}`, { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : null)).then((d) => { if (d && d.eoi_no) setEoiNo(d.eoi_no); }).catch(() => {});
+  }, [projectId, plotIds.join(','), companyId, eoiMode]);
 
   // Comma display of every selected plot ("12, 13, 14").
   const plotNumbers = useMemo(
     () => {
+      if (eoiMode) return eoiNo;
       const strip = (n) => { const s = (n || '').toString(); return s.replace(/^[^0-9]*/, '') || s; };
       return plots.length ? plots.map((p) => strip(p.number)).join(', ') : strip(plot?.number || '');
     },
-    [plots, plot],
+    [plots, plot, eoiMode, eoiNo],
   );
 
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
+  // All pricing sets share the sale-deed % split (Unit Price + Additional Extra Work Amount).
+  const hasSaleDeedSplit = formulaSet === 'ankhol' || formulaSet === 'kalrav' || formulaSet === 'industrial';
 
   const v = useMemo(() => computeFormulas({
     formulaSet, projectName: project?.name,
@@ -219,12 +257,13 @@ function BookingPage() {
     : formulaSet === 'industrial'
       ? `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maintDeposit)} + ${inr(v.maintAdvance)} + ${inr(v.legal)}`
       : `${inr(v.stampDuty)} + ${inr(v.regFees)} + ${inr(v.gst)} + ${inr(v.maint)} + ${inr(v.legal)}`;
-  const saleDeedSub = formulaSet === 'ankhol' ? `${v.saleDeedPct}% × Total Basic Amount` : 'Sale Deed Rate × Plot Area';
-  const saleDeedSub2 = formulaSet === 'ankhol'
-    ? `${v.saleDeedPct}% × ${inr(v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation)}`
+  const sdPct = Math.round((v.saleDeedPct || 0) * 100) / 100;   // display % capped at 2 decimals
+  const saleDeedSub = hasSaleDeedSplit ? `${sdPct}% × Total Basic Amount` : 'Sale Deed Rate × Plot Area';
+  const saleDeedSub2 = hasSaleDeedSplit
+    ? `${sdPct}% × ${inr(v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation)}`
     : `${inr(v.saleDeedRate)} × ${inr(v.area)}`;
   // formula sub-labels shown under each computed value (mirrors GAS)
-  const stampSub = (formulaSet === 'ankhol' && f.apply_stamp_duty === 'No') ? 'Not applicable'
+  const stampSub = (hasSaleDeedSplit && f.apply_stamp_duty === 'No') ? 'Not applicable'
     : (formulaSet === 'kalrav' ? '4.9% of Land Sale Deed' : '4.9% of Sale Deed');
   const pageFeeTxt = f.apply_page_fee === 'No' ? '' : ' + ₹1,500';
   const femPage = f.apply_page_fee === 'No' ? '₹0' : '₹1,500';
@@ -233,7 +272,7 @@ function BookingPage() {
     : (formulaSet === 'ankhol' ? `1% of Sale Deed${pageFeeTxt}`
       : formulaSet === 'industrial' ? `Male: 1% Sale Deed${pageFeeTxt} | Female: ${femPage}`
       : `Male: 1% LSD${pageFeeTxt} | Female: ${femPage}`);
-  const gstSub = (formulaSet === 'ankhol' && f.apply_gst === 'No') ? 'Not applicable'
+  const gstSub = (hasSaleDeedSplit && f.apply_gst === 'No') ? 'Not applicable'
     : (formulaSet === 'ankhol' ? '5% of Sale Deed'
       : formulaSet === 'industrial' ? (v.isTundav ? '18% of 67% of Sale Deed' : '18% of Development Agreement')
       : '18% of Construction Agreement');
@@ -302,7 +341,7 @@ function BookingPage() {
     // Installments are required before the LOI can be generated.
     if (!insts.length) { setMsg('Add the payment installments before downloading the LOI.'); return; }
     if (Math.abs(pctTotal - 100) > 0.01) { setMsg('Payment installments must total 100% before downloading the LOI.'); return; }
-    if (formulaSet === 'ankhol' && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
+    if (hasSaleDeedSplit && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
       setMsg('Extra Work Amount installments must be filled and total 100% before downloading the LOI.'); return;
     }
     const meta = {
@@ -332,7 +371,8 @@ function BookingPage() {
     if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
     setSaving(true); setMsg('');
     const payload = {
-      project: projectId, plot: plotId, plot_ids: plotIds, lead: leadId || undefined,
+      project: projectId, plot: eoiMode ? undefined : plotId, plot_ids: eoiMode ? [] : plotIds, lead: leadId || undefined,
+      ...(eoiMode ? { eoi: true, eoi_no: eoiNo } : {}),
       client_name: f.client_name.trim(), gender: f.gender, phone: f.phone.trim(), address: f.address, source: f.source,
       formula_set: formulaSet, area: f.area, area_unit: f.area_unit, const_area: f.const_area || '0',
       villa_type: flags.bunglowTypeIsDropdown ? f.villa_type : '', bunglow_type: flags.bunglowTypeFixed || '',
@@ -377,10 +417,12 @@ function BookingPage() {
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       <button onClick={() => router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
-        {reviseId ? 'Revise Booking' : (plots.length > 1 ? 'Book Units' : 'Book Unit')} {plotNumbers}
+        {reviseId ? 'Revise Booking' : eoiMode ? 'Create EOI' : (plots.length > 1 ? 'Book Units' : 'Book Unit')}{' '}
+        {eoiMode ? <span style={{ color: '#E4571A' }}>{eoiNo || '…'}</span> : plotNumbers}
       </h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>
         {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#3D5AFE' }}>{formulaSet}</span> pricing
+        {eoiMode && <span style={{ color: '#E4571A', fontWeight: 700 }}> · Expression of Interest · no plot</span>}
         {plots.length > 1 && <span style={{ color: '#2E7D32', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
       </p>
 
@@ -407,9 +449,19 @@ function BookingPage() {
             ))}
           </div>
         </Row>
-        <Row><L>Plot Area ({unit})</L><In value={f.area} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
-        {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} onChange={(e) => set('const_area', e.target.value)} /></Row>}
-        {flags.bunglowTypeIsDropdown && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
+        {eoiMode && (project?.eoi_unit_types || []).length > 0 && (
+          <Row><L>Unit Type</L>
+            <Sel value={eoiType} onChange={(e) => {
+              const name = e.target.value; setEoiType(name);
+              const t = (project.eoi_unit_types || []).find((x) => x.type === name);
+              // Standard EOI sizes prefill Plot/Construction Area (locked in EOI mode).
+              setF((s) => ({ ...s, villa_type: name, area: t ? String(t.plot_area) : s.area, const_area: t ? String(t.const_area) : s.const_area }));
+            }} opts={['', ...(project.eoi_unit_types || []).map((x) => x.type)]} />
+          </Row>
+        )}
+        <Row><L>Plot Area ({unit})</L><In value={f.area} disabled={eoiMode} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
+        {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} disabled={eoiMode} onChange={(e) => set('const_area', e.target.value)} /></Row>}
+        {flags.bunglowTypeIsDropdown && !eoiMode && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
         {flags.bunglowTypeFixed && <Row><L>Bunglow Type</L><In value={flags.bunglowTypeFixed} disabled /></Row>}
       </Section>
 
@@ -422,7 +474,12 @@ function BookingPage() {
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
-        {formulaSet === 'ankhol' && <>
+        {formulaSet === 'kalrav' && <>
+          {/* Kalrav: Unit Price = Land Sale Deed + Construction Agreement; % derived — both read-only. */}
+          <Row><L>Sale Deed %</L><In type="number" value={v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0'} disabled readOnly /></Row>
+          <Row><L>Unit Price (₹)</L><In type="number" value={Math.round(v.saleDeed) || 0} disabled readOnly /></Row>
+        </>}
+        {hasSaleDeedSplit && formulaSet !== 'kalrav' && <>
           {/* Editing the % clears the exact Unit Price override so the % drives again. */}
           <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => setF((s) => ({ ...s, sale_deed_pct: e.target.value, sale_deed_amount: '' }))} /></Row>
           <Row>
@@ -442,16 +499,16 @@ function BookingPage() {
             />
           </Row>
         </>}
-        {formulaSet !== 'ankhol' && <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>}
+        {!hasSaleDeedSplit && <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>}
       </Section>
 
       <Section title="Legal & Other Charges">
-        {formulaSet === 'ankhol' && <Row><L>Apply Stamp Duty?</L><Sel value={f.apply_stamp_duty} onChange={(e) => set('apply_stamp_duty', e.target.value)} opts={['Yes', 'No']} /></Row>}
+        {hasSaleDeedSplit && <Row><L>Apply Stamp Duty?</L><Sel value={f.apply_stamp_duty} onChange={(e) => set('apply_stamp_duty', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="Stamp Duty" sub={stampSub} val={v.stampDuty} />
         <Row><L>Apply Registration Fee?</L><Sel value={f.apply_reg_fee} onChange={(e) => set('apply_reg_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
         <Row><L>Apply ₹1,500 Page Fee?</L><Sel value={f.apply_page_fee} onChange={(e) => set('apply_page_fee', e.target.value)} opts={['Yes', 'No']} /></Row>
         <Calc label="Registration Fees" sub={regSub} val={v.regFees} />
-        {formulaSet === 'ankhol' && <Row><L>Apply GST?</L><Sel value={f.apply_gst} onChange={(e) => set('apply_gst', e.target.value)} opts={['Yes', 'No']} /></Row>}
+        {hasSaleDeedSplit && <Row><L>Apply GST?</L><Sel value={f.apply_gst} onChange={(e) => set('apply_gst', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="GST" sub={gstSub} val={v.gst} />
         <Row><L>Maintenance Rate (₹/{unit}{formulaSet === 'industrial' ? '' : '/mo'})</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
         {formulaSet !== 'industrial' && <Row><L>Maintenance Months</L><In type="number" value={f.maint_months} onChange={(e) => set('maint_months', e.target.value)} /></Row>}
@@ -472,8 +529,8 @@ function BookingPage() {
           sub={formulaSet === 'ankhol' ? 'Plot Basic + Plot Dev + Construction + Premium' : 'Plot Basic + Plot Dev + Construction'}
           val={formulaSet === 'ankhol' ? v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation : v.plotBasic + v.plotDev + v.constAmt}
           subtotal />}
-        {flags.hasSaleDeed && formulaSet !== 'ankhol' && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
-        {formulaSet === 'ankhol' && <>
+        {flags.hasSaleDeed && formulaSet !== 'ankhol' && !hasSaleDeedSplit && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
+        {hasSaleDeedSplit && <>
           <T label="Unit Price" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />
           <T label="Extra Work Amount" val={v.nonSaleDeed} />
           <Row><L>Discount (₹)</L><In type="number" value={f.discount} onChange={(e) => set('discount', e.target.value)} /></Row>
@@ -482,14 +539,14 @@ function BookingPage() {
         </>}
         <T label="Legal & Other Charges" sub={extraSub} sub2={extraSub2} val={v.totalExtra} />
         {reviseId && v.extraWorkAmt > 0 && <T label="Extra Work" val={v.extraWorkAmt} />}
-        {formulaSet !== 'ankhol' && <T label="Discount" val={-v.discount} />}
+        {!hasSaleDeedSplit && <T label="Discount" val={-v.discount} />}
         <T label="Total Box Price" val={v.finalAmt} big />
       </div>
 
       <Section title="Payment Schedule">
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
         {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
-        {formulaSet === 'ankhol' && nsdBase > 0 && (
+        {hasSaleDeedSplit && nsdBase > 0 && (
           <div style={{ marginBottom: 14, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Amount Installments</div>
             <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
@@ -511,6 +568,12 @@ function BookingPage() {
             )}
             {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
           </div>
+        )}
+        {hasSaleDeedSplit && (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>Unit Price Installments</div>
+            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(base)}</div>
+          </>
         )}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (

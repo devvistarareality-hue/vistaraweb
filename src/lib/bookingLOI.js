@@ -34,6 +34,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const isLOI = true;
   const isEOI = meta.plotNo && meta.plotNo.toString().trim().toUpperCase().indexOf('EOI') === 0;
   const isAnkholPdf = formulaSet === 'ankhol';
+  const isKalravPdf = formulaSet === 'kalrav';
   const isIndustrialPdf = formulaSet === 'industrial';
   const isTundavPdf = isIndustrialPdf && projNamePdf.trim().toLowerCase() === 'tundav';
   // Honour the booking form's unit toggle; fall back to the formula default.
@@ -127,7 +128,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   // Booking Date (right) + Plot No (left) — below the header.
   const plotNumOnly = (meta.plotNo || '—').toString().replace(/^[^0-9]*/, '') || (meta.plotNo || '—');
   st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-  doc.text('Plot No: ' + plotNumOnly, M, HDR_H + 6);
+  // EOI keeps its full code (EOI-3); a plot number is stripped to the digits only.
+  doc.text((isEOI ? 'EOI No: ' + (meta.plotNo || '—') : 'Plot No: ' + plotNumOnly), M, HDR_H + 6);
   doc.text('Booking Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
   y = HDR_H + 10; drawBorder();
 
@@ -205,9 +207,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     ]);
   }
 
-  // Agreement Amount
-  if (isAnkholPdf) {
-    const sdPct = v.saleDeedPct != null ? v.saleDeedPct : 60;
+  // Deal Value — all sets now use the sale-deed split (Unit Price + Additional Extra
+  // Work Amount ÷100).
+  {
     const fmt2 = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     secHead('Deal Value', [71, 85, 105]);
     infoGrid([
@@ -215,12 +217,6 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       ['Additional Extra Work Amount', 'Rs. ' + fmt2(v.discount > 0 ? (v.nonSaleDeed - v.discount) / 100 : v.nonSaleDeedDoc)],
     ]);
   }
-  else if (isIndustrialPdf) {
-    secHead('Agreement Amount', [71, 85, 105]);
-    const rows = [['Sale Deed', 'Rs. ' + num(v.saleDeed) + ' (SD Rate x Plot Area)']];
-    if (!isTundavPdf) rows.push(['Development Agreement', 'Rs. ' + num(v.devAgreement) + ' (Dev Rate x Plot Area)']);
-    infoGrid(rows);
-  } else { secHead('Agreement Amount', [71, 85, 105]); infoGrid([['Land Sale Deed', 'Rs. ' + num(v.lsd)], ['Construction Agreement', 'Rs. ' + num(v.constAgr)]]); }
 
   // Extra Charges — reserve the full section height so the Total Extra
   // Charges sub-row is never split onto the next page.
@@ -232,14 +228,14 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (5% of Sale Deed)', v.applyGst === 'No' ? 0 : v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Documentation charge', v.legal);
   } else if (isIndustrialPdf) {
-    tRow('Stamp Duty (4.9% of Sale Deed)', v.stampDuty);
+    tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? (v.applyPageFee === 'No' ? 'Registration Fees (Not Applicable)' : 'Registration Fees (Not Applicable) + Page Fee (Rs.1,500)') : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% Sale Deed' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.regFees);
-    tRow(isTundavPdf ? 'GST on Sale Deed (18% of 67% of Sale Deed)' : 'GST on Developed Plot (18% of Development Agreement)', v.gst);
+    tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : (isTundavPdf ? 'GST on Sale Deed (18% of 67% of Sale Deed)' : 'GST on Developed Plot (18% of Development Agreement)'), v.applyGst === 'No' ? 0 : v.gst);
     tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); tRow('Legal Documentation charge', v.legal);
   } else {
-    tRow('Stamp Duty (4.9% of Land Sale Deed)', v.stampDuty);
+    tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Land Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% LSD' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
-    tRow('GST (18% of Construction Agreement)', v.gst); tRow('Maintenance', v.maint); tRow('Legal Documentation charge', v.legal);
+    tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (18% of Construction Agreement)', v.applyGst === 'No' ? 0 : v.gst); tRow('Maintenance', v.maint); tRow('Legal Documentation charge', v.legal);
   }
   y += 2; tRow('Total Legal & Other Charges', v.totalExtra, { sub: true });
 
@@ -342,7 +338,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
 
   // Terms
-  const terms = isAnkholPdf ? [
+  const terms = (isEOI && isKalravPdf) ? [
+    ['Minimum Plot Area', 'The area of the minimum plot is subject to change at max. 10%.'],
+    ['Construction Area', 'Const. area is subject to change and will be finalised at the time of disclosure of master layout.'],
+    ['Booking Order', 'The EOI will be booked in a chronological manner and the selection of the plots will be done accordingly.'],
+    ['Super Built-up', 'Plot Area consists of super built up of 32% to 34% and Construction Area consists a super built up of 30%.'],
+    ['Additional Area', 'Clients who have booked EOI will have the opportunity to buy max. area of 10% at the same rate. In case someone wants to buy a bigger piece of land at the time of disclosure of master layout, the rate of additional area will be as per the rate decided by the developer at that point of time.'],
+  ] : isAnkholPdf ? [
     ['Payment Mode', 'All payments are received via cheque or bank transfer only. No cash is accepted.'],
     ['Late Payment', 'Payment delay of more than 10 days from the due date will attracts 2% per month penalty on the due instalment.'],
     ['Cancellation', 'In case of delay in payment of more than 30 days from the due date, the developer will have the right to cancel this deal.In such case, the developer will refund the received amount after deduction of 10% of the total deal value within 3 months.'],

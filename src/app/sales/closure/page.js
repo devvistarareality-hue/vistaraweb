@@ -93,8 +93,14 @@ export default function ClosureProjectsPage() {
             const total = pc.total || 0;
             const sold = pc.sold || 0;
             const pct = total ? Math.round(sold / total * 100) : 0;
+            // Projects with no plots yet (pre-approval) → raise an EOI instead of booking a unit.
+            const noPlots = total === 0;
+            const eoiQuery = sv ? `&client=${encodeURIComponent(sv.lead_name || '')}&phone=${encodeURIComponent(sv.lead_phone || '')}${sv.lead ? `&lead=${sv.lead}` : ''}` : '';
+            const goTo = () => noPlots
+              ? router.push(`/sales/booking?project=${p.id}&eoi=1${eoiQuery}`)
+              : router.push(`/sales/closure/${p.id}`);
             return (
-              <div key={p.id} onClick={() => router.push(`/sales/closure/${p.id}`)}
+              <div key={p.id} onClick={goTo}
                 style={{ ...card, cursor: 'pointer' }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 36px rgba(100,120,160,0.24)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = card.boxShadow; }}>
@@ -147,8 +153,11 @@ export default function ClosureProjectsPage() {
                     </div>
                   )}
 
-                  <div style={{ marginTop: 4, padding: '8px 12px', borderRadius: 10, background: '#F0F3FF', border: '1.5px solid #3D5AFE30', fontSize: 12, fontWeight: 700, color: '#3D5AFE', textAlign: 'center' }}>
-                    View units →
+                  <div style={{ marginTop: 4, padding: '8px 12px', borderRadius: 10,
+                    background: noPlots ? '#FFF4ED' : '#F0F3FF',
+                    border: `1.5px solid ${noPlots ? '#FF6B2B40' : '#3D5AFE30'}`,
+                    fontSize: 12, fontWeight: 700, color: noPlots ? '#E4571A' : '#3D5AFE', textAlign: 'center' }}>
+                    {noPlots ? 'Create EOI →' : 'View units →'}
                   </div>
                 </div>
               </div>

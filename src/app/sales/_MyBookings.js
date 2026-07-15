@@ -65,7 +65,10 @@ export function MyBookingsList() {
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                   {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
-                  {b.status === 'sold' && (
+                  {b.status === 'sold' && String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
+                    <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#E4571A' }}>→ Convert to LOI</button>
+                  )}
+                  {b.status === 'sold' && !String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
                     <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ Revise LOI</button>
                   )}
                   {b.status === 'pending' && <span style={{ fontSize: 12, color: '#B45309', alignSelf: 'center' }}>Awaiting approval</span>}
