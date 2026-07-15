@@ -338,11 +338,14 @@ function BookingPage() {
     if (!v.plotBasic) { if (!f.area) e.area = true; if (!f.land_rate) e.land_rate = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
-    // Installments are required before the LOI can be generated.
-    if (!insts.length) { setMsg('Add the payment installments before downloading the LOI.'); return; }
-    if (Math.abs(pctTotal - 100) > 0.01) { setMsg('Payment installments must total 100% before downloading the LOI.'); return; }
-    if (hasSaleDeedSplit && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
-      setMsg('Extra Work Amount installments must be filled and total 100% before downloading the LOI.'); return;
+    // Installments must total 100% before the LOI — EXCEPT for an EOI, where a partial
+    // (token) schedule is allowed and the 100% rule does not apply.
+    if (!eoiMode) {
+      if (!insts.length) { setMsg('Add the payment installments before downloading the LOI.'); return; }
+      if (Math.abs(pctTotal - 100) > 0.01) { setMsg('Payment installments must total 100% before downloading the LOI.'); return; }
+      if (hasSaleDeedSplit && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
+        setMsg('Extra Work Amount installments must be filled and total 100% before downloading the LOI.'); return;
+      }
     }
     const meta = {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
@@ -367,7 +370,7 @@ function BookingPage() {
     if (!f.land_rate || !v.plotBasic) { e.land_rate = true; if (!f.area) e.area = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
-    if (insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
+    if (!eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
     if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
     setSaving(true); setMsg('');
     const payload = {

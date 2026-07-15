@@ -163,6 +163,8 @@ function StatusBadge({ status, colors }) {
 export default function MyConversionsPage() {
   const user = useSelector((s) => s.auth.user);
   const des = (user?.designation || '').toLowerCase();
+  // Only an approver (admin/manager) may cancel a booking.
+  const isApprover = !!user && (user.role === 'Admin' || user.role === 'Manager' || user.is_staff);
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const [tab, setTab] = useState('sv');
   // Deep-link to a tab (dashboard Closures card → ?tab=closures). Read in an
@@ -322,7 +324,9 @@ export default function MyConversionsPage() {
                     <td style={td}>{c.closure_date ? fmtDate(c.closure_date) : '—'}</td>
                     <td style={td}><StatusBadge status={c.status} colors={CLOSURE_STATUS_COLOR} /></td>
                     <td style={td} onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => cancelClosure(c.id)} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                      {isApprover
+                        ? <button onClick={() => cancelClosure(c.id)} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                        : <span style={{ fontSize: 11, color: '#9CA3AF' }}>—</span>}
                     </td>
                   </tr>
                 ))}
