@@ -14,11 +14,13 @@ export const DESIG_ERROR          = 'DESIG_ERROR';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — designations rarely change
 
-export const fetchDesignations = (force = false) => async (dispatch, getState) => {
+export const fetchDesignations = (force = false, companyId = null) => async (dispatch, getState) => {
   const { lastFetched, designations } = getState().designations;
   if (!force && lastFetched && designations.length > 0 && Date.now() - lastFetched < CACHE_TTL) return;
   try {
-    const res  = await fetch(DESIGNATION_ENDPOINTS.list, { headers: authHeaders() });
+    // Platform admins pass the selected company so designations are company-specific.
+    const url  = DESIGNATION_ENDPOINTS.list + (companyId ? `?company_id=${companyId}` : '');
+    const res  = await fetch(url, { headers: authHeaders() });
     const data = await res.json();
     if (res.ok) dispatch({ type: DESIG_FETCH_SUCCESS, payload: data });
     else dispatch({ type: DESIG_ERROR, payload: data.detail || 'Failed to load designations.' });

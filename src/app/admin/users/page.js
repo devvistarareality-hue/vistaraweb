@@ -49,10 +49,10 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     dispatch(fetchUsers(true, companyId));
-    dispatch(fetchDesignations());
+    dispatch(fetchDesignations(true, companyId));
   }, [companyId]);
 
-  const handleRefresh = () => { dispatch(fetchUsers(true, companyId)); dispatch(fetchDesignations(true)); };
+  const handleRefresh = () => { dispatch(fetchUsers(true, companyId)); dispatch(fetchDesignations(true, companyId)); };
 
   useEffect(() => {
     if (updateSuccess) {

@@ -17,10 +17,11 @@ const MODULE_COLOR = {
 export default function DesignationMasterPage() {
   const dispatch = useDispatch();
   const { designations, error } = useSelector((s) => s.designations);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [form,  setForm]  = useState({ module: 'Sales', name: '' });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
-  useEffect(() => { dispatch(fetchDesignations()); }, []);
+  useEffect(() => { dispatch(fetchDesignations(true, companyId)); }, [companyId]);
 
   const showToast = (message, type = 'success') =>
     setToast({ visible: true, message, type });
@@ -28,7 +29,7 @@ export default function DesignationMasterPage() {
   const handleCreate = (e) => {
     e.preventDefault();
     if (!form.name.trim()) return;
-    dispatch(createDesignation({ module: form.module, name: form.name.trim() }));
+    dispatch(createDesignation({ module: form.module, name: form.name.trim(), ...(companyId ? { company_id: companyId } : {}) }));
     showToast(`"${form.name.trim()}" added to ${form.module}.`, 'success');
     setForm((f) => ({ ...f, name: '' }));
   };

@@ -60,15 +60,15 @@ export default function CreateUserPage() {
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   useEffect(() => {
-    dispatch(fetchDesignations());
     dispatch(fetchUsers());
     if (isVRLAdmin) dispatch(fetchCompanies());
   }, []);
 
-  // Clear reporting manager when company changes (VRL admin)
+  // Clear reporting manager + reload the selected company's designations when it changes.
   useEffect(() => {
     setForm((f) => ({ ...f, reporting_manager_id: null }));
     setManagerSearch('');
+    dispatch(fetchDesignations(true, selectedCompanyId || null));
   }, [selectedCompanyId]);
 
   useEffect(() => {
