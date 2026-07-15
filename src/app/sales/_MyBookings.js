@@ -23,6 +23,8 @@ export function MyBookingsList() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState({});   // which project groups are expanded
+  const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
 
   useEffect(() => {
     setLoading(true);
@@ -43,11 +45,16 @@ export function MyBookingsList() {
       {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : projectNames.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>You haven&apos;t booked any units yet.</div>
       ) : projectNames.map((pn) => (
-        <div key={pn} style={{ marginBottom: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
-            🏢 {pn} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
+        <div key={pn} style={{ marginBottom: 12 }}>
+          <div onClick={() => toggle(pn)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 12, padding: '14px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', border: open[pn] ? '1.5px solid #C7D2FE' : '1.5px solid transparent' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              🏢 {pn} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
+            </div>
+            <span style={{ color: '#8492A6', fontSize: 13, fontWeight: 800, transform: open[pn] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {open[pn] && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
             {groups[pn].map((b) => (
               <div key={b.id} style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -76,6 +83,7 @@ export function MyBookingsList() {
               </div>
             ))}
           </div>
+          )}
         </div>
       ))}
     </>
