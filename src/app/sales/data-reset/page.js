@@ -13,6 +13,7 @@ const ITEMS = [
   ['follow_ups', 'Follow-ups'],
   ['site_visits', 'Site visits'],
   ['bookings', 'Bookings'],
+  ['cancelled_bookings', 'Cancelled bookings (logs only)'],
   ['closures', 'Closures / conversions'],
   ['distribution_log', 'Distribution log'],
   ['availability', 'Availability records'],
