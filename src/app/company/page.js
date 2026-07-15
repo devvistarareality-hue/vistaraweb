@@ -128,7 +128,7 @@ export default function CompanyScreen() {
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g.  VRL01"
+                placeholder="e.g.  VRL"
                 style={s.input}
                 autoFocus
                 disabled={companyLoading}
