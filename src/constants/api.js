@@ -56,6 +56,7 @@ export const AUTH_ENDPOINTS = {
   get otpVerify()  { return `${BASE_URL}/api/auth/otp/verify/`; },
   get otpResend()  { return `${BASE_URL}/api/auth/otp/resend/`; },
   get me()         { return `${BASE_URL}/api/auth/me/`; },
+  get changePassword() { return `${BASE_URL}/api/auth/change-password/`; },
   get refresh()    { return `${BASE_URL}/api/auth/token/refresh/`; },
   get notifications()        { return `${BASE_URL}/api/auth/notifications/`; },
   get notificationsReadAll() { return `${BASE_URL}/api/auth/notifications/read/`; },

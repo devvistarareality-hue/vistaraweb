@@ -9,6 +9,7 @@ import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adm
 import { MODULE_META } from './moduleMeta';
 import { moduleAccess, SLUG_TO_MODULE } from '../../../lib/moduleAccess';
 import { AUTH_ENDPOINTS } from '../../../constants/api';
+import ChangePasswordModal from '../../../components/ChangePasswordModal';
 
 const ORANGE = '#FF6B2B';
 const NAVY = '#0C1E3C';
@@ -36,6 +37,7 @@ export default function ModuleLayout({ children, params }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [changePwOpen, setChangePwOpen] = useState(false);
 
   async function openProfile() {
     setProfileOpen(true); setProfileLoading(true);
@@ -186,12 +188,15 @@ export default function ModuleLayout({ children, params }) {
                 </div>
               ))}
             </div>
-            <div style={{ padding: '12px 16px 16px' }}>
+            <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: '1.5px solid #E5E7EB', backgroundColor: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Change Password</button>
               <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: '1.5px solid #FECACA', backgroundColor: '#FEF2F2', color: '#EF4444', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
             </div>
           </div>
         </div>
       )}
+
+      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} />
     </div>
   );
 }

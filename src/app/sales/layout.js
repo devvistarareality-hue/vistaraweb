@@ -9,6 +9,7 @@ import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminF
 import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
 import { moduleAccess, isSuperAdmin } from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
@@ -92,6 +93,7 @@ export default function SalesLayout({ children }) {
   const [profileOpen,    setProfileOpen]    = useState(false);
   const [profileData,    setProfileData]    = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [changePwOpen,   setChangePwOpen]   = useState(false);
 
   useEffect(() => {
     dispatch(restoreAdminFilter());
@@ -359,8 +361,19 @@ export default function SalesLayout({ children }) {
               ))}
             </div>
 
-            {/* Sign Out */}
-            <div style={{ padding: '12px 16px 16px' }}>
+            {/* Change Password + Sign Out */}
+            <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{
+                width: '100%', padding: '10px 0', borderRadius: 10,
+                border: '1.5px solid #E5E7EB', backgroundColor: '#fff',
+                color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              }}>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                Change Password
+              </button>
               <button onClick={handleLogout} style={{
                 width: '100%', padding: '10px 0', borderRadius: 10,
                 border: '1.5px solid #FECACA', backgroundColor: '#FEF2F2',
@@ -376,6 +389,8 @@ export default function SalesLayout({ children }) {
           </div>
         </div>
       )}
+
+      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} />
 
       {/* ── Main content ── */}
       <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>
