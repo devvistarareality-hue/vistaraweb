@@ -162,6 +162,8 @@ function StatusBadge({ status, colors }) {
 
 export default function MyConversionsPage() {
   const user = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const cq = companyId ? `?company_id=${companyId}` : '';
   const des = (user?.designation || '').toLowerCase();
   // Only an approver (admin/manager) may cancel a booking.
   const isApprover = !!user && (user.role === 'Admin' || user.role === 'Manager' || user.is_staff);
@@ -187,14 +189,14 @@ export default function MyConversionsPage() {
     setLoading(true);
     try {
       const [svRes, clRes] = await Promise.all([
-        fetch(SALES_ENDPOINTS.siteVisits, { headers: authHeaders() }),
-        fetch(SALES_ENDPOINTS.closures, { headers: authHeaders() }),
+        fetch(SALES_ENDPOINTS.siteVisits + cq, { headers: authHeaders() }),
+        fetch(SALES_ENDPOINTS.closures + cq, { headers: authHeaders() }),
       ]);
       if (svRes.ok) setVisits(await svRes.json());
       if (clRes.ok) setClosures(await clRes.json());
     } catch (_) {}
     setLoading(false);
-  }, []);
+  }, [cq]);
 
   const cancelClosure = useCallback(async (id) => {
     if (!window.confirm('Cancel this closure?\nThis frees the unit and permanently deletes its signed LOI from storage. This cannot be undone.')) return;
