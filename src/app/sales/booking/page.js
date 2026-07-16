@@ -180,6 +180,9 @@ function BookingPage() {
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
   // All pricing sets share the sale-deed % split (Unit Price + Additional Extra Work Amount).
   const hasSaleDeedSplit = formulaSet === 'ankhol' || formulaSet === 'kalrav' || formulaSet === 'industrial';
+  // In EOI, area is locked only when the project defines standard unit types (picked from the
+  // Unit Type dropdown). Sets without unit types (e.g. Industrial) keep the area editable.
+  const eoiLocked = eoiMode && (project?.eoi_unit_types || []).length > 0;
 
   const v = useMemo(() => computeFormulas({
     formulaSet, projectName: project?.name,
@@ -462,8 +465,8 @@ function BookingPage() {
             }} opts={['', ...(project.eoi_unit_types || []).map((x) => x.type)]} />
           </Row>
         )}
-        <Row><L>Plot Area ({unit})</L><In value={f.area} disabled={eoiMode} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
-        {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} disabled={eoiMode} onChange={(e) => set('const_area', e.target.value)} /></Row>}
+        <Row><L>Plot Area ({unit})</L><In value={f.area} disabled={eoiLocked} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
+        {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} disabled={eoiLocked} onChange={(e) => set('const_area', e.target.value)} /></Row>}
         {flags.bunglowTypeIsDropdown && !eoiMode && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
         {flags.bunglowTypeFixed && <Row><L>Bunglow Type</L><In value={flags.bunglowTypeFixed} disabled /></Row>}
       </Section>
