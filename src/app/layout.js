@@ -1,4 +1,5 @@
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 import ReduxProvider from '../components/ReduxProvider';
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
         <ReduxProvider>
           {children}
         </ReduxProvider>
+        <Analytics />
       </body>
     </html>
   );
