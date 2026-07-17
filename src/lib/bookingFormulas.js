@@ -73,9 +73,10 @@ export function computeFormulas(inp = {}) {
   // Construction Amount (none for Industrial)
   const constAmt = isIndustrial ? 0 : (constArea * constRate);
 
-  // Maintenance
+  // Maintenance — Deposit and Advance are each the base unit amount; the displayed
+  // Maintenance Amount is their sum (Deposit + Advance) for formula sets that have both.
   const maintBase = isAnkhol ? constArea : area;
-  const maint = isIndustrial ? (area * maintRate) : (maintBase * maintRate * maintMonths);
+  const maintUnit = isIndustrial ? (area * maintRate) : (maintBase * maintRate * maintMonths);
 
   // Sale Deed / Stamp / Reg / GST per formula set
   let saleDeed = 0, stampDuty = 0, regFees = 0, gst = 0, maintDeposit = 0, maintAdvance = 0;
@@ -84,7 +85,7 @@ export function computeFormulas(inp = {}) {
     stampDuty    = saleDeed * 0.049;
     regFees      = (saleDeed * 0.01) + pageFee;
     gst          = saleDeed * 0.05;
-    maintDeposit = maint; maintAdvance = maint;
+    maintDeposit = maintUnit; maintAdvance = maintUnit;
   } else if (isIndustrial) {
     // Industrial now uses the sale-deed % split: Unit Price = % of Plot Basic.
     // Tax is UNCHANGED — still on the Sale Deed value (SD Rate × Area) & Dev Agreement.
@@ -93,7 +94,7 @@ export function computeFormulas(inp = {}) {
     stampDuty    = saleDeedTax * 0.049;
     regFees      = gender === 'Female' ? pageFee : (saleDeedTax * 0.01 + pageFee);
     gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
-    maintDeposit = maint; maintAdvance = maint;
+    maintDeposit = maintUnit; maintAdvance = maintUnit;
   } else { // kalrav
     // Kalrav Unit Price = Land Sale Deed + Construction Agreement (entered directly).
     // The Sale Deed % is derived from this (read-only in the form). Tax (stamp/reg/GST)
@@ -103,6 +104,10 @@ export function computeFormulas(inp = {}) {
     regFees   = gender === 'Female' ? pageFee : (lsd * 0.01 + pageFee);
     gst       = constAgr * 0.18;
   }
+
+  // Maintenance Amount = Deposit + Advance where both exist (Ankhol/Industrial);
+  // otherwise the standalone unit value (Kalrav has no Deposit/Advance fields).
+  const maint = (isAnkhol || isIndustrial) ? (maintDeposit + maintAdvance) : maintUnit;
 
   if (applyRegFee === 'No') regFees = pageFee; // 1% removed but page fee stays independent
   // All three sets can toggle stamp duty / GST off.
