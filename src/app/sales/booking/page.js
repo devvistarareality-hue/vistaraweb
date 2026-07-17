@@ -267,17 +267,19 @@ function BookingPage() {
     : `${inr(v.saleDeedRate)} × ${inr(v.area)}`;
   // formula sub-labels shown under each computed value (mirrors GAS)
   const stampSub = (hasSaleDeedSplit && f.apply_stamp_duty === 'No') ? 'Not applicable'
-    : (formulaSet === 'kalrav' ? '4.9% of Land Sale Deed' : '4.9% of Sale Deed');
+    : (formulaSet === 'kalrav' ? (v.isKalrav3 ? '4.9% of Unit Price' : '4.9% of Land Sale Deed') : '4.9% of Sale Deed');
   const pageFeeTxt = f.apply_page_fee === 'No' ? '' : ' + ₹1,500';
   const femPage = f.apply_page_fee === 'No' ? '₹0' : '₹1,500';
   const regSub = f.apply_reg_fee === 'No'
     ? (f.apply_page_fee === 'No' ? 'Not applicable' : 'Page Fee only (₹1,500)')
     : (formulaSet === 'ankhol' ? `1% of Sale Deed${pageFeeTxt}`
       : formulaSet === 'industrial' ? `Male: 1% Sale Deed${pageFeeTxt} | Female: ${femPage}`
+      : v.isKalrav3 ? `Male: 1% Unit Price${pageFeeTxt} | Female: ${femPage}`
       : `Male: 1% LSD${pageFeeTxt} | Female: ${femPage}`);
   const gstSub = (hasSaleDeedSplit && f.apply_gst === 'No') ? 'Not applicable'
     : (formulaSet === 'ankhol' ? '5% of Sale Deed'
       : formulaSet === 'industrial' ? (v.isTundav ? '18% of 67% of Sale Deed' : '18% of Development Agreement')
+      : v.isKalrav3 ? '5% of Unit Price'
       : '18% of Construction Agreement');
   const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
     : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';

@@ -32,6 +32,10 @@ export function computeFormulas(inp = {}) {
   const isKalrav     = formulaSet === 'kalrav';
   const isIndustrial = formulaSet === 'industrial';
   const isTundav     = isIndustrial && projectName === 'tundav';
+  // Kalrav 3 special case: Stamp Duty, Registration Fee, and GST are computed off the
+  // Unit Price (Land Sale Deed + Construction Agreement) instead of LSD/Const Agreement
+  // separately, and GST is a flat 5% instead of 18%. Other Kalrav-set projects unaffected.
+  const isKalrav3    = isKalrav && projectName === 'kalrav 3';
 
   const area       = num(inp.area);
   const landRate   = num(inp.landRate);
@@ -97,12 +101,20 @@ export function computeFormulas(inp = {}) {
     maintDeposit = maintUnit; maintAdvance = maintUnit;
   } else { // kalrav
     // Kalrav Unit Price = Land Sale Deed + Construction Agreement (entered directly).
-    // The Sale Deed % is derived from this (read-only in the form). Tax (stamp/reg/GST)
-    // is UNCHANGED — still on the Land Sale Deed & Construction Agreement respectively.
+    // The Sale Deed % is derived from this (read-only in the form).
     saleDeed  = lsd + constAgr;
-    stampDuty = lsd * 0.049;
-    regFees   = gender === 'Female' ? pageFee : (lsd * 0.01 + pageFee);
-    gst       = constAgr * 0.18;
+    if (isKalrav3) {
+      // Kalrav 3: Stamp Duty, Registration Fee, and GST are all based on Unit Price.
+      stampDuty = saleDeed * 0.049;
+      regFees   = gender === 'Female' ? pageFee : (saleDeed * 0.01 + pageFee);
+      gst       = saleDeed * 0.05;
+    } else {
+      // All other Kalrav-set projects: tax is UNCHANGED — still on the Land Sale Deed
+      // & Construction Agreement respectively.
+      stampDuty = lsd * 0.049;
+      regFees   = gender === 'Female' ? pageFee : (lsd * 0.01 + pageFee);
+      gst       = constAgr * 0.18;
+    }
   }
 
   // Maintenance Amount = Deposit + Advance where both exist (Ankhol/Industrial);
@@ -141,7 +153,7 @@ export function computeFormulas(inp = {}) {
     : (plotBasic + plotDev + constAmt + totalExtra + extraWorkAmt - discount);
 
   return {
-    formulaSet, isTundav, area, landRate, devRate, constArea, constRate, discount,
+    formulaSet, isTundav, isKalrav3, area, landRate, devRate, constArea, constRate, discount,
     lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
     saleDeedRate, saleDeedPct: effSaleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
     maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
