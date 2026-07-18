@@ -77,8 +77,9 @@ export function computeFormulas(inp = {}) {
   // Construction Amount (none for Industrial)
   const constAmt = isIndustrial ? 0 : (constArea * constRate);
 
-  // Maintenance — Deposit and Advance are each the base unit amount; the displayed
-  // Maintenance Amount is their sum (Deposit + Advance) for formula sets that have both.
+  // Maintenance — Ankhol/Industrial: Deposit and Advance are each the base unit amount and
+  // the displayed Maintenance Amount is their sum. Kalrav 3: Deposit and Advance are each
+  // half of the Maintenance Amount (a breakdown that leaves the total unchanged).
   const maintBase = isAnkhol ? constArea : area;
   const maintUnit = isIndustrial ? (area * maintRate) : (maintBase * maintRate * maintMonths);
 
@@ -108,6 +109,9 @@ export function computeFormulas(inp = {}) {
       stampDuty = saleDeed * 0.049;
       regFees   = gender === 'Female' ? pageFee : (saleDeed * 0.01 + pageFee);
       gst       = saleDeed * 0.05;
+      // Kalrav 3 splits the Maintenance Amount into a Deposit and an Advance, each half of
+      // the amount. This is only a breakdown — the total maintenance (maint) is unchanged.
+      maintDeposit = maintUnit / 2; maintAdvance = maintUnit / 2;
     } else {
       // All other Kalrav-set projects: tax is UNCHANGED — still on the Land Sale Deed
       // & Construction Agreement respectively.
