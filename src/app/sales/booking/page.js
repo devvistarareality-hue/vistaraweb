@@ -44,6 +44,7 @@ function BookingPage() {
   const eoiMode   = !reviseId && (qp.get('eoi') === '1' || qp.get('eoi') === 'true');
   const [eoiNo, setEoiNo] = useState('');
   const [eoiType, setEoiType] = useState('');   // selected EOI standard unit type
+  const [eoiUnits, setEoiUnits] = useState('1'); // no. of units — multiplies the standard area
 
   const [project, setProject] = useState(null);
   const [plot,    setPlot]    = useState(null);   // primary (first) plot
@@ -183,6 +184,14 @@ function BookingPage() {
   // In EOI, area is locked only when the project defines standard unit types (picked from the
   // Unit Type dropdown). Sets without unit types (e.g. Industrial) keep the area editable.
   const eoiLocked = eoiMode && (project?.eoi_unit_types || []).length > 0;
+  // EOI standard sizes are per-unit; the No. of Units field multiplies Plot/Construction Area.
+  const applyEoiUnit = (name, unitsStr) => {
+    const t = (project?.eoi_unit_types || []).find((x) => x.type === name);
+    const n = Math.max(1, parseInt(unitsStr, 10) || 1);
+    setF((s) => ({ ...s, villa_type: name,
+      area:       t ? String((+t.plot_area  || 0) * n) : s.area,
+      const_area: t ? String((+t.const_area || 0) * n) : s.const_area }));
+  };
 
   const v = useMemo(() => computeFormulas({
     formulaSet, projectName: project?.name,
@@ -458,14 +467,19 @@ function BookingPage() {
           </div>
         </Row>
         {eoiMode && (project?.eoi_unit_types || []).length > 0 && (
-          <Row><L>Unit Type</L>
-            <Sel value={eoiType} onChange={(e) => {
-              const name = e.target.value; setEoiType(name);
-              const t = (project.eoi_unit_types || []).find((x) => x.type === name);
-              // Standard EOI sizes prefill Plot/Construction Area (locked in EOI mode).
-              setF((s) => ({ ...s, villa_type: name, area: t ? String(t.plot_area) : s.area, const_area: t ? String(t.const_area) : s.const_area }));
-            }} opts={['', ...(project.eoi_unit_types || []).map((x) => x.type)]} />
-          </Row>
+          <>
+            <Row><L>Unit Type</L>
+              <Sel value={eoiType} onChange={(e) => {
+                const name = e.target.value; setEoiType(name);
+                // Standard EOI sizes prefill Plot/Construction Area (× No. of Units, locked in EOI mode).
+                applyEoiUnit(name, eoiUnits);
+              }} opts={['', ...(project.eoi_unit_types || []).map((x) => x.type)]} />
+            </Row>
+            <Row><L>No. of Units</L>
+              <In type="number" value={eoiUnits} onChange={(e) => {
+                const u = e.target.value; setEoiUnits(u); applyEoiUnit(eoiType, u);
+              }} /></Row>
+          </>
         )}
         <Row><L>Plot Area ({unit})</L><In value={f.area} disabled={eoiLocked} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
         {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} disabled={eoiLocked} onChange={(e) => set('const_area', e.target.value)} /></Row>}
