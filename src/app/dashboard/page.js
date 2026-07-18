@@ -12,6 +12,7 @@ const MODULE_CONFIG = {
   'Execution':          { accent: MODULE_ACCENT.Execution,             href: '/m/execution', sub: 'Tasks & Progress' },
   'Purchase':           { accent: MODULE_ACCENT.Purchase,              href: '/m/purchase',  sub: 'Vendors & Orders' },
   'Land':               { accent: MODULE_ACCENT.Land,                  href: '/m/land',      sub: 'Properties & Sites' },
+  'Club 1000':          { accent: MODULE_ACCENT['Club 1000'],          href: '/club1000',    sub: 'Investment Schemes' },
 };
 
 export default function DashboardPage() {
