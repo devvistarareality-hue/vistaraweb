@@ -6,8 +6,8 @@ import { createUser, resetCreateUser, fetchUsers } from '../../../../redux/actio
 import { fetchDesignations } from '../../../../redux/actions/designationActions';
 import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
+import { ALL_MODULES } from '../../../../lib/moduleAccess';
 
-const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Employee', 'Intern'];
 
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);

@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { fetchUsers, updateUser, deleteUser, resetUpdateUser } from '../../../redux/actions/userManagementActions';
 import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
+import { ALL_MODULES } from '../../../lib/moduleAccess';
 
-const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'Execution', 'Purchase', 'Land'];
 const ROLES       = ['Admin', 'Manager', 'Employee'];
 
 const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
