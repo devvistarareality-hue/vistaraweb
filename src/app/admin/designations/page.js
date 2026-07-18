@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDesignations, createDesignation, deleteDesignation } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
-
-const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'Execution', 'Purchase', 'Land'];
+import { ALL_MODULES } from '../../../lib/moduleAccess';
 
 const MODULE_COLOR = {
   Sales:      { bg: '#FFF8E1', text: '#E6960A', dot: '#F9A825' },
@@ -12,6 +11,7 @@ const MODULE_COLOR = {
   Execution:  { bg: '#FFF0E6', text: '#EA580C', dot: '#EA580C' },
   Purchase:   { bg: '#F3E5F5', text: '#7B1FA2', dot: '#7B1FA2' },
   Land:       { bg: '#E8F5E9', text: '#2E7D32', dot: '#22C55E' },
+  'Club 1000': { bg: '#E0F7FA', text: '#00838F', dot: '#00838F' },
 };
 
 export default function DesignationMasterPage() {

@@ -74,7 +74,7 @@ const PARKED_ITEMS = [
   { label: 'Execution',          href: '/m/execution', icon: <IconChecklist />, live: true },
   { label: 'Purchase',           href: '/m/purchase',  icon: <IconCart />,      live: true },
   { label: 'Land',               href: '/m/land',      icon: <IconPin />,       live: true },
-  { label: 'Club 1000',          href: '/m/club1000',  icon: <IconCoins />,     live: true },
+  { label: 'Club 1000',          href: '/club1000',    icon: <IconCoins />,     live: true },
 ];
 
 const CSS = `

@@ -114,3 +114,17 @@ export const SALES_ENDPOINTS = {
   get mediaDelete()      { return `${BASE_URL}/api/sales/media/delete/`; },
   get dataReset()        { return `${BASE_URL}/api/sales/admin/reset-trial-data/`; },
 };
+
+export const CLUB1000_ENDPOINTS = {
+  get stats()      { return `${BASE_URL}/api/club1000/stats/`; },
+  get schemes()    { return `${BASE_URL}/api/club1000/schemes/`; },
+  scheme: (id)     => `${BASE_URL}/api/club1000/schemes/${id}/`,
+  get investors()  { return `${BASE_URL}/api/club1000/investors/`; },
+  get investorReferences() { return `${BASE_URL}/api/club1000/investors/references/`; },
+  investor: (id)   => `${BASE_URL}/api/club1000/investors/${id}/`,
+  investorRedeem: (id) => `${BASE_URL}/api/club1000/investors/${id}/redeem/`,
+  get payouts()    { return `${BASE_URL}/api/club1000/payouts/`; },
+  payoutMarkPaid: (id) => `${BASE_URL}/api/club1000/payouts/${id}/mark-paid/`,
+  get referralRewards() { return `${BASE_URL}/api/club1000/referral-rewards/`; },
+  referralRewardMarkPaid: (id) => `${BASE_URL}/api/club1000/referral-rewards/${id}/mark-paid/`,
+};
