@@ -16,12 +16,12 @@ export const MODULE_ROUTES = {
   'Execution':          '/m/execution',
   'Purchase':           '/m/purchase',
   'Land':               '/m/land',
-  'Club 1000':          '/m/club1000',
+  'Club 1000':          '/club1000',
 };
 
 // /m/[module] slug → module display name
 export const SLUG_TO_MODULE = {
-  hr: 'HR', accounts: 'Accounts & Finance', execution: 'Execution', purchase: 'Purchase', land: 'Land', club1000: 'Club 1000',
+  hr: 'HR', accounts: 'Accounts & Finance', execution: 'Execution', purchase: 'Purchase', land: 'Land',
 };
 
 // A departmental / module admin = role='Admin' restricted to exactly ONE module
@@ -55,4 +55,21 @@ export function canAccessModule(user, moduleName) {
   const { superAdmin, isModuleAdmin, allowed } = moduleAccess(user);
   if (superAdmin || !isModuleAdmin) return true;
   return allowed.includes(moduleName);
+}
+
+// Club 1000 manager-level access: platform admins, company Admins, or anyone
+// explicitly granted Club 1000 in their manager_modules. Mirrors
+// backend/club1000/permissions.py::is_club1000_manager exactly — keep in sync.
+export function isClub1000Manager(user) {
+  if (!user) return false;
+  return !!(
+    user.is_staff || isSuperAdmin(user) || user.role === 'Admin'
+    || (user.manager_modules || []).includes('Club 1000')
+  );
+}
+
+// Any Club 1000 access at all: manager-level, or plain module access.
+export function hasClub1000Access(user) {
+  if (!user) return false;
+  return isClub1000Manager(user) || (user.modules || []).includes('Club 1000');
 }
