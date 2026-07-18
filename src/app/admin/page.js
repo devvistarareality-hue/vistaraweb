@@ -43,7 +43,7 @@ const MODULES = [
   { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.22)'  }, href: '/m/execution',                    soon: false },
   { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.22)'   }, href: '/m/purchase',                     soon: false },
   { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#BA68C8', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.22)' }, href: '/m/land',                         soon: false },
-  { name: 'Club 1000',          desc: 'Investment portfolio and returns tracking',    icon: 'coins',     accent: { bg: '#80DEEA', icon: '#00838F', gradient: 'rgba(0,131,143,0.22)'  }, href: '/m/club1000',                     soon: false },
+  { name: 'Club 1000',          desc: 'Investment portfolio and returns tracking',    icon: 'coins',     accent: { bg: '#80DEEA', icon: '#00838F', gradient: 'rgba(0,131,143,0.22)'  }, href: '/club1000',                       soon: false },
 ];
 
 const openMods = MODULES.filter((m) => !m.soon);
