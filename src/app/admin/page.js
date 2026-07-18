@@ -29,6 +29,7 @@ function ModuleIcon({ type, size = 20 }) {
     cart:      <svg {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>,
     map:       <svg {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
     wallet:    <svg {...p}><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>,
+    coins:     <svg {...p}><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>,
   };
   return icons[type] || null;
 }
@@ -42,6 +43,7 @@ const MODULES = [
   { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#81C784', icon: '#2E7D32', gradient: 'rgba(46,125,50,0.22)'  }, href: '/m/execution',                    soon: false },
   { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFB74D', icon: '#E65100', gradient: 'rgba(230,81,0,0.22)'   }, href: '/m/purchase',                     soon: false },
   { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#BA68C8', icon: '#7B1FA2', gradient: 'rgba(123,31,162,0.22)' }, href: '/m/land',                         soon: false },
+  { name: 'Club 1000',          desc: 'Investment portfolio and returns tracking',    icon: 'coins',     accent: { bg: '#80DEEA', icon: '#00838F', gradient: 'rgba(0,131,143,0.22)'  }, href: '/m/club1000',                     soon: false },
 ];
 
 const openMods = MODULES.filter((m) => !m.soon);

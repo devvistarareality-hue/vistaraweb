@@ -52,6 +52,9 @@ function IconLogout() {
 function IconWallet() {
   return <SvgIcon><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></SvgIcon>;
 }
+function IconCoins() {
+  return <SvgIcon><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></SvgIcon>;
+}
 
 function IconDesignation() {
   return <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
@@ -71,6 +74,7 @@ const PARKED_ITEMS = [
   { label: 'Execution',          href: '/m/execution', icon: <IconChecklist />, live: true },
   { label: 'Purchase',           href: '/m/purchase',  icon: <IconCart />,      live: true },
   { label: 'Land',               href: '/m/land',      icon: <IconPin />,       live: true },
+  { label: 'Club 1000',          href: '/m/club1000',  icon: <IconCoins />,     live: true },
 ];
 
 const CSS = `
