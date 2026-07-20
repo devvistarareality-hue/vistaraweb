@@ -7,7 +7,7 @@ import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 
-const ROLES       = ['Admin', 'Manager', 'Employee'];
+const ROLES       = ['Manager', 'Employee'];
 
 const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
 const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
@@ -83,6 +83,7 @@ export default function UserManagementPage() {
       designation:          u.designation     || '',
       modules:              u.modules         || [],
       manager_modules:      u.manager_modules || [],
+      admin_modules:        u.admin_modules   || [],
       is_active:            u.is_active,
       reporting_manager_id: u.reporting_manager?.id ?? null,
     });
@@ -143,12 +144,14 @@ export default function UserManagementPage() {
   };
 
   const toggleModule = (mod, field) => {
-    setForm((f) => ({
-      ...f,
-      [field]: f[field].includes(mod)
-        ? f[field].filter((m) => m !== mod)
-        : [...f[field], mod],
-    }));
+    setForm((f) => {
+      const next   = f[field].includes(mod) ? f[field].filter((m) => m !== mod) : [...f[field], mod];
+      const updated = { ...f, [field]: next };
+      // Managers get Manager Modules auto-mirrored from Modules — any Modules
+      // change overwrites Manager Modules to match.
+      if (field === 'modules' && f.role === 'Manager') updated.manager_modules = next;
+      return updated;
+    });
   };
 
   const filtered = users.filter((u) =>
@@ -282,7 +285,10 @@ export default function UserManagementPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
                   <label style={mLbl}>Role</label>
-                  <select value={form.role || 'Employee'} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select value={form.role || 'Employee'} onChange={(e) => {
+                    const role = e.target.value;
+                    setForm((f) => ({ ...f, role, manager_modules: role === 'Manager' ? (f.modules || []) : f.manager_modules }));
+                  }} style={{ ...mInp, cursor: 'pointer' }}>
                     {ROLES.map((r) => <option key={r}>{r}</option>)}
                   </select>
                 </div>
@@ -326,7 +332,10 @@ export default function UserManagementPage() {
                 ))}
               </div>
 
-              <div style={mSec}>Manager Modules</div>
+              <div style={mSec}>
+                Manager Modules
+                {form.role === 'Manager' && <span style={{ textTransform: 'none', fontWeight: 500, color: '#9CA3AF', letterSpacing: 0 }}> — auto-matches Modules</span>}
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                 {ALL_MODULES.map((mod) => (
                   <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.manager_modules||[]).includes(mod) ? '#3D5AFE' : '#E5E7EB'}`, backgroundColor: (form.manager_modules||[]).includes(mod) ? '#F0F3FF' : '#FAFAFA' }}>
@@ -335,6 +344,20 @@ export default function UserManagementPage() {
                   </label>
                 ))}
               </div>
+
+              {form.role === 'Manager' && (
+                <>
+                  <div style={mSec}>Admin Modules</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
+                    {ALL_MODULES.map((mod) => (
+                      <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.admin_modules||[]).includes(mod) ? '#3D5AFE' : '#E5E7EB'}`, backgroundColor: (form.admin_modules||[]).includes(mod) ? '#F0F3FF' : '#FAFAFA' }}>
+                        <input type="checkbox" checked={(form.admin_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'admin_modules')} style={{ accentColor: '#3D5AFE' }} />
+                        {mod}
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.is_active ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.is_active ? '#F0FFF4' : '#FAFAFA', marginBottom: 4 }}>
                 <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} style={{ accentColor: '#2E7D32' }} />
