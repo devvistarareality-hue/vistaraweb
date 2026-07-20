@@ -41,7 +41,8 @@ function BookingPage() {
   const leadId    = qp.get('lead') || '';
   // EOI (Expression of Interest): a booking on a project with no plots yet. No plot is
   // selected; a sequential per-project EOI code (EOI-1, EOI-2…) stands in for the plot no.
-  const eoiMode   = !reviseId && (qp.get('eoi') === '1' || qp.get('eoi') === 'true');
+  // EOI mode applies when creating an EOI (?eoi=1) OR revising an existing EOI (?revise=..&eoi=1).
+  const eoiMode   = qp.get('eoi') === '1' || qp.get('eoi') === 'true';
   const [eoiNo, setEoiNo] = useState('');
   const [eoiType, setEoiType] = useState('');   // selected EOI standard unit type
   const [eoiUnits, setEoiUnits] = useState('1'); // no. of units — multiplies the standard area
@@ -89,6 +90,8 @@ function BookingPage() {
       if (!b) return;
       setProjectId(String(b.project));
       setPlotIds(((b.plot_ids && b.plot_ids.length ? b.plot_ids : [b.plot]).filter(Boolean)).map(String));
+      // Revising an EOI: keep its existing EOI code (no plot, no next-EOI fetch).
+      if (String(b.plot_numbers || '').toUpperCase().startsWith('EOI')) setEoiNo(b.plot_numbers);
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
@@ -163,7 +166,7 @@ function BookingPage() {
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
     // EOI: fetch the next per-project EOI code to show in the form + the LOI/EOI PDF.
-    if (eoiMode && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}`, { headers: authHeaders() })
+    if (eoiMode && !reviseId && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null)).then((d) => { if (d && d.eoi_no) setEoiNo(d.eoi_no); }).catch(() => {});
   }, [projectId, plotIds.join(','), companyId, eoiMode]);
 
@@ -431,7 +434,7 @@ function BookingPage() {
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       <button onClick={() => router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
-        {reviseId ? 'Revise Booking' : eoiMode ? 'Create EOI' : (plots.length > 1 ? 'Book Units' : 'Book Unit')}{' '}
+        {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI' : (plots.length > 1 ? 'Book Units' : 'Book Unit')}{' '}
         {eoiMode ? <span style={{ color: '#E4571A' }}>{eoiNo || '…'}</span> : plotNumbers}
       </h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>
