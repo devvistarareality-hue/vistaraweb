@@ -8,7 +8,7 @@ import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 import { ALL_MODULES } from '../../../../lib/moduleAccess';
 
-const ROLES       = ['Admin', 'Manager', 'Employee', 'Intern'];
+const ROLES       = ['Manager', 'Employee', 'Intern'];
 
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
 
@@ -55,6 +55,7 @@ export default function CreateUserPage() {
     designation:          '',
     modules:              [],
     manager_modules:      [],
+    admin_modules:        [],
     reporting_manager_id: null,
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -97,12 +98,14 @@ export default function CreateUserPage() {
   }, [form.modules]);
 
   const toggleModule = (mod, field) => {
-    setForm((f) => ({
-      ...f,
-      [field]: f[field].includes(mod)
-        ? f[field].filter((m) => m !== mod)
-        : [...f[field], mod],
-    }));
+    setForm((f) => {
+      const next   = f[field].includes(mod) ? f[field].filter((m) => m !== mod) : [...f[field], mod];
+      const updated = { ...f, [field]: next };
+      // Managers get Manager Modules auto-mirrored from Modules — any Modules
+      // change overwrites Manager Modules to match.
+      if (field === 'modules' && f.role === 'Manager') updated.manager_modules = next;
+      return updated;
+    });
   };
 
   const handleSubmit = (e) => {
@@ -209,7 +212,10 @@ export default function CreateUserPage() {
               <label style={s.label}>Role</label>
               <select
                 value={form.role}
-                onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                onChange={(e) => {
+                  const role = e.target.value;
+                  setForm((f) => ({ ...f, role, manager_modules: role === 'Manager' ? f.modules : f.manager_modules }));
+                }}
                 style={s.input}
               >
                 {ROLES.map((r) => <option key={r}>{r}</option>)}
@@ -305,7 +311,10 @@ export default function CreateUserPage() {
           </div>
 
           <div style={{ marginBottom: 28 }}>
-            <label style={s.label}>Manager Modules</label>
+            <label style={s.label}>
+              Manager Modules
+              {form.role === 'Manager' && <span style={s.hintInline}> — auto-matches Modules</span>}
+            </label>
             <div style={s.checkGrid}>
               {ALL_MODULES.map((mod) => (
                 <label key={mod} style={s.checkLabel}>
@@ -319,6 +328,24 @@ export default function CreateUserPage() {
               ))}
             </div>
           </div>
+
+          {form.role === 'Manager' && (
+            <div style={{ marginBottom: 28 }}>
+              <label style={s.label}>Admin Modules</label>
+              <div style={s.checkGrid}>
+                {ALL_MODULES.map((mod) => (
+                  <label key={mod} style={s.checkLabel}>
+                    <input
+                      type="checkbox"
+                      checked={form.admin_modules.includes(mod)}
+                      onChange={() => toggleModule(mod, 'admin_modules')}
+                    />
+                    {mod}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
             <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
