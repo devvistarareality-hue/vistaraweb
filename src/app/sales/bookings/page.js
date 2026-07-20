@@ -126,9 +126,15 @@ export default function BookingsPage() {
                     <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#DC2626' }}>✕ Reject</button>
                   </>
                 )}
-                {b.status === 'sold' && (
-                  <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ Revise LOI</button>
-                )}
+                {b.status === 'sold' && (() => {
+                  const isEoi = String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
+                  return (
+                    <>
+                      {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#E4571A' }}>→ Convert to LOI</button>}
+                      <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ))}

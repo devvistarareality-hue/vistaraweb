@@ -7,7 +7,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 import MediaUpload from '../../../components/MediaUpload';
 
 
-function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTypes, setPlotTypes, addType, removeType, updateType, validTypes, totalTypePlots, inp, lbl }) {
+function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTypes, setPlotTypes, addType, removeType, updateType, validTypes, totalTypePlots, inp, lbl, startNo = 1 }) {
   return (
     <div>
       {/* Has types toggle */}
@@ -34,7 +34,7 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
             style={{ ...inp, maxWidth: 160 }} placeholder="e.g. 20" />
           {Number(noTypePlots) > 0 && (
             <div style={{ marginTop: 8, fontSize: 12, color: '#3D5AFE', background: '#F0F3FF', padding: '8px 12px', borderRadius: 8 }}>
-              Will create <strong>{noTypePlots}</strong> plots numbered <strong>1</strong> to <strong>{noTypePlots}</strong>
+              Will create <strong>{noTypePlots}</strong> plots numbered <strong>{startNo}</strong> to <strong>{startNo + Number(noTypePlots) - 1}</strong>
             </div>
           )}
         </div>
@@ -93,7 +93,9 @@ function ProjectModal({ project, onClose, onSaved }) {
     tagline:         project?.tagline         || '',
     rera:            project?.rera            || '',
     total_area:      project?.total_area      || '',
-    total_plots:     project?.total_plots     ?? '',
+    // Show the real number of plot records (plot_counts.total). The stored total_plots field
+    // can drift from reality (e.g. a double "Add More Plots"); the actual plots are the truth.
+    total_plots:     project?.plot_counts?.total ?? project?.total_plots ?? '',
     price_range:     project?.price_range     || '',
     possession:      project?.possession      || '',
     cover_image_url: project?.cover_image_url || '',
@@ -113,6 +115,22 @@ function ProjectModal({ project, onClose, onSaved }) {
   const [plotTypes,   setPlotTypes]   = useState([{ name: '', from: '1', to: '' }]);
   // For edit: track whether the "add more plots" section is expanded
   const [addingMore,  setAddingMore]  = useState(false);
+  // For edit: highest existing plot number so "Add More Plots" (no types) continues
+  // numbering from where the project left off (e.g. 70 existing → new plots start at 71).
+  const [existingMaxNo, setExistingMaxNo] = useState(0);
+  useEffect(() => {
+    if (!isEdit) return;
+    fetch(`${SALES_ENDPOINTS.plots}?project=${project.id}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(arr => {
+        const max = (Array.isArray(arr) ? arr : []).reduce((m, p) => {
+          const n = parseInt(String(p.number).match(/\d+/g)?.pop() || '0', 10);
+          return n > m ? n : m;
+        }, 0);
+        setExistingMaxNo(max);
+      })
+      .catch(() => {});
+  }, [isEdit, project?.id]);
   // For edit: editable type names — [{original, current}]
   const [editableTypes, setEditableTypes] = useState(
     () => (project?.plot_type_plans || []).map(pt => ({ original: pt.name, current: pt.name }))
@@ -141,7 +159,8 @@ function ProjectModal({ project, onClose, onSaved }) {
     }
     const count = Number(noTypePlots);
     if (!count || count < 1) return [];
-    return Array.from({ length: count }, (_, i) => ({ number: String(i + 1), cluster_type: '' }));
+    // Continue numbering after the highest existing plot (0 for a new project).
+    return Array.from({ length: count }, (_, i) => ({ number: String(existingMaxNo + i + 1), cluster_type: '' }));
   }
 
   const validTypes    = plotTypes.filter(pt => pt.name.trim() && Number(pt.from) && Number(pt.to) && Number(pt.to) >= Number(pt.from));
@@ -153,7 +172,10 @@ function ProjectModal({ project, onClose, onSaved }) {
 
     // For new: build plots from wizard. For edit+addingMore: also build additional plots.
     const plots      = (!isEdit || addingMore) ? buildPlots() : [];
-    const totalPlots = isEdit ? (form.total_plots === '' ? 0 : Number(form.total_plots)) : plots.length;
+    // On edit, the stored total always mirrors the real plot count (prevents drift/doubling);
+    // extra plots being added this save are counted below. On create it's the wizard count.
+    const realCount  = project?.plot_counts?.total ?? 0;
+    const totalPlots = isEdit ? realCount : plots.length;
 
     setSaving(true); setErr('');
 
@@ -345,13 +367,18 @@ function ProjectModal({ project, onClose, onSaved }) {
                 )}
                 <div style={{ maxWidth: 200 }}>
                   <label style={mLbl}>Total Plots / Units</label>
-                  <input type="number" min="0" value={form.total_plots} onChange={e => set('total_plots', e.target.value)} style={mInp} placeholder="e.g. 36" />
+                  <input type="number" min="0" value={form.total_plots}
+                    onChange={e => set('total_plots', e.target.value)}
+                    disabled={isEdit} readOnly={isEdit}
+                    style={{ ...mInp, ...(isEdit ? { background: '#F3F4F6', color: '#6B7280', cursor: 'not-allowed' } : {}) }}
+                    placeholder="e.g. 36" />
+                  {isEdit && <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>Reflects actual plots — use “Add More Plots” or Manage Plots to change.</p>}
                 </div>
                 <button type="button" onClick={() => setAddingMore(m => !m)}
                   style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#EF4444' : '#3D5AFE', background: 'none', border: `1.5px dashed ${addingMore ? '#EF4444' : '#3D5AFE'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer', width: 'fit-content' }}>
                   {addingMore ? '✕ Cancel adding plots' : '+ Add More Plots'}
                 </button>
-                {addingMore && <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} />}
+                {addingMore && <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} startNo={existingMaxNo + 1} />}
               </div>
             ) : (
               <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} />
