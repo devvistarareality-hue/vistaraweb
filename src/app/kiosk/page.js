@@ -16,16 +16,29 @@ const STEPS = [
   { key: 'details', label: 'Details' },
 ];
 
+const isImageUrl = (u) => /\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i.test(String(u || ''));
+const KSTATUS = {
+  available: { dot: '#16A34A', label: 'Available' },
+  sold:      { dot: '#EF4444', label: 'Sold' },
+  hold:      { dot: '#F59E0B', label: 'On Hold' },
+};
+const zoneCenter = (z) => (z.points?.length
+  ? { cx: z.points.reduce((s, p) => s + p.x, 0) / z.points.length, cy: z.points.reduce((s, p) => s + p.y, 0) / z.points.length }
+  : { cx: (z.x || 0) + (z.width || 0) / 2, cy: (z.y || 0) + (z.height || 0) / 2 });
+
 export default function KioskPage() {
   const router   = useRouter();
   const dispatch = useDispatch();
   const user     = useSelector((s) => s.auth.user);
 
-  const [step, setStep]         = useState('project'); // project | select | details | done
+  const [step, setStep]         = useState('project'); // project | select
   const [projects, setProjects] = useState(null);      // null = loading
   const [project,  setProject]  = useState(null);
-  const [plots,    setPlots]    = useState([]);
-  const [plot,     setPlot]     = useState(null);       // chosen plot (LOI) or null (EOI)
+  const [plots,    setPlots]    = useState([]);         // ALL plots (map needs sold/hold too)
+  const [selIds,   setSelIds]   = useState([]);         // chosen plot ids (multi-select for LOI)
+  const [hovered,  setHovered]  = useState(null);
+  const isSelected = (pl) => selIds.includes(pl.id);
+  const togglePlot = (pl) => { if (pl.status !== 'available') return; setSelIds((s) => s.includes(pl.id) ? s.filter((x) => x !== pl.id) : [...s, pl.id]); };
   const [eoiType,  setEoiType]  = useState('');
   const [eoiUnits, setEoiUnits] = useState('1');
 
@@ -45,25 +58,31 @@ export default function KioskPage() {
   }, [user]);
 
   const pickProject = async (p) => {
-    setProject(p); setPlot(null); setEoiType(''); setEoiUnits('1');
+    setProject(p); setSelIds([]); setEoiType(''); setEoiUnits('1'); setHovered(null);
     try {
       const r = await fetch(`${SALES_ENDPOINTS.plots}?project=${p.id}`, { headers: authHeaders() });
       const arr = await r.json();
-      setPlots((Array.isArray(arr) ? arr : []).filter((x) => x.status === 'available'));
+      setPlots(Array.isArray(arr) ? arr : []);
     } catch { setPlots([]); }
     setStep('select');
   };
+
+  const availablePlots = plots.filter((x) => x.status === 'available');
+  const plotByNumber   = Object.fromEntries(plots.map((p) => [String(p.number), p]));
+  const zones          = project?.site_map_zones || [];
+  const mapImage       = project?.site_map_image_url || (isImageUrl(project?.master_plan_url) ? project?.master_plan_url : '');
+  const hasMap         = !!mapImage && zones.length > 0;
 
   const unitTypes = project?.eoi_unit_types || [];
   const selType   = unitTypes.find((t) => t.type === eoiType);
   const nUnits    = Math.max(1, parseInt(eoiUnits, 10) || 1);
   const eoiArea   = selType ? (+selType.plot_area || 0) * nUnits : 0;
   const eoiConst  = selType ? (+selType.const_area || 0) * nUnits : 0;
-  const canContinueSelect = isEoi ? (unitTypes.length === 0 || !!eoiType) : !!plot;
+  const canContinueSelect = isEoi ? (unitTypes.length === 0 || !!eoiType) : selIds.length > 0;
 
 
   const restart = () => {
-    setProject(null); setPlots([]); setPlot(null); setEoiType(''); setEoiUnits('1');
+    setProject(null); setPlots([]); setSelIds([]); setEoiType(''); setEoiUnits('1');
     setStep('project');
   };
 
@@ -137,7 +156,8 @@ export default function KioskPage() {
           <section className="k-fade k-panel">
             <button className="k-back" onClick={restart}>← Projects</button>
             <h1 className="k-h1">{project.name}</h1>
-            {project.master_plan_url && (
+            {/* Master plan (only when there's no interactive map to avoid showing it twice) */}
+            {!hasMap && project.master_plan_url && (
               <img className="k-master" src={project.master_plan_url} alt="Master plan" />
             )}
 
@@ -165,12 +185,66 @@ export default function KioskPage() {
                   </>
                 )}
               </div>
+            ) : hasMap ? (
+              <div>
+                <div className="k-maphead">
+                  <label className="k-label" style={{ margin: 0 }}>Tap available (green) units — pick one or several</label>
+                  <div className="k-legend">
+                    <span><i style={{ background: KSTATUS.available.dot }} /> Available</span>
+                    <span><i style={{ background: KSTATUS.hold.dot }} /> On hold</span>
+                    <span><i style={{ background: KSTATUS.sold.dot }} /> Sold</span>
+                  </div>
+                </div>
+                <div className="k-map">
+                  <img src={mapImage} alt="Site map" draggable={false} />
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                    {zones.map((zone) => {
+                      const pl = plotByNumber[String(zone.plotNumber)];
+                      if (!pl) return null;
+                      const cfg = KSTATUS[pl.status] || KSTATUS.available;
+                      const clickable = pl.status === 'available';
+                      const isSel = isSelected(pl);
+                      const isHov = hovered === zone.id;
+                      const pts = zone.points?.length ? zone.points.map((p) => `${p.x},${p.y}`).join(' ') : null;
+                      const fill = isSel ? '#3D5AFE' : cfg.dot + (isHov ? 'cc' : '99');
+                      const stroke = isSel ? '#1A237E' : cfg.dot;
+                      const sw = isSel ? 0.95 : (isHov ? 0.7 : 0.45);
+                      const st = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill .13s' };
+                      const ev = { onClick: () => togglePlot(pl), onMouseEnter: () => setHovered(zone.id), onMouseLeave: () => setHovered(null) };
+                      return (
+                        <g key={zone.id}>
+                          {pts
+                            ? <polygon points={pts} fill="rgba(255,255,255,0.92)" style={{ pointerEvents: 'none' }} />
+                            : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill="rgba(255,255,255,0.92)" style={{ pointerEvents: 'none' }} />}
+                          {pts
+                            ? <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={sw} style={st} {...ev} />
+                            : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={fill} stroke={stroke} strokeWidth={sw} style={st} {...ev} />}
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  {zones.map((zone) => {
+                    const pl = plotByNumber[String(zone.plotNumber)];
+                    if (!pl) return null;
+                    const cfg = KSTATUS[pl.status] || KSTATUS.available;
+                    const isSel = isSelected(pl);
+                    const { cx, cy } = zoneCenter(zone);
+                    const label = String(zone.plotNumber).replace(/^[^\d]+/, '') || zone.plotNumber;
+                    return (
+                      <div key={zone.id + '-l'} className="k-maplbl" style={{ left: `${cx}%`, top: `${cy}%`, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.dot, boxShadow: `0 1px 3px rgba(0,0,0,.18),0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}` }}>
+                        {isSel ? `✓ ${label}` : label}
+                      </div>
+                    );
+                  })}
+                </div>
+                {selIds.length > 0 && <div className="k-summary">Selected <b>{selIds.length}</b> unit{selIds.length > 1 ? 's' : ''} · {plots.filter((p) => selIds.includes(p.id)).map((p) => p.number).join(', ')}</div>}
+              </div>
             ) : (
               <div>
-                <label className="k-label">Choose an available plot</label>
+                <label className="k-label">Choose available plots — pick one or several</label>
                 <div className="k-plots">
-                  {plots.map((pl) => (
-                    <button key={pl.id} className={`k-plot ${plot?.id === pl.id ? 'on' : ''}`} onClick={() => setPlot(pl)}>
+                  {availablePlots.map((pl) => (
+                    <button key={pl.id} className={`k-plot ${isSelected(pl) ? 'on' : ''}`} onClick={() => togglePlot(pl)}>
                       <span className="k-plot-no">{pl.number}</span>
                       {pl.size ? <span className="k-plot-sz">{pl.size} sq.yd</span> : null}
                     </button>
@@ -180,7 +254,7 @@ export default function KioskPage() {
             )}
 
             <button className="k-primary k-block" disabled={!canContinueSelect}
-              onClick={() => router.push(`/kiosk/book?project=${project.id}${isEoi ? '&eoi=1' : `&plot=${plot.id}`}`)}>Continue →</button>
+              onClick={() => router.push(`/kiosk/book?project=${project.id}${isEoi ? '&eoi=1' : `&plots=${selIds.join(',')}`}`)}>Continue →</button>
           </section>
         )}
 
@@ -249,6 +323,15 @@ const Style = () => (
   .k-narrow{max-width:560px}
   .k-back{background:none;border:none;color:#6B7391;font-size:14px;font-weight:700;cursor:pointer;padding:0;margin-bottom:12px}
   .k-master{width:100%;max-height:380px;object-fit:contain;background:#F5F7FC;border-radius:16px;margin-bottom:22px}
+  .k-maphead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  .k-legend{display:flex;gap:16px;font-size:12px;font-weight:600;color:#6B7391}
+  .k-legend span{display:flex;align-items:center;gap:6px}
+  .k-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .k-map{position:relative;width:100%;user-select:none;border-radius:14px;overflow:hidden;background:#F5F7FC;border:1px solid #E6EBF4}
+  .k-map img{width:100%;display:block}
+  .k-map svg{position:absolute;inset:0;width:100%;height:100%}
+  .k-maplbl{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:3;font-weight:800;
+    font-size:clamp(6px,0.85vw,12px);line-height:1;padding:1px 5px;border-radius:4px;white-space:nowrap}
   .k-note{font-size:15px;color:#4B5468;line-height:1.5;margin:0 0 18px}
   .k-note.center{text-align:center}
   .k-label{display:block;font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#8492A6;margin:18px 0 8px}
