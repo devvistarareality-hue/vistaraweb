@@ -28,7 +28,7 @@ export default function CompanyScreen() {
   const router   = useRouter();
   const { companyLoading, company, companyError, user } = useSelector((s) => s.auth);
 
-  useEffect(() => { if (user)    router.replace(user.role === 'Admin' || user.is_staff ? '/admin' : '/dashboard'); }, [user]);
+  useEffect(() => { if (user)    router.replace(user.role === 'Kiosk' ? '/kiosk' : (user.role === 'Admin' || user.is_staff ? '/admin' : '/dashboard')); }, [user]);
   useEffect(() => { if (company) router.push('/login'); }, [company]);
 
   const handleSubmit = (e) => {

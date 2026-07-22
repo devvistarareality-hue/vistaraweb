@@ -47,7 +47,7 @@ export default function LoginScreen() {
   const { user, company } = useSelector((s) => s.auth);
 
   useEffect(() => {
-    if (user) router.replace((user.role === 'Admin' || user.is_staff) ? moduleAccess(user).home : '/dashboard');
+    if (user) router.replace(user.role === 'Kiosk' ? '/kiosk' : ((user.role === 'Admin' || user.is_staff) ? moduleAccess(user).home : '/dashboard'));
   }, [user]);
 
   useEffect(() => {
