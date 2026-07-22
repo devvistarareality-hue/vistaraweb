@@ -270,25 +270,25 @@ const Empty = ({ children }) => <div className="k-empty">{children}</div>;
 const Style = () => (
   <style>{`
   .k-root{min-height:100vh;position:relative;overflow-x:hidden;font-family:inherit;color:#182350;
-    background:radial-gradient(1200px 600px at 15% -10%,#EEF2FF 0%,transparent 60%),
+    background:radial-gradient(1200px 600px at 15% -10%,#E8EEFF 0%,transparent 60%),
                radial-gradient(1000px 500px at 110% 10%,#E7ECFF 0%,transparent 55%),
                linear-gradient(160deg,#F7F9FF 0%,#EDF1FB 100%);}
   .k-bg{position:fixed;inset:0;pointer-events:none;
-    background:radial-gradient(600px 300px at 90% 100%,rgba(79,70,229,.06),transparent 70%);}
+    background:radial-gradient(600px 300px at 90% 100%,rgba(61,90,254,.06),transparent 70%);}
   .k-header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;
     gap:16px;padding:18px 40px;background:rgba(255,255,255,.72);backdrop-filter:blur(12px);
     border-bottom:1px solid rgba(24,35,80,.06);}
   .k-brand{display:flex;align-items:center;gap:14px}
   .k-logo{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:20px;color:#fff;background:linear-gradient(135deg,#182350,#3D3AF5);
-    box-shadow:0 6px 16px rgba(61,58,245,.28)}
+    font-weight:800;font-size:20px;color:#fff;background:linear-gradient(135deg,#182350,#3D5AFE);
+    box-shadow:0 6px 16px rgba(61,90,254,.28)}
   .k-brand-name{font-size:19px;font-weight:800;letter-spacing:-.3px}
   .k-brand-sub{font-size:12px;color:#8492A6;margin-top:1px}
   .k-steps{display:flex;align-items:center;gap:0}
   .k-step{display:flex;align-items:center;gap:8px}
   .k-step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-size:12px;font-weight:800;background:#E4E8F2;color:#9AA4B8;transition:.25s}
-  .k-step-dot.active{background:#4F46E5;color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.4)}
+  .k-step-dot.active{background:#3D5AFE;color:#fff;box-shadow:0 4px 12px rgba(61,90,254,.4)}
   .k-step-dot.done{background:#16A34A;color:#fff}
   .k-step-label{font-size:13px;font-weight:600;color:#9AA4B8}
   .k-step-label.active{color:#182350}
@@ -306,16 +306,16 @@ const Style = () => (
   .k-card:active{transform:translateY(-2px) scale(.995)}
   .k-card-media{position:relative;height:200px}
   .k-card-media img{width:100%;height:100%;object-fit:cover;display:block}
-  .k-card-ph{width:100%;height:100%;background:linear-gradient(135deg,#DfE4F5,#EEF2FF)}
+  .k-card-ph{width:100%;height:100%;background:linear-gradient(135deg,#DfE4F5,#E8EEFF)}
   .k-card-veil{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,15,40,.72),transparent 55%)}
   .k-card-title{position:absolute;left:18px;bottom:14px;color:#fff;font-size:22px;font-weight:800;
     letter-spacing:-.4px;text-shadow:0 2px 10px rgba(0,0,0,.35)}
   .k-card-body{padding:16px 18px 18px}
   .k-card-loc{font-size:13px;color:#8492A6}
   .k-card-meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-  .k-tag{font-size:12px;font-weight:700;color:#4338CA;background:#EEF2FF;border-radius:20px;padding:5px 12px}
+  .k-tag{font-size:12px;font-weight:700;color:#3D5AFE;background:#E8EEFF;border-radius:20px;padding:5px 12px}
   .k-tag.ghost{color:#64748B;background:#F1F4FA}
-  .k-card-cta{font-size:14px;font-weight:800;color:#4F46E5}
+  .k-card-cta{font-size:14px;font-weight:800;color:#3D5AFE}
 
   .k-panel{background:#fff;border-radius:24px;padding:30px 32px;box-shadow:0 10px 34px rgba(24,35,80,.08)}
   .k-narrow{max-width:560px}
@@ -328,32 +328,32 @@ const Style = () => (
   .k-chips{display:flex;flex-wrap:wrap;gap:12px}
   .k-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:96px;padding:14px 18px;border-radius:16px;
     border:1.5px solid #E1E6F1;background:#fff;color:#374151;cursor:pointer;transition:.15s}
-  .k-chip:hover{border-color:#C7CEFF}
-  .k-chip.on{border-color:#4F46E5;background:#EEF2FF;color:#4338CA;box-shadow:0 6px 16px rgba(79,70,229,.18)}
+  .k-chip:hover{border-color:#BBD0FF}
+  .k-chip.on{border-color:#3D5AFE;background:#E8EEFF;color:#3D5AFE;box-shadow:0 6px 16px rgba(61,90,254,.18)}
   .k-chip-t{font-size:16px;font-weight:800}
   .k-chip-s{font-size:12px;opacity:.75}
 
   .k-plots{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
   .k-plot{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:92px;padding:14px 12px;border-radius:16px;
     border:1.5px solid #E1E6F1;background:#fff;color:#374151;cursor:pointer;transition:.15s}
-  .k-plot:hover{border-color:#C7CEFF;transform:translateY(-2px)}
-  .k-plot.on{border-color:#4F46E5;background:#EEF2FF;color:#4338CA;box-shadow:0 8px 18px rgba(79,70,229,.2)}
+  .k-plot:hover{border-color:#BBD0FF;transform:translateY(-2px)}
+  .k-plot.on{border-color:#3D5AFE;background:#E8EEFF;color:#3D5AFE;box-shadow:0 8px 18px rgba(61,90,254,.2)}
   .k-plot-no{font-size:17px;font-weight:800}
   .k-plot-sz{font-size:11px;opacity:.75}
 
   .k-stepper{display:inline-flex;align-items:center;border:1.5px solid #E1E6F1;border-radius:14px;overflow:hidden;background:#fff}
-  .k-stepper button{width:52px;height:52px;border:none;background:#F6F8FD;font-size:24px;font-weight:700;color:#4F46E5;cursor:pointer}
-  .k-stepper button:active{background:#EDEFFb}
+  .k-stepper button{width:52px;height:52px;border:none;background:#F6F8FD;font-size:24px;font-weight:700;color:#3D5AFE;cursor:pointer}
+  .k-stepper button:active{background:#E8EEFF}
   .k-stepper input{width:80px;height:52px;border:none;text-align:center;font-size:18px;font-weight:700;color:#182350;outline:none}
   .k-summary{margin-top:16px;font-size:15px;color:#4B5468}
-  .k-summary b{color:#4338CA}
+  .k-summary b{color:#3D5AFE}
 
   .k-input{width:100%;height:54px;padding:0 16px;border-radius:14px;border:1.5px solid #D9DEEA;font-size:16px;
     box-sizing:border-box;outline:none;background:#fff;transition:.15s}
-  .k-input:focus{border-color:#4F46E5;box-shadow:0 0 0 4px rgba(79,70,229,.12)}
+  .k-input:focus{border-color:#3D5AFE;box-shadow:0 0 0 4px rgba(61,90,254,.12)}
 
   .k-primary{height:56px;padding:0 34px;border:none;border-radius:16px;font-size:17px;font-weight:800;color:#fff;cursor:pointer;
-    background:linear-gradient(135deg,#4F46E5,#3D3AF5);box-shadow:0 10px 24px rgba(61,58,245,.32);transition:.15s}
+    background:linear-gradient(135deg,#182350,#3D5AFE);box-shadow:0 10px 24px rgba(61,90,254,.32);transition:.15s}
   .k-primary:hover{filter:brightness(1.05)}
   .k-primary:active{transform:scale(.98)}
   .k-primary:disabled{opacity:.45;box-shadow:none;cursor:not-allowed}
@@ -371,7 +371,7 @@ const Style = () => (
   .k-empty{background:#fff;border-radius:20px;padding:44px;text-align:center;color:#6B7391;font-size:16px;line-height:1.6;
     box-shadow:0 8px 26px rgba(24,35,80,.06)}
   .k-spin-wrap{display:flex;justify-content:center;padding:80px}
-  .k-spin{width:38px;height:38px;border:3px solid #C7D2FE;border-top-color:#4F46E5;border-radius:50%;animation:kspin .8s linear infinite}
+  .k-spin{width:38px;height:38px;border:3px solid #C7D8FF;border-top-color:#3D5AFE;border-radius:50%;animation:kspin .8s linear infinite}
   @keyframes kspin{to{transform:rotate(360deg)}}
   .k-fade{animation:kfade .35s ease}
   @keyframes kfade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
