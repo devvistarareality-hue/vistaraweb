@@ -28,10 +28,6 @@ export default function KioskPage() {
   const [plot,     setPlot]     = useState(null);       // chosen plot (LOI) or null (EOI)
   const [eoiType,  setEoiType]  = useState('');
   const [eoiUnits, setEoiUnits] = useState('1');
-  const [form, setForm]         = useState({ client_name: '', gender: '', phone: '', address: '' });
-  const [saving, setSaving]     = useState(false);
-  const [err, setErr]           = useState('');
-  const [ref, setRef]           = useState('');
 
   const isEoi = project && plots.length === 0;
 
@@ -49,7 +45,7 @@ export default function KioskPage() {
   }, [user]);
 
   const pickProject = async (p) => {
-    setProject(p); setPlot(null); setEoiType(''); setEoiUnits('1'); setErr('');
+    setProject(p); setPlot(null); setEoiType(''); setEoiUnits('1');
     try {
       const r = await fetch(`${SALES_ENDPOINTS.plots}?project=${p.id}`, { headers: authHeaders() });
       const arr = await r.json();
@@ -65,39 +61,9 @@ export default function KioskPage() {
   const eoiConst  = selType ? (+selType.const_area || 0) * nUnits : 0;
   const canContinueSelect = isEoi ? (unitTypes.length === 0 || !!eoiType) : !!plot;
 
-  const submit = async () => {
-    if (!form.client_name.trim() || !form.phone.trim() || !form.gender) {
-      setErr('Please enter your name, gender and phone.'); return;
-    }
-    setSaving(true); setErr('');
-    const area      = isEoi ? String(eoiArea || '') : String(plot?.size || '');
-    const constArea = isEoi ? String(eoiConst || '') : String(plot?.construction_area || '0');
-    const payload = {
-      project: project.id,
-      plot: isEoi ? undefined : plot.id,
-      plot_ids: isEoi ? [] : [plot.id],
-      ...(isEoi ? { eoi: true } : {}),
-      client_name: form.client_name.trim(), gender: form.gender, phone: form.phone.trim(),
-      address: form.address.trim(), source: 'Kiosk',
-      formula_set: project.formula_set || 'kalrav',
-      area, area_unit: 'sq.yd', const_area: constArea || '0',
-      sale_deed_pct: 60,
-    };
-    try {
-      const r = await fetch(SALES_ENDPOINTS.bookings, {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify(payload),
-      });
-      const data = await r.json();
-      if (!r.ok) { setErr(data.detail || 'Could not submit. Please call staff.'); setSaving(false); return; }
-      setRef(data.plot_numbers || (isEoi ? 'EOI' : plot?.number) || '');
-      setStep('done');
-    } catch { setErr('Network error. Please call staff.'); }
-    setSaving(false);
-  };
 
   const restart = () => {
     setProject(null); setPlots([]); setPlot(null); setEoiType(''); setEoiUnits('1');
-    setForm({ client_name: '', gender: '', phone: '', address: '' }); setErr(''); setRef('');
     setStep('project');
   };
 
@@ -213,49 +179,11 @@ export default function KioskPage() {
               </div>
             )}
 
-            <button className="k-primary k-block" disabled={!canContinueSelect} onClick={() => setStep('details')}>Continue →</button>
+            <button className="k-primary k-block" disabled={!canContinueSelect}
+              onClick={() => router.push(`/kiosk/book?project=${project.id}${isEoi ? '&eoi=1' : `&plot=${plot.id}`}`)}>Continue →</button>
           </section>
         )}
 
-        {/* STEP: details */}
-        {step === 'details' && (
-          <section className="k-fade k-panel k-narrow">
-            <button className="k-back" onClick={() => setStep('select')}>← Back</button>
-            <h1 className="k-h1">Your details</h1>
-            <p className="k-note">We’ll use these to confirm your {isEoi ? 'interest' : 'booking'}.</p>
-
-            <label className="k-label">Full name *</label>
-            <input className="k-input" value={form.client_name} onChange={(e) => setForm((s) => ({ ...s, client_name: e.target.value }))} placeholder="Your name" />
-
-            <label className="k-label">Gender *</label>
-            <div className="k-chips">
-              {['Male', 'Female', 'Other'].map((g) => (
-                <button key={g} className={`k-chip ${form.gender === g ? 'on' : ''}`} onClick={() => setForm((s) => ({ ...s, gender: g }))}>{g}</button>
-              ))}
-            </div>
-
-            <label className="k-label">Phone *</label>
-            <input className="k-input" value={form.phone} onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))} placeholder="10-digit mobile" inputMode="tel" />
-
-            <label className="k-label">City / address</label>
-            <input className="k-input" value={form.address} onChange={(e) => setForm((s) => ({ ...s, address: e.target.value }))} placeholder="Optional" />
-
-            {err && <div className="k-err">{err}</div>}
-            <button className="k-primary k-block" disabled={saving} onClick={submit}>{saving ? 'Submitting…' : 'Submit booking'}</button>
-            <p className="k-fine">Your request will be reviewed and confirmed by our team.</p>
-          </section>
-        )}
-
-        {/* STEP: done */}
-        {step === 'done' && (
-          <section className="k-fade k-done">
-            <div className="k-check">✓</div>
-            <h1 className="k-h1">Thank you, {form.client_name.split(' ')[0]}!</h1>
-            <p className="k-done-msg">Your {isEoi ? 'Expression of Interest' : 'booking'} for <b>{project?.name}</b>{ref ? <> · <b>{ref}</b></> : null} has been submitted.</p>
-            <p className="k-note center">Our team will contact you shortly to confirm.</p>
-            <button className="k-primary" onClick={restart}>Start a new booking</button>
-          </section>
-        )}
       </main>
 
       <button className="k-exit" onClick={() => { dispatch(logout()); router.replace('/company'); }} title="Staff exit">Exit kiosk</button>
