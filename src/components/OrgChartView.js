@@ -6,7 +6,10 @@ import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 
 // Reusable org chart. `module` scopes to a department (admins only); `scope="all"`
 // shows the whole company. Non-admins always get their own reporting subtree.
-export default function OrgChartView({ module = '', scope = '', title = 'My Team' }) {
+// `adminView` is for a Sales Admin-Modules user viewing this from the mirrored
+// Admin section — it asks the backend for the full company org via `admin_view=1`
+// (see _sees_all_company in backend/sales/views.py), without affecting real admins.
+export default function OrgChartView({ module = '', scope = '', title = 'My Team', adminView = false }) {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const companies = useSelector((s) => s.companies?.companies || []);
@@ -18,6 +21,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
       if (scope === 'all') parts.push('scope=all');
       else if (module) parts.push(`module=${encodeURIComponent(module)}`);
     }
+    if (adminView) parts.push('admin_view=1');
     if (companyId) parts.push(`company_id=${companyId}`);   // honour "Viewing Company" filter
     return parts.length ? '?' + parts.join('&') : '';
   })();

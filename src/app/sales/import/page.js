@@ -65,7 +65,7 @@ export default function ImportPage() {
   const user    = useSelector((s) => s.auth.user);
 
   useEffect(() => {
-    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes('Sales')) router.replace('/sales');
   }, [user]);
 
   const fileRef = useRef(null);

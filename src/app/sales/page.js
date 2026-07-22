@@ -138,7 +138,7 @@ function SkeletonGrid({ count = 6, grid }) {
 // ─────────────────────────────────────────────
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────
-function AdminDashboard({ user }) {
+function AdminDashboard({ user, adminView = false }) {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -148,22 +148,32 @@ function AdminDashboard({ user }) {
   const isCp = _des.includes('cp executive') || _des.includes('channel partner') || _des.includes('cp cluster head');
 
   useEffect(() => {
-    const cacheKey = `stats_${companyId || 'all'}`;
-    const { data: cached, fresh } = getCacheWithStatus(cacheKey);
-    if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
-    const url = companyId ? `${SALES_ENDPOINTS.stats}?company_id=${companyId}` : SALES_ENDPOINTS.stats;
+    // `adminView` (Admin-section mirror for a Sales Admin-Modules user) always hits
+    // the network with admin_view=1 rather than reusing the plain cache key — the
+    // regular Dashboard's cached numbers are team-scoped and would be wrong here.
+    const cacheKey = `stats_${companyId || 'all'}${adminView ? '_admin' : ''}`;
+    if (!adminView) {
+      const { data: cached, fresh } = getCacheWithStatus(cacheKey);
+      if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
+    }
+    const params = [];
+    if (companyId) params.push(`company_id=${companyId}`);
+    if (adminView) params.push('admin_view=1');
+    const url = params.length ? `${SALES_ENDPOINTS.stats}?${params.join('&')}` : SALES_ENDPOINTS.stats;
     apiFetch(url)
       .then((r) => r.json())
-      .then((d) => { setCache(cacheKey, d); setStats(d); setLoading(false); })
+      .then((d) => { if (!adminView) setCache(cacheKey, d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId]);
+  }, [companyId, adminView]);
 
+  const leadsHref = adminView ? '/sales/admin/leads' : '/sales/leads';
+  const convHref  = adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions';
   const cards = stats ? [
-    { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-    { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads?date_from=today' },
-    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.new_leads, icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/leads?status=new' }]),
-    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: '/sales/my-conversions?tab=sv' },
-    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: '/sales/my-conversions?tab=closures' },
+    { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: leadsHref },
+    { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: `${leadsHref}?date_from=today` },
+    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.new_leads, icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: `${leadsHref}?status=new` }]),
+    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: `${convHref}?tab=sv` },
+    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: `${convHref}?tab=closures` },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/closure' },
   ] : [];
 
@@ -183,7 +193,7 @@ function AdminDashboard({ user }) {
       <div style={cardWrap}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>Recent Leads</h2>
-          <Link href="/sales/leads" style={{ fontSize: 13, color: '#B9915E', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+          <Link href={leadsHref} style={{ fontSize: 13, color: '#B9915E', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
         </div>
         {loading ? (
           <p style={{ textAlign: 'center', color: '#8492A6', padding: '24px 0' }}>Loading…</p>
@@ -655,10 +665,14 @@ function STMDashboard({ user }) {
 
 // ─────────────────────────────────────────────
 // ROUTER — picks dashboard by designation
+// `adminView` is for the Admin-section mirror (/sales/admin) — a Sales
+// Admin-Modules user always lands on the AdminDashboard there, in full-company mode.
 // ─────────────────────────────────────────────
-export default function SalesDashboard() {
+export function SalesDashboardContent({ adminView = false }) {
   const user = useSelector((s) => s.auth.user);
   const des  = (user?.designation || '').toLowerCase();
+
+  if (adminView) return <AdminDashboard user={user} adminView />;
 
   if (des.includes('telecaller') || des.includes('tele caller')) {
     return <TelecallerDashboard user={user} />;
@@ -670,6 +684,10 @@ export default function SalesDashboard() {
     return <STMDashboard user={user} />;
   }
   return <AdminDashboard user={user} />;
+}
+
+export default function SalesDashboard() {
+  return <SalesDashboardContent />;
 }
 
 // ─────────────────────────────────────────────

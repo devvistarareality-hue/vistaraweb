@@ -52,7 +52,7 @@ export default function LeadSetupPage() {
   const srcKey    = `sources_${companyId || 'all'}`;
 
   useEffect(() => {
-    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes('Sales')) router.replace('/sales');
   }, [user]);
 
   const [tab, setTab] = useState('meta');
