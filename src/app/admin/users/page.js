@@ -7,7 +7,7 @@ import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 
-const ROLES       = ['Manager', 'Employee'];
+const ROLES       = ['Manager', 'Employee', 'Intern', 'Kiosk'];
 
 const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
 const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
