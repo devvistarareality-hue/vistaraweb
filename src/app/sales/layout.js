@@ -186,9 +186,11 @@ export default function SalesLayout({ children }) {
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
+    if (user.role === 'Kiosk') { router.replace('/kiosk'); return; } // Kiosk users are locked to the kiosk
     if (_blockedFromSales) router.replace(_modHome);
   }, [user]);
 
+  if (user?.role === 'Kiosk') return null;
   if (_blockedFromSales) return null;
 
   if (!user) {

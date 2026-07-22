@@ -21,10 +21,11 @@ export default function DashboardPage() {
   const userModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m]);
 
   useEffect(() => {
+    if (user?.role === 'Kiosk') { router.replace('/kiosk'); return; }
     if (userModules.length === 1) {
       router.replace(MODULE_CONFIG[userModules[0]].href);
     }
-  }, [userModules.length]);
+  }, [userModules.length, user?.role]);
 
   if (userModules.length === 1) return null;
 

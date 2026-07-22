@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../lib/bookingFormulas';
@@ -28,6 +28,10 @@ export default function BookingPageWrapper() {
 function BookingPage() {
   const router = useRouter();
   const qp = useSearchParams();
+  const pathname = usePathname();
+  // Kiosk mode: this booking form is opened full-screen from the client Kiosk (/kiosk/book).
+  // Back and post-submit return to the kiosk instead of the sales area.
+  const kioskMode = (pathname || '').startsWith('/kiosk');
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
@@ -420,7 +424,7 @@ function BookingPage() {
       if (res.ok) {
         setMsg('✅ Booking submitted — sent for approval.');
         try { sessionStorage.setItem('booking_flash', 'Your booking has been submitted and sent for approval.'); } catch {}
-        setTimeout(() => router.push('/sales/closure'), 1000);
+        setTimeout(() => router.push(kioskMode ? '/kiosk' : '/sales/closure'), 1000);
       }
       else setMsg('Error: ' + JSON.stringify(await res.json().catch(() => ({}))));
     } catch (e) { setMsg(e.message); }
@@ -432,7 +436,7 @@ function BookingPage() {
   const unit = f.area_unit || flags.areaUnit;
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
-      <button onClick={() => router.back()} style={back}>← Back</button>
+      <button onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
         {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI' : (plots.length > 1 ? 'Book Units' : 'Book Unit')}{' '}
         {eoiMode ? <span style={{ color: '#E4571A' }}>{eoiNo || '…'}</span> : plotNumbers}

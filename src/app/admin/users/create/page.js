@@ -8,7 +8,7 @@ import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 import { ALL_MODULES } from '../../../../lib/moduleAccess';
 
-const ROLES       = ['Manager', 'Employee', 'Intern'];
+const ROLES       = ['Manager', 'Employee', 'Intern', 'Kiosk'];
 
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
 
