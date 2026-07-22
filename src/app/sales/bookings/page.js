@@ -17,13 +17,13 @@ async function openLoi(id) {
 
 const TABS = [['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected'], ['', 'All']];
 
-export default function BookingsPage() {
+export function BookingsContent({ adminView = false }) {
   const router = useRouter();
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
   const isApprover = me?.role === 'Admin' || me?.role === 'Manager' || me?.is_staff;
-  const isAdmin = me?.role === 'Admin' || me?.is_staff;
+  const isAdmin = me?.role === 'Admin' || me?.is_staff || (me?.admin_modules || []).includes('Sales');
   const [tab, setTab] = useState('pending');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,12 +53,12 @@ export default function BookingsPage() {
 
   function load() {
     setLoading(true);
-    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : ''].filter(Boolean).join('&');
+    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : ''].filter(Boolean).join('&');
     fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
-  useEffect(() => { load(); }, [tab, companyId]);
+  useEffect(() => { load(); }, [tab, companyId, adminView]);
 
   async function act(id, action) {
     setBusy(id);
@@ -142,6 +142,10 @@ export default function BookingsPage() {
       )}
     </div>
   );
+}
+
+export default function BookingsPage() {
+  return <BookingsContent />;
 }
 
 function ApproverDropdown({ project, managers, onToggle }) {

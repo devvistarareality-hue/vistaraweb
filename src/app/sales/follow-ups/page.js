@@ -23,7 +23,7 @@ const TABS = [
   { key: 'all',     label: 'All' },
 ];
 
-export default function FollowUpsPage() {
+export function FollowUpsContent({ adminView = false }) {
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [items,   setItems]   = useState([]);
@@ -33,12 +33,15 @@ export default function FollowUpsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const url = companyId ? `${SALES_ENDPOINTS.followUps}?company_id=${companyId}` : SALES_ENDPOINTS.followUps;
+      const params = [];
+      if (companyId) params.push(`company_id=${companyId}`);
+      if (adminView) params.push('admin_view=1');
+      const url = params.length ? `${SALES_ENDPOINTS.followUps}?${params.join('&')}` : SALES_ENDPOINTS.followUps;
       const res = await fetch(url, { headers: authHeaders() });
       if (res.ok) setItems(await res.json());
     } catch (_) {}
     setLoading(false);
-  }, [companyId]);
+  }, [companyId, adminView]);
 
   useEffect(() => { load(); }, [load, companyId]);
 
@@ -139,4 +142,8 @@ export default function FollowUpsPage() {
       )}
     </div>
   );
+}
+
+export default function FollowUpsPage() {
+  return <FollowUpsContent />;
 }

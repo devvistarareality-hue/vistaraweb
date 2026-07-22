@@ -160,10 +160,13 @@ function StatusBadge({ status, colors }) {
   );
 }
 
-export default function MyConversionsPage() {
+export function MyConversionsContent({ adminView = false }) {
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
-  const cq = companyId ? `?company_id=${companyId}` : '';
+  const cqParts = [];
+  if (companyId) cqParts.push(`company_id=${companyId}`);
+  if (adminView) cqParts.push('admin_view=1');
+  const cq = cqParts.length ? `?${cqParts.join('&')}` : '';
   const des = (user?.designation || '').toLowerCase();
   // Only an approver (admin/manager) may cancel a booking.
   const isApprover = !!user && (user.role === 'Admin' || user.role === 'Manager' || user.is_staff);
@@ -341,4 +344,8 @@ export default function MyConversionsPage() {
       {historyLead && <LeadHistoryModal lead={historyLead} onClose={() => setHistoryLead(null)} />}
     </div>
   );
+}
+
+export default function MyConversionsPage() {
+  return <MyConversionsContent />;
 }

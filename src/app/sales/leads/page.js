@@ -953,7 +953,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 }
 
 // ── Main Leads Page ─────────────────────────────────────────────────────────
-export default function SalesLeadsPage() {
+export function SalesLeadsContent({ adminView = false }) {
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Telecallers & Sales Executives (STM) cannot delete leads — only admins/managers.
@@ -1086,6 +1086,7 @@ export default function SalesLeadsPage() {
     if (filters.is_duplicate)    params.set('is_duplicate',     'true');
     if (filters.date_from)       params.set('date_from',        filters.date_from);
     if (filters.date_to)         params.set('date_to',          filters.date_to);
+    if (adminView)               params.set('admin_view', '1');
     const cacheKey = `leads_${params.toString()}`;
     const cached = getCache(cacheKey);
     if (cached) { setLeads(cached.results); setTotal(cached.count); setLoading(false); return; }
@@ -1096,7 +1097,7 @@ export default function SalesLeadsPage() {
     setLeads(data.results ?? []);
     setTotal(data.count ?? 0);
     setLoading(false);
-  }, [page, filters, companyId, isCaller, workTab]);
+  }, [page, filters, companyId, isCaller, workTab, adminView]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
   useEffect(() => { if (seeded) loadLeads(); }, [loadLeads, seeded]);
@@ -1482,6 +1483,10 @@ export default function SalesLeadsPage() {
       )}
     </div>
   );
+}
+
+export default function SalesLeadsPage() {
+  return <SalesLeadsContent />;
 }
 
 // Shared styles

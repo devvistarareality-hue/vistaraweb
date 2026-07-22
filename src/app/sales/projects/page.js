@@ -430,7 +430,7 @@ export default function ProjectsPage() {
   const cq        = companyId ? `?company_id=${companyId}` : '';
 
   useEffect(() => {
-    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes('Sales')) router.replace('/sales');
   }, [user]);
 
   const [projects, setProjects] = useState([]);

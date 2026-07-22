@@ -26,7 +26,7 @@ export default function DataResetPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
 
-  const isAdmin = !!(user && (user.is_staff || user.role === 'Admin'));
+  const isAdmin = !!(user && (user.is_staff || user.role === 'Admin' || (user.admin_modules || []).includes('Sales')));
 
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);

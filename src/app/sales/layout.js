@@ -36,6 +36,7 @@ function IconCalendar()     { return <SvgIcon><rect x="3" y="4" width="18" heigh
 function IconMapPin()       { return <SvgIcon><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></SvgIcon>; }
 function IconConversion()   { return <SvgIcon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></SvgIcon>; }
 function IconTrash()        { return <SvgIcon><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></SvgIcon>; }
+function IconAdmin()        { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></SvgIcon>; }
 
 const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
@@ -52,6 +53,29 @@ const NAV = [
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
   { label: 'Import Leads', href: '/sales/import',        icon: <IconImport />,    adminOnly: true },
   { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true },
+];
+
+// Full Admin-section menu for a Sales Admin-Modules user — mirrors every item a
+// real Admin sees (same order as NAV above), but the first 8 point at dedicated
+// /sales/admin/* routes that request full company data via ?admin_view=1 (see
+// backend/sales/views.py::_sees_all_company). The last 6 (Projects..Data Reset)
+// reuse their existing routes as-is — those were already company-wide for anyone
+// let in the door, hierarchy never applied to them.
+const ADMIN_SECTION_NAV = [
+  { label: 'Dashboard',      href: '/sales/admin',                 icon: <IconDashboard /> },
+  { label: 'All Leads',      href: '/sales/admin/leads',           icon: <IconLeads /> },
+  { label: 'Follow-Ups',     href: '/sales/admin/follow-ups',      icon: <IconCalendar /> },
+  { label: 'Site Visits',    href: '/sales/admin/site-visits',     icon: <IconMapPin /> },
+  { label: 'Booking',        href: '/sales/admin/closure',         icon: <IconBuilding /> },
+  { label: 'My Conversions', href: '/sales/admin/my-conversions',  icon: <IconConversion /> },
+  { label: 'My Team',        href: '/sales/admin/my-team',         icon: <IconUsers /> },
+  { label: 'Approvals',      href: '/sales/admin/bookings',        icon: <IconBuilding /> },
+  { label: 'Projects',       href: '/sales/projects',              icon: <IconBuilding /> },
+  { label: 'Lead Setup',     href: '/sales/sources',               icon: <IconSource /> },
+  { label: 'Team Users',     href: '/sales/users',                 icon: <IconUsers /> },
+  { label: 'Distribution',   href: '/sales/distribution',          icon: <IconDistribute /> },
+  { label: 'Import Leads',   href: '/sales/import',                icon: <IconImport /> },
+  { label: 'Data Reset',     href: '/sales/data-reset',            icon: <IconTrash /> },
 ];
 
 const CSS = `
@@ -176,8 +200,26 @@ export default function SalesLayout({ children }) {
     );
   }
 
-  const isAdmin  = user?.role === 'Admin' || user?.is_staff;
-  const isActive = (href) => href === '/sales' ? pathname === '/sales' : pathname.startsWith(href);
+  // True/hardcoded admins (Chinmay, Prince, etc. — role='Admin' or platform staff)
+  // keep the flat menu exactly as before. Module-scoped admins (e.g. a Manager
+  // granted Sales in Admin Modules) instead get a separate "Admin" section — tapping
+  // it swaps the whole sidebar to the admin-only pages, mirroring how tapping into
+  // Sales itself replaces the launcher's tiles with the Sales menu. It never changes
+  // behavior for real admins.
+  const isTrueAdmin = user?.role === 'Admin' || user?.is_staff;
+  const isSalesModuleAdmin = !isTrueAdmin && (user?.admin_modules || []).includes('Sales');
+  const isAdmin  = isTrueAdmin || isSalesModuleAdmin;
+  // '/sales' and '/sales/admin' are both "Dashboard" hrefs whose sub-routes share
+  // their prefix (e.g. '/sales/leads', '/sales/admin/leads') — exact-match those two
+  // so the Dashboard link doesn't light up while looking at a different page.
+  const isActive = (href) => (href === '/sales' || href === '/sales/admin') ? pathname === href : pathname.startsWith(href);
+  // Real admins get these 6 appended flat, inline, in NAV's own order — unchanged.
+  const trueAdminExtraItems = NAV.filter((item) => item.adminOnly);
+  // A module-scoped admin's full Admin section (14 items, mirrors a real admin's menu).
+  const adminSectionNavItems = ADMIN_SECTION_NAV;
+  // Whether the module-scoped admin is currently inside their Admin section — derived
+  // from the URL, so a direct link or refresh lands on the right sidebar automatically.
+  const inAdminSection = isSalesModuleAdmin && adminSectionNavItems.some((item) => isActive(item.href));
 
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
@@ -221,20 +263,74 @@ export default function SalesLayout({ children }) {
 
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
-          <div style={s.sectionLabel}>SALES MENU</div>
-          {NAV.filter(item => (!item.adminOnly || isAdmin) && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp)).map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link key={item.href} href={item.href} className="s-nav-link"
-                style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-                {active && <div style={s.activeBar} />}
-                <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
-                  {item.icon}
-                </span>
-                <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+          {inAdminSection ? (
+            <>
+              {/* Module-scoped admin, inside their Admin section — this REPLACES the
+                  Sales menu entirely, the same way tapping into Sales itself replaces
+                  the launcher's tiles. Real admins never see this branch. */}
+              <div style={s.sectionLabel}>ADMIN MENU</div>
+              <Link href="/sales" className="s-nav-link" style={s.navItem}>
+                <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Sales</span>
               </Link>
-            );
-          })}
+              <div style={{ ...s.divider, marginTop: 10 }} />
+              {adminSectionNavItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.href} href={item.href} className="s-nav-link"
+                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
+                    {active && <div style={s.activeBar} />}
+                    <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
+                      {item.icon}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <div style={s.sectionLabel}>SALES MENU</div>
+              {NAV.filter(item => !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp)).map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.href} href={item.href} className="s-nav-link"
+                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
+                    {active && <div style={s.activeBar} />}
+                    <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
+                      {item.icon}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+                  </Link>
+                );
+              })}
+
+              {isTrueAdmin && trueAdminExtraItems.map((item) => {
+                // Real admins (Chinmay, Prince, platform staff) get the flat,
+                // always-visible list exactly as before — no separate section for them.
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.href} href={item.href} className="s-nav-link"
+                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
+                    {active && <div style={s.activeBar} />}
+                    <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
+                      {item.icon}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+                  </Link>
+                );
+              })}
+
+              {isSalesModuleAdmin && (
+                <Link href="/sales/admin" className="s-nav-link" style={s.navItem}>
+                  <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}>
+                    <IconAdmin />
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>Admin</span>
+                </Link>
+              )}
+            </>
+          )}
 
           {isVRLAdmin && companies.length > 0 && (
             <div style={{ marginTop: 18, marginBottom: 4 }}>
