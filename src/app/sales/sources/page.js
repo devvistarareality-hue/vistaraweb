@@ -75,6 +75,7 @@ export default function LeadSetupPage() {
   const [subscribedPages, setSubscribedPages] = useState([]);
   const [failedPages,     setFailedPages]     = useState([]);
   const [pagesData,       setPagesData]       = useState([]);
+  const [formLeadCounts,  setFormLeadCounts]  = useState({}); // { form_id: leads received }
   const [refreshingPages, setRefreshingPages] = useState(false);
   const [pagesDiag,       setPagesDiag]       = useState('');
   const [editingToken,    setEditingToken]    = useState(false);
@@ -97,7 +98,7 @@ export default function LeadSetupPage() {
     }
     // Meta config + mappings
     fetch(SALES_ENDPOINTS.metaWebhookConfig + cq, { headers: authHeaders() })
-      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setLoadingCfg(false); })
+      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setFormLeadCounts(d.form_lead_counts || {}); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
     fetch(SALES_ENDPOINTS.metaMappings + cq, { headers: authHeaders() })
       .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
@@ -448,11 +449,16 @@ export default function LeadSetupPage() {
                           <div style={{ padding: '6px 10px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
                             {pg.forms.map(f => {
                               const mapped = mappingMap[f.id];
+                              const leads = formLeadCounts[f.id] || 0;
+                              // Highlight forms that are bringing in leads but aren't routed to a project yet.
+                              const leadBg = leads ? (mapped ? '#E8EEFF' : '#FEF3C7') : '#F3F4F6';
+                              const leadFg = leads ? (mapped ? '#3D5AFE' : '#B45309') : '#9CA3AF';
                               return (
-                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, backgroundColor: mapped ? '#F0FFF4' : '#FAFAFA' }}>
+                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, backgroundColor: mapped ? '#F0FFF4' : (leads ? '#FFFBEB' : '#FAFAFA') }}>
                                   <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name || 'Unnamed'}</span>
                                   <code style={{ fontSize: 10, color: '#B0BAC9', fontFamily: 'monospace', flexShrink: 0 }}>{f.id}</code>
                                   <CopyBtn text={f.id} />
+                                  <span title="Leads received from this form" style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: leadBg, color: leadFg, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{leads} lead{leads === 1 ? '' : 's'}</span>
                                   {mapped
                                     ? <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
                                     : <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#F3F4F6', color: '#9CA3AF', fontSize: 10, flexShrink: 0 }}>No project</span>
