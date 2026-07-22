@@ -187,6 +187,19 @@ export default function KioskPage() {
               </div>
             ) : hasMap ? (
               <div>
+                {/* Availability counts */}
+                <div className="k-stats">
+                  {['available', 'hold', 'sold'].map((k) => {
+                    const n = plots.filter((p) => p.status === k).length;
+                    return (
+                      <div key={k} className="k-stat" style={{ borderColor: KSTATUS[k].dot + '55' }}>
+                        <span className="k-stat-dot" style={{ background: KSTATUS[k].dot }} />
+                        <span className="k-stat-n">{n}</span>
+                        <span className="k-stat-l">{KSTATUS[k].label}{plots.length ? ` · ${Math.round(n / plots.length * 100)}%` : ''}</span>
+                      </div>
+                    );
+                  })}
+                </div>
                 <div className="k-maphead">
                   <label className="k-label" style={{ margin: 0 }}>Tap available (green) units — pick one or several</label>
                   <div className="k-legend">
@@ -236,6 +249,27 @@ export default function KioskPage() {
                       </div>
                     );
                   })}
+                  {/* Hover tooltip */}
+                  {hovered && (() => {
+                    const zone = zones.find((z) => z.id === hovered);
+                    const pl = zone && plotByNumber[String(zone.plotNumber)];
+                    if (!pl) return null;
+                    const cfg = KSTATUS[pl.status] || KSTATUS.available;
+                    const { cx } = zoneCenter(zone);
+                    const top = zone.points?.length ? Math.min(...zone.points.map((p) => p.y)) : (zone.y || 0);
+                    const right = cx > 70;
+                    return (
+                      <div className="k-tip" style={{ left: `${cx}%`, top: `${top}%`, transform: right ? 'translate(-92%,calc(-100% - 8px))' : 'translate(-8%,calc(-100% - 8px))' }}>
+                        <div className="k-tip-t">Plot {pl.number}</div>
+                        <div className="k-tip-badges">
+                          <span style={{ background: cfg.dot + '30', color: cfg.dot, border: `1px solid ${cfg.dot}60` }}>{cfg.label}</span>
+                          {pl.cluster_type && <span className="k-tip-type">{pl.cluster_type}</span>}
+                        </div>
+                        {pl.size && <div className="k-tip-sz">{pl.size} sq.yd</div>}
+                        {pl.status === 'available' && <div className="k-tip-hint">Tap to select →</div>}
+                      </div>
+                    );
+                  })()}
                 </div>
                 {selIds.length > 0 && <div className="k-summary">Selected <b>{selIds.length}</b> unit{selIds.length > 1 ? 's' : ''} · {plots.filter((p) => selIds.includes(p.id)).map((p) => p.number).join(', ')}</div>}
               </div>
@@ -327,7 +361,20 @@ const Style = () => (
   .k-legend{display:flex;gap:16px;font-size:12px;font-weight:600;color:#6B7391}
   .k-legend span{display:flex;align-items:center;gap:6px}
   .k-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .k-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .k-stat{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #E6EBF4;border-radius:14px;padding:10px 16px;flex:1;min-width:150px}
+  .k-stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .k-stat-n{font-size:22px;font-weight:800;color:#182350}
+  .k-stat-l{font-size:12px;font-weight:600;color:#6B7391}
   .k-map{position:relative;width:100%;user-select:none;border-radius:14px;overflow:hidden;background:#F5F7FC;border:1px solid #E6EBF4}
+  .k-tip{position:absolute;z-index:20;background:rgba(10,18,30,0.96);color:#fff;padding:10px 14px;border-radius:12px;
+    white-space:nowrap;pointer-events:none;min-width:130px;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(8px)}
+  .k-tip-t{font-weight:800;font-size:15px;margin-bottom:6px}
+  .k-tip-badges{display:flex;gap:6px;flex-wrap:wrap}
+  .k-tip-badges span{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
+  .k-tip-type{background:rgba(124,58,237,0.25);color:#C4B5FD;border:1px solid rgba(124,58,237,0.5)}
+  .k-tip-sz{color:#C9A84C;font-size:11px;font-weight:600;margin-top:5px}
+  .k-tip-hint{color:rgba(255,255,255,0.45);font-size:10px;margin-top:5px}
   .k-map img{width:100%;display:block}
   .k-map svg{position:absolute;inset:0;width:100%;height:100%}
   .k-maplbl{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:3;font-weight:800;
