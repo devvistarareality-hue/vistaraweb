@@ -59,7 +59,7 @@ export default function DistributionPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
 
   useEffect(() => {
-    if (user && user.role !== 'Admin' && !user.is_staff) router.replace('/sales');
+    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes('Sales')) router.replace('/sales');
   }, [user]);
 
   // Settings

@@ -65,6 +65,7 @@ export function isClub1000Manager(user) {
   return !!(
     user.is_staff || isSuperAdmin(user) || user.role === 'Admin'
     || (user.manager_modules || []).includes('Club 1000')
+    || (user.admin_modules || []).includes('Club 1000')
   );
 }
 
