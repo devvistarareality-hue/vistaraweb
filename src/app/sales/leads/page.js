@@ -1377,7 +1377,7 @@ export default function SalesLeadsPage() {
                 <th style={th}>
                   {canDelete && <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />}
                 </th>
-                {['Name', 'Phone', 'Project', 'Source',
+                {['Name', 'Project', 'Source',
                   ...(showTcStatus ? ['Telecaller'] : []),
                   ...(showStmStatus ? [isCpAny ? 'CP' : 'STM'] : []),
                   ...(showTcStatus ? ['TC Status'] : []),
@@ -1391,7 +1391,7 @@ export default function SalesLeadsPage() {
               {loading ? (
                 [...Array(8)].map((_, i) => (
                   <tr key={i}>
-                    {[...Array(12)].map((__, j) => (
+                    {[...Array(11)].map((__, j) => (
                       <td key={j} style={{ padding: '12px 14px' }}>
                         <div className="s-skel" style={{ height: 14, width: j === 0 ? 16 : j === 1 ? 120 : 80, borderRadius: 6 }} />
                       </td>
@@ -1399,7 +1399,7 @@ export default function SalesLeadsPage() {
                   </tr>
                 ))
               ) : leads.length === 0 ? (
-                <tr><td colSpan={12} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
+                <tr><td colSpan={11} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (
                 <tr key={l.id}
                   style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FFFBFB' : '', borderLeft: l.is_duplicate ? '3px solid #DC2626' : '3px solid transparent' }}
@@ -1419,7 +1419,6 @@ export default function SalesLeadsPage() {
                       </div>
                     )}
                   </td>
-                  <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.phone}</td>
                   <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
                   <td style={{ ...td, color: '#8492A6', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
                   {showTcStatus && <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>}
