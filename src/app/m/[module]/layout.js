@@ -73,6 +73,7 @@ export default function ModuleLayout({ children, params }) {
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
+    if (user.role === 'Kiosk') { router.replace('/kiosk'); return; } // Kiosk users are locked to the kiosk
     if (blockedHere) router.replace(home);
   }, [user, slug]);
 

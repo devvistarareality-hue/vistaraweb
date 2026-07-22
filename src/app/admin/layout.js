@@ -21,6 +21,8 @@ export default function AdminLayout({ children }) {
     if (user === null) return;
     if (!user) {
       router.replace('/company');
+    } else if (user.role === 'Kiosk') {
+      router.replace('/kiosk');
     } else if (user.role !== 'Admin' && !user.is_staff) {
       router.replace('/dashboard');
     } else if (blockedHere) {
