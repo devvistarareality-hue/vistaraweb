@@ -102,6 +102,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     logo_url:        project?.logo_url        || '',
     master_plan_url: project?.master_plan_url || '',
     eoi_unit_types:  project?.eoi_unit_types  || [],
+    kiosk_enabled:   project?.kiosk_enabled   ?? false,
   });
 
   // EOI standard unit types (pre-approval sizes) — [{type, plot_area, const_area}].
@@ -326,6 +327,10 @@ function ProjectModal({ project, onClose, onSaved }) {
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.is_active ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.is_active ? '#F0FFF4' : '#FAFAFA' }}>
               <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} style={{ accentColor: '#2E7D32' }} />
               <span style={{ fontWeight: 600, color: form.is_active ? '#2E7D32' : '#6B7280' }}>Active project</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.kiosk_enabled ? '#C7D2FE' : '#E5E7EB'}`, backgroundColor: form.kiosk_enabled ? '#EEF2FF' : '#FAFAFA' }}>
+              <input type="checkbox" checked={form.kiosk_enabled} onChange={e => set('kiosk_enabled', e.target.checked)} style={{ accentColor: '#4F46E5' }} />
+              <span style={{ fontWeight: 600, color: form.kiosk_enabled ? '#4338CA' : '#6B7280' }}>Enable Kiosk self-booking</span>
             </label>
           </div>
 
