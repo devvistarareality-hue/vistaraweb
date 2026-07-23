@@ -51,3 +51,14 @@ export function bustCache(...keys) {
   const s = store(); if (!s) return;
   keys.forEach((k) => s.removeItem(`sc_${k}`));
 }
+
+// Every sc_* key is scoped by company_id, never by the logged-in user — two users
+// in the same company sharing a browser would otherwise see each other's cached
+// dashboard/leads/team data. Call on every login and logout so a session switch
+// never reuses stale data cached under the previous user.
+export function clearAllCache() {
+  const s = store(); if (!s) return;
+  try {
+    Object.keys(s).filter((k) => k.startsWith('sc_')).forEach((k) => s.removeItem(k));
+  } catch {}
+}
