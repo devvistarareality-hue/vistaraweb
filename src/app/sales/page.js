@@ -203,13 +203,12 @@ function AdminDashboard({ user, adminView = false }) {
           <div style={{ overflowX: 'auto' }}>
             <table style={tbl}>
               <thead>
-                <tr>{['Name','Phone','Project','Source','Status','Received'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+                <tr>{['Name','Project','Source','Status','Received'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {stats.recent_leads.map((l) => (
                   <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
                     <td style={td}><span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span></td>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }}>{l.phone}</td>
                     <td style={{ ...td, color: '#8492A6' }}>{l.project_name || '—'}</td>
                     <td style={{ ...td, color: '#8492A6', textTransform: 'capitalize' }}>{l.source_name || '—'}</td>
                     <td style={td}><StatusBadge status={l.status} /></td>
@@ -641,13 +640,12 @@ function STMDashboard({ user }) {
           <div style={{ overflowX: 'auto' }}>
             <table style={tbl}>
               <thead>
-                <tr>{['Name','Phone','Project','STM Status','Remarks'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+                <tr>{['Name','Project','STM Status','Remarks'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {svUpcoming.slice(0, 8).map((l) => (
                   <tr key={l.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
                     <td style={td}><span style={{ fontWeight: 600, color: '#1A1A2E' }}>{l.name}</span></td>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6' }}>{l.phone}</td>
                     <td style={{ ...td, color: '#8492A6' }}>{l.project_name || '—'}</td>
                     <td style={td}><StatusBadge status={l.stm_status} /></td>
                     <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>{l.stm_remarks || '—'}</td>
