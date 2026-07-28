@@ -159,7 +159,7 @@ export default function UserManagementPage() {
     u.name?.toLowerCase().includes(search.toLowerCase()) ||
     u.user_code?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  ).sort((a, b) => String(a.user_code || '').localeCompare(String(b.user_code || ''), undefined, { numeric: true }));
 
   const activeCount   = users.filter((u) => u.is_active).length;
   const inactiveCount = users.filter((u) => !u.is_active).length;
