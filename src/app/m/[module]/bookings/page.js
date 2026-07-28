@@ -55,8 +55,16 @@ const Group = ({ title, children }) => (
 );
 
 // The exact details entered on the booking form (client, property, rates, amounts, schedule).
+// Due dates are stored yyyy-mm-dd; show them as dd-mm-yyyy for the accounts view.
+function fmtDate(d) {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(d || ''));
+  return m ? `${m[3].padStart(2, '0')}-${m[2].padStart(2, '0')}-${m[1]}` : (d || '—');
+}
+
 function BookingDetails({ b }) {
-  const insts = Array.isArray(b.installments) ? b.installments : [];
+  const rawInsts = Array.isArray(b.installments) ? b.installments : [];
+  // Sort the payment schedule by due date ascending (yyyy-mm-dd sorts chronologically).
+  const insts = [...rawInsts].sort((a, x) => String(a.date || '').localeCompare(String(x.date || '')));
   return (
     <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #CBD5E1' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
@@ -109,8 +117,8 @@ function BookingDetails({ b }) {
             <tbody>
               {insts.map((i, idx) => (
                 <tr key={idx}>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{i.no || idx + 1}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{i.date || '—'}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{idx + 1}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{fmtDate(i.date)}</td>
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{i.pct != null ? i.pct + '%' : '—'}</td>
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9', fontWeight: 700 }}>{money0(i.amt)}</td>
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9', color: '#8492A6' }}>{i.isNsd ? 'Extra Work' : i.isExtra ? 'Legal & Other' : 'Unit Price'}</td>
