@@ -152,8 +152,10 @@ export default function ModuleBookingsPage() {
       .catch((s) => { setErr(s === 403 ? 'You do not have access to bookings.' : 'Could not load bookings.'); setLoading(false); });
   }, [companyId]);
 
+  // Accounts view excludes rejected bookings — only real (pending/approved) ones matter here.
+  const isRejected = (b) => b.status === 'rejected' || String(b.approval_status || '').toUpperCase().includes('REJECT');
   const groups = {};
-  rows.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
+  rows.filter((b) => !isRejected(b)).forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.booking_date || '').localeCompare(String(a.booking_date || ''))));
 
