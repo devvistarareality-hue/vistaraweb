@@ -29,6 +29,13 @@ export function FollowUpsContent({ adminView = false }) {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  // Completion modal: capture remarks + optionally schedule the next follow-up.
+  const [done,    setDone]    = useState(null);   // the follow-up being completed
+  const [outcome, setOutcome] = useState('');
+  const [schedNext, setSchedNext] = useState(false);
+  const [nextAt,  setNextAt]  = useState('');
+  const [nextRemarks, setNextRemarks] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,15 +52,39 @@ export function FollowUpsContent({ adminView = false }) {
 
   useEffect(() => { load(); }, [load, companyId]);
 
-  async function markDone(id) {
-    const res = await fetch(SALES_ENDPOINTS.followUp(id), {
-      method: 'PATCH', headers: authHeaders(),
-      body: JSON.stringify({ status: 'completed', completed_at: new Date().toISOString() }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setItems((list) => list.map((f) => (f.id === id ? updated : f)));
-    }
+  function openDone(fu) {
+    setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks('');
+  }
+
+  async function completeFollowUp() {
+    if (!done) return;
+    if (schedNext && !nextAt) { return; }
+    setSubmitting(true);
+    try {
+      // Mark this follow-up completed, saving the outcome remarks.
+      const res = await fetch(SALES_ENDPOINTS.followUp(done.id), {
+        method: 'PATCH', headers: authHeaders(),
+        body: JSON.stringify({ status: 'completed', completed_at: new Date().toISOString(), outcome: outcome.trim() }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setItems((list) => list.map((f) => (f.id === done.id ? updated : f)));
+      }
+      // Optionally schedule the next follow-up on the same lead / assignee / role.
+      if (schedNext && nextAt) {
+        const r2 = await fetch(SALES_ENDPOINTS.followUps, {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({
+            lead: done.lead, assigned_to: done.assigned_to, role_context: done.role_context,
+            scheduled_at: new Date(nextAt).toISOString(), remarks: nextRemarks.trim(), status: 'pending',
+          }),
+        });
+        if (r2.ok) { const created = await r2.json(); setItems((list) => [...list, created]); }
+      }
+      setDone(null);
+      load();
+    } catch (_) {}
+    setSubmitting(false);
   }
 
   const now = new Date();
@@ -127,9 +158,10 @@ export function FollowUpsContent({ adminView = false }) {
                   </p>
                   {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#8492A6', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
                   {fu.remarks && <p style={{ fontSize: 12, color: '#3A3A5C', margin: '6px 0 0', fontStyle: 'italic' }}>“{fu.remarks}”</p>}
+                  {fu.outcome && <p style={{ fontSize: 12, color: '#2E7D32', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
                 {fu.status === 'pending' && (
-                  <button onClick={() => markDone(fu.id)}
+                  <button onClick={() => openDone(fu)}
                     style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
                       border: '1.5px solid #2E7D32', color: '#2E7D32', background: '#fff', cursor: 'pointer' }}>
                     Mark Done
@@ -138,6 +170,44 @@ export function FollowUpsContent({ adminView = false }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Complete follow-up: remarks + optional next follow-up */}
+      {done && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
+          onClick={() => !submitting && setDone(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Complete follow-up</div>
+            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
+
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>Remarks</label>
+            <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
+              style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: '#1A1A2E', cursor: 'pointer' }}>
+              <input type="checkbox" checked={schedNext} onChange={(e) => setSchedNext(e.target.checked)} style={{ accentColor: '#3D5AFE' }} />
+              Schedule next follow-up
+            </label>
+            {schedNext && (
+              <div style={{ marginTop: 12, paddingLeft: 4 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>Next follow-up date &amp; time</label>
+                <input type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280', display: 'block', marginTop: 10 }}>Next follow-up note</label>
+                <textarea value={nextRemarks} onChange={(e) => setNextRemarks(e.target.value)} rows={2} placeholder="What to discuss next…"
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
+              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={completeFollowUp} disabled={submitting || (schedNext && !nextAt)}
+                style={{ padding: '9px 20px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !nextAt)) ? 0.6 : 1 }}>
+                {submitting ? 'Saving…' : 'Mark Done'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
