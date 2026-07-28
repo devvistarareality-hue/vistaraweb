@@ -383,6 +383,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const [form, setForm] = useState({});
   const [cityOther, setCityOther] = useState(false);  // City = "Other" → free-text box
   const [saving,    setSaving]    = useState(false);
+  const [saveErr,   setSaveErr]   = useState('');   // required-field validation message
 
   // Followup form
   const [fuForm,    setFuForm]    = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
@@ -419,6 +420,14 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   }, [lead?.id]);
 
   async function save() {
+    // Telecaller / STM portals must record their status + remarks before saving.
+    if (_isTelecaller && (!form.telecaller_status || !(form.telecaller_remarks || '').trim())) {
+      setSaveErr('Please set TC Status and add TC Remarks before saving.'); return;
+    }
+    if (_isStm && (!form.stm_status || !(form.stm_remarks || '').trim())) {
+      setSaveErr('Please set STM Status and add STM Remarks before saving.'); return;
+    }
+    setSaveErr('');
     setSaving(true);
     const body = {
       status: form.status,
@@ -713,7 +722,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
                 )}
                 <div>
-                  <label style={mLbl}>TC Status</label>
+                  <label style={mLbl}>TC Status {_isTelecaller && <span style={{ color: '#DC2626' }}>*</span>}</label>
                   <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -721,7 +730,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={mLbl}>TC Remarks</label>
+                <label style={mLbl}>TC Remarks {_isTelecaller && <span style={{ color: '#DC2626' }}>*</span>}</label>
                 <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
@@ -741,7 +750,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
                 )}
                 <div>
-                  <label style={mLbl}>{_isCp ? 'CP Status' : 'STM Status'}</label>
+                  <label style={mLbl}>{_isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: '#DC2626' }}>*</span>}</label>
                   <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -749,7 +758,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={mLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}</label>
+                <label style={mLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: '#DC2626' }}>*</span>}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
@@ -798,6 +807,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               )}
 
+              {saveErr && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{saveErr}</div>}
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
                 <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                 <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
