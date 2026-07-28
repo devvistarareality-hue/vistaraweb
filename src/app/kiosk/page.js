@@ -104,17 +104,20 @@ export default function KioskPage() {
             <div className="k-brand-sub">Self-Service Booking Kiosk</div>
           </div>
         </div>
-        {step !== 'done' && (
-          <div className="k-steps">
-            {STEPS.map((s, i) => (
-              <div key={s.key} className="k-step">
-                <span className={`k-step-dot ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}`}>{i < stepIdx ? '✓' : i + 1}</span>
-                <span className={`k-step-label ${i === stepIdx ? 'active' : ''}`}>{s.label}</span>
-                {i < STEPS.length - 1 && <span className="k-step-bar" />}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="k-header-right">
+          {step !== 'done' && (
+            <div className="k-steps">
+              {STEPS.map((s, i) => (
+                <div key={s.key} className="k-step">
+                  <span className={`k-step-dot ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}`}>{i < stepIdx ? '✓' : i + 1}</span>
+                  <span className={`k-step-label ${i === stepIdx ? 'active' : ''}`}>{s.label}</span>
+                  {i < STEPS.length - 1 && <span className="k-step-bar" />}
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="k-signout" onClick={() => { dispatch(logout()); router.replace('/company'); }}>⎋ Sign out</button>
+        </div>
       </header>
 
       <main className="k-main">
@@ -320,6 +323,10 @@ const Style = () => (
     box-shadow:0 6px 16px rgba(61,90,254,.28)}
   .k-brand-name{font-size:19px;font-weight:800;letter-spacing:-.3px}
   .k-brand-sub{font-size:12px;color:#8492A6;margin-top:1px}
+  .k-header-right{display:flex;align-items:center;gap:20px}
+  .k-signout{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;cursor:pointer;
+    font-size:13px;font-weight:700;color:#DC2626;background:#FEF2F2;border:1.5px solid #FECACA;transition:.15s}
+  .k-signout:hover{background:#FEE2E2}
   .k-steps{display:flex;align-items:center;gap:0}
   .k-step{display:flex;align-items:center;gap:8px}
   .k-step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
