@@ -40,7 +40,10 @@ export default function InvestorsPage() {
       const params = new URLSearchParams();
       if (schemeFilter) params.set('scheme_id', schemeFilter);
       if (statusFilter) params.set('status', statusFilter);
-      const qs = params.toString() ? `?${params.toString()}` : '';
+      // The approved portfolio only — pending/rejected submissions live on the
+      // dedicated Approvals page (managers) until they're actioned.
+      params.set('approval_status', 'approved');
+      const qs = `?${params.toString()}`;
       const [invRes, schemesRes] = await Promise.all([
         apiFetch(`${CLUB1000_ENDPOINTS.investors}${qs}`),
         apiFetch(CLUB1000_ENDPOINTS.schemes),
@@ -53,6 +56,13 @@ export default function InvestorsPage() {
   }
 
   useEffect(() => { load(); }, [schemeFilter, statusFilter]);
+
+  async function openLoi(id) {
+    const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
+    const data = await res.json();
+    if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+    else alert(data?.detail || 'Could not open the LOI.');
+  }
 
   async function redeem(id) {
     if (!confirm('Redeem this investment now? This applies the premature-redemption rate for the elapsed period.')) return;
@@ -71,7 +81,7 @@ export default function InvestorsPage() {
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Investors</h1>
           <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>
-            {manager ? 'All investors across Club 1000' : 'Investors you have added'}
+            {manager ? 'All approved investors across Club 1000' : 'Your approved investors'}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -109,6 +119,7 @@ export default function InvestorsPage() {
               <th style={th}>Invested</th>
               <th style={th}>Matures</th>
               <th style={th}>Document</th>
+              <th style={th}>LOI</th>
               <th style={th}>Status</th>
               {manager && <th style={th}>Added By</th>}
               {manager && <th style={th}></th>}
@@ -116,9 +127,9 @@ export default function InvestorsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={12} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={13} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
             ) : investors.length === 0 ? (
-              <tr><td colSpan={12} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No investors yet.</td></tr>
+              <tr><td colSpan={13} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No investors yet.</td></tr>
             ) : investors.map((inv) => (
               <tr key={inv.id}>
                 <td style={td}>{inv.name}</td>
@@ -131,6 +142,9 @@ export default function InvestorsPage() {
                 <td style={td}>{formatDMY(inv.maturity_date)}</td>
                 <td style={td}>
                   {inv.document_url ? <a href={inv.document_url} target="_blank" rel="noreferrer" style={{ color: TEAL, fontWeight: 700, textDecoration: 'none' }}>View</a> : '—'}
+                </td>
+                <td style={td}>
+                  {inv.loi_document_url ? <button onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>View LOI</button> : '—'}
                 </td>
                 <td style={td}><StatusBadge status={inv.status} /></td>
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}

@@ -66,7 +66,7 @@ export default function ReferralRewardsPage() {
   return (
     <div style={{ padding: '28px 32px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Referral Rewards</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>0.5% of each referred investor&apos;s investment, owed to their referrer</p>
+      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>0.5% of a referred investor&apos;s first investment, 0.25% on every investment after — owed to their referrer</p>
 
       {referrers.length > 0 && (
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
+import { downloadInvestorLOI } from '../../lib/investorLOI';
 
 const TEAL = '#00838F';
 
@@ -145,18 +146,26 @@ function MonthYearField({ value, onChange, style, wrapperStyle }) {
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
-export default function AddInvestorModal({ schemes, onClose, onCreated }) {
+export default function AddInvestorModal({ schemes, prefillLead, onClose, onCreated }) {
+  const initialSchemeId = prefillLead?.scheme_interest || schemes[0]?.id || '';
+  const initialScheme = schemes.find((s) => String(s.id) === String(initialSchemeId));
   const [form, setForm] = useState({
-    scheme: schemes[0]?.id || '', reference_name: '', reference_phone: '', name: '', phone: '', email: '', pan: '',
-    amount_invested: '', investment_date: toISODate(new Date()), notes: '',
-    interest_payout: schemes[0]?.interest_payout_options?.[0] || 'maturity',
-    total_return_pct: schemes[0]?.total_return_pct ?? '',
+    scheme: initialSchemeId,
+    reference_name: prefillLead?.reference_name || '', reference_phone: prefillLead?.reference_phone || '',
+    name: prefillLead?.name || '', phone: prefillLead?.phone || '', email: prefillLead?.email || '', pan: '',
+    amount_invested: prefillLead?.amount_interested || '', investment_date: toISODate(new Date()), notes: '',
+    security: '',
+    interest_payout: initialScheme?.interest_payout_options?.[0] || 'maturity',
+    total_return_pct: initialScheme?.total_return_pct ?? '',
   });
   const [documentFile, setDocumentFile] = useState(null); // {name, type, data(base64)}
   const [schedule, setSchedule] = useState([]); // [{due_date, amount_due, payout_type}] — editable preview
   const [scheduleDirty, setScheduleDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [loiDone, setLoiDone] = useState(false);
+  const [loiDownloading, setLoiDownloading] = useState(false);
+  const [loiFile, setLoiFile] = useState(null); // signed scan, {name, type, data(base64)}
   const [refSuggestions, setRefSuggestions] = useState([]);
   const [refDropdownOpen, setRefDropdownOpen] = useState(false);
 
@@ -243,6 +252,39 @@ export default function AddInvestorModal({ schemes, onClose, onCreated }) {
     reader.readAsDataURL(file);
   }
 
+  function handleLoiFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setLoiFile({ name: file.name, type: file.type, data: reader.result.split(',')[1] });
+    reader.readAsDataURL(file);
+  }
+
+  // Generate & download the Investment Proposal Form (LOI) from the form's
+  // current values — client-side only, no API call except previewing the
+  // stable LOI number so it's baked into the PDF (the real number is
+  // (re)computed the same way at actual submit time).
+  async function doDownloadLoi() {
+    setError('');
+    if (!scheme) { setError('Select a scheme first.'); return; }
+    if (!form.name.trim()) { setError('Investor name is required before generating the LOI.'); return; }
+    if (Number(form.amount_invested) < Number(scheme.min_ticket_size)) {
+      setError(`Minimum ticket size for ${scheme.name} is ₹${Number(scheme.min_ticket_size).toLocaleString('en-IN')}.`);
+      return;
+    }
+    setLoiDownloading(true);
+    try {
+      const noRes = await apiFetch(`${CLUB1000_ENDPOINTS.investorNextLoiNo}?scheme_id=${scheme.id}`);
+      const { loi_no } = noRes.ok ? await noRes.json() : { loi_no: '' };
+      await downloadInvestorLOI({ ...form, loi_no }, scheme);
+      setLoiDone(true);
+    } catch (_) {
+      setError('Could not generate the LOI. Please try again.');
+    } finally {
+      setLoiDownloading(false);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError('');
@@ -250,11 +292,16 @@ export default function AddInvestorModal({ schemes, onClose, onCreated }) {
       setError(`Minimum ticket size for ${scheme.name} is ₹${Number(scheme.min_ticket_size).toLocaleString('en-IN')}.`);
       return;
     }
+    if (!loiFile) {
+      setError('Download the LOI, get it signed, and upload it before submitting.');
+      return;
+    }
     setBusy(true);
     try {
-      const payload = { ...form };
+      const payload = { ...form, loi_file: loiFile };
       if (documentFile) payload.document_file = documentFile;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
+      if (prefillLead?.id) payload.lead = prefillLead.id;
       const res = await apiFetch(CLUB1000_ENDPOINTS.investors, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -422,15 +469,34 @@ export default function AddInvestorModal({ schemes, onClose, onCreated }) {
             {documentFile && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 4 }}>Selected: {documentFile.name}</div>}
           </div>
           <div>
+            <label style={lbl}>Security (for LOI — optional)</label>
+            <input style={inp} value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
+          </div>
+          <div>
             <label style={lbl}>Notes</label>
             <input style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
           </div>
+
+          <div style={{ background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 10, padding: 12 }}>
+            <label style={lbl}>Investment Proposal Form (LOI)</label>
+            <button type="button" onClick={doDownloadLoi} disabled={loiDownloading}
+              style={{ width: '100%', padding: '9px 0', background: '#fff', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
+              {loiDownloading ? 'Generating…' : '📥 Download LOI PDF (Print → Sign → Upload)'}
+            </button>
+            {loiDone && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 6 }}>LOI downloaded — get it signed and upload below.</div>}
+            <div style={{ marginTop: 10 }}>
+              <label style={lbl}>Upload Signed LOI *</label>
+              <input type="file" accept="image/*,.pdf" onChange={handleLoiFileChange} style={{ fontSize: 12 }} />
+              {loiFile && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 4 }}>Selected: {loiFile.name}</div>}
+            </div>
+          </div>
+
           {error && <div style={{ fontSize: 12, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
-            {busy ? 'Saving…' : 'Add Investor'}
+          <button type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
+            {busy ? 'Submitting…' : 'Submit for Approval'}
           </button>
         </div>
       </form>

@@ -127,4 +127,13 @@ export const CLUB1000_ENDPOINTS = {
   payoutMarkPaid: (id) => `${BASE_URL}/api/club1000/payouts/${id}/mark-paid/`,
   get referralRewards() { return `${BASE_URL}/api/club1000/referral-rewards/`; },
   referralRewardMarkPaid: (id) => `${BASE_URL}/api/club1000/referral-rewards/${id}/mark-paid/`,
+  get leads()      { return `${BASE_URL}/api/club1000/leads/`; },
+  lead: (id)       => `${BASE_URL}/api/club1000/leads/${id}/`,
+  get followUps()  { return `${BASE_URL}/api/club1000/follow-ups/`; },
+  followUp: (id)   => `${BASE_URL}/api/club1000/follow-ups/${id}/`,
+  investorLoiNo: (id)      => `${BASE_URL}/api/club1000/investors/${id}/loi-no/`,
+  investorUploadLoi: (id) => `${BASE_URL}/api/club1000/investors/${id}/upload-loi/`,
+  investorLoiUrl: (id)    => `${BASE_URL}/api/club1000/investors/${id}/loi-url/`,
+  investorAction: (id)    => `${BASE_URL}/api/club1000/investors/${id}/action/`,
+  get investorNextLoiNo() { return `${BASE_URL}/api/club1000/investors/next-loi-no/`; },
 };

@@ -31,11 +31,18 @@ function IconWallet()    { return <SvgIcon><path d="M21 12V7H5a2 2 0 010-4h14v4"
 function IconTeam()      { return <SvgIcon><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="22" y1="21" x2="22" y2="19"/><line x1="19" y1="19" x2="25" y2="19"/><path d="M22 9a3 3 0 000 6"/></SvgIcon>; }
 function IconBack()      { return <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>; }
 function IconGift()      { return <SvgIcon><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></SvgIcon>; }
+function IconAdmin()     { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></SvgIcon>; }
+function IconLeads()     { return <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></SvgIcon>; }
+function IconCalendar()  { return <SvgIcon><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></SvgIcon>; }
+function IconApprovals() { return <SvgIcon><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></SvgIcon>; }
 
 const NAV = [
   { label: 'Dashboard',  href: '/club1000',            icon: <IconDashboard /> },
+  { label: 'Leads',      href: '/club1000/leads',       icon: <IconLeads /> },
+  { label: 'Follow-Ups', href: '/club1000/follow-ups',  icon: <IconCalendar /> },
   { label: 'Schemes',    href: '/club1000/schemes',     icon: <IconLayers />, managerOnly: true },
   { label: 'Investors',  href: '/club1000/investors',   icon: <IconUsers /> },
+  { label: 'Approvals',  href: '/club1000/approvals',   icon: <IconApprovals />, managerOnly: true },
   { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true },
   { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift />, managerOnly: true },
   { label: 'My Team',    href: '/club1000/my-team',     icon: <IconTeam />,   managerOnly: true },
@@ -69,6 +76,15 @@ export default function Club1000Layout({ children }) {
   const superAdmin = isSuperAdmin(user);
   const isVRLAdmin = superAdmin && user?.company_code === 'VRL';
   const manager = isClub1000Manager(user);
+  // True managers (role='Admin', staff, or Club 1000 in manager_modules) keep the
+  // flat, always-visible menu exactly as before. A user granted Club 1000 only via
+  // Admin Modules instead gets a separate "Admin" section — tapping it swaps the
+  // whole sidebar to the manager-only pages, mirroring Sales' Admin section. Data
+  // access is unaffected either way — isClub1000Manager already grants full company
+  // visibility from admin_modules alone; this only changes where the nav lives.
+  const isTrueManager = user?.role === 'Admin' || user?.is_staff || (user?.manager_modules || []).includes('Club 1000');
+  const isAdminModulesOnly = !isTrueManager && (user?.admin_modules || []).includes('Club 1000');
+  const managerOnlyItems = NAV.filter((item) => item.managerOnly);
 
   // "Back to Modules" for anyone with more than one module to switch between
   // (matches the generic m/[module] shell's behaviour); admins go to /admin instead.
@@ -130,6 +146,9 @@ export default function Club1000Layout({ children }) {
   }
 
   const isActive = (href) => href === '/club1000' ? pathname === '/club1000' : pathname.startsWith(href);
+  // Whether the Admin-Modules-only user is currently inside their Admin section —
+  // derived from the URL, so a direct link or refresh lands on the right sidebar.
+  const inAdminSection = isAdminModulesOnly && managerOnlyItems.some((item) => isActive(item.href));
 
   function handleLogout() {
     dispatch(logout());
@@ -183,18 +202,53 @@ export default function Club1000Layout({ children }) {
         </div>
 
         <div className="c1k-scroll" style={s.scroll}>
-          <div style={s.sectionLabel}>CLUB 1000</div>
-          {NAV.filter(item => !item.managerOnly || manager).map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link key={item.href} href={item.href} className="c1k-nav-link"
-                style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-                {active && <div style={s.activeBar} />}
-                <span style={{ ...s.iconWrap, color: active ? TEAL : 'rgba(255,255,255,0.38)' }}>{item.icon}</span>
-                <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+          {inAdminSection ? (
+            <>
+              {/* Admin-Modules-only user, inside their Admin section — this REPLACES
+                  the normal Club 1000 menu entirely. True managers never see this. */}
+              <div style={s.sectionLabel}>ADMIN MENU</div>
+              <Link href="/club1000" className="c1k-nav-link" style={s.navItem}>
+                <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}><IconBack /></span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Club 1000</span>
               </Link>
-            );
-          })}
+              <div style={{ ...s.divider, marginTop: 10 }} />
+              {managerOnlyItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.href} href={item.href} className="c1k-nav-link"
+                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
+                    {active && <div style={s.activeBar} />}
+                    <span style={{ ...s.iconWrap, color: active ? TEAL : 'rgba(255,255,255,0.38)' }}>{item.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <div style={s.sectionLabel}>CLUB 1000</div>
+              {(isTrueManager ? NAV.filter(item => !item.managerOnly || manager) : NAV.filter(item => !item.managerOnly)).map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.href} href={item.href} className="c1k-nav-link"
+                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
+                    {active && <div style={s.activeBar} />}
+                    <span style={{ ...s.iconWrap, color: active ? TEAL : 'rgba(255,255,255,0.38)' }}>{item.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+                  </Link>
+                );
+              })}
+
+              {isAdminModulesOnly && (
+                <Link href={managerOnlyItems[0]?.href || '/club1000'} className="c1k-nav-link" style={s.navItem}>
+                  <span style={{ ...s.iconWrap, color: 'rgba(255,255,255,0.38)' }}>
+                    <IconAdmin />
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>Admin</span>
+                </Link>
+              )}
+            </>
+          )}
 
           {isVRLAdmin && companies.length > 0 && (
             <div style={{ marginTop: 18, marginBottom: 4 }}>
