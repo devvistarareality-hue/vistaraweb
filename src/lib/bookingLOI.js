@@ -395,7 +395,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
 // Load an image URL → { dataURL(PNG), w, h } via canvas. Returns null on any failure
 // (missing image, CORS-tainted canvas, …) so the LOI still renders without the logo.
-function loadLogo(url) {
+export function loadLogo(url) {
   return new Promise((resolve) => {
     if (!url || typeof window === 'undefined') return resolve(null);
     const img = new Image();
