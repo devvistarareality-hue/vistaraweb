@@ -45,10 +45,16 @@ function toDatetimeLocal(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// <input type="date"> wants "YYYY-MM-DD" in LOCAL time.
+function toISODate(d) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function AddLeadModal({ schemes, onClose, onCreated }) {
   const [form, setForm] = useState({
     name: '', phone: '', alt_phone: '', email: '', reference_name: '', reference_phone: '',
-    source: 'referral', scheme_interest: '', amount_interested: '', remarks: '',
+    source: 'referral', lead_date: toISODate(new Date()), scheme_interest: '', amount_interested: '', remarks: '',
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -59,6 +65,7 @@ function AddLeadModal({ schemes, onClose, onCreated }) {
     setError(''); setBusy(true);
     try {
       const payload = { ...form };
+      if (form.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
       if (!payload.scheme_interest) delete payload.scheme_interest;
       if (!payload.amount_interested) delete payload.amount_interested;
       const res = await apiFetch(CLUB1000_ENDPOINTS.leads, { method: 'POST', body: JSON.stringify(payload) });
@@ -90,10 +97,6 @@ function AddLeadModal({ schemes, onClose, onCreated }) {
           <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} style={inp} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-          <div><label style={lbl}>Reference Name</label><input value={form.reference_name} onChange={(e) => setForm((f) => ({ ...f, reference_name: e.target.value }))} style={inp} /></div>
-          <div><label style={lbl}>Reference Phone</label><input value={form.reference_phone} onChange={(e) => setForm((f) => ({ ...f, reference_phone: e.target.value }))} style={inp} /></div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <div>
             <label style={lbl}>Source</label>
             <select value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} style={inp}>
@@ -101,12 +104,22 @@ function AddLeadModal({ schemes, onClose, onCreated }) {
             </select>
           </div>
           <div>
-            <label style={lbl}>Scheme Interest</label>
-            <select value={form.scheme_interest} onChange={(e) => setForm((f) => ({ ...f, scheme_interest: e.target.value }))} style={inp}>
-              <option value="">— None —</option>
-              {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            <label style={lbl}>Date</label>
+            <input type="date" value={form.lead_date} onChange={(e) => setForm((f) => ({ ...f, lead_date: e.target.value }))} style={inp} />
           </div>
+        </div>
+        {form.source === 'referral' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div><label style={lbl}>Reference Name</label><input value={form.reference_name} onChange={(e) => setForm((f) => ({ ...f, reference_name: e.target.value }))} style={inp} /></div>
+            <div><label style={lbl}>Reference Phone</label><input value={form.reference_phone} onChange={(e) => setForm((f) => ({ ...f, reference_phone: e.target.value }))} style={inp} /></div>
+          </div>
+        )}
+        <div style={{ marginBottom: 12 }}>
+          <label style={lbl}>Scheme Interest</label>
+          <select value={form.scheme_interest} onChange={(e) => setForm((f) => ({ ...f, scheme_interest: e.target.value }))} style={inp}>
+            <option value="">— None —</option>
+            {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={lbl}>Amount Interested (₹)</label>
@@ -161,10 +174,11 @@ function LeadDetailModal({ lead, onClose, onConvert, onStatusChange, onScheduleF
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13, marginBottom: 16 }}>
           <div><div style={lbl}>Source</div><div>{SOURCE_LABELS[lead.source] || lead.source}</div></div>
+          <div><div style={lbl}>Date</div><div>{lead.lead_date ? new Date(`${lead.lead_date}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</div></div>
           <div><div style={lbl}>Scheme Interest</div><div>{lead.scheme_interest_name || '—'}</div></div>
           <div><div style={lbl}>Amount Interested</div><div>{lead.amount_interested ? `₹${Number(lead.amount_interested).toLocaleString('en-IN')}` : '—'}</div></div>
           <div><div style={lbl}>Assigned To</div><div>{lead.assigned_to_name || '—'}</div></div>
-          <div><div style={lbl}>Reference</div><div>{lead.reference_name || '—'}</div></div>
+          {lead.source === 'referral' && <div><div style={lbl}>Reference</div><div>{lead.reference_name || '—'}</div></div>}
           <div><div style={lbl}>Status</div><StatusBadge status={lead.status} /></div>
         </div>
         {lead.remarks && <div style={{ marginBottom: 16, fontSize: 13, color: '#3A3A5C' }}><div style={lbl}>Remarks</div>{lead.remarks}</div>}

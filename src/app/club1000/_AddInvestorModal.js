@@ -156,7 +156,8 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
     amount_invested: prefillLead?.amount_interested || '', investment_date: toISODate(new Date()), notes: '',
     security: '',
     interest_payout: initialScheme?.interest_payout_options?.[0] || 'maturity',
-    total_return_pct: initialScheme?.total_return_pct ?? '',
+    // The lead's negotiated rate wins over the scheme default, if one was set.
+    total_return_pct: prefillLead?.total_return_pct ?? initialScheme?.total_return_pct ?? '',
   });
   const [documentFile, setDocumentFile] = useState(null); // {name, type, data(base64)}
   const [schedule, setSchedule] = useState([]); // [{due_date, amount_due, payout_type}] — editable preview
