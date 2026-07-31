@@ -807,16 +807,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               )}
 
-              {saveErr && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{saveErr}</div>}
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
-                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
-                  {saving ? 'Saving…' : (form.stm_status === 'closed' ? 'Record Closure →' : 'Save Changes')}
-                </button>
-              </div>
-
-              {/* ── FOLLOW-UPS (moved inline into Detail) ── */}
-              <div style={{ borderTop: '1px solid #F0F3FA', margin: '20px 0 0', paddingTop: 18, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* ── FOLLOW-UPS (inline in Detail, above the Save bar) ── */}
+              <div style={{ borderTop: '1px solid #F0F3FA', margin: '4px 0 0', paddingTop: 18, display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div style={mSec}>Follow-ups</div>
                 {/* Add new followup */}
                 <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
@@ -885,6 +877,15 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                     )}
                   </div>
                 ))}
+              </div>
+
+              {/* Save bar — at the very bottom, below Follow-ups */}
+              {saveErr && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, margin: '18px 0 4px' }}>{saveErr}</div>}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #F0F3FA', marginTop: 20, paddingTop: 16 }}>
+                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
+                  {saving ? 'Saving…' : (form.stm_status === 'closed' ? 'Record Closure →' : 'Save Changes')}
+                </button>
               </div>
             </div>
           )}
