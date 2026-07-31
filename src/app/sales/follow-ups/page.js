@@ -16,6 +16,12 @@ const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); 
 
 const fuStatusColor = { pending: '#F9A825', completed: '#2E7D32', missed: '#B71C1C', rescheduled: '#0097A7' };
 
+// Lead-status options a follow-up can set when completed, by the follow-up's role.
+// Telecaller updates TC Status; STM updates STM Status (a manager completing either
+// writes the matching field). Marking a TC lead "warm" auto-transfers it to the STM.
+const TC_STATUS_OPTS  = [['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested'], ['not_reachable', 'Not Reachable'], ['callback', 'Callback']];
+const STM_STATUS_OPTS = [['hot', 'Hot'], ['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested'], ['sv_scheduled', 'SV Scheduled'], ['sv_done', 'SV Done'], ['closed', 'Closed']];
+
 const TABS = [
   { key: 'today',   label: "Today's" },
   { key: 'overdue', label: 'Overdue' },
@@ -35,6 +41,7 @@ export function FollowUpsContent({ adminView = false }) {
   const [schedNext, setSchedNext] = useState(false);
   const [nextAt,  setNextAt]  = useState('');
   const [nextRemarks, setNextRemarks] = useState('');
+  const [newStatus, setNewStatus] = useState('');   // optional lead status to set on completion
   const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
@@ -53,7 +60,7 @@ export function FollowUpsContent({ adminView = false }) {
   useEffect(() => { load(); }, [load, companyId]);
 
   function openDone(fu) {
-    setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks('');
+    setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus('');
   }
 
   async function completeFollowUp() {
@@ -69,6 +76,14 @@ export function FollowUpsContent({ adminView = false }) {
       if (res.ok) {
         const updated = await res.json();
         setItems((list) => list.map((f) => (f.id === done.id ? updated : f)));
+      }
+      // Optionally update the lead's status (TC or STM, per the follow-up's role).
+      if (newStatus && done.lead) {
+        const field = done.role_context === 'stm' ? 'stm_status' : 'telecaller_status';
+        await fetch(SALES_ENDPOINTS.lead(done.lead), {
+          method: 'PATCH', headers: authHeaders(),
+          body: JSON.stringify({ [field]: newStatus }),
+        });
       }
       // Optionally schedule the next follow-up on the same lead / assignee / role.
       if (schedNext && nextAt) {
@@ -181,7 +196,22 @@ export function FollowUpsContent({ adminView = false }) {
             <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Complete follow-up</div>
             <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
 
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>Remarks</label>
+            {/* Update the lead's status after this call (TC or STM, per the follow-up's role). */}
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>
+              {done.role_context === 'stm' ? 'Update STM Status' : 'Update TC Status'}
+            </label>
+            <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}
+              style={{ width: '100%', marginTop: 6, marginBottom: 4, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', cursor: 'pointer', background: '#fff' }}>
+              <option value="">— No change —</option>
+              {(done.role_context === 'stm' ? STM_STATUS_OPTS : TC_STATUS_OPTS).map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </select>
+            {newStatus === 'warm' && done.role_context !== 'stm' && (
+              <p style={{ fontSize: 11, color: '#B45309', margin: '2px 0 0' }}>Marking warm will transfer this lead to the STM pipeline.</p>
+            )}
+
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280', display: 'block', marginTop: 14 }}>Remarks</label>
             <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
               style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
 
