@@ -152,17 +152,35 @@ export default function ModuleBookingsPage() {
       .catch((s) => { setErr(s === 403 ? 'You do not have access to bookings.' : 'Could not load bookings.'); setLoading(false); });
   }, [companyId]);
 
-  // Accounts view excludes rejected bookings — only real (pending/approved) ones matter here.
-  const isRejected = (b) => b.status === 'rejected' || String(b.approval_status || '').toUpperCase().includes('REJECT');
+  // Accounts view shows ONLY bookings approved by an approver — pending / revision-pending,
+  // rejected and cancelled are all excluded (money is only real once approved).
+  const isApproved = (b) => {
+    const a = String(b.approval_status || '').toUpperCase();
+    if (a.includes('REJECT') || a.includes('CANCEL') || a.includes('PENDING')) return false;
+    return a.includes('APPROVED') || b.status === 'sold';
+  };
   const groups = {};
-  rows.filter((b) => !isRejected(b)).forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
+  rows.filter(isApproved).forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.booking_date || '').localeCompare(String(a.booking_date || ''))));
+  // Project-wise total booking value (sum of approved final_amount) + grand total.
+  const projectTotal = (pn) => groups[pn].reduce((s, b) => s + (Number(b.final_amount) || 0), 0);
+  const grandTotal = projectNames.reduce((s, pn) => s + projectTotal(pn), 0);
+  const grandCount = projectNames.reduce((s, pn) => s + groups[pn].length, 0);
 
   return (
     <div style={{ padding: '28px 32px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Bookings</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>All sales bookings (LOI &amp; EOI), project-wise · view only</p>
+      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>Approved bookings only (LOI &amp; EOI), project-wise · view only</p>
+
+      {!loading && !err && projectNames.length > 0 && (
+        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'linear-gradient(135deg,#0D9488,#0F766E)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(13,148,136,0.25)' }}>
+          <div style={{ color: '#CCFBF1', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            Total Approved · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+          </div>
+          <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
+        </div>
+      )}
 
       <div style={{ marginTop: 22 }}>
         {loading ? <p style={{ color: '#8492A6' }}>Loading…</p>
@@ -176,7 +194,10 @@ export default function ModuleBookingsPage() {
               <div style={{ fontSize: 13, fontWeight: 800, color: '#0D9488', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 🏢 {pn} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
               </div>
-              <span style={{ color: '#8492A6', fontSize: 13, fontWeight: 800, transform: open[pn] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#0D47A1' }}>{rupee(projectTotal(pn))}</span>
+                <span style={{ color: '#8492A6', fontSize: 13, fontWeight: 800, transform: open[pn] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+              </div>
             </div>
             {open[pn] && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
