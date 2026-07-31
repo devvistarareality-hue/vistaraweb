@@ -596,7 +596,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 
         {/* Tab bar */}
         <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', flexShrink: 0, backgroundColor: '#FAFBFF' }}>
-          {[['detail','Detail'],['history','History'],['followups','Follow-ups']].map(([k,label]) => (
+          {[['detail','Detail'],['history','History']].map(([k,label]) => (
             <button key={k} onClick={() => setActiveTab(k)} style={tabStyle(k)}>{label}</button>
           ))}
         </div>
@@ -814,6 +814,78 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                   {saving ? 'Saving…' : (form.stm_status === 'closed' ? 'Record Closure →' : 'Save Changes')}
                 </button>
               </div>
+
+              {/* ── FOLLOW-UPS (moved inline into Detail) ── */}
+              <div style={{ borderTop: '1px solid #F0F3FA', margin: '20px 0 0', paddingTop: 18, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={mSec}>Follow-ups</div>
+                {/* Add new followup */}
+                <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
+                    {/* Role picker only for admins/managers — telecaller/STM portals auto-set their own role */}
+                    {canAssign && (
+                      <div>
+                        <label style={mLbl}>Role</label>
+                        <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                          <option value="telecaller">Telecaller</option>
+                          <option value="stm">STM</option>
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label style={mLbl}>Date & Time</label>
+                      <input type="datetime-local" value={fuForm.scheduled_at}
+                        onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={mInp} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <label style={mLbl}>Remarks</label>
+                    <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
+                      placeholder="Call notes, instructions…" rows={2}
+                      style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
+                  </div>
+                  {fuErr && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 12, color: '#DC2626' }}>{fuErr}</div>}
+                  <button onClick={addFollowup} disabled={savingFu}
+                    style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: savingFu ? 0.7 : 1 }}>
+                    {savingFu ? 'Saving…' : '+ Add Follow-up'}
+                  </button>
+                </div>
+
+                {/* Existing followups */}
+                {!detail && <p style={{ fontSize: 13, color: '#8492A6' }}>Loading…</p>}
+                {detail?.follow_ups?.length === 0 && (
+                  <p style={{ fontSize: 13, color: '#B0BAC9', textAlign: 'center' }}>No follow-ups scheduled yet.</p>
+                )}
+                {detail?.follow_ups?.map((fu) => (
+                  <div key={fu.id} style={{ border: '1.5px solid #E4E8F0', borderRadius: 12, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
+                          color: fu.role_context === 'stm' ? '#FF6B2B' : '#0097A7' }}>
+                          {fu.role_context?.toUpperCase()}
+                        </span>
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                          backgroundColor: (fuStatusColor[fu.status] || '#9E9E9E') + '18',
+                          color: fuStatusColor[fu.status] || '#9E9E9E' }}>
+                          {fu.status}
+                        </span>
+                      </div>
+                      {fu.status === 'pending' && (
+                        <button onClick={() => markFollowupDone(fu.id)}
+                          style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 8, border: '1.5px solid #2E7D32', color: '#2E7D32', background: '#fff', cursor: 'pointer' }}>
+                          Mark Done
+                        </button>
+                      )}
+                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: '8px 0 2px' }}>{fmtDateTime(fu.scheduled_at)}</p>
+                    {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Assigned to: {fu.assigned_to_name}</p>}
+                    {fu.remarks && <p style={{ fontSize: 12, color: '#3A3A5C', margin: '6px 0 0' }}>{fu.remarks}</p>}
+                    {fu.status === 'completed' && fu.completed_at && (
+                      <p style={{ fontSize: 11, color: '#2E7D32', margin: '4px 0 0' }}>✓ Done {fmtDateTime(fu.completed_at)}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -880,79 +952,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                   </div>
                 );
               })}
-            </div>
-          )}
-
-          {/* ── FOLLOWUPS TAB ── */}
-          {activeTab === 'followups' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Add new followup */}
-              <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
-                <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
-                  {/* Role picker only for admins/managers — telecaller/STM portals auto-set their own role */}
-                  {canAssign && (
-                    <div>
-                      <label style={mLbl}>Role</label>
-                      <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
-                        <option value="telecaller">Telecaller</option>
-                        <option value="stm">STM</option>
-                      </select>
-                    </div>
-                  )}
-                  <div>
-                    <label style={mLbl}>Date & Time</label>
-                    <input type="datetime-local" value={fuForm.scheduled_at}
-                      onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={mInp} />
-                  </div>
-                </div>
-                <div style={{ marginBottom: 10 }}>
-                  <label style={mLbl}>Remarks</label>
-                  <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
-                    placeholder="Call notes, instructions…" rows={2}
-                    style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
-                </div>
-                {fuErr && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 12, color: '#DC2626' }}>{fuErr}</div>}
-                <button onClick={addFollowup} disabled={savingFu}
-                  style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: savingFu ? 0.7 : 1 }}>
-                  {savingFu ? 'Saving…' : '+ Add Follow-up'}
-                </button>
-              </div>
-
-              {/* Existing followups */}
-              {!detail && <p style={{ fontSize: 13, color: '#8492A6' }}>Loading…</p>}
-              {detail?.follow_ups?.length === 0 && (
-                <p style={{ fontSize: 13, color: '#B0BAC9', textAlign: 'center' }}>No follow-ups scheduled yet.</p>
-              )}
-              {detail?.follow_ups?.map((fu) => (
-                <div key={fu.id} style={{ border: '1.5px solid #E4E8F0', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
-                        color: fu.role_context === 'stm' ? '#FF6B2B' : '#0097A7' }}>
-                        {fu.role_context?.toUpperCase()}
-                      </span>
-                      <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                        backgroundColor: (fuStatusColor[fu.status] || '#9E9E9E') + '18',
-                        color: fuStatusColor[fu.status] || '#9E9E9E' }}>
-                        {fu.status}
-                      </span>
-                    </div>
-                    {fu.status === 'pending' && (
-                      <button onClick={() => markFollowupDone(fu.id)}
-                        style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 8, border: '1.5px solid #2E7D32', color: '#2E7D32', background: '#fff', cursor: 'pointer' }}>
-                        Mark Done
-                      </button>
-                    )}
-                  </div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: '8px 0 2px' }}>{fmtDateTime(fu.scheduled_at)}</p>
-                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Assigned to: {fu.assigned_to_name}</p>}
-                  {fu.remarks && <p style={{ fontSize: 12, color: '#3A3A5C', margin: '6px 0 0' }}>{fu.remarks}</p>}
-                  {fu.status === 'completed' && fu.completed_at && (
-                    <p style={{ fontSize: 11, color: '#2E7D32', margin: '4px 0 0' }}>✓ Done {fmtDateTime(fu.completed_at)}</p>
-                  )}
-                </div>
-              ))}
             </div>
           )}
 
