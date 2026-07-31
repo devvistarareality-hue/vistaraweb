@@ -387,8 +387,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 
   // Followup form
   const [fuForm,    setFuForm]    = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
-  const [savingFu,  setSavingFu]  = useState(false);
-  const [fuErr,     setFuErr]     = useState('');
   // Inline "schedule site visit" when STM sets status = sv_scheduled
   const [svScheduledAt, setSvScheduledAt] = useState('');
   const [svRemarks,     setSvRemarks]     = useState('');
@@ -456,6 +454,24 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       let updated = null;
       try { updated = await res.json(); } catch { /* ignore */ }
 
+      // Auto-create a follow-up if one was filled in the inline Schedule Follow-up form.
+      if (fuForm.scheduled_at) {
+        const assignedTo = fuForm.role_context === 'telecaller'
+          ? (form.telecaller || user?.id)
+          : (form.stm || user?.id);
+        if (assignedTo) {
+          try {
+            await fetch(SALES_ENDPOINTS.followUps, {
+              method: 'POST', headers: authHeaders(),
+              body: JSON.stringify({
+                lead: lead.id, assigned_to: assignedTo, role_context: fuForm.role_context,
+                scheduled_at: fuForm.scheduled_at, remarks: fuForm.remarks, status: 'pending',
+              }),
+            });
+          } catch { /* ignore */ }
+        }
+      }
+
       // STM scheduled a visit → auto-create the site-visit entry
       if (form.stm_status === 'sv_scheduled' && svScheduledAt) {
         try {
@@ -520,36 +536,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       onClose();
     } else {
       setSaving(false);
-    }
-  }
-
-  async function addFollowup() {
-    if (!fuForm.scheduled_at) { setFuErr('Scheduled date & time is required.'); return; }
-    const assignedTo = fuForm.role_context === 'telecaller'
-      ? (form.telecaller || user?.id)
-      : (form.stm || user?.id);
-    if (!assignedTo) { setFuErr('Assign a telecaller or STM to the lead first.'); return; }
-    setFuErr('');
-    setSavingFu(true);
-    const res = await fetch(SALES_ENDPOINTS.followUps, {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({
-        lead: lead.id,
-        assigned_to: assignedTo,
-        role_context: fuForm.role_context,
-        scheduled_at: fuForm.scheduled_at,
-        remarks: fuForm.remarks,
-        status: 'pending',
-      }),
-    });
-    setSavingFu(false);
-    if (res.ok) {
-      const newFu = await res.json();
-      setDetail(d => ({ ...d, follow_ups: [newFu, ...(d?.follow_ups || [])] }));
-      setFuForm({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setFuErr(JSON.stringify(err));
     }
   }
 
@@ -836,11 +822,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                       placeholder="Call notes, instructions…" rows={2}
                       style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
                   </div>
-                  {fuErr && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 12, color: '#DC2626' }}>{fuErr}</div>}
-                  <button onClick={addFollowup} disabled={savingFu}
-                    style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: savingFu ? 0.7 : 1 }}>
-                    {savingFu ? 'Saving…' : '+ Add Follow-up'}
-                  </button>
+                  <p style={{ fontSize: 11, color: '#8492A6', margin: 0, fontStyle: 'italic' }}>Pick a date &amp; time and it's added when you click Save Changes below.</p>
                 </div>
 
                 {/* Existing followups */}
