@@ -74,6 +74,67 @@ function WeightStepper({ value, onChange, color, border }) {
   );
 }
 
+// Ratio panel grouped BY PROJECT: leads for a project only split among the
+// telecallers/STMs assigned to that project, so the share % is computed within
+// each project group. Weight is a single value per person, shared across every
+// project they belong to (editing it in one group updates it everywhere).
+function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barColor, members, weights, setWeights }) {
+  const byProject = {};
+  const noProject = [];
+  members.forEach(m => {
+    if (!m.projects || m.projects.length === 0) { noProject.push(m); return; }
+    m.projects.forEach(p => { (byProject[p] = byProject[p] || []).push(m); });
+  });
+  const projectNames = Object.keys(byProject).sort();
+  return (
+    <div style={{ border: `1.5px solid ${borderColor}`, borderRadius: 12, padding: '14px 16px', backgroundColor: bg }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: dotColor, display: 'inline-block' }} />
+        <p style={{ fontSize: 11, fontWeight: 700, color: headColor, textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</p>
+      </div>
+      {members.length === 0
+        ? <p style={{ fontSize: 12, color: '#8492A6' }}>No active {title.toLowerCase()}</p>
+        : projectNames.length === 0
+          ? <p style={{ fontSize: 12, color: '#8492A6' }}>No projects assigned yet — assign projects above so leads can route.</p>
+          : projectNames.map(pn => {
+              const grp   = byProject[pn];
+              const total = grp.reduce((s, m) => s + (weights[m.user_id] ?? 1), 0);
+              return (
+                <div key={pn} style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: headColor }}>{pn}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: headColor, backgroundColor: borderColor, padding: '1px 7px', borderRadius: 20 }}>{grp.length}</span>
+                  </div>
+                  {grp.map(m => {
+                    const w   = weights[m.user_id] ?? 1;
+                    const pct = total > 0 ? Math.round((w / total) * 100) : 0;
+                    return (
+                      <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: '7px 10px', border: `1px solid ${borderColor}`, marginBottom: 6 }}>
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                        <WeightBar pct={pct} color={barColor} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: headColor, width: 30, textAlign: 'right' }}>{pct}%</span>
+                        <WeightStepper value={w} color={headColor} border={borderColor}
+                          onChange={val => setWeights(prev => ({ ...prev, [m.user_id]: val }))} />
+                      </div>
+                    );
+                  })}
+                  <p style={{ fontSize: 11, color: headColor, fontWeight: 600, marginTop: 2 }}>
+                    Ratio: {grp.map(m => weights[m.user_id] ?? 1).join(' : ')}
+                  </p>
+                </div>
+              );
+            })
+      }
+      {noProject.length > 0 && (
+        <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, backgroundColor: '#FEF3F2', border: '1px solid #FECDCA' }}>
+          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#B42318', marginBottom: 3 }}>Not assigned to any project — won&apos;t receive leads:</p>
+          <p style={{ fontSize: 12, color: '#912018' }}>{noProject.map(m => m.name).join(', ')}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DistributionPage() {
   const router    = useRouter();
   const user      = useSelector((s) => s.auth.user);
@@ -151,6 +212,10 @@ export default function DistributionPage() {
   // ── Weights ─────────────────────────────────────────────────────────────────
   const tcUsers  = allUsers.filter(u => u.role === 'TELECALLER');
   const stmUsers = allUsers.filter(u => u.role === 'STM');
+  // Project-grouped ratio uses the availability feed, which carries each user's
+  // assigned projects (same source as the ProjectTags above).
+  const tcMembers  = availability.filter(a => a.role === 'telecaller');
+  const stmMembers = availability.filter(a => a.role === 'stm');
   const weightsChanged = Object.keys(weights).some(id => weights[id] !== savedWeights[id]);
 
   async function saveSettings() {
@@ -350,7 +415,7 @@ export default function DistributionPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h2 style={cardTitle}>📊 Lead Distribution Ratio</h2>
-            <span style={{ fontSize: 12, color: '#8492A6' }}>Higher weight = more leads assigned</span>
+            <span style={{ fontSize: 12, color: '#8492A6' }}>Per project · share splits among assigned members</span>
           </div>
           <button onClick={saveWeights} disabled={savingWeights || !weightsChanged}
             style={{ ...primaryBtn, opacity: (!weightsChanged || savingWeights) ? 0.4 : 1 }}>
@@ -358,73 +423,12 @@ export default function DistributionPage() {
           </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-          {/* Telecallers weight */}
-          <div style={{ border: '1.5px solid #BBF7D0', borderRadius: 12, padding: '14px 16px', backgroundColor: '#F0FDF4' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#22C55E', display: 'inline-block' }} />
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#15803D', textTransform: 'uppercase', letterSpacing: 0.6 }}>Telecallers</p>
-            </div>
-            {tcUsers.length === 0
-              ? <p style={{ fontSize: 12, color: '#8492A6' }}>No active telecallers</p>
-              : (() => {
-                  const total = tcUsers.reduce((s, u) => s + (weights[u.user_id] ?? 1), 0);
-                  return (
-                    <>
-                      {tcUsers.map(u => {
-                        const w   = weights[u.user_id] ?? 1;
-                        const pct = Math.round((w / total) * 100);
-                        return (
-                          <div key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: '7px 10px', border: '1px solid #BBF7D0', marginBottom: 6 }}>
-                            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
-                            <WeightBar pct={pct} color="#22C55E" />
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D', width: 30, textAlign: 'right' }}>{pct}%</span>
-                            <WeightStepper value={w} color="#15803D" border="#BBF7D0"
-                              onChange={val => setWeights(prev => ({ ...prev, [u.user_id]: val }))} />
-                          </div>
-                        );
-                      })}
-                      <p style={{ fontSize: 11, color: '#15803D', fontWeight: 600, marginTop: 4 }}>
-                        Ratio: {tcUsers.map(u => weights[u.user_id] ?? 1).join(' : ')}
-                      </p>
-                    </>
-                  );
-                })()
-            }
-          </div>
-
-          {/* STM weight */}
-          <div style={{ border: '1.5px solid #BFDBFE', borderRadius: 12, padding: '14px 16px', backgroundColor: '#EFF6FF' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#3B82F6', display: 'inline-block' }} />
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: 0.6 }}>STMs</p>
-            </div>
-            {stmUsers.length === 0
-              ? <p style={{ fontSize: 12, color: '#8492A6' }}>No active STMs</p>
-              : (() => {
-                  const total = stmUsers.reduce((s, u) => s + (weights[u.user_id] ?? 1), 0);
-                  return (
-                    <>
-                      {stmUsers.map(u => {
-                        const w   = weights[u.user_id] ?? 1;
-                        const pct = Math.round((w / total) * 100);
-                        return (
-                          <div key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: '7px 10px', border: '1px solid #BFDBFE', marginBottom: 6 }}>
-                            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
-                            <WeightBar pct={pct} color="#3B82F6" />
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#1D4ED8', width: 30, textAlign: 'right' }}>{pct}%</span>
-                            <WeightStepper value={w} color="#1D4ED8" border="#BFDBFE"
-                              onChange={val => setWeights(prev => ({ ...prev, [u.user_id]: val }))} />
-                          </div>
-                        );
-                      })}
-                      <p style={{ fontSize: 11, color: '#1D4ED8', fontWeight: 600, marginTop: 4 }}>
-                        Ratio: {stmUsers.map(u => weights[u.user_id] ?? 1).join(' : ')}
-                      </p>
-                    </>
-                  );
-                })()
-            }
-          </div>
+          <ProjectRatioPanel title="Telecallers" dotColor="#22C55E" headColor="#15803D"
+            borderColor="#BBF7D0" bg="#F0FDF4" barColor="#22C55E"
+            members={tcMembers} weights={weights} setWeights={setWeights} />
+          <ProjectRatioPanel title="STMs" dotColor="#3B82F6" headColor="#1D4ED8"
+            borderColor="#BFDBFE" bg="#EFF6FF" barColor="#3B82F6"
+            members={stmMembers} weights={weights} setWeights={setWeights} />
         </div>
       </div>
 
