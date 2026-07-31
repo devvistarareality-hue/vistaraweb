@@ -60,7 +60,9 @@ export function FollowUpsContent({ adminView = false }) {
   useEffect(() => { load(); }, [load, companyId]);
 
   function openDone(fu) {
-    setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus('');
+    // Pre-select the lead's current TC/STM status so the caller sees where it stands.
+    const cur = (fu.role_context === 'stm' ? fu.lead_stm_status : fu.lead_telecaller_status) || '';
+    setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus(cur);
   }
 
   async function completeFollowUp() {
@@ -77,8 +79,9 @@ export function FollowUpsContent({ adminView = false }) {
         const updated = await res.json();
         setItems((list) => list.map((f) => (f.id === done.id ? updated : f)));
       }
-      // Optionally update the lead's status (TC or STM, per the follow-up's role).
-      if (newStatus && done.lead) {
+      // Update the lead's status (TC or STM, per the follow-up's role) — only if changed.
+      const origStatus = (done.role_context === 'stm' ? done.lead_stm_status : done.lead_telecaller_status) || '';
+      if (newStatus && newStatus !== origStatus && done.lead) {
         const field = done.role_context === 'stm' ? 'stm_status' : 'telecaller_status';
         await fetch(SALES_ENDPOINTS.lead(done.lead), {
           method: 'PATCH', headers: authHeaders(),
@@ -207,7 +210,7 @@ export function FollowUpsContent({ adminView = false }) {
                 <option key={v} value={v}>{l}</option>
               ))}
             </select>
-            {newStatus === 'warm' && done.role_context !== 'stm' && (
+            {newStatus === 'warm' && done.role_context !== 'stm' && (done.lead_telecaller_status || '') !== 'warm' && (
               <p style={{ fontSize: 11, color: '#B45309', margin: '2px 0 0' }}>Marking warm will transfer this lead to the STM pipeline.</p>
             )}
 
