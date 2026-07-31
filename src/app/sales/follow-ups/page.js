@@ -35,6 +35,8 @@ export function FollowUpsContent({ adminView = false }) {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo,   setDateTo]   = useState('');
   // Completion modal: capture remarks + optionally schedule the next follow-up.
   const [done,    setDone]    = useState(null);   // the follow-up being completed
   const [outcome, setOutcome] = useState('');
@@ -106,7 +108,25 @@ export function FollowUpsContent({ adminView = false }) {
   }
 
   const now = new Date();
-  const visible = items.filter((fu) => {
+  // Date-range filter on the scheduled date (applies before the tab filter).
+  const inDateRange = (fu) => {
+    if (!dateFrom && !dateTo) return true;
+    const d = new Date(fu.scheduled_at);
+    if (dateFrom && d < new Date(dateFrom + 'T00:00:00')) return false;
+    if (dateTo   && d > new Date(dateTo   + 'T23:59:59')) return false;
+    return true;
+  };
+  const dateItems = items.filter(inDateRange);
+
+  // Status-wise counts for the selected date range (independent of the tab).
+  const counts = {
+    total:     dateItems.length,
+    pending:   dateItems.filter((f) => f.status === 'pending').length,
+    completed: dateItems.filter((f) => f.status === 'completed').length,
+    overdue:   dateItems.filter((f) => f.status === 'pending' && new Date(f.scheduled_at) < now).length,
+  };
+
+  const visible = dateItems.filter((fu) => {
     const at = new Date(fu.scheduled_at);
     if (filter === 'all')     return true;
     if (filter === 'pending') return fu.status === 'pending';
@@ -121,6 +141,33 @@ export function FollowUpsContent({ adminView = false }) {
       <p style={{ fontSize: 13, color: '#8492A6', margin: '4px 0 18px' }}>
         {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}
       </p>
+
+      {/* Date range filter + status-wise counts */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6 }}>Date</span>
+        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid #E4E8F0', fontSize: 12.5, color: '#1A1A2E', outline: 'none' }} />
+        <span style={{ color: '#B0BAC9' }}>→</span>
+        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid #E4E8F0', fontSize: 12.5, color: '#1A1A2E', outline: 'none' }} />
+        {(dateFrom || dateTo) && (
+          <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+            style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #E4E8F0', background: '#fff', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+        {[
+          { label: 'Total',     n: counts.total,     c: '#3D5AFE', bg: '#EEF2FF' },
+          { label: 'Pending',   n: counts.pending,   c: '#B45309', bg: '#FEF3C7' },
+          { label: 'Overdue',   n: counts.overdue,   c: '#DC2626', bg: '#FEE2E2' },
+          { label: 'Completed', n: counts.completed, c: '#2E7D32', bg: '#E7F6EE' },
+        ].map((s) => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 12px', borderRadius: 20, background: s.bg }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: s.c }}>{s.n}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: s.c, textTransform: 'uppercase', letterSpacing: 0.4 }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E4E8F0', marginBottom: 20, overflowX: 'auto' }}>
