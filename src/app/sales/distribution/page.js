@@ -53,6 +53,27 @@ function WeightBar({ pct, color }) {
   );
 }
 
+function WeightStepper({ value, onChange, color, border }) {
+  const clamp = (n) => Math.min(20, Math.max(1, n));
+  const btn = {
+    width: 24, height: 26, borderRadius: 6, border: `1.5px solid ${border}`,
+    backgroundColor: '#fff', color, fontSize: 16, fontWeight: 700, lineHeight: '1',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    userSelect: 'none', padding: 0,
+  };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <button type="button" aria-label="Decrease weight" onClick={() => onChange(clamp(value - 1))}
+        disabled={value <= 1} style={{ ...btn, opacity: value <= 1 ? 0.4 : 1, cursor: value <= 1 ? 'not-allowed' : 'pointer' }}>−</button>
+      <input type="number" min={1} max={20} value={value}
+        onChange={e => onChange(clamp(parseInt(e.target.value) || 1))}
+        style={{ width: 42, padding: '3px 6px', borderRadius: 6, border: `1.5px solid ${border}`, fontSize: 12, textAlign: 'center' }} />
+      <button type="button" aria-label="Increase weight" onClick={() => onChange(clamp(value + 1))}
+        disabled={value >= 20} style={{ ...btn, opacity: value >= 20 ? 0.4 : 1, cursor: value >= 20 ? 'not-allowed' : 'pointer' }}>+</button>
+    </div>
+  );
+}
+
 export default function DistributionPage() {
   const router    = useRouter();
   const user      = useSelector((s) => s.auth.user);
@@ -357,9 +378,8 @@ export default function DistributionPage() {
                             <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
                             <WeightBar pct={pct} color="#22C55E" />
                             <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D', width: 30, textAlign: 'right' }}>{pct}%</span>
-                            <input type="number" min={1} max={20} value={w}
-                              onChange={e => setWeights(prev => ({ ...prev, [u.user_id]: Math.max(1, parseInt(e.target.value) || 1) }))}
-                              style={{ width: 46, padding: '3px 6px', borderRadius: 6, border: '1.5px solid #BBF7D0', fontSize: 12, textAlign: 'center' }} />
+                            <WeightStepper value={w} color="#15803D" border="#BBF7D0"
+                              onChange={val => setWeights(prev => ({ ...prev, [u.user_id]: val }))} />
                           </div>
                         );
                       })}
@@ -392,9 +412,8 @@ export default function DistributionPage() {
                             <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
                             <WeightBar pct={pct} color="#3B82F6" />
                             <span style={{ fontSize: 11, fontWeight: 700, color: '#1D4ED8', width: 30, textAlign: 'right' }}>{pct}%</span>
-                            <input type="number" min={1} max={20} value={w}
-                              onChange={e => setWeights(prev => ({ ...prev, [u.user_id]: Math.max(1, parseInt(e.target.value) || 1) }))}
-                              style={{ width: 46, padding: '3px 6px', borderRadius: 6, border: '1.5px solid #BFDBFE', fontSize: 12, textAlign: 'center' }} />
+                            <WeightStepper value={w} color="#1D4ED8" border="#BFDBFE"
+                              onChange={val => setWeights(prev => ({ ...prev, [u.user_id]: val }))} />
                           </div>
                         );
                       })}
