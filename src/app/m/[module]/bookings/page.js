@@ -213,7 +213,7 @@ export default function ModuleBookingsPage() {
                           <span style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', background: '#CCFBF1', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
                           {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
                         </div>
-                        <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{b.phone} · Booked {b.booking_date || '—'} · STM {b.stm_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{b.phone} · Booked {fmtDate(b.booking_date)} · STM {b.stm_name || '—'}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
