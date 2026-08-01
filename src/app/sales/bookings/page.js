@@ -81,7 +81,8 @@ export function BookingsContent({ adminView = false }) {
   const grandTotal = projectNames.reduce((s, pn) => s + projectTotal(pn), 0);
   // Short lists (a handful of pending approvals) are more useful open than collapsed —
   // only make the user click through when there's actually a lot to scroll past.
-  const autoOpen = rows.length <= 10;
+  // Rejected is archival, though: always start it collapsed however few there are.
+  const autoOpen = tab !== 'rejected' && rows.length <= 10;
   const isOpen = (pn) => (openProj[pn] === undefined ? autoOpen : openProj[pn]);
   const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
 
