@@ -105,6 +105,9 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  // Same inline scheduler as the Lead Detail modal — filled in here it's created
+  // right after the lead itself, so a manual lead can arrive with its first call booked.
+  const [fuForm, setFuForm] = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
   const addLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
   const addInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
   const addSel = { ...addInp, cursor: 'pointer' };
@@ -134,8 +137,28 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
       method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
     });
     const data = await res.json();
+    if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
+
+    // Schedule the first follow-up against the lead we just created. Best-effort: the
+    // lead is already saved, so a failure here must not read as "lead not added".
+    if (fuForm.scheduled_at && data?.id) {
+      const assignedTo = fuForm.role_context === 'telecaller'
+        ? (form.telecaller || user?.id)
+        : (form.stm || user?.id);
+      if (assignedTo) {
+        try {
+          await fetch(SALES_ENDPOINTS.followUps, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({
+              lead: data.id, assigned_to: assignedTo, role_context: fuForm.role_context,
+              scheduled_at: fuForm.scheduled_at, remarks: fuForm.remarks, status: 'pending',
+            }),
+          });
+        } catch { /* ignore */ }
+      }
+    }
+
     setSaving(false);
-    if (!res.ok) { setErr(data.detail || JSON.stringify(data)); return; }
     onAdded(data);
     onClose();
   }
@@ -310,6 +333,35 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               </div>
             </>
           )}
+
+          {/* ── FOLLOW-UPS ── mirrors the Lead Detail modal's inline scheduler */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Follow-ups</div>
+          <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0', marginBottom: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
+            <div style={{ display: 'grid', gridTemplateColumns: _isAdminMgr ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
+              {/* Role picker only for admins/managers — telecaller/STM portals auto-set their own role */}
+              {_isAdminMgr && (
+                <div>
+                  <label style={addLbl}>Role</label>
+                  <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={addSel}>
+                    <option value="telecaller">Telecaller</option>
+                    <option value="stm">STM</option>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label style={addLbl}>Date &amp; Time</label>
+                <input type="datetime-local" value={fuForm.scheduled_at}
+                  onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={addInp} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label style={addLbl}>Remarks</label>
+              <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
+                placeholder="Call notes, instructions…" rows={2} style={addTa} />
+            </div>
+            <p style={{ fontSize: 11, color: '#8492A6', margin: 0, fontStyle: 'italic' }}>Optional — pick a date &amp; time and it's scheduled when you click Add Lead below.</p>
+          </div>
 
           {err && (
             <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: '#DC2626' }}>
