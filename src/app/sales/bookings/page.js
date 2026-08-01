@@ -34,6 +34,7 @@ export function BookingsContent({ adminView = false }) {
   const [savedCfg, setSavedCfg] = useState('');
   const [openProj, setOpenProj] = useState({});   // project name → expanded?
   const toggleProj = (pn) => setOpenProj((o) => ({ ...o, [pn]: !o[pn] }));
+  const [q, setQ] = useState('');
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -71,10 +72,29 @@ export function BookingsContent({ adminView = false }) {
 
   const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
+  // Search across client name, phone and the LOI/unit number. Phones are stored with
+  // spaces ("81408 05999") so digit queries are compared digits-only; the LOI's stored
+  // filename and the booking id are matched too, since either can be quoted as "LOI no".
+  const ql = q.trim().toLowerCase();
+  const qDigits = ql.replace(/\D/g, '');
+  // Only treat the query as a phone/id when it is ALL digits and separators — otherwise
+  // "shop1" would strip to "1" and match every phone containing a 1.
+  const numericQuery = !!qDigits && /^[\d\s+()-]+$/.test(ql);
+  const matches = (b) => {
+    if (!ql) return true;
+    const text = [b.client_name, b.plot_numbers, b.plot_number, b.area, b.loi_document];
+    if (text.some((v) => String(v || '').toLowerCase().includes(ql))) return true;
+    if (!numericQuery) return false;
+    if (String(b.id) === qDigits) return true;
+    // Need a few digits before matching phones, or "1" would hit almost everything.
+    return qDigits.length >= 3 && String(b.phone || '').replace(/\D/g, '').includes(qDigits);
+  };
+  const visible = rows.filter(matches);
+
   // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
   // applied to whichever tab is selected so approvers keep their per-booking actions.
   const groups = {};
-  rows.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
+  visible.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.booking_date || '').localeCompare(String(a.booking_date || ''))));
   const projectTotal = (pn) => groups[pn].reduce((s, b) => s + (Number(b.final_amount) || 0), 0);
@@ -82,14 +102,17 @@ export function BookingsContent({ adminView = false }) {
   // Short lists (a handful of pending approvals) are more useful open than collapsed —
   // only make the user click through when there's actually a lot to scroll past.
   // Rejected is archival, though: always start it collapsed however few there are.
-  const autoOpen = tab !== 'rejected' && rows.length <= 10;
+  // While searching, always open: hits are the point of the search.
+  const autoOpen = !!ql || (tab !== 'rejected' && visible.length <= 10);
   const isOpen = (pn) => (openProj[pn] === undefined ? autoOpen : openProj[pn]);
   const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
 
   return (
     <div style={{ padding: '24px 28px' }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Bookings &amp; Approvals</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 16 }}>{rows.length} {tab || 'total'} bookings</p>
+      <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 16 }}>
+        {ql ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
+      </p>
 
       {isAdmin && (
         <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
@@ -110,25 +133,43 @@ export function BookingsContent({ adminView = false }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
-        {TABS.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            background: tab === k ? '#3D5AFE' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
-        ))}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {TABS.map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: tab === k ? '#3D5AFE' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
+          ))}
+        </div>
+        <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8492A6', fontSize: 13 }}>🔍</span>
+          {/* Collapse state is keyed by project, so drop it as the query changes —
+              otherwise a group the user collapsed earlier would hide its own hits. */}
+          <input value={q} onChange={(e) => { setQ(e.target.value); setOpenProj({}); }}
+            placeholder="Search name, phone or LOI / unit no…"
+            style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid #E0E6F0',
+              background: '#fff', fontSize: 13, color: '#1A1A2E', boxSizing: 'border-box' }} />
+          {!!q && (
+            <button onClick={() => { setQ(''); setOpenProj({}); }} title="Clear search"
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
+                color: '#8492A6', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
+          )}
+        </div>
       </div>
 
-      {!loading && rows.length > 0 && (
+      {!loading && visible.length > 0 && (
         <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
           background: 'linear-gradient(135deg,#3D5AFE,#1E3A8A)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(61,90,254,0.25)' }}>
           <div style={{ color: '#DBEAFE', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            Total {tabLabel} · {rows.length} booking{rows.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+            {ql ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>
       )}
 
-      {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : rows.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>No bookings here.</div>
+      {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : visible.length === 0 ? (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
+          {ql ? <>No bookings match “{q.trim()}”.</> : 'No bookings here.'}
+        </div>
       ) : projectNames.map((pn) => (
         <div key={pn} style={{ marginBottom: 12 }}>
           <div onClick={() => toggleProj(pn)}
