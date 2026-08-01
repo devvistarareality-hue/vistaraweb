@@ -35,6 +35,7 @@ export function BookingsContent({ adminView = false }) {
   const [openProj, setOpenProj] = useState({});   // project name → expanded?
   const toggleProj = (pn) => setOpenProj((o) => ({ ...o, [pn]: !o[pn] }));
   const [q, setQ] = useState('');
+  const [toCancel, setToCancel] = useState(null);   // booking awaiting cancel confirmation
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -72,14 +73,14 @@ export function BookingsContent({ adminView = false }) {
 
   // Cancelling an approved booking goes through its closure: that endpoint frees the
   // plot(s), purges the signed LOI from storage and marks the booking CANCELLED.
+  // Irreversible, so it always runs behind the confirmation modal below.
   async function cancelBooking(b) {
-    if (!window.confirm(`Cancel this booking for ${b.client_name || 'this client'}?\nThis frees the unit and permanently deletes its signed LOI from storage. This cannot be undone.`)) return;
     setBusy(b.id);
     try {
       const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders() });
       if (!r.ok) { const d = await r.json().catch(() => ({})); alert('Cancel failed: ' + (d.detail || r.status)); }
     } catch (e) { alert(e.message); }
-    setBusy(null); load();
+    setToCancel(null); setBusy(null); load();
   }
 
   const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
@@ -230,7 +231,7 @@ export function BookingsContent({ adminView = false }) {
                           {/* Only an approver can cancel, and only once the booking has a
                               closure to cancel through. */}
                           {isApprover && b.closure && (
-                            <button onClick={() => cancelBooking(b)} disabled={busy === b.id}
+                            <button onClick={() => setToCancel(b)} disabled={busy === b.id}
                               style={{ ...actBtn, background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}>✕ Cancel Booking</button>
                           )}
                         </>
@@ -243,6 +244,49 @@ export function BookingsContent({ adminView = false }) {
           )}
         </div>
       ))}
+
+      {toCancel && (
+        <CancelBookingModal b={toCancel} rupee={rupee} busy={busy === toCancel.id}
+          onClose={() => setToCancel(null)} onConfirm={() => cancelBooking(toCancel)} />
+      )}
+    </div>
+  );
+}
+
+// Cancelling frees the unit and destroys the signed LOI — irreversible, so spell out
+// exactly which booking is going and what it costs before letting it through.
+function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
+  const unit = b.plot_numbers || b.plot_number || b.area || '—';
+  return (
+    <div onClick={busy ? undefined : onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(15,23,42,0.3)' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#DC2626', marginBottom: 6 }}>Cancel this booking?</div>
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16, lineHeight: 1.6 }}>
+          This frees the unit back to <b>available</b>, permanently deletes the signed
+          {' '}{String(b.plot_numbers || '').toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'} from storage,
+          and removes it from conversions. <b>This cannot be undone.</b>
+        </p>
+        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
+          {[['Client', b.client_name || '—'], ['Project', b.project_name || '—'], ['Unit', unit], ['Amount', rupee(b.final_amount)]].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '4px 0' }}>
+              <span style={{ fontSize: 12, color: '#8492A6', fontWeight: 600 }}>{k}</span>
+              <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 700, textAlign: 'right' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} disabled={busy}
+            style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            Keep Booking
+          </button>
+          <button onClick={onConfirm} disabled={busy}
+            style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: busy ? '#F3B4B4' : '#DC2626', color: '#fff', fontSize: 13, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            {busy ? 'Cancelling…' : 'Yes, Cancel Booking'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
