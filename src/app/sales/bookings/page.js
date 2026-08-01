@@ -70,6 +70,18 @@ export function BookingsContent({ adminView = false }) {
     setBusy(null); load();
   }
 
+  // Cancelling an approved booking goes through its closure: that endpoint frees the
+  // plot(s), purges the signed LOI from storage and marks the booking CANCELLED.
+  async function cancelBooking(b) {
+    if (!window.confirm(`Cancel this booking for ${b.client_name || 'this client'}?\nThis frees the unit and permanently deletes its signed LOI from storage. This cannot be undone.`)) return;
+    setBusy(b.id);
+    try {
+      const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders() });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); alert('Cancel failed: ' + (d.detail || r.status)); }
+    } catch (e) { alert(e.message); }
+    setBusy(null); load();
+  }
+
   const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
   // Search across client name, phone and the LOI/unit number. Phones are stored with
@@ -215,6 +227,12 @@ export function BookingsContent({ adminView = false }) {
                         <>
                           {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#E4571A' }}>→ Convert to LOI</button>}
                           <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
+                          {/* Only an approver can cancel, and only once the booking has a
+                              closure to cancel through. */}
+                          {isApprover && b.closure && (
+                            <button onClick={() => cancelBooking(b)} disabled={busy === b.id}
+                              style={{ ...actBtn, background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}>✕ Cancel Booking</button>
+                          )}
                         </>
                       );
                     })()}
