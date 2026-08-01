@@ -319,8 +319,9 @@ export function MyConversionsContent({ adminView = false }) {
                 </tr>
               </thead>
               <tbody>
+                {/* A closure outlives its lead (trial reset) — no lead, no history to open. */}
                 {allClosures.map(c => (
-                  <tr key={c.id} onClick={() => openLead(c)} style={{ transition: 'background 0.1s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                  <tr key={c.id} onClick={() => openLead(c)} style={{ transition: 'background 0.1s', cursor: c.lead ? 'pointer' : 'default' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{c.lead_name || '—'}</span></td>
                     <td style={{ ...td, color: '#6B7280' }}>{c.lead_phone || '—'}</td>
                     <td style={td}>{c.project_name || '—'}</td>
