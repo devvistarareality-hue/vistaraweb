@@ -41,7 +41,9 @@ export default function DataResetPage() {
   const allOn = selected.size === ITEMS.length;
   const toggleAll = () => setSelected(allOn ? new Set() : new Set(ITEMS.map(([k]) => k)));
   // Deleting leads cascades their children in the DB — show those as implied.
-  const CASCADE = ['closures', 'site_visits', 'follow_ups', 'lead_history'];
+  // Closures are NOT one of them: they now survive their lead so the conversion
+  // history stays in step with the bookings that point at it.
+  const CASCADE = ['site_visits', 'follow_ups', 'lead_history'];
   const implied = (k) => selected.has('leads') && CASCADE.includes(k);
 
   const load = useCallback(() => {
@@ -120,9 +122,15 @@ export default function DataResetPage() {
             })}
           </div>
         )}
-        {!loading && selected.has('leads') && (
-          <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
-            Deleting <b>Leads</b> also removes their history, follow-ups, site visits &amp; closures.
+        {!loading && (selected.has('leads') || selected.has('bookings')) && (
+          <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, lineHeight: 1.6 }}>
+            {selected.has('leads') && (
+              <>Deleting <b>Leads</b> also removes their history, follow-ups &amp; site visits.
+                Closures are <b>kept</b> — they stay in step with your bookings.<br /></>
+            )}
+            {selected.has('bookings') && (
+              <>Deleting <b>Bookings</b> also removes the closures those bookings created.</>
+            )}
           </p>
         )}
       </div>
