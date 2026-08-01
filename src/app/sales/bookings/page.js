@@ -32,6 +32,8 @@ export function BookingsContent({ adminView = false }) {
   const [projects, setProjects] = useState([]);   // each carries booking_approvers
   const [cfgOpen, setCfgOpen] = useState(false);
   const [savedCfg, setSavedCfg] = useState('');
+  const [openProj, setOpenProj] = useState({});   // project name → expanded?
+  const toggleProj = (pn) => setOpenProj((o) => ({ ...o, [pn]: !o[pn] }));
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -58,7 +60,8 @@ export function BookingsContent({ adminView = false }) {
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
-  useEffect(() => { load(); }, [tab, companyId, adminView]);
+  // Collapse state is per project name, so reset it whenever the visible set changes.
+  useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView]);
 
   async function act(id, action) {
     setBusy(id);
@@ -67,6 +70,20 @@ export function BookingsContent({ adminView = false }) {
   }
 
   const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+
+  // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
+  // applied to whichever tab is selected so approvers keep their per-booking actions.
+  const groups = {};
+  rows.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
+  const projectNames = Object.keys(groups).sort();
+  projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.booking_date || '').localeCompare(String(a.booking_date || ''))));
+  const projectTotal = (pn) => groups[pn].reduce((s, b) => s + (Number(b.final_amount) || 0), 0);
+  const grandTotal = projectNames.reduce((s, pn) => s + projectTotal(pn), 0);
+  // Short lists (a handful of pending approvals) are more useful open than collapsed —
+  // only make the user click through when there's actually a lot to scroll past.
+  const autoOpen = rows.length <= 10;
+  const isOpen = (pn) => (openProj[pn] === undefined ? autoOpen : openProj[pn]);
+  const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -99,47 +116,73 @@ export function BookingsContent({ adminView = false }) {
         ))}
       </div>
 
-      {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : rows.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>No bookings here.</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {rows.map((b) => (
-            <div key={b.id} style={{ background: '#fff', borderRadius: 14, padding: '16px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>
-                    {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · {b.project_name} · Unit {b.plot_numbers || b.plot_number || b.area}</div>
-                  <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
-                  <span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
-                {b.status === 'pending' && isApprover && (
-                  <>
-                    <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#16A34A' }}>✓ Approve</button>
-                    <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#DC2626' }}>✕ Reject</button>
-                  </>
-                )}
-                {b.status === 'sold' && (() => {
-                  const isEoi = String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
-                  return (
-                    <>
-                      {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#E4571A' }}>→ Convert to LOI</button>}
-                      <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-          ))}
+      {!loading && rows.length > 0 && (
+        <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+          background: 'linear-gradient(135deg,#3D5AFE,#1E3A8A)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(61,90,254,0.25)' }}>
+          <div style={{ color: '#DBEAFE', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            Total {tabLabel} · {rows.length} booking{rows.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+          </div>
+          <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>
       )}
+
+      {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : rows.length === 0 ? (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>No bookings here.</div>
+      ) : projectNames.map((pn) => (
+        <div key={pn} style={{ marginBottom: 12 }}>
+          <div onClick={() => toggleProj(pn)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 12,
+              padding: '14px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', border: isOpen(pn) ? '1.5px solid #C7D2FE' : '1.5px solid transparent' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              🏢 {pn} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#0D47A1' }}>{rupee(projectTotal(pn))}</span>
+              <span style={{ color: '#8492A6', fontSize: 13, fontWeight: 800, transform: isOpen(pn) ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+            </div>
+          </div>
+          {isOpen(pn) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
+              {groups[pn].map((b) => (
+                <div key={b.id} style={{ background: '#fff', borderRadius: 14, padding: '16px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>
+                        {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
+                      </div>
+                      {/* Project lives in the group header now — don't repeat it on every card. */}
+                      <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · Unit {b.plot_numbers || b.plot_number || b.area}</div>
+                      <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
+                      <span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+                    {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
+                    {b.status === 'pending' && isApprover && (
+                      <>
+                        <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#16A34A' }}>✓ Approve</button>
+                        <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#DC2626' }}>✕ Reject</button>
+                      </>
+                    )}
+                    {b.status === 'sold' && (() => {
+                      const isEoi = String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
+                      return (
+                        <>
+                          {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#E4571A' }}>→ Convert to LOI</button>}
+                          <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
