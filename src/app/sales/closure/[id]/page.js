@@ -19,12 +19,26 @@ const STATUS = {
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
 };
 
+// Visual centre of a zone. Uses the polygon's area centroid (shoelace), not the average
+// of its vertices — unit outlines are notched, and a vertex average drifts toward
+// wherever points cluster, which floated labels above their unit. Falls back to the
+// bounding box for degenerate (zero-area) shapes.
 function zoneCenter(zone) {
-  if (zone.points?.length) {
-    const xs = zone.points.map(p => p.x), ys = zone.points.map(p => p.y);
-    return { cx: (Math.min(...xs) + Math.max(...xs)) / 2, cy: (Math.min(...ys) + Math.max(...ys)) / 2 };
+  const pts = zone.points || [];
+  if (pts.length) {
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const bbox = { cx: (Math.min(...xs) + Math.max(...xs)) / 2, cy: (Math.min(...ys) + Math.max(...ys)) / 2 };
+    let a = 0, cx = 0, cy = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const p0 = pts[i], p1 = pts[(i + 1) % pts.length];
+      const cross = p0.x * p1.y - p1.x * p0.y;
+      a += cross; cx += (p0.x + p1.x) * cross; cy += (p0.y + p1.y) * cross;
+    }
+    a *= 0.5;
+    if (Math.abs(a) < 1e-9) return bbox;
+    return { cx: cx / (6 * a), cy: cy / (6 * a) };
   }
-  return { cx: zone.x + zone.width / 2, cy: zone.y + zone.height / 2 };
+  return { cx: (zone.x || 0) + (zone.width || zone.w || 0) / 2, cy: (zone.y || 0) + (zone.height || zone.h || 0) / 2 };
 }
 
 function zoneTopCenter(zone) {
@@ -335,10 +349,16 @@ export default function ClosureViewerPage() {
               const tc  = plot.cluster_type ? TYPE_COLORS[plot.cluster_type] : null;
               const { tx, ty } = zoneTopCenter(zone);
               const isRight = tx > 68;
+              // The map card clips its overflow, so a tooltip drawn above a unit near
+              // the top gets cut. Flip it below the unit in that band instead.
+              const ys = zone.points?.length ? zone.points.map(p => p.y) : [zone.y, zone.y + zone.height];
+              const below = ty < 26;
+              const anchorY = below ? Math.max(...ys) : ty;
+              const shiftX = isRight ? '-92%' : '-8%';
               return (
                 <div style={{
-                  position: 'absolute', left: `${tx}%`, top: `${ty}%`,
-                  transform: isRight ? 'translate(-92%, calc(-100% - 10px))' : 'translate(-8%, calc(-100% - 10px))',
+                  position: 'absolute', left: `${tx}%`, top: `${anchorY}%`,
+                  transform: below ? `translate(${shiftX}, 10px)` : `translate(${shiftX}, calc(-100% - 10px))`,
                   background: 'rgba(10,18,30,0.96)', color: '#fff', padding: '10px 14px', borderRadius: 12,
                   whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20, minWidth: 140,
                   boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',

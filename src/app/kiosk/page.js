@@ -17,14 +17,35 @@ const STEPS = [
 ];
 
 const isImageUrl = (u) => /\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i.test(String(u || ''));
+// Stored as 'road' / 'garden'; shown in full wherever a unit is surfaced.
+const FACING_LABEL = { road: 'Road Facing', garden: 'Garden Facing' };
+
 const KSTATUS = {
   available: { dot: '#16A34A', label: 'Available' },
   sold:      { dot: '#EF4444', label: 'Sold' },
   hold:      { dot: '#F59E0B', label: 'On Hold' },
 };
-const zoneCenter = (z) => (z.points?.length
-  ? { cx: z.points.reduce((s, p) => s + p.x, 0) / z.points.length, cy: z.points.reduce((s, p) => s + p.y, 0) / z.points.length }
-  : { cx: (z.x || 0) + (z.width || 0) / 2, cy: (z.y || 0) + (z.height || 0) / 2 });
+// Visual centre of a zone. Uses the polygon's area centroid (shoelace), not the average
+// of its vertices — unit outlines are notched, and a vertex average drifts toward
+// wherever points cluster, which floated labels above their unit. Falls back to the
+// bounding box for degenerate (zero-area) shapes.
+function zoneCenter(zone) {
+  const pts = zone.points || [];
+  if (pts.length) {
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const bbox = { cx: (Math.min(...xs) + Math.max(...xs)) / 2, cy: (Math.min(...ys) + Math.max(...ys)) / 2 };
+    let a = 0, cx = 0, cy = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const p0 = pts[i], p1 = pts[(i + 1) % pts.length];
+      const cross = p0.x * p1.y - p1.x * p0.y;
+      a += cross; cx += (p0.x + p1.x) * cross; cy += (p0.y + p1.y) * cross;
+    }
+    a *= 0.5;
+    if (Math.abs(a) < 1e-9) return bbox;
+    return { cx: cx / (6 * a), cy: cy / (6 * a) };
+  }
+  return { cx: (zone.x || 0) + (zone.width || zone.w || 0) / 2, cy: (zone.y || 0) + (zone.height || zone.h || 0) / 2 };
+}
 
 export default function KioskPage() {
   const router   = useRouter();
@@ -298,15 +319,25 @@ export default function KioskPage() {
                     const cfg = KSTATUS[pl.status] || KSTATUS.available;
                     const { cx } = zoneCenter(zone);
                     const top = zone.points?.length ? Math.min(...zone.points.map((p) => p.y)) : (zone.y || 0);
+                    const bottom = zone.points?.length ? Math.max(...zone.points.map((p) => p.y)) : ((zone.y || 0) + (zone.h || 0));
                     const right = cx > 70;
+                    // The map clips its overflow, so a tooltip drawn above a unit near the
+                    // top gets cut. Flip it below the unit in that band instead.
+                    const below = top < 26;
+                    const shiftX = right ? '-92%' : '-8%';
                     return (
-                      <div className="k-tip" style={{ left: `${cx}%`, top: `${top}%`, transform: right ? 'translate(-92%,calc(-100% - 8px))' : 'translate(-8%,calc(-100% - 8px))' }}>
+                      <div className="k-tip" style={{ left: `${cx}%`, top: `${below ? bottom : top}%`,
+                        transform: below ? `translate(${shiftX},8px)` : `translate(${shiftX},calc(-100% - 8px))` }}>
                         <div className="k-tip-t">Plot {pl.number}</div>
                         <div className="k-tip-badges">
                           <span style={{ background: cfg.dot + '30', color: cfg.dot, border: `1px solid ${cfg.dot}60` }}>{cfg.label}</span>
                           {pl.cluster_type && <span className="k-tip-type">{pl.cluster_type}</span>}
                         </div>
-                        {pl.size && <div className="k-tip-sz">{pl.size} sq.yd</div>}
+                        {/* size already carries its own unit (e.g. "84 sqyrd") — don't append another */}
+                        {pl.size && <div className="k-tip-sz">{pl.size}</div>}
+                        {/* Facing and terrace both move the price, so surface them here. */}
+                        {pl.facing && <div className="k-tip-fac">{FACING_LABEL[pl.facing] || pl.facing}</div>}
+                        {(pl.terrace_area || '').trim() && <div className="k-tip-ter">Terrace {pl.terrace_area} sq.ft</div>}
                         {pl.status === 'available' && <div className="k-tip-hint">Tap to select →</div>}
                       </div>
                     );
@@ -336,7 +367,7 @@ export default function KioskPage() {
                   {availablePlots.map((pl) => (
                     <button key={pl.id} className={`k-plot ${isSelected(pl) ? 'on' : ''}`} onClick={() => togglePlot(pl)}>
                       <span className="k-plot-no">{pl.number}</span>
-                      {pl.size ? <span className="k-plot-sz">{pl.size} sq.yd</span> : null}
+                      {pl.size ? <span className="k-plot-sz">{pl.size}</span> : null}
                     </button>
                   ))}
                 </div>
@@ -439,6 +470,8 @@ const Style = () => (
   .k-tip-badges span{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
   .k-tip-type{background:rgba(124,58,237,0.25);color:#C4B5FD;border:1px solid rgba(124,58,237,0.5)}
   .k-tip-sz{color:#C9A84C;font-size:11px;font-weight:600;margin-top:5px}
+  .k-tip-fac{color:#93C5FD;font-size:11px;font-weight:600;margin-top:3px}
+  .k-tip-ter{color:#6EE7B7;font-size:11px;font-weight:600;margin-top:3px}
   .k-tip-hint{color:rgba(255,255,255,0.45);font-size:10px;margin-top:5px}
   .k-map img{width:100%;display:block}
   .k-map svg{position:absolute;inset:0;width:100%;height:100%}
