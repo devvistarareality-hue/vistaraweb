@@ -7,6 +7,9 @@ import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../li
 import { downloadLOI } from '../../../lib/bookingLOI';
 
 
+const MAX_LOI_FILE_SIZE_MB = 100;
+const MAX_LOI_FILE_SIZE = MAX_LOI_FILE_SIZE_MB * 1024 * 1024;
+
 // Normalise legacy lowercase source names stored in the DB to display equivalents.
 const srcDisplay = (name) => {
   if (!name) return name;
@@ -376,6 +379,11 @@ function BookingPage() {
   }
   function onFile(e) {
     const file = e.target.files[0]; if (!file) return;
+    if (file.size > MAX_LOI_FILE_SIZE) {
+      setMsg(`File too large — max ${MAX_LOI_FILE_SIZE_MB} MB.`);
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setLoiFile({ name: file.name, type: file.type, data: reader.result.split(',')[1] });
     reader.readAsDataURL(file);
