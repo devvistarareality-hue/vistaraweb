@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import MediaUpload from '../../../../components/MediaUpload';
+import TowerFloorBuilder from '../../../../components/TowerFloorBuilder';
+import { toPlanImage } from '../../../../utils/planImage';
 import { uploadToSupabase } from '../../../../utils/supabaseStorage';
 import { pdfToImageBlob } from '../../../../utils/pdfToImage';
 
@@ -13,24 +15,6 @@ const STATUS_CFG = {
   hold:      { label: 'Hold',      color: '#E65100', bg: '#FFF3E0', border: '#E65100', zone: '#f59e0b' },
   sold:      { label: 'Sold',      color: '#EF4444', bg: '#FEE2E2', border: '#EF4444', zone: '#ef4444' },
 };
-
-/* ─── Plan upload helper ───
-   Architects hand over plans as PDFs, so every plan picker accepts them — but plans
-   are displayed as <img> (in setup and to the buyer picking a unit), so render the
-   first page to PNG and store that instead. Returns the original URL unchanged for
-   images, and falls back to the PDF if rendering fails: keeping an un-previewable
-   upload beats losing it. */
-async function toPlanImage(url, folder, name) {
-  if (!/\.pdf(\?|$)/i.test(url || '')) return { url, converted: false };
-  try {
-    const blob = await pdfToImageBlob(url, 2);
-    const file = new File([blob], `${name}.png`, { type: 'image/png' });
-    const up = await uploadToSupabase(file, folder);
-    return { url: up.url, converted: true };
-  } catch (err) {
-    return { url, converted: false, error: err.message || 'unknown error' };
-  }
-}
 
 /* ─── Zone center helper ─── */
 function zoneCenter(zone) {
@@ -805,231 +789,6 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
   );
 }
 
-/* ─── Tower Floor Builder ───
-   Plotted schemes get a flat list of plot numbers; a tower (Pratishtha: G+13) is
-   defined floor by floor — each floor has its own numbering run and its own plan
-   drawing. Ground is floor 0, so "Shop1–Shop12" on the ground and "101–107",
-   "201–207" upward all come out of the same prefix + from/to rule. */
-const ordinal = (n) => {
-  if (n === 0) return 'Ground';
-  const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]) + ' Floor';
-};
-
-// A floor's units: prefix + every number from..to. Ground normally carries a word
-// prefix ("Shop"), upper floors a bare 3-digit run keyed off the floor number.
-function unitsForFloor(f) {
-  const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
-  if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) return [];
-  if (to - from > 200) return [];   // guard against a stray keystroke generating thousands
-  const out = [];
-  for (let n = from; n <= to; n++) out.push(`${f.prefix || ''}${n}`);
-  return out;
-}
-
-function TowerFloorBuilder({ project, plots, onProjectUpdate, onPlotsChanged }) {
-  const id = project.id;
-  const existing = new Set(plots.map((p) => String(p.number)));
-
-  // Seed from whatever is already saved; otherwise a sensible G+13 skeleton.
-  const seed = () => {
-    const saved = project.floor_plans || [];
-    if (saved.length) return saved.map((f) => ({ prefix: '', from: '', to: '', ...f }));
-    return [{ floor: 0, label: 'Ground', prefix: 'Shop', from: 1, to: 12, image_url: '' }];
-  };
-  const [floors, setFloors] = useState(seed);
-  const [saving, setSaving] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [converting, setConverting] = useState(null);   // floor index mid PDF→PNG
-
-  const persist = async (updated) => {
-    setSaving(true);
-    const res = await fetch(SALES_ENDPOINTS.project(id), {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ floor_plans: updated }),
-    });
-    if (res.ok) onProjectUpdate(await res.json());
-    setSaving(false);
-  };
-  const update = (i, patch) => {
-    const next = floors.map((f, ix) => (ix === i ? { ...f, ...patch } : f));
-    setFloors(next); return next;
-  };
-  const commit = (next) => { setFloors(next); persist(next); };
-
-  function addFloor() {
-    const top = floors.reduce((m, f) => Math.max(m, Number(f.floor) || 0), -1) + 1;
-    // Upper floors follow the 101/201/301 convention off the floor number.
-    commit([...floors, { floor: top, label: ordinal(top), prefix: '', from: top * 100 + 1, to: top * 100 + 7, image_url: '' }]);
-  }
-
-  // Towers repeat: floors 2..13 are usually floor 1 with a different hundreds digit.
-  function repeatUpTo(i, topFloor) {
-    const src = floors[i];
-    const base = Number(src.floor) || 0;
-    const span = (parseInt(src.to, 10) || 0) - (parseInt(src.from, 10) || 0);
-    const offset = (parseInt(src.from, 10) || 0) - base * 100;   // e.g. 101 - 1*100 = 1
-    const next = [...floors];
-    for (let fl = base + 1; fl <= topFloor; fl++) {
-      if (next.some((f) => Number(f.floor) === fl)) continue;
-      next.push({ floor: fl, label: ordinal(fl), prefix: src.prefix || '',
-        from: fl * 100 + offset, to: fl * 100 + offset + span, image_url: src.image_url || '' });
-    }
-    next.sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0));
-    commit(next);
-  }
-
-  function removeFloor(i) {
-    if (!window.confirm(`Remove ${floors[i].label} from the plan? Units already generated are kept.`)) return;
-    commit(floors.filter((_, ix) => ix !== i));
-  }
-
-  async function setPlan(i, url) {
-    setConverting(i); setMsg('');
-    const r = await toPlanImage(url, `erp/projects/${id}/floor-plans`, `floor_${floors[i].floor ?? i}`);
-    commit(floors.map((x, ix) => (ix === i ? { ...x, image_url: r.url } : x)));
-    if (r.error) setMsg('Uploaded the PDF, but could not render a preview: ' + r.error);
-    setConverting(null);
-  }
-
-  const planned = floors.flatMap((f) => unitsForFloor(f).map((number) => ({ number, floor: Number(f.floor) || 0 })));
-  const toCreate = planned.filter((u) => !existing.has(u.number));
-  const dupes = planned.length - new Set(planned.map((u) => u.number)).size;
-
-  async function generate() {
-    if (!toCreate.length) return;
-    setBusy(true); setMsg('');
-    try {
-      const res = await fetch(SALES_ENDPOINTS.plotsBulk, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ project_id: id, plots: toCreate.map((u) => ({ number: u.number, floor: u.floor })) }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setMsg(`✅ Created ${d.created ?? toCreate.length} units.`);
-        const fresh = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then((r) => r.json());
-        onPlotsChanged(Array.isArray(fresh) ? fresh : []);
-      } else setMsg('Error: ' + (d.detail || res.status));
-    } catch (e) { setMsg(e.message); }
-    setBusy(false);
-  }
-
-  const inp = { height: 34, padding: '0 9px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
-
-  return (
-    <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>🏢 Floor-wise Setup</div>
-          <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>
-            Define each floor's unit numbering and plan. Ground is floor 0.
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {saving && <span style={{ fontSize: 11, color: '#8492A6' }}>Saving…</span>}
-          <button onClick={addFloor} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-            + Add Floor
-          </button>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {floors.length === 0 && <p style={{ fontSize: 13, color: '#8492A6' }}>No floors yet — add one to begin.</p>}
-        {floors.map((f, i) => {
-          const units = unitsForFloor(f);
-          const isNew = units.filter((n) => !existing.has(n)).length;
-          return (
-            <div key={i} style={{ border: '1.5px solid #E6EBF4', borderRadius: 12, padding: 14 }}>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <div style={{ width: 62 }}>
-                  <label style={lblSm}>Floor</label>
-                  <input type="number" value={f.floor} onChange={(e) => setFloors(update(i, { floor: e.target.value }))}
-                    onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
-                </div>
-                <div style={{ width: 130 }}>
-                  <label style={lblSm}>Label</label>
-                  <input value={f.label || ''} onChange={(e) => setFloors(update(i, { label: e.target.value }))}
-                    onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
-                </div>
-                <div style={{ width: 96 }}>
-                  <label style={lblSm}>Prefix</label>
-                  <input value={f.prefix || ''} placeholder="e.g. Shop" onChange={(e) => setFloors(update(i, { prefix: e.target.value }))}
-                    onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
-                </div>
-                <div style={{ width: 78 }}>
-                  <label style={lblSm}>From</label>
-                  <input type="number" value={f.from} onChange={(e) => setFloors(update(i, { from: e.target.value }))}
-                    onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
-                </div>
-                <div style={{ width: 78 }}>
-                  <label style={lblSm}>To</label>
-                  <input type="number" value={f.to} onChange={(e) => setFloors(update(i, { to: e.target.value }))}
-                    onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
-                </div>
-                <button onClick={() => removeFloor(i)} title="Remove floor"
-                  style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕</button>
-              </div>
-
-              <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: units.length ? '#374151' : '#DC2626' }}>
-                  {units.length
-                    ? <>{units.length} unit{units.length === 1 ? '' : 's'}: <b>{units.slice(0, 3).join(', ')}{units.length > 3 ? ` … ${units[units.length - 1]}` : ''}</b>
-                        {isNew === 0 && <span style={{ color: '#15803D', marginLeft: 6 }}>· all exist</span>}
-                        {isNew > 0 && isNew < units.length && <span style={{ color: '#B45309', marginLeft: 6 }}>· {isNew} new</span>}</>
-                    : 'Set From / To to generate unit numbers.'}
-                </span>
-                <button onClick={() => { const top = Number(window.prompt('Repeat this floor\'s layout up to which floor?', '13')); if (top) repeatUpTo(i, top); }}
-                  style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #E0E6F0', background: '#fff', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                  ↓ Repeat up to…
-                </button>
-              </div>
-
-              <div style={{ marginTop: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
-                {converting === i ? (
-                  <span style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 600 }}>Converting PDF to an image…</span>
-                ) : f.image_url ? (
-                  <>
-                    {/\.pdf(\?|$)/i.test(f.image_url)
-                      ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 600 }}>📄 View PDF ↗</a>
-                      : <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid #E6EBF4' }} />}
-                    <button onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
-                      style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
-                  </>
-                ) : (
-                  <div style={{ flex: 1, minWidth: 240 }}>
-                    <MediaUpload value="" label=""
-                      onChange={(url) => setPlan(i, url)}
-                      folder={`erp/projects/${id}/floor-plans`} accept="image/*,application/pdf"
-                      hint={`Upload ${f.label || 'floor'} plan (JPG / PNG / PDF)`} />
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {planned.length > 0 && (
-        <div style={{ marginTop: 16, borderTop: '1px solid #F0F3FA', paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 13, color: '#374151' }}>
-            <b>{planned.length}</b> units planned across <b>{floors.length}</b> floors ·{' '}
-            <span style={{ color: toCreate.length ? '#B45309' : '#15803D', fontWeight: 700 }}>
-              {toCreate.length ? `${toCreate.length} to create` : 'all already created'}
-            </span>
-            {dupes > 0 && <span style={{ color: '#DC2626', fontWeight: 700 }}> · {dupes} duplicate number{dupes === 1 ? '' : 's'} across floors</span>}
-          </div>
-          <button onClick={generate} disabled={busy || !toCreate.length}
-            style={{ padding: '10px 20px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
-              background: toCreate.length && !busy ? 'linear-gradient(135deg,#182350,#3D5AFE)' : '#C7D2FE', cursor: toCreate.length && !busy ? 'pointer' : 'not-allowed' }}>
-            {busy ? 'Generating…' : `Generate ${toCreate.length} Units`}
-          </button>
-        </div>
-      )}
-      {!!msg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#15803D' : '#DC2626' }}>{msg}</p>}
-    </div>
-  );
-}
-const lblSm = { display: 'block', fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 };
 
 /* ─── Main Page ─── */
 export default function ManagePlotsPage() {
@@ -1046,6 +805,31 @@ export default function ManagePlotsPage() {
   const [filter,  setFilter]  = useState('all');
   const [loading, setLoading] = useState(true);
   const [savingMaster, setSavingMaster] = useState(false);
+  // Floor-wise projects: the builder edits these, this page persists them and turns
+  // them into unit records.
+  const [floorPlans, setFloorPlans] = useState([]);
+  const [genBusy, setGenBusy] = useState(false);
+
+  const saveFloorPlans = useCallback(async (next) => {
+    const res = await fetch(SALES_ENDPOINTS.project(id), {
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ floor_plans: next }),
+    });
+    if (res.ok) setProject(await res.json());
+  }, [id]);
+
+  const generateUnits = useCallback(async (toCreate) => {
+    if (!toCreate.length) return;
+    setGenBusy(true);
+    try {
+      await fetch(SALES_ENDPOINTS.plotsBulk, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ project_id: id, plots: toCreate.map((u) => ({ number: u.number, floor: u.floor })) }),
+      });
+      const fresh = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then((r) => r.json());
+      setPlots(Array.isArray(fresh) ? fresh : []);
+    } catch (_) { /* surfaced by the unchanged unit count */ }
+    setGenBusy(false);
+  }, [id]);
 
   useEffect(() => {
     Promise.all([
@@ -1054,6 +838,10 @@ export default function ManagePlotsPage() {
     ]).then(([proj, plotList]) => {
       setProject(proj);
       setPlots(Array.isArray(plotList) ? plotList : []);
+      // Seed the builder: saved floors, else a sensible ground-floor starting row.
+      const saved = proj?.floor_plans || [];
+      setFloorPlans(saved.length ? saved.map((f) => ({ prefix: '', from: '', to: '', ...f }))
+        : [{ floor: 0, label: 'Ground', prefix: 'Shop', from: 1, to: 12, image_url: '' }]);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
@@ -1199,7 +987,18 @@ export default function ManagePlotsPage() {
       {/* Layout mode decides which editor applies: a tower is built floor by floor,
           a plotted scheme is positioned on a site map. Set it in Edit Project. */}
       {project.floor_wise ? (
-        <TowerFloorBuilder project={project} plots={plots} onProjectUpdate={setProject} onPlotsChanged={setPlots} />
+        <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>🏢 Floor-wise Setup</div>
+          <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 4 }}>
+            Define each floor's unit numbering and plan. Ground is floor 0.
+          </div>
+          <TowerFloorBuilder
+            floors={floorPlans} setFloors={setFloorPlans}
+            folder={`erp/projects/${id}/floor-plans`}
+            existing={new Set(plots.map((p) => String(p.number)))}
+            onPersist={saveFloorPlans}
+            onGenerate={generateUnits} generating={genBusy} />
+        </div>
       ) : (
         <>
           {/* Plot Type Floor Plans */}
