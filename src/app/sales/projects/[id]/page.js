@@ -489,7 +489,7 @@ function parseSizeUnit(sizeStr) {
 }
 
 /* ─── Plot Card ─── */
-function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
+function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floorWise = false }) {
   const cfg = STATUS_CFG[plot.status] || STATUS_CFG.available;
   const [saving,  setSaving]  = useState(false);
   const [editing, setEditing] = useState(false);
@@ -506,6 +506,11 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
   const [editType, setEditType] = useState(plot.cluster_type || '');
   const [editNum,  setEditNum]  = useState(displayNum);
   const [constArea, setConstArea] = useState(plot.construction_area || '');
+  // Tower units: which way the flat faces (road commands a premium) and the private
+  // terrace area, if any. Both are per-unit and feed the unit's price.
+  const [facing, setFacing] = useState(plot.facing || '');
+  const [hasTerrace, setHasTerrace] = useState(!!(plot.terrace_area || '').trim());
+  const [terraceArea, setTerraceArea] = useState(plot.terrace_area || '');
 
   function openEdit() {
     const p = parseSizeUnit(plot.size);
@@ -514,6 +519,9 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
     setEditType(plot.cluster_type || '');
     setEditNum(displayNum);
     setConstArea(plot.construction_area || '');
+    setFacing(plot.facing || '');
+    setHasTerrace(!!(plot.terrace_area || '').trim());
+    setTerraceArea(plot.terrace_area || '');
     setEditing(true);
   }
 
@@ -530,7 +538,12 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
     const combinedSize = sizeVal.trim() ? `${sizeVal.trim()} ${sizeUnit}` : '';
     const res = await fetch(SALES_ENDPOINTS.plot(plot.id), {
       method: 'PATCH', headers: authHeaders(),
-      body: JSON.stringify({ number: newNumber, size: combinedSize, construction_area: constArea.trim(), cluster_type: editType.trim() }),
+      body: JSON.stringify({
+        number: newNumber, size: combinedSize, construction_area: constArea.trim(), cluster_type: editType.trim(),
+        // Clearing the terrace toggle wipes the stored area, so a unit can't keep a
+        // stale terrace charge after being switched back.
+        ...(floorWise ? { facing, terrace_area: hasTerrace ? terraceArea.trim() : '' } : {}),
+      }),
     });
     if (res.ok) { onPlotUpdate(await res.json()); setEditing(false); }
     setSaving(false);
@@ -610,6 +623,37 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
             <input value={constArea} onChange={e => setConstArea(e.target.value)}
               placeholder="e.g. 1200" type="text" inputMode="decimal" style={inpStyle} />
           </div>
+          {/* Tower units: facing drives a price premium, terrace is charged separately. */}
+          {floorWise && (
+            <>
+              <div>
+                <label style={lblStyle}>Facing</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[['road', 'Road Facing'], ['garden', 'Garden Facing']].map(([val, label]) => {
+                    const on = facing === val;
+                    return (
+                      <button key={val} type="button" onClick={() => setFacing(on ? '' : val)}
+                        style={{ flex: 1, padding: '10px 8px', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                          border: `1.5px solid ${on ? '#3D5AFE' : '#E8C97A'}`, background: on ? '#EEF1FF' : '#fff', color: on ? '#2536C9' : '#8492A6' }}>
+                        {on ? '✓ ' : ''}{label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <label style={{ ...lblStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={hasTerrace} onChange={(e) => setHasTerrace(e.target.checked)} />
+                  Has Terrace
+                </label>
+                {hasTerrace && (
+                  <input value={terraceArea} onChange={(e) => setTerraceArea(e.target.value)}
+                    placeholder="Terrace area (sq.ft) — e.g. 300" type="text" inputMode="decimal" style={inpStyle} />
+                )}
+              </div>
+            </>
+          )}
+
           {/* Cluster/Type + Number */}
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 10 }}>
             <div>
@@ -1143,7 +1187,8 @@ export default function ManagePlotsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12, alignItems: 'start' }}>
           {filtered.map(plot => (
             <PlotCard key={plot.id} plot={plot} onStatusChange={handleStatusChange} onPlotUpdate={handlePlotUpdate}
-              clusterTypes={[...new Set(plots.map(p => p.cluster_type).filter(Boolean))]} />
+              clusterTypes={[...new Set(plots.map(p => p.cluster_type).filter(Boolean))]}
+              floorWise={!!project.floor_wise} />
           ))}
         </div>
       )}
