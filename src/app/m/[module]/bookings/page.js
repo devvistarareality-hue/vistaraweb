@@ -100,8 +100,18 @@ function BookingDetails({ b }) {
           <Row2 label="Stamp Duty" value={money0(b.stamp_duty)} />
           <Row2 label="Registration" value={money0(b.reg_fees)} />
           <Row2 label="GST" value={money0(b.gst)} />
-          <Row2 label="Maintenance Deposit" value={money0(b.maint_deposit || b.maintenance)} />
-          {Number(b.maint_advance) ? <Row2 label="Maintenance Advance" value={money0(b.maint_advance)} /> : null}
+          {/* Kalrav-3 / Ankhol / Industrial split maintenance into deposit + advance;
+              plain Kalrav books a single Maintenance amount and leaves both at 0. Test
+              numerically — DRF serialises decimals as strings, so "0.00" is truthy and
+              a `maint_deposit || maintenance` fallback would never fire. */}
+          {(Number(b.maint_deposit) || Number(b.maint_advance)) ? (
+            <>
+              <Row2 label="Maintenance Deposit" value={money0(b.maint_deposit)} />
+              {Number(b.maint_advance) ? <Row2 label="Maintenance Advance" value={money0(b.maint_advance)} /> : null}
+            </>
+          ) : (
+            <Row2 label="Maintenance" value={money0(b.maintenance)} />
+          )}
           <Row2 label="Legal Charges" value={money0(b.legal_charges)} />
           <Row2 label="Total Legal & Other" value={money0(b.total_extra)} />
           {Number(b.discount) ? <Row2 label="Discount" value={money0(b.discount)} /> : null}
