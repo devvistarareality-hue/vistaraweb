@@ -7,6 +7,9 @@ import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../li
 import { downloadLOI } from '../../../lib/bookingLOI';
 
 
+const MAX_LOI_FILE_SIZE_MB = 100;
+const MAX_LOI_FILE_SIZE = MAX_LOI_FILE_SIZE_MB * 1024 * 1024;
+
 // Normalise legacy lowercase source names stored in the DB to display equivalents.
 const srcDisplay = (name) => {
   if (!name) return name;
@@ -376,6 +379,11 @@ function BookingPage() {
   }
   function onFile(e) {
     const file = e.target.files[0]; if (!file) return;
+    if (file.size > MAX_LOI_FILE_SIZE) {
+      setMsg(`File too large — max ${MAX_LOI_FILE_SIZE_MB} MB.`);
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setLoiFile({ name: file.name, type: file.type, data: reader.result.split(',')[1] });
     reader.readAsDataURL(file);
@@ -424,9 +432,14 @@ function BookingPage() {
       if (res.ok) {
         setMsg('✅ Booking submitted — sent for approval.');
         try { sessionStorage.setItem('booking_flash', 'Your booking has been submitted and sent for approval.'); } catch {}
+        // Leave the button disabled (saving stays true) — we're navigating away
+        // momentarily. Re-enabling it here let an impatient re-click during that
+        // 1s window fire a second, identical submission (confirmed against real
+        // duplicate bookings in production).
         setTimeout(() => router.push(kioskMode ? '/kiosk' : '/sales/closure'), 1000);
+        return;
       }
-      else setMsg('Error: ' + JSON.stringify(await res.json().catch(() => ({}))));
+      setMsg('Error: ' + JSON.stringify(await res.json().catch(() => ({}))));
     } catch (e) { setMsg(e.message); }
     setSaving(false);
   }
@@ -436,6 +449,13 @@ function BookingPage() {
   const unit = f.area_unit || flags.areaUnit;
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
+      {saving && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #E0E6F0', borderTopColor: '#1a73e8', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>Submitting booking…</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
       <button onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
         {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI' : (plots.length > 1 ? 'Book Units' : 'Book Unit')}{' '}
