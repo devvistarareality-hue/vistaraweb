@@ -10,6 +10,9 @@ const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?'
 
 // Status config keyed to vistaraweb plot statuses. Only "available" is selectable
 // for a closure (Sold/Hold are shown for context but not clickable).
+// Stored as 'road' / 'garden'; shown in full wherever a unit is surfaced.
+const FACING_LABEL = { road: 'Road Facing', garden: 'Garden Facing' };
+
 const STATUS = {
   available: { label: 'Available', dot: '#22c55e', text: '#064E3B', bg: '#E8F5E9' },
   hold:      { label: 'On Hold',   dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
@@ -348,6 +351,18 @@ export default function ClosureViewerPage() {
                     )}
                   </div>
                   {plot.size && <div style={{ color: '#C9A84C', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
+                  {/* Facing and terrace both move the price, so surface them on hover
+                      rather than making the user open the unit to find out. */}
+                  {plot.facing && (
+                    <div style={{ color: '#93C5FD', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      {FACING_LABEL[plot.facing] || plot.facing}
+                    </div>
+                  )}
+                  {(plot.terrace_area || '').trim() && (
+                    <div style={{ color: '#6EE7B7', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      Terrace {plot.terrace_area} sq.ft
+                    </div>
+                  )}
                   {plot.status === 'available' && (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
                   )}
@@ -371,7 +386,11 @@ export default function ClosureViewerPage() {
                 const isSel = selectedSet.has(plot.id);
                 return (
                   <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
-                    title={cfg.label}
+                    // No plan drawn for this floor, so the chip's tooltip is the only
+                    // place these price-affecting details can surface.
+                    title={[cfg.label, plot.size, FACING_LABEL[plot.facing],
+                            (plot.terrace_area || '').trim() && `Terrace ${plot.terrace_area} sq.ft`]
+                            .filter(Boolean).join(' · ')}
                     style={{
                       minWidth: 56, padding: '10px 12px', borderRadius: 10,
                       border: `1.5px solid ${isSel ? '#1A237E' : cfg.dot}`,
