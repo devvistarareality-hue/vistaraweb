@@ -31,15 +31,20 @@ function zoneCenter(zone) {
 const isImageUrl = url => url && /\.(jpg|jpeg|png|webp|gif|svg)(\?|$)/i.test(url);
 const isPdfUrl   = url => url && /\.pdf(\?|$)/i.test(url);
 
-function SiteMapEditor({ project, plots, onProjectUpdate }) {
+/* Drives both the whole-project site map and a single floor's plan. Left unparameterised
+   it reads/writes project.site_map_*; a floor passes its own image + zones in and keeps
+   them inside its floor_plans entry. Same drawing engine either way. */
+function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZonesChange,
+                         imageOverride, onImageChange, heading, blurb, extraHeader }) {
   const containerRef = useRef();
   const plotNumRef   = useRef();
+  const scoped = zonesOverride !== undefined;   // a floor supplies its own data
 
-  const zones = project.site_map_zones || [];
+  const zones = scoped ? (zonesOverride || []) : (project.site_map_zones || []);
 
   // Resolved site map image: prefer site_map_image_url (converted PNG), else master_plan_url if image
-  const resolvedImage = project.site_map_image_url
-    || (isImageUrl(project.master_plan_url) ? project.master_plan_url : '');
+  const resolvedImage = scoped ? (imageOverride || '')
+    : (project.site_map_image_url || (isImageUrl(project.master_plan_url) ? project.master_plan_url : ''));
 
   const [siteMapImage, setSiteMapImage] = useState(resolvedImage);
   const [converting,   setConverting]   = useState(false);
@@ -55,9 +60,11 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
   const [plotInput,   setPlotInput]   = useState('');
   const [saving,      setSaving]      = useState(false);
 
-  // Auto-convert PDF master plan on first load
+  useEffect(() => { if (scoped) setSiteMapImage(imageOverride || ''); }, [scoped, imageOverride]);
+
+  // Auto-convert PDF master plan on first load (whole-project map only)
   useEffect(() => {
-    if (siteMapImage) return;
+    if (scoped || siteMapImage) return;
     if (!isPdfUrl(project.master_plan_url)) return;
     convertPdf(project.master_plan_url);
   }, [project.master_plan_url]);
@@ -98,6 +105,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
   }
 
   async function persistZones(newZones) {
+    if (scoped) { onZonesChange(newZones); return; }
     setSaving(true);
     const res = await fetch(SALES_ENDPOINTS.project(project.id), {
       method: 'PATCH', headers: authHeaders(),
@@ -111,6 +119,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
   }
 
   async function persistSiteMapImage(url) {
+    if (scoped) { onImageChange(url); setSiteMapImage(url); return; }
     const res = await fetch(SALES_ENDPOINTS.project(project.id), {
       method: 'PATCH', headers: authHeaders(),
       body: JSON.stringify({ site_map_image_url: url, site_map_zones: [] }),
@@ -218,7 +227,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
       <div style={{ padding: '14px 18px', borderBottom: '1px solid #F0F3FA', background: '#FAFBFF' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Interactive Site Map
+            {heading || 'Interactive Site Map'}
           </div>
           {siteMapImage && (
             <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
@@ -229,8 +238,9 @@ function SiteMapEditor({ project, plots, onProjectUpdate }) {
           )}
         </div>
         <p style={{ fontSize: 12, color: '#8492A6', marginTop: 4 }}>
-          Drag rectangles or click polygon vertices over each plot on the master plan. Zones turn green/red automatically based on plot status.
+          {blurb || 'Drag rectangles or click polygon vertices over each plot on the master plan. Zones turn green/red automatically based on plot status.'}
         </p>
+        {extraHeader}
         {siteMapImage && totalPlots > 0 && (
           <div style={{ height: 5, borderRadius: 4, background: '#F0F3FA', overflow: 'hidden', marginTop: 8 }}>
             <div style={{ height: '100%', width: `${mappedPct}%`, background: 'linear-gradient(90deg,#3D5AFE,#22c55e)', borderRadius: 4, transition: 'width 0.4s' }} />
@@ -638,6 +648,79 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [] }) {
   );
 }
 
+/* ─── Floor Map Editor ───
+   The tower equivalent of the site map: pick a floor, then draw a zone over each unit
+   on that floor's plan. Zones live inside the floor's own floor_plans entry, so every
+   floor keeps its own mapping against its own drawing. */
+function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
+  const withPlan = floors.filter((f) => f.image_url);
+  const [sel, setSel] = useState(0);
+  const active = withPlan[Math.min(sel, Math.max(withPlan.length - 1, 0))];
+
+  if (!floors.length) return null;
+  if (!withPlan.length) {
+    return (
+      <div style={{ backgroundColor: '#fff', borderRadius: 12, padding: '18px 20px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Floor Plan Mapping</div>
+        <p style={{ fontSize: 12, color: '#8492A6', marginTop: 6 }}>
+          Upload a plan for at least one floor above to start mapping its units.
+        </p>
+      </div>
+    );
+  }
+
+  const idxInAll = floors.findIndex((f) => f === active);
+  // Only this floor's units are mappable — matched by the floor field, falling back to
+  // the floor's own numbering run for units created before `floor` was recorded.
+  const names = new Set(unitsForFloorNumbers(active));
+  const floorPlots = plots.filter((p) => (p.floor !== null && p.floor !== undefined)
+    ? Number(p.floor) === Number(active.floor)
+    : names.has(String(p.number)));
+
+  const setZones = (zones) => onFloorsChange(floors.map((f, i) => (i === idxInAll ? { ...f, zones } : f)));
+  const setImage = (image_url) => onFloorsChange(floors.map((f, i) => (i === idxInAll ? { ...f, image_url, zones: [] } : f)));
+
+  const picker = (
+    <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <label style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4 }}>Floor</label>
+      <select value={sel} onChange={(e) => setSel(Number(e.target.value))}
+        style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
+        {withPlan.map((f, i) => {
+          const mapped = (f.zones || []).length;
+          const total = unitsForFloorNumbers(f).length;
+          return <option key={i} value={i}>{f.label || `Floor ${f.floor}`} — {mapped}/{total} mapped</option>;
+        })}
+      </select>
+    </div>
+  );
+
+  return (
+    <SiteMapEditor
+      key={idxInAll}
+      project={project}
+      plots={floorPlots}
+      onProjectUpdate={() => {}}
+      zonesOverride={active.zones || []}
+      onZonesChange={setZones}
+      imageOverride={active.image_url}
+      onImageChange={setImage}
+      heading="Floor Plan Mapping"
+      blurb={`Drag rectangles or click polygon vertices over each unit on the ${active.label || 'floor'} plan. Zones turn green/red automatically based on unit status.`}
+      extraHeader={picker}
+    />
+  );
+}
+
+// Unit numbers a floor's rule produces — used to scope plots to a floor and to show
+// per-floor mapping progress.
+function unitsForFloorNumbers(f) {
+  const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
+  if (!Number.isFinite(from) || !Number.isFinite(to) || to < from || to - from > 200) return [];
+  const out = [];
+  for (let n = from; n <= to; n++) out.push(`${f.prefix || ''}${n}`);
+  return out;
+}
+
 /* ─── Plot Type Floor Plans Editor ─── */
 function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
   const id = project.id;
@@ -955,7 +1038,8 @@ export default function ManagePlotsPage() {
         </div>
       )}
 
-      {/* Master Plan */}
+      {/* Master Plan — plotted schemes only; a tower is described by its per-floor plans. */}
+      {!project.floor_wise && (
       <div style={{ backgroundColor: '#fff', borderRadius: 12, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Master Plan</div>
@@ -984,10 +1068,13 @@ export default function ManagePlotsPage() {
         )}
       </div>
 
+      )}
+
       {/* Layout mode decides which editor applies: a tower is built floor by floor,
           a plotted scheme is positioned on a site map. Set it in Edit Project. */}
       {project.floor_wise ? (
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+        <>
+          <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>🏢 Floor-wise Setup</div>
           <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 4 }}>
             Define each floor's unit numbering and plan. Ground is floor 0.
@@ -998,7 +1085,10 @@ export default function ManagePlotsPage() {
             existing={new Set(plots.map((p) => String(p.number)))}
             onPersist={saveFloorPlans}
             onGenerate={generateUnits} generating={genBusy} />
-        </div>
+          </div>
+          <FloorMapEditor project={project} plots={plots} floors={floorPlans}
+            onFloorsChange={(next) => { setFloorPlans(next); saveFloorPlans(next); }} />
+        </>
       ) : (
         <>
           {/* Plot Type Floor Plans */}

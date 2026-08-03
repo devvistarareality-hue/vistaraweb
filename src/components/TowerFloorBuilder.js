@@ -80,13 +80,10 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
   const inp = { height: 34, padding: '0 9px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
 
   return (
-    <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>🏢 Floor-wise Setup</div>
-          <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>
-            Define each floor's unit numbering and plan. Ground is floor 0.
-          </div>
+        <div style={{ fontSize: 12, color: '#8492A6' }}>
+          Define each floor's unit numbering and plan. Ground is floor 0.
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           
