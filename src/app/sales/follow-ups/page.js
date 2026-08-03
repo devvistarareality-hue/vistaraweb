@@ -244,7 +244,7 @@ export function FollowUpsContent({ adminView = false }) {
           onClick={() => !submitting && setDone(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Complete follow-up</div>
-            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
+            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 16 }}>{done.lead_name}{!!done.lead_phone && ` · ${done.lead_phone}`} · {fmtDateTime(done.scheduled_at)}</div>
 
             {/* Update the lead's status after this call (TC or STM, per the follow-up's role). */}
             <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>
