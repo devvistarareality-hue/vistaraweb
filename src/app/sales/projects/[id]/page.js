@@ -1196,14 +1196,19 @@ export default function ManagePlotsPage() {
         )}
       </div>
 
-      {/* Floor-wise setup — towers only (a plotted scheme has no floors) */}
-      <TowerFloorBuilder project={project} plots={plots} onProjectUpdate={setProject} onPlotsChanged={setPlots} />
+      {/* Layout mode decides which editor applies: a tower is built floor by floor,
+          a plotted scheme is positioned on a site map. Set it in Edit Project. */}
+      {project.floor_wise ? (
+        <TowerFloorBuilder project={project} plots={plots} onProjectUpdate={setProject} onPlotsChanged={setPlots} />
+      ) : (
+        <>
+          {/* Plot Type Floor Plans */}
+          <PlotTypePlansEditor project={project} onProjectUpdate={setProject} plots={plots} />
 
-      {/* Plot Type Floor Plans */}
-      <PlotTypePlansEditor project={project} onProjectUpdate={setProject} plots={plots} />
-
-      {/* Interactive Site Map */}
-      <SiteMapEditor project={project} plots={plots} onProjectUpdate={setProject} />
+          {/* Interactive Site Map */}
+          <SiteMapEditor project={project} plots={plots} onProjectUpdate={setProject} />
+        </>
+      )}
 
       {/* Filter tabs + Delete All */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>

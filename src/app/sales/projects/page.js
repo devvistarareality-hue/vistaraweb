@@ -103,6 +103,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     master_plan_url: project?.master_plan_url || '',
     eoi_unit_types:  project?.eoi_unit_types  || [],
     kiosk_enabled:   project?.kiosk_enabled   ?? false,
+    floor_wise:      project?.floor_wise      ?? false,
   });
 
   // EOI standard unit types (pre-approval sizes) — [{type, plot_area, const_area}].
@@ -147,6 +148,9 @@ function ProjectModal({ project, onClose, onSaved }) {
   function updateType(i, k, v)    { setPlotTypes(p => p.map((t, idx) => idx === i ? { ...t, [k]: v } : t)); }
 
   function buildPlots() {
+    // A floor-wise project's units come from the Floor-wise Setup builder, not this
+    // wizard — never create plots from leftover wizard state.
+    if (form.floor_wise) return [];
     if (hasTypes) {
       const arr = [];
       for (const pt of plotTypes) {
@@ -295,6 +299,19 @@ function ProjectModal({ project, onClose, onSaved }) {
               </select>
               <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Drives the booking / EOI pricing formulas. This is separate from the display Type above.</p>
             </div>
+            <div>
+              <label style={mLbl}>Layout <span style={{ color: '#EF4444' }}>*</span></label>
+              <select value={form.floor_wise ? 'floor' : 'plot'} onChange={e => set('floor_wise', e.target.value === 'floor')}
+                style={{ ...mInp, cursor: 'pointer' }}>
+                <option value="plot">Plotted scheme — flat list of plots + site map</option>
+                <option value="floor">Floor-wise (tower) — units defined per floor</option>
+              </select>
+              <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>
+                {form.floor_wise
+                  ? 'Units are built floor by floor (e.g. Ground = Shop1–12, 1st = 101–107), each floor with its own plan.'
+                  : 'Plots are added as a flat list and positioned on an interactive site map.'}
+              </p>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={mLbl}>RERA Number</label>
@@ -345,7 +362,21 @@ function ProjectModal({ project, onClose, onSaved }) {
               folder="erp/projects/masterplans" accept="image/*,application/pdf" hint="Upload master plan image or PDF" />
           </div>
 
-          {/* Plot Setup */}
+          {/* Plot Setup — a tower's units come from the floor-wise builder on the project
+              page instead, so this flat-list wizard doesn't apply. */}
+          {form.floor_wise ? (
+            <>
+              <div style={mSec}>Unit Setup</div>
+              <div style={{ marginBottom: 20, background: '#F5F7FF', border: '1px solid #E0E6F0', borderRadius: 10, padding: '12px 14px' }}>
+                <p style={{ fontSize: 12, color: '#4B5563', margin: 0, lineHeight: 1.6 }}>
+                  This is a floor-wise project — units are created per floor.
+                  {isEdit ? ' Open ' : ' Save the project, then open '}
+                  <b>Manage Plots → Floor-wise Setup</b> to define each floor's numbering and plan.
+                </p>
+              </div>
+            </>
+          ) : (
+          <>
           <div style={mSec}>Plot Setup</div>
           <div style={{ marginBottom: 20 }}>
             {isEdit ? (
@@ -389,6 +420,8 @@ function ProjectModal({ project, onClose, onSaved }) {
               <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} />
             )}
           </div>
+          </>
+          )}
 
           {/* EOI Unit Types — standard pre-approval sizes used to prefill the EOI form */}
           <div style={mSec}>EOI Unit Types</div>
