@@ -8,6 +8,8 @@ import { isClub1000Manager } from '../../../lib/moduleAccess';
 import { fmtMoney } from '../_StatCard';
 
 const TEAL = '#00838F';
+const PURPLE = '#7C3AED';
+const AMBER = '#D97706';
 const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', borderTop: '1px solid #F5F6FA', color: '#1A1A2E' };
 
@@ -77,6 +79,14 @@ export default function InvestorApprovalsPage() {
   const [managers, setManagers] = useState([]);
   const [cfgOpen, setCfgOpen] = useState(false);
   const [savedCfg, setSavedCfg] = useState('');
+  const [search, setSearch] = useState('');
+  // Search box is debounced: typing updates `searchText` instantly (responsive UI)
+  // but only commits to `search` (which triggers the fetch) after a pause.
+  const [searchText, setSearchText] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchText), 400);
+    return () => clearTimeout(t);
+  }, [searchText]);
 
   useEffect(() => {
     if (user && !manager) router.replace('/club1000');
@@ -104,9 +114,10 @@ export default function InvestorApprovalsPage() {
   async function load() {
     setLoading(true);
     try {
-      const qs = `?approval_status=${tab}`;
+      const params = new URLSearchParams({ approval_status: tab });
+      if (search) params.set('search', search);
       const [invRes, schemesRes] = await Promise.all([
-        apiFetch(`${CLUB1000_ENDPOINTS.investors}${qs}`),
+        apiFetch(`${CLUB1000_ENDPOINTS.investors}?${params.toString()}`),
         apiFetch(CLUB1000_ENDPOINTS.schemes),
       ]);
       if (invRes.ok) setInvestors(await invRes.json());
@@ -116,13 +127,20 @@ export default function InvestorApprovalsPage() {
     }
   }
 
-  useEffect(() => { if (manager) load(); }, [manager, tab]);
+  useEffect(() => { if (manager) load(); }, [manager, tab, search]);
 
-  async function openLoi(id) {
-    const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
+  async function openLoi(id, pending) {
+    const res = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(id)}${pending ? '?pending=1' : ''}`);
     const data = await res.json();
     if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
     else alert(data?.detail || 'Could not open the LOI.');
+  }
+
+  const FIELD_LABELS = { amount_invested: 'Amount', total_return_pct: 'Return %', interest_payout: 'Payout', security: 'Security', notes: 'Notes', investment_date: 'Renewal Date' };
+  function revisionSummary(inv) {
+    const pr = inv.pending_revision;
+    if (!pr) return null;
+    return Object.entries(pr).filter(([k]) => k !== 'payout_schedule').map(([k, v]) => `${FIELD_LABELS[k] || k}: ${v}`).join(' · ');
   }
 
   async function act(id, action) {
@@ -164,7 +182,17 @@ export default function InvestorApprovalsPage() {
         )}
       </div>
 
-      <div style={{ marginTop: 18, display: 'flex', gap: 6 }}>
+      <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
+        <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search name, phone, email, investor no.…"
+          style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+        {searchText && (
+          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#8492A6', cursor: 'pointer', fontSize: 14 }}>✕</button>
+        )}
+      </div>
+
+      <div style={{ marginTop: 14, display: 'flex', gap: 6 }}>
         {TABS.map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             background: tab === k ? TEAL : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
@@ -172,13 +200,14 @@ export default function InvestorApprovalsPage() {
       </div>
 
       {loading ? <p style={{ color: '#8492A6', marginTop: 18 }}>Loading…</p> : investors.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', marginTop: 18, border: '1px solid #EDF1F7' }}>No investors here.</div>
+        <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', marginTop: 18, border: '1px solid #EDF1F7' }}>{search ? 'No investors match your search.' : 'No investors here.'}</div>
       ) : (
         <div style={{ marginTop: 18, background: '#fff', borderRadius: 16, border: '1px solid #EDF1F7', overflow: 'hidden', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
                 <th style={th}>Name</th>
+                <th style={th}>Mobile</th>
                 <th style={th}>Scheme</th>
                 <th style={th}>Amount</th>
                 <th style={th}>Added By</th>
@@ -189,15 +218,26 @@ export default function InvestorApprovalsPage() {
               </tr>
             </thead>
             <tbody>
-              {investors.map((inv) => (
+              {investors.map((inv) => {
+                const isRevision = !!inv.pending_revision;
+                const isRenewal = isRevision && inv.pending_revision_type === 'renew';
+                const accent = isRenewal ? AMBER : PURPLE;
+                return (
                 <tr key={inv.id}>
-                  <td style={{ ...td, fontWeight: 600 }}>{inv.name}</td>
+                  <td style={{ ...td, fontWeight: 600 }}>
+                    {inv.name}
+                    {inv.revision_no > 0 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: accent, background: isRenewal ? '#FEF3C7' : '#F3E8FF', padding: '2px 7px', borderRadius: 20 }}>{isRenewal ? 'RENEW' : 'R'}{isRenewal ? '' : inv.revision_no}</span>}
+                    {isRevision && <div style={{ fontSize: 11, fontWeight: 500, color: '#8492A6', marginTop: 3 }}>Proposed: {revisionSummary(inv)}</div>}
+                  </td>
+                  <td style={td}>{inv.phone || '—'}</td>
                   <td style={td}>{inv.scheme_name}</td>
                   <td style={td}>{fmtMoney(inv.amount_invested)}</td>
                   <td style={td}>{inv.added_by_name || '—'}</td>
                   <td style={td}>{new Date(inv.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                   <td style={td}>
-                    {inv.loi_document_url ? <button onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>📄 Signed LOI</button> : '—'}
+                    {isRevision
+                      ? (inv.pending_loi_document_url ? <button onClick={() => openLoi(inv.id, true)} style={{ background: 'none', border: 'none', color: accent, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>📄 {isRenewal ? 'Renewed' : 'Revised'} LOI</button> : '—')
+                      : (inv.loi_document_url ? <button onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>📄 Signed LOI</button> : '—')}
                   </td>
                   <td style={td}><ApprovalBadge approvalStatus={inv.approval_status} /></td>
                   <td style={td}>
@@ -209,7 +249,8 @@ export default function InvestorApprovalsPage() {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

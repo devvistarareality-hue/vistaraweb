@@ -44,7 +44,7 @@ const NAV = [
   { label: 'Investors',  href: '/club1000/investors',   icon: <IconUsers /> },
   { label: 'Approvals',  href: '/club1000/approvals',   icon: <IconApprovals />, managerOnly: true },
   { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true },
-  { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift />, managerOnly: true },
+  { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift /> },
   { label: 'My Team',    href: '/club1000/my-team',     icon: <IconTeam />,   managerOnly: true },
 ];
 
