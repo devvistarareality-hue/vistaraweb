@@ -4,6 +4,9 @@ import { uploadToSupabase, deleteFromSupabase, extractStoragePath } from '../uti
 
 const isImage = (url) => url && /\.(jpg|jpeg|png|webp|gif|svg)(\?|$)/i.test(url);
 const isPdf   = (url) => url && /\.pdf(\?|$)/i.test(url);
+// Keep in step with MEDIA_UPLOAD_MAX_MB in sales/views.py — this check only fails fast
+// before the upload starts; the server is the one that enforces it.
+const MAX_MB = 100;
 
 export default function MediaUpload({ label, value, onChange, folder = 'erp/media', accept = 'image/*,application/pdf', hint }) {
   const fileRef   = useRef();
@@ -13,8 +16,7 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
   async function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-    const maxMb = 30;
-    if (file.size > maxMb * 1024 * 1024) { setError(`Max ${maxMb}MB`); return; }
+    if (file.size > MAX_MB * 1024 * 1024) { setError(`Max ${MAX_MB}MB`); return; }
     setError('');
     setProgress(10);
     try {
@@ -94,7 +96,7 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
                   filtered by `accept`, so promising PDF when it only allows images
                   reads as the upload being broken. */}
               <span style={{ fontSize: 11, color: '#B0BAC9' }}>
-                {accept.includes('pdf') ? 'Images or PDF' : 'Images'} up to 30MB
+                {accept.includes('pdf') ? 'Images or PDF' : 'Images'} up to {MAX_MB}MB
               </span>
             </>
           )}

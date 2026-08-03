@@ -82,9 +82,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
-        <div style={{ fontSize: 12, color: '#8492A6' }}>
-          Define each floor's unit numbering and plan. Ground is floor 0.
-        </div>
+        <div />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           
           <button type="button" onClick={addFloor} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
