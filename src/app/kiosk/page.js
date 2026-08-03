@@ -35,6 +35,7 @@ export default function KioskPage() {
   const [projects, setProjects] = useState(null);      // null = loading
   const [project,  setProject]  = useState(null);
   const [plots,    setPlots]    = useState([]);         // ALL plots (map needs sold/hold too)
+  const [floorIdx, setFloorIdx] = useState(0);          // tower: which floor is on screen
   const [selIds,   setSelIds]   = useState([]);         // chosen plot ids (multi-select for LOI)
   const [hovered,  setHovered]  = useState(null);
   const isSelected = (pl) => selIds.includes(pl.id);
@@ -59,6 +60,10 @@ export default function KioskPage() {
 
   const pickProject = async (p) => {
     setProject(p); setSelIds([]); setEoiType(''); setEoiUnits('1'); setHovered(null);
+    // Open a tower on its ground floor — that's where a walk-in starts.
+    const fl = (p?.floor_plans || []).slice().sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0));
+    const g = fl.findIndex((f) => Number(f.floor) === 0);
+    setFloorIdx(g >= 0 ? g : 0);
     try {
       const r = await fetch(`${SALES_ENDPOINTS.plots}?project=${p.id}`, { headers: authHeaders() });
       const arr = await r.json();
@@ -67,10 +72,28 @@ export default function KioskPage() {
     setStep('select');
   };
 
-  const availablePlots = plots.filter((x) => x.status === 'available');
-  const plotByNumber   = Object.fromEntries(plots.map((p) => [String(p.number), p]));
-  const zones          = project?.site_map_zones || [];
-  const mapImage       = project?.site_map_image_url || (isImageUrl(project?.master_plan_url) ? project?.master_plan_url : '');
+  // A tower is browsed one floor at a time: each floor has its own plan and zones, so
+  // the map, the unit list and the counts are all scoped to the chosen floor.
+  const floorWise = !!project?.floor_wise;
+  const floors = (project?.floor_plans || []).slice().sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0));
+  const activeFloor = floorWise ? floors[Math.min(floorIdx, Math.max(floors.length - 1, 0))] : null;
+  const onFloor = (p, f) => {
+    if (!f) return true;
+    if (p.floor !== null && p.floor !== undefined) return Number(p.floor) === Number(f.floor);
+    const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return false;
+    const n = String(p.number);
+    for (let i = from; i <= to; i++) if (`${f.prefix || ''}${i}` === n) return true;
+    return false;
+  };
+  const visiblePlots = floorWise && activeFloor ? plots.filter((p) => onFloor(p, activeFloor)) : plots;
+
+  const availablePlots = visiblePlots.filter((x) => x.status === 'available');
+  const plotByNumber   = Object.fromEntries(visiblePlots.map((p) => [String(p.number), p]));
+  const zones          = floorWise ? (activeFloor?.zones || []) : (project?.site_map_zones || []);
+  const mapImage       = floorWise
+    ? (activeFloor?.image_url || '')
+    : (project?.site_map_image_url || (isImageUrl(project?.master_plan_url) ? project?.master_plan_url : ''));
   const hasMap         = !!mapImage && zones.length > 0;
 
   const unitTypes = project?.eoi_unit_types || [];
@@ -190,15 +213,30 @@ export default function KioskPage() {
               </div>
             ) : hasMap ? (
               <div>
+            {floorWise && floors.length > 0 && (
+              <div className="k-floors">
+                <span className="k-floors-l">Floor</span>
+                {floors.map((f, i) => {
+                  const on = i === Math.min(floorIdx, floors.length - 1);
+                  const n = plots.filter((p) => onFloor(p, f)).length;
+                  return (
+                    <button key={i} className={`k-floor ${on ? 'on' : ''}`}
+                      onClick={() => { setFloorIdx(i); setSelIds([]); setHovered(null); }}>
+                      {f.label || `Floor ${f.floor}`} · {n}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
                 {/* Availability counts */}
                 <div className="k-stats">
                   {['available', 'hold', 'sold'].map((k) => {
-                    const n = plots.filter((p) => p.status === k).length;
+                    const n = visiblePlots.filter((p) => p.status === k).length;
                     return (
                       <div key={k} className="k-stat" style={{ borderColor: KSTATUS[k].dot + '55' }}>
                         <span className="k-stat-dot" style={{ background: KSTATUS[k].dot }} />
                         <span className="k-stat-n">{n}</span>
-                        <span className="k-stat-l">{KSTATUS[k].label}{plots.length ? ` · ${Math.round(n / plots.length * 100)}%` : ''}</span>
+                        <span className="k-stat-l">{KSTATUS[k].label}{visiblePlots.length ? ` · ${Math.round(n / visiblePlots.length * 100)}%` : ''}</span>
                       </div>
                     );
                   })}
@@ -278,6 +316,21 @@ export default function KioskPage() {
               </div>
             ) : (
               <div>
+            {floorWise && floors.length > 0 && (
+              <div className="k-floors">
+                <span className="k-floors-l">Floor</span>
+                {floors.map((f, i) => {
+                  const on = i === Math.min(floorIdx, floors.length - 1);
+                  const n = plots.filter((p) => onFloor(p, f)).length;
+                  return (
+                    <button key={i} className={`k-floor ${on ? 'on' : ''}`}
+                      onClick={() => { setFloorIdx(i); setSelIds([]); setHovered(null); }}>
+                      {f.label || `Floor ${f.floor}`} · {n}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
                 <label className="k-label">Choose available plots — pick one or several</label>
                 <div className="k-plots">
                   {availablePlots.map((pl) => (
@@ -368,6 +421,11 @@ const Style = () => (
   .k-legend{display:flex;gap:16px;font-size:12px;font-weight:600;color:#6B7391}
   .k-legend span{display:flex;align-items:center;gap:6px}
   .k-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .k-floors{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .k-floors-l{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8492A6;margin-right:2px}
+  .k-floor{padding:8px 14px;border-radius:20px;border:1.5px solid #E1E6F1;background:#fff;color:#374151;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+  .k-floor:hover{border-color:#BBD0FF}
+  .k-floor.on{border-color:#3D5AFE;background:#E8EEFF;color:#3D5AFE}
   .k-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
   .k-stat{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #E6EBF4;border-radius:14px;padding:10px 16px;flex:1;min-width:150px}
   .k-stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
