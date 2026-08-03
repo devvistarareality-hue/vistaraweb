@@ -14,6 +14,24 @@ const STATUS_CFG = {
   sold:      { label: 'Sold',      color: '#EF4444', bg: '#FEE2E2', border: '#EF4444', zone: '#ef4444' },
 };
 
+/* ─── Plan upload helper ───
+   Architects hand over plans as PDFs, so every plan picker accepts them — but plans
+   are displayed as <img> (in setup and to the buyer picking a unit), so render the
+   first page to PNG and store that instead. Returns the original URL unchanged for
+   images, and falls back to the PDF if rendering fails: keeping an un-previewable
+   upload beats losing it. */
+async function toPlanImage(url, folder, name) {
+  if (!/\.pdf(\?|$)/i.test(url || '')) return { url, converted: false };
+  try {
+    const blob = await pdfToImageBlob(url, 2);
+    const file = new File([blob], `${name}.png`, { type: 'image/png' });
+    const up = await uploadToSupabase(file, folder);
+    return { url: up.url, converted: true };
+  } catch (err) {
+    return { url, converted: false, error: err.message || 'unknown error' };
+  }
+}
+
 /* ─── Zone center helper ─── */
 function zoneCenter(zone) {
   if (zone.points?.length) {
@@ -680,8 +698,9 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
     persist(updated);
   }
 
-  function addFloor(url) {
+  async function addFloor(rawUrl) {
     const label = newFloorLabel.trim() || `Floor ${(plans[activeType]?.floor_plans.length || 0) + 1}`;
+    const { url } = await toPlanImage(rawUrl, `erp/projects/${id}/floor-plans`, label.replace(/\W+/g, '_') || 'plan');
     const updated = plans.map((t, i) => i === activeType
       ? { ...t, floor_plans: [...t.floor_plans, { label, url }] } : t);
     setPlans(updated); setNewFloorLabel(''); persist(updated);
@@ -777,8 +796,8 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
             <MediaUpload value="" label=""
               onChange={url => addFloor(url)}
               folder={`erp/projects/${id}/floor-plans`}
-              accept="image/*"
-              hint="Upload floor plan image (JPG / PNG)" />
+              accept="image/*,application/pdf"
+              hint="Upload floor plan (JPG / PNG / PDF)" />
           </div>
         </div>
       )}
@@ -822,6 +841,7 @@ function TowerFloorBuilder({ project, plots, onProjectUpdate, onPlotsChanged }) 
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [converting, setConverting] = useState(null);   // floor index mid PDF→PNG
 
   const persist = async (updated) => {
     setSaving(true);
@@ -862,6 +882,14 @@ function TowerFloorBuilder({ project, plots, onProjectUpdate, onPlotsChanged }) 
   function removeFloor(i) {
     if (!window.confirm(`Remove ${floors[i].label} from the plan? Units already generated are kept.`)) return;
     commit(floors.filter((_, ix) => ix !== i));
+  }
+
+  async function setPlan(i, url) {
+    setConverting(i); setMsg('');
+    const r = await toPlanImage(url, `erp/projects/${id}/floor-plans`, `floor_${floors[i].floor ?? i}`);
+    commit(floors.map((x, ix) => (ix === i ? { ...x, image_url: r.url } : x)));
+    if (r.error) setMsg('Uploaded the PDF, but could not render a preview: ' + r.error);
+    setConverting(null);
   }
 
   const planned = floors.flatMap((f) => unitsForFloor(f).map((number) => ({ number, floor: Number(f.floor) || 0 })));
@@ -957,18 +985,24 @@ function TowerFloorBuilder({ project, plots, onProjectUpdate, onPlotsChanged }) 
               </div>
 
               <div style={{ marginTop: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
-                {f.image_url
-                  ? <>
-                      <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid #E6EBF4' }} />
-                      <button onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
-                        style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
-                    </>
-                  : <div style={{ flex: 1, minWidth: 240 }}>
-                      <MediaUpload value="" label=""
-                        onChange={(url) => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: url } : x))}
-                        folder={`erp/projects/${id}/floor-plans`} accept="image/*"
-                        hint={`Upload ${f.label || 'floor'} plan (JPG / PNG)`} />
-                    </div>}
+                {converting === i ? (
+                  <span style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 600 }}>Converting PDF to an image…</span>
+                ) : f.image_url ? (
+                  <>
+                    {/\.pdf(\?|$)/i.test(f.image_url)
+                      ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 600 }}>📄 View PDF ↗</a>
+                      : <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid #E6EBF4' }} />}
+                    <button onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
+                      style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
+                  </>
+                ) : (
+                  <div style={{ flex: 1, minWidth: 240 }}>
+                    <MediaUpload value="" label=""
+                      onChange={(url) => setPlan(i, url)}
+                      folder={`erp/projects/${id}/floor-plans`} accept="image/*,application/pdf"
+                      hint={`Upload ${f.label || 'floor'} plan (JPG / PNG / PDF)`} />
+                  </div>
+                )}
               </div>
             </div>
           );

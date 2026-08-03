@@ -90,7 +90,12 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
             <>
               <span style={{ fontSize: 22 }}>☁</span>
               <span style={{ fontSize: 12, color: '#8492A6', fontWeight: 500 }}>{hint || 'Click to upload'}</span>
-              <span style={{ fontSize: 11, color: '#B0BAC9' }}>Images or PDF up to 30MB</span>
+              {/* Describe what this picker will actually take — the file dialog is
+                  filtered by `accept`, so promising PDF when it only allows images
+                  reads as the upload being broken. */}
+              <span style={{ fontSize: 11, color: '#B0BAC9' }}>
+                {accept.includes('pdf') ? 'Images or PDF' : 'Images'} up to 30MB
+              </span>
             </>
           )}
         </div>
