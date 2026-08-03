@@ -72,26 +72,59 @@ export default function ClosureViewerPage() {
     });
   }, [id]);
 
-  const zones    = project?.site_map_zones || [];
-  const mapImage = project?.site_map_image_url
-    || (isImageUrl(project?.master_plan_url) ? project.master_plan_url : '');
+  // A tower is browsed one floor at a time: each floor has its own plan and its own
+  // zones, so the map, the unit list and the counts are all scoped to the chosen floor.
+  const floorWise = !!project?.floor_wise;
+  const floors = useMemo(
+    () => (project?.floor_plans || []).slice().sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0)),
+    [project],
+  );
+  const [floorIdx, setFloorIdx] = useState(0);
+  // Open on the ground floor — that's where a walk-in starts.
+  useEffect(() => {
+    if (!floorWise || !floors.length) return;
+    const g = floors.findIndex(f => Number(f.floor) === 0);
+    setFloorIdx(g >= 0 ? g : 0);
+  }, [floorWise, floors.length]);
+  const activeFloor = floorWise ? floors[Math.min(floorIdx, Math.max(floors.length - 1, 0))] : null;
+
+  // Units belonging to the chosen floor — by the floor field, falling back to the
+  // floor's own numbering run for units created before that field existed.
+  const onFloor = (p, f) => {
+    if (!f) return true;
+    if (p.floor !== null && p.floor !== undefined) return Number(p.floor) === Number(f.floor);
+    const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return false;
+    const n = String(p.number);
+    for (let i = from; i <= to; i++) if (`${f.prefix || ''}${i}` === n) return true;
+    return false;
+  };
+  const visiblePlots = useMemo(
+    () => (floorWise && activeFloor ? plots.filter(p => onFloor(p, activeFloor)) : plots),
+    [plots, floorWise, activeFloor],
+  );
+
+  const zones    = floorWise ? (activeFloor?.zones || []) : (project?.site_map_zones || []);
+  const mapImage = floorWise
+    ? (activeFloor?.image_url || '')
+    : (project?.site_map_image_url || (isImageUrl(project?.master_plan_url) ? project.master_plan_url : ''));
   const hasMap   = !!mapImage && zones.length > 0;
 
   const counts = useMemo(() => {
     const c = { available: 0, hold: 0, sold: 0 };
-    plots.forEach(p => { if (c[p.status] != null) c[p.status]++; });
+    visiblePlots.forEach(p => { if (c[p.status] != null) c[p.status]++; });
     return c;
-  }, [plots]);
+  }, [visiblePlots]);
 
   const plotByNumber = useMemo(() => {
     const m = {};
-    plots.forEach(p => { m[String(p.number)] = p; });
+    visiblePlots.forEach(p => { m[String(p.number)] = p; });
     return m;
-  }, [plots]);
+  }, [visiblePlots]);
 
   const types = useMemo(
-    () => [...new Set(plots.map(p => p.cluster_type).filter(Boolean))].sort(),
-    [plots],
+    () => [...new Set(visiblePlots.map(p => p.cluster_type).filter(Boolean))].sort(),
+    [visiblePlots],
   );
 
   // A plot is dimmed (not removed) when it doesn't match the active status/type filter.
@@ -99,8 +132,8 @@ export default function ClosureViewerPage() {
     (filter !== 'all' && plot.status !== filter) ||
     (typeFilter !== 'all' && plot.cluster_type !== typeFilter);
 
-  const shownCount = plots.filter(p => !isHidden(p)).length;
-  const total      = plots.length;
+  const shownCount = visiblePlots.filter(p => !isHidden(p)).length;
+  const total      = visiblePlots.length;
   const pct        = (n) => (total ? Math.round(n / total * 100) : 0);
 
   // Multi-select: a client can buy several plots in one booking. Tapping an
@@ -173,6 +206,24 @@ export default function ClosureViewerPage() {
           );
         })}
       </div>
+      {/* Tower: choose the floor first — its plan and its units are what's shown below. */}
+      {floorWise && floors.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+          <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
+          <select value={floorIdx} onChange={(e) => { setFloorIdx(Number(e.target.value)); setSelectedIds([]); }}
+            style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
+              fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 190 }}>
+            {floors.map((f, i) => {
+              const n = plots.filter((p) => onFloor(p, f)).length;
+              return <option key={i} value={i}>{f.label || `Floor ${f.floor}`} · {n} unit{n === 1 ? '' : 's'}</option>;
+            })}
+          </select>
+          {!activeFloor?.image_url && (
+            <span style={{ fontSize: 12, color: '#B45309' }}>No plan uploaded for this floor — units are listed below.</span>
+          )}
+        </div>
+      )}
+
       {types.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
           {['all', ...types].map((t) => {
@@ -310,11 +361,11 @@ export default function ClosureViewerPage() {
         <div style={{ background: '#fff', borderRadius: 16, padding: '18px', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Units</h2>
           <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 14 }}>No site map drawn for this project. Tap an available unit below.</p>
-          {!plots.length ? (
+          {!visiblePlots.length ? (
             <p style={{ color: '#8492A6', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No units defined for this project.</p>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {plots.filter(p => !isHidden(p)).map(plot => {
+              {visiblePlots.filter(p => !isHidden(p)).map(plot => {
                 const cfg = STATUS[plot.status] || STATUS.available;
                 const clickable = plot.status === 'available';
                 const isSel = selectedSet.has(plot.id);
