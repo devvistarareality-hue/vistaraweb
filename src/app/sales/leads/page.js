@@ -116,6 +116,8 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   async function submit(e) {
     e.preventDefault();
     if (!form.name || !form.phone) { setErr('Name and phone are required.'); return; }
+    if (!form.project) { setErr('Project is required.'); return; }
+    if (!form.source)  { setErr('Source is required.'); return; }
     setSaving(true);
     const body = { name: form.name, phone: form.phone };
     if (form.alt_phone) body.alt_phone = form.alt_phone;
@@ -248,7 +250,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Assignment</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Project</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Project<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })}
                   style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.project ? '#1A1A2E' : '#9CA3AF' }}>
@@ -259,7 +261,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               </div>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Source</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Source<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
                   style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.source ? '#1A1A2E' : '#9CA3AF', textTransform: 'capitalize' }}>
