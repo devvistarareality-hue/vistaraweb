@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
@@ -30,15 +29,10 @@ function groupByReferrer(rewards) {
 
 export default function ReferralRewardsPage() {
   const user = useSelector((s) => s.auth.user);
-  const router = useRouter();
   const manager = isClub1000Manager(user);
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pending');
-
-  useEffect(() => {
-    if (user && !manager) router.replace('/club1000');
-  }, [user]);
 
   async function load() {
     setLoading(true);
@@ -51,7 +45,7 @@ export default function ReferralRewardsPage() {
     }
   }
 
-  useEffect(() => { if (manager) load(); }, [manager, statusFilter]);
+  useEffect(() => { load(); }, [statusFilter]);
 
   async function markPaid(id) {
     if (!confirm('Mark this referral reward as paid?')) return;
@@ -59,14 +53,16 @@ export default function ReferralRewardsPage() {
     if (res.ok) load();
   }
 
-  if (!manager) return null;
-
   const referrers = groupByReferrer(rewards);
 
   return (
     <div style={{ padding: '28px 32px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Referral Rewards</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>0.5% of a referred investor&apos;s first investment, 0.25% on every investment after — owed to their referrer</p>
+      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>
+        {manager
+          ? 'Owed to whoever referred an investor: 0.5% on a new investment, 0.25% on a renewal at maturity'
+          : 'Rewards earned from investors converted off your leads'}
+      </p>
 
       {referrers.length > 0 && (
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
@@ -100,14 +96,14 @@ export default function ReferralRewardsPage() {
               <th style={th}>Reward</th>
               <th style={th}>Earned</th>
               <th style={th}>Status</th>
-              <th style={th}></th>
+              {manager && <th style={th}></th>}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
             ) : rewards.length === 0 ? (
-              <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No referral rewards yet.</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No referral rewards yet.</td></tr>
             ) : rewards.map((r) => (
               <tr key={r.id}>
                 <td style={td}>{r.reference_name}{r.reference_phone ? ` — ${r.reference_phone}` : ''}</td>
@@ -119,11 +115,13 @@ export default function ReferralRewardsPage() {
                     {r.status === 'paid' ? 'Paid' : 'Pending'}
                   </span>
                 </td>
-                <td style={td}>
-                  {r.status === 'pending' && (
-                    <button onClick={() => markPaid(r.id)} style={{ padding: '5px 10px', background: TEAL, color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
-                  )}
-                </td>
+                {manager && (
+                  <td style={td}>
+                    {r.status === 'pending' && (
+                      <button onClick={() => markPaid(r.id)} style={{ padding: '5px 10px', background: TEAL, color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

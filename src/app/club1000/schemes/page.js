@@ -13,22 +13,35 @@ const th   = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#849
 const td   = { padding: '12px 16px', borderTop: '1px solid #F5F6FA', color: '#1A1A2E' };
 
 const EMPTY_FORM = {
-  name: '', tenure_months: 12, fixed_return_pct: '', loyalty_benefit_pct: '0',
-  min_ticket_size: '', premature_redemption_allowed: false,
+  name: '', tenure_months: 12, min_ticket_size: '',
+  premature_redemption_allowed: false,
   premature_redemption_lock_months: '', premature_redemption_rate_pct_per_month: '1.00',
   interest_payout_options: ['maturity'],
+  payout_rates: { maturity: '' },
 };
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
-function SchemeModal({ onClose, onSaved }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+function SchemeModal({ scheme, onClose, onSaved }) {
+  const isEdit = !!scheme;
+  const [form, setForm] = useState(() => (scheme ? {
+    name: scheme.name, tenure_months: scheme.tenure_months,
+    min_ticket_size: scheme.min_ticket_size,
+    premature_redemption_allowed: scheme.premature_redemption_allowed,
+    premature_redemption_lock_months: scheme.premature_redemption_lock_months || '',
+    premature_redemption_rate_pct_per_month: scheme.premature_redemption_rate_pct_per_month,
+    interest_payout_options: scheme.interest_payout_options || ['maturity'],
+    payout_rates: { ...(scheme.payout_rates || {}) },
+  } : EMPTY_FORM));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const total = (Number(form.fixed_return_pct) || 0) + (Number(form.loyalty_benefit_pct) || 0);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function setRate(key, value) {
+    setForm((f) => ({ ...f, payout_rates: { ...f.payout_rates, [key]: value } }));
   }
 
   function toggleInterestPayoutOption(key, checked) {
@@ -47,15 +60,21 @@ function SchemeModal({ onClose, onSaved }) {
       setError('Select at least one interest payout option.');
       return;
     }
+    const missingRate = form.interest_payout_options.find((k) => form.payout_rates[k] === '' || form.payout_rates[k] == null);
+    if (missingRate) {
+      setError(`Enter a return % for ${INTEREST_PAYOUT_LABELS[missingRate] || missingRate}.`);
+      return;
+    }
     setBusy(true);
     try {
-      const res = await apiFetch(CLUB1000_ENDPOINTS.schemes, {
-        method: 'POST',
-        body: JSON.stringify({ ...form, total_return_pct: total }),
+      const payout_rates = Object.fromEntries(form.interest_payout_options.map((k) => [k, form.payout_rates[k]]));
+      const res = await apiFetch(isEdit ? CLUB1000_ENDPOINTS.scheme(scheme.id) : CLUB1000_ENDPOINTS.schemes, {
+        method: isEdit ? 'PATCH' : 'POST',
+        body: JSON.stringify({ ...form, payout_rates }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.detail || Object.values(data || {})[0] || 'Could not create scheme.');
+        setError(data?.detail || Object.values(data || {})[0] || `Could not ${isEdit ? 'save' : 'create'} scheme.`);
         return;
       }
       onSaved(data);
@@ -69,7 +88,7 @@ function SchemeModal({ onClose, onSaved }) {
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(24,35,80,0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid #F0F3FA' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>New Scheme</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>{isEdit ? 'Edit Scheme' : 'New Scheme'}</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -86,32 +105,34 @@ function SchemeModal({ onClose, onSaved }) {
               <input style={inp} type="number" min="0" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Fixed Return %</label>
-              <input style={inp} type="number" step="0.01" min="0" value={form.fixed_return_pct} onChange={(e) => set('fixed_return_pct', e.target.value)} required />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Loyalty Benefit %</label>
-              <input style={inp} type="number" step="0.01" min="0" value={form.loyalty_benefit_pct} onChange={(e) => set('loyalty_benefit_pct', e.target.value)} />
-            </div>
-          </div>
-          <div style={{ fontSize: 12, color: '#8492A6' }}>Total Return: <strong style={{ color: TEAL }}>{total}%</strong></div>
           <div>
-            <label style={lbl}>Interest Payout Options</label>
-            <div style={{ display: 'flex', gap: 16 }}>
-              {Object.entries(INTEREST_PAYOUT_LABELS).map(([key, label]) => (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#334155' }}>
-                  <input
-                    type="checkbox"
-                    checked={form.interest_payout_options.includes(key)}
-                    onChange={(e) => toggleInterestPayoutOption(key, e.target.checked)}
-                  />
-                  {label}
-                </label>
-              ))}
+            <label style={lbl}>Interest Payout Options &amp; Return %</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {Object.entries(INTEREST_PAYOUT_LABELS).map(([key, label]) => {
+                const checked = form.interest_payout_options.includes(key);
+                return (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#334155', width: 130, flexShrink: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => toggleInterestPayoutOption(key, e.target.checked)}
+                      />
+                      {label}
+                    </label>
+                    <input
+                      style={{ ...inp, flex: 1, opacity: checked ? 1 : 0.4 }}
+                      type="number" step="0.01" min="0" placeholder="Return %"
+                      disabled={!checked}
+                      value={form.payout_rates[key] ?? ''}
+                      onChange={(e) => setRate(key, e.target.value)}
+                    />
+                    <span style={{ fontSize: 12, color: '#8492A6', width: 14 }}>%</span>
+                  </div>
+                );
+              })}
             </div>
-            <div style={{ fontSize: 11, color: '#8492A6', marginTop: 5 }}>Only the checked option(s) will be selectable when adding investors to this scheme.</div>
+            <div style={{ fontSize: 11, color: '#8492A6', marginTop: 5 }}>Only the checked option(s) will be selectable when adding investors to this scheme — each carries its own annual return %.</div>
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#334155' }}>
             <input type="checkbox" checked={form.premature_redemption_allowed} onChange={(e) => set('premature_redemption_allowed', e.target.checked)} />
@@ -134,7 +155,7 @@ function SchemeModal({ onClose, onSaved }) {
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
           <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
-            {busy ? 'Saving…' : 'Create Scheme'}
+            {busy ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Scheme'}
           </button>
         </div>
       </form>
@@ -149,6 +170,7 @@ export default function SchemesPage() {
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     if (user && !manager) router.replace('/club1000');
@@ -190,32 +212,37 @@ export default function SchemesPage() {
             <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
               <th style={th}>Name</th>
               <th style={th}>Tenure</th>
-              <th style={th}>Fixed</th>
-              <th style={th}>Loyalty</th>
-              <th style={th}>Total</th>
               <th style={th}>Min Ticket</th>
-              <th style={th}>Interest Payout</th>
+              <th style={th}>Payout Rates</th>
               <th style={th}>Premature Exit</th>
               <th style={th}></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
             ) : schemes.length === 0 ? (
-              <tr><td colSpan={9} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No schemes yet — create one to get started.</td></tr>
+              <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No schemes yet — create one to get started.</td></tr>
             ) : schemes.map((s) => (
               <tr key={s.id}>
                 <td style={td}>{s.name}</td>
                 <td style={td}>{s.tenure_months}mo</td>
-                <td style={td}>{s.fixed_return_pct}%</td>
-                <td style={td}>{s.loyalty_benefit_pct}%</td>
-                <td style={{ ...td, fontWeight: 700, color: TEAL }}>{s.total_return_pct}%</td>
                 <td style={td}>₹{Number(s.min_ticket_size).toLocaleString('en-IN')}</td>
-                <td style={td}>{(s.interest_payout_options || []).map((k) => INTEREST_PAYOUT_LABELS[k] || k).join(', ') || '—'}</td>
+                <td style={td}>
+                  {(s.interest_payout_options || []).length
+                    ? (s.interest_payout_options || []).map((k) => (
+                        <span key={k} style={{ marginRight: 10 }}>
+                          {INTEREST_PAYOUT_LABELS[k] || k}: <strong style={{ color: TEAL }}>{s.payout_rates?.[k] ?? '—'}%</strong>
+                        </span>
+                      ))
+                    : '—'}
+                </td>
                 <td style={td}>{s.premature_redemption_allowed ? `After ${s.premature_redemption_lock_months || 0}mo` : 'N/A'}</td>
                 <td style={td}>
-                  <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: '#E0F5F6', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -225,6 +252,9 @@ export default function SchemesPage() {
 
       {showNew && (
         <SchemeModal onClose={() => setShowNew(false)} onSaved={() => load()} />
+      )}
+      {editing && (
+        <SchemeModal scheme={editing} onClose={() => setEditing(null)} onSaved={() => load()} />
       )}
     </div>
   );

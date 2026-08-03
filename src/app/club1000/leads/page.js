@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { CLUB1000_ENDPOINTS, SALES_ENDPOINTS } from '../../../constants/api';
+import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
 import AddInvestorModal from '../_AddInvestorModal';
@@ -25,6 +25,9 @@ function StatusBadge({ status }) {
   const c = STATUS_COLORS[status] || { bg: '#F3F4F6', fg: '#6B7280' };
   return <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: c.bg, color: c.fg, textTransform: 'capitalize' }}>{(status || '').replace(/_/g, ' ')}</span>;
 }
+
+const HISTORY_LABEL = { created: 'Lead Created', status: 'Status', assigned_to: 'Assigned To' };
+const HISTORY_COLOR = { created: '#64748B', status: '#3D5AFE', assigned_to: '#7B1FA2' };
 
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost'];
@@ -51,10 +54,10 @@ function toISODate(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-function AddLeadModal({ schemes, onClose, onCreated }) {
+function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
   const [form, setForm] = useState({
     name: '', phone: '', alt_phone: '', email: '', reference_name: '', reference_phone: '',
-    source: 'referral', lead_date: toISODate(new Date()), scheme_interest: '', amount_interested: '', remarks: '',
+    source: 'referral', lead_date: toISODate(new Date()), scheme_interest: '', amount_interested: '', assigned_to: '', remarks: '',
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -68,6 +71,7 @@ function AddLeadModal({ schemes, onClose, onCreated }) {
       if (form.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
       if (!payload.scheme_interest) delete payload.scheme_interest;
       if (!payload.amount_interested) delete payload.amount_interested;
+      if (!payload.assigned_to) delete payload.assigned_to;
       const res = await apiFetch(CLUB1000_ENDPOINTS.leads, { method: 'POST', body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) { setError(data?.detail || 'Could not add lead.'); return; }
@@ -125,6 +129,15 @@ function AddLeadModal({ schemes, onClose, onCreated }) {
           <label style={lbl}>Amount Interested (₹)</label>
           <input type="number" value={form.amount_interested} onChange={(e) => setForm((f) => ({ ...f, amount_interested: e.target.value }))} style={inp} />
         </div>
+        {manager && (
+          <div style={{ marginBottom: 12 }}>
+            <label style={lbl}>Assigned To</label>
+            <select value={form.assigned_to} onChange={(e) => setForm((f) => ({ ...f, assigned_to: e.target.value }))} style={inp}>
+              <option value="">— Myself —</option>
+              {assignees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </div>
+        )}
         <div style={{ marginBottom: 18 }}>
           <label style={lbl}>Remarks</label>
           <textarea value={form.remarks} onChange={(e) => setForm((f) => ({ ...f, remarks: e.target.value }))} style={{ ...inp, height: 70, padding: 10 }} />
@@ -139,7 +152,9 @@ function AddLeadModal({ schemes, onClose, onCreated }) {
   );
 }
 
-function LeadDetailModal({ lead, onClose, onConvert, onStatusChange, onScheduleFollowUp }) {
+function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatusChange, onScheduleFollowUp, onAssigneeChange }) {
+  const [activeTab, setActiveTab] = useState('detail');
+  const [detail, setDetail] = useState(null);
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedAt, setSchedAt] = useState(() => {
     const d = new Date(); d.setMinutes(0, 0, 0); d.setHours(d.getHours() + 1);
@@ -148,6 +163,12 @@ function LeadDetailModal({ lead, onClose, onConvert, onStatusChange, onScheduleF
   const [schedRemarks, setSchedRemarks] = useState('');
   const [schedBusy, setSchedBusy] = useState(false);
   const isTerminal = TERMINAL_STATUSES.includes(lead.status);
+
+  useEffect(() => {
+    setActiveTab('detail');
+    setDetail(null);
+    apiFetch(CLUB1000_ENDPOINTS.lead(lead.id)).then((r) => (r.ok ? r.json() : null)).then(setDetail).catch(() => {});
+  }, [lead.id]);
 
   async function submitSchedule() {
     if (!schedAt) return;
@@ -161,10 +182,16 @@ function LeadDetailModal({ lead, onClose, onConvert, onStatusChange, onScheduleF
     }
   }
 
+  const tabStyle = (key) => ({
+    padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
+    background: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent',
+    color: activeTab === key ? TEAL : '#8492A6',
+  });
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <div style={{ background: '#fff', borderRadius: 16, width: '90%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+      <div style={{ background: '#fff', borderRadius: 16, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 24px 0', flexShrink: 0 }}>
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E' }}>{lead.name}</h2>
             <div style={{ fontSize: 13, color: '#8492A6', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
@@ -172,57 +199,118 @@ function LeadDetailModal({ lead, onClose, onConvert, onStatusChange, onScheduleF
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: '#8492A6', cursor: 'pointer' }}>✕</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13, marginBottom: 16 }}>
-          <div><div style={lbl}>Source</div><div>{SOURCE_LABELS[lead.source] || lead.source}</div></div>
-          <div><div style={lbl}>Date</div><div>{lead.lead_date ? new Date(`${lead.lead_date}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</div></div>
-          <div><div style={lbl}>Scheme Interest</div><div>{lead.scheme_interest_name || '—'}</div></div>
-          <div><div style={lbl}>Amount Interested</div><div>{lead.amount_interested ? `₹${Number(lead.amount_interested).toLocaleString('en-IN')}` : '—'}</div></div>
-          <div><div style={lbl}>Assigned To</div><div>{lead.assigned_to_name || '—'}</div></div>
-          {lead.source === 'referral' && <div><div style={lbl}>Reference</div><div>{lead.reference_name || '—'}</div></div>}
-          <div><div style={lbl}>Status</div><StatusBadge status={lead.status} /></div>
-        </div>
-        {lead.remarks && <div style={{ marginBottom: 16, fontSize: 13, color: '#3A3A5C' }}><div style={lbl}>Remarks</div>{lead.remarks}</div>}
-
-        <div style={{ marginBottom: 16 }}>
-          <label style={lbl}>Change Status</label>
-          <select value={lead.status} onChange={(e) => onStatusChange(lead.id, e.target.value)} style={inp}>
-            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
-          </select>
+        <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', marginTop: 14, flexShrink: 0 }}>
+          {[['detail', 'Detail'], ['history', 'History']].map(([k, label]) => (
+            <button key={k} onClick={() => setActiveTab(k)} style={tabStyle(k)}>{label}</button>
+          ))}
         </div>
 
-        {/* Next follow-up — hidden once the lead is in a terminal status (nothing
-            left to follow up on), matching the backend's auto-clear behaviour. */}
-        {!isTerminal && (
-          <div style={{ marginBottom: 16, background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 10, padding: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={lbl}>Next Follow-up</div>
-                <div style={{ fontSize: 13, color: lead.next_follow_up_date ? '#1A1A2E' : '#8492A6', fontWeight: lead.next_follow_up_date ? 700 : 400 }}>
-                  {lead.next_follow_up_date ? fmtDateTime(lead.next_follow_up_date) : 'Not scheduled'}
+        <div style={{ overflowY: 'auto', flex: 1, padding: 24 }}>
+          {activeTab === 'detail' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13, marginBottom: 16 }}>
+                <div><div style={lbl}>Source</div><div>{SOURCE_LABELS[lead.source] || lead.source}</div></div>
+                <div><div style={lbl}>Date</div><div>{lead.lead_date ? new Date(`${lead.lead_date}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</div></div>
+                <div><div style={lbl}>Scheme Interest</div><div>{lead.scheme_interest_name || '—'}</div></div>
+                <div><div style={lbl}>Amount Interested</div><div>{lead.amount_interested ? `₹${Number(lead.amount_interested).toLocaleString('en-IN')}` : '—'}</div></div>
+                <div>
+                  <div style={lbl}>Assigned To</div>
+                  {manager ? (
+                    <select value={lead.assigned_to || ''} onChange={(e) => onAssigneeChange(lead.id, e.target.value)} style={{ ...inp, height: 32 }}>
+                      {assignees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                    </select>
+                  ) : (
+                    <div>{lead.assigned_to_name || '—'}</div>
+                  )}
                 </div>
+                {lead.source === 'referral' && <div><div style={lbl}>Reference</div><div>{lead.reference_name || '—'}</div></div>}
+                <div><div style={lbl}>Status</div><StatusBadge status={lead.status} /></div>
               </div>
-              <button onClick={() => setSchedOpen((v) => !v)} style={{ padding: '6px 12px', background: '#fff', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                {lead.next_follow_up_date ? 'Reschedule' : 'Schedule'}
-              </button>
-            </div>
-            {schedOpen && (
-              <div style={{ marginTop: 12 }}>
-                <label style={lbl}>Date &amp; Time</label>
-                <input type="datetime-local" value={schedAt} onChange={(e) => setSchedAt(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
-                <label style={lbl}>Remarks</label>
-                <input value={schedRemarks} onChange={(e) => setSchedRemarks(e.target.value)} style={{ ...inp, marginBottom: 10 }} placeholder="Optional" />
-                <button onClick={submitSchedule} disabled={schedBusy} style={{ width: '100%', padding: '9px 0', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: schedBusy ? 0.7 : 1 }}>
-                  {schedBusy ? 'Saving…' : 'Save Follow-up'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              {lead.remarks && <div style={{ marginBottom: 16, fontSize: 13, color: '#3A3A5C' }}><div style={lbl}>Remarks</div>{lead.remarks}</div>}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button onClick={onClose} style={{ padding: '9px 16px', background: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
-          {lead.status !== 'converted' && (
-            <button onClick={() => onConvert(lead)} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Convert to Investor</button>
+              <div style={{ marginBottom: 16 }}>
+                <label style={lbl}>Change Status</label>
+                <select value={lead.status} onChange={(e) => onStatusChange(lead.id, e.target.value)} style={inp}>
+                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                </select>
+              </div>
+
+              {/* Next follow-up — hidden once the lead is in a terminal status (nothing
+                  left to follow up on), matching the backend's auto-clear behaviour. */}
+              {!isTerminal && (
+                <div style={{ marginBottom: 16, background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 10, padding: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={lbl}>Next Follow-up</div>
+                      <div style={{ fontSize: 13, color: lead.next_follow_up_date ? '#1A1A2E' : '#8492A6', fontWeight: lead.next_follow_up_date ? 700 : 400 }}>
+                        {lead.next_follow_up_date ? fmtDateTime(lead.next_follow_up_date) : 'Not scheduled'}
+                      </div>
+                    </div>
+                    <button onClick={() => setSchedOpen((v) => !v)} style={{ padding: '6px 12px', background: '#fff', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                      {lead.next_follow_up_date ? 'Reschedule' : 'Schedule'}
+                    </button>
+                  </div>
+                  {schedOpen && (
+                    <div style={{ marginTop: 12 }}>
+                      <label style={lbl}>Date &amp; Time</label>
+                      <input type="datetime-local" value={schedAt} onChange={(e) => setSchedAt(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
+                      <label style={lbl}>Remarks</label>
+                      <input value={schedRemarks} onChange={(e) => setSchedRemarks(e.target.value)} style={{ ...inp, marginBottom: 10 }} placeholder="Optional" />
+                      <button onClick={submitSchedule} disabled={schedBusy} style={{ width: '100%', padding: '9px 0', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: schedBusy ? 0.7 : 1 }}>
+                        {schedBusy ? 'Saving…' : 'Save Follow-up'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button onClick={onClose} style={{ padding: '9px 16px', background: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+                {lead.status !== 'converted' && (
+                  <button onClick={() => onConvert(lead)} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Convert to Investor</button>
+                )}
+              </div>
+            </>
+          )}
+
+          {activeTab === 'history' && (
+            <div>
+              {!detail && <p style={{ fontSize: 13, color: '#8492A6' }}>Loading…</p>}
+              {detail && detail.history?.length === 0 && (
+                <p style={{ fontSize: 13, color: '#B0BAC9', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
+              )}
+              {(detail?.history || []).map((h, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                const color = HISTORY_COLOR[h.field_changed] || '#8492A6';
+                const icon = h.field_changed === 'created' ? '📥' : h.field_changed === 'assigned_to' ? '👤' : '🔄';
+                const singleValue = h.field_changed === 'created' || !h.old_value;
+                const byLabel = h.changed_by_name || (h.field_changed === 'created' ? 'System (auto)' : null);
+                return (
+                  <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: isLast ? 0 : 18 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{icon}</div>
+                      {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F0F3FA', marginTop: 4 }} />}
+                    </div>
+                    <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
+                      <p style={{ fontSize: 12, color: '#3A3A5C', margin: '3px 0 0' }}>
+                        {singleValue ? (
+                          <span style={{ color, fontWeight: 600, textTransform: 'capitalize' }}>{(h.new_value || '—').replace(/_/g, ' ')}</span>
+                        ) : (
+                          <>
+                            <span style={{ color: '#8492A6', textTransform: 'capitalize' }}>{(h.old_value || '—').replace(/_/g, ' ')}</span>
+                            {' → '}
+                            <span style={{ color, fontWeight: 600, textTransform: 'capitalize' }}>{(h.new_value || '—').replace(/_/g, ' ')}</span>
+                          </>
+                        )}
+                      </p>
+                      {byLabel && <p style={{ fontSize: 11, color: '#8492A6', margin: '2px 0 0' }}>by {byLabel}</p>}
+                      <p style={{ fontSize: 11, color: '#B0BAC9', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
@@ -260,7 +348,7 @@ export default function Club1000LeadsPage() {
   const loadMeta = useCallback(async () => {
     const [schemesRes, usersRes] = await Promise.all([
       apiFetch(CLUB1000_ENDPOINTS.schemes),
-      apiFetch(SALES_ENDPOINTS.usersSlim),
+      apiFetch(CLUB1000_ENDPOINTS.users),
     ]);
     if (schemesRes.ok) setSchemes(await schemesRes.json());
     if (usersRes.ok) {
@@ -293,6 +381,15 @@ export default function Club1000LeadsPage() {
 
   async function changeStatus(id, status) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.lead(id), { method: 'PATCH', body: JSON.stringify({ status }) });
+    if (res.ok) {
+      const updated = await res.json();
+      setLeads((prev) => prev.map((l) => (l.id === id ? updated : l)));
+      setSelected(updated);
+    }
+  }
+
+  async function changeAssignee(id, assignedTo) {
+    const res = await apiFetch(CLUB1000_ENDPOINTS.lead(id), { method: 'PATCH', body: JSON.stringify({ assigned_to: assignedTo }) });
     if (res.ok) {
       const updated = await res.json();
       setLeads((prev) => prev.map((l) => (l.id === id ? updated : l)));
@@ -483,14 +580,17 @@ export default function Club1000LeadsPage() {
       </div>
 
       {showAdd && (
-        <AddLeadModal schemes={schemes} onClose={() => setShowAdd(false)} onCreated={() => loadLeads()} />
+        <AddLeadModal schemes={schemes} assignees={assignees} manager={manager} onClose={() => setShowAdd(false)} onCreated={() => loadLeads()} />
       )}
       {selected && (
         <LeadDetailModal
           lead={selected}
+          assignees={assignees}
+          manager={manager}
           onClose={() => setSelected(null)}
           onStatusChange={changeStatus}
           onScheduleFollowUp={scheduleFollowUp}
+          onAssigneeChange={changeAssignee}
           onConvert={(lead) => { setConvertLead(lead); setSelected(null); }}
         />
       )}

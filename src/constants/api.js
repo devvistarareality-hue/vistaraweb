@@ -117,6 +117,7 @@ export const SALES_ENDPOINTS = {
 
 export const CLUB1000_ENDPOINTS = {
   get stats()      { return `${BASE_URL}/api/club1000/stats/`; },
+  get users()      { return `${BASE_URL}/api/club1000/users/`; },
   get schemes()    { return `${BASE_URL}/api/club1000/schemes/`; },
   scheme: (id)     => `${BASE_URL}/api/club1000/schemes/${id}/`,
   get investors()  { return `${BASE_URL}/api/club1000/investors/`; },
@@ -135,5 +136,8 @@ export const CLUB1000_ENDPOINTS = {
   investorUploadLoi: (id) => `${BASE_URL}/api/club1000/investors/${id}/upload-loi/`,
   investorLoiUrl: (id)    => `${BASE_URL}/api/club1000/investors/${id}/loi-url/`,
   investorAction: (id)    => `${BASE_URL}/api/club1000/investors/${id}/action/`,
+  investorRevise: (id)    => `${BASE_URL}/api/club1000/investors/${id}/revise/`,
+  investorRenew: (id)     => `${BASE_URL}/api/club1000/investors/${id}/renew/`,
+  investorMaturePayout: (id) => `${BASE_URL}/api/club1000/investors/${id}/mature-payout/`,
   get investorNextLoiNo() { return `${BASE_URL}/api/club1000/investors/next-loi-no/`; },
 };

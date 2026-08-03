@@ -7,8 +7,12 @@ import { isClub1000Manager } from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
+import ReviseInvestorModal from '../_ReviseInvestorModal';
+import RenewInvestorModal from '../_RenewInvestorModal';
 
 const TEAL = '#00838F';
+const PURPLE = '#7C3AED';
+const AMBER = '#D97706';
 const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', borderTop: '1px solid #F5F6FA', color: '#1A1A2E' };
 
@@ -31,8 +35,18 @@ export default function InvestorsPage() {
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [revising, setRevising] = useState(null);
+  const [renewing, setRenewing] = useState(null);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  // Search box is debounced: typing updates `searchText` instantly (responsive UI)
+  // but only commits to `search` (which triggers the fetch) after a pause.
+  const [searchText, setSearchText] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchText), 400);
+    return () => clearTimeout(t);
+  }, [searchText]);
 
   async function load() {
     setLoading(true);
@@ -40,6 +54,7 @@ export default function InvestorsPage() {
       const params = new URLSearchParams();
       if (schemeFilter) params.set('scheme_id', schemeFilter);
       if (statusFilter) params.set('status', statusFilter);
+      if (search) params.set('search', search);
       // The approved portfolio only — pending/rejected submissions live on the
       // dedicated Approvals page (managers) until they're actioned.
       params.set('approval_status', 'approved');
@@ -55,7 +70,7 @@ export default function InvestorsPage() {
     }
   }
 
-  useEffect(() => { load(); }, [schemeFilter, statusFilter]);
+  useEffect(() => { load(); }, [schemeFilter, statusFilter, search]);
 
   async function openLoi(id) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
@@ -70,6 +85,17 @@ export default function InvestorsPage() {
     const data = await res.json();
     if (!res.ok) {
       alert(data?.detail || 'Could not redeem.');
+      return;
+    }
+    load();
+  }
+
+  async function maturePayout(id) {
+    if (!confirm('Pay out this matured investment now? The investor will be marked redeemed — mark the scheduled maturity payout paid separately from the Payouts screen.')) return;
+    const res = await apiFetch(CLUB1000_ENDPOINTS.investorMaturePayout(id), { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data?.detail || 'Could not process the payout.');
       return;
     }
     load();
@@ -92,7 +118,17 @@ export default function InvestorsPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
+      <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
+        <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search name, phone, email, investor no.…"
+          style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+        {searchText && (
+          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#8492A6', cursor: 'pointer', fontSize: 14 }}>✕</button>
+        )}
+      </div>
+
+      <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
         <select value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 12 }}>
           <option value="">All Schemes</option>
           {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -111,6 +147,7 @@ export default function InvestorsPage() {
           <thead>
             <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
               <th style={th}>Name</th>
+              <th style={th}>Mobile</th>
               <th style={th}>Scheme</th>
               <th style={th}>Reference</th>
               <th style={th}>Amount</th>
@@ -122,17 +159,22 @@ export default function InvestorsPage() {
               <th style={th}>LOI</th>
               <th style={th}>Status</th>
               {manager && <th style={th}>Added By</th>}
-              {manager && <th style={th}></th>}
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={13} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
             ) : investors.length === 0 ? (
-              <tr><td colSpan={13} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No investors yet.</td></tr>
+              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
             ) : investors.map((inv) => (
               <tr key={inv.id}>
-                <td style={td}>{inv.name}</td>
+                <td style={td}>
+                  {inv.name}
+                  {inv.revision_no > 0 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: '#F3E8FF', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
+                  {inv.is_matured && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: '#FEF3C7', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
+                </td>
+                <td style={td}>{inv.phone || '—'}</td>
                 <td style={td}>{inv.scheme_name}</td>
                 <td style={td}>{inv.reference_name ? `${inv.reference_name}${inv.reference_phone ? ` — ${inv.reference_phone}` : ''}` : '—'}</td>
                 <td style={td}>{fmtMoney(inv.amount_invested)}</td>
@@ -148,13 +190,23 @@ export default function InvestorsPage() {
                 </td>
                 <td style={td}><StatusBadge status={inv.status} /></td>
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
-                {manager && (
-                  <td style={td}>
-                    {inv.status === 'active' && (
-                      <button onClick={() => redeem(inv.id)} style={{ padding: '5px 10px', background: '#FFF3E0', color: '#E65100', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Redeem</button>
+                <td style={td}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: '#F3E8FF', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
+                    {inv.is_matured ? (
+                      <>
+                        <button onClick={() => setRenewing(inv)} style={{ padding: '5px 10px', background: '#FEF3C7', color: AMBER, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Renew</button>
+                        {manager && (
+                          <button onClick={() => maturePayout(inv.id)} style={{ padding: '5px 10px', background: '#FFF3E0', color: '#E65100', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Payout</button>
+                        )}
+                      </>
+                    ) : (
+                      manager && inv.status === 'active' && (
+                        <button onClick={() => redeem(inv.id)} style={{ padding: '5px 10px', background: '#FFF3E0', color: '#E65100', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Redeem</button>
+                      )
                     )}
-                  </td>
-                )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -163,6 +215,22 @@ export default function InvestorsPage() {
 
       {showAdd && (
         <AddInvestorModal schemes={schemes} onClose={() => setShowAdd(false)} onCreated={() => load()} />
+      )}
+      {revising && (
+        <ReviseInvestorModal
+          investor={revising}
+          scheme={schemes.find((s) => String(s.id) === String(revising.scheme))}
+          onClose={() => setRevising(null)}
+          onSaved={() => load()}
+        />
+      )}
+      {renewing && (
+        <RenewInvestorModal
+          investor={renewing}
+          scheme={schemes.find((s) => String(s.id) === String(renewing.scheme))}
+          onClose={() => setRenewing(null)}
+          onSaved={() => load()}
+        />
       )}
     </div>
   );

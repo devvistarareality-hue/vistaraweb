@@ -9,6 +9,7 @@ const TEAL = '#00838F';
 
 const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box' };
 const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 5 };
+const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
 
 // Format using LOCAL date parts, never toISOString() — that converts to UTC and
 // silently shifts the date back a day in positive-offset timezones (e.g. IST).
@@ -27,6 +28,23 @@ function computeMaturity(investmentDateStr, tenureMonths) {
   return toISODate(d);
 }
 
+// Principal + full-tenure interest, day-count basis — mirrors
+// backend/club1000/services.py::maturity_value exactly.
+function computeMaturityValue(investmentDateStr, maturityDateStr, principal, pct) {
+  if (!investmentDateStr || !maturityDateStr) return principal;
+  const start = new Date(`${investmentDateStr}T00:00:00`);
+  const end = new Date(`${maturityDateStr}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return principal;
+  const days = Math.round((end - start) / 86400000);
+  return principal + principal * (pct / 100) * (days / 365);
+}
+
+// Every interest instalment (quarterly or monthly) falls on this fixed day of
+// its month rather than the month-end — e.g. investing 25 Jun means the first
+// quarterly instalment is 10 Jul (a 15-day stub), not 31 Jul — mirrors
+// backend/club1000/services.py::PAYOUT_DAY.
+const PAYOUT_DAY = 10;
+
 // Company fiscal quarters: Q1 = Apr-Jun, Q2 = Jul-Sep, Q3 = Oct-Dec, Q4 = Jan-Mar.
 // Quarterly interest is paid in the FIRST month of the quarter AFTER the one the
 // investment falls in — e.g. investing anywhere in Q1 (Apr/May/Jun) pays out in
@@ -44,41 +62,66 @@ function nextQuarterPayout(d) {
   const targetMonth = QUARTER_START_MONTHS[nextIdx]; // 1-indexed
   // Only the Q3 (Oct-Dec) -> Q4 (Jan) handoff crosses a calendar year boundary.
   const year = idx === 2 ? d.getFullYear() + 1 : d.getFullYear();
-  const lastDay = new Date(year, targetMonth, 0).getDate(); // day 0 of next month
-  return new Date(year, targetMonth - 1, lastDay);
+  return new Date(year, targetMonth - 1, PAYOUT_DAY);
 }
 
+// The LAST instalment is capped at the maturity date instead of always
+// landing on the next quarter's PAYOUT_DAY — otherwise the stretch from the
+// last regular quarterly date to maturity would go uncompensated. Mirrors
+// backend/club1000/services.py::default_quarterly_dates.
 function computeQuarterlyDates(investmentDateStr, tenureMonths) {
-  const quarters = Math.max(Math.floor((Number(tenureMonths) || 0) / 3), 1);
   let current = new Date(`${investmentDateStr}T00:00:00`);
   if (Number.isNaN(current.getTime())) return [];
+  const maturity = new Date(current);
+  maturity.setMonth(maturity.getMonth() + Number(tenureMonths));
   const dates = [];
-  for (let i = 0; i < quarters; i++) {
-    current = nextQuarterPayout(current);
-    dates.push(toISODate(current));
+  for (;;) {
+    const nxt = nextQuarterPayout(current);
+    if (nxt >= maturity) { dates.push(toISODate(maturity)); break; }
+    dates.push(toISODate(nxt));
+    current = nxt;
   }
   return dates;
 }
 
 // Mirrors backend/club1000/services.py::default_monthly_dates — one instalment
-// per calendar month-end, for the full tenure.
-function nextMonthEnd(d) {
+// per calendar month on PAYOUT_DAY, for the full tenure.
+function nextMonth10th(d) {
   const totalMonth = d.getMonth() + 1 + 1; // 1-indexed, +1 month ahead
   const year = d.getFullYear() + Math.floor((totalMonth - 1) / 12);
   const month = ((totalMonth - 1) % 12) + 1;
-  const lastDay = new Date(year, month, 0).getDate();
-  return new Date(year, month - 1, lastDay);
+  return new Date(year, month - 1, PAYOUT_DAY);
 }
 
+// The LAST instalment is capped at the maturity date — see computeQuarterlyDates.
 function computeMonthlyDates(investmentDateStr, tenureMonths) {
   let current = new Date(`${investmentDateStr}T00:00:00`);
   if (Number.isNaN(current.getTime())) return [];
+  const maturity = new Date(current);
+  maturity.setMonth(maturity.getMonth() + Number(tenureMonths));
   const dates = [];
-  for (let i = 0; i < Math.max(Number(tenureMonths) || 0, 1); i++) {
-    current = nextMonthEnd(current);
-    dates.push(toISODate(current));
+  for (;;) {
+    const nxt = nextMonth10th(current);
+    if (nxt >= maturity) { dates.push(toISODate(maturity)); break; }
+    dates.push(toISODate(nxt));
+    current = nxt;
   }
   return dates;
+}
+
+// Day-count proration, mirrors backend/club1000/services.py::generate_payout_schedule:
+// dailyRate = principal * pct/100 / 365, each instalment = dailyRate * actual
+// calendar days since the PREVIOUS instalment (or since investment_date for
+// the first one) — so the first instalment is usually a stub.
+function prorateInstalments(dates, investmentDateStr, principal, totalReturnPct) {
+  const dailyRate = (principal * totalReturnPct) / 100 / 365;
+  let prev = new Date(`${investmentDateStr}T00:00:00`);
+  return dates.map((due_date) => {
+    const cur = new Date(`${due_date}T00:00:00`);
+    const days = Math.round((cur - prev) / 86400000);
+    prev = cur;
+    return +((dailyRate * days).toFixed(2));
+  });
 }
 
 // A native <input type="date"> always displays digits in the browser's own
@@ -106,44 +149,6 @@ function DateFieldDMY({ value, onChange, style, wrapperStyle }) {
   );
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function formatMonthYear(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-// Interest instalment due dates are always month-end by construction — showing
-// the day is noise, so this collapses editing to month granularity and snaps
-// back to the last day of whichever month is chosen.
-function MonthYearField({ value, onChange, style, wrapperStyle }) {
-  const monthValue = value ? value.slice(0, 7) : ''; // 'YYYY-MM'
-  function handleChange(e) {
-    const [y, m] = e.target.value.split('-').map(Number);
-    if (!y || !m) return;
-    const lastDay = new Date(y, m, 0).getDate();
-    onChange(`${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`);
-  }
-  return (
-    <div style={{ position: 'relative', ...wrapperStyle }}>
-      <input
-        type="month"
-        value={monthValue}
-        onChange={handleChange}
-        className="c1k-dmy-date"
-        style={{ ...inp, width: '100%', ...style }}
-      />
-      <span style={{
-        position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)',
-        fontSize: 13, color: value ? '#1A1A2E' : '#9CA3AF', pointerEvents: 'none',
-      }}>
-        {value ? formatMonthYear(value) : 'mmm yyyy'}
-      </span>
-    </div>
-  );
-}
-
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
 export default function AddInvestorModal({ schemes, prefillLead, onClose, onCreated }) {
@@ -151,13 +156,15 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
   const initialScheme = schemes.find((s) => String(s.id) === String(initialSchemeId));
   const [form, setForm] = useState({
     scheme: initialSchemeId,
+    source: 'referral',
     reference_name: prefillLead?.reference_name || '', reference_phone: prefillLead?.reference_phone || '',
     name: prefillLead?.name || '', phone: prefillLead?.phone || '', email: prefillLead?.email || '', pan: '',
     amount_invested: prefillLead?.amount_interested || '', investment_date: toISODate(new Date()), notes: '',
     security: '',
     interest_payout: initialScheme?.interest_payout_options?.[0] || 'maturity',
-    // The lead's negotiated rate wins over the scheme default, if one was set.
-    total_return_pct: prefillLead?.total_return_pct ?? initialScheme?.total_return_pct ?? '',
+    // The lead's negotiated rate wins over the scheme's rate for the default
+    // frequency, if one was set.
+    total_return_pct: prefillLead?.total_return_pct ?? initialScheme?.payout_rates?.[initialScheme?.interest_payout_options?.[0] || 'maturity'] ?? '',
   });
   const [documentFile, setDocumentFile] = useState(null); // {name, type, data(base64)}
   const [schedule, setSchedule] = useState([]); // [{due_date, amount_due, payout_type}] — editable preview
@@ -172,6 +179,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
 
   const scheme = schemes.find((s) => String(s.id) === String(form.scheme));
   const maturityPreview = scheme ? computeMaturity(form.investment_date, scheme.tenure_months) : '';
+  const maturityValuePreview = computeMaturityValue(form.investment_date, maturityPreview, Number(form.amount_invested) || 0, Number(form.total_return_pct) || 0);
 
   // Existing reference name/number pairs already used at this company — lets a
   // user pick a prior reference instead of retyping it with different casing
@@ -199,9 +207,8 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
       : computeMonthlyDates(form.investment_date, scheme.tenure_months);
     const principal = Number(form.amount_invested) || 0;
     const totalReturn = Number(form.total_return_pct) || 0;
-    const interestTotal = (principal * totalReturn) / 100;
-    const perInstalment = dates.length ? +(interestTotal / dates.length).toFixed(2) : 0;
-    const rows = dates.map((due_date) => ({ due_date, amount_due: perInstalment, payout_type: 'interest' }));
+    const amounts = prorateInstalments(dates, form.investment_date, principal, totalReturn);
+    const rows = dates.map((due_date, i) => ({ due_date, amount_due: amounts[i], payout_type: 'interest' }));
     rows.push({ due_date: maturityPreview, amount_due: principal, payout_type: 'maturity' });
     return rows;
   }
@@ -236,13 +243,21 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
   // defaults — both stay editable afterwards for this specific investor.
   function selectScheme(id) {
     const s = schemes.find((sc) => String(sc.id) === String(id));
+    const freq = s?.interest_payout_options?.[0] || 'maturity';
     setScheduleDirty(false);
     setForm((f) => ({
       ...f,
       scheme: id,
-      interest_payout: s?.interest_payout_options?.[0] || 'maturity',
-      total_return_pct: s?.total_return_pct ?? '',
+      interest_payout: freq,
+      total_return_pct: s?.payout_rates?.[freq] ?? '',
     }));
+  }
+
+  // Changing the frequency re-prefills return % from the scheme's rate for
+  // THAT frequency — each frequency carries its own rate, not one flat number.
+  function selectInterestPayout(freq) {
+    setScheduleDirty(false);
+    setForm((f) => ({ ...f, interest_payout: freq, total_return_pct: scheme?.payout_rates?.[freq] ?? '' }));
   }
 
   function handleFileChange(e) {
@@ -277,7 +292,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
     try {
       const noRes = await apiFetch(`${CLUB1000_ENDPOINTS.investorNextLoiNo}?scheme_id=${scheme.id}`);
       const { loi_no } = noRes.ok ? await noRes.json() : { loi_no: '' };
-      await downloadInvestorLOI({ ...form, loi_no }, scheme);
+      await downloadInvestorLOI({ ...form, loi_no }, scheme, { schedule });
       setLoiDone(true);
     } catch (_) {
       setError('Could not generate the LOI. Please try again.');
@@ -300,6 +315,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
     setBusy(true);
     try {
       const payload = { ...form, loi_file: loiFile };
+      if (payload.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
       if (documentFile) payload.document_file = documentFile;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
       if (prefillLead?.id) payload.lead = prefillLead.id;
@@ -361,7 +377,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Interest Payout</label>
-              <select style={inp} value={form.interest_payout} onChange={(e) => set('interest_payout', e.target.value)}>
+              <select style={inp} value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
                 {(scheme?.interest_payout_options?.length ? scheme.interest_payout_options : ['maturity']).map((key) => (
                   <option key={key} value={key}>{INTEREST_PAYOUT_LABELS[key] || key}</option>
                 ))}
@@ -372,6 +388,12 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
               <input style={inp} type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
             </div>
           </div>
+          {Number(form.amount_invested) > 0 && Number(form.total_return_pct) > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F0FBFA', border: '1px solid #CDEEEC', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+              <span style={{ color: '#0D6E64', fontWeight: 600 }}>Maturity Value</span>
+              <span style={{ color: '#0D6E64', fontWeight: 800 }}>₹{Math.round(maturityValuePreview).toLocaleString('en-IN')}</span>
+            </div>
+          )}
           {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -384,21 +406,12 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
                     <span style={{ fontSize: 11, fontWeight: 700, color: row.payout_type === 'maturity' ? '#7B1FA2' : '#0D9488', width: 58, flexShrink: 0 }}>
                       {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
                     </span>
-                    {row.payout_type === 'maturity' ? (
-                      <DateFieldDMY
-                        value={row.due_date}
-                        onChange={(e) => updateScheduleRow(idx, 'due_date', e.target.value)}
-                        style={{ height: 32 }}
-                        wrapperStyle={{ flex: 1 }}
-                      />
-                    ) : (
-                      <MonthYearField
-                        value={row.due_date}
-                        onChange={(val) => updateScheduleRow(idx, 'due_date', val)}
-                        style={{ height: 32 }}
-                        wrapperStyle={{ flex: 1 }}
-                      />
-                    )}
+                    <DateFieldDMY
+                      value={row.due_date}
+                      onChange={(e) => updateScheduleRow(idx, 'due_date', e.target.value)}
+                      style={{ height: 32 }}
+                      wrapperStyle={{ flex: 1 }}
+                    />
                     <input
                       type="number"
                       step="0.01"
@@ -411,41 +424,49 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <label style={lbl}>Reference Name</label>
-              <input
-                style={inp}
-                value={form.reference_name}
-                onChange={(e) => { set('reference_name', e.target.value); setRefDropdownOpen(true); }}
-                onFocus={() => setRefDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setRefDropdownOpen(false), 120)}
-                autoComplete="off"
-              />
-              {refDropdownOpen && filteredRefSuggestions.length > 0 && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, marginTop: 4,
-                  background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 8,
-                  boxShadow: '0 8px 24px rgba(24,35,80,0.14)', maxHeight: 160, overflowY: 'auto',
-                }}>
-                  {filteredRefSuggestions.map((r, i) => (
-                    <div
-                      key={`${r.reference_phone}-${i}`}
-                      onMouseDown={() => selectReferenceSuggestion(r)}
-                      style={{ padding: '8px 10px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid #F0F3FA' : 'none' }}
-                    >
-                      <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{r.reference_name}</span>
-                      {r.reference_phone && <span style={{ color: '#8492A6' }}> — {r.reference_phone}</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Reference Number</label>
-              <input style={inp} value={form.reference_phone} onChange={(e) => set('reference_phone', e.target.value)} />
-            </div>
+          <div>
+            <label style={lbl}>Source</label>
+            <select value={form.source} onChange={(e) => set('source', e.target.value)} style={inp}>
+              {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
           </div>
+          {form.source === 'referral' && (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <label style={lbl}>Reference Name</label>
+                <input
+                  style={inp}
+                  value={form.reference_name}
+                  onChange={(e) => { set('reference_name', e.target.value); setRefDropdownOpen(true); }}
+                  onFocus={() => setRefDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setRefDropdownOpen(false), 120)}
+                  autoComplete="off"
+                />
+                {refDropdownOpen && filteredRefSuggestions.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, marginTop: 4,
+                    background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 8,
+                    boxShadow: '0 8px 24px rgba(24,35,80,0.14)', maxHeight: 160, overflowY: 'auto',
+                  }}>
+                    {filteredRefSuggestions.map((r, i) => (
+                      <div
+                        key={`${r.reference_phone}-${i}`}
+                        onMouseDown={() => selectReferenceSuggestion(r)}
+                        style={{ padding: '8px 10px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid #F0F3FA' : 'none' }}
+                      >
+                        <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{r.reference_name}</span>
+                        {r.reference_phone && <span style={{ color: '#8492A6' }}> — {r.reference_phone}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Reference Number</label>
+                <input style={inp} value={form.reference_phone} onChange={(e) => set('reference_phone', e.target.value)} />
+              </div>
+            </div>
+          )}
           <div>
             <label style={lbl}>Investor Name</label>
             <input style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} required />
