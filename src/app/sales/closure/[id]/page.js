@@ -149,14 +149,6 @@ export default function ClosureViewerPage() {
     (filter !== 'all' && plot.status !== filter) ||
     (typeFilter !== 'all' && plot.cluster_type !== typeFilter);
 
-  // Which floor each selected unit sits on — shown only when the selection spans
-  // several, so picking a shop and a flat together reads clearly.
-  const floorOf = (p) => (floors.find((f) => onFloor(p, f))?.label) || '';
-  const selFloors = [...new Set(selPlots.map(floorOf).filter(Boolean))];
-  const selSummary = (floorWise && selFloors.length > 1)
-    ? selFloors.map((lbl) => `${lbl}: ${selPlots.filter((p) => floorOf(p) === lbl).map((p) => p.number).join(', ')}`).join(' · ')
-    : `Plot ${selPlots.map((p) => p.number).join(', ')}`;
-
   const shownCount = visiblePlots.filter(p => !isHidden(p)).length;
   const total      = visiblePlots.length;
   const pct        = (n) => (total ? Math.round(n / total * 100) : 0);
@@ -173,6 +165,14 @@ export default function ClosureViewerPage() {
     () => selectedIds.map((pid) => plots.find((p) => p.id === pid)).filter(Boolean),
     [selectedIds, plots],
   );
+  // Which floor each selected unit sits on — shown only when the selection spans
+  // several, so picking a shop and a flat together reads clearly.
+  const floorOf = (p) => (floors.find((f) => onFloor(p, f))?.label) || '';
+  const selFloors = [...new Set(selPlots.map(floorOf).filter(Boolean))];
+  const selSummary = (floorWise && selFloors.length > 1)
+    ? selFloors.map((lbl) => `${lbl}: ${selPlots.filter((p) => floorOf(p) === lbl).map((p) => p.number).join(', ')}`).join(' · ')
+    : `Plot ${selPlots.map((p) => p.number).join(', ')}`;
+
   const selArea = useMemo(
     () => selPlots.reduce((a, p) => a + (parseFloat(String(p.size || '').replace(/[^\d.]/g, '')) || 0), 0),
     [selPlots],
