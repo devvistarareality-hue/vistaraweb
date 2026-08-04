@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
@@ -31,6 +32,7 @@ const TABS = [
 
 export function FollowUpsContent({ adminView = false }) {
   const user      = useSelector((s) => s.auth.user);
+  const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,9 @@ export function FollowUpsContent({ adminView = false }) {
   const [nextAt,  setNextAt]  = useState('');
   const [nextRemarks, setNextRemarks] = useState('');
   const [newStatus, setNewStatus] = useState('');   // optional lead status to set on completion
+  // Completing with sv_scheduled schedules the visit inline, the same way the lead modal does.
+  const [svAt, setSvAt] = useState('');
+  const [svRemarks, setSvRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
@@ -65,6 +70,7 @@ export function FollowUpsContent({ adminView = false }) {
     // Pre-select the lead's current TC/STM status so the caller sees where it stands.
     const cur = (fu.role_context === 'stm' ? fu.lead_stm_status : fu.lead_telecaller_status) || '';
     setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus(cur);
+    setSvAt(''); setSvRemarks('');
   }
 
   async function completeFollowUp() {
@@ -90,6 +96,20 @@ export function FollowUpsContent({ adminView = false }) {
           body: JSON.stringify({ [field]: newStatus }),
         });
       }
+      // STM set sv_scheduled -> create the site visit, matching the lead modal.
+      if (newStatus === 'sv_scheduled' && svAt && done.lead) {
+        try {
+          await fetch(SALES_ENDPOINTS.siteVisits, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({
+              lead: done.lead, project: done.lead_project || null,
+              scheduled_at: new Date(svAt).toISOString(), status: 'scheduled',
+              stm: done.assigned_to, referred_by_telecaller: done.lead_telecaller || null,
+              remarks: svRemarks.trim(),
+            }),
+          });
+        } catch (_) {}
+      }
       // Optionally schedule the next follow-up on the same lead / assignee / role.
       if (schedNext && nextAt) {
         const r2 = await fetch(SALES_ENDPOINTS.followUps, {
@@ -100,6 +120,20 @@ export function FollowUpsContent({ adminView = false }) {
           }),
         });
         if (r2.ok) { const created = await r2.json(); setItems((list) => [...list, created]); }
+      }
+      // STM set closed -> hand off to the booking flow with this lead prefilled, exactly
+      // as the lead modal does, so a closure is recorded the same way from either screen.
+      if (newStatus === 'closed' && done.lead) {
+        try {
+          sessionStorage.setItem('closure_sv', JSON.stringify({
+            lead: done.lead, lead_name: done.lead_name || '', lead_phone: done.lead_phone || '',
+            project: done.lead_project || null,
+          }));
+        } catch (_) {}
+        setDone(null);
+        router.push(done.lead_project ? `/sales/closure/${done.lead_project}` : '/sales/closure');
+        setSubmitting(false);
+        return;
       }
       setDone(null);
       load();
@@ -261,6 +295,31 @@ export function FollowUpsContent({ adminView = false }) {
               <p style={{ fontSize: 11, color: '#B45309', margin: '2px 0 0' }}>Marking warm will transfer this lead to the STM pipeline.</p>
             )}
 
+            {/* Same two hand-offs the lead modal offers, so a status set here behaves
+                identically to one set on the lead. */}
+            {newStatus === 'sv_scheduled' && (
+              <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 10 }}>
+                  📍 Schedule Site Visit
+                </div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Date &amp; Time <span style={{ color: '#DC2626' }}>*</span></label>
+                <input type="datetime-local" value={svAt} onChange={(e) => setSvAt(e.target.value)}
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#166534', display: 'block', marginTop: 10 }}>Visit Remarks</label>
+                <input value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…"
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                {!svAt && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Set a date &amp; time to create the site visit automatically.</p>}
+              </div>
+            )}
+            {newStatus === 'closed' && (
+              <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: '12px 14px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: '#15803D' }}>✅</span>
+                <span style={{ fontSize: 12, color: '#166534', fontWeight: 600 }}>
+                  Marking done takes you to the booking flow — pick the unit(s) and record the booking for this lead.
+                </span>
+              </div>
+            )}
+
             <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280', display: 'block', marginTop: 14 }}>Remarks</label>
             <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
               style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
@@ -284,7 +343,7 @@ export function FollowUpsContent({ adminView = false }) {
               <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={completeFollowUp} disabled={submitting || (schedNext && !nextAt)}
                 style={{ padding: '9px 20px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !nextAt)) ? 0.6 : 1 }}>
-                {submitting ? 'Saving…' : 'Mark Done'}
+                {submitting ? 'Saving…' : newStatus === 'closed' ? 'Record Closure →' : 'Mark Done'}
               </button>
             </div>
           </div>
