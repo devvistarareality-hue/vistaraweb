@@ -311,6 +311,7 @@ function ProjectModal({ project, onClose, onSaved }) {
                 <option value="kalrav">Kalrav (villa / plots)</option>
                 <option value="ankhol">Ankhol (bunglow · sale-deed %)</option>
                 <option value="industrial">Industrial</option>
+                <option value="pratishtha">Pratishtha (tower · fixed price book)</option>
               </select>
               <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Drives the booking / EOI pricing formulas. This is separate from the display Type above.</p>
             </div>
