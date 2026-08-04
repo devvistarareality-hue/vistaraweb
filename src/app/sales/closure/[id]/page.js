@@ -406,19 +406,22 @@ export default function ClosureViewerPage() {
                 const isSel = selectedSet.has(plot.id);
                 return (
                   <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
-                    // No plan drawn for this floor, so the chip's tooltip is the only
-                    // place these price-affecting details can surface.
-                    title={[cfg.label, plot.size, FACING_LABEL[plot.facing],
-                            (plot.terrace_area || '').trim() && `Terrace ${plot.terrace_area} sq.ft`]
-                            .filter(Boolean).join(' · ')}
+                    title={cfg.label}
                     style={{
-                      minWidth: 56, padding: '10px 12px', borderRadius: 10,
+                      minWidth: 84, padding: '10px 12px', borderRadius: 10,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                       border: `1.5px solid ${isSel ? '#1A237E' : cfg.dot}`,
                       background: isSel ? '#3D5AFE' : cfg.dot + (clickable ? '22' : '14'),
                       color: isSel ? '#fff' : cfg.text, fontWeight: 800, fontSize: 13,
                       cursor: clickable ? 'pointer' : 'not-allowed', opacity: clickable ? 1 : 0.6,
                     }}>
-                    {isSel ? `✓ ${plot.number}` : plot.number}
+                    <span>{isSel ? `✓ ${plot.number}` : plot.number}</span>
+                    {/* No plan drawn for this floor, so the chip is the only place these
+                        price-affecting details can surface — a hover title is no use on a
+                        tablet, which is what the sales team books on. */}
+                    {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
+                    {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
+                    {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.ft</span>}
                   </button>
                 );
               })}
