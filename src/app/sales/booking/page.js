@@ -190,6 +190,13 @@ function BookingPage() {
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
   // All pricing sets share the sale-deed % split (Unit Price + Additional Extra Work Amount).
+  // Which pricing sections apply depends on the project's formula set and, for a unit
+  // booking, on that unit's price book — neither is known on the first paint. Render a
+  // placeholder until both have loaded, otherwise the default (Kalrav) layout flashes up
+  // and is then replaced.
+  const unitResolved = eoiMode || !plotIds.length || !!plot;
+  const pricingReady = !!project && unitResolved;
+
   // Pratishtha prices from the unit's fixed price book — nothing on this form is
   // editable for it, and there is no instalment schedule.
   const prat = (formulaSet === 'pratishtha' && plot?.price_book && Object.keys(plot.price_book).length)
@@ -490,7 +497,7 @@ function BookingPage() {
         {eoiMode ? <span style={{ color: '#E4571A' }}>{eoiNo || '…'}</span> : plotNumbers}
       </h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>
-        {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#3D5AFE' }}>{formulaSet}</span> pricing
+        {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#3D5AFE' }}>{pricingReady ? formulaSet : '…'}</span> pricing
         {eoiMode && <span style={{ color: '#E4571A', fontWeight: 700 }}> · Expression of Interest · no plot</span>}
         {plots.length > 1 && <span style={{ color: '#2E7D32', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
       </p>
@@ -506,7 +513,11 @@ function BookingPage() {
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
       </Section>
 
-      {prat ? (
+      {!pricingReady ? (
+        <Section title="Pricing">
+          <p style={{ fontSize: 13, color: '#8492A6', margin: 0 }}>Loading unit pricing…</p>
+        </Section>
+      ) : prat ? (
         /* Pratishtha: every figure is fixed in the unit's price book — shown, not entered. */
         <Section title={`Unit Pricing · ${prat.kind === 'shop' ? 'Shop' : 'Flat'} ${prat.unit} (fixed)`}>
           <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
@@ -644,7 +655,7 @@ function BookingPage() {
       <Section title="Payment Schedule">
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
         {/* Pratishtha is an all-inclusive fixed box price — no staged payments. */}
-        {!prat && (<>
+        {pricingReady && !prat && (<>
         {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
         {hasSaleDeedSplit && nsdBase > 0 && (
           <div style={{ marginBottom: 14, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
