@@ -2,6 +2,10 @@
 const API_PROXY_TARGET = process.env.API_PROXY_TARGET || 'https://vistararealtybackend-production.up.railway.app';
 
 const nextConfig = {
+  // Verification builds set NEXT_DIST_DIR so they don't overwrite the .next a running
+  // `next dev` is serving from — a production build prunes vendor chunks the dev
+  // server still references, which surfaces as "Cannot find module ./vendor-chunks/…".
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
     // Allow next/image to optimize Supabase-hosted assets (project covers, plans, etc.)
     remotePatterns: [

@@ -6,3 +6,4 @@ out/
 .claude/
 .vercel/
 .env*.local
+.next-verify/
