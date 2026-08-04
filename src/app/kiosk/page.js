@@ -368,6 +368,10 @@ export default function KioskPage() {
                     <button key={pl.id} className={`k-plot ${isSelected(pl) ? 'on' : ''}`} onClick={() => togglePlot(pl)}>
                       <span className="k-plot-no">{pl.number}</span>
                       {pl.size ? <span className="k-plot-sz">{pl.size}</span> : null}
+                      {/* Facing and terrace move the price — show them on the chip too,
+                          matching the app and the map tooltip. */}
+                      {pl.facing ? <span className="k-plot-sz">{FACING_LABEL[pl.facing] || pl.facing}</span> : null}
+                      {(pl.terrace_area || '').trim() ? <span className="k-plot-sz">Terrace {pl.terrace_area} sq.ft</span> : null}
                     </button>
                   ))}
                 </div>
