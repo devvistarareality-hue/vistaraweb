@@ -36,6 +36,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const isAnkholPdf = formulaSet === 'ankhol';
   const isKalravPdf = formulaSet === 'kalrav';
   const isIndustrialPdf = formulaSet === 'industrial';
+  const isPratishthaPdf = formulaSet === 'pratishtha';
+  // Pratishtha is priced from a fixed per-unit price book rather than a formula;
+  // its LOI renders those figures verbatim using the same visual primitives.
+  const pb = opts.priceBook || null;
   const isTundavPdf = isIndustrialPdf && projNamePdf.trim().toLowerCase() === 'tundav';
   const isKalrav3Pdf = isKalravPdf && projNamePdf.trim().toLowerCase() === 'kalrav 3';
   // Honour the booking form's unit toggle; fall back to the formula default.
@@ -188,7 +192,19 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     : /^other$/i.test(meta.source) ? 'Other'
     : 'CP / Channel Partner';
   secHead('Details', P);
-  if (isIndustrialPdf) {
+  if (isPratishthaPdf && pb) {
+    const isShop = pb.kind === 'shop';
+    infoGrid([
+      ...(isShop
+        ? [['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.']]
+        : [['Flat Area', num(pb.flat_area) + ' sq.yd.'],
+           ['Terrace Area', pb.terrace_area ? num(pb.terrace_area) + ' sq.yd.' : 'Not applicable'],
+           ['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—']]),
+      ...(showCp ? [[cpLabel, meta.cpName || '—']] : []),
+      ['STM Name', meta.loggedInUser || '—'],
+      ['Source of Inquiry', meta.source || '—'], ['Address', meta.address || '—'],
+    ]);
+  } else if (isIndustrialPdf) {
     const areaSqMtr = v.area > 0 ? (v.area / 10.764).toFixed(2) + ' sq.mtr' : '—';
     infoGrid([
       ...((chosenUnit && chosenUnit !== 'sq.ft')
@@ -208,6 +224,37 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     ]);
   }
 
+  if (isPratishthaPdf && pb) {
+    const isShop = pb.kind === 'shop';
+    if (isShop) {
+      secHead('Deal Value', [71, 85, 105]);
+      infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.'],
+                ['Shop Amount', 'Rs. ' + rs(pb.amount)], ['Loan Amount', 'Rs. ' + rs(pb.loan_amount)]]);
+      chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
+      tRow('Stamp Duty & Registration (6% of Loan Amount)', pb.stamp_duty_reg);
+      tRow('GST (5% of Loan Amount)', pb.gst);
+      tRow('AUDA (Rs. 400 per sq.ft.)', pb.auda);
+      tRow('6 Months Maintenance Advance (Rs. 1.5 per sq.ft. p.m.)', pb.maint_adv_6m);
+      tRow('12 Months Maintenance Deposit (Rs. 1.5 per sq.ft. p.m.)', pb.maint_dep_12m);
+      tRow('Legal Charges', pb.legal);
+      y += 2; tRow('Total Legal & Other Charges', pb.total_extra, { sub: true });
+      y += 2; tRow('Grand Total', pb.grand_total, { total: true });
+    } else {
+      secHead('Deal Value', [71, 85, 105]); rowAlt = false;
+      tRow('Flat Price', pb.flat_price);
+      if (pb.terrace_area) tRow('Additional Terrace Price', pb.terrace_price,
+        { subline: num(pb.terrace_area) + ' sq.yd. private terrace' });
+      y += 2; tRow('Total All Inclusive Amount (Box Price)', pb.box_price, { sub: true });
+      chk(14 + 6 * 7.5 + 12); secHead('Payment & Charges', [124, 58, 237]); rowAlt = false;
+      tRow('Token', pb.token);
+      tRow('Bank Loan', pb.bank_loan);
+      tRow('Dastavej Value (approx.)', pb.dastavej_value);
+      tRow('Stamp Duty + Registration', pb.stamp_duty_reg);
+      tRow('GST', pb.gst);
+      tRow('Bank Processing Fees & Insurance', pb.bank_processing);
+      y += 2; tRow('Total', pb.total, { total: true });
+    }
+  } else {
   // Deal Value — all sets now use the sale-deed split (Unit Price + Additional Extra
   // Work Amount ÷100).
   {
@@ -339,6 +386,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       drawSubTotal('SUB TOTAL', grandLegal);
     }
 
+  }
   }
 
   // Terms
