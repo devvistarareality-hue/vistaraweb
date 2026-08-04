@@ -266,7 +266,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       chk(14 + 6 * 7.5 + 12); secHead('Payment & Charges', [124, 58, 237]); rowAlt = false;
       tRow('Token', pb.token);
       tRow('Bank Loan', pb.bank_loan);
-      tRow('Sale Deed', pb.dastavej_value);
+      tRow('Final Unit Price', pb.dastavej_value);
       tRow('Stamp Duty + Registration', pb.stamp_duty_reg);
       tRow('GST', pb.gst);
       tRow('Bank Processing Fees & Insurance', pb.bank_processing);
