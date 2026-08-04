@@ -39,7 +39,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const isPratishthaPdf = formulaSet === 'pratishtha';
   // Pratishtha is priced from a fixed per-unit price book rather than a formula;
   // its LOI renders those figures verbatim using the same visual primitives.
-  const pb = opts.priceBook || null;
+  const pbs = (opts.priceBooks && opts.priceBooks.length) ? opts.priceBooks
+    : (opts.priceBook ? [opts.priceBook] : []);
+  const pb = pbs[0] || null;   // Details block describes the first unit
   const isTundavPdf = isIndustrialPdf && projNamePdf.trim().toLowerCase() === 'tundav';
   const isKalrav3Pdf = isKalravPdf && projNamePdf.trim().toLowerCase() === 'kalrav 3';
   // Honour the booking form's unit toggle; fall back to the formula default.
@@ -229,9 +231,12 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
 
   if (isPratishthaPdf && pb) {
+    const multi = pbs.length > 1;
+    const pbTot = (b) => (b.grand_total != null ? b.grand_total : b.box_price) || 0;
+    pbs.forEach((pb) => {
     const isShop = pb.kind === 'shop';
     if (isShop) {
-      secHead('Deal Value', [71, 85, 105]);
+      secHead(multi ? ('Shop ' + pb.unit) : 'Deal Value', [71, 85, 105]);
       infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.'],
                 ['Shop Amount', 'Rs. ' + rs(pb.amount)], ['Loan Amount', 'Rs. ' + rs(pb.loan_amount)]]);
       chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
@@ -242,9 +247,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('12 Months Maintenance Deposit (Rs. 1.5 per sq.ft. p.m.)', pb.maint_dep_12m);
       tRow('Legal Charges', pb.legal);
       y += 2; tRow('Total Legal & Other Charges', pb.total_extra, { sub: true });
-      y += 2; tRow('Grand Total', pb.grand_total, { total: true });
+      y += 2; tRow('Grand Total', pb.grand_total, { total: !multi, sub: multi });
     } else {
-      secHead('Deal Value', [71, 85, 105]); rowAlt = false;
+      secHead(multi ? ('Flat ' + pb.unit) : 'Deal Value', [71, 85, 105]); rowAlt = false;
       tRow('Flat Price', pb.flat_price);
       if (pb.terrace_area) tRow('Additional Terrace Price', pb.terrace_price,
         { subline: num(pb.terrace_area) + ' sq.yd. private terrace' });
@@ -256,7 +261,14 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('Stamp Duty + Registration', pb.stamp_duty_reg);
       tRow('GST', pb.gst);
       tRow('Bank Processing Fees & Insurance', pb.bank_processing);
-      y += 2; tRow('Total', pb.total, { total: true });
+      y += 2; tRow('Total', pb.total, { multi, total: !multi, sub: multi });
+    }
+    });
+    if (multi) {
+      chk(14 + pbs.length * 7.5 + 12);
+      secHead('Combined Total · ' + pbs.length + ' units', [71, 85, 105]); rowAlt = false;
+      pbs.forEach((b) => tRow((b.kind === 'shop' ? 'Shop ' : 'Flat ') + b.unit, pbTot(b)));
+      y += 2; tRow('Total All Inclusive Amount', pbs.reduce((s2, b) => s2 + pbTot(b), 0), { total: true });
     }
   } else {
   // Deal Value — all sets now use the sale-deed split (Unit Price + Additional Extra

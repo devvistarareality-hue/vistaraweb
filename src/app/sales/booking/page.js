@@ -198,28 +198,33 @@ function BookingPage() {
   const unitResolved = eoiMode || !plotIds.length || !!plot;
   const pricingReady = !!project && unitResolved;
 
-  // Pratishtha prices from the unit's fixed price book — nothing on this form is
-  // editable for it, and there is no instalment schedule.
-  const prat = (formulaSet === 'pratishtha' && plot?.price_book && Object.keys(plot.price_book).length)
-    ? plot.price_book : null;
-  const pratRows = !prat ? [] : (prat.kind === 'shop'
-    ? [['Shop Area', `${prat.sq_feet} sq.ft`], ['Rate', rupee(prat.rate) + ' / sq.ft'],
-       ['Shop Amount', rupee(prat.amount)], ['Loan Amount', rupee(prat.loan_amount)],
-       ['Stamp Duty & Registration (6% of Loan)', rupee(prat.stamp_duty_reg)],
-       ['GST (5% of Loan)', rupee(prat.gst)], ['AUDA (₹400/sq.ft)', rupee(prat.auda)],
-       ['6 Months Maintenance Advance', rupee(prat.maint_adv_6m)],
-       ['12 Months Maintenance Deposit', rupee(prat.maint_dep_12m)],
-       ['Legal Charges', rupee(prat.legal)], ['Total Legal & Other Charges', rupee(prat.total_extra)]]
-    : [['Flat Area', `${prat.flat_area} sq.yd`],
-       ['Terrace Area', prat.terrace_area ? `${prat.terrace_area} sq.yd` : '—'],
-       ['Facing', prat.facing === 'road' ? 'Road Facing' : prat.facing === 'garden' ? 'Garden Facing' : '—'],
-       ['Flat Price', rupee(prat.flat_price)],
-       ...(prat.terrace_area ? [['Additional Terrace Price', rupee(prat.terrace_price)]] : []),
-       ['Token', rupee(prat.token)], ['Bank Loan', rupee(prat.bank_loan)],
-       ['Dastavej Value (approx.)', rupee(prat.dastavej_value)],
-       ['Stamp Duty + Registration', rupee(prat.stamp_duty_reg)], ['GST', rupee(prat.gst)],
-       ['Bank Processing Fees & Insurance', rupee(prat.bank_processing)]]);
-  const pratTotal = prat ? (prat.grand_total ?? prat.box_price) : 0;
+  // Pratishtha prices from each unit's fixed price book — nothing on this form is
+  // editable for it, and there is no instalment schedule. A booking can cover several
+  // units, so every selected one is priced and the totals are summed.
+  const pratBooks = formulaSet === 'pratishtha'
+    ? plots.map((p) => p.price_book).filter((b) => b && Object.keys(b).length)
+    : [];
+  const prat = pratBooks[0] || null;
+  const pratRowsFor = (pb) => (pb.kind === 'shop'
+    ? [['Shop Area', `${pb.sq_feet} sq.ft`], ['Rate', rupee(pb.rate) + ' / sq.ft'],
+       ['Shop Amount', rupee(pb.amount)], ['Loan Amount', rupee(pb.loan_amount)],
+       ['Stamp Duty & Registration (6% of Loan)', rupee(pb.stamp_duty_reg)],
+       ['GST (5% of Loan)', rupee(pb.gst)], ['AUDA (₹400/sq.ft)', rupee(pb.auda)],
+       ['6 Months Maintenance Advance', rupee(pb.maint_adv_6m)],
+       ['12 Months Maintenance Deposit', rupee(pb.maint_dep_12m)],
+       ['Legal Charges', rupee(pb.legal)], ['Total Legal & Other Charges', rupee(pb.total_extra)]]
+    : [['Flat Area', `${pb.flat_area} sq.yd`],
+       ['Terrace Area', pb.terrace_area ? `${pb.terrace_area} sq.yd` : '—'],
+       ['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],
+       ['Flat Price', rupee(pb.flat_price)],
+       ...(pb.terrace_area ? [['Additional Terrace Price', rupee(pb.terrace_price)]] : []),
+       ['Token', rupee(pb.token)], ['Bank Loan', rupee(pb.bank_loan)],
+       ['Dastavej Value (approx.)', rupee(pb.dastavej_value)],
+       ['Stamp Duty + Registration', rupee(pb.stamp_duty_reg)], ['GST', rupee(pb.gst)],
+       ['Bank Processing Fees & Insurance', rupee(pb.bank_processing)]]);
+  const pbTotal = (pb) => (pb.grand_total ?? pb.box_price ?? 0);
+  const pratTotal = pratBooks.reduce((sum, pb) => sum + pbTotal(pb), 0);
+  const pratExtraTotal = pratBooks.reduce((sum, pb) => sum + (pb.total_extra || 0), 0);
 
   const hasSaleDeedSplit = formulaSet === 'ankhol' || formulaSet === 'kalrav' || formulaSet === 'industrial';
   // EOI standard sizes are per-unit; the No. of Units field multiplies Plot/Construction Area.
@@ -409,7 +414,7 @@ function BookingPage() {
     };
     try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit,
       // Pratishtha prices from the unit's fixed price book, not the form's rates.
-      priceBook: plot?.price_book && Object.keys(plot.price_book).length ? plot.price_book : null }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
+      priceBooks: pratBooks }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }
   }
   function onFile(e) {
@@ -452,7 +457,7 @@ function BookingPage() {
       stamp_duty: Math.round(v.stampDuty), reg_fees: Math.round(v.regFees), gst: Math.round(v.gst),
       maintenance: Math.round(v.maint), maint_deposit: Math.round(v.maintDeposit), maint_advance: Math.round(v.maintAdvance),
       legal_charges: f.legal_charges || 0, premium_location: f.premium_location || 0,
-      total_extra: Math.round(prat ? (prat.total_extra || 0) : v.totalExtra), discount: f.discount || 0,
+      total_extra: Math.round(prat ? pratExtraTotal : v.totalExtra), discount: f.discount || 0,
       final_amount: Math.round(prat ? pratTotal : v.finalAmt),
       apply_reg_fee: f.apply_reg_fee, apply_page_fee: f.apply_page_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
       installments: prat ? [] : instArr(),   // fixed box price — no staged payments
@@ -526,27 +531,53 @@ function BookingPage() {
           <p style={{ fontSize: 13, color: '#8492A6', margin: 0 }}>Loading unit pricing…</p>
         </Section>
       ) : prat ? (
-        /* Pratishtha: every figure is fixed in the unit's price book — shown, not entered. */
-        <Section title={`Unit Pricing · ${prat.kind === 'shop' ? 'Shop' : 'Flat'} ${prat.unit} (fixed)`}>
-          <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
-            These figures come from the approved Pratishtha price book and cannot be edited here.
-          </p>
-          <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
-            {pratRows.map(([k, val], i) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
-                background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
-                <span style={{ fontSize: 13, color: '#6B7280' }}>{k}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{val}</span>
+        /* Pratishtha: every figure is fixed in each unit's price book — shown, not entered.
+           A booking can cover several units, so each is priced separately and summed. */
+        <>
+          {pratBooks.map((pb, idx) => (
+            <Section key={idx} title={`Unit Pricing · ${pb.kind === 'shop' ? 'Shop' : 'Flat'} ${pb.unit} (fixed)`}>
+              {idx === 0 && (
+                <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
+                  These figures come from the approved Pratishtha price book and cannot be edited here.
+                </p>
+              )}
+              <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
+                {pratRowsFor(pb).map(([k, val], i) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
+                    background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
+                    <span style={{ fontSize: 13, color: '#6B7280' }}>{k}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{val}</span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px',
+                  background: pratBooks.length > 1 ? '#4B5563' : '#182350' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                    {pb.kind === 'shop' ? 'Grand Total' : 'Total All Inclusive Amount (Box Price)'}
+                  </span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pbTotal(pb))}</span>
+                </div>
               </div>
-            ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: '#182350' }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
-                {prat.kind === 'shop' ? 'Grand Total' : 'Total All Inclusive Amount (Box Price)'}
-              </span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pratTotal)}</span>
-            </div>
-          </div>
-        </Section>
+            </Section>
+          ))}
+          {/* Only meaningful with more than one unit — a single unit's total is above. */}
+          {pratBooks.length > 1 && (
+            <Section title={`Combined Total · ${pratBooks.length} units`}>
+              <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
+                {pratBooks.map((pb, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
+                    background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
+                    <span style={{ fontSize: 13, color: '#6B7280' }}>{pb.kind === 'shop' ? 'Shop' : 'Flat'} {pb.unit}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{rupee(pbTotal(pb))}</span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: '#182350' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Total All Inclusive Amount</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pratTotal)}</span>
+                </div>
+              </div>
+            </Section>
+          )}
+        </>
       ) : (<>
       <Section title="Plot & Type">
         <Row><L>Area Unit</L>
