@@ -390,7 +390,16 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   }
 
   // Terms
-  const terms = (isEOI && isKalravPdf) ? [
+  // Pratishtha has its own terms — the deal is an all-inclusive box price, so the
+  // inclusions are spelled out rather than itemised as separate charges.
+  const PRATISHTHA_TERMS = [
+    ['Payment Mode', 'All payments are received via cheque or bank transfer only. No cash is accepted.'],
+    ['Booking Token', 'Token amount for booking is subject to approval of loan from the bank. In case of disapproval from the bank, the token amount will be refunded back into the buyer\'s account within forty-eight hours.'],
+    ['Cancellation', 'If the buyer cancels the flat after booking, the token amount will be forfeited by the builder.'],
+    ['Inclusions', 'The above proposal is inclusive of:\n\u2022 Stamp duty and registration\n\u2022 GST\n\u2022 Bank processing fees and insurance\n\u2022 Gas meter charge\n\u2022 Electricity meter charge\n\u2022 Maintenance advance\n\u2022 Maintenance deposit'],
+  ];
+
+  const terms = isPratishthaPdf ? PRATISHTHA_TERMS : (isEOI && isKalravPdf) ? [
     ['Minimum Plot Area', 'The area of the minimum plot is subject to change at max. 10%.'],
     ['Construction Area', 'Const. area is subject to change and will be finalised at the time of disclosure of master layout.'],
     ['Booking Order', 'The EOI will be booked in a chronological manner and the selection of the plots will be done accordingly.'],
