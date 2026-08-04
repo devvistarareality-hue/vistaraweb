@@ -202,7 +202,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     const isShop = pb.kind === 'shop';
     infoGrid([
       ...(isShop
-        ? [['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.']]
+        ? [['Shop Area', num(pb.sq_feet) + ' sq.ft.']]
         : [['Flat Area', num(pb.flat_area) + ' sq.yd.'],
            ['Terrace Area', pb.terrace_area ? num(pb.terrace_area) + ' sq.yd.' : 'Not applicable'],
            ['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—']]),
@@ -245,9 +245,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     pbs.forEach((pb) => {
     const isShop = pb.kind === 'shop';
     if (isShop) {
+      // The shop LOI states the area, the unit price, the charge bifurcation and the
+      // extra work amount. Rate and Shop Amount are working figures, not contract terms,
+      // so they stay on the booking form and off the document.
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]);
-      infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.'],
-                ['Shop Amount', 'Rs. ' + rs(pb.amount)], ['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)]]);
+      infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)]]);
       chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
       tRow('Stamp Duty & Registration (6% of Final Unit Price)', pb.stamp_duty_reg);
       tRow('GST (5% of Final Unit Price)', pb.gst);
@@ -256,8 +258,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('12 Months Maintenance Deposit (Rs. 1.5 per sq.ft. p.m.)', pb.maint_dep_12m);
       tRow('Legal Charges', pb.legal);
       y += 2; tRow('Total Legal & Other Charges', pb.total_extra, { sub: true });
-      tRow('Extra Work Amount', pb.extra_work_amount,
-        { subline: 'Final Unit Price - Total Legal & Other Charges' });
+      tRow('Extra Work Amount', 0, {
+        valStr: (Number(pb.extra_work_amount || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        subline: 'Final Unit Price - Total Legal & Other Charges',
+      });
       y += 2; tRow('Grand Total', pb.grand_total, { total: !multi, sub: multi });
     } else {
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]); rowAlt = false;
