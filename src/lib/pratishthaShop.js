@@ -51,6 +51,10 @@ export function computeShop(pb, edit = {}) {
     // loan_amount is the stored key behind the "Final Unit Price" row.
     loan_amount: unit,
     stamp_duty_reg, gst, auda, maint_adv_6m, maint_dep_12m, legal,
-    total_extra, grand_total: amount + total_extra,
+    total_extra,
+    // Stated as Final Unit Price - Total Legal & Other Charges. Informational: the
+    // Grand Total is still Amount + Total Extra.
+    extra_work_amount: unit - total_extra,
+    grand_total: amount + total_extra,
   };
 }

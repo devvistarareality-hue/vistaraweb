@@ -220,7 +220,8 @@ function BookingPage() {
        ['GST (5% of Final Unit Price)', rupee(pb.gst)], ['AUDA (₹400/sq.ft)', rupee(pb.auda)],
        ['6 Months Maintenance Advance', rupee(pb.maint_adv_6m)],
        ['12 Months Maintenance Deposit', rupee(pb.maint_dep_12m)],
-       ['Legal Charges', rupee(pb.legal)], ['Total Legal & Other Charges', rupee(pb.total_extra)]]
+       ['Legal Charges', rupee(pb.legal)], ['Total Legal & Other Charges', rupee(pb.total_extra)],
+       ['Extra Work Amount', rupee(pb.extra_work_amount)]]
     : [['Flat Area', `${pb.flat_area} sq.yd`],
        ['Terrace Area', pb.terrace_area ? `${pb.terrace_area} sq.yd` : '—'],
        ['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],

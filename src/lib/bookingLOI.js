@@ -256,6 +256,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('12 Months Maintenance Deposit (Rs. 1.5 per sq.ft. p.m.)', pb.maint_dep_12m);
       tRow('Legal Charges', pb.legal);
       y += 2; tRow('Total Legal & Other Charges', pb.total_extra, { sub: true });
+      tRow('Extra Work Amount', pb.extra_work_amount,
+        { subline: 'Final Unit Price - Total Legal & Other Charges' });
       y += 2; tRow('Grand Total', pb.grand_total, { total: !multi, sub: multi });
     } else {
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]); rowAlt = false;
