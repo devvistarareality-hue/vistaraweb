@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../lib/bookingFormulas';
 import { downloadLOI } from '../../../lib/bookingLOI';
+import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
 
 
 const MAX_LOI_FILE_SIZE_MB = 100;
@@ -74,6 +75,8 @@ function BookingPage() {
     booking_date: new Date().toISOString().slice(0, 10), cp_name: '',
   });
   const [errs, setErrs] = useState({});   // required-field highlight on Generate/Submit
+  // Per-shop overrides: { [unit]: { rate, mode: 'pct'|'amount', unitPct, unitAmount } }
+  const [shopEdits, setShopEdits] = useState({});
   const set = (k, v) => { setF((s) => ({ ...s, [k]: v })); setErrs((e) => (e[k] ? { ...e, [k]: false } : e)); };
   const [insts, setInsts] = useState([]); // [{date,pct,amt}]
   const [nsdInsts, setNsdInsts] = useState([]); // extra work charges installments (ankhol)
@@ -201,9 +204,14 @@ function BookingPage() {
   // Pratishtha prices from each unit's fixed price book — nothing on this form is
   // editable for it, and there is no instalment schedule. A booking can cover several
   // units, so every selected one is priced and the totals are summed.
-  const pratBooks = formulaSet === 'pratishtha'
+  // Shops are computed from an editable Rate and Total Unit Price; flats stay fixed.
+  const rawBooks = formulaSet === 'pratishtha'
     ? plots.map((p) => p.price_book).filter((b) => b && Object.keys(b).length)
     : [];
+  const shopEdit = (pb) => shopEdits[pb.unit] || { rate: pb.rate, mode: 'pct', unitPct: impliedUnitPct(pb), unitAmount: pb.loan_amount };
+  const setShopEdit = (unit, patch) =>
+    setShopEdits((m) => ({ ...m, [unit]: { ...(m[unit] || {}), ...patch } }));
+  const pratBooks = rawBooks.map((pb) => (pb.kind === 'shop' ? computeShop(pb, shopEdit(pb)) : pb));
   const prat = pratBooks[0] || null;
   const pratRowsFor = (pb) => (pb.kind === 'shop'
     ? [['Shop Area', `${pb.sq_feet} sq.ft`], ['Rate', rupee(pb.rate) + ' / sq.ft'],
@@ -549,6 +557,37 @@ function BookingPage() {
                   These figures come from the approved Pratishtha price book and cannot be edited here.
                 </p>
               )}
+              {pb.kind === 'shop' && (() => {
+                const e = shopEdit(pb);
+                return (
+                  <div style={{ border: '1.5px solid #C7D2FE', background: '#F5F7FF', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                      Editable · everything below recalculates
+                    </div>
+                    <Row><L>Rate (₹/sq.ft)</L>
+                      <In type="number" value={e.rate ?? ''} onChange={(ev) => setShopEdit(pb.unit, { rate: ev.target.value })} />
+                    </Row>
+                    <Row><L>Total Unit Price</L>
+                      <div style={{ display: 'flex', flex: 1, gap: 8 }}>
+                        {[['pct', '%'], ['amount', '₹']].map(([m, lbl]) => (
+                          <button key={m} type="button" onClick={() => setShopEdit(pb.unit, { mode: m })}
+                            style={{ width: 44, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                              border: `1.5px solid ${e.mode === m ? '#3D5AFE' : '#E0E6F0'}`,
+                              background: e.mode === m ? '#3D5AFE' : '#fff', color: e.mode === m ? '#fff' : '#8492A6' }}>{lbl}</button>
+                        ))}
+                        {e.mode === 'amount'
+                          ? <In type="number" value={e.unitAmount ?? ''} onChange={(ev) => setShopEdit(pb.unit, { unitAmount: ev.target.value })} />
+                          : <In type="number" value={e.unitPct ?? ''} onChange={(ev) => setShopEdit(pb.unit, { unitPct: ev.target.value })} />}
+                      </div>
+                    </Row>
+                    <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
+                      {e.mode === 'amount'
+                        ? `Entered as an amount · ${pb.amount ? ((pb.loan_amount / pb.amount) * 100).toFixed(2) : '0'}% of the shop amount`
+                        : `${e.unitPct || 0}% of ${rupee(pb.amount)} = ${rupee(pb.loan_amount)}`}
+                    </p>
+                  </div>
+                );
+              })()}
               <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
                 {pratRowsFor(pb).map(([k, val], i) => (
                   <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
