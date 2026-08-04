@@ -190,6 +190,29 @@ function BookingPage() {
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
   // All pricing sets share the sale-deed % split (Unit Price + Additional Extra Work Amount).
+  // Pratishtha prices from the unit's fixed price book — nothing on this form is
+  // editable for it, and there is no instalment schedule.
+  const prat = (formulaSet === 'pratishtha' && plot?.price_book && Object.keys(plot.price_book).length)
+    ? plot.price_book : null;
+  const pratRows = !prat ? [] : (prat.kind === 'shop'
+    ? [['Shop Area', `${prat.sq_feet} sq.ft`], ['Rate', rupee(prat.rate) + ' / sq.ft'],
+       ['Shop Amount', rupee(prat.amount)], ['Loan Amount', rupee(prat.loan_amount)],
+       ['Stamp Duty & Registration (6% of Loan)', rupee(prat.stamp_duty_reg)],
+       ['GST (5% of Loan)', rupee(prat.gst)], ['AUDA (₹400/sq.ft)', rupee(prat.auda)],
+       ['6 Months Maintenance Advance', rupee(prat.maint_adv_6m)],
+       ['12 Months Maintenance Deposit', rupee(prat.maint_dep_12m)],
+       ['Legal Charges', rupee(prat.legal)], ['Total Legal & Other Charges', rupee(prat.total_extra)]]
+    : [['Flat Area', `${prat.flat_area} sq.yd`],
+       ['Terrace Area', prat.terrace_area ? `${prat.terrace_area} sq.yd` : '—'],
+       ['Facing', prat.facing === 'road' ? 'Road Facing' : prat.facing === 'garden' ? 'Garden Facing' : '—'],
+       ['Flat Price', rupee(prat.flat_price)],
+       ...(prat.terrace_area ? [['Additional Terrace Price', rupee(prat.terrace_price)]] : []),
+       ['Token', rupee(prat.token)], ['Bank Loan', rupee(prat.bank_loan)],
+       ['Dastavej Value (approx.)', rupee(prat.dastavej_value)],
+       ['Stamp Duty + Registration', rupee(prat.stamp_duty_reg)], ['GST', rupee(prat.gst)],
+       ['Bank Processing Fees & Insurance', rupee(prat.bank_processing)]]);
+  const pratTotal = prat ? (prat.grand_total ?? prat.box_price) : 0;
+
   const hasSaleDeedSplit = formulaSet === 'ankhol' || formulaSet === 'kalrav' || formulaSet === 'industrial';
   // EOI standard sizes are per-unit; the No. of Units field multiplies Plot/Construction Area.
   const applyEoiUnit = (name, unitsStr) => {
@@ -398,7 +421,7 @@ function BookingPage() {
     if (!f.land_rate || !v.plotBasic) { e.land_rate = true; if (!f.area) e.area = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
-    if (!eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
+    if (!prat && !eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
     if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
     setSaving(true); setMsg('');
     const payload = {
@@ -418,9 +441,10 @@ function BookingPage() {
       stamp_duty: Math.round(v.stampDuty), reg_fees: Math.round(v.regFees), gst: Math.round(v.gst),
       maintenance: Math.round(v.maint), maint_deposit: Math.round(v.maintDeposit), maint_advance: Math.round(v.maintAdvance),
       legal_charges: f.legal_charges || 0, premium_location: f.premium_location || 0,
-      total_extra: Math.round(v.totalExtra), discount: f.discount || 0, final_amount: Math.round(v.finalAmt),
+      total_extra: Math.round(prat ? (prat.total_extra || 0) : v.totalExtra), discount: f.discount || 0,
+      final_amount: Math.round(prat ? pratTotal : v.finalAmt),
       apply_reg_fee: f.apply_reg_fee, apply_page_fee: f.apply_page_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
-      installments: instArr(),
+      installments: prat ? [] : instArr(),   // fixed box price — no staged payments
       extra_work_desc: reviseId ? (ew.desc || '') : '',
       extra_work_amount: reviseId ? Math.round(parseFloat(ew.amt) || 0) : 0,
       extra_work_inst: reviseId ? ewArr() : [],
@@ -480,6 +504,29 @@ function BookingPage() {
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
       </Section>
 
+      {prat ? (
+        /* Pratishtha: every figure is fixed in the unit's price book — shown, not entered. */
+        <Section title={`Unit Pricing · ${prat.kind === 'shop' ? 'Shop' : 'Flat'} ${prat.unit} (fixed)`}>
+          <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
+            These figures come from the approved Pratishtha price book and cannot be edited here.
+          </p>
+          <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
+            {pratRows.map(([k, val], i) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
+                background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
+                <span style={{ fontSize: 13, color: '#6B7280' }}>{k}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{val}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: '#182350' }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                {prat.kind === 'shop' ? 'Grand Total' : 'Total All Inclusive Amount (Box Price)'}
+              </span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pratTotal)}</span>
+            </div>
+          </div>
+        </Section>
+      ) : (<>
       <Section title="Plot & Type">
         <Row><L>Area Unit</L>
           <div style={{ display: 'flex', flex: 1, gap: 8 }}>
@@ -590,9 +637,12 @@ function BookingPage() {
         {!hasSaleDeedSplit && <T label="Discount" val={-v.discount} />}
         <T label="Total Box Price" val={v.finalAmt} big />
       </div>
+      </>)}
 
       <Section title="Payment Schedule">
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
+        {/* Pratishtha is an all-inclusive fixed box price — no staged payments. */}
+        {!prat && (<>
         {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
         {hasSaleDeedSplit && nsdBase > 0 && (
           <div style={{ marginBottom: 14, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
@@ -648,6 +698,7 @@ function BookingPage() {
           </table>
         )}
         {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}% · Legal & Other Charges {rupee(v.totalExtra)}</div>}
+        </>)}
       </Section>
 
       {reviseId && (
