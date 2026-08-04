@@ -379,12 +379,14 @@ function BookingPage() {
     const e = {};
     if (!f.client_name.trim()) e.client_name = true;
     if (!f.phone.trim()) e.phone = true;
-    if (!v.plotBasic) { if (!f.area) e.area = true; if (!f.land_rate) e.land_rate = true; }
+    // Pratishtha has no rate fields — its amounts come from the unit's price book, so
+    // requiring area/land rate would flag inputs that aren't on the form.
+    if (!prat && !v.plotBasic) { if (!f.area) e.area = true; if (!f.land_rate) e.land_rate = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
     // Installments must total 100% before the LOI — EXCEPT for an EOI, where a partial
     // (token) schedule is allowed and the 100% rule does not apply.
-    if (!eoiMode) {
+    if (!prat && !eoiMode) {
       if (!insts.length) { setMsg('Add the payment installments before downloading the LOI.'); return; }
       if (Math.abs(pctTotal - 100) > 0.01) { setMsg('Payment installments must total 100% before downloading the LOI.'); return; }
       if (hasSaleDeedSplit && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
@@ -418,7 +420,7 @@ function BookingPage() {
     const e = {};
     if (!f.client_name.trim()) e.client_name = true;
     if (!f.phone.trim()) e.phone = true;
-    if (!f.land_rate || !v.plotBasic) { e.land_rate = true; if (!f.area) e.area = true; }
+    if (!prat && (!f.land_rate || !v.plotBasic)) { e.land_rate = true; if (!f.area) e.area = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
     if (!prat && !eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
