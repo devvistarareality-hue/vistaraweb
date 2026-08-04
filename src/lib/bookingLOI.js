@@ -247,10 +247,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     if (isShop) {
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]);
       infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.'],
-                ['Shop Amount', 'Rs. ' + rs(pb.amount)], ['Loan Amount', 'Rs. ' + rs(pb.loan_amount)]]);
+                ['Shop Amount', 'Rs. ' + rs(pb.amount)], ['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)]]);
       chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
-      tRow('Stamp Duty & Registration (6% of Loan Amount)', pb.stamp_duty_reg);
-      tRow('GST (5% of Loan Amount)', pb.gst);
+      tRow('Stamp Duty & Registration (6% of Final Unit Price)', pb.stamp_duty_reg);
+      tRow('GST (5% of Final Unit Price)', pb.gst);
       tRow('AUDA (Rs. 400 per sq.ft.)', pb.auda);
       tRow('6 Months Maintenance Advance (Rs. 1.5 per sq.ft. p.m.)', pb.maint_adv_6m);
       tRow('12 Months Maintenance Deposit (Rs. 1.5 per sq.ft. p.m.)', pb.maint_dep_12m);

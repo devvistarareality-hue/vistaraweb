@@ -207,9 +207,9 @@ function BookingPage() {
   const prat = pratBooks[0] || null;
   const pratRowsFor = (pb) => (pb.kind === 'shop'
     ? [['Shop Area', `${pb.sq_feet} sq.ft`], ['Rate', rupee(pb.rate) + ' / sq.ft'],
-       ['Shop Amount', rupee(pb.amount)], ['Loan Amount', rupee(pb.loan_amount)],
-       ['Stamp Duty & Registration (6% of Loan)', rupee(pb.stamp_duty_reg)],
-       ['GST (5% of Loan)', rupee(pb.gst)], ['AUDA (₹400/sq.ft)', rupee(pb.auda)],
+       ['Shop Amount', rupee(pb.amount)], ['Final Unit Price', rupee(pb.loan_amount)],
+       ['Stamp Duty & Registration (6% of Final Unit Price)', rupee(pb.stamp_duty_reg)],
+       ['GST (5% of Final Unit Price)', rupee(pb.gst)], ['AUDA (₹400/sq.ft)', rupee(pb.auda)],
        ['6 Months Maintenance Advance', rupee(pb.maint_adv_6m)],
        ['12 Months Maintenance Deposit', rupee(pb.maint_dep_12m)],
        ['Legal Charges', rupee(pb.legal)], ['Total Legal & Other Charges', rupee(pb.total_extra)]]
