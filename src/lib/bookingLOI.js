@@ -421,7 +421,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     ['Payment Mode', 'All payments are received via cheque or bank transfer only. No cash is accepted.'],
     ['Booking Token', 'Token amount for booking is subject to approval of loan from the bank. In case of disapproval from the bank, the token amount will be refunded back into the buyer\'s account within forty-eight hours.'],
     ['Cancellation', 'If the buyer cancels the flat after booking, the token amount will be forfeited by the builder.'],
-    ['Inclusions', 'The above proposal is inclusive of:\n\u2022 Stamp duty and registration\n\u2022 GST\n\u2022 Bank processing fees and insurance\n\u2022 Gas meter charge\n\u2022 Electricity meter charge\n\u2022 Maintenance advance\n\u2022 Maintenance deposit'],
+    ['Inclusions', 'The above proposal is inclusive of:\n\u2022 Stamp duty charges\n\u2022 Registration charges\n\u2022 Loan charges including PF and insurance\n\u2022 Meter connection charges\n\u2022 Gas connection charges\n\u2022 6 months maintenance advance (@ Rs. 1.5 per sq.ft. p.m.)\n\u2022 12 months maintenance deposit (@ Rs. 1.5 per sq.ft. p.m.)'],
   ];
 
   const terms = isPratishthaPdf ? PRATISHTHA_TERMS : (isEOI && isKalravPdf) ? [
