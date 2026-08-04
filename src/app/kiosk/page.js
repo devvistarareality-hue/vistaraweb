@@ -109,6 +109,15 @@ export default function KioskPage() {
   };
   const visiblePlots = floorWise && activeFloor ? plots.filter((p) => onFloor(p, activeFloor)) : plots;
 
+  // Which floor each selected unit sits on — shown only when the selection spans
+  // several, so picking a shop and a flat together reads clearly.
+  const selPlotsAll = plots.filter((p) => selIds.includes(p.id));
+  const floorOf = (p) => (floors.find((f) => onFloor(p, f))?.label) || '';
+  const selFloors = [...new Set(selPlotsAll.map(floorOf).filter(Boolean))];
+  const selSummary = (floorWise && selFloors.length > 1)
+    ? selFloors.map((lbl) => `${lbl}: ${selPlotsAll.filter((p) => floorOf(p) === lbl).map((p) => p.number).join(', ')}`).join(' · ')
+    : selPlotsAll.map((p) => p.number).join(', ');
+
   const availablePlots = visiblePlots.filter((x) => x.status === 'available');
   const plotByNumber   = Object.fromEntries(visiblePlots.map((p) => [String(p.number), p]));
   const zones          = floorWise ? (activeFloor?.zones || []) : (project?.site_map_zones || []);
@@ -242,7 +251,7 @@ export default function KioskPage() {
                   const n = plots.filter((p) => onFloor(p, f)).length;
                   return (
                     <button key={i} className={`k-floor ${on ? 'on' : ''}`}
-                      onClick={() => { setFloorIdx(i); setSelIds([]); setHovered(null); }}>
+                      onClick={() => { setFloorIdx(i); setHovered(null); }}>
                       {f.label || `Floor ${f.floor}`} · {n}
                     </button>
                   );
@@ -343,7 +352,6 @@ export default function KioskPage() {
                     );
                   })()}
                 </div>
-                {selIds.length > 0 && <div className="k-summary">Selected <b>{selIds.length}</b> unit{selIds.length > 1 ? 's' : ''} · {plots.filter((p) => selIds.includes(p.id)).map((p) => p.number).join(', ')}</div>}
               </div>
             ) : (
               <div>
@@ -355,7 +363,7 @@ export default function KioskPage() {
                   const n = plots.filter((p) => onFloor(p, f)).length;
                   return (
                     <button key={i} className={`k-floor ${on ? 'on' : ''}`}
-                      onClick={() => { setFloorIdx(i); setSelIds([]); setHovered(null); }}>
+                      onClick={() => { setFloorIdx(i); setHovered(null); }}>
                       {f.label || `Floor ${f.floor}`} · {n}
                     </button>
                   );
@@ -378,6 +386,13 @@ export default function KioskPage() {
               </div>
             )}
 
+            {/* Outside the map/chip branches so it's visible on every floor — a buyer can
+                pick a shop on the ground and a flat upstairs in one booking. */}
+            {selIds.length > 0 && (
+              <div className="k-summary">
+                Selected <b>{selIds.length}</b> unit{selIds.length > 1 ? 's' : ''} · {selSummary}
+              </div>
+            )}
             <button className="k-primary k-block" disabled={!canContinueSelect}
               onClick={() => router.push(`/kiosk/book?project=${project.id}${isEoi ? '&eoi=1' : `&plots=${selIds.join(',')}`}`)}>Continue →</button>
           </section>

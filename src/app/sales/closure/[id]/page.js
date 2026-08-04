@@ -149,6 +149,14 @@ export default function ClosureViewerPage() {
     (filter !== 'all' && plot.status !== filter) ||
     (typeFilter !== 'all' && plot.cluster_type !== typeFilter);
 
+  // Which floor each selected unit sits on — shown only when the selection spans
+  // several, so picking a shop and a flat together reads clearly.
+  const floorOf = (p) => (floors.find((f) => onFloor(p, f))?.label) || '';
+  const selFloors = [...new Set(selPlots.map(floorOf).filter(Boolean))];
+  const selSummary = (floorWise && selFloors.length > 1)
+    ? selFloors.map((lbl) => `${lbl}: ${selPlots.filter((p) => floorOf(p) === lbl).map((p) => p.number).join(', ')}`).join(' · ')
+    : `Plot ${selPlots.map((p) => p.number).join(', ')}`;
+
   const shownCount = visiblePlots.filter(p => !isHidden(p)).length;
   const total      = visiblePlots.length;
   const pct        = (n) => (total ? Math.round(n / total * 100) : 0);
@@ -227,7 +235,7 @@ export default function ClosureViewerPage() {
       {floorWise && floors.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
           <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
-          <select value={floorIdx} onChange={(e) => { setFloorIdx(Number(e.target.value)); setSelectedIds([]); }}
+          <select value={floorIdx} onChange={(e) => setFloorIdx(Number(e.target.value))}
             style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
               fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 190 }}>
             {floors.map((f, i) => {
@@ -439,7 +447,7 @@ export default function ClosureViewerPage() {
               {selArea > 0 && <span style={{ color: '#2E7D32', marginLeft: 8 }}>· {+selArea.toFixed(2)} total area</span>}
             </div>
             <div style={{ fontSize: 12, color: '#6B7280', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {sv ? `${sv.lead_name} · ` : ''}Plot {selPlots.map(p => p.number).join(', ')}
+              {sv ? `${sv.lead_name} · ` : ''}{selSummary}
             </div>
           </div>
           <button onClick={() => setSelectedIds([])} style={cancelBtn}>Clear</button>
