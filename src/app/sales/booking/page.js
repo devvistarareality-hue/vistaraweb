@@ -222,6 +222,14 @@ function BookingPage() {
        ['Dastavej Value (approx.)', rupee(pb.dastavej_value)],
        ['Stamp Duty + Registration', rupee(pb.stamp_duty_reg)], ['GST', rupee(pb.gst)],
        ['Bank Processing Fees & Insurance', rupee(pb.bank_processing)]]);
+  // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
+  // "Shop1" -> "Shop 1", "101" -> "Flat 101".
+  const unitTitle = (pb) => {
+    const kind = pb.kind === 'shop' ? 'Shop' : 'Flat';
+    const n = String(pb.unit || '').trim();
+    const bare = n.replace(new RegExp('^' + kind + '\\s*', 'i'), '');
+    return kind + ' ' + (bare || n);
+  };
   const pbTotal = (pb) => (pb.grand_total ?? pb.box_price ?? 0);
   const pratTotal = pratBooks.reduce((sum, pb) => sum + pbTotal(pb), 0);
   const pratExtraTotal = pratBooks.reduce((sum, pb) => sum + (pb.total_extra || 0), 0);
@@ -535,7 +543,7 @@ function BookingPage() {
            A booking can cover several units, so each is priced separately and summed. */
         <>
           {pratBooks.map((pb, idx) => (
-            <Section key={idx} title={`Unit Pricing · ${pb.kind === 'shop' ? 'Shop' : 'Flat'} ${pb.unit} (fixed)`}>
+            <Section key={idx} title={`Unit Pricing · ${unitTitle(pb)} (fixed)`}>
               {idx === 0 && (
                 <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
                   These figures come from the approved Pratishtha price book and cannot be edited here.
@@ -566,7 +574,7 @@ function BookingPage() {
                 {pratBooks.map((pb, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
                     background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
-                    <span style={{ fontSize: 13, color: '#6B7280' }}>{pb.kind === 'shop' ? 'Shop' : 'Flat'} {pb.unit}</span>
+                    <span style={{ fontSize: 13, color: '#6B7280' }}>{unitTitle(pb)}</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{rupee(pbTotal(pb))}</span>
                   </div>
                 ))}

@@ -233,10 +233,19 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   if (isPratishthaPdf && pb) {
     const multi = pbs.length > 1;
     const pbTot = (b) => (b.grand_total != null ? b.grand_total : b.box_price) || 0;
+    // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
+    // "Shop1" -> "Shop 1", "101" -> "Flat 101".
+    const unitTitle = (b) => {
+      const kind = b.kind === 'shop' ? 'Shop' : 'Flat';
+      const n = String(b.unit || '').trim();
+      const bare = n.replace(new RegExp('^' + kind + '\\s*', 'i'), '');
+    return kind + ' ' + (bare || n);
+  };
+
     pbs.forEach((pb) => {
     const isShop = pb.kind === 'shop';
     if (isShop) {
-      secHead(multi ? ('Shop ' + pb.unit) : 'Deal Value', [71, 85, 105]);
+      secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]);
       infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Rate', 'Rs. ' + rs(pb.rate) + ' per sq.ft.'],
                 ['Shop Amount', 'Rs. ' + rs(pb.amount)], ['Loan Amount', 'Rs. ' + rs(pb.loan_amount)]]);
       chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
@@ -249,7 +258,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       y += 2; tRow('Total Legal & Other Charges', pb.total_extra, { sub: true });
       y += 2; tRow('Grand Total', pb.grand_total, { total: !multi, sub: multi });
     } else {
-      secHead(multi ? ('Flat ' + pb.unit) : 'Deal Value', [71, 85, 105]); rowAlt = false;
+      secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]); rowAlt = false;
       tRow('Flat Price', pb.flat_price);
       if (pb.terrace_area) tRow('Additional Terrace Price', pb.terrace_price,
         { subline: num(pb.terrace_area) + ' sq.yd. private terrace' });
@@ -267,7 +276,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     if (multi) {
       chk(14 + pbs.length * 7.5 + 12);
       secHead('Combined Total · ' + pbs.length + ' units', [71, 85, 105]); rowAlt = false;
-      pbs.forEach((b) => tRow((b.kind === 'shop' ? 'Shop ' : 'Flat ') + b.unit, pbTot(b)));
+      pbs.forEach((b) => tRow(unitTitle(b), pbTot(b)));
       y += 2; tRow('Total All Inclusive Amount', pbs.reduce((s2, b) => s2 + pbTot(b), 0), { total: true });
     }
   } else {
