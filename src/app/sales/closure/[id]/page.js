@@ -388,7 +388,7 @@ export default function ClosureViewerPage() {
                   )}
                   {(plot.terrace_area || '').trim() && (
                     <div style={{ color: '#6EE7B7', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
-                      Terrace {plot.terrace_area} sq.ft
+                      Terrace {plot.terrace_area} sq.yd
                     </div>
                   )}
                   {plot.status === 'available' && (
@@ -429,7 +429,7 @@ export default function ClosureViewerPage() {
                         tablet, which is what the sales team books on. */}
                     {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
                     {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
-                    {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.ft</span>}
+                    {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
                   </button>
                 );
               })}

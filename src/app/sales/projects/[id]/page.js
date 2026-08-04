@@ -648,7 +648,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
                 </label>
                 {hasTerrace && (
                   <input value={terraceArea} onChange={(e) => setTerraceArea(e.target.value)}
-                    placeholder="Terrace area (sq.ft) — e.g. 300" type="text" inputMode="decimal" style={inpStyle} />
+                    placeholder="Terrace area (sq.yd) — e.g. 21" type="text" inputMode="decimal" style={inpStyle} />
                 )}
               </div>
             </>

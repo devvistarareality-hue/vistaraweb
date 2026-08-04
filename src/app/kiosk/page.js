@@ -346,7 +346,7 @@ export default function KioskPage() {
                         {pl.size && <div className="k-tip-sz">{pl.size}</div>}
                         {/* Facing and terrace both move the price, so surface them here. */}
                         {pl.facing && <div className="k-tip-fac">{FACING_LABEL[pl.facing] || pl.facing}</div>}
-                        {(pl.terrace_area || '').trim() && <div className="k-tip-ter">Terrace {pl.terrace_area} sq.ft</div>}
+                        {(pl.terrace_area || '').trim() && <div className="k-tip-ter">Terrace {pl.terrace_area} sq.yd</div>}
                         {pl.status === 'available' && <div className="k-tip-hint">Tap to select →</div>}
                       </div>
                     );
@@ -379,7 +379,7 @@ export default function KioskPage() {
                       {/* Facing and terrace move the price — show them on the chip too,
                           matching the app and the map tooltip. */}
                       {pl.facing ? <span className="k-plot-sz">{FACING_LABEL[pl.facing] || pl.facing}</span> : null}
-                      {(pl.terrace_area || '').trim() ? <span className="k-plot-sz">Terrace {pl.terrace_area} sq.ft</span> : null}
+                      {(pl.terrace_area || '').trim() ? <span className="k-plot-sz">Terrace {pl.terrace_area} sq.yd</span> : null}
                     </button>
                   ))}
                 </div>
