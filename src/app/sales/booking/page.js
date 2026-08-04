@@ -495,7 +495,9 @@ function BookingPage() {
       )}
       <button onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
-        {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI' : (plots.length > 1 ? 'Book Units' : 'Book Unit')}{' '}
+        {/* A tower sells flats and shops, not plots — name what's actually being booked. */}
+        {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI'
+          : (plots.length > 1 ? 'Book Units' : prat ? (prat.kind === 'shop' ? 'Book Shop' : 'Book Flat') : 'Book Unit')}{' '}
         {eoiMode ? <span style={{ color: '#E4571A' }}>{eoiNo || '…'}</span> : plotNumbers}
       </h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>

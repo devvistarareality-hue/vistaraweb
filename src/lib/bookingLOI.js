@@ -134,7 +134,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const plotNumOnly = (meta.plotNo || '—').toString().replace(/^[^0-9]*/, '') || (meta.plotNo || '—');
   st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
   // EOI keeps its full code (EOI-3); a plot number is stripped to the digits only.
-  doc.text((isEOI ? 'EOI No: ' + (meta.plotNo || '—') : 'Plot No: ' + plotNumOnly), M, HDR_H + 6);
+  // "Plot" is wrong for a tower — Pratishtha sells flats and shops, so label it by kind.
+  const unitLabel = isEOI ? 'EOI No: '
+    : (isPratishthaPdf && pb) ? (pb.kind === 'shop' ? 'Shop No: ' : 'Flat No: ')
+    : 'Plot No: ';
+  doc.text(unitLabel + (isEOI ? (meta.plotNo || '—') : plotNumOnly), M, HDR_H + 6);
   doc.text('Booking Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
   y = HDR_H + 10; drawBorder();
 
