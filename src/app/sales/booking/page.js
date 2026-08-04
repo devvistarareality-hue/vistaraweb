@@ -64,6 +64,7 @@ function BookingPage() {
   // form state
   const [f, setF] = useState({
     client_name: qp.get('client') || '', gender: '', phone: qp.get('phone') || '', address: '', source: '',
+    manual_stm_name: '',   // kiosk: the salesperson assisting, typed in
     area: '', area_unit: 'sq.yd', const_area: '', villa_type: '',
     land_rate: '', dev_rate: '', const_rate: '', sale_deed_rate: '', dev_agreement_rate: '',
     sale_deed_pct: '60', sale_deed_amount: '',
@@ -403,7 +404,7 @@ function BookingPage() {
     const meta = {
       clientName: f.client_name, phoneNumber: f.phone, gender: f.gender, address: f.address,
       project: project?.name, plotNo: plotNumbers || plot?.number, bookingDate: f.booking_date,
-      villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: me?.name, source: f.source,
+      villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: f.manual_stm_name.trim() || me?.name, source: f.source,
       areaUnit: f.area_unit || flags.areaUnit,
     };
     try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit,
@@ -437,6 +438,7 @@ function BookingPage() {
       project: projectId, plot: eoiMode ? undefined : plotId, plot_ids: eoiMode ? [] : plotIds, lead: leadId || undefined,
       ...(eoiMode ? { eoi: true, eoi_no: eoiNo } : {}),
       client_name: f.client_name.trim(), gender: f.gender, phone: f.phone.trim(), address: f.address, source: f.source,
+      manual_stm_name: f.manual_stm_name.trim(),
       formula_set: formulaSet, area: f.area, area_unit: f.area_unit, const_area: f.const_area || '0',
       villa_type: flags.bunglowTypeIsDropdown ? f.villa_type : '', bunglow_type: flags.bunglowTypeFixed || '',
       land_rate: f.land_rate || 0, dev_rate: f.dev_rate || 0, const_rate: f.const_rate || 0,
@@ -511,6 +513,10 @@ function BookingPage() {
         {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         {/^other$/i.test(f.source) && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
+        {/* Kiosk: the booking is created by the kiosk account, so the salesperson
+            assisting types their own name — it's what the LOI prints as STM Name. */}
+        {kioskMode && <Row><L>STM Name</L><In value={f.manual_stm_name} placeholder="Sales team member assisting"
+          onChange={(e) => set('manual_stm_name', e.target.value)} /></Row>}
       </Section>
 
       {!pricingReady ? (
