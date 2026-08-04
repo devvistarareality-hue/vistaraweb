@@ -219,7 +219,7 @@ function BookingPage() {
        ['Flat Price', rupee(pb.flat_price)],
        ...(pb.terrace_area ? [['Additional Terrace Price', rupee(pb.terrace_price)]] : []),
        ['Token', rupee(pb.token)], ['Bank Loan', rupee(pb.bank_loan)],
-       ['Dastavej Value (approx.)', rupee(pb.dastavej_value)],
+       ['Sale Deed', rupee(pb.dastavej_value)],
        ['Stamp Duty + Registration', rupee(pb.stamp_duty_reg)], ['GST', rupee(pb.gst)],
        ['Bank Processing Fees & Insurance', rupee(pb.bank_processing)]]);
   // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
