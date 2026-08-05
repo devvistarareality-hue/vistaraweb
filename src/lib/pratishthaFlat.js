@@ -21,6 +21,12 @@ export const FLAT_RULES = {
   dastavejDivisor: 1.07,
   stampDutyRegPct: 0.06,
   gstPct: 0.01,
+  // Down Payment maintenance: Rs 1.5 per sq.ft per month. Areas are held in sq.yd,
+  // hence the x9.
+  maintPerSqFtMonth: 1.5,
+  sqYdToSqFt: 9,
+  maintAdvMonths: 6,
+  maintDepMonths: 12,
 };
 
 // The flat rate a stored book implies, so the form opens on today's figures.
@@ -49,10 +55,20 @@ export function computeFlat(pb, edit = {}) {
   const terrace_price   = Math.round(terrace_area * terrace_rate);
   const box_price       = flat_price + terrace_price;
   const bank_loan       = box_price - token;
+  // A Down Payment plan carries no bank processing charge; maintenance is charged
+  // instead, at Rs 1.5 per sq.ft per month over the flat plus its terrace (x9 converts
+  // sq.yd to sq.ft). The two maintenance amounts take over the exact role bank
+  // processing played -- deducted before the 1.07 divisor -- so Final Unit Price +
+  // Stamp Duty + GST + the deductions still comes back to the Box Price.
+  const isDownPayment   = edit.plan === 'Down Payment';
+  const maintPerMonth   = R.maintPerSqFtMonth * R.sqYdToSqFt * (flat_area + terrace_area);
+  const maint_adv_6m    = isDownPayment ? Math.round(maintPerMonth * R.maintAdvMonths) : 0;
+  const maint_adv_12m   = isDownPayment ? Math.round(maintPerMonth * R.maintDepMonths) : 0;
   // Rounded at each step, not only at the end — that is what reproduces the
   // originally sanctioned figures to the rupee.
-  const bank_processing = Math.round(bank_loan * R.bankProcessingPct);
-  const dastavej_value  = Math.round((box_price - bank_processing) / R.dastavejDivisor);
+  const bank_processing = isDownPayment ? 0 : Math.round(bank_loan * R.bankProcessingPct);
+  const deduction       = isDownPayment ? (maint_adv_6m + maint_adv_12m) : bank_processing;
+  const dastavej_value  = Math.round((box_price - deduction) / R.dastavejDivisor);
   const stamp_duty_reg  = Math.round(dastavej_value * R.stampDutyRegPct);
   const gst             = Math.round(dastavej_value * R.gstPct);
   // Total is Processing + Dastavej + Stamp Duty + GST, which in exact arithmetic is
@@ -63,9 +79,10 @@ export function computeFlat(pb, edit = {}) {
   const total           = box_price;
 
   return {
-    ...pb, kind: 'flat',
+    ...pb, kind: 'flat', is_down_payment: isDownPayment,
     flat_area, terrace_area, flat_rate, terrace_rate,
     flat_price, terrace_price, box_price, token, bank_loan,
-    bank_processing, dastavej_value, stamp_duty_reg, gst, total,
+    bank_processing, maint_adv_6m, maint_adv_12m,
+    dastavej_value, stamp_duty_reg, gst, total,
   };
 }

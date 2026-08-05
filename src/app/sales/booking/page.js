@@ -260,10 +260,17 @@ function BookingPage() {
        // Same split as the LOI: what the price is made up of, then how it is funded.
        // Both add to the Total, so listing them together reads as double the price.
        { h: 'What This Price Includes' },
-       ['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
+       // A Down Payment plan replaces the bank processing charge with maintenance;
+       // whichever applies is what gets deducted before the 1.07 divisor.
+       [pb.is_down_payment
+         ? 'Final Unit Price ((Box Price - Maintenance) / 1.07)'
+         : 'Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
        ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
        ['GST (Final Unit Price x 1%)', rupee(pb.gst)],
-       ['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)],
+       ...(pb.is_down_payment
+         ? [['6 Months Advance Maintenance (1.5 x 9 x Area x 6)', rupee(pb.maint_adv_6m)],
+            ['12 Months Advance Maintenance (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)]]
+         : [['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)]]),
        ['Total All Inclusive Amount', rupee(pb.total), 'sub'],
        { h: 'How You Pay' },
        ['Token', rupee(pb.token)],
