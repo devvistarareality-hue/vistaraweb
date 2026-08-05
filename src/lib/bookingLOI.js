@@ -273,17 +273,23 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       });
     } else {
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]); rowAlt = false;
-      tRow('Flat Price', pb.flat_price);
+      tRow('Flat Price', pb.flat_price, { subline: num(pb.flat_area) + ' sq.yd. built-up' });
       if (pb.terrace_area) tRow('Additional Terrace Price', pb.terrace_price,
         { subline: num(pb.terrace_area) + ' sq.yd. private terrace' });
       y += 2; tRow('Box Price', pb.box_price, { sub: true });
-      chk(14 + 6 * 7.5 + 12); secHead('Payment & Charges', [124, 58, 237]); rowAlt = false;
-      tRow('Token', pb.token);
-      tRow('Bank Loan', pb.bank_loan);
-      tRow('Final Unit Price', pb.dastavej_value);
-      tRow('Stamp Duty + Registration', pb.stamp_duty_reg);
-      tRow('GST', pb.gst);
-      tRow('Bank Processing Fees & Insurance', pb.bank_processing);
+      // These are two DIFFERENT views of the same money, and printing them as one list
+      // made the document unreadable: a buyer added all six lines, got twice the total
+      // and asked why. Split into what the price is made up of, and how it is funded --
+      // each group adding to exactly the same total, and each row saying what it is.
+      chk(14 + 4 * 12 + 12); secHead('What This Price Includes', [124, 58, 237]); rowAlt = false;
+      tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });
+      tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
+      tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
+      tRow('Bank Processing Fees & Insurance', pb.bank_processing, { subline: 'Charged by the bank to sanction the loan' });
+      y += 2; tRow('Total All Inclusive Amount', pb.total, { sub: true });
+      chk(14 + 2 * 12 + 12); secHead('How You Pay', [71, 85, 105]); rowAlt = false;
+      tRow('Token', pb.token, { subline: 'Payable now, to book the unit' });
+      tRow('Bank Loan', pb.bank_loan, { subline: 'Loan amount to be arranged — the balance after the token' });
       y += 2; tRow('Total', pb.total, { multi, total: !multi, sub: multi });
     }
     });
