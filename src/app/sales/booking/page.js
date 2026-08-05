@@ -416,31 +416,6 @@ function BookingPage() {
   const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
     : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';
 
-  // The instalment amount is worked out from the % at the moment it is typed, so a later
-  // change to the price left the amounts stale — enter a Down Payment price after
-  // setting the schedule and the rows still showed amounts against the old base. The
-  // percentages are the source of truth, so re-derive the amounts whenever the base
-  // moves, giving the last row the remainder so the schedule always sums to the base.
-  const prevBaseRef = useRef(base);
-  useEffect(() => {
-    if (prevBaseRef.current === base) return;
-    prevBaseRef.current = base;
-    if (!base) return;
-    setInsts((arr) => {
-      if (!arr.length) return arr;
-      const next = arr.map((r) => {
-        const pct = parseFloat(r.pct) || 0;
-        return pct ? { ...r, amt: String(Math.round(base * pct / 100)) } : r;
-      });
-      const last = next.length - 1;
-      if (last > 0) {
-        const used = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
-        const rem = Math.max(0, Math.round(base - used));
-        next[last] = { ...next[last], amt: String(rem), pct: String(parseFloat((rem / base * 100).toFixed(2))) };
-      }
-      return next;
-    });
-  }, [base]);
 
   function buildInsts(n) {
     n = parseInt(n, 10) || 0;
@@ -468,6 +443,43 @@ function BookingPage() {
 
   const nsdBase = Math.max(0, (v.nonSaleDeed || 0) - (v.discount || 0));
   const nsdPctTotal = nsdBase ? nsdInsts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / nsdBase * 100 : nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  // An instalment's amount is worked out from its % at the moment the % is typed. Nothing
+  // revisited it when the base moved, so entering the price after setting the schedule
+  // left every amount against the old base — 33% of a 20,00,000 unit showing as 66.
+  // The percentages are the source of truth: re-derive the amounts whenever a base
+  // changes, giving the last row the remainder so a schedule always sums to its base.
+  // Applies to all three schedules (unit price, extra work charges, extra work) and so
+  // to every pricing model and to EOIs, which share this table.
+  const rebaseRows = (arr, b) => {
+    if (!arr.length || !b) return arr;
+    const next = arr.map((r) => {
+      const pct = parseFloat(r.pct) || 0;
+      return pct ? { ...r, amt: String(Math.round(b * pct / 100)) } : r;
+    });
+    // Give the last row the remainder only when the schedule is a complete one, so
+    // rounding never leaves it a rupee short of the base. An EOI may carry a partial
+    // (token) schedule on purpose — inflating its last row to 100% would misstate it.
+    const last = next.length - 1;
+    const pctSum = next.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+    if (last > 0 && Math.abs(pctSum - 100) < 0.5) {
+      const used = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
+      const rem = Math.max(0, Math.round(b - used));
+      next[last] = { ...next[last], amt: String(rem), pct: String(parseFloat((rem / b * 100).toFixed(2))) };
+    }
+    return next;
+  };
+  const useRebase = (b, setRows) => {
+    const prev = useRef(b);
+    useEffect(() => {
+      if (prev.current === b) return;
+      prev.current = b;
+      if (b) setRows((arr) => rebaseRows(arr, b));
+    }, [b]);
+  };
+  useRebase(base, setInsts);
+  useRebase(nsdBase, setNsdInsts);
+  useRebase(ewBase, setEwInsts);
+
   function buildNsdInsts(n) { n = parseInt(n, 10) || 0; setNsdInsts(Array.from({ length: n }, (_, i) => nsdInsts[i] || { date: '', pct: '', amt: '' })); }
   function setNsdInst(i, k, val) {
     setNsdInsts((arr) => {
