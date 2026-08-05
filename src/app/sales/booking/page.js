@@ -416,6 +416,32 @@ function BookingPage() {
   const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
     : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';
 
+  // The instalment amount is worked out from the % at the moment it is typed, so a later
+  // change to the price left the amounts stale — enter a Down Payment price after
+  // setting the schedule and the rows still showed amounts against the old base. The
+  // percentages are the source of truth, so re-derive the amounts whenever the base
+  // moves, giving the last row the remainder so the schedule always sums to the base.
+  const prevBaseRef = useRef(base);
+  useEffect(() => {
+    if (prevBaseRef.current === base) return;
+    prevBaseRef.current = base;
+    if (!base) return;
+    setInsts((arr) => {
+      if (!arr.length) return arr;
+      const next = arr.map((r) => {
+        const pct = parseFloat(r.pct) || 0;
+        return pct ? { ...r, amt: String(Math.round(base * pct / 100)) } : r;
+      });
+      const last = next.length - 1;
+      if (last > 0) {
+        const used = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
+        const rem = Math.max(0, Math.round(base - used));
+        next[last] = { ...next[last], amt: String(rem), pct: String(parseFloat((rem / base * 100).toFixed(2))) };
+      }
+      return next;
+    });
+  }, [base]);
+
   function buildInsts(n) {
     n = parseInt(n, 10) || 0;
     setInsts(Array.from({ length: n }, (_, i) => insts[i] || { date: '', pct: '', amt: '' }));
