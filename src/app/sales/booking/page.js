@@ -291,15 +291,22 @@ function BookingPage() {
   // A Down Payment flat is paid in instalments against the Box Price only — flats carry
   // no extra work, so there is no second schedule. The three charge lines fall due on
   // the sale deed or possession instead, so they are carried as undated extras.
-  const pratDp     = prat && pratBooks.some((b) => b.is_down_payment);
-  const pratSum    = (k) => pratBooks.reduce((sum, b) => sum + (Number(b[k]) || 0), 0);
-  const pratBox    = pratSum('box_price');
-  // One line on the schedule, not three: the itemisation already sits in the pricing
+  const pratDp   = prat && pratBooks.some((b) => b.is_down_payment);
+  const pratShop = prat && pratBooks.some((b) => b.kind === 'shop');
+  const pratSched = pratDp || pratShop;   // the units that are paid in instalments
+  // Shops follow Ankhol: an Extra Work Amount schedule, then the unit price, then the
+  // charges. A Down Payment flat has no extra work, so only the middle table applies.
+  // Summed per unit so a booking covering both kinds still adds up.
+  const pratPer = (fn) => pratBooks.reduce((sum, b) => sum + (Number(fn(b)) || 0), 0);
+  const pratUnitBase = pratPer((b) => (b.kind === 'shop' ? b.loan_amount : (b.is_down_payment ? b.box_price : 0)));
+  const pratEwBase   = pratPer((b) => (b.kind === 'shop' ? b.extra_work_amount : 0));
+  // One line on the schedule, not several: the itemisation already sits in the pricing
   // panel above, and the whole amount falls due on the same date.
   const pratExtras = () => {
-    const amt = Math.round(pratSum('total_legal_extra'));
+    const amt = Math.round(pratPer((b) => (b.kind === 'shop' ? b.total_extra : (b.is_down_payment ? b.total_legal_extra : 0))));
     return amt > 0
-      ? [{ no: 'Extra', date: '', amt, isExtra: true, label: 'Total Legal & Extra Charges' }]
+      ? [{ no: 'Extra', date: '', amt, isExtra: true,
+           label: pratDp ? 'Total Legal & Extra Charges' : 'Total Legal & Other Charges' }]
       : [];
   };
   const pbTotal = (pb) => (pb.grand_total ?? pb.box_price ?? 0);
@@ -355,7 +362,7 @@ function BookingPage() {
     return () => window.removeEventListener('popstate', onPop);
   }, [isDirty, router]);
 
-  const base = pratDp ? pratBox : installmentBase(v);
+  const base = pratSched ? pratUnitBase : installmentBase(v);
   const pctTotal = base ? insts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / base * 100 : insts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   const ewBase = parseFloat(ew.amt) || 0;
   const ewPctTotal = ewBase ? ewInsts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / ewBase * 100 : ewInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
@@ -441,7 +448,7 @@ function BookingPage() {
     });
   }
 
-  const nsdBase = Math.max(0, (v.nonSaleDeed || 0) - (v.discount || 0));
+  const nsdBase = pratSched ? pratEwBase : Math.max(0, (v.nonSaleDeed || 0) - (v.discount || 0));
   const nsdPctTotal = nsdBase ? nsdInsts.reduce((a, r) => a + (parseFloat(r.amt) || 0), 0) / nsdBase * 100 : nsdInsts.reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
   // An instalment's amount is worked out from its % at the moment the % is typed. Nothing
   // revisited it when the base moved, so entering the price after setting the schedule
@@ -502,7 +509,12 @@ function BookingPage() {
   }
   function instArr() {
     const arr = insts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0 }));
-    if (prat) return pratDp ? arr.concat(pratExtras()) : [];
+    if (prat) {
+      if (!pratSched) return [];
+      // isNsd marks the Extra Work Amount rows — the LOI prints those per hundred.
+      nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true }));
+      return arr.concat(pratExtras());
+    }
     nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true }));
     arr.push({ no: 'Extra', date: extraDate, amt: Math.round(v.totalExtra), isExtra: true });
     return arr;
@@ -520,10 +532,10 @@ function BookingPage() {
     // (token) schedule is allowed and the 100% rule does not apply.
     // A Down Payment Pratishtha flat now has a real schedule, so it is held to the same
     // 100% rule; a Regular one has no schedule at all and is skipped.
-    if ((!prat || pratDp) && !eoiMode) {
+    if ((!prat || pratSched) && !eoiMode) {
       if (!insts.length) { setMsg('Add the payment installments before downloading the LOI.'); return; }
       if (Math.abs(pctTotal - 100) > 0.01) { setMsg('Payment installments must total 100% before downloading the LOI.'); return; }
-      if (hasSaleDeedSplit && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
+      if ((hasSaleDeedSplit || pratShop) && nsdBase > 0 && (!nsdInsts.length || Math.abs(nsdPctTotal - 100) > 0.01)) {
         setMsg('Extra Work Amount installments must be filled and total 100% before downloading the LOI.'); return;
       }
     }
@@ -557,7 +569,7 @@ function BookingPage() {
     if (!prat && (!f.land_rate || !v.plotBasic)) { e.land_rate = true; if (!f.area) e.area = true; }
     if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
     setErrs({});
-    if ((!prat || pratDp) && !eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
+    if ((!prat || pratSched) && !eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
     if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
     setSaving(true); setMsg('');
     const payload = {
@@ -583,7 +595,7 @@ function BookingPage() {
       apply_reg_fee: f.apply_reg_fee, apply_page_fee: f.apply_page_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
       // A Regular Pratishtha unit is a fixed box price with no staged payments; a Down
       // Payment one is paid in instalments against the box price.
-      installments: (prat && !pratDp) ? [] : instArr(),
+      installments: instArr(),
       extra_work_desc: reviseId ? (ew.desc || '') : '',
       extra_work_amount: reviseId ? Math.round(parseFloat(ew.amt) || 0) : 0,
       extra_work_inst: reviseId ? ewArr() : [],
@@ -892,9 +904,9 @@ function BookingPage() {
         <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
         {/* A Regular Pratishtha unit is an all-inclusive fixed box price — no staged
             payments. A Down Payment one is paid in instalments against the box price. */}
-        {pricingReady && (!prat || pratDp) && (<>
+        {pricingReady && (!prat || pratSched) && (<>
         {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
-        {hasSaleDeedSplit && nsdBase > 0 && (
+        {(hasSaleDeedSplit || pratShop) && nsdBase > 0 && (
           <div style={{ marginBottom: 14, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Amount Installments</div>
             <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
@@ -917,9 +929,9 @@ function BookingPage() {
             {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
           </div>
         )}
-        {(hasSaleDeedSplit || pratDp) && (
+        {(hasSaleDeedSplit || pratSched) && (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>Unit Price Installments</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>{pratShop ? 'Final Unit Price Installments' : 'Unit Price Installments'}</div>
             <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(base)}</div>
           </>
         )}
@@ -938,7 +950,7 @@ function BookingPage() {
               ))}
               {/* Pratishtha's three charge lines all fall due on the sale deed or
                   possession, so they carry that wording instead of a date picker. */}
-              {pratDp ? pratExtras().map((x) => (
+              {pratSched ? pratExtras().map((x) => (
                 <tr key={x.label} style={{ background: '#FFF8E1' }}>
                   <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
                   <td style={{ ...td, fontSize: 10, fontStyle: 'italic', color: '#6B7280' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
