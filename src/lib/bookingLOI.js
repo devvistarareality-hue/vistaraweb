@@ -354,6 +354,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   if (v.extraWorkAmt > 0) { chk(20); secHead('Extra Work', [22, 163, 74]); rowAlt = false; tRow(v.extraWorkDesc || 'Extra Work Amount', v.extraWorkAmt); y += 2; }
 
+  }
+
   // Payment Schedule — 3 separate sections
   const unitInstPdf = installments.filter(i => !i.isExtra && !i.isExtraWork && !i.isNsd);
   const ewcRawPdf = [
@@ -441,14 +443,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
         sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
         drawSchedDate(inst.date);
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text('Legal & Other Charges', DC_PCT, y);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(inst.label || 'Legal & Other Charges', DC_PCT, y);
         doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
       drawSubTotal('SUB TOTAL', grandLegal);
     }
 
-  }
   }
 
   // Terms
