@@ -292,7 +292,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         tRow('Unit Price', pb.box_price, { subline: 'Flat Price + Additional Terrace Price' });
         tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Stamp duty, registration and GST at 7% of the unit price, plus legal charges' });
         tRow('6 Months Advance Maintenance', pb.maint_adv_6m, { subline: 'Six months of maintenance, paid in advance' });
-        tRow('12 Months Advance Maintenance', pb.maint_adv_12m, { subline: 'Twelve months of maintenance, paid in advance' });
+        tRow('12 Months Maintenance Deposit', pb.maint_adv_12m, { subline: 'Twelve months of maintenance, held as a deposit' });
         y += 2; tRow('Total Legal & Extra Charges', pb.total_legal_extra, { sub: true });
       } else {
         tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });

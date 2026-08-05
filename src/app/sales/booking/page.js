@@ -266,7 +266,7 @@ function BookingPage() {
          ? [['Unit Price (Flat Price + Terrace Price)', rupee(pb.box_price)],
             ['Total Legal & Other Charges (Unit Price x 7% + Legal Charges)', rupee(pb.total_extra)],
             ['6 Months Advance Maintenance (1.5 x 9 x Area x 6)', rupee(pb.maint_adv_6m)],
-            ['12 Months Advance Maintenance (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)],
+            ['12 Months Maintenance Deposit (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)],
             ['Total Legal & Extra Charges', rupee(pb.total_legal_extra), 'sub']]
          : [['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
             ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
