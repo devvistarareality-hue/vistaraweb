@@ -40,7 +40,7 @@ const NAV = [
   { label: 'Dashboard',  href: '/club1000',            icon: <IconDashboard /> },
   { label: 'Leads',      href: '/club1000/leads',       icon: <IconLeads /> },
   { label: 'Follow-Ups', href: '/club1000/follow-ups',  icon: <IconCalendar /> },
-  { label: 'Schemes',    href: '/club1000/schemes',     icon: <IconLayers />, managerOnly: true },
+  { label: 'Schemes',    href: '/club1000/schemes',     icon: <IconLayers /> },
   { label: 'Investors',  href: '/club1000/investors',   icon: <IconUsers /> },
   { label: 'Approvals',  href: '/club1000/approvals',   icon: <IconApprovals />, managerOnly: true },
   { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true },

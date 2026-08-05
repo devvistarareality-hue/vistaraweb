@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
@@ -165,16 +164,11 @@ function SchemeModal({ scheme, onClose, onSaved }) {
 
 export default function SchemesPage() {
   const user = useSelector((s) => s.auth.user);
-  const router = useRouter();
   const manager = isClub1000Manager(user);
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [editing, setEditing] = useState(null);
-
-  useEffect(() => {
-    if (user && !manager) router.replace('/club1000');
-  }, [user]);
 
   async function load() {
     setLoading(true);
@@ -186,7 +180,7 @@ export default function SchemesPage() {
     }
   }
 
-  useEffect(() => { if (manager) load(); }, [manager]);
+  useEffect(() => { if (user) load(); }, [user]);
 
   async function disableScheme(id) {
     if (!confirm('Disable this scheme?')) return;
@@ -194,16 +188,18 @@ export default function SchemesPage() {
     if (res.status === 204 || res.ok) load();
   }
 
-  if (!manager) return null;
-
   return (
     <div style={{ padding: '28px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Schemes</h1>
-          <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>Define investment plans investors can be added against</p>
+          <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>
+            {manager ? 'Define investment plans investors can be added against' : 'Investment plans investors can be added against'}
+          </p>
         </div>
-        <button onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
+        {manager && (
+          <button onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
+        )}
       </div>
 
       <div style={{ marginTop: 24, background: '#fff', borderRadius: 16, border: '1px solid #EDF1F7', overflow: 'hidden' }}>
@@ -215,14 +211,14 @@ export default function SchemesPage() {
               <th style={th}>Min Ticket</th>
               <th style={th}>Payout Rates</th>
               <th style={th}>Premature Exit</th>
-              <th style={th}></th>
+              {manager && <th style={th}></th>}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
             ) : schemes.length === 0 ? (
-              <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No schemes yet — create one to get started.</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No schemes yet — create one to get started.</td></tr>
             ) : schemes.map((s) => (
               <tr key={s.id}>
                 <td style={td}>{s.name}</td>
@@ -238,12 +234,14 @@ export default function SchemesPage() {
                     : '—'}
                 </td>
                 <td style={td}>{s.premature_redemption_allowed ? `After ${s.premature_redemption_lock_months || 0}mo` : 'N/A'}</td>
-                <td style={td}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: '#E0F5F6', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
-                    <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
-                  </div>
-                </td>
+                {manager && (
+                  <td style={td}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: '#E0F5F6', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                      <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

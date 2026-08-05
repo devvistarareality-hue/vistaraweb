@@ -19,12 +19,41 @@ const AUTO_PATTERNS = {
 
 // Lifecycle columns from the Full-Pipeline template — auto-mapped by exact header name.
 const PIPELINE_FIELDS = [
-  'project', 'source', 'requirement', 'budget_min', 'budget_max', 'preferred_location', 'overall_status',
-  'telecaller_id', 'telecaller_status', 'telecaller_remarks',
-  'stm_id', 'stm_status', 'stm_remarks',
-  'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_id', 'sv_remarks',
+  'project', 'source', 'requirement', 'budget_min', 'budget_max', 'preferred_location',
+  'city', 'address', 'purpose', 'budget_bucket', 'overall_status',
+  'telecaller_code', 'telecaller_status', 'telecaller_remarks',
+  'stm_code', 'stm_status', 'stm_remarks',
+  'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_code', 'sv_remarks',
   'closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks',
 ];
+// Human labels — used both for the downloadable template's actual header row and for
+// the manual pipeline-column mapping UI. Auto-detect normalises spaces/dashes back to
+// snake_case (see autoDetect below) so a nice label still round-trips correctly; a
+// stale template or a differently-typed header that doesn't normalise to a known key
+// silently drops the column with no error, which is what the manual mapping UI is for.
+const HEADER_LABELS = {
+  name: 'Name', phone: 'Phone', alt_phone: 'Alt Phone', email: 'Email',
+  project: 'Project', source: 'Source', requirement: 'Requirement',
+  budget_min: 'Budget Min', budget_max: 'Budget Max', preferred_location: 'Preferred Location',
+  city: 'City', address: 'Address', purpose: 'Purpose', budget_bucket: 'Budget Bucket',
+  overall_status: 'Overall Status',
+  telecaller_code: 'Telecaller Code', telecaller_status: 'Telecaller Status', telecaller_remarks: 'Telecaller Remarks',
+  stm_code: 'STM Code', stm_status: 'STM Status', stm_remarks: 'STM Remarks',
+  sv_scheduled_date: 'SV Scheduled Date', sv_visited_date: 'SV Visited Date', sv_status: 'SV Status',
+  sv_referred_by_code: 'SV Referred By Code', sv_remarks: 'SV Remarks',
+  closure_date: 'Closure Date', closure_status: 'Closure Status', unit_no: 'Unit No', unit_type: 'Unit Type',
+  booking_amount: 'Booking Amount', total_amount: 'Total Amount', closure_remarks: 'Closure Remarks',
+};
+
+// Backward-compat: these columns used to hold a raw numeric id (pre-user_code
+// rename) — a template downloaded before the rename, or a habitually-typed old
+// header, should still auto-map instead of silently dropping the column.
+// Mirrors the backend's _IMP_ALIASES exactly.
+const PIPELINE_ALIASES = {
+  telecaller_code: ['telecaller_code', 'telecaller_id'],
+  stm_code: ['stm_code', 'stm_id'],
+  sv_referred_by_code: ['sv_referred_by_code', 'sv_referred_by_id'],
+};
 
 function autoDetect(headers) {
   const m = { name: '', name2: '', phone: '', alt_phone: '', email: '', campaign: '', adset: '', creative: '', date: '' };
@@ -32,9 +61,12 @@ function autoDetect(headers) {
     const match = headers.find((h) => AUTO_PATTERNS[key].test(h.trim()));
     if (match) m[key] = match;
   }
-  // Pipeline columns: exact snake_case header match (as produced by the template).
+  // Pipeline columns: normalise spaces/dashes to underscores before comparing, so a
+  // nicely-cased header like "STM Code" still matches the canonical "stm_code" —
+  // mirrors the backend's _imp_canon_key normalisation exactly.
   for (const f of PIPELINE_FIELDS) {
-    const match = headers.find((h) => h.trim().toLowerCase() === f);
+    const candidates = PIPELINE_ALIASES[f] || [f];
+    const match = headers.find((h) => candidates.includes(h.trim().toLowerCase().replace(/[\s-]+/g, '_')));
     if (match) m[f] = match;
   }
   return m;
@@ -65,7 +97,11 @@ export default function ImportPage() {
   const user    = useSelector((s) => s.auth.user);
 
   useEffect(() => {
-    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes('Sales')) router.replace('/sales');
+    const hasSalesAccess = user && (
+      user.role === 'Admin' || user.role === 'Manager' || user.is_staff
+      || (user.admin_modules || []).includes('Sales') || (user.modules || []).includes('Sales')
+    );
+    if (user && !hasSalesAccess) router.replace('/sales');
   }, [user]);
 
   const fileRef = useRef(null);
@@ -86,6 +122,7 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [progress,  setProgress]  = useState(0);
   const [result,    setResult]    = useState(null);
+  const [showPipelineMap, setShowPipelineMap] = useState(false);
 
   useEffect(() => {
     fetch(SALES_ENDPOINTS.projects + '?active_only=true', { headers: authHeaders() }).then((r) => r.json()).then((d) => { if (Array.isArray(d)) setProjects(d); });
@@ -136,7 +173,7 @@ export default function ImportPage() {
     const batches = [];
     for (let i = 0; i < valid.length; i += BATCH) batches.push(valid.slice(i, i + BATCH));
 
-    let imported = 0, duplicates = 0, errors = 0, siteVisits = 0, closures = 0, failed = [];
+    let imported = 0, duplicates = 0, errors = 0, siteVisits = 0, closures = 0, failed = [], warnings = [];
 
     for (let b = 0; b < batches.length; b++) {
       const leads = batches[b].map((r) => {
@@ -160,12 +197,13 @@ export default function ImportPage() {
         siteVisits += data.site_visits || 0;
         closures   += data.closures || 0;
         failed     = failed.concat(data.failed || []);
+        warnings   = warnings.concat(data.warnings || []);
       } else {
         errors += batches[b].length;
       }
       setProgress(Math.round(((b + 1) / batches.length) * 100));
     }
-    setResult({ imported, duplicates, errors, siteVisits, closures, failed });
+    setResult({ imported, duplicates, errors, siteVisits, closures, failed, warnings });
     setImporting(false);
   }
 
@@ -185,10 +223,11 @@ export default function ImportPage() {
 
       const cols = [
         'name', 'phone', 'alt_phone', 'email', 'project', 'source', 'campaign', 'adset', 'ad_name',
-        'requirement', 'budget_min', 'budget_max', 'preferred_location', 'lead_date', 'overall_status',
-        'telecaller_id', 'telecaller_status', 'telecaller_remarks',
-        'stm_id', 'stm_status', 'stm_remarks',
-        'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_id', 'sv_remarks',
+        'requirement', 'budget_min', 'budget_max', 'preferred_location', 'city', 'address', 'purpose', 'budget_bucket',
+        'lead_date', 'overall_status',
+        'telecaller_code', 'telecaller_status', 'telecaller_remarks',
+        'stm_code', 'stm_status', 'stm_remarks',
+        'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_code', 'sv_remarks',
         'closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks',
       ];
       const STATUS = {
@@ -197,19 +236,23 @@ export default function ImportPage() {
         stm_status: 'hot,warm,cold,not_interested,sv_scheduled,sv_done,closed',
         sv_status: 'scheduled,completed,cancelled,no_show',
         closure_status: 'booked,cancelled,refunded',
+        budget_bucket: 'lt_10l,10_50l,50l_1cr,1_2cr,2_3cr,3_5cr,gt_5cr',
       };
-      const tcId = users.find((u) => /tele/i.test(u.designation || u.role || ''))?.id ?? users[0]?.id ?? '';
-      const stmId = users.find((u) => /stm|sales|manager/i.test(u.designation || u.role || ''))?.id ?? users[1]?.id ?? users[0]?.id ?? '';
-      const ex1 = { name: 'Rahul Sharma', phone: '9876543210', email: 'rahul@example.com', source: (sources[0]?.name || 'meta'), campaign: 'Meta - Luxury Homes', ad_name: 'Video 2BHK', lead_date: '01-05-2025', overall_status: 'new', telecaller_id: tcId, telecaller_status: 'callback', telecaller_remarks: 'Call back evening' };
-      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: (projects[0]?.name || 'Kalrav'), source: (sources[0]?.name || 'walk-in'), lead_date: '02-04-2025', overall_status: 'closed', telecaller_id: tcId, telecaller_status: 'warm', stm_id: stmId, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: 200000, total_amount: 5000000, closure_remarks: 'Token received' };
+      // purpose is multi-select (comma-separated) so it can't use the same
+      // single-value dropdown as STATUS — documented in the Reference sheet instead.
+      const PURPOSE_VALUES = 'investment, end_use, other';
+      const tcCode = users.find((u) => /tele/i.test(u.designation || u.role || '') && u.user_code)?.user_code ?? users[0]?.user_code ?? '';
+      const stmCode = users.find((u) => /stm|sales|manager/i.test(u.designation || u.role || '') && u.user_code)?.user_code ?? users[1]?.user_code ?? users[0]?.user_code ?? '';
+      const ex1 = { name: 'Rahul Sharma', phone: '9876543210', email: 'rahul@example.com', source: (sources[0]?.name || 'meta'), campaign: 'Meta - Luxury Homes', ad_name: 'Video 2BHK', city: 'Ahmedabad', purpose: 'end_use', budget_bucket: '50l_1cr', lead_date: '01-05-2025', overall_status: 'new', telecaller_code: tcCode, telecaller_status: 'callback', telecaller_remarks: 'Call back evening' };
+      const ex2 = { name: 'Priya Mehta', phone: '9988776655', email: 'priya@example.com', project: (projects[0]?.name || 'Kalrav'), source: (sources[0]?.name || 'walk-in'), city: 'Vadodara', address: '12 Alkapuri Society', purpose: 'investment, end_use', budget_bucket: '1_2cr', lead_date: '02-04-2025', overall_status: 'closed', telecaller_code: tcCode, telecaller_status: 'warm', stm_code: stmCode, stm_status: 'closed', sv_scheduled_date: '05-04-2025', sv_visited_date: '06-04-2025', sv_status: 'completed', sv_remarks: 'Liked plot A-12', closure_date: '08-04-2025', closure_status: 'booked', unit_no: 'A-12', unit_type: '2BHK', booking_amount: 200000, total_amount: 5000000, closure_remarks: 'Token received' };
 
       const wb = new ExcelJS.Workbook();
       const ws = wb.addWorksheet('Leads', { views: [{ state: 'frozen', ySplit: 1 }] });
-      const refSheet = wb.addWorksheet('Reference — IDs & values');
+      const refSheet = wb.addWorksheet('Reference — codes & values');
       const lists = wb.addWorksheet('Lists'); lists.state = 'hidden';
 
       const rowFrom = (o) => cols.map((c) => o[c] ?? '');
-      cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.min(26, Math.max(12, c.length + 3)); });
+      cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.min(26, Math.max(12, (HEADER_LABELS[c] || c).length + 3)); });
       // A real Excel table: bounds the header styling to the actual columns (no full-row
       // fill), and gives filter buttons + banded rows for a clean, navigable format.
       ws.addTable({
@@ -217,7 +260,7 @@ export default function ImportPage() {
         ref: 'A1',
         headerRow: true,
         style: { theme: 'TableStyleMedium2', showRowStripes: true },
-        columns: cols.map((c) => ({ name: c, filterButton: true })),
+        columns: cols.map((c) => ({ name: HEADER_LABELS[c] || c, filterButton: true })),
         rows: [rowFrom(ex1), rowFrom(ex2)],
       });
 
@@ -252,16 +295,18 @@ export default function ImportPage() {
       if (projNames.length) addDV('project', `Lists!$A$1:$A$${projNames.length}`);
       if (srcNames.length) addDV('source', `Lists!$B$1:$B$${srcNames.length}`);
 
-      refSheet.addRow(['— TEAM — put this id in telecaller_id / stm_id / sv_referred_by_id —']);
-      refSheet.addRow(['id', 'name', 'role / designation', 'phone']).font = { bold: true };
-      users.forEach((u) => refSheet.addRow([u.id, u.name, (u.designation || u.role || ''), u.phone || '']));
+      refSheet.addRow(['— TEAM — put this code in the Telecaller Code / STM Code / SV Referred By Code columns —']);
+      refSheet.addRow(['User Code', 'Name', 'Role / Designation', 'Phone']).font = { bold: true };
+      users.forEach((u) => refSheet.addRow([u.user_code || '—', u.name, (u.designation || u.role || ''), u.phone || '']));
       refSheet.addRow([]);
       refSheet.addRow(['— ALLOWED VALUES (the Leads sheet has dropdowns for these) —']);
-      refSheet.addRow(['overall_status', STATUS.overall_status.replace(/,/g, ', ')]);
-      refSheet.addRow(['telecaller_status', STATUS.telecaller_status.replace(/,/g, ', ')]);
-      refSheet.addRow(['stm_status', STATUS.stm_status.replace(/,/g, ', ')]);
-      refSheet.addRow(['sv_status', STATUS.sv_status.replace(/,/g, ', ')]);
-      refSheet.addRow(['closure_status', STATUS.closure_status.replace(/,/g, ', ')]);
+      refSheet.addRow([HEADER_LABELS.overall_status, STATUS.overall_status.replace(/,/g, ', ')]);
+      refSheet.addRow([HEADER_LABELS.telecaller_status, STATUS.telecaller_status.replace(/,/g, ', ')]);
+      refSheet.addRow([HEADER_LABELS.stm_status, STATUS.stm_status.replace(/,/g, ', ')]);
+      refSheet.addRow([HEADER_LABELS.sv_status, STATUS.sv_status.replace(/,/g, ', ')]);
+      refSheet.addRow([HEADER_LABELS.closure_status, STATUS.closure_status.replace(/,/g, ', ')]);
+      refSheet.addRow([HEADER_LABELS.budget_bucket, STATUS.budget_bucket.replace(/,/g, ', ')]);
+      refSheet.addRow(['Purpose (multi-select — separate multiple with a comma)', PURPOSE_VALUES]);
       refSheet.addRow([]);
       refSheet.addRow(['— NOTES —']);
       refSheet.addRow(['Header colours: RED = required (name, phone). PURPLE = closure columns (fill closure_date to record a sold deal).']);
@@ -269,6 +314,7 @@ export default function ImportPage() {
       refSheet.addRow(['project / source: pick from the dropdown (must already exist). Leave blank to skip.']);
       refSheet.addRow(['Fill any sv_* column to create a Site Visit. Fill closure_date to create a Closure.']);
       refSheet.addRow(['overall_status auto-fills from the furthest stage if you leave it blank.']);
+      refSheet.addRow(['purpose accepts multiple values in one cell, e.g. "investment, end_use".']);
       refSheet.columns = [{ width: 24 }, { width: 62 }, { width: 22 }, { width: 16 }];
 
       const buf = await wb.xlsx.writeBuffer();
@@ -405,13 +451,32 @@ export default function ImportPage() {
 
                 {(() => {
                   const detected = PIPELINE_FIELDS.filter((f) => mapping[f]);
-                  if (!detected.length) return null;
                   return (
                     <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #E0E6F0' }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#15803D', marginBottom: 8 }}>✓ {detected.length} pipeline columns auto-detected (telecaller, STM, site visit &amp; closure)</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {detected.map((f) => <span key={f} style={{ fontSize: 11, fontWeight: 600, color: '#3D5AFE', background: '#EEF1FF', padding: '3px 8px', borderRadius: 6 }}>{f}</span>)}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: detected.length ? '#15803D' : '#8492A6', margin: 0 }}>
+                          {detected.length
+                            ? `✓ ${detected.length} pipeline columns auto-detected (telecaller, STM, site visit & closure)`
+                            : 'No pipeline columns auto-detected (telecaller, STM, site visit & closure)'}
+                        </p>
+                        <button type="button" onClick={() => setShowPipelineMap((v) => !v)}
+                          style={{ fontSize: 11, fontWeight: 700, color: '#3D5AFE', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                          {showPipelineMap ? 'Hide manual mapping' : 'Map manually / fix a mismatch →'}
+                        </button>
                       </div>
+                      {detected.length > 0 && !showPipelineMap && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                          {detected.map((f) => <span key={f} style={{ fontSize: 11, fontWeight: 600, color: '#3D5AFE', background: '#EEF1FF', padding: '3px 8px', borderRadius: 6 }}>{f}</span>)}
+                        </div>
+                      )}
+                      {showPipelineMap && (
+                        <div style={{ marginTop: 10 }}>
+                          <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 8 }}>
+                            Only fields with a header that matched exactly (e.g. "stm_code") get auto-mapped — if your file uses an older or different header, pick the right column here.
+                          </p>
+                          {PIPELINE_FIELDS.map((f) => <ColSelect key={f} field={f} label={HEADER_LABELS[f] || f} />)}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -532,9 +597,32 @@ export default function ImportPage() {
                   ))}
                 </div>
               )}
+              {result.warnings && result.warnings.length > 0 && (
+                <div style={{ ...card, borderColor: '#FDE68A', backgroundColor: '#FFFBEB' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#B45309', marginBottom: 8 }}>
+                    ⚠ {result.warnings.length} code{result.warnings.length > 1 ? 's' : ''} didn't match anyone — those leads still imported, just without that assignment
+                  </p>
+                  <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                    <table style={{ ...tbl, fontSize: 12 }}>
+                      <thead style={{ backgroundColor: '#FEF3C7' }}><tr>{['Row', 'Name', 'Field', 'Value you entered'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                      <tbody>
+                        {result.warnings.map((w, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #FDE68A' }}>
+                            <td style={tdS}>{w.row}</td>
+                            <td style={{ ...tdS, fontWeight: 600 }}>{w.name}</td>
+                            <td style={tdS}>{w.field}</td>
+                            <td style={{ ...tdS, fontFamily: 'monospace' }}>{w.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p style={{ fontSize: 11, color: '#B45309', marginTop: 8 }}>Check the value against the Reference sheet's User Code column, fix it, and re-import just those rows.</p>
+                </div>
+              )}
               <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#1E40AF' }}>
                 <strong>What happens next?</strong><br />
-                Rows that carried a <strong>telecaller_id / stm_id</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
+                Rows that carried a <strong>Telecaller Code / STM Code</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
               </div>
               <button onClick={reset} style={outlineBtn}>Import another file</button>
             </>
