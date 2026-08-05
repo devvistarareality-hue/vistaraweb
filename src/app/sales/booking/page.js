@@ -256,17 +256,18 @@ function BookingPage() {
             ['Terrace Rate (Flat Rate / 2)', rupee(pb.terrace_rate) + ' / sq.yd'],
             ['Additional Terrace Price (Terrace Area x Terrace Rate)', rupee(pb.terrace_price)]]
          : [['Additional Terrace Area', '—']]),
-       ['Box Price (Flat Price + Terrace Price)', rupee(pb.box_price), 'sub'],
+       [pb.is_down_payment ? 'Unit Price (Flat Price + Terrace Price)' : 'Box Price (Flat Price + Terrace Price)', rupee(pb.box_price), 'sub'],
        // Same split as the LOI: what the price is made up of, then how it is funded.
        // Both add to the Total, so listing them together reads as double the price.
        { h: 'What This Price Includes' },
        // Down Payment quotes four figures that add to the total; Regular breaks the
        // box price down into what it already contains.
        ...(pb.is_down_payment
-         ? [['Box Price (Flat Price + Terrace Price)', rupee(pb.box_price)],
-            ['Total Legal & Other Charges (Box Price x 7% + Legal Charges)', rupee(pb.total_extra)],
+         ? [['Unit Price (Flat Price + Terrace Price)', rupee(pb.box_price)],
+            ['Total Legal & Other Charges (Unit Price x 7% + Legal Charges)', rupee(pb.total_extra)],
             ['6 Months Advance Maintenance (1.5 x 9 x Area x 6)', rupee(pb.maint_adv_6m)],
-            ['12 Months Advance Maintenance (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)]]
+            ['12 Months Advance Maintenance (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)],
+            ['Total Legal & Extra Charges', rupee(pb.total_legal_extra), 'sub']]
          : [['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
             ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
             ['GST (Final Unit Price x 1%)', rupee(pb.gst)],
@@ -293,12 +294,14 @@ function BookingPage() {
   const pratDp     = prat && pratBooks.some((b) => b.is_down_payment);
   const pratSum    = (k) => pratBooks.reduce((sum, b) => sum + (Number(b[k]) || 0), 0);
   const pratBox    = pratSum('box_price');
-  const pratExtras = () => [
-    ['Total Legal & Other Charges', pratSum('total_extra')],
-    ['6 Months Advance Maintenance', pratSum('maint_adv_6m')],
-    ['12 Months Advance Maintenance', pratSum('maint_adv_12m')],
-  ].filter(([, amt]) => Math.round(amt) > 0)
-   .map(([label, amt]) => ({ no: 'Extra', date: '', amt: Math.round(amt), isExtra: true, label }));
+  // One line on the schedule, not three: the itemisation already sits in the pricing
+  // panel above, and the whole amount falls due on the same date.
+  const pratExtras = () => {
+    const amt = Math.round(pratSum('total_legal_extra'));
+    return amt > 0
+      ? [{ no: 'Extra', date: '', amt, isExtra: true, label: 'Total Legal & Extra Charges' }]
+      : [];
+  };
   const pbTotal = (pb) => (pb.grand_total ?? pb.box_price ?? 0);
   const pratTotal = pratBooks.reduce((sum, pb) => sum + pbTotal(pb), 0);
   const pratExtraTotal = pratBooks.reduce((sum, pb) => sum + (pb.total_extra || 0), 0);
@@ -878,9 +881,7 @@ function BookingPage() {
         )}
         {(hasSaleDeedSplit || pratDp) && (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>
-              {pratDp ? 'Box Price Installments' : 'Unit Price Installments'}
-            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>Unit Price Installments</div>
             <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(base)}</div>
           </>
         )}

@@ -282,17 +282,18 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('Flat Price', pb.flat_price, { subline: num(pb.flat_area) + ' sq.yd. built-up' });
       if (pb.terrace_area) tRow('Additional Terrace Price', pb.terrace_price,
         { subline: num(pb.terrace_area) + ' sq.yd. private terrace' });
-      y += 2; tRow('Box Price', pb.box_price, { sub: true });
+      y += 2; tRow(pb.is_down_payment ? 'Unit Price' : 'Box Price', pb.box_price, { sub: true });
       // These are two DIFFERENT views of the same money, and printing them as one list
       // made the document unreadable: a buyer added all six lines, got twice the total
       // and asked why. Split into what the price is made up of, and how it is funded --
       // each group adding to exactly the same total, and each row saying what it is.
       chk(14 + 4 * 12 + 12); secHead('What This Price Includes', [124, 58, 237]); rowAlt = false;
       if (pb.is_down_payment) {
-        tRow('Box Price', pb.box_price, { subline: 'Flat Price + Additional Terrace Price' });
-        tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Stamp duty, registration and GST at 7% of the box price, plus legal charges' });
+        tRow('Unit Price', pb.box_price, { subline: 'Flat Price + Additional Terrace Price' });
+        tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Stamp duty, registration and GST at 7% of the unit price, plus legal charges' });
         tRow('6 Months Advance Maintenance', pb.maint_adv_6m, { subline: 'Six months of maintenance, paid in advance' });
         tRow('12 Months Advance Maintenance', pb.maint_adv_12m, { subline: 'Twelve months of maintenance, paid in advance' });
+        y += 2; tRow('Total Legal & Extra Charges', pb.total_legal_extra, { sub: true });
       } else {
         tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });
         tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });

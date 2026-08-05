@@ -88,16 +88,16 @@ export function computeFlat(pb, edit = {}) {
   // Down Payment charges on top instead, and quotes four figures:
   //   Box Price + Total Legal & Other Charges + both maintenance amounts.
   const total_extra     = isDownPayment ? stamp_duty_reg + gst + legal : 0;
-  const total           = isDownPayment
-    ? box_price + total_extra + maint_adv_6m + maint_adv_12m
-    : box_price;
+  // Everything charged on top of the unit price, as one figure.
+  const total_legal_extra = isDownPayment ? total_extra + maint_adv_6m + maint_adv_12m : 0;
+  const total           = isDownPayment ? box_price + total_legal_extra : box_price;
 
   return {
     ...pb, kind: 'flat', is_down_payment: isDownPayment,
     flat_area, terrace_area, flat_rate, terrace_rate,
     flat_price, terrace_price, box_price, token, bank_loan,
     bank_processing, maint_adv_6m, maint_adv_12m, legal,
-    dastavej_value, stamp_duty_reg, gst, total_extra, total,
+    dastavej_value, stamp_duty_reg, gst, total_extra, total_legal_extra, total,
     // pbTotal()/pbTot() on the forms and the LOI read grand_total first.
     grand_total: total,
   };
