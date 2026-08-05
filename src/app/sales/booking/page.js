@@ -243,8 +243,9 @@ function BookingPage() {
        ['12 Months Maintenance Deposit', rupee(pb.maint_dep_12m)],
        ['Legal Charges', rupee(pb.legal)],
        ['Total Legal & Other Charges', rupee(pb.total_extra), 'sub'],
-       { h: 'Agreement Value' },
+       { h: 'What This Price Includes' },
        ['Final Unit Price', rupee(pb.loan_amount)],
+       ['Total Legal & Other Charges', rupee(pb.total_extra)],
        ['Extra Work Amount', rupee(pb.extra_work_amount)]]
     : [['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],
        ['Flat Area', `${pb.flat_area} sq.yd`],

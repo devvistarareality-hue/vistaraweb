@@ -52,9 +52,11 @@ export function computeShop(pb, edit = {}) {
     loan_amount: unit,
     stamp_duty_reg, gst, auda, maint_adv_6m, maint_dep_12m, legal,
     total_extra,
-    // Stated as Final Unit Price - Total Legal & Other Charges. Informational: the
-    // Grand Total is still Amount + Total Extra.
-    extra_work_amount: unit - total_extra,
+    // The part of the shop amount not carried by the Total Unit Price -- at 50% the
+    // unit price and the extra work are half each. This makes the document add up:
+    // Final Unit Price + Total Legal & Other Charges + Extra Work Amount is exactly
+    // the Grand Total, for any percentage, since (unit) + (amount - unit) = amount.
+    extra_work_amount: amount - unit,
     grand_total: amount + total_extra,
   };
 }
