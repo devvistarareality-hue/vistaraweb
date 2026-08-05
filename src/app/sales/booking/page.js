@@ -6,7 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../lib/bookingFormulas';
 import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
-import { computeFlat, impliedFlatRate } from '../../../lib/pratishthaFlat';
+import { computeFlat } from '../../../lib/pratishthaFlat';
 
 
 const MAX_LOI_FILE_SIZE_MB = 100;
@@ -217,7 +217,7 @@ function BookingPage() {
   const shopEdit = (pb) => shopEdits[pb.unit] || shopSeed(pb);
   const setShopEdit = (pb, patch) =>
     setShopEdits((m) => ({ ...m, [pb.unit]: { ...(m[pb.unit] || shopSeed(pb)), ...patch } }));
-  const flatSeed = (pb) => ({ plan: 'Regular', rate: impliedFlatRate(pb), token: pb.token });
+  const flatSeed = (pb) => ({ plan: 'Regular', flatPrice: pb.flat_price, token: pb.token });
   const flatEdit = (pb) => flatEdits[pb.unit] || flatSeed(pb);
   const setFlatEdit = (pb, patch) =>
     setFlatEdits((m) => ({ ...m, [pb.unit]: { ...(m[pb.unit] || flatSeed(pb)), ...patch } }));
@@ -608,9 +608,9 @@ function BookingPage() {
                       <Sel opts={['Regular', 'Down Payment']} value={e.plan || 'Regular'}
                         onChange={(ev) => setFlatEdit(pb, { plan: ev.target.value })} />
                     </Row>
-                    <Row><L>Flat Rate (₹/sq.yd)</L>
-                      <In type="number" disabled={!dp} value={dp ? (e.rate ?? '') : pb.flat_rate}
-                        onChange={(ev) => setFlatEdit(pb, { rate: ev.target.value })} />
+                    <Row><L>Flat Price (₹)</L>
+                      <In type="number" disabled={!dp} value={dp ? (e.flatPrice ?? '') : pb.flat_price}
+                        onChange={(ev) => setFlatEdit(pb, { flatPrice: ev.target.value })} />
                     </Row>
                     <Row><L>Token</L>
                       <In type="number" disabled={!dp} value={dp ? (e.token ?? '') : pb.token}
@@ -618,7 +618,7 @@ function BookingPage() {
                     </Row>
                     <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
                       {dp
-                        ? `${pb.flat_area} sq.yd x ${rupee(pb.flat_rate)} = ${rupee(pb.flat_price)}${pb.terrace_area ? ` + terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
+                        ? `${rupee(pb.flat_price)} / ${pb.flat_area} sq.yd = ${rupee(pb.flat_rate)} per sq.yd${pb.terrace_area ? ` · terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
                         : 'Regular plan — priced from the approved price book. Switch to Down Payment to change the rate or token.'}
                     </p>
                   </div>

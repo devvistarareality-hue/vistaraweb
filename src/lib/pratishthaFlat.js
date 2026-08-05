@@ -1,7 +1,7 @@
 // Pratishtha flats are computed, not fixed: the sales team sets the Flat Rate and the
 // Token and every other line follows. Shops have their own rules (see pratishthaShop).
 //
-//   Flat Price          = Flat Area x Flat Rate
+//   Flat Rate           = Flat Price / Flat Area   (the price is what is entered)
 //   Terrace Rate        = Flat Rate / 2
 //   Add. Terrace Price  = Terrace Area x Terrace Rate
 //   Box Price           = Flat Price + Terrace Price
@@ -34,12 +34,17 @@ export function computeFlat(pb, edit = {}) {
   const R = FLAT_RULES;
   const flat_area = Number(pb.flat_area) || 0;
   const terrace_area = Number(pb.terrace_area) || 0;
-  const flat_rate = edit.rate === '' || edit.rate == null
-    ? impliedFlatRate(pb) : (Number(edit.rate) || 0);
+  // The Flat Price is the driver and the rate is derived from it: a price is what
+  // actually gets negotiated, so entering one should not require back-calculating a
+  // per-sq.yd rate by hand. Everything downstream still keys off the rate, including
+  // the terrace at half of it.
+  const flat_price = edit.flatPrice === '' || edit.flatPrice == null
+    ? Math.round(Number(pb.flat_price) || 0)
+    : Math.round(Number(edit.flatPrice) || 0);
+  const flat_rate = flat_area ? flat_price / flat_area : 0;
   const token = edit.token === '' || edit.token == null
     ? (Number(pb.token) || 0) : (Number(edit.token) || 0);
 
-  const flat_price      = Math.round(flat_area * flat_rate);
   const terrace_rate    = flat_rate / R.terraceRateDivisor;
   const terrace_price   = Math.round(terrace_area * terrace_rate);
   const box_price       = flat_price + terrace_price;
