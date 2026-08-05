@@ -271,10 +271,14 @@ function BookingPage() {
             ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
             ['GST (Final Unit Price x 1%)', rupee(pb.gst)],
             ['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)]]),
-       ['Total All Inclusive Amount', rupee(pb.total), 'sub'],
-       { h: 'How You Pay' },
-       ['Token', rupee(pb.token)],
-       ['Bank Loan (Box Price - Token)', rupee(pb.bank_loan)]]);
+       // Down Payment has no loan to describe, and its four rows already add to the
+       // footer total — so no How You Pay section and no duplicate subtotal above it.
+       ...(pb.is_down_payment
+         ? []
+         : [['Total All Inclusive Amount', rupee(pb.total), 'sub'],
+            { h: 'How You Pay' },
+            ['Token', rupee(pb.token)],
+            ['Bank Loan (Box Price - Token)', rupee(pb.bank_loan)]])]);
   // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
   // "Shop1" -> "Shop 1", "101" -> "Flat 101".
   const unitTitle = (pb) => {

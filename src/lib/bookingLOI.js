@@ -299,10 +299,14 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
         tRow('Bank Processing Charges', pb.bank_processing);
       }
-      y += 2; tRow('Total All Inclusive Amount', pb.total, { sub: true });
-      chk(14 + 2 * 12 + 12); secHead('How You Pay', [71, 85, 105]); rowAlt = false;
-      tRow('Token', pb.token, { subline: 'Payable now, to book the unit' });
-      tRow('Bank Loan', pb.bank_loan, { subline: 'Loan amount to be arranged — the balance after the token' });
+      // Down Payment has no loan to describe, and its four rows already add to the
+      // total — so no How You Pay section and no duplicate subtotal above it.
+      if (!pb.is_down_payment) {
+        y += 2; tRow('Total All Inclusive Amount', pb.total, { sub: true });
+        chk(14 + 2 * 12 + 12); secHead('How You Pay', [71, 85, 105]); rowAlt = false;
+        tRow('Token', pb.token, { subline: 'Payable now, to book the unit' });
+        tRow('Bank Loan', pb.bank_loan, { subline: 'Loan amount to be arranged — the balance after the token' });
+      }
       y += 2; tRow('Total', pb.total, { multi, total: !multi, sub: multi });
     }
     });
