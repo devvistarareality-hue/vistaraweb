@@ -27,6 +27,7 @@ export const FLAT_RULES = {
   sqYdToSqFt: 9,
   maintAdvMonths: 6,
   maintDepMonths: 12,
+  legalCharge: 10000,
 };
 
 // The flat rate a stored book implies, so the form opens on today's figures.
@@ -64,10 +65,11 @@ export function computeFlat(pb, edit = {}) {
   const maintPerMonth   = R.maintPerSqFtMonth * R.sqYdToSqFt * (flat_area + terrace_area);
   const maint_adv_6m    = isDownPayment ? Math.round(maintPerMonth * R.maintAdvMonths) : 0;
   const maint_adv_12m   = isDownPayment ? Math.round(maintPerMonth * R.maintDepMonths) : 0;
+  const legal           = isDownPayment ? R.legalCharge : 0;
   // Rounded at each step, not only at the end — that is what reproduces the
   // originally sanctioned figures to the rupee.
   const bank_processing = isDownPayment ? 0 : Math.round(bank_loan * R.bankProcessingPct);
-  const deduction       = isDownPayment ? (maint_adv_6m + maint_adv_12m) : bank_processing;
+  const deduction       = isDownPayment ? (maint_adv_6m + maint_adv_12m + legal) : bank_processing;
   const dastavej_value  = Math.round((box_price - deduction) / R.dastavejDivisor);
   const stamp_duty_reg  = Math.round(dastavej_value * R.stampDutyRegPct);
   const gst             = Math.round(dastavej_value * R.gstPct);
@@ -82,7 +84,7 @@ export function computeFlat(pb, edit = {}) {
     ...pb, kind: 'flat', is_down_payment: isDownPayment,
     flat_area, terrace_area, flat_rate, terrace_rate,
     flat_price, terrace_price, box_price, token, bank_loan,
-    bank_processing, maint_adv_6m, maint_adv_12m,
+    bank_processing, maint_adv_6m, maint_adv_12m, legal,
     dastavej_value, stamp_duty_reg, gst, total,
   };
 }

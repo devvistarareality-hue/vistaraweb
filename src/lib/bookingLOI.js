@@ -292,6 +292,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
       tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
       if (pb.is_down_payment) {
+        tRow('Legal Charges', pb.legal);
         tRow('6 Months Advance Maintenance', pb.maint_adv_6m, { subline: 'Six months of maintenance, paid in advance' });
         tRow('12 Months Advance Maintenance', pb.maint_adv_12m, { subline: 'Twelve months of maintenance, paid in advance' });
       } else {
