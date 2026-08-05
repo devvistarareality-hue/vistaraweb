@@ -616,17 +616,26 @@ function BookingPage() {
                       {dp ? 'Editable · everything below recalculates' : 'Plan'}
                     </div>
                     <Row><L>Plan</L>
+                      {/* Switching to Down Payment clears the price rather than carrying the
+                          price-book figure over: the whole point of the plan is to enter a
+                          negotiated one, and a pre-filled default is easy to leave in place
+                          by mistake. */}
                       <Sel opts={['Regular', 'Down Payment']} value={e.plan || 'Regular'}
-                        onChange={(ev) => setFlatEdit(pb, { plan: ev.target.value })} />
+                        onChange={(ev) => setFlatEdit(pb, ev.target.value === 'Down Payment'
+                          ? { plan: ev.target.value, flatPrice: 0 }
+                          : { plan: ev.target.value })} />
                     </Row>
                     <Row><L>Flat Price (₹)</L>
                       <In type="number" disabled={!dp} value={dp ? (e.flatPrice ?? '') : pb.flat_price}
                         onChange={(ev) => setFlatEdit(pb, { flatPrice: ev.target.value })} />
                     </Row>
-                    <Row><L>Token</L>
-                      <In type="number" disabled={!dp} value={dp ? (e.token ?? '') : pb.token}
-                        onChange={(ev) => setFlatEdit(pb, { token: ev.target.value })} />
-                    </Row>
+                    {/* No token on a Down Payment plan — there is no loan, and the section
+                        that used to quote it is gone. */}
+                    {!dp && (
+                      <Row><L>Token</L>
+                        <In type="number" disabled value={pb.token} />
+                      </Row>
+                    )}
                     <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
                       {dp
                         ? `${rupee(pb.flat_price)} / ${pb.flat_area} sq.yd = ${rupee(pb.flat_rate)} per sq.yd${pb.terrace_area ? ` · terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
