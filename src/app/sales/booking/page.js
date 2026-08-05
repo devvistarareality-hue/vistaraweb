@@ -210,12 +210,17 @@ function BookingPage() {
   const rawBooks = formulaSet === 'pratishtha'
     ? plots.map((p) => p.price_book).filter((b) => b && Object.keys(b).length)
     : [];
-  const shopEdit = (pb) => shopEdits[pb.unit] || { rate: pb.rate, mode: 'pct', unitPct: impliedUnitPct(pb), unitAmount: pb.loan_amount };
-  const setShopEdit = (unit, patch) =>
-    setShopEdits((m) => ({ ...m, [unit]: { ...(m[unit] || {}), ...patch } }));
-  const flatEdit = (pb) => flatEdits[pb.unit] || { plan: 'Regular', rate: impliedFlatRate(pb), token: pb.token };
-  const setFlatEdit = (unit, patch) =>
-    setFlatEdits((m) => ({ ...m, [unit]: { ...(m[unit] || {}), ...patch } }));
+  // Seeds come from the unit's own price book, and a patch merges onto the seed rather
+  // than onto {} — otherwise the first edit to any one field (switching plan, toggling
+  // % / Rs.) would create a state with the *other* fields missing and blank their inputs.
+  const shopSeed = (pb) => ({ rate: pb.rate, mode: 'pct', unitPct: impliedUnitPct(pb), unitAmount: pb.loan_amount });
+  const shopEdit = (pb) => shopEdits[pb.unit] || shopSeed(pb);
+  const setShopEdit = (pb, patch) =>
+    setShopEdits((m) => ({ ...m, [pb.unit]: { ...(m[pb.unit] || shopSeed(pb)), ...patch } }));
+  const flatSeed = (pb) => ({ plan: 'Regular', rate: impliedFlatRate(pb), token: pb.token });
+  const flatEdit = (pb) => flatEdits[pb.unit] || flatSeed(pb);
+  const setFlatEdit = (pb, patch) =>
+    setFlatEdits((m) => ({ ...m, [pb.unit]: { ...(m[pb.unit] || flatSeed(pb)), ...patch } }));
   // Only a Down Payment plan may move the rate or token. On Regular the unit prices
   // straight from the price book — passing no overrides at all, so switching back from
   // Down Payment cannot leave an edited figure behind.
@@ -588,15 +593,15 @@ function BookingPage() {
                     </div>
                     <Row><L>Plan</L>
                       <Sel opts={['Regular', 'Down Payment']} value={e.plan || 'Regular'}
-                        onChange={(ev) => setFlatEdit(pb.unit, { plan: ev.target.value })} />
+                        onChange={(ev) => setFlatEdit(pb, { plan: ev.target.value })} />
                     </Row>
                     <Row><L>Flat Rate (₹/sq.yd)</L>
                       <In type="number" disabled={!dp} value={dp ? (e.rate ?? '') : pb.flat_rate}
-                        onChange={(ev) => setFlatEdit(pb.unit, { rate: ev.target.value })} />
+                        onChange={(ev) => setFlatEdit(pb, { rate: ev.target.value })} />
                     </Row>
                     <Row><L>Token</L>
                       <In type="number" disabled={!dp} value={dp ? (e.token ?? '') : pb.token}
-                        onChange={(ev) => setFlatEdit(pb.unit, { token: ev.target.value })} />
+                        onChange={(ev) => setFlatEdit(pb, { token: ev.target.value })} />
                     </Row>
                     <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
                       {dp
@@ -614,19 +619,19 @@ function BookingPage() {
                       Editable · everything below recalculates
                     </div>
                     <Row><L>Rate (₹/sq.ft)</L>
-                      <In type="number" value={e.rate ?? ''} onChange={(ev) => setShopEdit(pb.unit, { rate: ev.target.value })} />
+                      <In type="number" value={e.rate ?? ''} onChange={(ev) => setShopEdit(pb, { rate: ev.target.value })} />
                     </Row>
                     <Row><L>Total Unit Price</L>
                       <div style={{ display: 'flex', flex: 1, gap: 8 }}>
                         {[['pct', '%'], ['amount', '₹']].map(([m, lbl]) => (
-                          <button key={m} type="button" onClick={() => setShopEdit(pb.unit, { mode: m })}
+                          <button key={m} type="button" onClick={() => setShopEdit(pb, { mode: m })}
                             style={{ width: 44, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                               border: `1.5px solid ${e.mode === m ? '#3D5AFE' : '#E0E6F0'}`,
                               background: e.mode === m ? '#3D5AFE' : '#fff', color: e.mode === m ? '#fff' : '#8492A6' }}>{lbl}</button>
                         ))}
                         {e.mode === 'amount'
-                          ? <In type="number" value={e.unitAmount ?? ''} onChange={(ev) => setShopEdit(pb.unit, { unitAmount: ev.target.value })} />
-                          : <In type="number" value={e.unitPct ?? ''} onChange={(ev) => setShopEdit(pb.unit, { unitPct: ev.target.value })} />}
+                          ? <In type="number" value={e.unitAmount ?? ''} onChange={(ev) => setShopEdit(pb, { unitAmount: ev.target.value })} />
+                          : <In type="number" value={e.unitPct ?? ''} onChange={(ev) => setShopEdit(pb, { unitPct: ev.target.value })} />}
                       </div>
                     </Row>
                     <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
