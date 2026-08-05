@@ -249,7 +249,11 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       // extra work amount. Rate and Shop Amount are working figures, not contract terms,
       // so they stay on the booking form and off the document.
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]);
-      infoGrid([['Shop Area', num(pb.sq_feet) + ' sq.ft.'], ['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)]]);
+      // Extra Work Amount prints per hundred on this document. Shop Area is already
+      // stated in the Details block above, so Deal Value carries the two money figures.
+      const ewDisp = (Number(pb.extra_work_amount) || 0) / 100;
+      const ewStr = ewDisp.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      infoGrid([['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)], ['Extra Work Amount', 'Rs. ' + ewStr]]);
       chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
       tRow('Stamp Duty & Registration (6% of Final Unit Price)', pb.stamp_duty_reg);
       tRow('GST (5% of Final Unit Price)', pb.gst);
@@ -265,8 +269,14 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       chk(14 + 3 * 7.5 + 12); secHead('What This Price Includes', [71, 85, 105]); rowAlt = false;
       tRow('Final Unit Price', pb.loan_amount, { subline: 'Value of the shop recorded in the sale agreement' });
       tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Bifurcation shown above' });
-      tRow('Extra Work Amount', pb.extra_work_amount, { subline: 'Balance of the shop amount beyond the Final Unit Price' });
-      y += 2; tRow('Grand Total', pb.grand_total, { total: !multi, sub: multi });
+      tRow('Extra Work Amount', 0, { valStr: ewStr, subline: 'Balance of the shop amount beyond the Final Unit Price' });
+      // Document total follows the printed figures, so it uses the per-hundred extra
+      // work amount. The booking still records Shop Amount + Total Legal & Other Charges.
+      const shopDocTotal = (Number(pb.loan_amount) || 0) + (Number(pb.total_extra) || 0) + ewDisp;
+      y += 2; tRow('Grand Total', 0, {
+        valStr: shopDocTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        total: !multi, sub: multi,
+      });
     } else {
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]); rowAlt = false;
       tRow('Flat Price', pb.flat_price, { subline: num(pb.flat_area) + ' sq.yd. built-up' });
