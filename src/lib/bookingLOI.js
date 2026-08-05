@@ -276,7 +276,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('Flat Price', pb.flat_price);
       if (pb.terrace_area) tRow('Additional Terrace Price', pb.terrace_price,
         { subline: num(pb.terrace_area) + ' sq.yd. private terrace' });
-      y += 2; tRow('Total All Inclusive Amount (Box Price)', pb.box_price, { sub: true });
+      y += 2; tRow('Box Price', pb.box_price, { sub: true });
       chk(14 + 6 * 7.5 + 12); secHead('Payment & Charges', [124, 58, 237]); rowAlt = false;
       tRow('Token', pb.token);
       tRow('Bank Loan', pb.bank_loan);

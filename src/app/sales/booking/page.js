@@ -229,20 +229,22 @@ function BookingPage() {
        ['12 Months Maintenance Deposit', rupee(pb.maint_dep_12m)],
        ['Legal Charges', rupee(pb.legal)], ['Total Legal & Other Charges', rupee(pb.total_extra)],
        ['Extra Work Amount', rupee(pb.extra_work_amount)]]
-    : [['Flat Area', `${pb.flat_area} sq.yd`],
+    : [['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],
+       ['Flat Area', `${pb.flat_area} sq.yd`],
        ['Flat Rate', rupee(pb.flat_rate) + ' / sq.yd'],
        ['Flat Price', rupee(pb.flat_price)],
-       ['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],
        ...(pb.terrace_area
          ? [['Additional Terrace Area', `${pb.terrace_area} sq.yd`],
             ['Terrace Rate (Flat Rate / 2)', rupee(pb.terrace_rate) + ' / sq.yd'],
-            ['Additional Terrace Price', rupee(pb.terrace_price)]]
-         : [['Terrace Area', '—']]),
-       ['Token', rupee(pb.token)], ['Bank Loan (Box Price - Token)', rupee(pb.bank_loan)],
-       ['Bank Processing Charges (4.5% of Bank Loan)', rupee(pb.bank_processing)],
-       ['Final Unit Price', rupee(pb.dastavej_value)],
-       ['Stamp Duty + Registration (6%)', rupee(pb.stamp_duty_reg)],
-       ['GST (1%)', rupee(pb.gst)]]);
+            ['Additional Terrace Price (Terrace Area x Terrace Rate)', rupee(pb.terrace_price)]]
+         : [['Additional Terrace Area', '—']]),
+       ['Box Price (Flat Price + Terrace Price)', rupee(pb.box_price)],
+       ['Token', rupee(pb.token)],
+       ['Bank Loan (Box Price - Token)', rupee(pb.bank_loan)],
+       ['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)],
+       ['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
+       ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
+       ['GST (Final Unit Price x 1%)', rupee(pb.gst)]]);
   // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
   // "Shop1" -> "Shop 1", "101" -> "Flat 101".
   const unitTitle = (pb) => {
@@ -633,7 +635,7 @@ function BookingPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px',
                   background: pratBooks.length > 1 ? '#4B5563' : '#182350' }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
-                    {pb.kind === 'shop' ? 'Grand Total' : 'Total All Inclusive Amount (Box Price)'}
+                    {pb.kind === 'shop' ? 'Grand Total' : 'Total'}
                   </span>
                   <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pbTotal(pb))}</span>
                 </div>
