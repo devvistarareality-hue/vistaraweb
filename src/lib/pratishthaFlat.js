@@ -9,8 +9,8 @@
 //   Bank Processing     = Bank Loan x 4.5%
 //   Dastavej Value      = (Box Price - Bank Processing) / 1.07   (Regular)
 //                       = Box Price / 1.07                       (Down Payment)
-//   Stamp Duty + Reg    = Dastavej Value x 6%
-//   GST                 = Dastavej Value x 1%
+//   Stamp Duty + Reg    = Dastavej Value x 6%   (Regular) / Box Price x 6% (DP)
+//   GST                 = Dastavej Value x 1%   (Regular) / Box Price x 1% (DP)
 //   Total (Regular)     = Bank Processing + Dastavej + Stamp Duty + GST = Box Price
 //   Total (Down Payment)= Box Price + Legal & Other Charges + both maintenances
 //
@@ -76,8 +76,11 @@ export function computeFlat(pb, edit = {}) {
   // than carved out.
   const dastavej_value  = Math.round(
     (isDownPayment ? box_price : box_price - bank_processing) / R.dastavejDivisor);
-  const stamp_duty_reg  = Math.round(dastavej_value * R.stampDutyRegPct);
-  const gst             = Math.round(dastavej_value * R.gstPct);
+  // Regular taxes the agreement value; Down Payment taxes the box price, so its
+  // Total Legal & Other Charges comes to Box Price x 7% plus the legal charge.
+  const taxBase         = isDownPayment ? box_price : dastavej_value;
+  const stamp_duty_reg  = Math.round(taxBase * R.stampDutyRegPct);
+  const gst             = Math.round(taxBase * R.gstPct);
   // Regular is an all-inclusive box price: Processing + Dastavej + Stamp Duty + GST
   // works back out to exactly the Box Price, so that is the total. (Summing the four
   // rounded lines can land a rupee off, and the box price is the figure quoted.)

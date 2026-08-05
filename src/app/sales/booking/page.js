@@ -264,7 +264,7 @@ function BookingPage() {
        // box price down into what it already contains.
        ...(pb.is_down_payment
          ? [['Box Price (Flat Price + Terrace Price)', rupee(pb.box_price)],
-            ['Total Legal & Other Charges (Stamp Duty + Registration + GST + Legal Charges)', rupee(pb.total_extra)],
+            ['Total Legal & Other Charges (Box Price x 7% + Legal Charges)', rupee(pb.total_extra)],
             ['6 Months Advance Maintenance (1.5 x 9 x Area x 6)', rupee(pb.maint_adv_6m)],
             ['12 Months Advance Maintenance (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)]]
          : [['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],

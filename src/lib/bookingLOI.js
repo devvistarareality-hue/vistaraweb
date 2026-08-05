@@ -290,7 +290,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       chk(14 + 4 * 12 + 12); secHead('What This Price Includes', [124, 58, 237]); rowAlt = false;
       if (pb.is_down_payment) {
         tRow('Box Price', pb.box_price, { subline: 'Flat Price + Additional Terrace Price' });
-        tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Stamp Duty + Registration, GST and Legal Charges' });
+        tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Stamp duty, registration and GST at 7% of the box price, plus legal charges' });
         tRow('6 Months Advance Maintenance', pb.maint_adv_6m, { subline: 'Six months of maintenance, paid in advance' });
         tRow('12 Months Advance Maintenance', pb.maint_adv_12m, { subline: 'Twelve months of maintenance, paid in advance' });
       } else {
