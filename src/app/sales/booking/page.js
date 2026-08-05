@@ -248,13 +248,18 @@ function BookingPage() {
             ['Terrace Rate (Flat Rate / 2)', rupee(pb.terrace_rate) + ' / sq.yd'],
             ['Additional Terrace Price (Terrace Area x Terrace Rate)', rupee(pb.terrace_price)]]
          : [['Additional Terrace Area', '—']]),
-       ['Box Price (Flat Price + Terrace Price)', rupee(pb.box_price)],
-       ['Token', rupee(pb.token)],
-       ['Bank Loan (Box Price - Token)', rupee(pb.bank_loan)],
-       ['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)],
+       ['Box Price (Flat Price + Terrace Price)', rupee(pb.box_price), 'sub'],
+       // Same split as the LOI: what the price is made up of, then how it is funded.
+       // Both add to the Total, so listing them together reads as double the price.
+       { h: 'What This Price Includes' },
        ['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
        ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
-       ['GST (Final Unit Price x 1%)', rupee(pb.gst)]]);
+       ['GST (Final Unit Price x 1%)', rupee(pb.gst)],
+       ['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)],
+       ['Total All Inclusive Amount', rupee(pb.total), 'sub'],
+       { h: 'How You Pay' },
+       ['Token', rupee(pb.token)],
+       ['Bank Loan (Box Price - Token)', rupee(pb.bank_loan)]]);
   // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
   // "Shop1" -> "Shop 1", "101" -> "Flat 101".
   const unitTitle = (pb) => {
@@ -643,12 +648,17 @@ function BookingPage() {
                 );
               })()}
               <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
-                {pratRowsFor(pb).map(([k, val], i) => (
-                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
-                    background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
-                    <span style={{ fontSize: 13, color: '#6B7280' }}>{k}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{val}</span>
-                  </div>
+                {pratRowsFor(pb).map((row, i) => (
+                  Array.isArray(row) ? (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
+                      background: row[2] === 'sub' ? '#EEF2FF' : (i % 2 ? '#FAFBFE' : '#fff'), borderBottom: '1px solid #F0F3FA' }}>
+                      <span style={{ fontSize: 13, color: row[2] === 'sub' ? '#1A1A2E' : '#6B7280', fontWeight: row[2] === 'sub' ? 700 : 400 }}>{row[0]}</span>
+                      <span style={{ fontSize: 13, fontWeight: row[2] === 'sub' ? 800 : 700, color: '#1A1A2E' }}>{row[1]}</span>
+                    </div>
+                  ) : (
+                    <div key={i} style={{ padding: '9px 14px', background: '#F5F7FF', borderBottom: '1px solid #E5EAF5',
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#3D5AFE' }}>{row.h}</div>
+                  )
                 ))}
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px',
                   background: pratBooks.length > 1 ? '#4B5563' : '#182350' }}>
