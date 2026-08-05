@@ -51,7 +51,7 @@ const NAV = [
   { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true },
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
-  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport />,    adminOnly: true },
+  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
   { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true },
 ];
 

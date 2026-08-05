@@ -473,7 +473,7 @@ export default function Club1000LeadsPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          {selectedIds.size > 0 && (
+          {manager && selectedIds.size > 0 && (
             <button onClick={bulkDelete} disabled={deleting} style={{ padding: '10px 18px', background: '#EF4444', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.7 : 1 }}>
               {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
             </button>
@@ -539,9 +539,11 @@ export default function Club1000LeadsPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
-              <th style={th}>
-                <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />
-              </th>
+              {manager && (
+                <th style={th}>
+                  <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />
+                </th>
+              )}
               <th style={th}>Name</th>
               <th style={th}>Scheme Interest</th>
               <th style={th}>Source</th>
@@ -553,16 +555,18 @@ export default function Club1000LeadsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={manager ? 8 : 7} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
             ) : leads.length === 0 ? (
-              <tr><td colSpan={8} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No leads found.</td></tr>
+              <tr><td colSpan={manager ? 8 : 7} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No leads found.</td></tr>
             ) : leads.map((l) => {
               const overdue = l.next_follow_up_date && new Date(l.next_follow_up_date) < new Date();
               return (
               <tr key={l.id} onClick={() => setSelected(l)} style={{ cursor: 'pointer' }}>
-                <td style={td} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
-                  <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
-                </td>
+                {manager && (
+                  <td style={td} onClick={(e) => { e.stopPropagation(); toggleSelect(l.id); }}>
+                    <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />
+                  </td>
+                )}
                 <td style={{ ...td, fontWeight: 600 }}>{l.name}</td>
                 <td style={td}>{l.scheme_interest_name || '—'}</td>
                 <td style={{ ...td, textTransform: 'capitalize' }}>{SOURCE_LABELS[l.source] || l.source}</td>
