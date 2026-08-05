@@ -7,10 +7,12 @@
 //   Box Price           = Flat Price + Terrace Price
 //   Bank Loan           = Box Price - Token
 //   Bank Processing     = Bank Loan x 4.5%
-//   Dastavej Value      = (Box Price - Bank Processing) / 1.07
+//   Dastavej Value      = (Box Price - Bank Processing) / 1.07   (Regular)
+//                       = Box Price / 1.07                       (Down Payment)
 //   Stamp Duty + Reg    = Dastavej Value x 6%
 //   GST                 = Dastavej Value x 1%
-//   Total               = Bank Processing + Dastavej + Stamp Duty + GST
+//   Total (Regular)     = Bank Processing + Dastavej + Stamp Duty + GST = Box Price
+//   Total (Down Payment)= Box Price + Legal & Other Charges + both maintenances
 //
 // The set is self-consistent: because 1.07 x Dastavej = Box - Processing and stamp+GST
 // come to 7% of Dastavej, Total always works back out to exactly the Box Price. That
@@ -69,22 +71,31 @@ export function computeFlat(pb, edit = {}) {
   // Rounded at each step, not only at the end — that is what reproduces the
   // originally sanctioned figures to the rupee.
   const bank_processing = isDownPayment ? 0 : Math.round(bank_loan * R.bankProcessingPct);
-  const deduction       = isDownPayment ? (maint_adv_6m + maint_adv_12m + legal) : bank_processing;
-  const dastavej_value  = Math.round((box_price - deduction) / R.dastavejDivisor);
+  // Regular backs the processing charge out of the box price first; Down Payment
+  // divides the box price straight down, because its charges are added on top rather
+  // than carved out.
+  const dastavej_value  = Math.round(
+    (isDownPayment ? box_price : box_price - bank_processing) / R.dastavejDivisor);
   const stamp_duty_reg  = Math.round(dastavej_value * R.stampDutyRegPct);
   const gst             = Math.round(dastavej_value * R.gstPct);
-  // Total is Processing + Dastavej + Stamp Duty + GST, which in exact arithmetic is
-  // precisely the Box Price. Summing the four *rounded* lines can land a rupee off
-  // (dastavej rounding up carries through stamp duty and GST), so the box price is
-  // taken as the total: it is the all-inclusive figure actually quoted and booked,
-  // and it keeps the LOI's own Box Price and Total rows agreeing.
-  const total           = box_price;
+  // Regular is an all-inclusive box price: Processing + Dastavej + Stamp Duty + GST
+  // works back out to exactly the Box Price, so that is the total. (Summing the four
+  // rounded lines can land a rupee off, and the box price is the figure quoted.)
+  //
+  // Down Payment charges on top instead, and quotes four figures:
+  //   Box Price + Total Legal & Other Charges + both maintenance amounts.
+  const total_extra     = isDownPayment ? stamp_duty_reg + gst + legal : 0;
+  const total           = isDownPayment
+    ? box_price + total_extra + maint_adv_6m + maint_adv_12m
+    : box_price;
 
   return {
     ...pb, kind: 'flat', is_down_payment: isDownPayment,
     flat_area, terrace_area, flat_rate, terrace_rate,
     flat_price, terrace_price, box_price, token, bank_loan,
     bank_processing, maint_adv_6m, maint_adv_12m, legal,
-    dastavej_value, stamp_duty_reg, gst, total,
+    dastavej_value, stamp_duty_reg, gst, total_extra, total,
+    // pbTotal()/pbTot() on the forms and the LOI read grand_total first.
+    grand_total: total,
   };
 }

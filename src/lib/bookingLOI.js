@@ -288,14 +288,15 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       // and asked why. Split into what the price is made up of, and how it is funded --
       // each group adding to exactly the same total, and each row saying what it is.
       chk(14 + 4 * 12 + 12); secHead('What This Price Includes', [124, 58, 237]); rowAlt = false;
-      tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });
-      tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
-      tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
       if (pb.is_down_payment) {
-        tRow('Legal Charges', pb.legal);
+        tRow('Box Price', pb.box_price, { subline: 'Flat Price + Additional Terrace Price' });
+        tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Stamp Duty + Registration, GST and Legal Charges' });
         tRow('6 Months Advance Maintenance', pb.maint_adv_6m, { subline: 'Six months of maintenance, paid in advance' });
         tRow('12 Months Advance Maintenance', pb.maint_adv_12m, { subline: 'Twelve months of maintenance, paid in advance' });
       } else {
+        tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });
+        tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
+        tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
         tRow('Bank Processing Charges', pb.bank_processing);
       }
       y += 2; tRow('Total All Inclusive Amount', pb.total, { sub: true });
