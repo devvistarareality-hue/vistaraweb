@@ -213,12 +213,17 @@ function BookingPage() {
   const shopEdit = (pb) => shopEdits[pb.unit] || { rate: pb.rate, mode: 'pct', unitPct: impliedUnitPct(pb), unitAmount: pb.loan_amount };
   const setShopEdit = (unit, patch) =>
     setShopEdits((m) => ({ ...m, [unit]: { ...(m[unit] || {}), ...patch } }));
-  const flatEdit = (pb) => flatEdits[pb.unit] || { rate: impliedFlatRate(pb), token: pb.token };
+  const flatEdit = (pb) => flatEdits[pb.unit] || { plan: 'Regular', rate: impliedFlatRate(pb), token: pb.token };
   const setFlatEdit = (unit, patch) =>
     setFlatEdits((m) => ({ ...m, [unit]: { ...(m[unit] || {}), ...patch } }));
+  // Only a Down Payment plan may move the rate or token. On Regular the unit prices
+  // straight from the price book — passing no overrides at all, so switching back from
+  // Down Payment cannot leave an edited figure behind.
+  const isDownPayment = (pb) => flatEdit(pb).plan === 'Down Payment';
+  const flatOverrides = (pb) => (isDownPayment(pb) ? flatEdit(pb) : {});
   const pratBooks = rawBooks.map((pb) => (pb.kind === 'shop'
     ? computeShop(pb, shopEdit(pb))
-    : computeFlat(pb, flatEdit(pb))));
+    : computeFlat(pb, flatOverrides(pb))));
   const prat = pratBooks[0] || null;
   const pratRowsFor = (pb) => (pb.kind === 'shop'
     ? [['Shop Area', `${pb.sq_feet} sq.ft`], ['Rate', rupee(pb.rate) + ' / sq.ft'],
@@ -575,20 +580,28 @@ function BookingPage() {
               )}
               {pb.kind !== 'shop' && (() => {
                 const e = flatEdit(pb);
+                const dp = isDownPayment(pb);
                 return (
                   <div style={{ border: '1.5px solid #C7D2FE', background: '#F5F7FF', borderRadius: 10, padding: 12, marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                      Editable · everything below recalculates
+                      {dp ? 'Editable · everything below recalculates' : 'Plan'}
                     </div>
+                    <Row><L>Plan</L>
+                      <Sel opts={['Regular', 'Down Payment']} value={e.plan || 'Regular'}
+                        onChange={(ev) => setFlatEdit(pb.unit, { plan: ev.target.value })} />
+                    </Row>
                     <Row><L>Flat Rate (₹/sq.yd)</L>
-                      <In type="number" value={e.rate ?? ''} onChange={(ev) => setFlatEdit(pb.unit, { rate: ev.target.value })} />
+                      <In type="number" disabled={!dp} value={dp ? (e.rate ?? '') : pb.flat_rate}
+                        onChange={(ev) => setFlatEdit(pb.unit, { rate: ev.target.value })} />
                     </Row>
                     <Row><L>Token</L>
-                      <In type="number" value={e.token ?? ''} onChange={(ev) => setFlatEdit(pb.unit, { token: ev.target.value })} />
+                      <In type="number" disabled={!dp} value={dp ? (e.token ?? '') : pb.token}
+                        onChange={(ev) => setFlatEdit(pb.unit, { token: ev.target.value })} />
                     </Row>
                     <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
-                      {pb.flat_area} sq.yd x {rupee(pb.flat_rate)} = {rupee(pb.flat_price)}
-                      {pb.terrace_area ? ` + terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}
+                      {dp
+                        ? `${pb.flat_area} sq.yd x ${rupee(pb.flat_rate)} = ${rupee(pb.flat_price)}${pb.terrace_area ? ` + terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
+                        : 'Regular plan — priced from the approved price book. Switch to Down Payment to change the rate or token.'}
                     </p>
                   </div>
                 );
