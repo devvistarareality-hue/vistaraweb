@@ -232,12 +232,19 @@ function BookingPage() {
   const prat = pratBooks[0] || null;
   const pratRowsFor = (pb) => (pb.kind === 'shop'
     ? [['Shop Area', `${pb.sq_feet} sq.ft`], ['Rate', rupee(pb.rate) + ' / sq.ft'],
-       ['Shop Amount', rupee(pb.amount)], ['Final Unit Price', rupee(pb.loan_amount)],
+       ['Shop Amount', rupee(pb.amount), 'sub'],
+       // Grouped like the flats: the charge bifurcation, then the documented split.
+       // Grand Total is Shop Amount + Total Legal & Other Charges, so those two are
+       // the figures to read.
+       { h: 'Legal & Other Charges' },
        ['Stamp Duty & Registration (6% of Final Unit Price)', rupee(pb.stamp_duty_reg)],
        ['GST (5% of Final Unit Price)', rupee(pb.gst)], ['AUDA (₹400/sq.ft)', rupee(pb.auda)],
        ['6 Months Maintenance Advance', rupee(pb.maint_adv_6m)],
        ['12 Months Maintenance Deposit', rupee(pb.maint_dep_12m)],
-       ['Legal Charges', rupee(pb.legal)], ['Total Legal & Other Charges', rupee(pb.total_extra)],
+       ['Legal Charges', rupee(pb.legal)],
+       ['Total Legal & Other Charges', rupee(pb.total_extra), 'sub'],
+       { h: 'Agreement Value' },
+       ['Final Unit Price', rupee(pb.loan_amount)],
        ['Extra Work Amount', rupee(pb.extra_work_amount)]]
     : [['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],
        ['Flat Area', `${pb.flat_area} sq.yd`],

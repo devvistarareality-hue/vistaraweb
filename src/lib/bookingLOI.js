@@ -258,15 +258,19 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('12 Months Maintenance Deposit (Rs. 1.5 per sq.ft. p.m.)', pb.maint_dep_12m);
       tRow('Legal Charges', pb.legal);
       y += 2; tRow('Total Legal & Other Charges', pb.total_extra, { sub: true });
-      tRow('Extra Work Amount', 0, {
-        valStr: (Number(pb.extra_work_amount || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        subline: 'Final Unit Price - Total Legal & Other Charges',
-      });
       // Document total = Final Unit Price + Total Legal & Other Charges + Extra Work
       // Amount as printed (per hundred), the same basis the other pricing sets use for
       // extra work on this document. The booking still records Amount + Total Extra.
+      const extraWorkStr = (Number(pb.extra_work_amount || 0) / 100)
+        .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const shopDocTotal = (Number(pb.loan_amount) || 0) + (Number(pb.total_extra) || 0)
         + (Number(pb.extra_work_amount) || 0) / 100;
+      // Summary, so the buyer can see the three figures that make the Grand Total
+      // instead of totalling a long list of charges themselves.
+      chk(14 + 3 * 7.5 + 12); secHead('What This Price Includes', [71, 85, 105]); rowAlt = false;
+      tRow('Final Unit Price', pb.loan_amount, { subline: 'Value of the shop recorded in the sale agreement' });
+      tRow('Total Legal & Other Charges', pb.total_extra, { subline: 'Bifurcation shown above' });
+      tRow('Extra Work Amount', 0, { valStr: extraWorkStr, subline: 'Final Unit Price - Total Legal & Other Charges' });
       y += 2; tRow('Grand Total', 0, {
         valStr: shopDocTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         total: !multi, sub: multi,
