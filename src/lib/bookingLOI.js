@@ -285,7 +285,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });
       tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
       tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
-      tRow('Bank Processing Fees & Insurance', pb.bank_processing, { subline: 'Charged by the bank to sanction the loan' });
+      tRow('Bank Processing Charges', pb.bank_processing);
       y += 2; tRow('Total All Inclusive Amount', pb.total, { sub: true });
       chk(14 + 2 * 12 + 12); secHead('How You Pay', [71, 85, 105]); rowAlt = false;
       tRow('Token', pb.token, { subline: 'Payable now, to book the unit' });
