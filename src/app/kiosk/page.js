@@ -347,6 +347,8 @@ export default function KioskPage() {
                         {/* Facing and terrace both move the price, so surface them here. */}
                         {pl.facing && <div className="k-tip-fac">{FACING_LABEL[pl.facing] || pl.facing}</div>}
                         {(pl.terrace_area || '').trim() && <div className="k-tip-ter">Terrace {pl.terrace_area} sq.yd</div>}
+                        {/* Who is on a taken unit — saves the visitor asking. */}
+                        {pl.agent_name && <div className="k-tip-agent">{pl.status === 'hold' ? 'On hold by' : 'Sold by'} {pl.agent_name}</div>}
                         {pl.status === 'available' && <div className="k-tip-hint">Tap to select →</div>}
                       </div>
                     );
@@ -380,6 +382,7 @@ export default function KioskPage() {
                           matching the app and the map tooltip. */}
                       {pl.facing ? <span className="k-plot-sz">{FACING_LABEL[pl.facing] || pl.facing}</span> : null}
                       {(pl.terrace_area || '').trim() ? <span className="k-plot-sz">Terrace {pl.terrace_area} sq.yd</span> : null}
+                      {pl.agent_name ? <span className="k-plot-sz">{pl.status === 'hold' ? 'On hold by' : 'Sold by'} {pl.agent_name}</span> : null}
                     </button>
                   ))}
                 </div>
@@ -491,6 +494,7 @@ const Style = () => (
   .k-tip-sz{color:#C9A84C;font-size:11px;font-weight:600;margin-top:5px}
   .k-tip-fac{color:#93C5FD;font-size:11px;font-weight:600;margin-top:3px}
   .k-tip-ter{color:#6EE7B7;font-size:11px;font-weight:600;margin-top:3px}
+  .k-tip-agent{color:#E2E8F0;font-size:11px;font-weight:600;margin-top:3px}
   .k-tip-hint{color:rgba(255,255,255,0.45);font-size:10px;margin-top:5px}
   .k-map img{width:100%;display:block}
   .k-map svg{position:absolute;inset:0;width:100%;height:100%}
