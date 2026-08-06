@@ -415,19 +415,22 @@ export default function ImportPage() {
             <>
               {/* Project + Source */}
               <div style={card}>
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', marginBottom: 12 }}>Assign imported leads to</h3>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', marginBottom: 4 }}>Default project / source (optional)</h3>
+                <p style={{ color: '#8492A6', fontSize: 12, marginBottom: 12 }}>
+                  If a row's Project or Source column in the file is blank or doesn't match an existing name, it'll fall back to whatever you pick here. Rows with a valid Project/Source in the file always use that instead.
+                </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label style={lbl}>Project *</label>
+                    <label style={lbl}>Project</label>
                     <select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={inp}>
-                      <option value="">Select project</option>
+                      <option value="">No default</option>
                       {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>Lead Source *</label>
+                    <label style={lbl}>Lead Source</label>
                     <select value={sourceId} onChange={(e) => setSourceId(e.target.value)} style={inp}>
-                      <option value="">Select source</option>
+                      <option value="">No default</option>
                       {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
                     </select>
                   </div>
