@@ -391,6 +391,12 @@ export default function ClosureViewerPage() {
                       Terrace {plot.terrace_area} sq.yd
                     </div>
                   )}
+                  {/* Who is on a booked unit — so the team can see it without opening the plot. */}
+                  {plot.agent_name && (
+                    <div style={{ color: '#E2E8F0', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      {plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}
+                    </div>
+                  )}
                   {plot.status === 'available' && (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
                   )}
@@ -430,6 +436,7 @@ export default function ClosureViewerPage() {
                     {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
                     {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
                     {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
+                    {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}</span>}
                   </button>
                 );
               })}
