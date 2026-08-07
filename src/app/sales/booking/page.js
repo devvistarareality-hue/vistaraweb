@@ -12,6 +12,17 @@ import { computeFlat } from '../../../lib/pratishthaFlat';
 const MAX_LOI_FILE_SIZE_MB = 100;
 const MAX_LOI_FILE_SIZE = MAX_LOI_FILE_SIZE_MB * 1024 * 1024;
 
+// Open a previously-uploaded signed LOI via a short-lived signed URL (never a public link).
+async function openLoi(id) {
+  if (!id) return;
+  try {
+    const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
+    const d = await r.json();
+    if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
+    else alert('Could not open the LOI.');
+  } catch { alert('Could not open the LOI.'); }
+}
+
 // Normalise legacy lowercase source names stored in the DB to display equivalents.
 const srcDisplay = (name) => {
   if (!name) return name;
@@ -42,6 +53,11 @@ function BookingPage() {
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
 
   const reviseId  = qp.get('revise') || '';
+  const draftId   = qp.get('draft') || '';   // resuming a saved draft
+  // Id of the draft this form is persisting to — starts as the URL's ?draft=, but a
+  // fresh Save (no ?draft= yet) mints a new draft row and this captures its id so
+  // every later Save in the same visit keeps updating that same row.
+  const [savedDraftId, setSavedDraftId] = useState('');
   const convertEoiId = qp.get('convertEoi') || '';   // converting an EOI into a plot booking
   const [projectId, setProjectId] = useState(qp.get('project'));
   // Multi-plot: `plots` query param is a comma list of ids; fall back to single `plot`.
@@ -91,7 +107,11 @@ function BookingPage() {
   const removeTerm = (i) => setExtraTerms((s) => s.filter((_, j) => j !== i));
   const cleanTerms = () => extraTerms.map((t) => ({ title: (t.title || '').trim(), desc: (t.desc || '').trim() })).filter((t) => t.title || t.desc);
   const [loiDone, setLoiDone] = useState(false);
-  const [loiFile, setLoiFile] = useState(null); // {name,type,data(base64)}
+  const [loiFile, setLoiFile] = useState(null); // {name,type,data(base64)} — a freshly attached file this session
+  // Path of a signed LOI already saved on a resumed draft from an earlier Save —
+  // distinct from loiFile, since we only have the backend path, not the file's bytes,
+  // and don't need to re-upload it unless the rep attaches a replacement.
+  const [savedLoiPath, setSavedLoiPath] = useState('');
   const [deedAmtStr, setDeedAmtStr] = useState('');
   const editingAmtRef = useRef(false);
 
@@ -127,6 +147,44 @@ function BookingPage() {
       if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
     });
   }, [reviseId]);
+
+  // Resuming a saved draft: same prefill as revision mode, from the caller's own
+  // drafts list (status=draft is always scoped server-side to the requester).
+  useEffect(() => {
+    if (!draftId) return;
+    fetch(`${SALES_ENDPOINTS.bookings}?status=draft${cq('&')}`, { headers: authHeaders() }).then(r => r.json()).then((arr) => {
+      const b = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(draftId));
+      if (!b) return;
+      setSavedDraftId(String(b.id));
+      // A signed LOI attached before an earlier Save is already on the server — show
+      // it as attached instead of asking the rep to re-upload it to resume.
+      setSavedLoiPath(b.loi_document || '');
+      if (b.loi_document) setLoiDone(true);
+      setProjectId(String(b.project));
+      setPlotIds(((b.plot_ids && b.plot_ids.length ? b.plot_ids : [b.plot]).filter(Boolean)).map(String));
+      if (String(b.plot_numbers || '').toUpperCase().startsWith('EOI')) setEoiNo(b.plot_numbers);
+      setF((s) => ({
+        ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
+        area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
+        sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
+        land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
+        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
+        apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
+        booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
+      }));
+      if (Array.isArray(b.installments)) {
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        const ex = b.installments.find((i) => i.isExtra);
+        if (ex) setExtraDate(safeDate(ex.date));
+      }
+      setEw({ desc: b.extra_work_desc || '', amt: b.extra_work_amount ? String(b.extra_work_amount) : '' });
+      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
+    });
+  }, [draftId]);
 
   // Convert EOI → LOI: prefill everything from the source EOI. Plot & Plot Area come from
   // the newly-picked plot (URL); Construction Area comes from the EOI. All fields editable.
@@ -562,17 +620,9 @@ function BookingPage() {
     reader.readAsDataURL(file);
   }
 
-  async function submit() {
-    const e = {};
-    if (!f.client_name.trim()) e.client_name = true;
-    if (!f.phone.trim()) e.phone = true;
-    if (!prat && (!f.land_rate || !v.plotBasic)) { e.land_rate = true; if (!f.area) e.area = true; }
-    if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
-    setErrs({});
-    if ((!prat || pratSched) && !eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
-    if (!loiFile) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
-    setSaving(true); setMsg('');
-    const payload = {
+  // Shared by submit() and saveDraft() so the two payloads never drift apart.
+  function buildPayload() {
+    return {
       project: projectId, plot: eoiMode ? undefined : plotId, plot_ids: eoiMode ? [] : plotIds, lead: leadId || undefined,
       ...(eoiMode ? { eoi: true, eoi_no: eoiNo } : {}),
       client_name: f.client_name.trim(), gender: f.gender, phone: f.phone.trim(), address: f.address, source: f.source,
@@ -604,6 +654,22 @@ function BookingPage() {
       loi_file: loiFile,   // {name,type,data} → saved server-side
       ...(reviseId ? { revision_of: reviseId } : {}),
     };
+  }
+
+  async function submit() {
+    const e = {};
+    if (!f.client_name.trim()) e.client_name = true;
+    if (!f.phone.trim()) e.phone = true;
+    if (!prat && (!f.land_rate || !v.plotBasic)) { e.land_rate = true; if (!f.area) e.area = true; }
+    if (Object.keys(e).length) { setErrs(e); setMsg('Please fill the highlighted fields.'); return; }
+    setErrs({});
+    if ((!prat || pratSched) && !eoiMode && insts.length && Math.abs(pctTotal - 100) > 0.01) { setMsg('Installments must total 100%.'); return; }
+    if (!loiFile && !savedLoiPath) { setMsg('Download the LOI, get it signed, and upload it before submitting.'); return; }
+    setSaving(true); setMsg('');
+    const payload = {
+      ...buildPayload(),
+      ...((draftId || savedDraftId) ? { draft_id: draftId || savedDraftId } : {}),
+    };
     try {
       const res = await fetch(SALES_ENDPOINTS.bookings + cq('?'), { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
       if (res.ok) {
@@ -618,6 +684,28 @@ function BookingPage() {
       }
       const errData = await res.json().catch(() => ({}));
       setMsg('Error: ' + (errData.detail || JSON.stringify(errData)));
+    } catch (e) { setMsg(e.message); }
+    setSaving(false);
+  }
+
+  // Save Draft: none of Submit's completeness checks apply — the whole point is to
+  // never lose typed data, even if it's just a client name so far.
+  async function saveDraft() {
+    setSaving(true); setMsg('');
+    const payload = { ...buildPayload(), ...(savedDraftId ? { id: savedDraftId } : {}) };
+    try {
+      const res = await fetch(SALES_ENDPOINTS.bookingDraft, { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setSavedDraftId(String(data.id));
+        if (data.loi_document) setSavedLoiPath(data.loi_document);
+        const conflicts = data.plot_conflicts || [];
+        setMsg(conflicts.length
+          ? `✅ Draft saved — but Plot ${conflicts.map((c) => c.number).join(', ')} is no longer held for you.`
+          : '✅ Draft saved — safe to come back later.');
+      } else {
+        setMsg('Error: ' + (data.detail || JSON.stringify(data)));
+      }
     } catch (e) { setMsg(e.message); }
     setSaving(false);
   }
@@ -1018,13 +1106,24 @@ function BookingPage() {
           📥 Download LOI PDF  (Print → Sign → Upload)
         </button>
         {loiDone && <div style={{ fontSize: 12, color: '#92400e', background: '#fffbeb', border: '1px solid #f59e0b', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>✅ LOI downloaded. Get it signed and upload below.</div>}
-        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Upload Signed LOI *</label>
+        {savedLoiPath && !loiFile && (
+          <div style={{ fontSize: 12, color: '#15803D', background: '#E8F5E9', border: '1px solid #86EFAC', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <span>📎 Signed LOI already attached from your last save.</span>
+            <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: '#15803D', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
+          </div>
+        )}
+        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
         <input type="file" accept="image/*,.pdf" onChange={onFile} style={{ display: 'block', marginTop: 8, fontSize: 13 }} />
         {loiFile && <div style={{ fontSize: 12, color: '#15803D', marginTop: 6 }}>📎 {loiFile.name}</div>}
       </Section>
 
       {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E8F5E9' : '#FEF2F2', color: msg[0] === '✅' ? '#15803D' : '#DC2626', fontSize: 13, marginBottom: 12 }}>{msg}</div>}
-      <button onClick={submit} disabled={saving} style={submitBtn}>{saving ? 'Saving…' : 'Submit Booking'}</button>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={saveDraft} disabled={saving || !projectId} style={{ ...submitBtn, background: '#fff', color: '#3D5AFE', border: '1.5px solid #3D5AFE' }}>
+          {saving ? '…' : '💾 Save Draft'}
+        </button>
+        <button onClick={submit} disabled={saving} style={submitBtn}>{saving ? 'Saving…' : 'Submit Booking'}</button>
+      </div>
     </div>
   );
 }

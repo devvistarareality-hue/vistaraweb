@@ -17,7 +17,14 @@ const STATUS = {
   available: { label: 'Available', dot: '#22c55e', text: '#064E3B', bg: '#E8F5E9' },
   hold:      { label: 'On Hold',   dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
+  // A unit with a saved (unsubmitted) draft — same underlying plot.status='hold' as a
+  // bare in-progress selection, but shown grey and distinct so the team can tell "someone
+  // is mid-paperwork on this" from "someone just clicked it a second ago".
+  drafted:   { label: 'Drafted',   dot: '#9CA3AF', text: '#374151', bg: '#F3F4F6' },
 };
+// Visual state for a plot, folding in the drafted override — everywhere the map colours
+// a unit should go through this instead of indexing STATUS[plot.status] directly.
+const plotCfg = (plot) => (plot.drafted_booking_id ? STATUS.drafted : (STATUS[plot.status] || STATUS.available));
 
 // Visual centre of a zone. Uses the polygon's area centroid (shoelace), not the average
 // of its vertices — unit outlines are notched, and a vertex average drifts toward
@@ -61,6 +68,7 @@ export default function ClosureViewerPage() {
   const { id }  = useParams();
   const router  = useRouter();
   const user    = useSelector((s) => s.auth.user);
+  const isManager = user?.role === 'Admin' || user?.role === 'Manager' || user?.is_staff;
 
   const [project, setProject] = useState(null);
   const [plots,   setPlots]   = useState([]);
@@ -68,6 +76,7 @@ export default function ClosureViewerPage() {
   const [sv,      setSv]      = useState(null);
   const [selectedIds, setSelectedIds] = useState([]); // multi-select: plot ids to book together
   const [hovered,  setHovered]  = useState(null);  // hovered zone id
+  const [draftPanelPlot, setDraftPanelPlot] = useState(null); // drafted unit clicked into
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
   const [sources,    setSources]    = useState([]);
@@ -199,8 +208,28 @@ export default function ClosureViewerPage() {
     setPlots((ps) => ps.map((p) => (ids.includes(p.id) ? { ...p, status: 'available', held_by_name: null } : p)));
   }
 
+  // Discard a draft from the map's panel — the drafter or a manager/admin, matching
+  // the backend permission on BookingDiscardDraftView.
+  async function discardDraftFromPanel(bookingId) {
+    if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
+    setDraftPanelPlot(null);
+    try {
+      await fetch(SALES_ENDPOINTS.bookingDiscard(bookingId), { method: 'POST', headers: authHeaders() });
+    } catch (_) {}
+    fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() })
+      .then((r) => r.json()).then((pl) => setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []))).catch(() => {});
+  }
+
   async function pickPlot(plot) {
     if (!plot || busyIds.has(plot.id)) return;
+    // A drafted unit is out of the normal select/hold flow entirely — it's not
+    // something to select for a new booking. Clicking it opens a small panel: the
+    // drafter can resume or discard it, a manager/admin can discard it, anyone else
+    // just sees who has it.
+    if (plot.drafted_booking_id) {
+      setDraftPanelPlot(plot);
+      return;
+    }
     if (selectedSet.has(plot.id)) {
       setSelectedIds((ids) => ids.filter((x) => x !== plot.id));
       releasePlots([plot.id]);
@@ -371,11 +400,14 @@ export default function ClosureViewerPage() {
               {zones.map(zone => {
                 const plot = plotByNumber[String(zone.plotNumber)];
                 if (!plot) return null;
-                const cfg = STATUS[plot.status] || STATUS.available;
+                const cfg = plotCfg(plot);
                 const dim = isHidden(plot);
                 const isHover = hovered === zone.id;
                 const isSel = selectedSet.has(plot.id);
-                const clickable = plot.status === 'available' || isSel;
+                const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
+                // Any drafted unit is clickable — it opens the draft panel for everyone,
+                // just with different actions inside depending on who's looking.
+                const clickable = plot.status === 'available' || isSel || !!plot.drafted_booking_id;
                 const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
                 const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
                 const strokeC = isSel ? '#1A237E' : cfg.dot;
@@ -386,7 +418,9 @@ export default function ClosureViewerPage() {
                   onMouseEnter: () => setHovered(zone.id),
                   onMouseLeave: () => setHovered(null),
                 };
-                const tooltip = plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label;
+                const tooltip = plot.drafted_booking_id
+                  ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
+                  : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
                 return (
                   <g key={zone.id}>
                     {pts
@@ -403,7 +437,7 @@ export default function ClosureViewerPage() {
             {zones.map(zone => {
               const plot = plotByNumber[String(zone.plotNumber)];
               if (!plot) return null;
-              const cfg = STATUS[plot.status] || STATUS.available;
+              const cfg = plotCfg(plot);
               const isSel = selectedSet.has(plot.id);
               const { cx, cy } = zoneCenter(zone);
               // Labels overlap on small plots when the number is type-prefixed
@@ -411,13 +445,26 @@ export default function ClosureViewerPage() {
               // so show just the numeric part; fall back to the full value.
               const labelText = String(zone.plotNumber).replace(/^[^\d]+/, '') || zone.plotNumber;
               return (
-                <div key={zone.id + '-lbl'} style={{
-                  position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
-                  opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
-                  pointerEvents: 'none', zIndex: 3, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
-                  fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                  borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
-                }}>{isSel ? `✓ ${labelText}` : labelText}</div>
+                <div key={zone.id + '-lbl'}>
+                  <div style={{
+                    position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
+                    opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
+                    pointerEvents: 'none', zIndex: 3, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
+                    fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
+                    borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
+                  }}>{isSel ? `✓ ${labelText}` : labelText}</div>
+                  {/* Drafted units name their drafter right on the map, not just on
+                      hover — a tablet has no hover, and this is who everyone else
+                      needs to know to ask about the unit. */}
+                  {plot.drafted_booking_id && plot.held_by_name && (
+                    <div style={{
+                      position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%, 6px)',
+                      opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s', pointerEvents: 'none', zIndex: 3,
+                      background: 'rgba(55,65,81,0.92)', color: '#fff', fontWeight: 700, fontSize: 'clamp(5px,0.6vw,9px)',
+                      lineHeight: 1, padding: '1px 5px', borderRadius: 4, whiteSpace: 'nowrap',
+                    }}>{plot.held_by_name}</div>
+                  )}
+                </div>
               );
             })}
 
@@ -426,7 +473,7 @@ export default function ClosureViewerPage() {
               const zone = zones.find(z => z.id === hovered);
               const plot = zone && plotByNumber[String(zone.plotNumber)];
               if (!plot || isHidden(plot)) return null;
-              const cfg = STATUS[plot.status] || STATUS.available;
+              const cfg = plotCfg(plot);
               const tc  = plot.cluster_type ? TYPE_COLORS[plot.cluster_type] : null;
               const { tx, ty } = zoneTopCenter(zone);
               const isRight = tx > 68;
@@ -451,6 +498,11 @@ export default function ClosureViewerPage() {
                       <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>{plot.cluster_type}</span>
                     )}
                   </div>
+                  {/* A drafted unit is visible to everyone, but only its drafter can act
+                      on it — surface who so the rest of the team knows who to ask. */}
+                  {plot.drafted_booking_id && plot.held_by_name && (
+                    <div style={{ color: '#D1D5DB', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
+                  )}
                   {plot.size && <div style={{ color: '#C9A84C', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
                   {/* Facing and terrace both move the price, so surface them on hover
                       rather than making the user open the unit to find out. */}
@@ -473,6 +525,9 @@ export default function ClosureViewerPage() {
                   {plot.status === 'available' && (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
                   )}
+                  {plot.drafted_booking_id && plot.held_by_name === user?.name && (
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to resume →</div>
+                  )}
                 </div>
               );
             })()}
@@ -488,12 +543,16 @@ export default function ClosureViewerPage() {
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {visiblePlots.filter(p => !isHidden(p)).map(plot => {
-                const cfg = STATUS[plot.status] || STATUS.available;
+                const cfg = plotCfg(plot);
                 const isSel = selectedSet.has(plot.id);
-                const clickable = plot.status === 'available' || isSel;
+                const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
+                const clickable = plot.status === 'available' || isSel || !!plot.drafted_booking_id;
+                const title = plot.drafted_booking_id
+                  ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
+                  : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
                 return (
                   <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
-                    title={plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label}
+                    title={title}
                     style={{
                       minWidth: 84, padding: '10px 12px', borderRadius: 10,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -505,7 +564,9 @@ export default function ClosureViewerPage() {
                     <span>{isSel ? `✓ ${plot.number}` : plot.number}</span>
                     {/* No plan drawn for this floor, so the chip is the only place these
                         price-affecting details can surface — a hover title is no use on a
-                        tablet, which is what the sales team books on. */}
+                        tablet, which is what the sales team books on. Same reasoning for
+                        who drafted a grey unit: print the name, don't rely on hover. */}
+                    {plot.drafted_booking_id && plot.held_by_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.held_by_name}</span>}
                     {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
                     {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
                     {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
@@ -536,6 +597,43 @@ export default function ClosureViewerPage() {
           </button>
         </div>
       )}
+
+      {/* Drafted-unit panel — resume (drafter) / discard (drafter or manager/admin). */}
+      {draftPanelPlot && (() => {
+        const p = draftPanelPlot;
+        const mine = !!p.held_by_name && p.held_by_name === user?.name;
+        const canDiscard = mine || isManager;
+        return (
+          <div onClick={() => setDraftPanelPlot(null)} style={overlay}>
+            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Drafted</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 18px' }}>
+                {p.held_by_name ? `Drafted by ${p.held_by_name}` : 'Drafted'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {mine && (
+                  <button onClick={() => router.push(`/sales/booking?draft=${p.drafted_booking_id}`)}
+                    style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#3D5AFE', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                    ▸ Resume
+                  </button>
+                )}
+                {canDiscard && (
+                  <button onClick={() => discardDraftFromPanel(p.drafted_booking_id)}
+                    style={{ padding: '11px 16px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                    ✕ Discard Draft
+                  </button>
+                )}
+                {!canDiscard && (
+                  <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or a manager can resume or discard this.</p>
+                )}
+                <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -546,7 +644,7 @@ export default function ClosureViewerPage() {
 const BOOKING_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypnmUmBmBIrL5rC6xqSEbLFDvSw1XvES6D-JyL1beY8-AeEREnfvVM_TbbbV1t1i883g/exec';
 
 function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed }) {
-  const cfg = STATUS[plot.status] || STATUS.available;
+  const cfg = plotCfg(plot);
   const router = useRouter();
 
   function openBookingScript() {
