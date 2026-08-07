@@ -71,6 +71,13 @@ export default function ClosureViewerPage() {
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
   const [sources,    setSources]    = useState([]);
+  const [notice,     setNotice]     = useState(''); // transient banner (unit taken / hold expired)
+  const [busyIds,    setBusyIds]    = useState(() => new Set()); // plot ids with an in-flight hold/release call
+
+  function flash(text) {
+    setNotice(text);
+    setTimeout(() => setNotice((n) => (n === text ? '' : n)), 4500);
+  }
 
   useEffect(() => {
     try { setSv(JSON.parse(sessionStorage.getItem('closure_sv') || 'null')); } catch (_) {}
@@ -88,6 +95,30 @@ export default function ClosureViewerPage() {
       setLoading(false);
     });
   }, [id]);
+
+  // Other reps hold/release units live — poll so this rep sees a unit turn orange
+  // (or free up again) without a manual refresh. Same interval as the notification bell.
+  useEffect(() => {
+    const poll = setInterval(() => {
+      fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() })
+        .then((r) => r.json()).then((pl) => {
+          const fresh = Array.isArray(pl) ? pl : (pl?.results ?? []);
+          setPlots(fresh);
+          // If a unit this rep had selected is no longer their own hold (it expired
+          // and someone else grabbed it, or an admin cleared it), drop it and say so.
+          const freshById = new Map(fresh.map((p) => [p.id, p]));
+          setSelectedIds((ids) => ids.filter((pid) => {
+            const fp = freshById.get(pid);
+            // Not 'hold' at all → definitely no longer mine. Still 'hold' but held by
+            // someone whose name doesn't match ours → expired and re-grabbed underneath us.
+            const stillMine = !!fp && fp.status === 'hold' && (!user?.name || fp.held_by_name === user.name);
+            if (!stillMine && fp) flash(`Your hold on Plot ${fp.number} expired or was released — please reselect.`);
+            return stillMine;
+          }));
+        }).catch(() => {});
+    }, 30_000);
+    return () => clearInterval(poll);
+  }, [id, user]);
 
   // A tower is browsed one floor at a time: each floor has its own plan and its own
   // zones, so the map, the unit list and the counts are all scoped to the chosen floor.
@@ -155,10 +186,45 @@ export default function ClosureViewerPage() {
 
   // Multi-select: a client can buy several plots in one booking. Tapping an
   // available unit toggles it; the action bar books all selected together.
+  // Selecting soft-locks the unit server-side immediately (turns it orange for every
+  // other rep), so two salespeople can't both spend time signing an LOI for the same
+  // unit — deselecting (or Clear) releases it again.
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  function pickPlot(plot) {
-    if (!plot || plot.status !== 'available') return; // only Available selectable
-    setSelectedIds((ids) => (ids.includes(plot.id) ? ids.filter((x) => x !== plot.id) : [...ids, plot.id]));
+
+  async function releasePlots(ids) {
+    if (!ids.length) return;
+    try {
+      await fetch(SALES_ENDPOINTS.plotsRelease, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: ids }) });
+    } catch (_) {}
+    setPlots((ps) => ps.map((p) => (ids.includes(p.id) ? { ...p, status: 'available', held_by_name: null } : p)));
+  }
+
+  async function pickPlot(plot) {
+    if (!plot || busyIds.has(plot.id)) return;
+    if (selectedSet.has(plot.id)) {
+      setSelectedIds((ids) => ids.filter((x) => x !== plot.id));
+      releasePlots([plot.id]);
+      return;
+    }
+    if (plot.status !== 'available') return; // only Available selectable
+    setBusyIds((s) => new Set(s).add(plot.id));
+    try {
+      const res = await fetch(SALES_ENDPOINTS.plotsHold, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plot.id] }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.held?.includes(plot.id)) {
+        setPlots((ps) => ps.map((p) => (p.id === plot.id ? { ...p, status: 'hold', held_by_name: user?.name || p.held_by_name } : p)));
+        setSelectedIds((ids) => (ids.includes(plot.id) ? ids : [...ids, plot.id]));
+      } else {
+        const f = (data.failed || [])[0];
+        flash(f?.reason === 'sold'
+          ? `Plot ${f.number || plot.number} was just sold — pick a different unit.`
+          : `Plot ${f?.number || plot.number} was just selected by another salesperson — pick a different one.`);
+        fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() })
+          .then((r) => r.json()).then((pl) => setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []))).catch(() => {});
+      }
+    } finally {
+      setBusyIds((s) => { const n = new Set(s); n.delete(plot.id); return n; });
+    }
   }
 
   const selPlots = useMemo(
@@ -265,6 +331,12 @@ export default function ClosureViewerPage() {
         </div>
       )}
 
+      {notice && (
+        <div style={{ padding: '10px 14px', borderRadius: 10, background: '#FEF3C7', border: '1px solid #f59e0b', color: '#78350F', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+          ⚠ {notice}
+        </div>
+      )}
+
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 18 }}>
         {[['available', counts.available], ['hold', counts.hold], ['sold', counts.sold]].map(([key, n]) => {
@@ -300,10 +372,10 @@ export default function ClosureViewerPage() {
                 const plot = plotByNumber[String(zone.plotNumber)];
                 if (!plot) return null;
                 const cfg = STATUS[plot.status] || STATUS.available;
-                const clickable = plot.status === 'available';
                 const dim = isHidden(plot);
                 const isHover = hovered === zone.id;
                 const isSel = selectedSet.has(plot.id);
+                const clickable = plot.status === 'available' || isSel;
                 const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
                 const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
                 const strokeC = isSel ? '#1A237E' : cfg.dot;
@@ -314,14 +386,15 @@ export default function ClosureViewerPage() {
                   onMouseEnter: () => setHovered(zone.id),
                   onMouseLeave: () => setHovered(null),
                 };
+                const tooltip = plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label;
                 return (
                   <g key={zone.id}>
                     {pts
                       ? <polygon points={pts} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />
                       : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />}
                     {pts
-                      ? <polygon points={pts} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev} />
-                      : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev} />}
+                      ? <polygon points={pts} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev}><title>{tooltip}</title></polygon>
+                      : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev}><title>{tooltip}</title></rect>}
                   </g>
                 );
               })}
@@ -410,11 +483,11 @@ export default function ClosureViewerPage() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {visiblePlots.filter(p => !isHidden(p)).map(plot => {
                 const cfg = STATUS[plot.status] || STATUS.available;
-                const clickable = plot.status === 'available';
                 const isSel = selectedSet.has(plot.id);
+                const clickable = plot.status === 'available' || isSel;
                 return (
                   <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
-                    title={cfg.label}
+                    title={plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label}
                     style={{
                       minWidth: 84, padding: '10px 12px', borderRadius: 10,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -450,7 +523,7 @@ export default function ClosureViewerPage() {
               {sv ? `${sv.lead_name} · ` : ''}{selSummary}
             </div>
           </div>
-          <button onClick={() => setSelectedIds([])} style={cancelBtn}>Clear</button>
+          <button onClick={() => { const ids = [...selectedIds]; setSelectedIds([]); releasePlots(ids); }} style={cancelBtn}>Clear</button>
           <button onClick={bookSelected} style={primaryBtn2}>
             {sv ? 'Record Closure' : 'Book'} · {selPlots.length} plot{selPlots.length > 1 ? 's' : ''} →
           </button>
@@ -505,7 +578,9 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
                 {plot.cluster_type}
               </span>
             )}
-            <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 20, background: '#fff', color: cfg.dot, border: `1px solid ${cfg.dot}55` }}>{cfg.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 20, background: '#fff', color: cfg.dot, border: `1px solid ${cfg.dot}55` }}>
+              {cfg.label}{plot.held_by_name && plot.status === 'hold' ? ` · ${plot.held_by_name}` : ''}
+            </span>
             <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, color: '#374151' }}>✕</button>
           </div>
         </div>
