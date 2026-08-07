@@ -15,7 +15,7 @@ async function openLoi(id) {
   } catch { alert('Could not open the LOI.'); }
 }
 
-const TABS = [['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected'], ['', 'All']];
+const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected'], ['', 'All']];
 
 export function BookingsContent({ adminView = false }) {
   const router = useRouter();
@@ -68,6 +68,15 @@ export function BookingsContent({ adminView = false }) {
   async function act(id, action) {
     setBusy(id);
     await fetch(`${SALES_ENDPOINTS.bookings}${id}/action/${cq('?')}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }) }).catch(() => {});
+    setBusy(null); load();
+  }
+
+  // Discarding a draft releases whatever plot(s) it still holds and deletes the row —
+  // irreversible, but a draft is scratch work, not a real submission.
+  async function discardDraft(id) {
+    if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
+    setBusy(id);
+    await fetch(SALES_ENDPOINTS.bookingDiscard(id) + cq('?'), { method: 'POST', headers: authHeaders() }).catch(() => {});
     setBusy(null); load();
   }
 
@@ -216,6 +225,13 @@ export function BookingsContent({ adminView = false }) {
                   </div>
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                     {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
+                    {b.status === 'draft' && (
+                      <>
+                        <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#3D5AFE' }}>▸ Resume</button>
+                        <button onClick={() => discardDraft(b.id)} disabled={busy === b.id}
+                          style={{ ...actBtn, background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}>✕ Discard</button>
+                      </>
+                    )}
                     {b.status === 'pending' && isApprover && (
                       <>
                         <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#16A34A' }}>✓ Approve</button>
@@ -336,7 +352,7 @@ function ApproverDropdown({ project, managers, onToggle }) {
 }
 
 function statusPill(s) {
-  const map = { pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
+  const map = { draft: ['#3D5AFE', '#EEF1FF'], pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
   const [c, bg] = map[s] || ['#6B7280', '#F3F4F6'];
   return { display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }

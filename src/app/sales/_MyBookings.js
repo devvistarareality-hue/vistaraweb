@@ -26,12 +26,19 @@ export function MyBookingsList() {
   const [open, setOpen] = useState({});   // which project groups are expanded
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
 
-  useEffect(() => {
+  function load() {
     setLoading(true);
     fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId]);
+  }
+  useEffect(load, [companyId]);
+
+  async function discardDraft(id) {
+    if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
+    await fetch(SALES_ENDPOINTS.bookingDiscard(id) + (companyId ? `?company_id=${companyId}` : ''), { method: 'POST', headers: authHeaders() }).catch(() => {});
+    load();
+  }
 
   const groups = {};
   rows.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
@@ -72,6 +79,12 @@ export function MyBookingsList() {
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                   {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
+                  {b.status === 'draft' && (
+                    <>
+                      <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#3D5AFE' }}>▸ Resume</button>
+                      <button onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}>✕ Discard</button>
+                    </>
+                  )}
                   {b.status === 'sold' && String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
                     <>
                       <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#E4571A' }}>→ Convert to LOI</button>
@@ -94,7 +107,7 @@ export function MyBookingsList() {
 }
 
 function statusPill(s) {
-  const map = { pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
+  const map = { draft: ['#3D5AFE', '#EEF1FF'], pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
   const [c, bg] = map[s] || ['#6B7280', '#F3F4F6'];
   return { display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
