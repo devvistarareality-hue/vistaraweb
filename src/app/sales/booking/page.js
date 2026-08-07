@@ -616,7 +616,8 @@ function BookingPage() {
         setTimeout(() => router.push(kioskMode ? '/kiosk' : '/sales/closure'), 1000);
         return;
       }
-      setMsg('Error: ' + JSON.stringify(await res.json().catch(() => ({}))));
+      const errData = await res.json().catch(() => ({}));
+      setMsg('Error: ' + (errData.detail || JSON.stringify(errData)));
     } catch (e) { setMsg(e.message); }
     setSaving(false);
   }
