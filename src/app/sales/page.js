@@ -329,6 +329,10 @@ function TelecallerDashboard({ user }) {
   const total    = stats?.total_leads    ?? 0;
   const newToday = stats?.leads_today    ?? 0;
   const called   = stats?.called_count   ?? 0;
+  // A completed follow-up is a call that was made, so it counts toward the day's
+  // calling. Both figures honour the same date filter as every other tile.
+  const fuCalls  = stats?.followup_call_count ?? 0;
+  const totCalls = stats?.total_called_count  ?? (called + fuCalls);
   const warm     = stats?.warm_count     ?? 0;
   const callback = stats?.callback_count ?? 0;
   const svDone   = stats?.sv_done        ?? 0;
@@ -339,6 +343,8 @@ function TelecallerDashboard({ user }) {
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
     { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
     { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
+    { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#EEF2FF', textColor: '#4338CA', href: '/sales/follow-ups' },
+    { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
     { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?tab=called&telecaller_status=warm' },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
     { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
