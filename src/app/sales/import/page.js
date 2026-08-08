@@ -95,6 +95,11 @@ const BATCH = 200;
 export default function ImportPage() {
   const router  = useRouter();
   const user    = useSelector((s) => s.auth.user);
+  // An STM only works the STM stage — telecaller assignment isn't theirs to set, so
+  // the template/mapping UI doesn't offer those fields at all for an STM login. Same
+  // designation-substring check the backend uses (there's no separate CRM-role field).
+  const isStm   = (user?.designation || '').toLowerCase().includes('stm');
+  const pipelineFields = isStm ? PIPELINE_FIELDS.filter((f) => !f.startsWith('telecaller_')) : PIPELINE_FIELDS;
 
   useEffect(() => {
     const hasSalesAccess = user && (
@@ -221,7 +226,7 @@ export default function ImportPage() {
       const xlMod = await import('exceljs/dist/exceljs.min.js');
       const ExcelJS = xlMod.Workbook ? xlMod : (xlMod.default || xlMod);
 
-      const cols = [
+      let cols = [
         'name', 'phone', 'alt_phone', 'email', 'project', 'source', 'campaign', 'adset', 'ad_name',
         'requirement', 'budget_min', 'budget_max', 'preferred_location', 'city', 'address', 'purpose', 'budget_bucket',
         'lead_date', 'overall_status',
@@ -230,9 +235,12 @@ export default function ImportPage() {
         'sv_scheduled_date', 'sv_visited_date', 'sv_status', 'sv_referred_by_code', 'sv_remarks',
         'closure_date', 'closure_status', 'unit_no', 'unit_type', 'booking_amount', 'total_amount', 'closure_remarks',
       ];
+      // An STM login doesn't get telecaller columns in the template — mirrors the
+      // backend's LeadImportTemplateView (uploads ignore them regardless either way).
+      if (isStm) cols = cols.filter((c) => !c.startsWith('telecaller_'));
       const STATUS = {
         overall_status: 'new,assigned,contacted,not_reachable,warm_transferred,hot,warm,cold,not_interested,sv_scheduled,sv_done,closed,lost',
-        telecaller_status: 'warm,cold,not_interested,not_reachable,callback',
+        ...(isStm ? {} : { telecaller_status: 'warm,cold,not_interested,not_reachable,callback' }),
         stm_status: 'hot,warm,cold,not_interested,sv_scheduled,sv_done,closed',
         sv_status: 'scheduled,completed,cancelled,no_show',
         closure_status: 'booked,cancelled,refunded',
@@ -295,13 +303,15 @@ export default function ImportPage() {
       if (projNames.length) addDV('project', `Lists!$A$1:$A$${projNames.length}`);
       if (srcNames.length) addDV('source', `Lists!$B$1:$B$${srcNames.length}`);
 
-      refSheet.addRow(['— TEAM — put this code in the Telecaller Code / STM Code / SV Referred By Code columns —']);
+      refSheet.addRow([isStm
+        ? '— TEAM — put this code in the STM Code / SV Referred By Code columns —'
+        : '— TEAM — put this code in the Telecaller Code / STM Code / SV Referred By Code columns —']);
       refSheet.addRow(['User Code', 'Name', 'Role / Designation', 'Phone']).font = { bold: true };
       users.forEach((u) => refSheet.addRow([u.user_code || '—', u.name, (u.designation || u.role || ''), u.phone || '']));
       refSheet.addRow([]);
       refSheet.addRow(['— ALLOWED VALUES (the Leads sheet has dropdowns for these) —']);
       refSheet.addRow([HEADER_LABELS.overall_status, STATUS.overall_status.replace(/,/g, ', ')]);
-      refSheet.addRow([HEADER_LABELS.telecaller_status, STATUS.telecaller_status.replace(/,/g, ', ')]);
+      if (!isStm) refSheet.addRow([HEADER_LABELS.telecaller_status, STATUS.telecaller_status.replace(/,/g, ', ')]);
       refSheet.addRow([HEADER_LABELS.stm_status, STATUS.stm_status.replace(/,/g, ', ')]);
       refSheet.addRow([HEADER_LABELS.sv_status, STATUS.sv_status.replace(/,/g, ', ')]);
       refSheet.addRow([HEADER_LABELS.closure_status, STATUS.closure_status.replace(/,/g, ', ')]);
@@ -453,14 +463,15 @@ export default function ImportPage() {
                 <ColSelect field="date"      label="Lead Date" />
 
                 {(() => {
-                  const detected = PIPELINE_FIELDS.filter((f) => mapping[f]);
+                  const detected = pipelineFields.filter((f) => mapping[f]);
+                  const kinds = isStm ? 'STM, site visit & closure' : 'telecaller, STM, site visit & closure';
                   return (
                     <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #E0E6F0' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                         <p style={{ fontSize: 12, fontWeight: 700, color: detected.length ? '#15803D' : '#8492A6', margin: 0 }}>
                           {detected.length
-                            ? `✓ ${detected.length} pipeline columns auto-detected (telecaller, STM, site visit & closure)`
-                            : 'No pipeline columns auto-detected (telecaller, STM, site visit & closure)'}
+                            ? `✓ ${detected.length} pipeline columns auto-detected (${kinds})`
+                            : `No pipeline columns auto-detected (${kinds})`}
                         </p>
                         <button type="button" onClick={() => setShowPipelineMap((v) => !v)}
                           style={{ fontSize: 11, fontWeight: 700, color: '#3D5AFE', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -477,7 +488,7 @@ export default function ImportPage() {
                           <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 8 }}>
                             Only fields with a header that matched exactly (e.g. "stm_code") get auto-mapped — if your file uses an older or different header, pick the right column here.
                           </p>
-                          {PIPELINE_FIELDS.map((f) => <ColSelect key={f} field={f} label={HEADER_LABELS[f] || f} />)}
+                          {pipelineFields.map((f) => <ColSelect key={f} field={f} label={HEADER_LABELS[f] || f} />)}
                         </div>
                       )}
                     </div>
@@ -625,7 +636,7 @@ export default function ImportPage() {
               )}
               <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#1E40AF' }}>
                 <strong>What happens next?</strong><br />
-                Rows that carried a <strong>Telecaller Code / STM Code</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
+                Rows that carried a <strong>{isStm ? 'STM Code' : 'Telecaller Code / STM Code'}</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
               </div>
               <button onClick={reset} style={outlineBtn}>Import another file</button>
             </>
