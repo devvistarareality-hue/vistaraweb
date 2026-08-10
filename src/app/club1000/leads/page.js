@@ -335,6 +335,17 @@ export default function Club1000LeadsPage() {
     search: '', status: '', source: '', scheme_interest: '', assigned_to: '',
     date_from: '', date_to: '',
   });
+  // Seed the status filter from the URL so the dashboard's Converted stat card can
+  // deep-link straight into the matching filter (?status=converted). Done in an
+  // effect, not a lazy initializer, since window.location isn't committed yet during
+  // Next client navigation when the initializer runs (mirrors payouts/page.js).
+  const [seeded, setSeeded] = useState(false);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const s = p.get('status');
+    if (s) setFilters((f) => ({ ...f, status: s }));
+    setSeeded(true);
+  }, []);
   // Search box is debounced: typing updates `searchText` instantly (responsive UI)
   // but only commits to `filters.search` (which triggers the fetch) after a pause.
   const [searchText, setSearchText] = useState('');
@@ -377,7 +388,7 @@ export default function Club1000LeadsPage() {
   }, [filters]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
-  useEffect(() => { loadLeads(); }, [loadLeads]);
+  useEffect(() => { if (seeded) loadLeads(); }, [loadLeads, seeded]);
 
   async function changeStatus(id, status) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.lead(id), { method: 'PATCH', body: JSON.stringify({ status }) });
