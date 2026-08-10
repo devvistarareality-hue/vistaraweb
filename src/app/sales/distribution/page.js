@@ -390,9 +390,9 @@ export default function DistributionPage() {
           {availTab === 'history' ? (
             <div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
-                <input type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...fSel, width: 142 }} />
+                <input type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...inp, width: 142 }} />
                 <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
-                <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...fSel, width: 142 }} />
+                <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...inp, width: 142 }} />
               </div>
               {histLoading ? <p style={{ fontSize: 12, color: '#8492A6' }}>Loading…</p>
                 : history.length === 0 ? <p style={{ fontSize: 12, color: '#8492A6' }}>Nobody marked available in this range.</p>
