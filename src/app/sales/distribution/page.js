@@ -394,11 +394,21 @@ export default function DistributionPage() {
                 <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
                 <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...inp, width: 142 }} />
               </div>
+              {/* Fixed height with its own scroll: a 30-day range would otherwise stretch
+                  the card far past the settings column beside it. */}
+              <style>{`
+                .availScroll::-webkit-scrollbar { width: 8px; }
+                .availScroll::-webkit-scrollbar-track { background: transparent; }
+                .availScroll::-webkit-scrollbar-thumb { background: #DDE3ED; border-radius: 8px; }
+                .availScroll::-webkit-scrollbar-thumb:hover { background: #C7D0DE; }
+              `}</style>
+              <div className="availScroll" style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: '#DDE3ED transparent' }}>
               {histLoading ? <p style={{ fontSize: 12, color: '#8492A6' }}>Loading…</p>
                 : history.length === 0 ? <p style={{ fontSize: 12, color: '#8492A6' }}>Nobody marked available in this range.</p>
                 : history.map(day => (
                   <div key={day.date} style={{ borderTop: '1px solid #F0F3FA', padding: '12px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap',
+                      position: 'sticky', top: 0, background: '#fff', paddingBottom: 4, zIndex: 1 }}>
                       <span style={{ fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>{fmtDay(day.date)}</span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '1px 8px', borderRadius: 20 }}>
                         {day.telecaller_count} TC · {day.stm_count} STM
@@ -425,6 +435,7 @@ export default function DistributionPage() {
                     </div>
                   </div>
                 ))}
+              </div>
             </div>
           ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
