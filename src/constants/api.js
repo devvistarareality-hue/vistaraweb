@@ -102,6 +102,7 @@ export const SALES_ENDPOINTS = {
   get distSettings() { return `${BASE_URL}/api/sales/dist-settings/`; },
   get availability() { return `${BASE_URL}/api/sales/availability/`; },
   get availabilityMe() { return `${BASE_URL}/api/sales/availability/me/`; },
+  get availabilityHistory() { return `${BASE_URL}/api/sales/availability/history/`; },
   get distWeight()   { return `${BASE_URL}/api/sales/dist-weight/`; },
   get plots()           { return `${BASE_URL}/api/sales/plots/`; },
   get plotsBulk()       { return `${BASE_URL}/api/sales/plots/bulk/`; },

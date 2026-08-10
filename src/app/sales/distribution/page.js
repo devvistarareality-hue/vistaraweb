@@ -27,6 +27,9 @@ function fmtTime(iso) {
   if (!iso) return '';
   return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const daysAgoISO = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+const fmtDay = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
 // ── Assigned-project chips shown under each availability name ──────────────────
 function ProjectTags({ projects }) {
@@ -151,6 +154,25 @@ export default function DistributionPage() {
 
   // Availability
   const [availability, setAvailability] = useState([]);
+  // Sign-in history — the same records the board shows for today, kept per day.
+  const [availTab, setAvailTab]   = useState('today');   // 'today' | 'history'
+  const [histFrom, setHistFrom]   = useState(daysAgoISO(29));
+  const [histTo, setHistTo]       = useState(todayISO());
+  const [history, setHistory]     = useState([]);
+  const [histLoading, setHistLoading] = useState(false);
+
+  useEffect(() => {
+    if (availTab !== 'history') return;
+    let cancelled = false;
+    setHistLoading(true);
+    fetch(`${SALES_ENDPOINTS.availabilityHistory}?date_from=${histFrom}&date_to=${histTo}`,
+          { headers: authHeaders() })
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setHistory(Array.isArray(d) ? d : []); })
+      .catch(() => { if (!cancelled) setHistory([]); })
+      .finally(() => { if (!cancelled) setHistLoading(false); });
+    return () => { cancelled = true; };
+  }, [availTab, histFrom, histTo]);
 
   // Weights
   const [weights, setWeights]           = useState({});       // {user_id: weight}
@@ -352,7 +374,59 @@ export default function DistributionPage() {
 
         {/* Today's Availability */}
         <div style={card}>
-          <h2 style={{ ...cardTitle, marginBottom: 16 }}>👥 Today's Availability</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+            <h2 style={{ ...cardTitle, marginBottom: 0 }}>👥 Availability</h2>
+            <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+              {[['today', 'Today'], ['history', 'History']].map(([k, lbl]) => (
+                <button key={k} onClick={() => setAvailTab(k)}
+                  style={{ padding: '4px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    border: `1.5px solid ${availTab === k ? '#3D5AFE' : '#E0E6F0'}`,
+                    background: availTab === k ? '#3D5AFE' : '#fff',
+                    color: availTab === k ? '#fff' : '#8492A6' }}>{lbl}</button>
+              ))}
+            </div>
+          </div>
+
+          {availTab === 'history' ? (
+            <div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+                <input type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...fSel, width: 142 }} />
+                <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
+                <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...fSel, width: 142 }} />
+              </div>
+              {histLoading ? <p style={{ fontSize: 12, color: '#8492A6' }}>Loading…</p>
+                : history.length === 0 ? <p style={{ fontSize: 12, color: '#8492A6' }}>Nobody marked available in this range.</p>
+                : history.map(day => (
+                  <div key={day.date} style={{ borderTop: '1px solid #F0F3FA', padding: '12px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>{fmtDay(day.date)}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '1px 8px', borderRadius: 20 }}>
+                        {day.telecaller_count} TC · {day.stm_count} STM
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+                      {[['Telecallers', day.telecallers], ['STMs', day.stms]].map(([lbl, list]) => (
+                        <div key={lbl}>
+                          <p style={{ ...sectionLabel, marginBottom: 6 }}>{lbl}</p>
+                          {list.length === 0
+                            ? <p style={{ fontSize: 12, color: '#B0BAD0' }}>—</p>
+                            : list.map(x => (
+                              <div key={x.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+                                <span style={{ fontSize: 12.5, color: x.is_available ? '#1A1A2E' : '#8492A6' }}>{x.name}</span>
+                                {x.checked_in_at && (
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '1px 7px', borderRadius: 20 }}>
+                                    ⏱ {fmtTime(x.checked_in_at)}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
             {/* Telecallers */}
             <div>
@@ -407,6 +481,7 @@ export default function DistributionPage() {
               }
             </div>
           </div>
+          )}
         </div>
       </div>
 
