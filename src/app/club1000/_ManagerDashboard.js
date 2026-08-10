@@ -66,7 +66,7 @@ export default function ManagerDashboard() {
         <>
           <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
             <StatCard label="Leads" value={stats?.leads_count ?? 0} href="/club1000/leads" />
-            <StatCard label="Converted" value={stats?.converted_count ?? 0} href="/club1000/leads" accent="#2E7D32" />
+            <StatCard label="Converted" value={stats?.converted_count ?? 0} href="/club1000/leads?status=converted" accent="#2E7D32" />
             <StatCard label="Total Invested" value={fmtMoney(stats?.total_invested)} href="/club1000/investors" />
             <StatCard label="Investors" value={stats?.investor_count ?? 0} href="/club1000/investors" />
             <StatCard label="Active Schemes" value={stats?.active_scheme_count ?? 0} href="/club1000/schemes" />
