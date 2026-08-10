@@ -256,6 +256,13 @@ export default function DistributionPage() {
   }
 
   async function toggleAvail(user_id, current) {
+    // Confirm first: the whole row is the button, so a stray click used to silently
+    // sign someone in or out and change who receives leads.
+    const name = availability.find(a => a.user_id === user_id)?.name || 'this user';
+    const ok = window.confirm(current
+      ? `Mark ${name} as unavailable?\n\nThey will stop receiving new leads.`
+      : `Mark ${name} as available?\n\nThey will start receiving new leads.`);
+    if (!ok) return;
     const res = await fetch(SALES_ENDPOINTS.availability, {
       method: 'POST', headers: authHeaders(),
       body: JSON.stringify({ user_id, is_available: !current, ...(companyId ? { company_id: companyId } : {}) }),
