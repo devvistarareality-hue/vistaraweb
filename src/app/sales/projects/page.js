@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 import MediaUpload from '../../../components/MediaUpload';
-import TowerFloorBuilder from '../../../components/TowerFloorBuilder';
+import TowerFloorBuilder, { unitsForFloor } from '../../../components/TowerFloorBuilder';
 
 
 function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTypes, setPlotTypes, addType, removeType, updateType, validTypes, totalTypePlots, inp, lbl, startNo = 1 }) {
@@ -157,14 +157,12 @@ function ProjectModal({ project, onClose, onSaved }) {
     // A floor-wise project's units come from the Floor-wise Setup builder above, not
     // the plot wizard. Send every planned unit — the bulk endpoint ignores conflicts,
     // so re-saving simply tops up whatever is missing.
+    // The builder's own numbering is the single source of truth — re-deriving it here
+    // once dropped the block prefix, so A/C/D's identical runs collapsed into one set
+    // of units (project+number is unique, and bulk create ignores the clashes).
     if (form.floor_wise) {
-      return (form.floor_plans || []).flatMap((f) => {
-        const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
-        if (!Number.isFinite(from) || !Number.isFinite(to) || to < from || to - from > 200) return [];
-        const out = [];
-        for (let n = from; n <= to; n++) out.push({ number: `${f.prefix || ''}${n}`, floor: Number(f.floor) || 0, cluster_type: '' });
-        return out;
-      });
+      return (form.floor_plans || []).flatMap((f) =>
+        unitsForFloor(f).map((number) => ({ number, floor: Number(f.floor) || 0, cluster_type: '' })));
     }
     if (hasTypes) {
       const arr = [];
