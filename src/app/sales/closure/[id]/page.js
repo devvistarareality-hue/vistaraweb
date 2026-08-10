@@ -193,11 +193,48 @@ export default function ClosureViewerPage() {
     : (project?.site_map_image_url || (isImageUrl(project?.master_plan_url) ? project.master_plan_url : ''));
   const hasMap   = !!mapImage && zones.length > 0;
 
-  const counts = useMemo(() => {
+  // The floor row is only meaningful when a floor is actually selected — a plotted
+  // scheme has none, so it shows the project row alone.
+  const floorRowLabel = floorWise && activeFloor
+    ? `${activeBlock ? `Block ${activeBlock} · ` : ''}${activeFloor.label || `Floor ${activeFloor.floor}`}`
+    : null;
+
+  // One row of stat cards over whatever set of units it is handed, so the floor row and
+  // the project row are counted and shown identically.
+  const statRow = (title, list) => {
+    if (!title) return null;
     const c = { available: 0, hold: 0, sold: 0 };
-    visiblePlots.forEach(p => { if (c[p.status] != null) c[p.status]++; });
-    return c;
-  }, [visiblePlots]);
+    list.forEach(p => { if (c[p.status] != null) c[p.status]++; });
+    const t = list.length;
+    const share = (n) => (t ? Math.round(n / t * 100) : 0);
+    const card = { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 14, background: '#fff', border: '1px solid #E6EBF4', boxShadow: '0 2px 8px rgba(184,196,214,0.12)' };
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7 }}>{title}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+          <div style={card}>
+            <span style={{ width: 36, height: 36, borderRadius: 10, background: '#EEF1FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#3D5AFE', fontSize: 17, fontWeight: 900 }}>▦</span>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{t}</div>
+              <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>Total Units</div>
+            </div>
+          </div>
+          {[['available', c.available], ['hold', c.hold], ['sold', c.sold]].map(([key, n]) => {
+            const cfg = STATUS[key];
+            return (
+              <div key={key} style={card}>
+                <span style={{ width: 36, height: 36, borderRadius: 10, background: cfg.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: cfg.dot, fontSize: 18, fontWeight: 900 }}>•</span>
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{n}</div>
+                  <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{cfg.label} · {share(n)}%</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   const plotByNumber = useMemo(() => {
     const m = {};
@@ -217,7 +254,6 @@ export default function ClosureViewerPage() {
 
   const shownCount = visiblePlots.filter(p => !isHidden(p)).length;
   const total      = visiblePlots.length;
-  const pct        = (n) => (total ? Math.round(n / total * 100) : 0);
 
   // Multi-select: a client can buy several plots in one booking. Tapping an
   // available unit toggles it; the action bar books all selected together.
@@ -405,32 +441,10 @@ export default function ClosureViewerPage() {
         </div>
       )}
 
-      {/* Stat cards — scoped to the floor on view, since that is what the map below
-          shows. Total leads so the three statuses read as a share of something. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 14, background: '#fff', border: '1px solid #E6EBF4', boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
-          <span style={{ width: 36, height: 36, borderRadius: 10, background: '#EEF1FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#3D5AFE', fontSize: 17, fontWeight: 900 }}>▦</span>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{total}</div>
-            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>
-              Total Units{/* only worth saying when the floor is a subset of the project */}
-              {plots.length !== total && <span> · {plots.length} in project</span>}
-            </div>
-          </div>
-        </div>
-        {[['available', counts.available], ['hold', counts.hold], ['sold', counts.sold]].map(([key, n]) => {
-          const cfg = STATUS[key];
-          return (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 14, background: '#fff', border: '1px solid #E6EBF4', boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
-              <span style={{ width: 36, height: 36, borderRadius: 10, background: cfg.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: cfg.dot, fontSize: 18, fontWeight: 900 }}>•</span>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{n}</div>
-                <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{cfg.label} · {pct(n)}%</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* Two rows of stat cards: the floor on view (what the map below shows), then the
+          whole project. A plotted scheme has no floors, so it gets the project row only. */}
+      {statRow(floorRowLabel, visiblePlots)}
+      {statRow('Whole Project', plots)}
 
       {/* Interactive unit map (if the admin drew zones) */}
       {hasMap ? (
