@@ -405,8 +405,19 @@ export default function ClosureViewerPage() {
         </div>
       )}
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 18 }}>
+      {/* Stat cards — scoped to the floor on view, since that is what the map below
+          shows. Total leads so the three statuses read as a share of something. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 14, background: '#fff', border: '1px solid #E6EBF4', boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+          <span style={{ width: 36, height: 36, borderRadius: 10, background: '#EEF1FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#3D5AFE', fontSize: 17, fontWeight: 900 }}>▦</span>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{total}</div>
+            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>
+              Total Units{/* only worth saying when the floor is a subset of the project */}
+              {plots.length !== total && <span> · {plots.length} in project</span>}
+            </div>
+          </div>
+        </div>
         {[['available', counts.available], ['hold', counts.hold], ['sold', counts.sold]].map(([key, n]) => {
           const cfg = STATUS[key];
           return (
