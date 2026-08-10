@@ -641,12 +641,14 @@ export default function DistributionPage() {
         {log.length === 0
           ? <p style={{ textAlign: 'center', color: '#8492A6', padding: '40px 0', fontSize: 13 }}>No distributions run yet</p>
           : (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="availScroll" style={{ overflowX: 'auto', maxHeight: 420, overflowY: 'auto',
+              scrollbarWidth: 'thin', scrollbarColor: '#DDE3ED transparent' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #F0F3FA' }}>
                     {['Type', 'Leads', 'Triggered By', 'When', 'Details'].map(h => (
-                      <th key={h} style={{ textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '8px 16px', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                      /* sticky so the columns stay labelled while the rows scroll */
+                      <th key={h} style={{ textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '8px 16px', textTransform: 'uppercase', letterSpacing: 0.5, position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
