@@ -132,23 +132,39 @@ export default function ClosureViewerPage() {
   // A tower is browsed one floor at a time: each floor has its own plan and its own
   // zones, so the map, the unit list and the counts are all scoped to the chosen floor.
   const floorWise = !!project?.floor_wise;
+  const allFloors = useMemo(() => (project?.floor_plans || []), [project]);
+  // A tower may be one block or several (A, B, C…), each with its own floor count —
+  // so pick the block first, then the floor within it.
+  const blocks = useMemo(() => {
+    const seen = [];
+    allFloors.forEach(f => { const b = f.block || ''; if (!seen.includes(b)) seen.push(b); });
+    return seen.length ? seen : [''];
+  }, [allFloors]);
+  const [blockIdx, setBlockIdx] = useState(0);
+  const activeBlock = blocks[Math.min(blockIdx, blocks.length - 1)] ?? '';
   const floors = useMemo(
-    () => (project?.floor_plans || []).slice().sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0)),
-    [project],
+    () => allFloors.filter(f => (f.block || '') === activeBlock)
+                   .slice().sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0)),
+    [allFloors, activeBlock],
   );
   const [floorIdx, setFloorIdx] = useState(0);
-  // Open on the ground floor — that's where a walk-in starts.
+  // Open on the ground floor — that's where a walk-in starts. Re-runs on a block
+  // change so switching block lands on its ground floor, not a stale index.
   useEffect(() => {
     if (!floorWise || !floors.length) return;
     const g = floors.findIndex(f => Number(f.floor) === 0);
     setFloorIdx(g >= 0 ? g : 0);
-  }, [floorWise, floors.length]);
+  }, [floorWise, floors.length, activeBlock]);
   const activeFloor = floorWise ? floors[Math.min(floorIdx, Math.max(floors.length - 1, 0))] : null;
 
   // Units belonging to the chosen floor — by the floor field, falling back to the
   // floor's own numbering run for units created before that field existed.
   const onFloor = (p, f) => {
     if (!f) return true;
+    // Both blocks have a floor 1, so the floor number alone is not enough — units
+    // carry their block as a prefix ("A-101"), which is what separates them.
+    const bp = f.block ? `${f.block}-` : '';
+    if (bp && !String(p.number || '').startsWith(bp)) return false;
     if (p.floor !== null && p.floor !== undefined) return Number(p.floor) === Number(f.floor);
     const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
     if (!Number.isFinite(from) || !Number.isFinite(to)) return false;
@@ -329,6 +345,20 @@ export default function ClosureViewerPage() {
       {/* Tower: choose the floor first — its plan and its units are what's shown below. */}
       {floorWise && floors.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+          {/* Block first, then floor — only shown when the tower actually has blocks. */}
+          {blocks.filter(Boolean).length > 1 && (
+            <>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
+              <select value={blockIdx} onChange={(e) => setBlockIdx(Number(e.target.value))}
+                style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
+                  fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 120 }}>
+                {blocks.map((b, i) => {
+                  const n = allFloors.filter(f => (f.block || '') === b).length;
+                  return <option key={i} value={i}>Block {b || '—'} · {n} floor{n === 1 ? '' : 's'}</option>;
+                })}
+              </select>
+            </>
+          )}
           <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
           <select value={floorIdx} onChange={(e) => setFloorIdx(Number(e.target.value))}
             style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',

@@ -18,13 +18,22 @@ const ordinal = (n) => {
 
 // A floor's units: prefix + every number from..to. Ground normally carries a word
 // prefix ("Shop"), upper floors a bare 3-digit run keyed off the floor number.
-function unitsForFloor(f) {
+// A multi-block tower puts the block in front — "A-101" — so unit numbers stay unique
+// across blocks that repeat the same numbering, which they normally do.
+export function blockPrefix(f) { return f && f.block ? `${f.block}-` : ''; }
+export function unitsForFloor(f) {
   const from = parseInt(f.from, 10), to = parseInt(f.to, 10);
   if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) return [];
   if (to - from > 200) return [];   // guard against a stray keystroke generating thousands
   const out = [];
-  for (let n = from; n <= to; n++) out.push(`${f.prefix || ''}${n}`);
+  for (let n = from; n <= to; n++) out.push(`${blockPrefix(f)}${f.prefix || ''}${n}`);
   return out;
+}
+// Distinct blocks in definition order; [''] for a single-block tower.
+export function blocksOf(floors) {
+  const seen = [];
+  (floors || []).forEach((f) => { const b = f.block || ''; if (!seen.includes(b)) seen.push(b); });
+  return seen.length ? seen : [''];
 }
 
 export default function TowerFloorBuilder({ floors, setFloors, folder, existing = new Set(), onPersist, onGenerate, generating = false, note }) {
@@ -38,10 +47,36 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
   };
   const commit = (next) => { setFloors(next); persist(next); };
 
-  function addFloor() {
-    const top = floors.reduce((m, f) => Math.max(m, Number(f.floor) || 0), -1) + 1;
+  function addFloor(block = '') {
+    const inBlock = floors.filter((f) => (f.block || '') === block);
+    const top = inBlock.reduce((m, f) => Math.max(m, Number(f.floor) || 0), -1) + 1;
     // Upper floors follow the 101/201/301 convention off the floor number.
-    commit([...floors, { floor: top, label: ordinal(top), prefix: '', from: top * 100 + 1, to: top * 100 + 7, image_url: '' }]);
+    commit([...floors, { block, floor: top, label: ordinal(top), prefix: '', from: top * 100 + 1, to: top * 100 + 7, image_url: '' }]);
+  }
+
+  // Blocks are lettered A, B, C… — the next free letter, so adding one is one click.
+  function addBlock() {
+    const used = blocksOf(floors).filter(Boolean);
+    let letter = 'A';
+    for (let i = 0; i < 26; i++) { const c = String.fromCharCode(65 + i); if (!used.includes(c)) { letter = c; break; } }
+    const existingUnlettered = floors.some((f) => !(f.block || ''));
+    // First block added to an unlettered tower: name the existing floors "A" so the
+    // two are distinguishable, rather than leaving a nameless block beside a named one.
+    const base = existingUnlettered ? floors.map((f) => ({ ...f, block: f.block || 'A' })) : floors;
+    const next = existingUnlettered && letter === 'A' ? 'B' : letter;
+    const top = 0;
+    commit([...base, { block: next, floor: top, label: ordinal(top), prefix: '', from: 1, to: 7, image_url: '' }]);
+  }
+
+  // Renaming a block moves every floor under it, so unit numbers follow.
+  function renameBlock(from, to) {
+    commit(floors.map((f) => ((f.block || '') === from ? { ...f, block: to } : f)));
+  }
+
+  function removeBlock(block) {
+    const n = floors.filter((f) => (f.block || '') === block).length;
+    if (!window.confirm(`Remove Block ${block || '—'} and its ${n} floor${n === 1 ? '' : 's'} from the plan? Units already generated are kept.`)) return;
+    commit(floors.filter((f) => (f.block || '') !== block));
   }
 
   // Towers repeat: floors 2..13 are usually floor 1 with a different hundreds digit.
@@ -50,13 +85,15 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
     const base = Number(src.floor) || 0;
     const span = (parseInt(src.to, 10) || 0) - (parseInt(src.from, 10) || 0);
     const offset = (parseInt(src.from, 10) || 0) - base * 100;   // e.g. 101 - 1*100 = 1
+    const blk = src.block || '';
     const next = [...floors];
     for (let fl = base + 1; fl <= topFloor; fl++) {
-      if (next.some((f) => Number(f.floor) === fl)) continue;
-      next.push({ floor: fl, label: ordinal(fl), prefix: src.prefix || '',
+      // Only within this block — Block B having a 5th floor must not stop Block A getting one.
+      if (next.some((f) => (f.block || '') === blk && Number(f.floor) === fl)) continue;
+      next.push({ block: blk, floor: fl, label: ordinal(fl), prefix: src.prefix || '',
         from: fl * 100 + offset, to: fl * 100 + offset + span, image_url: src.image_url || '' });
     }
-    next.sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0));
+    next.sort((a, b) => String(a.block || '').localeCompare(String(b.block || '')) || (Number(a.floor) || 0) - (Number(b.floor) || 0));
     commit(next);
   }
 
@@ -85,7 +122,10 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
         <div />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           
-          <button type="button" onClick={addFloor} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button type="button" onClick={addBlock} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            + Add Block
+          </button>
+          <button type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             + Add Floor
           </button>
         </div>
@@ -93,7 +133,27 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
 
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {floors.length === 0 && <p style={{ fontSize: 13, color: '#8492A6' }}>No floors yet — add one to begin.</p>}
-        {floors.map((f, i) => {
+        {/* Grouped by block. A single-block tower has one unnamed group and looks
+            exactly as it did before blocks existed. */}
+        {blocksOf(floors).map((blk) => {
+          const rows = floors.map((f, i) => ({ f, i })).filter(({ f }) => (f.block || '') === blk);
+          if (!rows.length) return null;
+          const blkUnits = rows.reduce((n, { f }) => n + unitsForFloor(f).length, 0);
+          return (
+        <div key={`blk-${blk}`} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {(blocksOf(floors).length > 1 || blk) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6 }}>Block</span>
+              <input value={blk} onChange={(e) => renameBlock(blk, e.target.value.trim().toUpperCase())}
+                placeholder="A" style={{ ...inp, width: 64, fontWeight: 800, textAlign: 'center' }} />
+              <span style={{ fontSize: 12, color: '#8492A6' }}>{rows.length} floor{rows.length === 1 ? '' : 's'} · {blkUnits} units</span>
+              <button type="button" onClick={() => addFloor(blk)}
+                style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #E0E6F0', background: '#fff', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ Floor</button>
+              <button type="button" onClick={() => removeBlock(blk)}
+                style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove block</button>
+            </div>
+          )}
+          {rows.map(({ f, i }) => {
           const units = unitsForFloor(f);
           const isNew = units.filter((n) => !existing.has(n)).length;
           return (
@@ -164,13 +224,17 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
               </div>
             </div>
           );
+          })}
+        </div>
+          );
         })}
       </div>
 
       {planned.length > 0 && (
         <div style={{ marginTop: 16, borderTop: '1px solid #F0F3FA', paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 13, color: '#374151' }}>
-            <b>{planned.length}</b> units planned across <b>{floors.length}</b> floors ·{' '}
+            <b>{planned.length}</b> units planned across <b>{floors.length}</b> floor{floors.length === 1 ? '' : 's'}
+            {blocksOf(floors).filter(Boolean).length > 1 && <> in <b>{blocksOf(floors).filter(Boolean).length}</b> blocks</>} ·{' '}
             <span style={{ color: toCreate.length ? '#B45309' : '#15803D', fontWeight: 700 }}>
               {toCreate.length ? `${toCreate.length} to create` : 'all already created'}
             </span>
