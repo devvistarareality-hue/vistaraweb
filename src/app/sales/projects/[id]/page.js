@@ -938,6 +938,10 @@ export default function ManagePlotsPage() {
   const [project, setProject] = useState(null);
   const [plots,   setPlots]   = useState([]);
   const [filter,  setFilter]  = useState('all');
+  // Tower projects only: narrow the grid to one block, then one of its floors.
+  // '' means "all" on both.
+  const [blockF,  setBlockF]  = useState('');
+  const [floorF,  setFloorF]  = useState('');
   const [loading, setLoading] = useState(true);
   const [savingMaster, setSavingMaster] = useState(false);
   // Floor-wise projects: the builder edits these, this page persists them and turns
@@ -1012,16 +1016,42 @@ export default function ManagePlotsPage() {
     const m = String(disp).match(/\d+/);
     return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
   };
-  const filtered = (filter === 'all' ? plots : plots.filter(p => p.status === filter))
+  // The block a unit belongs to is carried by its number ("A-101"), which is also what
+  // makes numbers unique across blocks that repeat the same run.
+  const blockOfPlot = (p) => { const m = String(p.number || '').match(/^([A-Za-z]+)-/); return m ? m[1] : ''; };
+  const towerBlocks = !project?.floor_wise ? [] : [...new Set(
+    (project.floor_plans || []).map(f => f.block || '').filter(Boolean))];
+  // Floors offered are the selected block's own — every block numbers its floors from 0,
+  // so listing all of them would repeat "1st Floor" once per block.
+  const towerFloors = !project?.floor_wise ? [] : (() => {
+    const seen = new Map();
+    (project.floor_plans || [])
+      .filter(f => !blockF || (f.block || '') === blockF)
+      .forEach(f => { const n = Number(f.floor) || 0; if (!seen.has(n)) seen.set(n, f.label || `Floor ${n}`); });
+    return [...seen.entries()].sort((a, b) => a[0] - b[0]);
+  })();
+
+  // Block/floor narrow the pool the status tabs then count and filter, so the tab
+  // numbers always describe what is actually on screen.
+  const scoped = plots.filter(p =>
+    (!blockF || blockOfPlot(p) === blockF) &&
+    (floorF === '' || Number(p.floor) === Number(floorF)));
+  const filtered = (filter === 'all' ? scoped : scoped.filter(p => p.status === filter))
     .slice()
-    .sort((a, b) => (plotNumVal(a) - plotNumVal(b)) || a.number.localeCompare(b.number, undefined, { numeric: true }));
+    // Block first, then floor, then unit number — otherwise every block's "1" sorts
+    // together and A/B/C interleave down the grid.
+    .sort((a, b) =>
+      blockOfPlot(a).localeCompare(blockOfPlot(b))
+      || ((a.floor ?? Number.MAX_SAFE_INTEGER) - (b.floor ?? Number.MAX_SAFE_INTEGER))
+      || (plotNumVal(a) - plotNumVal(b))
+      || a.number.localeCompare(b.number, undefined, { numeric: true }));
   const counts = {
-    all:       plots.length,
-    available: plots.filter(p => p.status === 'available').length,
-    hold:      plots.filter(p => p.status === 'hold').length,
-    sold:      plots.filter(p => p.status === 'sold').length,
+    all:       scoped.length,
+    available: scoped.filter(p => p.status === 'available').length,
+    hold:      scoped.filter(p => p.status === 'hold').length,
+    sold:      scoped.filter(p => p.status === 'sold').length,
   };
-  const soldPct = plots.length ? Math.round(counts.sold / plots.length * 100) : 0;
+  const soldPct = plots.length ? Math.round(plots.filter(p => p.status === 'sold').length / plots.length * 100) : 0;
 
   if (loading) return (
     <div style={{ padding: '24px 28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
@@ -1170,6 +1200,25 @@ export default function ManagePlotsPage() {
             {label} <span style={{ opacity: 0.65 }}>({counts[key]})</span>
           </button>
         ))}
+        {/* A single-block tower has nothing to choose between, so only its floors show. */}
+        {towerBlocks.length > 1 && (
+          <select value={blockF} onChange={e => { setBlockF(e.target.value); setFloorF(''); }} style={gridSel}>
+            <option value="">All Blocks</option>
+            {towerBlocks.map(b => <option key={b} value={b}>Block {b}</option>)}
+          </select>
+        )}
+        {towerFloors.length > 1 && (
+          <select value={floorF} onChange={e => setFloorF(e.target.value)} style={gridSel}>
+            <option value="">All Floors</option>
+            {towerFloors.map(([n, label]) => <option key={n} value={n}>{label}</option>)}
+          </select>
+        )}
+        {(blockF || floorF) && (
+          <button onClick={() => { setBlockF(''); setFloorF(''); }}
+            style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#fff', color: '#8492A6', border: '1.5px solid #E0E6F0' }}>
+            ✕ Clear
+          </button>
+        )}
         {plots.length > 0 && (
           <button onClick={async () => {
             if (!window.confirm(`Delete all ${plots.length} plots for this project? This cannot be undone.`)) return;
@@ -1189,7 +1238,9 @@ export default function ManagePlotsPage() {
       {/* Plot grid */}
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: '#8492A6' }}>
-          <p style={{ fontWeight: 600 }}>No plots with this status.</p>
+          <p style={{ fontWeight: 600 }}>
+            {blockF || floorF ? 'No plots match this block/floor.' : 'No plots with this status.'}
+          </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12, alignItems: 'start' }}>
@@ -1204,5 +1255,7 @@ export default function ManagePlotsPage() {
   );
 }
 
+// Block / Floor pickers above the plot grid — sized to sit level with the status tabs.
+const gridSel  = { height: 32, padding: '0 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#1A1A2E', background: '#fff', border: '1.5px solid #E0E6F0', cursor: 'pointer', outline: 'none' };
 const doneBtn  = { padding: '7px 14px', background: '#182350', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' };
 const ghostBtn = { padding: '7px 14px', background: '#F0F3FA', color: '#8492A6', border: '1px solid #E0E6F0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' };
