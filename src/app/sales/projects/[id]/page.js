@@ -571,9 +571,16 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
           {cfg.label}
         </span>
       </div>
-      {/* Size sub-row — always rendered so all cards stay the same height */}
+      {/* Size sub-row — always rendered so all cards stay the same height. A terrace is
+          charged on top of the flat and only half the flats have one, so it is called
+          out here rather than hidden behind Edit Info. */}
       <div style={{ padding: '0 14px 4px', fontSize: 11, minHeight: 14, color: plot.size ? '#A0AABA' : '#D1D5DB', fontStyle: plot.size ? 'normal' : 'italic' }}>
         {plot.size || 'Area not set'}
+        {(plot.terrace_area || '').trim() && (
+          <span style={{ color: '#4F46E5', fontWeight: 700, fontStyle: 'normal' }}>
+            {' '}+ {plot.terrace_area.trim()} terrace
+          </span>
+        )}
       </div>
 
       {/* Status toggles */}
