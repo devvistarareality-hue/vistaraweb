@@ -140,6 +140,16 @@ export default function ClosureViewerPage() {
     allFloors.forEach(f => { const b = f.block || ''; if (!seen.includes(b)) seen.push(b); });
     return seen.length ? seen : [''];
   }, [allFloors]);
+  // A block's height is quoted the way the trade quotes it — "G+12", ground plus the
+  // floors above it — not as a raw floor count. A block with no ground floor falls
+  // back to counting.
+  const blockHeight = (b) => {
+    const fs = allFloors.filter(f => (f.block || '') === b);
+    const upper = fs.filter(f => Number(f.floor) > 0).length;
+    return fs.some(f => Number(f.floor) === 0)
+      ? `G+${upper}`
+      : `${fs.length} floor${fs.length === 1 ? '' : 's'}`;
+  };
   const [blockIdx, setBlockIdx] = useState(0);
   const activeBlock = blocks[Math.min(blockIdx, blocks.length - 1)] ?? '';
   const floors = useMemo(
@@ -352,10 +362,9 @@ export default function ClosureViewerPage() {
               <select value={blockIdx} onChange={(e) => setBlockIdx(Number(e.target.value))}
                 style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
                   fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 120 }}>
-                {blocks.map((b, i) => {
-                  const n = allFloors.filter(f => (f.block || '') === b).length;
-                  return <option key={i} value={i}>Block {b || '—'} · {n} floor{n === 1 ? '' : 's'}</option>;
-                })}
+                {blocks.map((b, i) => (
+                  <option key={i} value={i}>Block {b || '—'} · {blockHeight(b)}</option>
+                ))}
               </select>
             </>
           )}
