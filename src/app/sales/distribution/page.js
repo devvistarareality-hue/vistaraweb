@@ -90,11 +90,14 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
   });
   const projectNames = Object.keys(byProject).sort();
   return (
-    <div style={{ border: `1.5px solid ${borderColor}`, borderRadius: 12, padding: '14px 16px', backgroundColor: bg }}>
+    <div style={{ border: `1.5px solid ${borderColor}`, borderRadius: 12, padding: '14px 16px', backgroundColor: bg, alignSelf: 'start' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: dotColor, display: 'inline-block' }} />
         <p style={{ fontSize: 11, fontWeight: 700, color: headColor, textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</p>
       </div>
+      {/* Fixed height with its own scroll: the two panels sit side by side, so a long
+          project list otherwise stretched both and left the shorter one mostly blank. */}
+      <div className="availScroll" style={{ maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: '#DDE3ED transparent' }}>
       {members.length === 0
         ? <p style={{ fontSize: 12, color: '#8492A6' }}>No active {title.toLowerCase()}</p>
         : projectNames.length === 0
@@ -134,6 +137,7 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
           <p style={{ fontSize: 12, color: '#912018' }}>{noProject.map(m => m.name).join(', ')}</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -295,6 +299,15 @@ export default function DistributionPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="page-pad" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Scrollbar for the fixed-height panels (availability history, ratio columns).
+          Declared at page level so it applies wherever .availScroll is used, not only
+          on the tab that happens to be open. */}
+      <style>{`
+        .availScroll::-webkit-scrollbar { width: 8px; }
+        .availScroll::-webkit-scrollbar-track { background: transparent; }
+        .availScroll::-webkit-scrollbar-thumb { background: #DDE3ED; border-radius: 8px; }
+        .availScroll::-webkit-scrollbar-thumb:hover { background: #C7D0DE; }
+      `}</style>
       {/* Header */}
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Lead Distribution</h1>
@@ -396,12 +409,6 @@ export default function DistributionPage() {
               </div>
               {/* Fixed height with its own scroll: a 30-day range would otherwise stretch
                   the card far past the settings column beside it. */}
-              <style>{`
-                .availScroll::-webkit-scrollbar { width: 8px; }
-                .availScroll::-webkit-scrollbar-track { background: transparent; }
-                .availScroll::-webkit-scrollbar-thumb { background: #DDE3ED; border-radius: 8px; }
-                .availScroll::-webkit-scrollbar-thumb:hover { background: #C7D0DE; }
-              `}</style>
               <div className="availScroll" style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: '#DDE3ED transparent' }}>
               {histLoading ? <p style={{ fontSize: 12, color: '#8492A6' }}>Loading…</p>
                 : history.length === 0 ? <p style={{ fontSize: 12, color: '#8492A6' }}>Nobody marked available in this range.</p>
