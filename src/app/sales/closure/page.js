@@ -96,7 +96,10 @@ export default function ClosureProjectsPage() {
             // Projects with no plots yet (pre-approval) → raise an EOI instead of booking a unit.
             const noPlots = total === 0;
             const eoiQuery = sv ? `&client=${encodeURIComponent(sv.lead_name || '')}&phone=${encodeURIComponent(sv.lead_phone || '')}${sv.lead ? `&lead=${sv.lead}` : ''}` : '';
-            const goTo = () => noPlots
+            // Block-wise industrial: whether to raise an EOI is a per-block decision, not
+            // a project-wide one (some blocks may be mapped, others not) — always open the
+            // block picker rather than short-circuiting a project with zero plots so far.
+            const goTo = () => (!p.block_industrial && noPlots)
               ? router.push(`/sales/booking?project=${p.id}&eoi=1${eoiQuery}`)
               : router.push(`/sales/closure/${p.id}`);
             return (

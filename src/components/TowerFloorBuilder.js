@@ -36,7 +36,7 @@ export function blocksOf(floors) {
   return seen.length ? seen : [''];
 }
 
-export default function TowerFloorBuilder({ floors, setFloors, folder, existing = new Set(), onPersist, onGenerate, generating = false, note }) {
+export default function TowerFloorBuilder({ floors, setFloors, folder, existing = new Set(), onPersist, onGenerate, generating = false, note, industrial = false }) {
 
   const [msg, setMsg] = useState('');
   const [converting, setConverting] = useState(null);   // floor index mid PDF→PNG
@@ -125,14 +125,17 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
           <button type="button" onClick={addBlock} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             + Add Block
           </button>
-          <button type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-            + Add Floor
-          </button>
+          {/* Industrial blocks are single-level — no floor concept, so no way to add one. */}
+          {!industrial && (
+            <button type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #C7D2FE', background: '#fff', color: '#3D5AFE', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              + Add Floor
+            </button>
+          )}
         </div>
       </div>
 
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {floors.length === 0 && <p style={{ fontSize: 13, color: '#8492A6' }}>No floors yet — add one to begin.</p>}
+        {floors.length === 0 && <p style={{ fontSize: 13, color: '#8492A6' }}>{industrial ? 'No blocks yet — add one to begin.' : 'No floors yet — add one to begin.'}</p>}
         {/* Grouped by block. A single-block tower has one unnamed group and looks
             exactly as it did before blocks existed. */}
         {blocksOf(floors).map((blk) => {
@@ -146,9 +149,11 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
               <span style={{ fontSize: 11, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6 }}>Block</span>
               <input value={blk} onChange={(e) => renameBlock(blk, e.target.value.trim().toUpperCase())}
                 placeholder="A" style={{ ...inp, width: 64, fontWeight: 800, textAlign: 'center' }} />
-              <span style={{ fontSize: 12, color: '#8492A6' }}>{rows.length} floor{rows.length === 1 ? '' : 's'} · {blkUnits} units</span>
-              <button type="button" onClick={() => addFloor(blk)}
-                style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #E0E6F0', background: '#fff', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ Floor</button>
+              <span style={{ fontSize: 12, color: '#8492A6' }}>{industrial ? `${blkUnits} units` : `${rows.length} floor${rows.length === 1 ? '' : 's'} · ${blkUnits} units`}</span>
+              {!industrial && (
+                <button type="button" onClick={() => addFloor(blk)}
+                  style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #E0E6F0', background: '#fff', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ Floor</button>
+              )}
               <button type="button" onClick={() => removeBlock(blk)}
                 style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove block</button>
             </div>
@@ -159,11 +164,14 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
           return (
             <div key={i} style={{ border: '1.5px solid #E6EBF4', borderRadius: 12, padding: 14 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <div style={{ width: 62 }}>
-                  <label style={lblSm}>Floor</label>
-                  <input type="number" value={f.floor} onChange={(e) => setFloors(update(i, { floor: e.target.value }))}
-                    onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
-                </div>
+                {/* Industrial blocks are single-level — the floor number is meaningless. */}
+                {!industrial && (
+                  <div style={{ width: 62 }}>
+                    <label style={lblSm}>Floor</label>
+                    <input type="number" value={f.floor} onChange={(e) => setFloors(update(i, { floor: e.target.value }))}
+                      onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
+                  </div>
+                )}
                 <div style={{ width: 130 }}>
                   <label style={lblSm}>Label</label>
                   <input value={f.label || ''} onChange={(e) => setFloors(update(i, { label: e.target.value }))}
@@ -196,10 +204,12 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                         {isNew > 0 && isNew < units.length && <span style={{ color: '#B45309', marginLeft: 6 }}>· {isNew} new</span>}</>
                     : 'Set From / To to generate unit numbers.'}
                 </span>
-                <button type="button" onClick={() => { const top = Number(window.prompt('Repeat this floor\'s layout up to which floor?', '13')); if (top) repeatUpTo(i, top); }}
-                  style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #E0E6F0', background: '#fff', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                  ↓ Repeat up to…
-                </button>
+                {!industrial && (
+                  <button type="button" onClick={() => { const top = Number(window.prompt('Repeat this floor\'s layout up to which floor?', '13')); if (top) repeatUpTo(i, top); }}
+                    style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #E0E6F0', background: '#fff', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ↓ Repeat up to…
+                  </button>
+                )}
               </div>
 
               <div style={{ marginTop: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -233,12 +243,15 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
       {planned.length > 0 && (
         <div style={{ marginTop: 16, borderTop: '1px solid #F0F3FA', paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 13, color: '#374151' }}>
-            <b>{planned.length}</b> units planned across <b>{floors.length}</b> floor{floors.length === 1 ? '' : 's'}
-            {blocksOf(floors).filter(Boolean).length > 1 && <> in <b>{blocksOf(floors).filter(Boolean).length}</b> blocks</>} ·{' '}
+            <b>{planned.length}</b> units planned
+            {industrial
+              ? (blocksOf(floors).filter(Boolean).length > 0 && <> across <b>{blocksOf(floors).filter(Boolean).length}</b> block{blocksOf(floors).filter(Boolean).length === 1 ? '' : 's'}</>)
+              : <> across <b>{floors.length}</b> floor{floors.length === 1 ? '' : 's'}
+                  {blocksOf(floors).filter(Boolean).length > 1 && <> in <b>{blocksOf(floors).filter(Boolean).length}</b> blocks</>}</>} ·{' '}
             <span style={{ color: toCreate.length ? '#B45309' : '#15803D', fontWeight: 700 }}>
               {toCreate.length ? `${toCreate.length} to create` : 'all already created'}
             </span>
-            {dupes > 0 && <span style={{ color: '#DC2626', fontWeight: 700 }}> · {dupes} duplicate number{dupes === 1 ? '' : 's'} across floors</span>}
+            {dupes > 0 && <span style={{ color: '#DC2626', fontWeight: 700 }}> · {dupes} duplicate number{dupes === 1 ? '' : 's'} across {industrial ? 'blocks' : 'floors'}</span>}
             {note && <div style={{ fontSize: 11, color: '#8492A6', marginTop: 4 }}>{note}</div>}
           </div>
           {onGenerate && (

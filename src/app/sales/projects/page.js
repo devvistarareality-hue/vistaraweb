@@ -104,7 +104,8 @@ function ProjectModal({ project, onClose, onSaved }) {
     master_plan_url: project?.master_plan_url || '',
     eoi_unit_types:  project?.eoi_unit_types  || [],
     kiosk_enabled:   project?.kiosk_enabled   ?? false,
-    floor_wise:      project?.floor_wise      ?? false,
+    floor_wise:       project?.floor_wise       ?? false,
+    block_industrial: project?.block_industrial ?? false,
     floor_plans:     (project?.floor_plans?.length ? project.floor_plans : [{ floor: 0, label: 'Ground', prefix: 'Shop', from: 1, to: 12, image_url: '' }]),
   });
 
@@ -317,13 +318,21 @@ function ProjectModal({ project, onClose, onSaved }) {
             </div>
             <div>
               <label style={mLbl}>Layout <span style={{ color: '#EF4444' }}>*</span></label>
-              <select value={form.floor_wise ? 'floor' : 'plot'} onChange={e => set('floor_wise', e.target.value === 'floor')}
+              <select
+                value={form.block_industrial ? 'block' : form.floor_wise ? 'floor' : 'plot'}
+                onChange={e => {
+                  const v = e.target.value;
+                  setForm(f => ({ ...f, floor_wise: v !== 'plot', block_industrial: v === 'block' }));
+                }}
                 style={{ ...mInp, cursor: 'pointer' }}>
                 <option value="plot">Plotted scheme — flat list of plots + site map</option>
                 <option value="floor">Floor-wise (tower) — units defined per floor</option>
+                <option value="block">Block-wise industrial — units grouped in blocks (A, B, C…)</option>
               </select>
               <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>
-                {form.floor_wise
+                {form.block_industrial
+                  ? 'Units are grouped by block. A mapped block (site plan + zones drawn) books normally; an unmapped block raises a block-prefixed EOI (e.g. Block E → E1, E2…) until it’s surveyed.'
+                  : form.floor_wise
                   ? 'Units are built floor by floor (e.g. Ground = Shop1–12, 1st = 101–107), each floor with its own plan.'
                   : 'Plots are added as a flat list and positioned on an interactive site map.'}
               </p>
@@ -386,14 +395,17 @@ function ProjectModal({ project, onClose, onSaved }) {
               page instead, so this flat-list wizard doesn't apply. */}
           {form.floor_wise ? (
             <>
-              <div style={mSec}>Floor-wise Setup</div>
+              <div style={mSec}>{form.block_industrial ? 'Block Setup' : 'Floor-wise Setup'}</div>
               <div style={{ marginBottom: 20 }}>
                 <TowerFloorBuilder
                   floors={form.floor_plans || []}
                   setFloors={(next) => set('floor_plans', next)}
                   folder={`erp/projects/${project?.id || 'new'}/floor-plans`}
                   existing={existingNumbers}
-                  note={`Units are created when you ${isEdit ? 'save' : 'add the project'} — existing ones are left alone.`} />
+                  industrial={form.block_industrial}
+                  note={form.block_industrial
+                    ? `Add a block, then draw its site plan once it's surveyed. Leave a block's units ungenerated until then — it'll raise EOIs (block-prefixed, e.g. E1, E2…) in the meantime. Units are created when you ${isEdit ? 'save' : 'add the project'}.`
+                    : `Units are created when you ${isEdit ? 'save' : 'add the project'} — existing ones are left alone.`} />
               </div>
             </>
           ) : (
