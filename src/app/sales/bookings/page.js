@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
+import DateFilter from '../_DateFilter';
 
 
 // Open the confidential LOI via a short-lived signed URL (never a public link).
@@ -35,6 +36,8 @@ export function BookingsContent({ adminView = false }) {
   const [openProj, setOpenProj] = useState({});   // project name → expanded?
   const toggleProj = (pn) => setOpenProj((o) => ({ ...o, [pn]: !o[pn] }));
   const [q, setQ] = useState('');
+  // Booking-date range, from the same filter the dashboards use.
+  const [range, setRange] = useState({ from: '', to: '' });
   const [toCancel, setToCancel] = useState(null);   // booking awaiting cancel confirmation
 
   useEffect(() => {
@@ -111,7 +114,17 @@ export function BookingsContent({ adminView = false }) {
     // Need a few digits before matching phones, or "1" would hit almost everything.
     return qDigits.length >= 3 && String(b.phone || '').replace(/\D/g, '').includes(qDigits);
   };
-  const visible = rows.filter(matches);
+  // Booking date is a plain YYYY-MM-DD, so the range compares as strings. A booking
+  // with no date can't be placed in time, so a live range excludes it rather than
+  // silently counting it in every period.
+  const dated = !!(range.from || range.to);
+  const inRange = (b) => {
+    if (!dated) return true;
+    const d = String(b.booking_date || '');
+    if (!d) return false;
+    return (!range.from || d >= range.from) && (!range.to || d <= range.to);
+  };
+  const visible = rows.filter((b) => matches(b) && inRange(b));
 
   // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
   // applied to whichever tab is selected so approvers keep their per-booking actions.
@@ -125,7 +138,7 @@ export function BookingsContent({ adminView = false }) {
   // only make the user click through when there's actually a lot to scroll past.
   // Rejected is archival, though: always start it collapsed however few there are.
   // While searching, always open: hits are the point of the search.
-  const autoOpen = !!ql || (tab !== 'rejected' && visible.length <= 10);
+  const autoOpen = !!ql || dated || (tab !== 'rejected' && visible.length <= 10);
   const isOpen = (pn) => (openProj[pn] === undefined ? autoOpen : openProj[pn]);
   const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
 
@@ -133,7 +146,7 @@ export function BookingsContent({ adminView = false }) {
     <div style={{ padding: '24px 28px' }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Bookings &amp; Approvals</h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 16 }}>
-        {ql ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
+        {ql || dated ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
       </p>
 
       {isAdmin && (
@@ -154,6 +167,10 @@ export function BookingsContent({ adminView = false }) {
           )}
         </div>
       )}
+
+      {/* Booking-date range — the same control as the dashboards, so a period picked
+          here means what it means there. */}
+      <DateFilter onChange={setRange} />
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -182,7 +199,8 @@ export function BookingsContent({ adminView = false }) {
         <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
           background: 'linear-gradient(135deg,#3D5AFE,#1E3A8A)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(61,90,254,0.25)' }}>
           <div style={{ color: '#DBEAFE', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {ql ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+            {ql || dated ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+            {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>
@@ -190,7 +208,9 @@ export function BookingsContent({ adminView = false }) {
 
       {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : visible.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
-          {ql ? <>No bookings match “{q.trim()}”.</> : 'No bookings here.'}
+          {ql ? <>No bookings match “{q.trim()}”.</>
+            : dated ? 'No bookings were booked in this date range.'
+            : 'No bookings here.'}
         </div>
       ) : projectNames.map((pn) => (
         <div key={pn} style={{ marginBottom: 12 }}>
