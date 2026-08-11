@@ -1115,9 +1115,16 @@ export function SalesLeadsContent({ adminView = false }) {
     const params = new URLSearchParams({ page });
     if (isCaller) {
       params.set('work', workTab);
-      // Pending = oldest-first (FIFO) so new leads queue at the bottom and never
-      // bury the lead being worked; Called = most recently actioned first.
-      params.set('ordering', workTab === 'pending' ? 'created_at' : '-updated_at');
+      if (isStm && workTab === 'pending') {
+        // An STM's queue is ordered by when the lead was handed to them, most
+        // recent first — not creation date (a lead can exist long before it
+        // reaches this STM), and not the telecaller's oldest-first FIFO below.
+        params.set('ordering', '-stm_assigned_at');
+      } else {
+        // Pending = oldest-first (FIFO) so new leads queue at the bottom and never
+        // bury the lead being worked; Called = most recently actioned first.
+        params.set('ordering', workTab === 'pending' ? 'created_at' : '-updated_at');
+      }
     }
     if (companyId)               params.set('company_id',       companyId);
     if (filters.search)          params.set('search',           filters.search);
@@ -1478,8 +1485,15 @@ export function SalesLeadsContent({ adminView = false }) {
                   </td>}
                   <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} /></td>
                   <td style={{ ...td, color: '#8492A6', fontSize: 12 }} onClick={() => loadDetail(l)}>
-                    <div>{new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>
-                    <div style={{ fontSize: 11, color: '#B0BAC9' }}>{new Date(l.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                    {/* An STM cares about when THEY received the lead, not when it first
+                        entered the system — fall back to created_at for leads with no
+                        stamped stm_assigned_at (e.g. self-sourced). */}
+                    {(() => { const d = (isStm && l.stm_assigned_at) ? l.stm_assigned_at : l.created_at; return (
+                      <>
+                        <div>{new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>
+                        <div style={{ fontSize: 11, color: '#B0BAC9' }}>{new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                      </>
+                    ); })()}
                   </td>
                   <td style={td}>
                     {canDelete && (
