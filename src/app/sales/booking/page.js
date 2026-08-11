@@ -68,6 +68,9 @@ function BookingPage() {
   // selected; a sequential per-project EOI code (EOI-1, EOI-2…) stands in for the plot no.
   // EOI mode applies when creating an EOI (?eoi=1) OR revising an existing EOI (?revise=..&eoi=1).
   const eoiMode   = qp.get('eoi') === '1' || qp.get('eoi') === 'true';
+  // Block-wise industrial: which block this EOI is against — drives the block-prefixed
+  // EOI code (e.g. Block E → E1, E2…) instead of the default EOI-<n>.
+  const eoiBlock  = qp.get('block') || '';
   const [eoiNo, setEoiNo] = useState('');
   const [eoiType, setEoiType] = useState('');   // selected EOI standard unit type
   const [eoiUnits, setEoiUnits] = useState('1'); // no. of units — multiplies the standard area
@@ -237,9 +240,9 @@ function BookingPage() {
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
     // EOI: fetch the next per-project EOI code to show in the form + the LOI/EOI PDF.
-    if (eoiMode && !reviseId && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}`, { headers: authHeaders() })
+    if (eoiMode && !reviseId && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}${eoiBlock ? `&block=${encodeURIComponent(eoiBlock)}` : ''}`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null)).then((d) => { if (d && d.eoi_no) setEoiNo(d.eoi_no); }).catch(() => {});
-  }, [projectId, plotIds.join(','), companyId, eoiMode]);
+  }, [projectId, plotIds.join(','), companyId, eoiMode, eoiBlock]);
 
   // Comma display of every selected plot ("12, 13, 14").
   const plotNumbers = useMemo(
@@ -624,7 +627,7 @@ function BookingPage() {
   function buildPayload() {
     return {
       project: projectId, plot: eoiMode ? undefined : plotId, plot_ids: eoiMode ? [] : plotIds, lead: leadId || undefined,
-      ...(eoiMode ? { eoi: true, eoi_no: eoiNo } : {}),
+      ...(eoiMode ? { eoi: true, eoi_no: eoiNo, ...(eoiBlock ? { eoi_block: eoiBlock } : {}) } : {}),
       client_name: f.client_name.trim(), gender: f.gender, phone: f.phone.trim(), address: f.address, source: f.source,
       manual_stm_name: f.manual_stm_name.trim(),
       formula_set: formulaSet, area: f.area, area_unit: f.area_unit, const_area: f.const_area || '0',

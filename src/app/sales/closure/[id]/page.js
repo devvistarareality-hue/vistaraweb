@@ -602,7 +602,25 @@ export default function ClosureViewerPage() {
         <div style={{ background: '#fff', borderRadius: 16, padding: '18px', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Units</h2>
           <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 14 }}>No site map drawn for this project. Tap an available unit below.</p>
-          {!visiblePlots.length ? (
+          {!visiblePlots.length && project?.block_industrial ? (
+            // Block-wise industrial, this block has no plots yet — nothing to pick, so
+            // raise an EOI against the block instead of a dead end. The EOI code is
+            // block-prefixed (e.g. Block E → E1, E2…) via ?block= on the booking form.
+            <div style={{ textAlign: 'center', padding: '28px 12px' }}>
+              <p style={{ color: '#374151', fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
+                Block {activeBlock || '—'} hasn't been mapped yet.
+              </p>
+              <p style={{ color: '#8492A6', fontSize: 12, marginBottom: 16 }}>
+                No units are defined here yet — raise an EOI to hold interest until it's surveyed.
+              </p>
+              <button
+                onClick={() => router.push(`/sales/booking?project=${id}&eoi=1&block=${encodeURIComponent(activeBlock)}`)}
+                style={{ padding: '10px 22px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
+                  background: 'linear-gradient(135deg,#182350,#3D5AFE)', cursor: 'pointer' }}>
+                Raise EOI for Block {activeBlock || 'this project'}
+              </button>
+            </div>
+          ) : !visiblePlots.length ? (
             <p style={{ color: '#8492A6', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No units defined for this project.</p>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

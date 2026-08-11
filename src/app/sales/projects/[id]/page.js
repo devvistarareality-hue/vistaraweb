@@ -1164,15 +1164,18 @@ export default function ManagePlotsPage() {
       {project.floor_wise ? (
         <>
           <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>🏢 Floor-wise Setup</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>{project.block_industrial ? '🏭 Block Setup' : '🏢 Floor-wise Setup'}</div>
           <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 4 }}>
-            Define each floor's unit numbering and plan. Ground is floor 0.
+            {project.block_industrial
+              ? "Define each block's unit numbering and plan once it's surveyed."
+              : "Define each floor's unit numbering and plan. Ground is floor 0."}
           </div>
           <TowerFloorBuilder
             floors={floorPlans} setFloors={setFloorPlans}
             folder={`erp/projects/${id}/floor-plans`}
             existing={new Set(plots.map((p) => String(p.number)))}
             onPersist={saveFloorPlans}
+            industrial={!!project.block_industrial}
             onGenerate={generateUnits} generating={genBusy} />
           </div>
           <FloorMapEditor project={project} plots={plots} floors={floorPlans}
