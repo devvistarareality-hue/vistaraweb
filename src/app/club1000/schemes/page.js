@@ -67,9 +67,14 @@ function SchemeModal({ scheme, onClose, onSaved }) {
     setBusy(true);
     try {
       const payout_rates = Object.fromEntries(form.interest_payout_options.map((k) => [k, form.payout_rates[k]]));
+      // premature_redemption_lock_months is a PositiveIntegerField(null=True) on the
+      // backend — an empty string (the field's default/cleared value, and what's left
+      // over when "Allow premature redemption" is unchecked) fails "a valid integer is
+      // required" instead of being treated as blank, so send null explicitly instead.
+      const lock_months = form.premature_redemption_lock_months === '' ? null : form.premature_redemption_lock_months;
       const res = await apiFetch(isEdit ? CLUB1000_ENDPOINTS.scheme(scheme.id) : CLUB1000_ENDPOINTS.schemes, {
         method: isEdit ? 'PATCH' : 'POST',
-        body: JSON.stringify({ ...form, payout_rates }),
+        body: JSON.stringify({ ...form, payout_rates, premature_redemption_lock_months: lock_months }),
       });
       const data = await res.json();
       if (!res.ok) {
