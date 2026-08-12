@@ -7,6 +7,15 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 import MediaUpload from '../../../components/MediaUpload';
 import TowerFloorBuilder, { unitsForFloor } from '../../../components/TowerFloorBuilder';
 
+// A DRF error is JSON, but a 500 (or a proxy timeout) is an HTML page. res.json() on
+// that throws a bare SyntaxError, so read the text first and hand back either the
+// parsed body or a { _raw } snippet the caller can show.
+async function readJson(res) {
+  const text = await res.text().catch(() => '');
+  try { return text ? JSON.parse(text) : {}; }
+  catch { return { _raw: text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200) }; }
+}
+
 
 function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTypes, setPlotTypes, addType, removeType, updateType, validTypes, totalTypePlots, inp, lbl, startNo = 1 }) {
   return (
@@ -187,6 +196,15 @@ function ProjectModal({ project, onClose, onSaved }) {
 
   async function submit(e) {
     e.preventDefault();
+    try { await doSubmit(e); }
+    catch (ex) {
+      // Never leave the modal pinned on "Saving…" with no explanation.
+      setSaving(false);
+      setErr(`Could not save: ${ex?.message || ex}`);
+    }
+  }
+
+  async function doSubmit(e) {
     if (!form.name.trim()) { setErr('Project name is required.'); return; }
 
     // For new: build plots from wizard. For edit+addingMore: also build additional plots.
@@ -203,9 +221,16 @@ function ProjectModal({ project, onClose, onSaved }) {
     const url    = isEdit ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
     const method = isEdit ? 'PATCH' : 'POST';
     const res    = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
-    const data   = await res.json();
+    // A server error comes back as an HTML page, not JSON — parsing it blind threw a
+    // bare SyntaxError that surfaced as an unhandled crash with the modal stuck on
+    // "Saving…". Read the body defensively and show whatever the server actually said.
+    const data   = await readJson(res);
 
-    if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
+    if (!res.ok) {
+      setSaving(false);
+      setErr(data?.detail || (data?._raw ? `Server error ${res.status}. ${data._raw}` : JSON.stringify(data)));
+      return;
+    }
 
     // Rename cluster_types on plots if type names changed (edit only)
     if (isEdit) {
