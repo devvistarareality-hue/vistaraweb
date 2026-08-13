@@ -38,6 +38,7 @@ export function BookingsContent({ adminView = false }) {
   const [q, setQ] = useState('');
   // Booking-date range, from the same filter the dashboards use.
   const [range, setRange] = useState({ from: '', to: '' });
+  const [stm, setStm] = useState('');   // '' = every STM
   const [toCancel, setToCancel] = useState(null);   // booking awaiting cancel confirmation
 
   useEffect(() => {
@@ -124,7 +125,12 @@ export function BookingsContent({ adminView = false }) {
     if (!d) return false;
     return (!range.from || d >= range.from) && (!range.to || d <= range.to);
   };
-  const visible = rows.filter((b) => matches(b) && inRange(b));
+  // The STM list comes from the whole tab, not the filtered rows, so choosing a name
+  // never removes the other names from the dropdown.
+  const stmName = (b) => b.stm_name || '—';
+  const stmOptions = [...new Set(rows.map(stmName))].sort((a, b) => a.localeCompare(b));
+  const narrowed = !!ql || dated || !!stm;
+  const visible = rows.filter((b) => matches(b) && inRange(b) && (!stm || stmName(b) === stm));
 
   // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
   // applied to whichever tab is selected so approvers keep their per-booking actions.
@@ -138,7 +144,7 @@ export function BookingsContent({ adminView = false }) {
   // only make the user click through when there's actually a lot to scroll past.
   // Rejected is archival, though: always start it collapsed however few there are.
   // While searching, always open: hits are the point of the search.
-  const autoOpen = !!ql || dated || (tab !== 'rejected' && visible.length <= 10);
+  const autoOpen = narrowed || (tab !== 'rejected' && visible.length <= 10);
   const isOpen = (pn) => (openProj[pn] === undefined ? autoOpen : openProj[pn]);
   const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
 
@@ -146,7 +152,7 @@ export function BookingsContent({ adminView = false }) {
     <div style={{ padding: '24px 28px' }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Bookings &amp; Approvals</h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 16 }}>
-        {ql || dated ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
+        {narrowed ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
       </p>
 
       {isAdmin && (
@@ -193,14 +199,26 @@ export function BookingsContent({ adminView = false }) {
                 color: '#8492A6', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
+        {/* Whose bookings — one name at a time. Options come from the loaded tab, so a
+            tab with a single STM shows only that one. */}
+        {stmOptions.length > 1 && (
+          <select value={stm} onChange={(e) => { setStm(e.target.value); setOpenProj({}); }}
+            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${stm ? '#3D5AFE' : '#E0E6F0'}`,
+              background: '#fff', fontSize: 13, fontWeight: stm ? 700 : 500, color: stm ? '#1A1A2E' : '#8492A6',
+              cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
+            <option value="">All STMs</option>
+            {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        )}
       </div>
 
       {!loading && visible.length > 0 && (
         <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
           background: 'linear-gradient(135deg,#3D5AFE,#1E3A8A)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(61,90,254,0.25)' }}>
           <div style={{ color: '#DBEAFE', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {ql || dated ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+            {narrowed ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
+            {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>
@@ -209,6 +227,7 @@ export function BookingsContent({ adminView = false }) {
       {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : visible.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
           {ql ? <>No bookings match “{q.trim()}”.</>
+            : stm ? <>No bookings for {stm}{dated ? ' in this date range' : ''}.</>
             : dated ? 'No bookings were booked in this date range.'
             : 'No bookings here.'}
         </div>
