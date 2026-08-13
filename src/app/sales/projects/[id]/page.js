@@ -1257,7 +1257,12 @@ export default function ManagePlotsPage() {
           {filtered.map(plot => (
             <PlotCard key={plot.id} plot={plot} onStatusChange={handleStatusChange} onPlotUpdate={handlePlotUpdate}
               clusterTypes={[...new Set(plots.map(p => p.cluster_type).filter(Boolean))]}
-              floorWise={!!project.floor_wise} />
+              // Facing/terrace are Pratishtha-tower concepts (a flat facing road vs
+              // garden, an optional terrace charged separately) -- meaningless for an
+              // industrial shed, so block-wise industrial projects don't get this
+              // section even though they also set floor_wise=True to reuse the
+              // block/floor-plan machinery.
+              floorWise={!!project.floor_wise && !project.block_industrial} />
           ))}
         </div>
       )}

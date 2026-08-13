@@ -399,22 +399,28 @@ export default function ClosureViewerPage() {
                 style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
                   fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 120 }}>
                 {blocks.map((b, i) => (
-                  <option key={i} value={i}>Block {b || '—'} · {blockHeight(b)}</option>
+                  <option key={i} value={i}>Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}</option>
                 ))}
               </select>
             </>
           )}
-          <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
-          <select value={floorIdx} onChange={(e) => setFloorIdx(Number(e.target.value))}
-            style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
-              fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 190 }}>
-            {floors.map((f, i) => {
-              const n = plots.filter((p) => onFloor(p, f)).length;
-              return <option key={i} value={i}>{f.label || `Floor ${f.floor}`} · {n} unit{n === 1 ? '' : 's'}</option>;
-            })}
-          </select>
+          {/* A block-industrial block is always a single ground-level entry — no real
+              floor concept, so picking one is redundant clutter, unlike an actual tower. */}
+          {!project?.block_industrial && (
+            <>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
+              <select value={floorIdx} onChange={(e) => setFloorIdx(Number(e.target.value))}
+                style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
+                  fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 190 }}>
+                {floors.map((f, i) => {
+                  const n = plots.filter((p) => onFloor(p, f)).length;
+                  return <option key={i} value={i}>{f.label || `Floor ${f.floor}`} · {n} unit{n === 1 ? '' : 's'}</option>;
+                })}
+              </select>
+            </>
+          )}
           {!activeFloor?.image_url && (
-            <span style={{ fontSize: 12, color: '#B45309' }}>No plan uploaded for this floor — units are listed below.</span>
+            <span style={{ fontSize: 12, color: '#B45309' }}>No plan uploaded for this {project?.block_industrial ? 'block' : 'floor'} — units are listed below.</span>
           )}
         </div>
       )}
