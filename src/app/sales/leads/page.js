@@ -101,7 +101,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const showStm = _isAdminMgr || _isStm || _isCp;
   const TC_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback'];
   const STM_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed'];
-  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '' });
+  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', lead_date: '' });
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -128,6 +128,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (form.address)         body.address       = form.address;
     if (form.purpose?.length) body.purpose       = form.purpose;
     if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
+    if (form.lead_date)       body.lead_date     = form.lead_date;
     if (_isAdminMgr && form.telecaller)         body.telecaller = form.telecaller;
     if ((_isAdminMgr || _isCpHead) && form.stm) body.stm        = form.stm;
     if (showTC && form.telecaller_status)   body.telecaller_status  = form.telecaller_status;
@@ -199,6 +200,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 />
               </div>
             ))}
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label style={addLbl}>Lead Received Date</label>
+            <input type="date" value={form.lead_date} max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setForm({ ...form, lead_date: e.target.value })}
+              style={{ ...addInp, maxWidth: 220 }} />
+            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Leave blank to use today. Set this if the lead actually came in earlier (e.g. a walk-in logged a day later).</p>
           </div>
 
           {/* Requirement */}
@@ -389,26 +397,30 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
 
 // ── Lead Detail Modal ───────────────────────────────────────────────────────
 const HISTORY_LABEL = {
-  created:           'Lead Created',
-  status:            'Overall Status',
-  telecaller_status: 'TC Status',
-  stm_status:        'STM Status',
-  telecaller:        'Telecaller Assigned',
-  stm:               'STM Assigned',
-  warm_transfer:     'Transferred to STM',
-  site_visit:        'Site Visit',
-  closure:           'Closure',
+  created:            'Lead Created',
+  status:             'Overall Status',
+  telecaller_status:  'TC Status',
+  stm_status:         'STM Status',
+  telecaller_remarks: 'TC Remarks',
+  stm_remarks:        'STM Remarks',
+  telecaller:         'Telecaller Assigned',
+  stm:                'STM Assigned',
+  warm_transfer:      'Transferred to STM',
+  site_visit:         'Site Visit',
+  closure:            'Closure',
 };
 const HISTORY_COLOR = {
-  created:           '#64748B',
-  status:            '#3D5AFE',
-  telecaller_status: '#0097A7',
-  stm_status:        '#FF6B2B',
-  telecaller:        '#7B1FA2',
-  stm:               '#2E7D32',
-  warm_transfer:     '#EF4444',
-  site_visit:        '#F9A825',
-  closure:           '#15803D',
+  created:            '#64748B',
+  status:             '#3D5AFE',
+  telecaller_status:  '#0097A7',
+  stm_status:         '#FF6B2B',
+  telecaller_remarks: '#0097A7',
+  stm_remarks:        '#FF6B2B',
+  telecaller:         '#7B1FA2',
+  stm:                '#2E7D32',
+  warm_transfer:      '#EF4444',
+  site_visit:         '#F9A825',
+  closure:            '#15803D',
 };
 
 function fmtDateTime(iso) {
@@ -526,8 +538,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
         }
       }
 
+      // Only act on an ACTUAL transition into sv_scheduled/sv_done this save — otherwise
+      // resaving an already sv_done lead (e.g. just to update remarks) re-ran this block
+      // every time and created a fresh duplicate "completed" site visit each time.
+      const stmStatusChanged = lead.stm_status !== form.stm_status;
+
       // STM scheduled a visit → auto-create the site-visit entry
-      if (form.stm_status === 'sv_scheduled' && svScheduledAt) {
+      if (stmStatusChanged && form.stm_status === 'sv_scheduled' && svScheduledAt) {
         try {
           await fetch(SALES_ENDPOINTS.siteVisits, {
             method: 'POST', headers: authHeaders(),
@@ -543,7 +560,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
       }
 
       // STM marked sv_done → complete the latest pending visit (or create a completed one)
-      if (form.stm_status === 'sv_done') {
+      if (stmStatusChanged && form.stm_status === 'sv_done') {
         try {
           const svRes = await fetch(`${SALES_ENDPOINTS.siteVisits}?lead_id=${lead.id}`, { headers: authHeaders() });
           const list = svRes.ok ? await svRes.json() : [];
@@ -749,6 +766,21 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
               </div>
 
               {/* Telecaller */}
+              {/* Read-only for STM/CP once the lead reaches them — they can't edit TC
+                  fields, but they should be able to see what the telecaller found out. */}
+              {!showTC && (lead.telecaller_name || lead.telecaller_remarks) && (
+                <div style={{ ...mSec, marginBottom: 6 }}>Telecaller (Pre-Sales)</div>
+              )}
+              {!showTC && (lead.telecaller_name || lead.telecaller_remarks) && (
+                <div style={{ marginBottom: 18, padding: 12, borderRadius: 10, background: '#F8FAFD', border: '1px solid #E8ECF4' }}>
+                  {lead.telecaller_name && (
+                    <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Telecaller: <span style={{ color: '#1A1A2E', fontWeight: 600 }}>{lead.telecaller_name}</span>{lead.telecaller_status ? ` · ${lead.telecaller_status.replace(/_/g, ' ')}` : ''}</p>
+                  )}
+                  {lead.telecaller_remarks && (
+                    <p style={{ fontSize: 13, color: '#3A3A5C', margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{lead.telecaller_remarks}</p>
+                  )}
+                </div>
+              )}
               {showTC && (<>
               <div style={mSec}>Telecaller (Pre-Sales)</div>
               <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
@@ -958,9 +990,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                              : h.field_changed === 'stm'           ? '🏢'
                              : h.field_changed === 'site_visit'    ? '🏠'
                              : h.field_changed === 'closure'       ? '✅'
+                             : h.field_changed.includes('remarks') ? '📝'
                              : h.field_changed.includes('status')  ? '🔄' : '✏️';
-                // Lead-flow events (created / assignment / transfer / closure) read as a single value, not a transition.
-                const singleValue = ['created', 'warm_transfer', 'closure'].includes(h.field_changed) || !h.old_value;
+                // Lead-flow events (created / assignment / transfer / closure) and free-text
+                // remarks read as a single value, not a before→after transition.
+                const singleValue = ['created', 'warm_transfer', 'closure', 'telecaller_remarks', 'stm_remarks'].includes(h.field_changed) || !h.old_value;
                 // Auto events have no changed_by; label them "System (auto)".
                 const byLabel = h.changed_by_name
                   || (['created', 'telecaller', 'stm'].includes(h.field_changed) ? 'System (auto)' : null);
@@ -972,9 +1006,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                     </div>
                     <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
-                      <p style={{ fontSize: 12, color: '#3A3A5C', margin: '3px 0 0' }}>
+                      <p style={{ fontSize: 12, color: '#3A3A5C', margin: '3px 0 0', whiteSpace: 'pre-wrap' }}>
                         {singleValue ? (
-                          <span style={{ color, fontWeight: 600 }}>{h.new_value || '—'}</span>
+                          // Remarks run past new_value's 100-char DB cap — the full text
+                          // lives in `remarks` instead, fall back to new_value elsewhere.
+                          <span style={{ color, fontWeight: 600 }}>{(h.field_changed.includes('remarks') ? h.remarks : null) || h.new_value || '—'}</span>
                         ) : (
                           <>
                             <span style={{ color: '#8492A6' }}>{h.old_value || '—'}</span>
