@@ -2,9 +2,13 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
+import DateFilter from '../../../sales/_DateFilter';
 
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const isEoi = (b) => String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
+// Project / STM pickers — sized to sit under the date filter in this module's teal.
+const modSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0',
+  background: '#fff', fontSize: 13, cursor: 'pointer', outline: 'none', maxWidth: 240 };
 
 // Open the confidential LOI/EOI PDF via a short-lived signed URL (never a public link).
 async function openLoi(id) {
@@ -153,6 +157,10 @@ export default function ModuleBookingsPage() {
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
   const [detailsOpen, setDetailsOpen] = useState({});
   const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
+  // Same three filters as the Sales approvals view: booking date, project, STM.
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [proj, setProj] = useState('');   // '' = every project
+  const [stm, setStm] = useState('');     // '' = every STM
 
   useEffect(() => {
     setLoading(true); setErr('');
@@ -169,8 +177,30 @@ export default function ModuleBookingsPage() {
     if (a.includes('REJECT') || a.includes('CANCEL') || a.includes('PENDING')) return false;
     return a.includes('APPROVED') || b.status === 'sold';
   };
+  const approved = rows.filter(isApproved);
+
+  // Booking date is a plain YYYY-MM-DD, so the range compares as strings. A booking
+  // with no date can't be placed in time, so a live range excludes it rather than
+  // silently counting it in every period.
+  const dated = !!(range.from || range.to);
+  const inRange = (b) => {
+    if (!dated) return true;
+    const d = String(b.booking_date || '');
+    if (!d) return false;
+    return (!range.from || d >= range.from) && (!range.to || d <= range.to);
+  };
+  // Both option lists come from every approved booking, not the filtered set, so
+  // choosing one value never removes the other options from its dropdown.
+  const stmName = (b) => b.stm_name || '—';
+  const projName = (b) => b.project_name || '—';
+  const stmOptions = [...new Set(approved.map(stmName))].sort((a, b) => a.localeCompare(b));
+  const projOptions = [...new Set(approved.map(projName))].sort((a, b) => a.localeCompare(b));
+  const narrowed = dated || !!stm || !!proj;
+
   const groups = {};
-  rows.filter(isApproved).forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
+  approved
+    .filter((b) => inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
+    .forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.booking_date || '').localeCompare(String(a.booking_date || ''))));
   // Project-wise total booking value (sum of approved final_amount) + grand total.
@@ -183,10 +213,39 @@ export default function ModuleBookingsPage() {
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Bookings</h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>Approved bookings only (LOI &amp; EOI), project-wise · view only</p>
 
+      {!loading && !err && approved.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          {/* Booking-date range — the same control the dashboards and Sales approvals
+              use, so a period picked here means the same thing there. */}
+          <DateFilter onChange={setRange} />
+          {(projOptions.length > 1 || stmOptions.length > 1) && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -8, marginBottom: 4 }}>
+              {projOptions.length > 1 && (
+                <select value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
+                  style={{ ...modSel, borderColor: proj ? '#0D9488' : '#E0E6F0', fontWeight: proj ? 700 : 500, color: proj ? '#1A1A2E' : '#8492A6' }}>
+                  <option value="">All Projects</option>
+                  {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              )}
+              {stmOptions.length > 1 && (
+                <select value={stm} onChange={(e) => { setStm(e.target.value); setOpen({}); }}
+                  style={{ ...modSel, borderColor: stm ? '#0D9488' : '#E0E6F0', fontWeight: stm ? 700 : 500, color: stm ? '#1A1A2E' : '#8492A6' }}>
+                  <option value="">All STMs</option>
+                  {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {!loading && !err && projectNames.length > 0 && (
         <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'linear-gradient(135deg,#0D9488,#0F766E)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(13,148,136,0.25)' }}>
           <div style={{ color: '#CCFBF1', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            Total Approved · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+            {narrowed ? 'Matching' : 'Total'} Approved · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+            {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
+            {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}
+            {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>
@@ -196,7 +255,9 @@ export default function ModuleBookingsPage() {
         {loading ? <p style={{ color: '#8492A6' }}>Loading…</p>
         : err ? <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 12, padding: '14px 18px', fontSize: 13 }}>{err}</div>
         : projectNames.length === 0 ? (
-          <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>No bookings yet.</div>
+          <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
+            {narrowed ? 'No approved bookings match these filters.' : 'No bookings yet.'}
+          </div>
         ) : projectNames.map((pn) => (
           <div key={pn} style={{ marginBottom: 12 }}>
             <div onClick={() => toggle(pn)}
