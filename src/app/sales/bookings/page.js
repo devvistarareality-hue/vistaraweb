@@ -38,7 +38,8 @@ export function BookingsContent({ adminView = false }) {
   const [q, setQ] = useState('');
   // Booking-date range, from the same filter the dashboards use.
   const [range, setRange] = useState({ from: '', to: '' });
-  const [stm, setStm] = useState('');   // '' = every STM
+  const [stm, setStm] = useState('');     // '' = every STM
+  const [proj, setProj] = useState('');   // '' = every project
   const [toCancel, setToCancel] = useState(null);   // booking awaiting cancel confirmation
 
   useEffect(() => {
@@ -125,12 +126,15 @@ export function BookingsContent({ adminView = false }) {
     if (!d) return false;
     return (!range.from || d >= range.from) && (!range.to || d <= range.to);
   };
-  // The STM list comes from the whole tab, not the filtered rows, so choosing a name
-  // never removes the other names from the dropdown.
+  // Both lists come from the whole tab, not the filtered rows, so choosing one value
+  // never removes the other options from its dropdown.
   const stmName = (b) => b.stm_name || '—';
+  const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(rows.map(stmName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = !!ql || dated || !!stm;
-  const visible = rows.filter((b) => matches(b) && inRange(b) && (!stm || stmName(b) === stm));
+  const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
+  const narrowed = !!ql || dated || !!stm || !!proj;
+  const visible = rows.filter((b) => matches(b) && inRange(b)
+    && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj));
 
   // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
   // applied to whichever tab is selected so approvers keep their per-booking actions.
@@ -199,8 +203,17 @@ export function BookingsContent({ adminView = false }) {
                 color: '#8492A6', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
-        {/* Whose bookings — one name at a time. Options come from the loaded tab, so a
-            tab with a single STM shows only that one. */}
+        {/* Which project, and whose bookings — one value at a time. Options come from
+            the loaded tab, so a tab holding a single project or STM shows no control. */}
+        {projOptions.length > 1 && (
+          <select value={proj} onChange={(e) => { setProj(e.target.value); setOpenProj({}); }}
+            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? '#3D5AFE' : '#E0E6F0'}`,
+              background: '#fff', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? '#1A1A2E' : '#8492A6',
+              cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
+            <option value="">All Projects</option>
+            {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        )}
         {stmOptions.length > 1 && (
           <select value={stm} onChange={(e) => { setStm(e.target.value); setOpenProj({}); }}
             style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${stm ? '#3D5AFE' : '#E0E6F0'}`,
@@ -219,6 +232,7 @@ export function BookingsContent({ adminView = false }) {
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
+            {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>
@@ -227,7 +241,7 @@ export function BookingsContent({ adminView = false }) {
       {loading ? <p style={{ color: '#8492A6' }}>Loading…</p> : visible.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
           {ql ? <>No bookings match “{q.trim()}”.</>
-            : stm ? <>No bookings for {stm}{dated ? ' in this date range' : ''}.</>
+            : stm || proj ? <>No bookings for {[stm, proj].filter(Boolean).join(' · ')}{dated ? ' in this date range' : ''}.</>
             : dated ? 'No bookings were booked in this date range.'
             : 'No bookings here.'}
         </div>
