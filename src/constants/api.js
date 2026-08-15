@@ -118,6 +118,10 @@ export const SALES_ENDPOINTS = {
   get mediaUpload()      { return `${BASE_URL}/api/sales/media/upload/`; },
   get mediaDelete()      { return `${BASE_URL}/api/sales/media/delete/`; },
   get dataReset()        { return `${BASE_URL}/api/sales/admin/reset-trial-data/`; },
+  get backupSettings()   { return `${BASE_URL}/api/sales/backups/settings/`; },
+  get backups()          { return `${BASE_URL}/api/sales/backups/`; },
+  get backupRun()        { return `${BASE_URL}/api/sales/backups/run/`; },
+  backupDownload: (id)   => `${BASE_URL}/api/sales/backups/${id}/download/`,
 };
 
 export const CLUB1000_ENDPOINTS = {

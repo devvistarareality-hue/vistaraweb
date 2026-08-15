@@ -59,12 +59,16 @@ function IconCoins() {
 function IconDesignation() {
   return <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
 }
+function IconBackup() {
+  return <SvgIcon><path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/><polyline points="12 12 12 21"/><polyline points="9 18 12 21 15 18"/></SvgIcon>;
+}
 
 const NAV_ITEMS = [
   { label: 'Dashboard',          href: '/admin',                icon: <IconDashboard /> },
   { label: 'User Management',    href: '/admin/users',          icon: <IconUsers /> },
   { label: 'Company Management', href: '/admin/companies',      icon: <IconBuilding /> },
   { label: 'Designation Master', href: '/admin/designations',   icon: <IconDesignation /> },
+  { label: 'Data Backup',        href: '/admin/data-backup',    icon: <IconBackup /> },
 ];
 
 const PARKED_ITEMS = [
@@ -102,6 +106,7 @@ export default function Sidebar({ user, onClose, className }) {
 
   const visibleNav = NAV_ITEMS.filter((item) => {
     if (item.href === '/admin/companies') return isVRLAdmin;
+    if (item.href === '/admin/data-backup') return isVRLAdmin;
     return true;
   });
 
