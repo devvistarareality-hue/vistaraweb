@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
+import DateFilter from '../_DateFilter';
 
 
 function fmtDateTime(iso) {
@@ -45,6 +46,8 @@ export function SiteVisitsContent({ adminView = false }) {
   const [visits,  setVisits]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  const [range,   setRange]   = useState({ from: '', to: '' });   // visit date
+  const [proj,    setProj]    = useState('');                     // '' = every project
   // Allow deep-linking to a tab (e.g. dashboard Site Visits card → ?tab=completed).
   // Read in an effect — window.location isn't committed yet when a lazy useState
   // initializer runs during Next client navigation.
@@ -171,7 +174,32 @@ export function SiteVisitsContent({ adminView = false }) {
     setSaving(false);
   }
 
+  // A visit's own date: when it actually happened if it has, otherwise when it is due.
+  // That way Completed filters by the visit date and Scheduled by the due date, without
+  // a second control asking which one you meant. Sliced from the ISO stamp in local
+  // time so an evening visit doesn't fall into the next day.
+  const visitDay = (v) => {
+    const s = v.visited_at || v.scheduled_at;
+    if (!s) return '';
+    const d = new Date(s);
+    return isNaN(d) ? String(s).slice(0, 10) : d.toLocaleDateString('en-CA');
+  };
+  const dated = !!(range.from || range.to);
+  const inRange = (v) => {
+    if (!dated) return true;
+    const d = visitDay(v);
+    if (!d) return false;
+    return (!range.from || d >= range.from) && (!range.to || d <= range.to);
+  };
+  // Options come from every visit, not the filtered set, so picking a project never
+  // removes the other projects from the dropdown.
+  const projName = (v) => v.project_name || '—';
+  const projOptions = [...new Set(visits.map(projName))].sort((a, b) => a.localeCompare(b));
+  const narrowed = dated || !!proj;
+
   const visible = visits.filter((v) => {
+    if (!inRange(v)) return false;
+    if (proj && projName(v) !== proj) return false;
     if (filter === 'all') return true;
     if (filter === 'today') {
       const at = new Date(v.scheduled_at);
@@ -204,11 +232,32 @@ export function SiteVisitsContent({ adminView = false }) {
         })}
       </div>
 
+      {/* Visit date + project. The date control is the one the dashboards use, so its
+          Month / Quarter / FY choices mean the same thing here. */}
+      <DateFilter onChange={setRange} />
+      {projOptions.length > 1 && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -10, marginBottom: 16 }}>
+          <select value={proj} onChange={(e) => setProj(e.target.value)}
+            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? '#3D5AFE' : '#E0E6F0'}`,
+              background: '#fff', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? '#1A1A2E' : '#8492A6',
+              cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
+            <option value="">All Projects</option>
+            {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          {narrowed && (
+            <button onClick={() => { setProj(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', background: '#fff', color: '#8492A6', border: '1.5px solid #E0E6F0' }}>
+              ✕ Clear project
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <p style={{ fontSize: 13, color: '#8492A6', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
       ) : visible.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#5A6B85', margin: 0 }}>No site visits</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#5A6B85', margin: 0 }}>{narrowed ? 'No site visits match these filters' : 'No site visits'}</p>
           <p style={{ fontSize: 13, color: '#B0BAC9', margin: '4px 0 0' }}>Schedule one from your pipeline</p>
         </div>
       ) : (
