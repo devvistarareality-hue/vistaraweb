@@ -4,6 +4,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../lib/bookingFormulas';
+import { stripPlotPrefix } from '../../../lib/plotNumber';
 import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
 import { computeFlat } from '../../../lib/pratishthaFlat';
@@ -248,8 +249,7 @@ function BookingPage() {
   const plotNumbers = useMemo(
     () => {
       if (eoiMode) return eoiNo;
-      const strip = (n) => { const s = (n || '').toString(); return s.replace(/^[^0-9]*/, '') || s; };
-      return plots.length ? plots.map((p) => strip(p.number)).join(', ') : strip(plot?.number || '');
+      return plots.length ? plots.map((p) => stripPlotPrefix(p.number)).join(', ') : stripPlotPrefix(plot?.number || '');
     },
     [plots, plot, eoiMode, eoiNo],
   );

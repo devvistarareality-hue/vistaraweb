@@ -1,6 +1,7 @@
 // LOI / EOI PDF generator — faithful port of the GAS buildPDF (jsPDF).
 // Loads jsPDF from the same CDN/version the GAS app uses (no npm dependency),
 // so the document matches the existing LOI.
+import { stripPlotPrefix } from './plotNumber';
 
 const JSPDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 
@@ -133,7 +134,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   gradH(PW / 2, HDR_H, half, 0.6, MB, WHT);
 
   // Booking Date (right) + Plot No (left) — below the header.
-  const plotNumOnly = (meta.plotNo || '—').toString().replace(/^[^0-9]*/, '') || (meta.plotNo || '—');
+  const plotNumOnly = stripPlotPrefix(meta.plotNo || '—');
   st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
   // EOI keeps its full code (EOI-3); a plot number is stripped to the digits only.
   // "Plot" is wrong for a tower — Pratishtha sells flats and shops, so label it by kind.
