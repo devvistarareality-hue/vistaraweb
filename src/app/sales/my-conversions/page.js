@@ -206,7 +206,10 @@ export function MyConversionsContent({ adminView = false }) {
   const allClosures = closures;
 
   const card = { backgroundColor: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden' };
-  const th = { padding: '10px 14px', fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'left', borderBottom: '1px solid #F3F4F6', whiteSpace: 'nowrap' };
+  const th = { padding: '10px 14px', fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'left', borderBottom: '1px solid #F3F4F6', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#fff', zIndex: 1 };
+  // Both tables are long (200+ closures) and now wide enough to need sideways room,
+  // so each gets its own fixed-height scroller instead of stretching the page.
+  const scroller = { maxHeight: 560, overflowY: 'auto', overflowX: 'auto' };
   const td = { padding: '10px 14px', fontSize: 13, color: '#1F2937', borderBottom: '1px solid #F9FAFB' };
 
   return (
@@ -263,7 +266,8 @@ export function MyConversionsContent({ adminView = false }) {
               {isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.'}
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={scroller} className="convScroll">
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr>
                   <th style={th}>Lead Name</th>
@@ -271,7 +275,8 @@ export function MyConversionsContent({ adminView = false }) {
                   <th style={th}>Project</th>
                   <th style={th}>Visit Date</th>
                   <th style={th}>Status</th>
-                  <th style={th}>{isStm ? 'Telecaller' : 'STM'}</th>
+                  <th style={th}>STM</th>
+                  <th style={th}>Telecaller</th>
                 </tr>
               </thead>
               <tbody>
@@ -282,11 +287,13 @@ export function MyConversionsContent({ adminView = false }) {
                     <td style={td}>{v.project_name || '—'}</td>
                     <td style={td}>{v.visited_at ? fmtDate(v.visited_at) : (v.scheduled_at ? fmtDate(v.scheduled_at) : '—')}</td>
                     <td style={td}><StatusBadge status={v.status} colors={SV_COLOR} /></td>
-                    <td style={{ ...td, color: '#6B7280' }}>{(isStm ? v.referred_by_telecaller_name : v.stm_name) || '—'}</td>
+                    <td style={{ ...td, color: '#6B7280' }}>{v.stm_name || '—'}</td>
+                    <td style={{ ...td, color: '#6B7280' }}>{v.referred_by_telecaller_name || '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       ) : (
@@ -296,7 +303,8 @@ export function MyConversionsContent({ adminView = false }) {
               {isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={scroller} className="convScroll">
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr>
                   <th style={th}>Lead Name</th>
@@ -305,6 +313,8 @@ export function MyConversionsContent({ adminView = false }) {
                   <th style={th}>Unit</th>
                   <th style={th}>Amount</th>
                   <th style={th}>Closure Date</th>
+                  <th style={th}>STM</th>
+                  <th style={th}>Telecaller</th>
                   <th style={th}>Status</th>
                 </tr>
               </thead>
@@ -318,14 +328,27 @@ export function MyConversionsContent({ adminView = false }) {
                     <td style={td}>{(c.unit_type || '') + ' ' + (c.unit_no || '')}</td>
                     <td style={{ ...td, fontWeight: 600 }}>{c.total_amount ? '₹' + new Intl.NumberFormat('en-IN').format(c.total_amount) : '—'}</td>
                     <td style={td}>{c.closure_date ? fmtDate(c.closure_date) : '—'}</td>
+                    <td style={{ ...td, color: '#6B7280' }}>{c.stm_name || '—'}</td>
+                    <td style={{ ...td, color: '#6B7280' }}>{c.referred_by_telecaller_name || '—'}</td>
                     <td style={td}><StatusBadge status={c.status} colors={CLOSURE_STATUS_COLOR} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}
+
+      {/* A visible scrollbar — the default overlay one on macOS hides until you scroll,
+          which makes a fixed-height table look truncated rather than scrollable. */}
+      <style>{`
+        .convScroll::-webkit-scrollbar { width: 10px; height: 10px; }
+        .convScroll::-webkit-scrollbar-track { background: #F3F4F6; border-radius: 8px; }
+        .convScroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; border: 2px solid #F3F4F6; }
+        .convScroll::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .convScroll { scrollbar-width: thin; scrollbar-color: #CBD5E1 #F3F4F6; }
+      `}</style>
 
       {historyLead && <LeadHistoryModal lead={historyLead} onClose={() => setHistoryLead(null)} />}
     </div>
