@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
+import { stripPlotPrefix } from '../../../../lib/plotNumber';
 
 
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
@@ -513,7 +514,7 @@ export default function ClosureViewerPage() {
               // Labels overlap on small plots when the number is type-prefixed
               // (e.g. "Karuna24"). The type is already conveyed by colour/legend,
               // so show just the numeric part; fall back to the full value.
-              const labelText = String(zone.plotNumber).replace(/^[^\d]+/, '') || zone.plotNumber;
+              const labelText = stripPlotPrefix(zone.plotNumber);
               return (
                 <div key={zone.id + '-lbl'}>
                   <div style={{

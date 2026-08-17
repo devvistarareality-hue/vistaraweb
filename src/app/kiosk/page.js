@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../constants/api';
+import { stripPlotPrefix } from '../../lib/plotNumber';
 import { logout } from '../../redux/actions/authActions';
 
 // ── Client-facing Kiosk self-booking (full-screen, no ERP chrome) ─────────────
@@ -340,7 +341,7 @@ export default function KioskPage() {
                     const cfg = KSTATUS[pl.status] || KSTATUS.available;
                     const isSel = isSelected(pl);
                     const { cx, cy } = zoneCenter(zone);
-                    const label = String(zone.plotNumber).replace(/^[^\d]+/, '') || zone.plotNumber;
+                    const label = stripPlotPrefix(zone.plotNumber);
                     return (
                       <div key={zone.id + '-l'} className="k-maplbl" style={{ left: `${cx}%`, top: `${cy}%`, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.dot, boxShadow: `0 1px 3px rgba(0,0,0,.18),0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}` }}>
                         {isSel ? `✓ ${label}` : label}

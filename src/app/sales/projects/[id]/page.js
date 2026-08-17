@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
+import { stripPlotPrefix } from '../../../../lib/plotNumber';
 import MediaUpload from '../../../../components/MediaUpload';
 import TowerFloorBuilder from '../../../../components/TowerFloorBuilder';
 import { toPlanImage } from '../../../../utils/planImage';
@@ -405,7 +406,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
               {zones.map(zone => {
                 const { cx, cy } = zoneCenter(zone);
                 const color = getZoneColor(zone.plotNumber);
-                const labelText = String(zone.plotNumber).replace(/^[^\d]+/, '') || zone.plotNumber;
+                const labelText = stripPlotPrefix(zone.plotNumber);
                 return (
                   <div key={zone.id + '-lbl'} style={{
                     position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
