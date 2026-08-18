@@ -79,6 +79,9 @@ export default function LeadSetupPage() {
   const [refreshingPages, setRefreshingPages] = useState(false);
   const [pagesDiag,       setPagesDiag]       = useState('');
   const [editingToken,    setEditingToken]    = useState(false);
+  // Meta signs each webhook delivery with this; without it we can't tell a genuine
+  // delivery from anyone's POST. Write-only — the API only reports whether one is set.
+  const [appSecret,       setAppSecret]      = useState('');
 
   // Form mappings
   const [mappings,    setMappings]   = useState([]);
@@ -98,7 +101,7 @@ export default function LeadSetupPage() {
     }
     // Meta config + mappings
     fetch(SALES_ENDPOINTS.metaWebhookConfig + cq, { headers: authHeaders() })
-      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setFormLeadCounts(d.form_lead_counts || {}); setLoadingCfg(false); })
+      .then(r => r.json()).then(d => { setCfg(d); setPat(d.page_access_token || ''); setAppSecret(''); setProjectId(d.default_project_id || ''); setSubscribedPages(d.subscribed_pages || []); setPagesData(d.pages_data || []); setFormLeadCounts(d.form_lead_counts || {}); setLoadingCfg(false); })
       .catch(() => setLoadingCfg(false));
     fetch(SALES_ENDPOINTS.metaMappings + cq, { headers: authHeaders() })
       .then(r => r.json()).then(d => setMappings(Array.isArray(d) ? d : []))
@@ -135,12 +138,14 @@ export default function LeadSetupPage() {
     setSaving(true); setMetaMsg(''); setSubscribedPages([]); setFailedPages([]); setPagesDiag('');
     const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ action: 'save', page_access_token: cleanPat, ...(companyId ? { company_id: companyId } : {}) }),
+      body: JSON.stringify({ action: 'save', page_access_token: cleanPat, ...(appSecret.trim() ? { app_secret: appSecret.trim() } : {}), ...(companyId ? { company_id: companyId } : {}) }),
     });
     const d = await res.json();
     setSaving(false);
     if (res.ok) {
-      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: cleanPat }));
+      setCfg(prev => ({ ...prev, is_active: d.is_active, page_access_token: cleanPat,
+                        app_secret_set: prev?.app_secret_set || !!appSecret.trim() }));
+      setAppSecret('');   // never keep the secret in component state after saving
       setSubscribedPages(d.subscribed_pages || []);
       setFailedPages(d.failed_pages || []);
       setPagesData(d.pages_data || []);
@@ -160,7 +165,7 @@ export default function LeadSetupPage() {
     try {
       const res = await fetch(SALES_ENDPOINTS.metaWebhookConfig, {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ action: 'save', page_access_token: cleanPat, ...cidBody }),
+        body: JSON.stringify({ action: 'save', page_access_token: cleanPat, ...(appSecret.trim() ? { app_secret: appSecret.trim() } : {}), ...cidBody }),
       });
       const d = await res.json().catch(() => ({}));
       const pages = d.pages_data || [];
@@ -345,6 +350,38 @@ export default function LeadSetupPage() {
                       <button onClick={() => { setEditingToken(true); setMetaMsg(''); setPagesDiag(''); }} style={outlineBtn}>✎ Edit</button>
                     </div>
                   )}
+
+                  {/* App Secret — verifies that a webhook delivery really came from Meta */}
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EEF1F7' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={fieldLabel}>APP SECRET</div>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
+                        color: cfg?.app_secret_set ? GREEN : '#B45309',
+                        background: cfg?.app_secret_set ? '#E8F8EE' : '#FEF3C7', padding: '3px 9px', borderRadius: 20 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg?.app_secret_set ? GREEN : '#B45309' }} />
+                        {cfg?.app_secret_set ? 'Verifying deliveries' : 'Not verified'}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10, lineHeight: 1.5 }}>
+                      developers.facebook.com → your app → <strong>Settings → Basic → App Secret → Show</strong>.
+                      Meta signs every lead delivery with it; without it we cannot tell a genuine delivery from
+                      anyone else&rsquo;s. {cfg?.app_secret_set ? 'Leave blank to keep the stored secret.' : ''}
+                    </p>
+                    <input
+                      type="password"
+                      value={appSecret}
+                      onChange={e => setAppSecret(e.target.value)}
+                      placeholder={cfg?.app_secret_set ? '•••••••• (stored — type to replace)' : 'paste the App Secret'}
+                      autoComplete="new-password"
+                      style={{ ...inp, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
+                    />
+                    {!editing && (
+                      <button onClick={saveMetaConfig} disabled={saving || !appSecret.trim()}
+                        style={{ ...saveBtn, marginTop: 10, opacity: appSecret.trim() ? 1 : 0.5 }}>
+                        {saving ? 'Saving…' : '💾 Save App Secret'}
+                      </button>
+                    )}
+                  </div>
 
                   {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') || metaMsg.includes('No pages') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
                   {metaMsg === 'Saved!' && failedPages.length > 0 && (
