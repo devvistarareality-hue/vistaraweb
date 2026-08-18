@@ -14,6 +14,8 @@ function fmtDateTime(iso) {
 }
 
 const SV_COLOR = { scheduled: '#F9A825', completed: '#2E7D32', no_show: '#B71C1C', cancelled: '#9E9E9E' };
+const OUTCOME_COLOR = { interested: '#2E7D32', not_interested: '#B71C1C' };
+const OUTCOME_LABEL = { interested: 'Interested', not_interested: 'Not Interested' };
 const TABS = [
   { key: 'today',     label: "Today's" },
   { key: 'scheduled', label: 'Scheduled' },
@@ -67,6 +69,10 @@ export function SiteVisitsContent({ adminView = false }) {
   // closure modal
   const [closureSv, setClosureSv] = useState(null);
   const [closure,   setClosure]   = useState({ closure_date: new Date().toISOString().slice(0, 10), unit_no: '', unit_type: '', booking_amount: '', total_amount: '', remarks: '' });
+
+  // "Mark Done" modal — outcome + remarks are required before a visit can be closed out.
+  const [doneSv,   setDoneSv]   = useState(null);
+  const [doneForm, setDoneForm] = useState({ outcome: '', remarks: '' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -127,19 +133,47 @@ export function SiteVisitsContent({ adminView = false }) {
 
   async function updateStatus(sv, status) {
     const body = { status };
-    if (status === 'completed') body.visited_at = new Date().toISOString();
     const res = await fetch(SALES_ENDPOINTS.siteVisit(sv.id), {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
     if (res.ok) {
-      if (status === 'completed') {
-        await fetch(SALES_ENDPOINTS.lead(sv.lead), {
-          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: 'sv_done' }),
-        }).catch(() => {});
-      }
       const updated = await res.json();
       setVisits((list) => list.map((v) => (v.id === sv.id ? updated : v)));
     }
+  }
+
+  function openDone(sv) {
+    setErr('');
+    setDoneForm({ outcome: '', remarks: '' });
+    setDoneSv(sv);
+  }
+
+  async function submitDone() {
+    if (!doneForm.outcome || !doneForm.remarks.trim()) {
+      setErr('Outcome and remarks are required to mark a visit as done.');
+      return;
+    }
+    setSaving(true); setErr('');
+    try {
+      const res = await fetch(SALES_ENDPOINTS.siteVisit(doneSv.id), {
+        method: 'PATCH', headers: authHeaders(),
+        body: JSON.stringify({
+          status: 'completed', visited_at: new Date().toISOString(),
+          outcome: doneForm.outcome, remarks: doneForm.remarks.trim(),
+        }),
+      });
+      if (res.ok) {
+        await fetch(SALES_ENDPOINTS.lead(doneSv.lead), {
+          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: 'sv_done' }),
+        }).catch(() => {});
+        const updated = await res.json();
+        setVisits((list) => list.map((v) => (v.id === updated.id ? updated : v)));
+        setDoneSv(null);
+      } else {
+        setErr(JSON.stringify(await res.json().catch(() => ({}))));
+      }
+    } catch (e) { setErr(e.message); }
+    setSaving(false);
   }
 
   async function recordClosure() {
@@ -272,6 +306,12 @@ export function SiteVisitsContent({ adminView = false }) {
                     backgroundColor: (SV_COLOR[sv.status] || '#9E9E9E') + '18', color: SV_COLOR[sv.status] || '#9E9E9E' }}>
                     {(sv.status || '').replace('_', ' ')}
                   </span>
+                  {sv.outcome && (
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                      backgroundColor: (OUTCOME_COLOR[sv.outcome] || '#9E9E9E') + '18', color: OUTCOME_COLOR[sv.outcome] || '#9E9E9E' }}>
+                      {OUTCOME_LABEL[sv.outcome] || sv.outcome}
+                    </span>
+                  )}
                 </div>
                 <p style={{ fontSize: 12, color: '#8492A6', margin: '4px 0 0' }}>
                   {sv.lead_phone || ''}{sv.project_name ? ` · ${sv.project_name}` : ''}
@@ -281,11 +321,12 @@ export function SiteVisitsContent({ adminView = false }) {
                   <span>Scheduled: {fmtDateTime(sv.scheduled_at)}</span>
                   {sv.visited_at && <span>Visited: {fmtDateTime(sv.visited_at)}</span>}
                 </div>
+                {sv.remarks && <p style={{ fontSize: 12, color: '#5A6B85', margin: '6px 0 0', fontStyle: 'italic' }}>"{sv.remarks}"</p>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, flexShrink: 0 }}>
                 {sv.status === 'scheduled' && (
                   <>
-                    <button onClick={() => updateStatus(sv, 'completed')} style={smBtn('#fff', '#2E7D32', '#2E7D32')}>✓ Done</button>
+                    <button onClick={() => openDone(sv)} style={smBtn('#fff', '#2E7D32', '#2E7D32')}>✓ Done</button>
                     <button onClick={() => updateStatus(sv, 'no_show')} style={smBtn('#fff', '#B45309', '#F59E0B')}>No Show</button>
                     <button onClick={() => updateStatus(sv, 'cancelled')} style={smBtn('#fff', '#9CA3AF', '#D1D5DB')}>Cancel</button>
                   </>
@@ -325,6 +366,43 @@ export function SiteVisitsContent({ adminView = false }) {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
               <button onClick={() => setSchedOpen(false)} style={{ padding: '9px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={scheduleVisit} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Schedule'}</button>
+            </div>
+          </ModalCard>
+        </Overlay>
+      )}
+
+      {/* ── Mark Done Modal ── */}
+      {doneSv && (
+        <Overlay onClose={() => setDoneSv(null)}>
+          <ModalCard title="Mark Site Visit Done" onClose={() => setDoneSv(null)}>
+            <p style={{ fontSize: 13, color: '#8492A6', margin: '0 0 14px' }}>{doneSv.lead_name} · {doneSv.lead_phone}</p>
+            <div style={{ marginBottom: 12 }}>
+              <label style={lbl}>Outcome *</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[['interested', 'Interested', '#2E7D32'], ['not_interested', 'Not Interested', '#B71C1C']].map(([val, label, color]) => {
+                  const active = doneForm.outcome === val;
+                  return (
+                    <button key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
+                      style={{ flex: 1, padding: '10px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                        border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={lbl}>Remarks *</label>
+              <textarea value={doneForm.remarks} onChange={(e) => setDoneForm({ ...doneForm, remarks: e.target.value })} rows={3}
+                style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} placeholder="What happened on the visit…" />
+            </div>
+            {err && <ErrBox>{err}</ErrBox>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
+              <button onClick={() => setDoneSv(null)} style={{ padding: '9px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={submitDone} disabled={saving || !doneForm.outcome || !doneForm.remarks.trim()}
+                style={{ ...btnPrimary, opacity: (saving || !doneForm.outcome || !doneForm.remarks.trim()) ? 0.5 : 1 }}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
             </div>
           </ModalCard>
         </Overlay>
