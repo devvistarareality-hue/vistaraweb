@@ -31,11 +31,15 @@ export function computeFormulas(inp = {}) {
   const isAnkhol     = formulaSet === 'ankhol';
   const isKalrav     = formulaSet === 'kalrav';
   const isIndustrial = formulaSet === 'industrial';
-  const isTundav     = isIndustrial && projectName === 'tundav';
+  // Variant comes from the project record, not its name: this branch changes GST,
+  // so a rename must never silently reprice a booking. Falls back to the old name
+  // test only when the caller hasn't supplied the field (older cached project).
+  const loiVariant   = (inp.loiVariant || '').toString().trim().toLowerCase();
+  const isTundav     = isIndustrial && (loiVariant ? loiVariant === 'tundav' : projectName === 'tundav');
   // Kalrav 3 special case: Stamp Duty, Registration Fee, and GST are computed off the
   // Unit Price (Land Sale Deed + Construction Agreement) instead of LSD/Const Agreement
   // separately, and GST is a flat 5% instead of 18%. Other Kalrav-set projects unaffected.
-  const isKalrav3    = isKalrav && projectName === 'kalrav 3';
+  const isKalrav3    = isKalrav && (loiVariant ? loiVariant === 'kalrav3' : projectName === 'kalrav 3');
 
   const area       = num(inp.area);
   const landRate   = num(inp.landRate);

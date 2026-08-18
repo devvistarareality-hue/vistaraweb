@@ -385,7 +385,7 @@ function BookingPage() {
   };
 
   const v = useMemo(() => computeFormulas({
-    formulaSet, projectName: project?.name,
+    formulaSet, projectName: project?.name, loiVariant: project?.loi_variant,
     area: f.area, landRate: f.land_rate, devRate: f.dev_rate, constArea: f.const_area, constRate: f.const_rate,
     discount: f.discount, legalCharges: f.legal_charges, maintRate: f.maint_rate, maintMonths: f.maint_months,
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
@@ -606,7 +606,7 @@ function BookingPage() {
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: f.manual_stm_name.trim() || me?.name, source: f.source,
       areaUnit: f.area_unit || flags.areaUnit,
     };
-    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit,
+    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, loiVariant: project?.loi_variant, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit,
       // Pratishtha prices from the unit's fixed price book, not the form's rates.
       priceBooks: pratBooks }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }
