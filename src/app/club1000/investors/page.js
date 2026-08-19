@@ -9,6 +9,7 @@ import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import ReviseInvestorModal from '../_ReviseInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
+import LedgerModal from '../_LedgerModal';
 
 const TEAL = '#00838F';
 const PURPLE = '#7C3AED';
@@ -37,6 +38,7 @@ export default function InvestorsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [revising, setRevising] = useState(null);
   const [renewing, setRenewing] = useState(null);
+  const [ledgerFor, setLedgerFor] = useState(null);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -192,6 +194,7 @@ export default function InvestorsPage() {
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
                 <td style={td}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: '#E0F2F1', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📒 Ledger</button>
                     <button onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: '#F3E8FF', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
                     {inv.is_matured ? (
                       <>
@@ -231,6 +234,9 @@ export default function InvestorsPage() {
           onClose={() => setRenewing(null)}
           onSaved={() => load()}
         />
+      )}
+      {ledgerFor && (
+        <LedgerModal investorId={ledgerFor} onClose={() => setLedgerFor(null)} />
       )}
     </div>
   );
