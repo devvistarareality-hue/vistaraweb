@@ -93,7 +93,13 @@ export default function LedgerModal({ investorId, onClose }) {
                         <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA' }}>
                           <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: '#F3F4F6', fg: '#6B7280' }} />
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA', fontWeight: 700, color: '#1A1A2E' }}>{fmtMoney(e.amount)}</td>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA', fontWeight: 700, color: '#1A1A2E' }}>
+                          {fmtMoney(e.amount)}
+                          {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && (
+                            <div style={{ fontSize: 11, fontWeight: 600, color: '#B45309' }}>Paid {fmtMoney(e.paid_amount)}</div>
+                          )}
+                          {!!e.notes && <div style={{ fontSize: 11, fontWeight: 400, color: '#8492A6', fontStyle: 'italic', marginTop: 2 }}>"{e.notes}"</div>}
+                        </td>
                         <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA' }}>
                           <Badge label={e.status} color={STATUS_COLOR[e.status] || { bg: '#F3F4F6', fg: '#6B7280' }} />
                         </td>
