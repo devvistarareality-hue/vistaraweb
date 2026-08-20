@@ -49,11 +49,19 @@ const STATUS_COLOR = {
 
 const ALL_STATUSES = ['new','assigned','contacted','not_reachable','warm_transferred','hot','warm','cold','not_interested','sv_scheduled','sv_done','closed','lost'];
 
-function StatusBadge({ status }) {
+const OUTCOME_COLOR = { hot: '#EF4444', warm: '#F97316', cold: '#3B82F6', not_interested: '#6B7280' };
+
+// `outcome` (SV Hot/Warm/Cold, only meaningful for sv_done) is shown alongside
+// the stage — "SV DONE · HOT" — rather than replacing it, so the pipeline stage
+// and the visit's outcome are both visible without conflating the two.
+function StatusBadge({ status, outcome }) {
   const color = STATUS_COLOR[status] || '#9E9E9E';
   return (
     <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: color + '18', color }}>
       {status?.replace(/_/g, ' ').toUpperCase()}
+      {status === 'sv_done' && outcome && (
+        <span style={{ color: OUTCOME_COLOR[outcome] || color }}> · {outcome.replace(/_/g, ' ').toUpperCase()}</span>
+      )}
     </span>
   );
 }
@@ -456,9 +464,9 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   // Inline "schedule site visit" when STM sets status = sv_scheduled
   const [svScheduledAt, setSvScheduledAt] = useState('');
   const [svRemarks,     setSvRemarks]     = useState('');
-  // Inline visit outcome when STM sets status = sv_done — the outcome (not the
-  // generic "sv done") becomes the lead's actual next stm_status, same as the
-  // dedicated Site Visits "Mark Done" flow.
+  // Inline visit outcome when STM sets status = sv_done — recorded on the
+  // auto-created/completed SiteVisit, same as the dedicated Site Visits "Mark
+  // Done" flow. Does not change the lead's own stm_status (stays "sv done").
   const [svOutcome, setSvOutcome] = useState('');
 
   useEffect(() => {
@@ -518,10 +526,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     // "closed" is NOT persisted from the dropdown — a lead only becomes CLOSED when
     // its booking is approved (the backend sets stm_status='closed' on approval).
     // Picking "closed" here just routes the STM into the booking flow below.
-    // "sv_done" is a UI-only intermediate — the actual outcome (hot/warm/cold)
-    // picked below is what's saved, same as the dedicated Site Visits flow.
-    if (form.stm_status === 'sv_done') body.stm_status = svOutcome;
-    else if (form.stm_status && form.stm_status !== 'closed') body.stm_status = form.stm_status;
+    if (form.stm_status && form.stm_status !== 'closed') body.stm_status = form.stm_status;
     if (form.project)          body.project          = form.project;
     if (form.source)           body.source           = form.source;
     const res = await fetch(SALES_ENDPOINTS.lead(lead.id), {
@@ -868,29 +873,30 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               )}
 
-              {/* Inline visit outcome when STM picks "sv_done" — the outcome (not the
-                  generic "sv done") is what actually gets saved as STM Status, same as
-                  the dedicated Site Visits "Mark Done" flow. Uses STM Remarks above as
-                  the visit's remarks — no separate field needed since it's already required. */}
+              {/* Inline visit outcome when STM picks "sv_done" — recorded on the
+                  SiteVisit itself (rolls into the SV Hot/Warm/Cold dashboard tiles),
+                  same as the dedicated Site Visits "Mark Done" flow. The lead's own
+                  STM Status stays "sv done". Uses STM Remarks above as the visit's
+                  remarks — no separate field needed since it's already required. */}
               {form.stm_status === 'sv_done' && (
                 <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <span style={{ color: '#15803D' }}>📍</span>
                     <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome</span>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6']].map(([val, label, color]) => {
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6'], ['not_interested', 'Not Interested', '#6B7280']].map(([val, label, color]) => {
                       const active = svOutcome === val;
                       return (
                         <button key={val} type="button" onClick={() => setSvOutcome(val)}
-                          style={{ flex: 1, padding: '10px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                          style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                             border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                           {label}
                         </button>
                       );
                     })}
                   </div>
-                  {!svOutcome && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Pick how the visit went — this becomes the lead's STM Status.</p>}
+                  {!svOutcome && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
                 </div>
               )}
 
@@ -1555,9 +1561,9 @@ export function SalesLeadsContent({ adminView = false }) {
                     {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
                   </td>}
                   {showStmStatus && <td style={td} onClick={() => loadDetail(l)}>
-                    {l.stm_status ? <StatusBadge status={l.stm_status} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
+                    {l.stm_status ? <StatusBadge status={l.stm_status} outcome={l.sv_outcome} /> : <span style={{ color: '#D1D5DB' }}>—</span>}
                   </td>}
-                  <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} /></td>
+                  <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} outcome={l.sv_outcome} /></td>
                   <td style={{ ...td, color: '#8492A6', fontSize: 12 }} onClick={() => loadDetail(l)}>
                     {/* An STM cares about when THEY received the lead, not when it first
                         entered the system — fall back to created_at for leads with no

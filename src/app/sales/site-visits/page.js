@@ -14,8 +14,8 @@ function fmtDateTime(iso) {
 }
 
 const SV_COLOR = { scheduled: '#F9A825', completed: '#2E7D32', no_show: '#B71C1C', cancelled: '#9E9E9E' };
-const OUTCOME_COLOR = { hot: '#EF4444', warm: '#F97316', cold: '#3B82F6' };
-const OUTCOME_LABEL = { hot: 'Hot', warm: 'Warm', cold: 'Cold' };
+const OUTCOME_COLOR = { hot: '#EF4444', warm: '#F97316', cold: '#3B82F6', not_interested: '#6B7280' };
+const OUTCOME_LABEL = { hot: 'Hot', warm: 'Warm', cold: 'Cold', not_interested: 'Not Interested' };
 const TABS = [
   { key: 'today',     label: "Today's" },
   { key: 'scheduled', label: 'Scheduled' },
@@ -164,12 +164,11 @@ export function SiteVisitsContent({ adminView = false }) {
         }),
       });
       if (res.ok) {
-        // The outcome IS the lead's next pipeline status — hot/warm/cold are all
-        // valid stm_status values, so a lead marked Hot on the visit lands
-        // straight in the Hot bucket instead of sitting generically in sv_done
-        // waiting for someone to reclassify it by hand.
+        // The lead's pipeline stage stays "sv done" — the outcome is recorded on
+        // the SiteVisit itself (and rolls up into the SV Hot/Warm/Cold dashboard
+        // tiles), but it does not overwrite the lead's own STM Status.
         await fetch(SALES_ENDPOINTS.lead(doneSv.lead), {
-          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: doneForm.outcome }),
+          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: 'sv_done' }),
         }).catch(() => {});
         const updated = await res.json();
         setVisits((list) => list.map((v) => (v.id === updated.id ? updated : v)));
@@ -286,7 +285,7 @@ export function SiteVisitsContent({ adminView = false }) {
           </select>
         )}
         <span style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginLeft: 4 }}>OUTCOME</span>
-        {['', 'hot', 'warm', 'cold'].map((val) => {
+        {['', 'hot', 'warm', 'cold', 'not_interested'].map((val) => {
           const active = outcomeFilter === val;
           const color = val ? OUTCOME_COLOR[val] : '#5A6B85';
           const label = val ? OUTCOME_LABEL[val] : 'All';
@@ -397,12 +396,12 @@ export function SiteVisitsContent({ adminView = false }) {
             <p style={{ fontSize: 13, color: '#8492A6', margin: '0 0 14px' }}>{doneSv.lead_name} · {doneSv.lead_phone}</p>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Outcome *</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6']].map(([val, label, color]) => {
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6'], ['not_interested', 'Not Interested', '#6B7280']].map(([val, label, color]) => {
                   const active = doneForm.outcome === val;
                   return (
                     <button key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
-                      style={{ flex: 1, padding: '10px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                         border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                       {label}
                     </button>
