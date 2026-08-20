@@ -14,8 +14,8 @@ function fmtDateTime(iso) {
 }
 
 const SV_COLOR = { scheduled: '#F9A825', completed: '#2E7D32', no_show: '#B71C1C', cancelled: '#9E9E9E' };
-const OUTCOME_COLOR = { interested: '#2E7D32', not_interested: '#B71C1C' };
-const OUTCOME_LABEL = { interested: 'Interested', not_interested: 'Not Interested' };
+const OUTCOME_COLOR = { hot: '#EF4444', warm: '#F97316', cold: '#3B82F6' };
+const OUTCOME_LABEL = { hot: 'Hot', warm: 'Warm', cold: 'Cold' };
 const TABS = [
   { key: 'today',     label: "Today's" },
   { key: 'scheduled', label: 'Scheduled' },
@@ -50,6 +50,7 @@ export function SiteVisitsContent({ adminView = false }) {
   const [filter,  setFilter]  = useState('today');
   const [range,   setRange]   = useState({ from: '', to: '' });   // visit date
   const [proj,    setProj]    = useState('');                     // '' = every project
+  const [outcomeFilter, setOutcomeFilter] = useState('');         // '' = every outcome
   // Allow deep-linking to a tab (e.g. dashboard Site Visits card → ?tab=completed).
   // Read in an effect — window.location isn't committed yet when a lazy useState
   // initializer runs during Next client navigation.
@@ -163,8 +164,12 @@ export function SiteVisitsContent({ adminView = false }) {
         }),
       });
       if (res.ok) {
+        // The outcome IS the lead's next pipeline status — hot/warm/cold are all
+        // valid stm_status values, so a lead marked Hot on the visit lands
+        // straight in the Hot bucket instead of sitting generically in sv_done
+        // waiting for someone to reclassify it by hand.
         await fetch(SALES_ENDPOINTS.lead(doneSv.lead), {
-          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: 'sv_done' }),
+          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: doneForm.outcome }),
         }).catch(() => {});
         const updated = await res.json();
         setVisits((list) => list.map((v) => (v.id === updated.id ? updated : v)));
@@ -229,11 +234,12 @@ export function SiteVisitsContent({ adminView = false }) {
   // removes the other projects from the dropdown.
   const projName = (v) => v.project_name || '—';
   const projOptions = [...new Set(visits.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = dated || !!proj;
+  const narrowed = dated || !!proj || !!outcomeFilter;
 
   const visible = visits.filter((v) => {
     if (!inRange(v)) return false;
     if (proj && projName(v) !== proj) return false;
+    if (outcomeFilter && v.outcome !== outcomeFilter) return false;
     if (filter === 'all') return true;
     if (filter === 'today') {
       const at = new Date(v.scheduled_at);
@@ -269,8 +275,8 @@ export function SiteVisitsContent({ adminView = false }) {
       {/* Visit date + project. The date control is the one the dashboards use, so its
           Month / Quarter / FY choices mean the same thing here. */}
       <DateFilter onChange={setRange} />
-      {projOptions.length > 1 && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -10, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -10, marginBottom: 16 }}>
+        {projOptions.length > 1 && (
           <select value={proj} onChange={(e) => setProj(e.target.value)}
             style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? '#3D5AFE' : '#E0E6F0'}`,
               background: '#fff', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? '#1A1A2E' : '#8492A6',
@@ -278,14 +284,27 @@ export function SiteVisitsContent({ adminView = false }) {
             <option value="">All Projects</option>
             {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
-          {narrowed && (
-            <button onClick={() => { setProj(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', background: '#fff', color: '#8492A6', border: '1.5px solid #E0E6F0' }}>
-              ✕ Clear project
+        )}
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginLeft: 4 }}>OUTCOME</span>
+        {['', 'hot', 'warm', 'cold'].map((val) => {
+          const active = outcomeFilter === val;
+          const color = val ? OUTCOME_COLOR[val] : '#5A6B85';
+          const label = val ? OUTCOME_LABEL[val] : 'All';
+          return (
+            <button key={val || 'all'} onClick={() => setOutcomeFilter(val)}
+              style={{ padding: '6px 12px', borderRadius: 14, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+              {label}
             </button>
-          )}
-        </div>
-      )}
+          );
+        })}
+        {narrowed && (
+          <button onClick={() => { setProj(''); setOutcomeFilter(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+            cursor: 'pointer', background: '#fff', color: '#8492A6', border: '1.5px solid #E0E6F0' }}>
+            ✕ Clear filters
+          </button>
+        )}
+      </div>
 
       {loading ? (
         <p style={{ fontSize: 13, color: '#8492A6', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
@@ -379,7 +398,7 @@ export function SiteVisitsContent({ adminView = false }) {
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Outcome *</label>
               <div style={{ display: 'flex', gap: 8 }}>
-                {[['interested', 'Interested', '#2E7D32'], ['not_interested', 'Not Interested', '#B71C1C']].map(([val, label, color]) => {
+                {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6']].map(([val, label, color]) => {
                   const active = doneForm.outcome === val;
                   return (
                     <button key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
