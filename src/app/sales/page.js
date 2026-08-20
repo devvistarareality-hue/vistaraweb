@@ -609,7 +609,7 @@ function STMDashboard({ user }) {
             { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
             { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
             { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
-            { label: 'SV Done / Low Hanging', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
+            { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
             { label: 'SV Hot',  value: svHot,  icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/site-visits?tab=completed' },
             { label: 'SV Warm', value: svWarm, icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/site-visits?tab=completed' },
             { label: 'SV Cold', value: svCold, icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/site-visits?tab=completed' },
