@@ -176,6 +176,7 @@ function AdminDashboard({ user, adminView = false }) {
     { label: 'SV Hot',  value: stats.sv_hot_count,  icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: `${convHref}?tab=sv` },
     { label: 'SV Warm', value: stats.sv_warm_count, icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: `${convHref}?tab=sv` },
     { label: 'SV Cold', value: stats.sv_cold_count, icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: `${convHref}?tab=sv` },
+    { label: 'SV Not Interested', value: stats.sv_not_interested_count, icon: <IconActivity />, color: '#F3F4F6', textColor: '#6B7280', href: `${convHref}?tab=sv` },
     { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: `${convHref}?tab=closures` },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/closure' },
   ] : [];
@@ -568,6 +569,7 @@ function STMDashboard({ user }) {
   const svHot  = stats?.sv_hot_count  ?? 0;
   const svWarm = stats?.sv_warm_count ?? 0;
   const svCold = stats?.sv_cold_count ?? 0;
+  const svNotInterested = stats?.sv_not_interested_count ?? 0;
   const closed     = stats?.closures ?? count('stm_status', 'closed');
 
   // Funnel metrics: SQL = leads that reached warm; ratios & avg closure timeline.
@@ -613,6 +615,7 @@ function STMDashboard({ user }) {
             { label: 'SV Hot',  value: svHot,  icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/site-visits?tab=completed' },
             { label: 'SV Warm', value: svWarm, icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/site-visits?tab=completed' },
             { label: 'SV Cold', value: svCold, icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/site-visits?tab=completed' },
+            { label: 'SV Not Interested', value: svNotInterested, icon: <IconActivity />, color: '#F3F4F6', textColor: '#6B7280', href: '/sales/site-visits?tab=completed' },
             { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
             { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#EEF2FF', textColor: '#4F46E5' },
             { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: '#F5F3FF', textColor: '#7C3AED' },
