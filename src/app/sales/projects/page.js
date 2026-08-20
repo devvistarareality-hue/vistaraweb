@@ -113,6 +113,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     master_plan_url: project?.master_plan_url || '',
     eoi_unit_types:  project?.eoi_unit_types  || [],
     kiosk_enabled:   project?.kiosk_enabled   ?? false,
+    skip_telecaller: project?.skip_telecaller ?? false,
     floor_wise:       project?.floor_wise       ?? false,
     block_industrial: project?.block_industrial ?? false,
     floor_plans:     (project?.floor_plans?.length ? project.floor_plans : [{ floor: 0, label: 'Ground', prefix: 'Shop', from: 1, to: 12, image_url: '' }]),
@@ -396,6 +397,17 @@ function ProjectModal({ project, onClose, onSaved }) {
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.kiosk_enabled ? '#C7D2FE' : '#E5E7EB'}`, backgroundColor: form.kiosk_enabled ? '#EEF2FF' : '#FAFAFA' }}>
               <input type="checkbox" checked={form.kiosk_enabled} onChange={e => set('kiosk_enabled', e.target.checked)} style={{ accentColor: '#4F46E5' }} />
               <span style={{ fontWeight: 600, color: form.kiosk_enabled ? '#4338CA' : '#6B7280' }}>Enable Kiosk self-booking</span>
+            </label>
+            {/* Projects with no telecalling team hand their leads straight to sales. */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.skip_telecaller ? '#FED7AA' : '#E5E7EB'}`, backgroundColor: form.skip_telecaller ? '#FFF7ED' : '#FAFAFA' }}>
+              <input type="checkbox" checked={form.skip_telecaller} onChange={e => set('skip_telecaller', e.target.checked)} style={{ accentColor: '#E4571A', marginTop: 2 }} />
+              <span>
+                <span style={{ fontWeight: 600, color: form.skip_telecaller ? '#C2410C' : '#6B7280' }}>No telecaller — assign leads directly to STM</span>
+                <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
+                  For projects with no telecalling team. New leads skip the telecaller stage and go
+                  straight to an available STM, in auto distribution too.
+                </span>
+              </span>
             </label>
           </div>
 
