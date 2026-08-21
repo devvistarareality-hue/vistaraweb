@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import DateFilter from '../../../sales/_DateFilter';
+import { unitLabel } from '../../../../lib/bookingUnit';
 
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const isEoi = (b) => String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
@@ -279,7 +280,7 @@ export default function ModuleBookingsPage() {
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>
                           {isEoi(b)
                             ? <span style={{ color: '#E4571A' }}>{b.plot_numbers}</span>
-                            : <>Plot {b.plot_numbers || b.plot_number || b.area}</>}
+                            : <>{unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text}</>}
                           <span style={{ color: '#8492A6', fontWeight: 600 }}> · {b.client_name || '—'}</span>
                           <span style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', background: '#CCFBF1', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
                           {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}

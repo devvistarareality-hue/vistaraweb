@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../constants/api';
+import { unitLabel } from './../../lib/bookingUnit';
 
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
@@ -67,7 +68,7 @@ export function MyBookingsList() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>
-                      Plot {b.plot_numbers || b.plot_number || b.area} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {b.client_name || '—'}</span>
+                      {unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {b.client_name || '—'}</span>
                       {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
                     </div>
                     <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{b.phone} · Booked {b.booking_date || '—'}</div>

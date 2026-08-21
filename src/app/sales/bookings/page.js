@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
 import DateFilter from '../_DateFilter';
 import { isManagerRole } from '../../../lib/moduleAccess';
+import { unitLabel } from '../../../lib/bookingUnit';
 
 
 // Open the confidential LOI via a short-lived signed URL (never a public link).
@@ -269,7 +270,7 @@ export function BookingsContent({ adminView = false }) {
                         {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
                       </div>
                       {/* Project lives in the group header now — don't repeat it on every card. */}
-                      <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · Unit {b.plot_numbers || b.plot_number || b.area}</div>
+                      <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · {unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text}</div>
                       <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
