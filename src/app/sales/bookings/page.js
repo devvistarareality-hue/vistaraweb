@@ -327,7 +327,7 @@ export function BookingsContent({ adminView = false }) {
 // Cancelling frees the unit and destroys the signed LOI — irreversible, so spell out
 // exactly which booking is going and what it costs before letting it through.
 function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
-  const unit = b.plot_numbers || b.plot_number || b.area || '—';
+  const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div onClick={busy ? undefined : onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
