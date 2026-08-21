@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
 import DateFilter from '../_DateFilter';
+import { isManagerRole } from '../../../lib/moduleAccess';
 
 
 // Open the confidential LOI via a short-lived signed URL (never a public link).
@@ -23,7 +24,7 @@ export function BookingsContent({ adminView = false }) {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
-  const isApprover = me?.role === 'Admin' || me?.role === 'Manager' || me?.is_staff;
+  const isApprover = me?.role === 'Admin' || isManagerRole(me) || me?.is_staff;
   const isAdmin = me?.role === 'Admin' || me?.is_staff || (me?.admin_modules || []).includes('Sales');
   const [tab, setTab] = useState('pending');
   const [rows, setRows] = useState([]);

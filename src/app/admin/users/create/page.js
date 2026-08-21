@@ -7,8 +7,12 @@ import { fetchDesignations } from '../../../../redux/actions/designationActions'
 import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 import { ALL_MODULES } from '../../../../lib/moduleAccess';
+import { isManagerRole } from '../../../../lib/moduleAccess';
 
-const ROLES       = ['Manager', 'Employee', 'Intern', 'Kiosk'];
+// Seniority order, most senior first. Everything down to Manager carries manager
+// authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
+// unattended self-booking account -- so it sits apart at the end.
+const ROLES       = ['Director', 'General Manager', 'Manager', 'Employee', 'Intern', 'Kiosk'];
 
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
 
@@ -103,7 +107,7 @@ export default function CreateUserPage() {
       const updated = { ...f, [field]: next };
       // Managers get Manager Modules auto-mirrored from Modules — any Modules
       // change overwrites Manager Modules to match.
-      if (field === 'modules' && f.role === 'Manager') updated.manager_modules = next;
+      if (field === 'modules' && isManagerRole(f)) updated.manager_modules = next;
       return updated;
     });
   };
@@ -214,7 +218,7 @@ export default function CreateUserPage() {
                 value={form.role}
                 onChange={(e) => {
                   const role = e.target.value;
-                  setForm((f) => ({ ...f, role, manager_modules: role === 'Manager' ? f.modules : f.manager_modules }));
+                  setForm((f) => ({ ...f, role, manager_modules: isManagerRole({ role }) ? f.modules : f.manager_modules }));
                 }}
                 style={s.input}
               >
@@ -313,7 +317,7 @@ export default function CreateUserPage() {
           <div style={{ marginBottom: 28 }}>
             <label style={s.label}>
               Manager Modules
-              {form.role === 'Manager' && <span style={s.hintInline}> — auto-matches Modules</span>}
+              {isManagerRole(form) && <span style={s.hintInline}> — auto-matches Modules</span>}
             </label>
             <div style={s.checkGrid}>
               {ALL_MODULES.map((mod) => (
@@ -329,7 +333,7 @@ export default function CreateUserPage() {
             </div>
           </div>
 
-          {form.role === 'Manager' && (
+          {isManagerRole(form) && (
             <div style={{ marginBottom: 28 }}>
               <label style={s.label}>Admin Modules</label>
               <div style={s.checkGrid}>

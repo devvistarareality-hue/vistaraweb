@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
+import { isManagerRole } from '../../../lib/moduleAccess';
 
 
 const AUTO_PATTERNS = {
@@ -103,7 +104,7 @@ export default function ImportPage() {
 
   useEffect(() => {
     const hasSalesAccess = user && (
-      user.role === 'Admin' || user.role === 'Manager' || user.is_staff
+      user.role === 'Admin' || isManagerRole(user) || user.is_staff
       || (user.admin_modules || []).includes('Sales') || (user.modules || []).includes('Sales')
     );
     if (user && !hasSalesAccess) router.replace('/sales');

@@ -2,12 +2,13 @@
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { MODULE_META } from './moduleMeta';
+import { isManagerRole } from '../../../lib/moduleAccess';
 
 export default function ModuleOverview({ params }) {
   const slug = params.module;
   const meta = MODULE_META[slug] || { name: slug, accent: '#3D5AFE', desc: '' };
   const user = useSelector((s) => s.auth.user);
-  const canSeeTeam = user?.role === 'Manager' || user?.role === 'Admin' || user?.is_staff;
+  const canSeeTeam = isManagerRole(user) || user?.role === 'Admin' || user?.is_staff;
 
   return (
     <div style={{ padding: '28px 32px' }}>

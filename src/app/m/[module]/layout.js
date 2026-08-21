@@ -7,7 +7,7 @@ import { logout } from '../../../redux/actions/authActions';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adminFilterReducer';
 import { MODULE_META } from './moduleMeta';
-import { moduleAccess, SLUG_TO_MODULE } from '../../../lib/moduleAccess';
+import {SLUG_TO_MODULE, isManagerRole, moduleAccess} from '../../../lib/moduleAccess';
 import { AUTH_ENDPOINTS } from '../../../constants/api';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
 
@@ -78,7 +78,7 @@ export default function ModuleLayout({ children, params }) {
   }, [user, slug]);
 
   const isAdmin = user?.role === 'Admin' || user?.is_staff;
-  const isManager = user?.role === 'Manager';
+  const isManager = isManagerRole(user);
   const base = `/m/${slug}`;
   const NAV = [
     { label: 'Overview', href: base, icon: <IconGrid /> },

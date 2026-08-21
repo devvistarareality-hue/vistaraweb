@@ -10,7 +10,7 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import { moduleAccess, isSuperAdmin } from '../../lib/moduleAccess';
+import {isManagerRole, isSuperAdmin, moduleAccess} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -231,7 +231,7 @@ export default function SalesLayout({ children }) {
   const isCp = des.includes('cp executive') || des.includes('channel partner');
   // Managers oversee the sales floor, so they also get the STM-portal modules
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
-  const isManager = user?.role === 'Manager';
+  const isManager = isManagerRole(user);
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
     : (isCp || des.includes('cp cluster head'))

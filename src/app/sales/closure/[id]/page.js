@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import { stripPlotPrefix } from '../../../../lib/plotNumber';
+import { isManagerRole } from '../../../../lib/moduleAccess';
 
 
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
@@ -69,7 +70,7 @@ export default function ClosureViewerPage() {
   const { id }  = useParams();
   const router  = useRouter();
   const user    = useSelector((s) => s.auth.user);
-  const isManager = user?.role === 'Admin' || user?.role === 'Manager' || user?.is_staff;
+  const isManager = user?.role === 'Admin' || isManagerRole(user) || user?.is_staff;
 
   const [project, setProject] = useState(null);
   const [plots,   setPlots]   = useState([]);

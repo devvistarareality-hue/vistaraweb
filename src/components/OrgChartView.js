@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
+import { isManagerRole } from '../lib/moduleAccess';
 
 
 // Reusable org chart. `module` scopes to a department (admins only); `scope="all"`
@@ -60,7 +61,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
         _root: true, children: [meNode],
       };
     }
-    let tops = team.filter((m) => m.role === 'Manager' && !m.reporting_manager_id);
+    let tops = team.filter((m) => isManagerRole(m) && !m.reporting_manager_id);
     if (!tops.length) tops = team.filter((m) => !m.reporting_manager_id || !byId[m.reporting_manager_id]);
     tops = sortSiblings(tops);
     // Always show a department/company header so the context is consistent.
@@ -195,7 +196,7 @@ function accentFor(node) {
   if (d.includes('stm') || d.includes('sales'))           return '#2563EB';
   if (d.includes('market'))                               return '#DB2777';
   if (d.includes('account') || d.includes('finance'))     return '#0D9488';
-  if (node.role === 'Manager')                            return '#7C3AED';
+  if (isManagerRole(node))                            return '#7C3AED';
   return '#64748B';
 }
 

@@ -6,8 +6,12 @@ import { fetchUsers, updateUser, deleteUser, resetUpdateUser } from '../../../re
 import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
+import { isManagerRole } from '../../../lib/moduleAccess';
 
-const ROLES       = ['Manager', 'Employee', 'Intern', 'Kiosk'];
+// Seniority order, most senior first. Everything down to Manager carries manager
+// authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
+// unattended self-booking account -- so it sits apart at the end.
+const ROLES       = ['Director', 'General Manager', 'Manager', 'Employee', 'Intern', 'Kiosk'];
 
 const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
 const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
@@ -149,7 +153,7 @@ export default function UserManagementPage() {
       const updated = { ...f, [field]: next };
       // Managers get Manager Modules auto-mirrored from Modules — any Modules
       // change overwrites Manager Modules to match.
-      if (field === 'modules' && f.role === 'Manager') updated.manager_modules = next;
+      if (field === 'modules' && isManagerRole(f)) updated.manager_modules = next;
       return updated;
     });
   };
@@ -287,7 +291,7 @@ export default function UserManagementPage() {
                   <label style={mLbl}>Role</label>
                   <select value={form.role || 'Employee'} onChange={(e) => {
                     const role = e.target.value;
-                    setForm((f) => ({ ...f, role, manager_modules: role === 'Manager' ? (f.modules || []) : f.manager_modules }));
+                    setForm((f) => ({ ...f, role, manager_modules: isManagerRole({ role }) ? (f.modules || []) : f.manager_modules }));
                   }} style={{ ...mInp, cursor: 'pointer' }}>
                     {ROLES.map((r) => <option key={r}>{r}</option>)}
                   </select>
@@ -334,7 +338,7 @@ export default function UserManagementPage() {
 
               <div style={mSec}>
                 Manager Modules
-                {form.role === 'Manager' && <span style={{ textTransform: 'none', fontWeight: 500, color: '#9CA3AF', letterSpacing: 0 }}> — auto-matches Modules</span>}
+                {isManagerRole(form) && <span style={{ textTransform: 'none', fontWeight: 500, color: '#9CA3AF', letterSpacing: 0 }}> — auto-matches Modules</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                 {ALL_MODULES.map((mod) => (
@@ -345,7 +349,7 @@ export default function UserManagementPage() {
                 ))}
               </div>
 
-              {form.role === 'Manager' && (
+              {isManagerRole(form) && (
                 <>
                   <div style={mSec}>Admin Modules</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>

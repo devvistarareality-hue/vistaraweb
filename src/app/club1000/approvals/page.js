@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS, SALES_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import { isClub1000Manager } from '../../../lib/moduleAccess';
+import {isClub1000Manager, isManagerRole} from '../../../lib/moduleAccess';
 import { fmtMoney } from '../_StatCard';
 
 const TEAL = '#00838F';
@@ -95,7 +95,7 @@ export default function InvestorApprovalsPage() {
   useEffect(() => {
     if (!manager) return;
     apiFetch(SALES_ENDPOINTS.usersSlim).then((r) => (r.ok ? r.json() : []))
-      .then((d) => setManagers(Array.isArray(d) ? d.filter((u) => u.role === 'Manager' || u.role === 'Admin') : []))
+      .then((d) => setManagers(Array.isArray(d) ? d.filter((u) => isManagerRole(u) || u.role === 'Admin') : []))
       .catch(() => {});
   }, [manager]);
 
