@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
-import { isManagerRole } from '../../../lib/moduleAccess';
 
 
 function RoleBadge({ role }) {
@@ -31,12 +30,14 @@ function DesigBadge({ desig }) {
 }
 
 // Frontline designations always take project assignments — that is how leads are
-// routed to them. Manager-level roles take them too, because an assignment is what
-// confines a manager's leads/visits/closures to those projects (see
-// manager_project_ids in the backend); without this there was no way to scope one.
+// routed to them. Manager takes them too, because an assignment is what confines a
+// manager's leads/visits/closures to those projects (see manager_project_ids in the
+// backend). Director and General Manager sit above the project line: they always see
+// the whole company, so offering them an assignment would imply a limit that does
+// not exist. Keep in step with PROJECT_SCOPED_ROLES on the backend.
 const ASSIGN_DESIGS = ['TELECALLER', 'STM'];
 const canHoldProjects = (m) =>
-  ASSIGN_DESIGS.includes((m?.designation || '').toUpperCase()) || isManagerRole(m);
+  ASSIGN_DESIGS.includes((m?.designation || '').toUpperCase()) || m?.role === 'Manager';
 
 function FilterChip({ label, active, onClick }) {
   return (
