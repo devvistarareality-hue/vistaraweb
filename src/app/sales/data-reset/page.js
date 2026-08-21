@@ -31,6 +31,7 @@ export default function DataResetPage() {
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirmText, setConfirmText] = useState('');
+  const [resetKey, setResetKey] = useState('');
   const [withAttendance, setWithAttendance] = useState(false);
   const [withLoi, setWithLoi] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -69,7 +70,7 @@ export default function DataResetPage() {
     try {
       const res = await fetch(SALES_ENDPOINTS.dataReset + cq('?'), {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ confirm: 'DELETE', targets: [...selected], with_attendance: withAttendance, with_loi_files: withLoi }),
+        body: JSON.stringify({ confirm: 'DELETE', reset_key: resetKey, targets: [...selected], with_attendance: withAttendance, with_loi_files: withLoi }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) { setMsg('✅ Trial data cleared. Your CRM is now a clean slate.'); setConfirmText(''); load(); }
@@ -151,18 +152,23 @@ export default function DataResetPage() {
       <div style={{ background: '#FEF2F2', border: `1.5px solid ${RED}`, borderRadius: 14, padding: 18 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: RED, marginBottom: 6 }}>⚠️ Danger zone — this cannot be undone</div>
         <p style={{ fontSize: 13, color: '#7F1D1D', marginBottom: 12 }}>
-          Take a Railway database backup first. Then type <b>DELETE</b> to enable the button.
+          Take a Railway database backup first. Then type <b>DELETE</b> and enter the reset key.
         </p>
         <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="Type DELETE"
           style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 10, border: `1.5px solid ${RED}66`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }} />
+        {/* The key is held in the server environment, not in the app — so being signed
+            in as an admin is not by itself enough to wipe the company's data. */}
+        <input type="password" value={resetKey} onChange={(e) => setResetKey(e.target.value)}
+          placeholder="Reset key" autoComplete="new-password"
+          style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 10, border: `1.5px solid ${RED}66`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box', display: 'block' }} />
         <div>
           {(() => {
-            const ready = confirmText === 'DELETE' && !busy && !nothingSelected;
+            const ready = confirmText === 'DELETE' && !!resetKey.trim() && !busy && !nothingSelected;
             return (
               <button onClick={doReset} disabled={!ready}
                 style={{ padding: '11px 22px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 800,
                   background: ready ? RED : '#F3B4B4', color: '#fff', cursor: ready ? 'pointer' : 'not-allowed' }}>
-                {busy ? 'Clearing…' : nothingSelected ? 'Select at least one item' : `Permanently delete ${total} records`}
+                {busy ? 'Clearing…' : nothingSelected ? 'Select at least one item' : !resetKey.trim() ? 'Enter the reset key' : `Permanently delete ${total} records`}
               </button>
             );
           })()}
