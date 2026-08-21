@@ -113,6 +113,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  // Same inline outcome capture as the Lead Detail modal — a manual lead created
+  // directly at STM Status = sv_done needs its visit outcome too, recorded on an
+  // auto-created completed SiteVisit right after the lead itself.
+  const [svOutcome, setSvOutcome] = useState('');
+  const [svVisitedDate, setSvVisitedDate] = useState(new Date().toLocaleDateString('en-CA'));
   // Same inline scheduler as the Lead Detail modal — filled in here it's created
   // right after the lead itself, so a manual lead can arrive with its first call booked.
   const [fuForm, setFuForm] = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
@@ -126,6 +131,9 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (!form.name || !form.phone) { setErr('Name and phone are required.'); return; }
     if (!form.project) { setErr('Project is required.'); return; }
     if (!form.source)  { setErr('Source is required.'); return; }
+    if (showStm && form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
+      setErr('Please pick a visit outcome and visit date.'); return;
+    }
     setSaving(true);
     const body = { name: form.name, phone: form.phone };
     if (form.alt_phone) body.alt_phone = form.alt_phone;
@@ -149,6 +157,27 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     });
     const data = await res.json();
     if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
+
+    // A lead created directly at STM Status = sv_done needs the visit itself on
+    // record too — same as marking a scheduled visit done, just with no prior
+    // "scheduled" row to complete. Best-effort: the lead is already saved.
+    if (showStm && form.stm_status === 'sv_done' && data?.id && svOutcome && svVisitedDate) {
+      const now = new Date();
+      const visitedAt = new Date(`${svVisitedDate}T00:00:00`);
+      visitedAt.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+      const visitedIso = visitedAt.toISOString();
+      try {
+        await fetch(SALES_ENDPOINTS.siteVisits, {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({
+            lead: data.id, project: form.project || null,
+            scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
+            stm: form.stm || user?.id,
+            outcome: svOutcome, remarks: form.stm_remarks || '',
+          }),
+        });
+      } catch { /* ignore */ }
+    }
 
     // Schedule the first follow-up against the lead we just created. Best-effort: the
     // lead is already saved, so a failure here must not read as "lead not added".
@@ -349,6 +378,35 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 <label style={addLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder="Optional" style={addTa} />
               </div>
+
+              {/* A lead added directly at sv_done needs its visit outcome recorded too —
+                  same panel as the Lead Detail modal's inline "Visit Outcome". */}
+              {form.stm_status === 'sv_done' && (
+                <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <span style={{ color: '#15803D' }}>📍</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6'], ['not_interested', 'Not Interested', '#6B7280']].map(([val, label, color]) => {
+                      const active = svOutcome === val;
+                      return (
+                        <button key={val} type="button" onClick={() => setSvOutcome(val)}
+                          style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                            border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <label style={{ ...addLbl, color: '#166534' }}>Visit Date *</label>
+                    <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
+                      onChange={(e) => setSvVisitedDate(e.target.value)} style={addInp} />
+                  </div>
+                  {!svOutcome && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
+                </div>
+              )}
             </>
           )}
 
@@ -468,6 +526,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   // auto-created/completed SiteVisit, same as the dedicated Site Visits "Mark
   // Done" flow. Does not change the lead's own stm_status (stays "sv done").
   const [svOutcome, setSvOutcome] = useState('');
+  const [svVisitedDate, setSvVisitedDate] = useState('');
 
   useEffect(() => {
     setForm({
@@ -488,7 +547,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setDetail(null);
     setSvScheduledAt('');
     setSvRemarks('');
-    setSvOutcome('');
+    // A lead already at sv_done carries its visit's outcome on the list row
+    // (LeadListView annotates it) — prefill instantly instead of forcing a
+    // re-pick every time the lead is reopened; the exact visit date is refined
+    // below once the full site-visit record arrives.
+    setSvOutcome(lead.stm_status === 'sv_done' ? (lead.sv_outcome || '') : '');
+    const defaultVisitedDate = new Date().toLocaleDateString('en-CA');
+    setSvVisitedDate(defaultVisitedDate);
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
       if (!res.ok) return;
@@ -506,6 +571,18 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
         stm_status: f.stm_status === (lead.stm_status || '') ? (data.stm_status || '') : f.stm_status,
         telecaller_status: f.telecaller_status === (lead.telecaller_status || '') ? (data.telecaller_status || '') : f.telecaller_status,
       }));
+      // Refine the sv_done prefill with the actual latest completed visit — its real
+      // outcome and the date it happened on, rather than just today's date.
+      if (data.stm_status === 'sv_done') {
+        const latestSv = (data.site_visits || [])
+          .filter((v) => v.status === 'completed' && v.visited_at)
+          .sort((a, b) => new Date(b.visited_at) - new Date(a.visited_at))[0];
+        if (latestSv) {
+          setSvOutcome((cur) => cur || latestSv.outcome || '');
+          const realDate = new Date(latestSv.visited_at).toLocaleDateString('en-CA');
+          setSvVisitedDate((cur) => (cur === defaultVisitedDate ? realDate : cur));
+        }
+      }
     }
     loadDetail();
   }, [lead?.id]);
@@ -518,8 +595,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     if (_isStm && (!form.stm_status || !(form.stm_remarks || '').trim())) {
       setSaveErr('Please set STM Status and add STM Remarks before saving.'); return;
     }
-    if (form.stm_status === 'sv_done' && !svOutcome) {
-      setSaveErr('Please pick a visit outcome (Hot, Warm or Cold).'); return;
+    if (form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
+      setSaveErr('Please pick a visit outcome and visit date.'); return;
     }
     setSaveErr('');
     setSaving(true);
@@ -596,18 +673,23 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
           const list = svRes.ok ? await svRes.json() : [];
           const pending = (Array.isArray(list) ? list : []).filter(v => v.status === 'scheduled')
             .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))[0];
-          const now = new Date().toISOString();
+          // Keeps the current time-of-day but lets the date itself be backdated to
+          // when the visit actually happened.
+          const visitedNow = new Date();
+          const visitedAt = new Date(`${svVisitedDate}T00:00:00`);
+          visitedAt.setHours(visitedNow.getHours(), visitedNow.getMinutes(), visitedNow.getSeconds(), 0);
+          const visitedIso = visitedAt.toISOString();
           if (pending) {
             await fetch(SALES_ENDPOINTS.siteVisit(pending.id), {
               method: 'PATCH', headers: authHeaders(),
-              body: JSON.stringify({ status: 'completed', visited_at: now, outcome: svOutcome, remarks: form.stm_remarks || '' }),
+              body: JSON.stringify({ status: 'completed', visited_at: visitedIso, outcome: svOutcome, remarks: form.stm_remarks || '' }),
             });
           } else {
             await fetch(SALES_ENDPOINTS.siteVisits, {
               method: 'POST', headers: authHeaders(),
               body: JSON.stringify({
                 lead: lead.id, project: form.project || null,
-                scheduled_at: now, visited_at: now, status: 'completed',
+                scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
                 stm: form.stm || user?.id, referred_by_telecaller: form.telecaller || null,
                 outcome: svOutcome, remarks: form.stm_remarks || '',
               }),
@@ -909,6 +991,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                         </button>
                       );
                     })}
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <label style={{ ...mLbl, color: '#166534' }}>Visit Date *</label>
+                    <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
+                      onChange={(e) => setSvVisitedDate(e.target.value)} style={mInp} />
                   </div>
                   {!svOutcome && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
                 </div>
