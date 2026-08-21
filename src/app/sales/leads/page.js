@@ -491,7 +491,21 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setSvOutcome('');
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
-      if (res.ok) setDetail(await res.json());
+      if (!res.ok) return;
+      const data = await res.json();
+      setDetail(data);
+      // The list row this form was seeded from can be stale (fetched before someone
+      // else's later update) — every save resends `status`/`stm_status`/`telecaller_status`
+      // regardless of whether they were touched, so a stale value silently regresses a
+      // status another user already advanced (e.g. STM sets warm, then an unrelated
+      // resave reverts it to warm_transferred). Once the authoritative record arrives,
+      // correct any of these three the user hasn't already started editing.
+      setForm((f) => ({
+        ...f,
+        status: f.status === lead.status ? data.status : f.status,
+        stm_status: f.stm_status === (lead.stm_status || '') ? (data.stm_status || '') : f.stm_status,
+        telecaller_status: f.telecaller_status === (lead.telecaller_status || '') ? (data.telecaller_status || '') : f.telecaller_status,
+      }));
     }
     loadDetail();
   }, [lead?.id]);
