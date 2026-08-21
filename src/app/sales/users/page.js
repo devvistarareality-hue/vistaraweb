@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
+import { isManagerRole } from '../../../lib/moduleAccess';
 
 
 function RoleBadge({ role }) {
@@ -29,7 +30,13 @@ function DesigBadge({ desig }) {
   );
 }
 
+// Frontline designations always take project assignments — that is how leads are
+// routed to them. Manager-level roles take them too, because an assignment is what
+// confines a manager's leads/visits/closures to those projects (see
+// manager_project_ids in the backend); without this there was no way to scope one.
 const ASSIGN_DESIGS = ['TELECALLER', 'STM'];
+const canHoldProjects = (m) =>
+  ASSIGN_DESIGS.includes((m?.designation || '').toUpperCase()) || isManagerRole(m);
 
 function FilterChip({ label, active, onClick }) {
   return (
@@ -147,7 +154,7 @@ export default function SalesUsersPage() {
       setProjects(Array.isArray(projRes) ? projRes : []);
 
       // Load project counts for TELECALLER/STM users (best-effort — backend may not be deployed yet)
-      const assignable = teamList.filter(m => ASSIGN_DESIGS.includes(m.designation?.toUpperCase()));
+      const assignable = teamList.filter(canHoldProjects);
       const counts = {};
       await Promise.allSettled(assignable.map(async m => {
         try {
@@ -190,7 +197,7 @@ export default function SalesUsersPage() {
     return true;
   });
 
-  const isAssignable = (m) => ASSIGN_DESIGS.includes(m.designation?.toUpperCase());
+  const isAssignable = (m) => canHoldProjects(m);
 
   return (
     <div style={{ padding: '24px 28px' }}>
