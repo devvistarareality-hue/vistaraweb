@@ -73,7 +73,7 @@ export function SiteVisitsContent({ adminView = false }) {
 
   // "Mark Done" modal — outcome + remarks are required before a visit can be closed out.
   const [doneSv,   setDoneSv]   = useState(null);
-  const [doneForm, setDoneForm] = useState({ outcome: '', remarks: '' });
+  const [doneForm, setDoneForm] = useState({ outcome: '', remarks: '', visitedDate: '' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -145,13 +145,22 @@ export function SiteVisitsContent({ adminView = false }) {
 
   function openDone(sv) {
     setErr('');
-    setDoneForm({ outcome: '', remarks: '' });
+    setDoneForm({ outcome: '', remarks: '', visitedDate: new Date().toLocaleDateString('en-CA') });
     setDoneSv(sv);
   }
 
+  // Keeps the current time-of-day (so same-day orders still make sense) but lets
+  // the date itself be backdated to when the visit actually happened.
+  function visitedAtFromDate(dateStr) {
+    const now = new Date();
+    const d = new Date(`${dateStr}T00:00:00`);
+    d.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+    return d.toISOString();
+  }
+
   async function submitDone() {
-    if (!doneForm.outcome || !doneForm.remarks.trim()) {
-      setErr('Outcome and remarks are required to mark a visit as done.');
+    if (!doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate) {
+      setErr('Outcome, visit date and remarks are required to mark a visit as done.');
       return;
     }
     setSaving(true); setErr('');
@@ -159,7 +168,7 @@ export function SiteVisitsContent({ adminView = false }) {
       const res = await fetch(SALES_ENDPOINTS.siteVisit(doneSv.id), {
         method: 'PATCH', headers: authHeaders(),
         body: JSON.stringify({
-          status: 'completed', visited_at: new Date().toISOString(),
+          status: 'completed', visited_at: visitedAtFromDate(doneForm.visitedDate),
           outcome: doneForm.outcome, remarks: doneForm.remarks.trim(),
         }),
       });
@@ -410,6 +419,11 @@ export function SiteVisitsContent({ adminView = false }) {
               </div>
             </div>
             <div style={{ marginBottom: 12 }}>
+              <label style={lbl}>Visit Date *</label>
+              <input type="date" value={doneForm.visitedDate} max={new Date().toLocaleDateString('en-CA')}
+                onChange={(e) => setDoneForm({ ...doneForm, visitedDate: e.target.value })} style={inp} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Remarks *</label>
               <textarea value={doneForm.remarks} onChange={(e) => setDoneForm({ ...doneForm, remarks: e.target.value })} rows={3}
                 style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} placeholder="What happened on the visit…" />
@@ -417,8 +431,8 @@ export function SiteVisitsContent({ adminView = false }) {
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
               <button onClick={() => setDoneSv(null)} style={{ padding: '9px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={submitDone} disabled={saving || !doneForm.outcome || !doneForm.remarks.trim()}
-                style={{ ...btnPrimary, opacity: (saving || !doneForm.outcome || !doneForm.remarks.trim()) ? 0.5 : 1 }}>
+              <button onClick={submitDone} disabled={saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate}
+                style={{ ...btnPrimary, opacity: (saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate) ? 0.5 : 1 }}>
                 {saving ? 'Saving…' : 'Save'}
               </button>
             </div>
