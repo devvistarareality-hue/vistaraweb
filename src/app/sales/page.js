@@ -109,33 +109,33 @@ function StatusBadge({ status }) {
   );
 }
 
-function StatCard({ label, value, icon, color, textColor, href, loading }) {
+function StatCard({ label, value, icon, color, textColor, href, loading, flat }) {
+  // `flat` tiles live inside a section panel, so they drop the white card and its
+  // shadow — the panel already provides both — and sit tighter.
   const inner = (
-    <div style={{ ...card, textDecoration: 'none', display: 'block' }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor, marginBottom: 12 }}>
+    <div style={flat ? tile : { ...card, textDecoration: 'none', display: 'block' }}>
+      <div style={{ width: flat ? 32 : 40, height: flat ? 32 : 40, borderRadius: 9, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor, marginBottom: flat ? 8 : 12 }}>
         {icon}
       </div>
       {loading
-        ? <div style={{ height: 28, width: 48, borderRadius: 6, background: '#E8ECF4', animation: 'pulse 1.4s ease infinite' }} />
-        : <div style={{ fontSize: 26, fontWeight: 800, color: '#1A1A2E', lineHeight: 1 }}>{(value ?? 0).toLocaleString()}</div>
+        ? <div style={{ height: 24, width: 42, borderRadius: 6, background: '#E8ECF4', animation: 'pulse 1.4s ease infinite' }} />
+        : <div style={{ fontSize: flat ? 22 : 26, fontWeight: 800, color: '#1A1A2E', lineHeight: 1 }}>{(value ?? 0).toLocaleString()}</div>
       }
-      <div style={{ fontSize: 12, color: '#8492A6', marginTop: 4, lineHeight: 1.3, minHeight: 31 }}>{label}</div>
+      <div style={{ fontSize: 11.5, color: '#8492A6', marginTop: 4, lineHeight: 1.3, minHeight: flat ? 28 : 31 }}>{label}</div>
     </div>
   );
   return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
 }
 
-// A labelled block of tiles. Columns are a fixed width rather than 1fr so a
-// three-tile section and a four-tile one line up on the same grid instead of
-// each stretching to fill the row.
+// A group of related tiles in one panel. The panels themselves flow in a grid
+// (see sectionsWrap), so two or three groups sit side by side and a group of two
+// no longer stretches across the whole page.
 function StatSection({ title, cards, loading }) {
   return (
-    <section style={{ marginBottom: 18 }}>
+    <section style={panel}>
       <h3 style={sectionLabel}>{title}</h3>
       <div style={sectionGrid}>
-        {cards.map((c) => (loading
-          ? <div key={c.label} style={{ ...card, height: 90, background: '#E8ECF4', animation: 'pulse 1.4s ease infinite' }} />
-          : <StatCard key={c.label} {...c} />))}
+        {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
       </div>
     </section>
   );
@@ -534,10 +534,10 @@ function TelecallerDashboard({ user }) {
         </div>
       </div>
 
-      {/* Stats, grouped */}
-      {loading
-        ? sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading />)
-        : sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} />)}
+      {/* Stats, grouped into panels */}
+      <div style={sectionsWrap}>
+        {sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
+      </div>
 
       {/* Trend Charts */}
       {selectedMonths.length > 0 && (
@@ -656,6 +656,7 @@ function STMDashboard({ user }) {
 
       <DateFilter onChange={setEff} />
 
+      <div style={sectionsWrap}>
       {[
         { title: 'My Pipeline', cards: [
           { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: withDate('/sales/leads') },
@@ -681,6 +682,7 @@ function STMDashboard({ user }) {
           { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FFF1F2', textColor: '#E11D48' },
         ] },
       ].map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
+      </div>
       {!loading && trend && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           {[
@@ -767,8 +769,13 @@ export default function SalesDashboard() {
 // Shared styles
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
-const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 8px' };
-const sectionGrid  = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px,178px))', gap: 10 };
+const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 10px' };
+// Panels flow side by side and only wrap when they run out of room, so the page
+// fills its width instead of giving each group a near-empty row of its own.
+const sectionsWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px,1fr))', gap: 14, alignItems: 'start', marginBottom: 24 };
+const panel        = { backgroundColor: '#fff', borderRadius: 16, padding: '14px 16px 16px', border: '1px solid #E8ECF4', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' };
+const sectionGrid  = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(92px,1fr))', gap: 8 };
+const tile         = { backgroundColor: '#F8F9FB', border: '1px solid #EEF1F6', borderRadius: 12, padding: '11px 11px 9px', textDecoration: 'none', display: 'block' };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
 const tbl       = { width: '100%', borderCollapse: 'collapse' };
