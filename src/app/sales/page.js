@@ -127,9 +127,8 @@ function StatCard({ label, value, icon, color, textColor, href, loading, flat })
   return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
 }
 
-// A group of related tiles in one panel. The panels themselves flow in a grid
-// (see sectionsWrap), so two or three groups sit side by side and a group of two
-// no longer stretches across the whole page.
+// A group of related tiles in one panel. The panels are laid out by .dash-sections
+// in globals.css, which carries the breakpoints inline styles cannot express.
 function StatSection({ title, cards, loading }) {
   // One column per tile, each free to shrink (minmax(0,1fr)), so a group always
   // shows its tiles on a single row and never strands one on a row of its own.
@@ -138,7 +137,7 @@ function StatSection({ title, cards, loading }) {
   return (
     <section style={panel}>
       <h3 style={sectionLabel}>{title}</h3>
-      <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))` }}>
+      <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))`, maxWidth: cards.length * 168 }}>
         {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
       </div>
     </section>
@@ -539,7 +538,7 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Stats, grouped into panels */}
-      <div style={sectionsWrap}>
+      <div className="dash-sections">
         {sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
       </div>
 
@@ -660,7 +659,7 @@ function STMDashboard({ user }) {
 
       <DateFilter onChange={setEff} />
 
-      <div style={sectionsWrap}>
+      <div className="dash-sections">
       {[
         { title: 'My Pipeline', cards: [
           { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: withDate('/sales/leads') },
@@ -774,14 +773,9 @@ export default function SalesDashboard() {
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
 const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 10px' };
-// Every panel is the same width whatever it holds, so they line up cleanly and
-// drop from four across to three, two and one as the window narrows. Flex rather
-// than grid specifically so a part-full last row centres: grid places a lone item
-// in column one, hard against the left, which is what looked lopsided.
-// align-items start keeps each panel only as tall as its own content instead of
-// stretching to match the tallest in its row.
-const sectionsWrap = { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start', gap: 14, marginBottom: 24 };
-const panel        = { flex: '1 1 300px', maxWidth: 'min(100%, 380px)', backgroundColor: '#fff', borderRadius: 16, padding: '14px 16px 16px', border: '1px solid #E8ECF4', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', minWidth: 0 };
+// Panel layout lives in globals.css as .dash-sections: 1 column, then 2, then 4,
+// so the row is always full and no group is stranded on a row of its own.
+const panel        = { backgroundColor: '#fff', borderRadius: 16, padding: '14px 16px 16px', border: '1px solid #E8ECF4', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', minWidth: 0 };
 const sectionGrid  = { display: 'grid', gap: 8 };
 const tile         = { backgroundColor: '#F8F9FB', border: '1px solid #EEF1F6', borderRadius: 12, padding: '11px 11px 9px', textDecoration: 'none', display: 'block' };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };

@@ -197,3 +197,27 @@ input[type="number"]::-webkit-inner-spin-button {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Sales dashboard tile groups.
+   Column counts that divide the group count evenly — 1, then 2, then 4, never 3 —
+   so the panels always fill the row edge to edge and no group is left stranded on
+   a row of its own. Media queries live here because the dashboards style inline,
+   and inline styles cannot express a breakpoint. */
+.dash-sections {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+  grid-template-columns: 1fr;
+  margin-bottom: 24px;
+}
+@media (min-width: 700px) {
+  .dash-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* An odd last group spans the row instead of leaving a hole beside it. */
+  .dash-sections > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 1500px) {
+  .dash-sections { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dash-sections > :last-child:nth-child(4n + 1) { grid-column: span 4; }
+  .dash-sections > :last-child:nth-child(4n + 2) { grid-column: span 3; }
+  .dash-sections > :last-child:nth-child(4n + 3) { grid-column: span 2; }
+}
