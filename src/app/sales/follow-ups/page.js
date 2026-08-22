@@ -37,6 +37,13 @@ export function FollowUpsContent({ adminView = false }) {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  // Deep link from the dashboard's Pending / Overdue tiles, e.g. ?filter=overdue.
+  // Read in an effect, not a lazy initialiser: during a Next client navigation
+  // window.location isn't committed yet when the initialiser runs.
+  useEffect(() => {
+    const f = new URLSearchParams(window.location.search).get('filter');
+    if (TABS.some((t) => t.key === f)) setFilter(f);
+  }, []);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo,   setDateTo]   = useState('');
   // Completion modal: capture remarks + optionally schedule the next follow-up.

@@ -337,6 +337,10 @@ function TelecallerDashboard({ user }) {
   const callback = stats?.callback_count ?? 0;
   const svDone   = stats?.sv_done        ?? 0;
   const closed   = stats?.closures       ?? 0;
+  // Backlog tiles: what is still waiting to be worked, as opposed to what was done.
+  const toCall     = stats?.to_call_count           ?? 0;
+  const fuPending  = stats?.followup_pending_count  ?? 0;
+  const fuOverdue  = stats?.followup_overdue_count  ?? 0;
   // MQLs per completed site visit, e.g. "4.0 : 1" = four dispositioned leads for
   // every visit. Divides by SV, so it needs svDone (not called) to be non-zero.
   const mqlToSv  = svDone > 0 ? (called / svDone).toFixed(1) + ' : 1' : '—';
@@ -344,6 +348,7 @@ function TelecallerDashboard({ user }) {
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
     { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
+    { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
     { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
     { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#EEF2FF', textColor: '#4338CA', href: '/sales/follow-ups' },
     { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
@@ -351,6 +356,8 @@ function TelecallerDashboard({ user }) {
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
     { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
     { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?tab=called&telecaller_status=callback' },
+    { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
+    { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
     { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
   ];
 
@@ -490,7 +497,7 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Stats */}
-      {loading ? <SkeletonGrid count={8} /> : (
+      {loading ? <SkeletonGrid count={13} /> : (
         <div style={statsGrid}>
           {cards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
@@ -565,6 +572,10 @@ function STMDashboard({ user }) {
   const svSched    = stats?.stm_sv_scheduled_count ?? count('stm_status', 'sv_scheduled');
   const svDone     = stats?.sv_done ?? count('stm_status', 'sv_done');
   const closed     = stats?.closures ?? count('stm_status', 'closed');
+  // Backlog tiles: leads handed over but not yet worked, and follow-ups still open.
+  const toWork     = stats?.to_call_count           ?? count('stm_status', '');
+  const fuPending  = stats?.followup_pending_count  ?? 0;
+  const fuOverdue  = stats?.followup_overdue_count  ?? 0;
 
   // Funnel metrics: SQL = leads that reached warm; ratios & avg closure timeline.
   const sql          = stats?.sql_count ?? warm;
@@ -599,10 +610,11 @@ function STMDashboard({ user }) {
 
       <DateFilter onChange={setEff} />
 
-      {loading ? <SkeletonGrid count={10} grid={stmStatsGrid} /> : (
+      {loading ? <SkeletonGrid count={13} grid={stmStatsGrid} /> : (
         <div style={stmStatsGrid}>
           {[
             { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
+            { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
             { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
             { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
             { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
@@ -611,6 +623,8 @@ function STMDashboard({ user }) {
             { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
             { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#EEF2FF', textColor: '#4F46E5' },
             { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: '#F5F3FF', textColor: '#7C3AED' },
+            { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
+            { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
             { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FFF1F2', textColor: '#E11D48' },
           ].map((c) => <StatCard key={c.label} {...c} />)}
         </div>
@@ -702,7 +716,8 @@ export default function SalesDashboard() {
 // Shared styles
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
-// STM/CP dashboard has 10 cards — force even rows (5 per row) instead of orphaning the last card.
+// STM/CP dashboard has 13 cards — a fixed 5 per row keeps the rows aligned
+// (5/5/3) instead of auto-fit leaving a single card stranded on its own row.
 const stmStatsGrid = { display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 10, marginBottom: 28 };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
