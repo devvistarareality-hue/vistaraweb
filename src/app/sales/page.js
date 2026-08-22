@@ -131,8 +131,15 @@ function StatCard({ label, value, icon, color, textColor, href, loading, flat })
 // (see sectionsWrap), so two or three groups sit side by side and a group of two
 // no longer stretches across the whole page.
 function StatSection({ title, cards, loading }) {
+  // Width tracks tile count: basis is the tightest one row of tiles can be
+  // (86px each + gaps + padding), so all the groups fit across a desktop rather
+  // than one being pushed onto a row of its own. maxWidth caps how far a panel
+  // grows, so a group that does wrap sits at a sane width instead of stretching
+  // edge to edge with balloon-sized tiles. minWidth 0 lets it shrink on a phone,
+  // where the inner auto-fit grid re-flows the tiles onto two rows.
+  const basis = cards.length * 94 + 24;
   return (
-    <section style={panel}>
+    <section style={{ ...panel, flex: `1 1 ${basis}px`, minWidth: 0, maxWidth: `min(100%, ${cards.length * 136 + 24}px)` }}>
       <h3 style={sectionLabel}>{title}</h3>
       <div style={sectionGrid}>
         {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
@@ -194,7 +201,7 @@ function AdminDashboard({ user, adminView = false }) {
   ] : [];
 
   return (
-    <div style={{ padding: '24px 28px' }}>
+    <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Sales Dashboard</h1>
         <p style={{ fontSize: 13, color: '#8492A6' }}>Overview of all CRM activity</p>
@@ -400,9 +407,9 @@ function TelecallerDashboard({ user }) {
   ];
 
   return (
-    <div style={{ padding: '24px 28px' }}>
+    <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
         <div style={{ width: 46, height: 46, borderRadius: 13, background: 'linear-gradient(135deg,#3D5AFE,#7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
           <IconPhone />
         </div>
@@ -640,8 +647,8 @@ function STMDashboard({ user }) {
   const withDate = (href) => dateQS ? `${href}${href.includes('?') ? '&' : '?'}${dateQS}` : href;
 
   return (
-    <div style={{ padding: '24px 28px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+    <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
         <div style={{ width: 46, height: 46, borderRadius: 13, background: 'linear-gradient(135deg,#2E7D32,#0097A7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
           <IconSalesPerson />
         </div>
@@ -772,9 +779,11 @@ const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minm
 const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 10px' };
 // Panels flow side by side and only wrap when they run out of room, so the page
 // fills its width instead of giving each group a near-empty row of its own.
-const sectionsWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px,1fr))', gap: 14, alignItems: 'start', marginBottom: 24 };
+// Flex rather than grid: each panel asks for a width proportional to its tile
+// count (see StatSection) instead of every group being forced into one track size.
+const sectionsWrap = { display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start', marginBottom: 24 };
 const panel        = { backgroundColor: '#fff', borderRadius: 16, padding: '14px 16px 16px', border: '1px solid #E8ECF4', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' };
-const sectionGrid  = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(92px,1fr))', gap: 8 };
+const sectionGrid  = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(86px,1fr))', gap: 8 };
 const tile         = { backgroundColor: '#F8F9FB', border: '1px solid #EEF1F6', borderRadius: 12, padding: '11px 11px 9px', textDecoration: 'none', display: 'block' };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
