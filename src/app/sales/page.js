@@ -361,27 +361,38 @@ function TelecallerDashboard({ user }) {
   // every visit. Divides by SV, so it needs svDone (not called) to be non-zero.
   const mqlToSv  = svDone > 0 ? (called / svDone).toFixed(1) + ' : 1' : '—';
 
+  // A tile's count is computed over the selected date range, so its click-through
+  // must carry that same range — otherwise "Warm/SQL: 18" (became warm today) opens
+  // a list scoped to "currently warm, ever" (a much bigger, unrelated number).
+  const dateQS = (() => {
+    const params = new URLSearchParams();
+    if (effectiveDates.from) params.set('date_from', effectiveDates.from);
+    if (effectiveDates.to)   params.set('date_to',   effectiveDates.to);
+    return params.toString();
+  })();
+  const withDate = (href) => dateQS ? `${href}${href.includes('?') ? '&' : '?'}${dateQS}` : href;
+
   // Grouped by the question each block answers — what I hold, what I called,
   // what I still owe, what came of it — so the row a number sits in already says
   // how to read it.
   const sections = [
     { title: 'My Pipeline', cards: [
-      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
-      { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
+      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: withDate('/sales/leads') },
+      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: withDate('/sales/leads') },
+      { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: '#FEF3C7', textColor: '#B45309', href: withDate('/sales/leads') },
     ] },
     { title: 'Calling Activity', cards: [
-      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
+      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: withDate('/sales/leads?tab=called') },
       { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#EEF2FF', textColor: '#4338CA', href: '/sales/follow-ups' },
-      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
+      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: withDate('/sales/leads?tab=called') },
     ] },
     { title: 'Follow-ups Due', cards: [
-      { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?tab=called&telecaller_status=callback' },
-      { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
-      { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
+      { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: withDate('/sales/leads?tab=called&telecaller_status=callback') },
+      { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: '#FEF3C7', textColor: '#B45309', href: withDate('/sales/follow-ups?filter=pending') },
+      { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: '#FEE2E2', textColor: '#DC2626', href: withDate('/sales/follow-ups?filter=overdue') },
     ] },
     { title: 'Conversions', cards: [
-      { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?tab=called&telecaller_status=warm' },
+      { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
       { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
       { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
       { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
@@ -618,6 +629,16 @@ function STMDashboard({ user }) {
 
   const svUpcoming = leads.filter(l => l.stm_status === 'sv_scheduled');
 
+  // A tile's count is computed over the selected date range, so its click-through
+  // must carry that same range — see the identical note in TelecallerDashboard.
+  const dateQS = (() => {
+    const params = new URLSearchParams();
+    if (eff.from) params.set('date_from', eff.from);
+    if (eff.to)   params.set('date_to',   eff.to);
+    return params.toString();
+  })();
+  const withDate = (href) => dateQS ? `${href}${href.includes('?') ? '&' : '?'}${dateQS}` : href;
+
   return (
     <div style={{ padding: '24px 28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
@@ -637,20 +658,20 @@ function STMDashboard({ user }) {
 
       {[
         { title: 'My Pipeline', cards: [
-          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-          { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
+          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: withDate('/sales/leads') },
+          { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: withDate('/sales/leads') },
         ] },
         { title: 'Lead Temperature', cards: [
-          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
-          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
-          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
+          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: withDate('/sales/leads?stm_status=hot') },
+          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: withDate('/sales/leads?stm_status=warm') },
+          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: withDate('/sales/leads?stm_status=cold') },
         ] },
         { title: 'Follow-ups Due', cards: [
-          { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
-          { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
+          { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: withDate('/sales/follow-ups?filter=pending') },
+          { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FEE2E2', textColor: '#DC2626', href: withDate('/sales/follow-ups?filter=overdue') },
         ] },
         { title: 'Site Visits & Closures', cards: [
-          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
+          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: withDate('/sales/leads?stm_status=sv_scheduled') },
           { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
           { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
         ] },
@@ -660,7 +681,6 @@ function STMDashboard({ user }) {
           { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FFF1F2', textColor: '#E11D48' },
         ] },
       ].map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
-
       {!loading && trend && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           {[
