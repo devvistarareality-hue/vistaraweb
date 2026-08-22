@@ -1381,13 +1381,14 @@ export function SalesLeadsContent({ adminView = false }) {
     const cachedS = getCache(sKey);
     if (cachedP) setProjects(cachedP);
     if (cachedS) setSources(cachedS);
-    // Telecaller / STM portals never show the assign dropdowns, so don't fetch the
-    // (potentially large) telecaller & STM user lists for them — two fewer requests.
+    // Telecaller / CP portals never show the assign dropdowns, so don't fetch the
+    // (potentially large) user lists for them. An STM is the exception: they cannot
+    // assign, but they do need the STM list to pick a transfer target.
     const [pRes, sRes, tRes, sRes2, cRes] = await Promise.all([
       cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + cqExtra, { headers: authHeaders() }).then((r) => r.json()),
       cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
       isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }).then((r) => r.json()),
-      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }).then((r) => r.json()),
+      (isCaller && !isStm) ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms + cqUser, { headers: authHeaders() }).then((r) => r.json()),
       // CP managers (cluster heads) assign leads to their CP executives.
       isCpHead ? fetch(SALES_ENDPOINTS.cps + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
     ]);
@@ -1396,7 +1397,7 @@ export function SalesLeadsContent({ adminView = false }) {
     if (tRes)  setTelecallers(Array.isArray(tRes)  ? tRes  : []);
     if (sRes2) setStms(       Array.isArray(sRes2) ? sRes2 : []);
     if (cRes)  setCps(        Array.isArray(cRes)  ? cRes  : []);
-  }, [companyId, isCaller, isCpHead]);
+  }, [companyId, isCaller, isStm, isCpHead]);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
