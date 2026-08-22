@@ -337,7 +337,9 @@ function TelecallerDashboard({ user }) {
   const callback = stats?.callback_count ?? 0;
   const svDone   = stats?.sv_done        ?? 0;
   const closed   = stats?.closures       ?? 0;
-  const mqlToSv  = called > 0 ? (svDone / called * 100).toFixed(1) + '%' : '—';
+  // MQLs per completed site visit, e.g. "4.0 : 1" = four dispositioned leads for
+  // every visit. Divides by SV, so it needs svDone (not called) to be non-zero.
+  const mqlToSv  = svDone > 0 ? (called / svDone).toFixed(1) + ' : 1' : '—';
 
   const cards = [
     { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
