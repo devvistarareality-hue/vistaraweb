@@ -131,17 +131,14 @@ function StatCard({ label, value, icon, color, textColor, href, loading, flat })
 // (see sectionsWrap), so two or three groups sit side by side and a group of two
 // no longer stretches across the whole page.
 function StatSection({ title, cards, loading }) {
-  // Width tracks tile count: basis is the tightest one row of tiles can be
-  // (86px each + gaps + padding), so all the groups fit across a desktop rather
-  // than one being pushed onto a row of its own. maxWidth caps how far a panel
-  // grows, so a group that does wrap sits at a sane width instead of stretching
-  // edge to edge with balloon-sized tiles. minWidth 0 lets it shrink on a phone,
-  // where the inner auto-fit grid re-flows the tiles onto two rows.
-  const basis = cards.length * 94 + 24;
+  // One column per tile, each free to shrink (minmax(0,1fr)), so a group always
+  // shows its tiles on a single row and never strands one on a row of its own.
+  // Panels come from a uniform column track, so every panel is the same width at
+  // any screen size and the tiles line up across them.
   return (
-    <section style={{ ...panel, flex: `1 1 ${basis}px`, minWidth: 0, maxWidth: `min(100%, ${cards.length * 136 + 24}px)` }}>
+    <section style={panel}>
       <h3 style={sectionLabel}>{title}</h3>
-      <div style={sectionGrid}>
+      <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))` }}>
         {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
       </div>
     </section>
@@ -777,13 +774,13 @@ export default function SalesDashboard() {
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
 const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 10px' };
-// Panels flow side by side and only wrap when they run out of room, so the page
-// fills its width instead of giving each group a near-empty row of its own.
-// Flex rather than grid: each panel asks for a width proportional to its tile
-// count (see StatSection) instead of every group being forced into one track size.
-const sectionsWrap = { display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start', marginBottom: 24 };
-const panel        = { backgroundColor: '#fff', borderRadius: 16, padding: '14px 16px 16px', border: '1px solid #E8ECF4', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' };
-const sectionGrid  = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(86px,1fr))', gap: 8 };
+// Uniform columns: every panel is the same width whatever it holds, so they line
+// up in a clean grid at any screen size and drop from four across to three, two
+// and one as the window narrows. align-items start keeps each panel only as tall
+// as its own content instead of stretching to match the tallest in the row.
+const sectionsWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 14, alignItems: 'start', marginBottom: 24 };
+const panel        = { backgroundColor: '#fff', borderRadius: 16, padding: '14px 16px 16px', border: '1px solid #E8ECF4', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', minWidth: 0 };
+const sectionGrid  = { display: 'grid', gap: 8 };
 const tile         = { backgroundColor: '#F8F9FB', border: '1px solid #EEF1F6', borderRadius: 12, padding: '11px 11px 9px', textDecoration: 'none', display: 'block' };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
