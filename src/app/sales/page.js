@@ -568,8 +568,10 @@ function STMDashboard({ user }) {
 
   // Funnel metrics: SQL = leads that reached warm; ratios & avg closure timeline.
   const sql          = stats?.sql_count ?? warm;
-  const sqlToSv      = sql ? `${Math.round((svDone / sql) * 100)}%` : '—';
-  const sqlToClosure = sql ? `${Math.round((closed / sql) * 100)}%` : '—';
+  // SQLs per outcome, e.g. "4.0 : 1" = four warm leads for every site visit.
+  // Divides by the outcome, so the guard sits on svDone/closed, not on sql.
+  const sqlToSv      = svDone ? `${(sql / svDone).toFixed(1)} : 1` : '—';
+  const sqlToClosure = closed ? `${(sql / closed).toFixed(1)} : 1` : '—';
   const avgCloseMo   = (() => {
     const d = stats?.avg_closure_days;
     if (d == null) return '—';
