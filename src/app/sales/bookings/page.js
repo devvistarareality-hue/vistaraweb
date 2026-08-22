@@ -62,6 +62,27 @@ export function BookingsContent({ adminView = false }) {
     setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
   }
 
+  // Pending lead transfers for the projects this user approves. Same authority as a
+  // booking on that project, so it belongs on the same screen.
+  const [xfers, setXfers] = useState([]);
+  const [xferBusy, setXferBusy] = useState(null);
+  function loadTransfers() {
+    fetch(`${SALES_ENDPOINTS.leadTransfers}?status=pending${companyId ? `&company_id=${companyId}` : ''}`, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setXfers(Array.isArray(d) ? d : []))
+      .catch(() => setXfers([]));
+  }
+  useEffect(() => { loadTransfers(); }, [companyId, adminView]);
+
+  async function actOnTransfer(id, action) {
+    setXferBusy(id);
+    await fetch(SALES_ENDPOINTS.leadTransferAction(id), {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }),
+    }).catch(() => {});
+    setXferBusy(null);
+    loadTransfers();
+  }
+
   function load() {
     setLoading(true);
     const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : ''].filter(Boolean).join('&');
@@ -160,6 +181,41 @@ export function BookingsContent({ adminView = false }) {
       <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 16 }}>
         {narrowed ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
       </p>
+
+      {xfers.length > 0 && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', borderLeft: '4px solid #B45309' }}>
+          <p style={{ fontSize: 13, fontWeight: 800, color: '#B45309', margin: '0 0 2px' }}>
+            ⇄ Lead Transfers awaiting your approval · {xfers.length}
+          </p>
+          <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
+            The lead stays with the current STM until you approve.
+          </p>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {xfers.map((x) => (
+              <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+                border: '1px solid #F0F3FA', borderRadius: 10, padding: '10px 12px', background: '#FFFBEB' }}>
+                <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>
+                    {x.lead_name || 'Lead'} {x.project_name && <span style={{ fontWeight: 500, color: '#8492A6' }}>· {x.project_name}</span>}
+                  </p>
+                  <p style={{ fontSize: 12, color: '#6B7280', margin: '3px 0 0' }}>
+                    {x.from_stm_name || 'Unassigned'} <span style={{ color: '#B45309', fontWeight: 700 }}>→</span> {x.to_stm_name}
+                    {x.reason ? <span style={{ color: '#8492A6' }}> · {x.reason}</span> : null}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => actOnTransfer(x.id, 'reject')} disabled={xferBusy === x.id}
+                    style={{ padding: '8px 14px', background: '#fff', color: '#DC2626', border: '1.5px solid #FECACA', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Reject</button>
+                  <button onClick={() => actOnTransfer(x.id, 'approve')} disabled={xferBusy === x.id}
+                    style={{ padding: '8px 16px', background: '#15803D', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    {xferBusy === x.id ? '…' : 'Approve'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isAdmin && (
         <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>

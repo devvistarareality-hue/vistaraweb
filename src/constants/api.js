@@ -83,6 +83,8 @@ export const SALES_ENDPOINTS = {
   siteVisit: (id)  => `${BASE_URL}/api/sales/site-visits/${id}/`,
   get closures()   { return `${BASE_URL}/api/sales/closures/`; },
   closureCancel: (id) => `${BASE_URL}/api/sales/closures/${id}/cancel/`,
+  get leadTransfers() { return `${BASE_URL}/api/sales/lead-transfers/`; },
+  leadTransferAction: (id) => `${BASE_URL}/api/sales/lead-transfers/${id}/action/`,
   get bookings()   { return `${BASE_URL}/api/sales/bookings/`; },
   get bookingsAll(){ return `${BASE_URL}/api/sales/bookings/all/`; },
   bookingLoiUrl: (id) => `${BASE_URL}/api/sales/bookings/${id}/loi-url/`,
