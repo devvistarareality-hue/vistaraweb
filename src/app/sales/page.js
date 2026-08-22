@@ -339,16 +339,27 @@ function TelecallerDashboard({ user }) {
   const closed   = stats?.closures       ?? 0;
   const mqlToSv  = called > 0 ? (svDone / called * 100).toFixed(1) + '%' : '—';
 
+  // A tile's count is computed over the selected date range, so its click-through
+  // must carry that same range — otherwise "Warm/SQL: 18" (became warm today) opens
+  // a list scoped to "currently warm, ever" (a much bigger, unrelated number).
+  const dateQS = (() => {
+    const params = new URLSearchParams();
+    if (effectiveDates.from) params.set('date_from', effectiveDates.from);
+    if (effectiveDates.to)   params.set('date_to',   effectiveDates.to);
+    return params.toString();
+  })();
+  const withDate = (href) => dateQS ? `${href}${href.includes('?') ? '&' : '?'}${dateQS}` : href;
+
   const cards = [
-    { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-    { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
-    { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
+    { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: withDate('/sales/leads') },
+    { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: withDate('/sales/leads') },
+    { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: withDate('/sales/leads?tab=called') },
     { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#EEF2FF', textColor: '#4338CA', href: '/sales/follow-ups' },
-    { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
-    { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?tab=called&telecaller_status=warm' },
+    { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: withDate('/sales/leads?tab=called') },
+    { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
     { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
     { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
-    { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?tab=called&telecaller_status=callback' },
+    { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: withDate('/sales/leads?tab=called&telecaller_status=callback') },
     { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
   ];
 
@@ -578,6 +589,16 @@ function STMDashboard({ user }) {
 
   const svUpcoming = leads.filter(l => l.stm_status === 'sv_scheduled');
 
+  // A tile's count is computed over the selected date range, so its click-through
+  // must carry that same range — see the identical note in TelecallerDashboard.
+  const dateQS = (() => {
+    const params = new URLSearchParams();
+    if (eff.from) params.set('date_from', eff.from);
+    if (eff.to)   params.set('date_to',   eff.to);
+    return params.toString();
+  })();
+  const withDate = (href) => dateQS ? `${href}${href.includes('?') ? '&' : '?'}${dateQS}` : href;
+
   return (
     <div style={{ padding: '24px 28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
@@ -598,11 +619,11 @@ function STMDashboard({ user }) {
       {loading ? <SkeletonGrid count={10} grid={stmStatsGrid} /> : (
         <div style={stmStatsGrid}>
           {[
-            { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-            { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
-            { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
-            { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
-            { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
+            { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: withDate('/sales/leads') },
+            { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: withDate('/sales/leads?stm_status=hot') },
+            { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: withDate('/sales/leads?stm_status=warm') },
+            { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: withDate('/sales/leads?stm_status=cold') },
+            { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: withDate('/sales/leads?stm_status=sv_scheduled') },
             { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
             { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
             { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#EEF2FF', textColor: '#4F46E5' },
