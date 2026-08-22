@@ -97,6 +97,62 @@ function DupToast({ toasts, onDismiss }) {
 
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
+function TransferLeadModal({ lead, stms, onClose, onDone }) {
+  const [to, setTo] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const options = (stms || []).filter((u) => String(u.id) !== String(lead.stm));
+
+  async function submit() {
+    if (!to) return;
+    setBusy(true); setErr('');
+    try {
+      const r = await fetch(SALES_ENDPOINTS.leadTransfers, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ lead: lead.id, to_stm: to, reason: reason.trim() }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setErr(d.detail || 'Could not request the transfer.'); setBusy(false); return; }
+      onDone();
+    } catch { setErr('Could not request the transfer.'); setBusy(false); }
+  }
+
+  const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(12,20,40,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: 'min(100%, 460px)', boxShadow: '0 18px 50px rgba(12,20,40,0.28)', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg,#182350,#3D5AFE)', padding: '16px 20px' }}>
+          <p style={{ color: '#fff', fontSize: 16, fontWeight: 800, margin: 0 }}>Transfer to another STM</p>
+          <p style={{ color: '#C7D2FE', fontSize: 12, margin: '3px 0 0' }}>{lead.name}{lead.project_name ? ` · ${lead.project_name}` : ''}</p>
+        </div>
+        <div style={{ padding: 20, display: 'grid', gap: 10 }}>
+          <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>
+            Needs approval from this project&rsquo;s booking approvers. The lead stays with you until then.
+          </p>
+          <select value={to} onChange={(e) => setTo(e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+            <option value="">Select the STM to transfer to…</option>
+            {options.map((u) => <option key={u.id} value={u.id}>{u.name}{u.user_code ? ` · ${u.user_code}` : ''}</option>)}
+          </select>
+          {options.length === 0 && (
+            <p style={{ fontSize: 12, color: '#B45309', margin: 0 }}>No other STM in your company to transfer to.</p>
+          )}
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why is it moving? (optional)"
+            style={{ ...inp, height: 64, padding: '8px 12px', resize: 'vertical' }} />
+          {!!err && <p style={{ fontSize: 12.5, color: '#DC2626', fontWeight: 600, margin: 0 }}>{err}</p>}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button onClick={onClose} style={{ padding: '10px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={submit} disabled={!to || busy}
+              style={{ padding: '10px 20px', background: (!to || busy) ? '#C7D2FE' : 'linear-gradient(135deg,#182350,#3D5AFE)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: (!to || busy) ? 'default' : 'pointer' }}>
+              {busy ? 'Sending…' : 'Request transfer'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const _desig = (user?.designation || '').toLowerCase();
@@ -1358,6 +1414,8 @@ export function SalesLeadsContent({ adminView = false }) {
   const [addModal,    setAddModal]    = useState(false);
   const [selected,    setSelected]    = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  // Transfer straight from the row — the lead the STM is handing on, or null.
+  const [xferLead, setXferLead] = useState(null);
   const [deleting,    setDeleting]    = useState(false);
   const [dupToasts,   setDupToasts]   = useState([]);
 
@@ -1711,6 +1769,11 @@ export function SalesLeadsContent({ adminView = false }) {
         );
       })()}
 
+      {xferLead && (
+        <TransferLeadModal lead={xferLead} stms={stms} onClose={() => setXferLead(null)}
+          onDone={() => { setXferLead(null); loadLeads(); }} />
+      )}
+
       {/* Table */}
       <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflowX: 'auto' }}>
         <div>
@@ -1785,12 +1848,22 @@ export function SalesLeadsContent({ adminView = false }) {
                     ); })()}
                   </td>
                   <td style={td}>
-                    {canDelete && (
-                    <button onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
-                      style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>
-                      ✕
-                    </button>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                      {/* Hand the lead on without having to open it first. */}
+                      {isStm && !!l.stm && (
+                        <button title="Transfer to another STM"
+                          onClick={(e) => { e.stopPropagation(); setXferLead(l); }}
+                          style={{ background: '#fff', border: '1.5px solid #C7D2FE', color: '#3D5AFE', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
+                          ⇄ Transfer
+                        </button>
+                      )}
+                      {canDelete && (
+                      <button onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
+                        style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>
+                        ✕
+                      </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
