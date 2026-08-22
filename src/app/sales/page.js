@@ -125,6 +125,22 @@ function StatCard({ label, value, icon, color, textColor, href, loading }) {
   return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
 }
 
+// A labelled block of tiles. Columns are a fixed width rather than 1fr so a
+// three-tile section and a four-tile one line up on the same grid instead of
+// each stretching to fill the row.
+function StatSection({ title, cards, loading }) {
+  return (
+    <section style={{ marginBottom: 18 }}>
+      <h3 style={sectionLabel}>{title}</h3>
+      <div style={sectionGrid}>
+        {cards.map((c) => (loading
+          ? <div key={c.label} style={{ ...card, height: 90, background: '#E8ECF4', animation: 'pulse 1.4s ease infinite' }} />
+          : <StatCard key={c.label} {...c} />))}
+      </div>
+    </section>
+  );
+}
+
 function SkeletonGrid({ count = 6, grid }) {
   return (
     <div style={grid || statsGrid}>
@@ -345,20 +361,31 @@ function TelecallerDashboard({ user }) {
   // every visit. Divides by SV, so it needs svDone (not called) to be non-zero.
   const mqlToSv  = svDone > 0 ? (called / svDone).toFixed(1) + ' : 1' : '—';
 
-  const cards = [
-    { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-    { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
-    { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
-    { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
-    { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#EEF2FF', textColor: '#4338CA', href: '/sales/follow-ups' },
-    { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
-    { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?tab=called&telecaller_status=warm' },
-    { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
-    { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
-    { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?tab=called&telecaller_status=callback' },
-    { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
-    { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
-    { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
+  // Grouped by the question each block answers — what I hold, what I called,
+  // what I still owe, what came of it — so the row a number sits in already says
+  // how to read it.
+  const sections = [
+    { title: 'My Pipeline', cards: [
+      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
+      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#DCFCE7', textColor: '#15803D', href: '/sales/leads' },
+      { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
+    ] },
+    { title: 'Calling Activity', cards: [
+      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
+      { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#EEF2FF', textColor: '#4338CA', href: '/sales/follow-ups' },
+      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/leads?tab=called' },
+    ] },
+    { title: 'Follow-ups Due', cards: [
+      { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F5F3FF', textColor: '#7C3AED', href: '/sales/leads?tab=called&telecaller_status=callback' },
+      { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
+      { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
+    ] },
+    { title: 'Conversions', cards: [
+      { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?tab=called&telecaller_status=warm' },
+      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions' },
+      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
+      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#EFF6FF', textColor: '#1D4ED8', href: '/sales/my-conversions' },
+    ] },
   ];
 
   return (
@@ -496,12 +523,10 @@ function TelecallerDashboard({ user }) {
         </div>
       </div>
 
-      {/* Stats */}
-      {loading ? <SkeletonGrid count={13} /> : (
-        <div style={statsGrid}>
-          {cards.map((c) => <StatCard key={c.label} {...c} />)}
-        </div>
-      )}
+      {/* Stats, grouped */}
+      {loading
+        ? sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading />)
+        : sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} />)}
 
       {/* Trend Charts */}
       {selectedMonths.length > 0 && (
@@ -610,25 +635,31 @@ function STMDashboard({ user }) {
 
       <DateFilter onChange={setEff} />
 
-      {loading ? <SkeletonGrid count={13} grid={stmStatsGrid} /> : (
-        <div style={stmStatsGrid}>
-          {[
-            { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
-            { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
-            { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
-            { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
-            { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
-            { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
-            { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
-            { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
-            { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#EEF2FF', textColor: '#4F46E5' },
-            { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: '#F5F3FF', textColor: '#7C3AED' },
-            { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
-            { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
-            { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FFF1F2', textColor: '#E11D48' },
-          ].map((c) => <StatCard key={c.label} {...c} />)}
-        </div>
-      )}
+      {[
+        { title: 'My Pipeline', cards: [
+          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#daeaf9', textColor: '#182350', href: '/sales/leads' },
+          { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/leads' },
+        ] },
+        { title: 'Lead Temperature', cards: [
+          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FEE2E2', textColor: '#DC2626', href: '/sales/leads?stm_status=hot' },
+          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF7ED', textColor: '#EA580C', href: '/sales/leads?stm_status=warm' },
+          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#EFF6FF', textColor: '#2563EB', href: '/sales/leads?stm_status=cold' },
+        ] },
+        { title: 'Follow-ups Due', cards: [
+          { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: '#FEF3C7', textColor: '#B45309', href: '/sales/follow-ups?filter=pending' },
+          { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FEE2E2', textColor: '#DC2626', href: '/sales/follow-ups?filter=overdue' },
+        ] },
+        { title: 'Site Visits & Closures', cards: [
+          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/leads?stm_status=sv_scheduled' },
+          { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
+          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
+        ] },
+        { title: 'Conversion Rates', cards: [
+          { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#EEF2FF', textColor: '#4F46E5' },
+          { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: '#F5F3FF', textColor: '#7C3AED' },
+          { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FFF1F2', textColor: '#E11D48' },
+        ] },
+      ].map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
 
       {!loading && trend && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
@@ -716,9 +747,8 @@ export default function SalesDashboard() {
 // Shared styles
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
-// STM/CP dashboard has 13 cards — a fixed 5 per row keeps the rows aligned
-// (5/5/3) instead of auto-fit leaving a single card stranded on its own row.
-const stmStatsGrid = { display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 10, marginBottom: 28 };
+const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 8px' };
+const sectionGrid  = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px,178px))', gap: 10 };
 const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
 const cardWrap  = { backgroundColor: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)', marginBottom: 20 };
 const tbl       = { width: '100%', borderCollapse: 'collapse' };
