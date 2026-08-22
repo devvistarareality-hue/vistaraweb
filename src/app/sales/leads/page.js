@@ -113,6 +113,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  // A walk-in IS the site visit — the client turned up. So picking that source
+  // puts the lead straight at sv_done and dates the visit by when they walked in
+  // (the Lead Received Date), not by when the STM got round to typing it in.
+  const srcName = (id) => (sources.find((x) => String(x.id) === String(id))?.name || '').toLowerCase();
+  const isWalkIn = /walk\s*-?\s*in/.test(srcName(form.source));
   // Same inline outcome capture as the Lead Detail modal — a manual lead created
   // directly at STM Status = sv_done needs its visit outcome too, recorded on an
   // auto-created completed SiteVisit right after the lead itself.
@@ -132,7 +137,10 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (!form.project) { setErr('Project is required.'); return; }
     if (!form.source)  { setErr('Source is required.'); return; }
     if (showStm && form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
-      setErr('Please pick a visit outcome and visit date.'); return;
+      setErr(isWalkIn
+        ? 'A walk-in is a completed visit — pick how it went (Hot / Warm / Cold / Not Interested) and the visit date.'
+        : 'Please pick a visit outcome and visit date.');
+      return;
     }
     setSaving(true);
     const body = { name: form.name, phone: form.phone };
@@ -241,7 +249,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           <div style={{ marginBottom: 18 }}>
             <label style={addLbl}>Lead Received Date</label>
             <input type="date" value={form.lead_date} max={new Date().toISOString().slice(0, 10)}
-              onChange={(e) => setForm({ ...form, lead_date: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, lead_date: e.target.value });
+                // A walk-in's visit happened the day they walked in.
+                if (isWalkIn) setSvVisitedDate(e.target.value || new Date().toLocaleDateString('en-CA'));
+              }}
               style={{ ...addInp, maxWidth: 220 }} />
             <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Leave blank to use today. Set this if the lead actually came in earlier (e.g. a walk-in logged a day later).</p>
           </div>
@@ -308,7 +320,12 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Source<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
               <div style={{ position: 'relative' }}>
-                <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
+                <select value={form.source} onChange={(e) => {
+                    const v = e.target.value;
+                    const walkIn = /walk\s*-?\s*in/.test(srcName(v));
+                    setForm((f) => ({ ...f, source: v, ...(walkIn && showStm ? { stm_status: 'sv_done' } : {}) }));
+                    if (walkIn) setSvVisitedDate(form.lead_date || new Date().toLocaleDateString('en-CA'));
+                  }}
                   style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.source ? '#1A1A2E' : '#9CA3AF', textTransform: 'capitalize' }}>
                   <option value="">Select source</option>
                   {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
@@ -385,7 +402,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <span style={{ color: '#15803D' }}>📍</span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome <span style={{ color: '#DC2626' }}>*</span></span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6'], ['not_interested', 'Not Interested', '#6B7280']].map(([val, label, color]) => {
@@ -404,7 +421,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                     <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
                       onChange={(e) => setSvVisitedDate(e.target.value)} style={addInp} />
                   </div>
-                  {!svOutcome && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
+                  {!svOutcome && <p style={{ fontSize: 11, color: '#16A34A', margin: '8px 0 0' }}>
+                    {isWalkIn
+                      ? 'Walk-in — the visit already happened, so an outcome is required.'
+                      : 'Pick how the visit went — recorded on the site visit.'}
+                  </p>}
                 </div>
               )}
             </>
@@ -978,7 +999,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', borderRadius: 12, padding: 14, marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <span style={{ color: '#15803D' }}>📍</span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome <span style={{ color: '#DC2626' }}>*</span></span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6'], ['not_interested', 'Not Interested', '#6B7280']].map(([val, label, color]) => {
