@@ -97,7 +97,7 @@ function DupToast({ toasts, onDismiss }) {
 
 
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
-function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], onClose, onAdded }) {
+function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], cpOnly = false, channelPartners = [], onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
@@ -109,7 +109,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const showStm = _isAdminMgr || _isStm || _isCp;
   const TC_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback'];
   const STM_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed'];
-  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', lead_date: '' });
+  // In the Channel Partner section, Source is fixed to the "Channel Partner"
+  // LeadSource (created on demand by the parent) rather than freely chosen.
+  const cpSource = cpOnly ? sources.find((s) => (s.name || '').toLowerCase() === 'channel partner') : null;
+  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', lead_date: '' });
+  useEffect(() => {
+    if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
+  }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -120,7 +126,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const [svVisitedDate, setSvVisitedDate] = useState(new Date().toLocaleDateString('en-CA'));
   // Same inline scheduler as the Lead Detail modal — filled in here it's created
   // right after the lead itself, so a manual lead can arrive with its first call booked.
-  const [fuForm, setFuForm] = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
+  const [fuForm, setFuForm] = useState({ role_context: (_isStm || cpOnly) ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
   const addLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
   const addInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
   const addSel = { ...addInp, cursor: 'pointer' };
@@ -131,6 +137,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (!form.name || !form.phone) { setErr('Name and phone are required.'); return; }
     if (!form.project) { setErr('Project is required.'); return; }
     if (!form.source)  { setErr('Source is required.'); return; }
+    if (cpOnly && !form.channel_partner) { setErr('Channel Partner is required.'); return; }
     if (showStm && form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
       setErr('Please pick a visit outcome and visit date.'); return;
     }
@@ -140,13 +147,20 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (form.email)     body.email     = form.email;
     if (form.project)   body.project   = form.project;
     if (form.source)    body.source    = form.source;
+    if (form.channel_partner) body.channel_partner = form.channel_partner;
     if (form.city)            body.city          = form.city;
     if (form.address)         body.address       = form.address;
     if (form.purpose?.length) body.purpose       = form.purpose;
     if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
     if (form.lead_date)       body.lead_date     = form.lead_date;
-    if (_isAdminMgr && form.telecaller)         body.telecaller = form.telecaller;
-    if ((_isAdminMgr || _isCpHead) && form.stm) body.stm        = form.stm;
+    if (cpOnly) {
+      // No telecaller/STM assignment step for a Channel Partner lead — whoever
+      // adds it owns it automatically.
+      body.stm = user?.id;
+    } else {
+      if (_isAdminMgr && form.telecaller)         body.telecaller = form.telecaller;
+      if ((_isAdminMgr || _isCpHead) && form.stm) body.stm        = form.stm;
+    }
     if (showTC && form.telecaller_status)   body.telecaller_status  = form.telecaller_status;
     if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
     if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
@@ -307,19 +321,37 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             </div>
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Source<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
-              <div style={{ position: 'relative' }}>
-                <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
-                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.source ? '#1A1A2E' : '#9CA3AF', textTransform: 'capitalize' }}>
-                  <option value="">Select source</option>
-                  {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
-                </select>
-                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
-              </div>
+              {cpOnly ? (
+                <div style={{ ...addInp, display: 'flex', alignItems: 'center', color: '#1A1A2E', fontWeight: 600 }}>Channel Partner</div>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
+                    style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.source ? '#1A1A2E' : '#9CA3AF', textTransform: 'capitalize' }}>
+                    <option value="">Select source</option>
+                    {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
+                  </select>
+                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
+                </div>
+              )}
             </div>
+            {cpOnly && (
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Channel Partner Name<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
+                <div style={{ position: 'relative' }}>
+                  <select value={form.channel_partner} onChange={(e) => setForm({ ...form, channel_partner: e.target.value })}
+                    style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.channel_partner ? '#1A1A2E' : '#9CA3AF' }}>
+                    <option value="">Select channel partner</option>
+                    {channelPartners.map((cp) => <option key={cp.id} value={cp.id}>{cp.name}{cp.firm_name ? ` · ${cp.firm_name}` : ''}</option>)}
+                  </select>
+                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Telecaller (Pre-Sales) */}
-          {showTC && (
+          {/* Telecaller (Pre-Sales) — a Channel Partner lead skips telecaller calling
+              entirely: it goes straight into the STM pipeline. */}
+          {showTC && !cpOnly && (
             <>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Telecaller (Pre-Sales)</div>
               {_isAdminMgr && (
@@ -348,8 +380,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           {/* STM (Sales) — labelled CP for Channel Partners (same underlying field) */}
           {showStm && (
             <>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>{_isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
-              {_isAdminMgr && (
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>{cpOnly ? 'Status' : _isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
+              {/* A Channel Partner lead is automatically owned by whoever adds it —
+                  no telecaller/STM assignment step, unlike a regular lead. */}
+              {cpOnly && (
+                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Assigned to you ({user?.name}) automatically.</p>
+              )}
+              {_isAdminMgr && !cpOnly && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign STM</label>
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
@@ -368,14 +405,14 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
-                <label style={addLbl}>{_isCp ? 'CP Status' : 'STM Status'}</label>
+                <label style={addLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'}</label>
                 <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={addLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}</label>
+                <label style={addLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder="Optional" style={addTa} />
               </div>
 
@@ -414,9 +451,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Follow-ups</div>
           <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0', marginBottom: 18 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
-            <div style={{ display: 'grid', gridTemplateColumns: _isAdminMgr ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
-              {/* Role picker only for admins/managers — telecaller/STM portals auto-set their own role */}
-              {_isAdminMgr && (
+            <div style={{ display: 'grid', gridTemplateColumns: (_isAdminMgr && !cpOnly) ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
+              {/* Role picker only for admins/managers — telecaller/STM portals auto-set
+                  their own role, and a Channel Partner lead has no telecaller stage
+                  at all so it's always scheduled against the STM/CP role. */}
+              {_isAdminMgr && !cpOnly && (
                 <div>
                   <label style={addLbl}>Role</label>
                   <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={addSel}>
@@ -496,7 +535,7 @@ function fmtDateTime(iso) {
     + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, onUpdated }) {
+function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = false, onClose, onUpdated }) {
   const router = useRouter();
   const user = useSelector((s) => s.auth.user);
   // Only admins/managers may (re)assign telecaller / STM. Telecaller & Sales Executive
@@ -518,7 +557,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   const [saveErr,   setSaveErr]   = useState('');   // required-field validation message
 
   // Followup form
-  const [fuForm,    setFuForm]    = useState({ role_context: _isStm ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
+  const [fuForm,    setFuForm]    = useState({ role_context: (_isStm || cpOnly) ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
   // Inline "schedule site visit" when STM sets status = sv_scheduled
   const [svScheduledAt, setSvScheduledAt] = useState('');
   const [svRemarks,     setSvRemarks]     = useState('');
@@ -878,13 +917,14 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               </div>
 
-              {/* Telecaller */}
+              {/* Telecaller — a Channel Partner lead skips telecaller calling entirely,
+                  so this whole section (read-only summary included) never applies. */}
               {/* Read-only for STM/CP once the lead reaches them — they can't edit TC
                   fields, but they should be able to see what the telecaller found out. */}
-              {!showTC && (lead.telecaller_name || lead.telecaller_remarks) && (
+              {!showTC && !cpOnly && (lead.telecaller_name || lead.telecaller_remarks) && (
                 <div style={{ ...mSec, marginBottom: 6 }}>Telecaller (Pre-Sales)</div>
               )}
-              {!showTC && (lead.telecaller_name || lead.telecaller_remarks) && (
+              {!showTC && !cpOnly && (lead.telecaller_name || lead.telecaller_remarks) && (
                 <div style={{ marginBottom: 18, padding: 12, borderRadius: 10, background: '#F8FAFD', border: '1px solid #E8ECF4' }}>
                   {lead.telecaller_name && (
                     <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Telecaller: <span style={{ color: '#1A1A2E', fontWeight: 600 }}>{lead.telecaller_name}</span>{lead.telecaller_status ? ` · ${lead.telecaller_status.replace(/_/g, ' ')}` : ''}</p>
@@ -894,7 +934,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                   )}
                 </div>
               )}
-              {showTC && (<>
+              {showTC && !cpOnly && (<>
               <div style={mSec}>Telecaller (Pre-Sales)</div>
               <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
                 {canAssign && (
@@ -923,9 +963,14 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 
               {/* STM — labelled CP for Channel Partners (same underlying field) */}
               {showStm && (<>
-              <div style={mSec}>{_isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
-                {canAssign && (
+              <div style={mSec}>{cpOnly ? 'Status' : _isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
+              {/* A Channel Partner lead is owned by whoever added it — no reassignment
+                  step, unlike a regular lead. */}
+              {cpOnly && (
+                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Assigned to {lead.stm_name || 'you'} automatically.</p>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: (canAssign && !cpOnly) ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
+                {canAssign && !cpOnly && (
                 <div>
                   <label style={mLbl}>Assign STM</label>
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
@@ -935,7 +980,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
                 )}
                 <div>
-                  <label style={mLbl}>{_isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: '#DC2626' }}>*</span>}</label>
+                  <label style={mLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: '#DC2626' }}>*</span>}</label>
                   <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -943,7 +988,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={mLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: '#DC2626' }}>*</span>}</label>
+                <label style={mLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: '#DC2626' }}>*</span>}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
@@ -1030,9 +1075,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 {/* Add new followup */}
                 <div style={{ background: '#F8FAFD', borderRadius: 12, padding: 16, border: '1px solid #E4E8F0' }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: canAssign ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
-                    {/* Role picker only for admins/managers — telecaller/STM portals auto-set their own role */}
-                    {canAssign && (
+                  <div style={{ display: 'grid', gridTemplateColumns: (canAssign && !cpOnly) ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
+                    {/* Role picker only for admins/managers — telecaller/STM portals auto-set
+                        their own role, and a Channel Partner lead has no telecaller stage. */}
+                    {canAssign && !cpOnly && (
                       <div>
                         <label style={mLbl}>Role</label>
                         <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
@@ -1116,6 +1162,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                   <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>Lead Received</p>
                   <p style={{ fontSize: 11, color: '#8492A6', margin: '3px 0 0' }}>
                     Source: {lead.source_name || '—'} · Project: {lead.project_name || '—'}
+                    {cpOnly && <> · Channel Partner: {lead.channel_partner_name || '—'}</>}
                   </p>
                   <p style={{ fontSize: 11, color: '#B0BAC9', margin: '3px 0 0' }}>{fmtDateTime(lead.created_at)}</p>
                 </div>
@@ -1180,7 +1227,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
 }
 
 // ── Main Leads Page ─────────────────────────────────────────────────────────
-export function SalesLeadsContent({ adminView = false }) {
+export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Telecallers & Sales Executives (STM) cannot delete leads — only admins/managers.
@@ -1210,6 +1257,14 @@ export function SalesLeadsContent({ adminView = false }) {
   const [telecallers, setTelecallers] = useState([]);
   const [stms,        setStms]        = useState([]);
   const [cps,         setCps]         = useState([]);
+  // The referral-partner directory (distinct from `cps` above, which is CP
+  // Executive/Cluster Head EMPLOYEES) — only needed when this list is the
+  // Channel Partner section's CP Leads tab.
+  const [channelPartners, setChannelPartners] = useState([]);
+  // Everyone with Channel Partner module access — replaces the Telecaller/STM
+  // filters in this section, since a CP lead never has a telecaller and its
+  // "STM" is really just whoever added it (see cp_module in TelecallerListView).
+  const [cpModuleUsers, setCpModuleUsers] = useState([]);
   const [filters, setFilters] = useState({
     search: '', status: '', project_id: '', source_id: '',
     telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
@@ -1276,20 +1331,43 @@ export function SalesLeadsContent({ adminView = false }) {
     if (cachedS) setSources(cachedS);
     // Telecaller / STM portals never show the assign dropdowns, so don't fetch the
     // (potentially large) telecaller & STM user lists for them — two fewer requests.
-    const [pRes, sRes, tRes, sRes2, cRes] = await Promise.all([
+    const [pRes, sRes, tRes, sRes2, cRes, cpDirRes, cpUsersRes] = await Promise.all([
       cachedP ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.projects + cqExtra, { headers: authHeaders() }).then((r) => r.json()),
       cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
-      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }).then((r) => r.json()),
-      isCaller ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }).then((r) => r.json()),
+      (isCaller || cpOnly) ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }).then((r) => r.json()),
+      (isCaller || cpOnly) ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }).then((r) => r.json()),
       // CP managers (cluster heads) assign leads to their CP executives.
       isCpHead ? fetch(SALES_ENDPOINTS.cps + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
+      // The Channel Partner section's referral-partner directory (CP Details).
+      cpOnly ? fetch(SALES_ENDPOINTS.channelPartners + cq, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
+      // Who a CP lead can be filtered by — everyone with CP module access, not
+      // telecallers/STMs (a CP lead never has either).
+      cpOnly ? fetch(SALES_ENDPOINTS.cpModuleUsers + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
     ]);
     if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache(pKey, p); setProjects(p); }
-    if (sRes) { const s = Array.isArray(sRes) ? sRes : []; setCache(sKey, s); setSources(s);  }
+    let resolvedSources = cachedS || null;
+    if (sRes) { resolvedSources = Array.isArray(sRes) ? sRes : []; setCache(sKey, resolvedSources); setSources(resolvedSources); }
     if (tRes)  setTelecallers(Array.isArray(tRes)  ? tRes  : []);
     if (sRes2) setStms(       Array.isArray(sRes2) ? sRes2 : []);
     if (cRes)  setCps(        Array.isArray(cRes)  ? cRes  : []);
-  }, [companyId, isCaller, isCpHead]);
+    if (cpDirRes) setChannelPartners(Array.isArray(cpDirRes) ? cpDirRes : []);
+    if (cpUsersRes) setCpModuleUsers(Array.isArray(cpUsersRes) ? cpUsersRes : []);
+    // Every CP lead must be tagged with a "Channel Partner" source — create that
+    // LeadSource on first use in a company that doesn't have one yet, the same way
+    // a company would add any other source under Lead Setup.
+    if (cpOnly && resolvedSources && !resolvedSources.some((x) => (x.name || '').toLowerCase() === 'channel partner')) {
+      try {
+        const body = companyId ? { name: 'channel partner', company_id: companyId } : { name: 'channel partner' };
+        const r2 = await fetch(SALES_ENDPOINTS.sources, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+        if (r2.ok) {
+          const newSrc = await r2.json();
+          const updated = [...resolvedSources, newSrc];
+          setCache(sKey, updated);
+          setSources(updated);
+        }
+      } catch (_) {}
+    }
+  }, [companyId, isCaller, isCpHead, cpOnly]);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -1321,6 +1399,7 @@ export function SalesLeadsContent({ adminView = false }) {
     if (filters.date_from)       params.set('date_from',        filters.date_from);
     if (filters.date_to)         params.set('date_to',          filters.date_to);
     if (adminView)               params.set('admin_view', '1');
+    if (cpOnly)                  params.set('cp_only', 'true');
     const cacheKey = `leads_${params.toString()}`;
     const cached = getCache(cacheKey);
     if (cached) { setLeads(cached.results); setTotal(cached.count); setLoading(false); return; }
@@ -1331,7 +1410,7 @@ export function SalesLeadsContent({ adminView = false }) {
     setLeads(data.results ?? []);
     setTotal(data.count ?? 0);
     setLoading(false);
-  }, [page, filters, companyId, isCaller, workTab, adminView]);
+  }, [page, filters, companyId, isCaller, workTab, adminView, cpOnly]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
   useEffect(() => { if (seeded) loadLeads(); }, [loadLeads, seeded]);
@@ -1556,7 +1635,7 @@ export function SalesLeadsContent({ adminView = false }) {
               )}
               {showStmStatus && (
               <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
-                <option value="">{isCpAny ? 'CP Status' : 'STM Status'}</option>
+                <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
                 {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
@@ -1579,16 +1658,22 @@ export function SalesLeadsContent({ adminView = false }) {
                 <option value="">All Sources</option>
                 {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
               </select>
-              {showAssignees && (
+              {showAssignees && !cpOnly && (
               <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={activeSelStyle(filters.telecaller_id)}>
                 <option value="">All Telecallers</option>
                 {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
               )}
-              {showAssignees && (
+              {showAssignees && !cpOnly && (
               <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
                 <option value="">All STMs</option>
                 {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+              )}
+              {showAssignees && cpOnly && (
+              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
+                <option value="">All Team Members</option>
+                {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
               )}
               <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
@@ -1613,10 +1698,11 @@ export function SalesLeadsContent({ adminView = false }) {
                   {canDelete && <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />}
                 </th>
                 {['Name', 'Project', 'Source',
+                  ...(cpOnly ? ['Channel Partner'] : []),
                   ...(showTcStatus ? ['Telecaller'] : []),
                   ...(showStmStatus ? [isCpAny ? 'CP' : 'STM'] : []),
                   ...(showTcStatus ? ['TC Status'] : []),
-                  ...(showStmStatus ? [isCpAny ? 'CP Status' : 'STM Status'] : []),
+                  ...(showStmStatus ? [cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'] : []),
                   'Overall', 'Received', ''].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
@@ -1626,7 +1712,7 @@ export function SalesLeadsContent({ adminView = false }) {
               {loading ? (
                 [...Array(8)].map((_, i) => (
                   <tr key={i}>
-                    {[...Array(11)].map((__, j) => (
+                    {[...Array(cpOnly ? 12 : 11)].map((__, j) => (
                       <td key={j} style={{ padding: '12px 14px' }}>
                         <div className="s-skel" style={{ height: 14, width: j === 0 ? 16 : j === 1 ? 120 : 80, borderRadius: 6 }} />
                       </td>
@@ -1634,7 +1720,7 @@ export function SalesLeadsContent({ adminView = false }) {
                   </tr>
                 ))
               ) : leads.length === 0 ? (
-                <tr><td colSpan={11} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
+                <tr><td colSpan={cpOnly ? 12 : 11} style={{ textAlign: 'center', padding: '60px 0', color: '#8492A6' }}>No leads found</td></tr>
               ) : leads.map((l) => (
                 <tr key={l.id}
                   style={{ borderBottom: '1px solid #F0F3FA', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FFFBFB' : '', borderLeft: l.is_duplicate ? '3px solid #DC2626' : '3px solid transparent' }}
@@ -1656,6 +1742,7 @@ export function SalesLeadsContent({ adminView = false }) {
                   </td>
                   <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
                   <td style={{ ...td, color: '#8492A6', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
+                  {cpOnly && <td style={{ ...td, color: '#8492A6' }} onClick={() => loadDetail(l)}>{l.channel_partner_name || '—'}</td>}
                   {showTcStatus && <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>}
                   {showStmStatus && <td style={{ ...td, color: '#3A3A5C', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: '#D1D5DB' }}>—</span>}</td>}
                   {showTcStatus && <td style={td} onClick={() => loadDetail(l)}>
@@ -1716,10 +1803,12 @@ export function SalesLeadsContent({ adminView = false }) {
       {/* Modals */}
       {addModal && (
         <AddLeadModal projects={projects} sources={sources} telecallers={telecallers} stms={stms} cps={cps}
+          cpOnly={cpOnly} channelPartners={channelPartners}
           onClose={() => setAddModal(false)} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}
+          cpOnly={cpOnly}
           onClose={() => setSelected(null)} onUpdated={onLeadUpdated} />
       )}
     </div>

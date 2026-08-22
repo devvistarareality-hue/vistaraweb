@@ -20,7 +20,7 @@ async function openLoi(id) {
 
 const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected'], ['', 'All']];
 
-export function BookingsContent({ adminView = false }) {
+export function BookingsContent({ adminView = false, cpOnly = false }) {
   const router = useRouter();
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -64,13 +64,13 @@ export function BookingsContent({ adminView = false }) {
 
   function load() {
     setLoading(true);
-    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : ''].filter(Boolean).join('&');
+    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : '', cpOnly ? 'cp_only=true' : ''].filter(Boolean).join('&');
     fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
   // Collapse state is per project name, so reset it whenever the visible set changes.
-  useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView]);
+  useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView, cpOnly]);
 
   async function act(id, action) {
     setBusy(id);

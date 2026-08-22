@@ -33,7 +33,7 @@ const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, bo
 const btnPrimary = { padding: '9px 16px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 const smBtn = (bg, color, border) => ({ fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${border}`, color, background: bg, cursor: 'pointer' });
 
-export function SiteVisitsContent({ adminView = false }) {
+export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const router    = useRouter();
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -78,12 +78,15 @@ export function SiteVisitsContent({ adminView = false }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const url = adminView ? `${SALES_ENDPOINTS.siteVisits}?admin_view=1` : SALES_ENDPOINTS.siteVisits;
+      const params = [];
+      if (adminView) params.push('admin_view=1');
+      if (cpOnly)    params.push('cp_only=true');
+      const url = params.length ? `${SALES_ENDPOINTS.siteVisits}?${params.join('&')}` : SALES_ENDPOINTS.siteVisits;
       const res = await fetch(url, { headers: authHeaders() });
       if (res.ok) setVisits(await res.json());
     } catch (_) {}
     setLoading(false);
-  }, [companyId, adminView]);
+  }, [companyId, adminView, cpOnly]);
 
   useEffect(() => { load(); }, [load]);
 

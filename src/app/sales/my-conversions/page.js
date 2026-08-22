@@ -160,12 +160,13 @@ function StatusBadge({ status, colors }) {
   );
 }
 
-export function MyConversionsContent({ adminView = false }) {
+export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cqParts = [];
   if (companyId) cqParts.push(`company_id=${companyId}`);
   if (adminView) cqParts.push('admin_view=1');
+  if (cpOnly) cqParts.push('cp_only=true');
   const cq = cqParts.length ? `?${cqParts.join('&')}` : '';
   const des = (user?.designation || '').toLowerCase();
   // Cancelling a booking lives on Bookings & Approvals — this page is read-only.

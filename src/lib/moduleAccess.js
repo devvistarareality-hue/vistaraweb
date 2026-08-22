@@ -87,3 +87,19 @@ export const MANAGER_ROLES = ['Director', 'General Manager', 'Manager'];
 export function isManagerRole(user) {
   return MANAGER_ROLES.includes(user?.role);
 }
+
+// ── Channel Partner module ─────────────────────────────────────────────────────
+// A Manager whose designation starts with "cp" (e.g. "CP Cluster Head") gets into
+// the Channel Partner module ONLY — not the rest of Sales. Mirrors
+// backend/sales/views.py::is_cp_manager exactly — keep in sync.
+export function isCpManager(user) {
+  return !!(user && user.role === 'Manager' && (user.designation || '').toLowerCase().trim().startsWith('cp'));
+}
+
+// Who can reach the Channel Partner module at all: the same admins who reach
+// every other admin-only Sales page, plus a CP-designation Manager (scoped to
+// their assigned projects once inside). Mirrors backend's
+// _is_sales_admin(user) or is_cp_manager(user) — keep in sync.
+export function canAccessChannelPartner(user) {
+  return !!(user && (user.is_staff || user.role === 'Admin' || (user.admin_modules || []).includes('Sales') || isCpManager(user)));
+}
