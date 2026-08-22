@@ -136,6 +136,16 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (!form.name || !form.phone) { setErr('Name and phone are required.'); return; }
     if (!form.project) { setErr('Project is required.'); return; }
     if (!form.source)  { setErr('Source is required.'); return; }
+    // A rep logging a lead by hand has just spoken to them, so the disposition and
+    // the note are the point of the record — without them the lead lands in the
+    // queue looking untouched. Required for the rep's own section only; an admin
+    // entering someone else's lead has no call to write up.
+    if (_isTelecaller && (!form.telecaller_status || !(form.telecaller_remarks || '').trim())) {
+      setErr('Pick a TC status and add remarks.'); return;
+    }
+    if (_isStm && (!form.stm_status || !(form.stm_remarks || '').trim())) {
+      setErr('Pick an STM status and add remarks.'); return;
+    }
     if (showStm && form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
       setErr(isWalkIn
         ? 'A walk-in is a completed visit — pick how it went (Hot / Warm / Cold / Not Interested) and the visit date.'
@@ -349,15 +359,15 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
-                <label style={addLbl}>TC Status</label>
+                <label style={addLbl}>TC Status{_isTelecaller &&  <span style={{ color: '#DC2626' }}>*</span>}</label>
                 <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={addLbl}>TC Remarks</label>
-                <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder="Optional" style={addTa} />
+                <label style={addLbl}>TC Remarks{_isTelecaller &&  <span style={{ color: '#DC2626' }}>*</span>}</label>
+                <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder={_isTelecaller ? 'What was discussed' : 'Optional'} style={addTa} />
               </div>
             </>
           )}
@@ -385,15 +395,15 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
-                <label style={addLbl}>{_isCp ? 'CP Status' : 'STM Status'}</label>
+                <label style={addLbl}>{_isCp ? 'CP Status' : 'STM Status'}{_isStm &&  <span style={{ color: '#DC2626' }}>*</span>}</label>
                 <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={addLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}</label>
-                <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder="Optional" style={addTa} />
+                <label style={addLbl}>{_isCp ? 'CP Remarks' : 'STM Remarks'}{_isStm &&  <span style={{ color: '#DC2626' }}>*</span>}</label>
+                <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder={_isStm ? 'What was discussed' : 'Optional'} style={addTa} />
               </div>
 
               {/* A lead added directly at sv_done needs its visit outcome recorded too —
