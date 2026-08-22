@@ -597,14 +597,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
   // head) see only the STM/CP section. Admins/managers see both.
   const showTC  = canAssign || _isTelecaller;
   const showStm = canAssign || _isStm || _isCp;
-  // Handing the lead to another STM. The request is raised here but the lead does
-  // not move until an approver signs it off, so nothing on this screen changes yet.
-  const [xferOpen, setXferOpen] = useState(false);
-  const [xferTo, setXferTo] = useState('');
-  const [xferReason, setXferReason] = useState('');
-  const [xferBusy, setXferBusy] = useState(false);
-  const [xferMsg, setXferMsg] = useState('');
-  const [xferPending, setXferPending] = useState(null);
   const [activeTab, setActiveTab] = useState('detail');
   const [detail,    setDetail]    = useState(null);
   const [form, setForm] = useState({});
@@ -649,12 +641,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     setSvOutcome(lead.stm_status === 'sv_done' ? (lead.sv_outcome || '') : '');
     const defaultVisitedDate = new Date().toLocaleDateString('en-CA');
     setSvVisitedDate(defaultVisitedDate);
-    // Show an outstanding transfer rather than offering to raise a second one.
-    setXferOpen(false); setXferTo(''); setXferReason(''); setXferMsg(''); setXferPending(null);
-    fetch(`${SALES_ENDPOINTS.leadTransfers}?status=pending`, { headers: authHeaders() })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rows) => setXferPending((Array.isArray(rows) ? rows : []).find((x) => x.lead === lead.id) || null))
-      .catch(() => {});
     async function loadDetail() {
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
       if (!res.ok) return;
@@ -687,27 +673,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
     }
     loadDetail();
   }, [lead?.id]);
-
-  // Raise the transfer request. The lead is untouched until an approver acts, so
-  // there is nothing to refresh here beyond showing that it is pending.
-  async function requestTransfer() {
-    if (!xferTo) return;
-    setXferBusy(true); setXferMsg('');
-    try {
-      const r = await fetch(SALES_ENDPOINTS.leadTransfers, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ lead: lead.id, to_stm: xferTo, reason: xferReason.trim() }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setXferMsg(d.detail || 'Could not request the transfer.'); }
-      else {
-        setXferPending(d);
-        setXferOpen(false);
-        setXferMsg('✓ Sent for approval — the lead stays with you until it is approved.');
-      }
-    } catch { setXferMsg('Could not request the transfer.'); }
-    setXferBusy(false);
-  }
 
   async function save() {
     // Telecaller / STM portals must record their status + remarks before saving.
@@ -1214,47 +1179,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, onClose, 
                 ))}
               </div>
 
-              {/* Transfer to another STM — request only; an approver decides. */}
-              {_isStm && lead?.stm && (
-                <div style={{ marginTop: 20, border: '1.5px solid #E4E8F0', borderRadius: 12, padding: 14, background: '#FAFBFF' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                    <div>
-                      <p style={{ fontSize: 12, fontWeight: 800, color: '#182350', margin: 0, textTransform: 'uppercase', letterSpacing: 0.4 }}>Transfer to another STM</p>
-                      <p style={{ fontSize: 11, color: '#8492A6', margin: '3px 0 0' }}>
-                        {xferPending
-                          ? `Awaiting approval — requested for ${xferPending.to_stm_name || 'another STM'}.`
-                          : 'Needs approval from this project\u2019s booking approvers before the lead moves.'}
-                      </p>
-                    </div>
-                    {!xferPending && (
-                      <button type="button" onClick={() => setXferOpen((v) => !v)}
-                        style={{ padding: '8px 16px', background: '#fff', color: '#3D5AFE', border: '1.5px solid #C7D2FE', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                        {xferOpen ? 'Close' : 'Transfer'}
-                      </button>
-                    )}
-                  </div>
-                  {xferOpen && !xferPending && (
-                    <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
-                      <select value={xferTo} onChange={(e) => setXferTo(e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
-                        <option value="">Select the STM to transfer to…</option>
-                        {stms.filter((u) => String(u.id) !== String(lead.stm)).map((u) => (
-                          <option key={u.id} value={u.id}>{u.name}{u.user_code ? ` · ${u.user_code}` : ''}</option>
-                        ))}
-                      </select>
-                      <textarea value={xferReason} onChange={(e) => setXferReason(e.target.value)}
-                        placeholder="Why is it moving? (optional)" style={{ ...mInp, height: 56, padding: '8px 12px', resize: 'vertical' }} />
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button type="button" disabled={!xferTo || xferBusy} onClick={requestTransfer}
-                          style={{ padding: '9px 18px', background: (!xferTo || xferBusy) ? '#C7D2FE' : 'linear-gradient(135deg,#182350,#3D5AFE)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: (!xferTo || xferBusy) ? 'default' : 'pointer' }}>
-                          {xferBusy ? 'Sending…' : 'Request transfer'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  {!!xferMsg && <p style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 0', color: xferMsg[0] === '✓' ? '#15803D' : '#DC2626' }}>{xferMsg}</p>}
-                </div>
-              )}
-
               {/* Save bar — at the very bottom, below Follow-ups */}
               {saveErr && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, margin: '18px 0 4px' }}>{saveErr}</div>}
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #F0F3FA', marginTop: 20, paddingTop: 16 }}>
@@ -1416,6 +1340,17 @@ export function SalesLeadsContent({ adminView = false }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   // Transfer straight from the row — the lead the STM is handing on, or null.
   const [xferLead, setXferLead] = useState(null);
+  // Leads that already have a request awaiting approval, so the row shows that
+  // instead of offering to raise a second one (the server would reject it anyway).
+  const [pendingXfers, setPendingXfers] = useState({});
+  const loadPendingXfers = useCallback(() => {
+    if (!isStm) return;
+    fetch(`${SALES_ENDPOINTS.leadTransfers}?status=pending`, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => setPendingXfers(Object.fromEntries((Array.isArray(rows) ? rows : []).map((x) => [x.lead, x]))))
+      .catch(() => {});
+  }, [isStm]);
+  useEffect(() => { loadPendingXfers(); }, [loadPendingXfers]);
   const [deleting,    setDeleting]    = useState(false);
   const [dupToasts,   setDupToasts]   = useState([]);
 
@@ -1771,7 +1706,7 @@ export function SalesLeadsContent({ adminView = false }) {
 
       {xferLead && (
         <TransferLeadModal lead={xferLead} stms={stms} onClose={() => setXferLead(null)}
-          onDone={() => { setXferLead(null); loadLeads(); }} />
+          onDone={() => { setXferLead(null); loadPendingXfers(); }} />
       )}
 
       {/* Table */}
@@ -1850,13 +1785,18 @@ export function SalesLeadsContent({ adminView = false }) {
                   <td style={td}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
                       {/* Hand the lead on without having to open it first. */}
-                      {isStm && !!l.stm && (
+                      {isStm && !!l.stm && (pendingXfers[l.id] ? (
+                        <span title={`Awaiting approval — requested for ${pendingXfers[l.id].to_stm_name || 'another STM'}`}
+                          style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', color: '#B45309', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
+                          ⏳ Transfer pending
+                        </span>
+                      ) : (
                         <button title="Transfer to another STM"
                           onClick={(e) => { e.stopPropagation(); setXferLead(l); }}
                           style={{ background: '#fff', border: '1.5px solid #C7D2FE', color: '#3D5AFE', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
                           ⇄ Transfer
                         </button>
-                      )}
+                      ))}
                       {canDelete && (
                       <button onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
                         style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>
