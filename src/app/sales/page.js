@@ -675,7 +675,10 @@ function STMDashboard({ user }) {
           { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FEE2E2', textColor: '#DC2626', href: withDate('/sales/follow-ups?filter=overdue') },
         ] },
         { title: 'Site Visits & Closures', cards: [
-          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: withDate('/sales/leads?stm_status=sv_scheduled') },
+          // Straight to the Site Visits screen's Scheduled tab — the visits themselves,
+          // not the leads that happen to carry the status. No date range appended:
+          // that page has its own date filter and ignores the params.
+          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FEF9C3', textColor: '#B45309', href: '/sales/site-visits?tab=scheduled' },
           { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#DCFCE7', textColor: '#15803D', href: '/sales/my-conversions?tab=sv' },
           { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E0F2F1', textColor: '#0F766E', href: '/sales/my-conversions?tab=closures' },
         ] },
