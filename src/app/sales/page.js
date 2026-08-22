@@ -137,7 +137,7 @@ function StatSection({ title, cards, loading }) {
   return (
     <section style={panel}>
       <h3 style={sectionLabel}>{title}</h3>
-      <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))`, maxWidth: cards.length * 168 }}>
+      <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))` }}>
         {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
       </div>
     </section>

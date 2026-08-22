@@ -212,12 +212,10 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 @media (min-width: 700px) {
   .dash-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* An odd last group spans the row instead of leaving a hole beside it. */
-  .dash-sections > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (min-width: 1500px) {
   .dash-sections { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .dash-sections > :last-child:nth-child(4n + 1) { grid-column: span 4; }
-  .dash-sections > :last-child:nth-child(4n + 2) { grid-column: span 3; }
-  .dash-sections > :last-child:nth-child(4n + 3) { grid-column: span 2; }
 }
+/* No span rule for an odd last group. Letting it stretch across the row forces
+   its two or three tiles to ~500px each, or leaves them marooned with gaps if
+   capped — both worse than a normal-width panel with a little space beside it. */
