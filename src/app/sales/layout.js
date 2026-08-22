@@ -44,7 +44,9 @@ const NAV = [
   { label: 'Follow-Ups',   href: '/sales/follow-ups',    icon: <IconCalendar /> },
   { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true },
   { label: 'Booking',      href: '/sales/closure',       icon: <IconBuilding />,  stmPortal: true },
-  { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true },
+  // Not for an STM: their site visits and closures are reached from Site Visits
+  // and Booking → My Bookings, which the dashboard tiles now link to directly.
+  { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true, hideForStm: true },
   { label: 'My Team',      href: '/sales/my-team',       icon: <IconUsers />,     managerOnly: true },
   { label: 'Approvals',    href: '/sales/bookings',      icon: <IconBuilding />,  managerOnly: true },
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true },
@@ -293,7 +295,7 @@ export default function SalesLayout({ children }) {
           ) : (
             <>
               <div style={s.sectionLabel}>SALES MENU</div>
-              {NAV.filter(item => !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp)).map((item) => {
+              {NAV.filter(item => !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp) && !(item.hideForStm && isStm && !isAdmin && !isManager)).map((item) => {
                 const active = isActive(item.href);
                 return (
                   <Link key={item.href} href={item.href} className="s-nav-link"
