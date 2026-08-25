@@ -66,6 +66,17 @@ function fmtDate(d) {
   return m ? `${m[3].padStart(2, '0')}-${m[2].padStart(2, '0')}-${m[1]}` : (d || '—');
 }
 
+// created_at/approved_at are full ISO timestamps — show date + time (IST, matches
+// the backend's TIME_ZONE) for booking/approval time-of-day, not just the date.
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  const date = d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Kolkata' });
+  const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+  return `${date}, ${time}`;
+}
+
 function BookingDetails({ b }) {
   const rawInsts = Array.isArray(b.installments) ? b.installments : [];
   // Sort the payment schedule by due date ascending (yyyy-mm-dd sorts chronologically).
@@ -85,6 +96,8 @@ function BookingDetails({ b }) {
           <Row2 label="Type" value={val(b.villa_type || b.bunglow_type)} />
           <Row2 label="STM" value={val(b.stm_name)} />
           <Row2 label="Booking Date" value={val(b.booking_date)} />
+          <Row2 label="Booking Time" value={fmtDateTime(b.created_at)} />
+          <Row2 label="Approved At" value={fmtDateTime(b.approved_at)} />
           <Row2 label="Pricing" value={String(b.formula_set || '').toUpperCase() || '—'} />
           <Row2 label="Plot Area" value={`${val(b.area)} ${b.area_unit || ''}`.trim()} />
           <Row2 label="Construction Area" value={val(b.const_area)} />
@@ -203,7 +216,9 @@ export default function ModuleBookingsPage() {
     .filter((b) => inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
     .forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
-  projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.booking_date || '').localeCompare(String(a.booking_date || ''))));
+  // Latest APPROVED first, not latest booked — approved_at is a full ISO
+  // timestamp so it sorts correctly to the minute, not just the day.
+  projectNames.forEach((pn) => groups[pn].sort((a, b) => String(b.approved_at || '').localeCompare(String(a.approved_at || ''))));
   // Project-wise total booking value (sum of approved final_amount) + grand total.
   const projectTotal = (pn) => groups[pn].reduce((s, b) => s + (Number(b.final_amount) || 0), 0);
   const grandTotal = projectNames.reduce((s, pn) => s + projectTotal(pn), 0);
@@ -285,11 +300,13 @@ export default function ModuleBookingsPage() {
                           <span style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', background: '#CCFBF1', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
                           {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
                         </div>
-                        <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{b.phone} · Booked {fmtDate(b.booking_date)} · STM {b.stm_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{b.phone} · STM {b.stm_name || '—'}</div>
+                        <div style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>Booked {fmtDateTime(b.created_at)}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
                         <div style={{ marginTop: 4 }}><span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span></div>
+                        {b.approved_at && <div style={{ fontSize: 11, color: '#8492A6', marginTop: 4 }}>Approved {fmtDateTime(b.approved_at)}</div>}
                       </div>
                     </div>
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
