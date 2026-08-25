@@ -80,6 +80,7 @@ function BookingPage() {
   const [plot,    setPlot]    = useState(null);   // primary (first) plot
   const [plots,   setPlots]   = useState([]);     // all selected plots
   const [sources, setSources] = useState([]);
+  const [cpModuleUsers, setCpModuleUsers] = useState([]); // employees with Channel Partner module access, for the Channel Partner Name picker
   const [saving,  setSaving]  = useState(false);
   const [msg,     setMsg]     = useState('');
 
@@ -240,6 +241,7 @@ function BookingPage() {
         }
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
+    fetch(SALES_ENDPOINTS.cpModuleUsers + cq('&'), { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then((d) => setCpModuleUsers(Array.isArray(d) ? d : [])).catch(() => {});
     // EOI: fetch the next per-project EOI code to show in the form + the LOI/EOI PDF.
     if (eoiMode && !reviseId && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}${eoiBlock ? `&block=${encodeURIComponent(eoiBlock)}` : ''}`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null)).then((d) => { if (d && d.eoi_no) setEoiNo(d.eoi_no); }).catch(() => {});
@@ -744,7 +746,7 @@ function BookingPage() {
         <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
         <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...(() => { const mapped = sources.map(s => srcDisplay(s.name)); const extra = ['Reference', 'Channel Partner', 'Other'].filter(n => !mapped.some(m => m.toLowerCase() === n.toLowerCase())); return [...mapped, ...extra]; })()] } /></Row>
         {/^reference$/i.test(f.source) && <Row><L>Reference Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
-        {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
+        {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><Sel value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} opts={['', ...cpModuleUsers.map((u) => u.name)]} /></Row>}
         {/^other$/i.test(f.source) && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
         {/* Kiosk: the booking is created by the kiosk account, so the salesperson

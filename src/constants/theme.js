@@ -48,4 +48,5 @@ export const MODULE_ACCENT = {
   Inventory:   { bg: '#FFF8E1', icon: '#F9A825' },
   Payments:    { bg: '#E8F5E9', icon: '#2E7D32' },
   Clients:     { bg: '#E8EEFF', icon: '#3D5AFE' },
+  'Channel Partner': { bg: '#FCE4EC', icon: '#C2185B' },
 };

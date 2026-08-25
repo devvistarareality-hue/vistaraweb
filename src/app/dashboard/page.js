@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { MODULE_ACCENT } from '../../constants/theme';
+import { canAccessChannelPartner } from '../../lib/moduleAccess';
 
 const MODULE_CONFIG = {
   'Sales':              { accent: MODULE_ACCENT.Sales,                 href: '/sales',       sub: 'Leads & Pipeline' },
@@ -13,12 +14,20 @@ const MODULE_CONFIG = {
   'Purchase':           { accent: MODULE_ACCENT.Purchase,              href: '/m/purchase',  sub: 'Vendors & Orders' },
   'Land':               { accent: MODULE_ACCENT.Land,                  href: '/m/land',      sub: 'Properties & Sites' },
   'Club 1000':          { accent: MODULE_ACCENT['Club 1000'],          href: '/club1000',    sub: 'Investment Schemes' },
+  'Channel Partner':    { accent: MODULE_ACCENT['Channel Partner'],    href: '/sales/channel-partners', sub: 'Referral Partners' },
 };
 
 export default function DashboardPage() {
-  const user        = useSelector((s) => s.auth.user);
-  const router      = useRouter();
-  const userModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m]);
+  const user = useSelector((s) => s.auth.user);
+  const router = useRouter();
+  const baseModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m] && m !== 'Channel Partner');
+  // A standalone tile only for someone who'd otherwise have no way in — anyone
+  // with the Sales module (or a true admin) already sees Channel Partner nested
+  // under Sales, so adding it here too would just duplicate that entry point.
+  // Mirrors sales/layout.js's isCpMgr exclusions (!isTrueAdmin && !isSalesModuleAdmin).
+  const isTrueAdmin = !!(user?.is_staff || user?.role === 'Admin');
+  const showCpTile = !isTrueAdmin && !baseModules.includes('Sales') && canAccessChannelPartner(user);
+  const userModules = showCpTile ? [...baseModules, 'Channel Partner'] : baseModules;
 
   useEffect(() => {
     if (user?.role === 'Kiosk') { router.replace('/kiosk'); return; }

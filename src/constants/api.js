@@ -93,6 +93,8 @@ export const SALES_ENDPOINTS = {
   get telecallers(){ return `${BASE_URL}/api/sales/users/telecallers/?crm_role=telecaller`; },
   get stms()       { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=stm`; },
   get cps()        { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp`; },
+  get cpModuleUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp_module`; },
+  get salesCpUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=sales_cp`; },
   get usersSlim()  { return `${BASE_URL}/api/sales/users/slim/`; },
   get team()       { return `${BASE_URL}/api/sales/team/`; },
   teamMember: (id) => `${BASE_URL}/api/sales/team/${id}/`,
@@ -124,6 +126,8 @@ export const SALES_ENDPOINTS = {
   get backups()          { return `${BASE_URL}/api/sales/backups/`; },
   get backupRun()        { return `${BASE_URL}/api/sales/backups/run/`; },
   backupDownload: (id)   => `${BASE_URL}/api/sales/backups/${id}/download/`,
+  get channelPartners()  { return `${BASE_URL}/api/sales/channel-partners/`; },
+  channelPartner: (id)   => `${BASE_URL}/api/sales/channel-partners/${id}/`,
 };
 
 export const CLUB1000_ENDPOINTS = {

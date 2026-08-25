@@ -157,20 +157,24 @@ function SkeletonGrid({ count = 6, grid }) {
 // ─────────────────────────────────────────────
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────
-function AdminDashboard({ user, adminView = false }) {
+export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   // CP portal (e.g. CP Cluster Head): CP leads are always self-assigned, so
-  // "Unassigned" isn't meaningful.
+  // "Unassigned" isn't meaningful. `cpOnly` forces this mode regardless of the
+  // viewer's own designation — a true admin browsing into the Channel Partner
+  // section still needs the CP-scoped view, not their own (non-CP) designation.
   const _des = (user?.designation || '').toLowerCase();
-  const isCp = _des.includes('cp executive') || _des.includes('channel partner') || _des.includes('cp cluster head');
+  const isCp = cpOnly || _des.includes('cp executive') || _des.includes('channel partner') || _des.includes('cp cluster head');
 
   useEffect(() => {
     // `adminView` (Admin-section mirror for a Sales Admin-Modules user) always hits
     // the network with admin_view=1 rather than reusing the plain cache key — the
     // regular Dashboard's cached numbers are team-scoped and would be wrong here.
-    const cacheKey = `stats_${companyId || 'all'}${adminView ? '_admin' : ''}`;
+    // Same reasoning for `isCp` — a CP Cluster Head's numbers are the CP-only pool
+    // (see cp_lead_q on the backend), never the whole company's.
+    const cacheKey = `stats_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}`;
     if (!adminView) {
       const { data: cached, fresh } = getCacheWithStatus(cacheKey);
       if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
@@ -178,29 +182,34 @@ function AdminDashboard({ user, adminView = false }) {
     const params = [];
     if (companyId) params.push(`company_id=${companyId}`);
     if (adminView) params.push('admin_view=1');
+    if (isCp) params.push('cp_only=true');
     const url = params.length ? `${SALES_ENDPOINTS.stats}?${params.join('&')}` : SALES_ENDPOINTS.stats;
     apiFetch(url)
       .then((r) => r.json())
       .then((d) => { if (!adminView) setCache(cacheKey, d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId, adminView]);
+  }, [companyId, adminView, isCp]);
 
-  const leadsHref = adminView ? '/sales/admin/leads' : '/sales/leads';
-  const convHref  = adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions';
+  // CP Cluster Heads land on their own Channel Partner section, not the regular
+  // Sales/Admin one — every tile has to point at the CP-scoped equivalent page.
+  const leadsHref     = isCp ? '/sales/channel-partners/leads'       : (adminView ? '/sales/admin/leads' : '/sales/leads');
+  const svHref         = isCp ? '/sales/channel-partners/site-visits' : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`;
+  const closuresHref   = isCp ? '/sales/channel-partners/closures'    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
+  const projectsHref   = isCp ? '/sales/channel-partners/closure'     : '/sales/closure';
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: leadsHref },
     { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: `${leadsHref}?date_from=today` },
     ...(isCp ? [] : [{ label: 'Unassigned', value: stats.new_leads, icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: `${leadsHref}?status=new` }]),
-    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: `${convHref}?tab=sv` },
-    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: `${convHref}?tab=closures` },
-    { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: '/sales/closure' },
+    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: svHref },
+    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: closuresHref },
+    { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: projectsHref },
   ] : [];
 
   return (
     <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Sales Dashboard</h1>
-        <p style={{ fontSize: 13, color: '#8492A6' }}>Overview of all CRM activity</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>{isCp ? 'Channel Partner Dashboard' : 'Sales Dashboard'}</h1>
+        <p style={{ fontSize: 13, color: '#8492A6' }}>{isCp ? 'Overview of Channel Partner activity' : 'Overview of all CRM activity'}</p>
       </div>
 
       {loading ? <SkeletonGrid count={6} /> : (

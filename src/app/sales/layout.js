@@ -10,7 +10,7 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import {isManagerRole, isSuperAdmin, moduleAccess} from '../../lib/moduleAccess';
+import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -37,6 +37,27 @@ function IconMapPin()       { return <SvgIcon><path d="M21 10c0 7-9 13-9 13s-9-6
 function IconConversion()   { return <SvgIcon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></SvgIcon>; }
 function IconTrash()        { return <SvgIcon><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></SvgIcon>; }
 function IconAdmin()        { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></SvgIcon>; }
+function IconPartner()      { return <SvgIcon><path d="M8.5 8.5L3 14l3 3 5.5-5.5M15.5 15.5L21 10l-3-3-5.5 5.5"/><path d="M9 15l1.5 1.5M13.5 9L15 10.5"/></SvgIcon>; }
+
+// Sub-pages shown inline under "Channel Partner" when it's expanded — shared by
+// both the real-admin NAV entry and the module-scoped admin's ADMIN_SECTION_NAV
+// entry, since (like Team Users/Distribution/Data Reset) these routes are already
+// company-wide rather than admin_view-scoped.
+const CP_CHILDREN = [
+  { label: 'Dashboard',   href: '/sales/channel-partners' },
+  { label: 'All Leads',   href: '/sales/channel-partners/leads' },
+  { label: 'Site Visits', href: '/sales/channel-partners/site-visits' },
+  { label: 'Follow-Ups',  href: '/sales/channel-partners/follow-ups' },
+  { label: 'Closures',    href: '/sales/channel-partners/closures' },
+  // "Booking" is the actual record-a-closure flow (project → units → form),
+  // same as the main Sales module's Booking item; "Approvals" is the
+  // Drafts/Pending/Approved/Rejected list — they used to share one nav item
+  // (labelled "Bookings"), which only ever opened the approvals list.
+  { label: 'Booking',     href: '/sales/channel-partners/closure' },
+  { label: 'Approvals',   href: '/sales/channel-partners/bookings' },
+];
+
+const CP_NAV_ITEM = { label: 'Channel Partner', href: '/sales/channel-partners', icon: <IconPartner />, children: CP_CHILDREN };
 
 const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
@@ -52,6 +73,7 @@ const NAV = [
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true },
   { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true },
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
+  { ...CP_NAV_ITEM, adminOnly: true },
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
   { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
   { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true },
@@ -75,6 +97,7 @@ const ADMIN_SECTION_NAV = [
   { label: 'Projects',       href: '/sales/projects',              icon: <IconBuilding /> },
   { label: 'Lead Setup',     href: '/sales/sources',               icon: <IconSource /> },
   { label: 'Team Users',     href: '/sales/users',                 icon: <IconUsers /> },
+  CP_NAV_ITEM,
   { label: 'Distribution',   href: '/sales/distribution',          icon: <IconDistribute /> },
   { label: 'Import Leads',   href: '/sales/import',                icon: <IconImport /> },
   { label: 'Data Reset',     href: '/sales/data-reset',            icon: <IconTrash /> },
@@ -116,6 +139,7 @@ export default function SalesLayout({ children }) {
   const isVRLAdmin = superAdmin && user?.company_code === 'VRL';
 
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
+  const [cpOpen,         setCpOpen]         = useState(false);
   const [profileOpen,    setProfileOpen]    = useState(false);
   const [profileData,    setProfileData]    = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -185,15 +209,23 @@ export default function SalesLayout({ children }) {
   // Box out module-scoped admins who don't own the Sales module (e.g. an HR Admin).
   const { isModuleAdmin: _isModAdmin, home: _modHome } = moduleAccess(user);
   const _blockedFromSales = _isModAdmin && !(user?.modules || []).includes('Sales');
+  // A CP-only Manager (designation starts with "cp", no Sales module/admin access)
+  // has no business on the generic '/sales' root — that dashboard is full-company
+  // Sales data they were never granted. Send them straight to their own dashboard.
+  const _isTrueAdminEarly = user?.role === 'Admin' || user?.is_staff;
+  const _isSalesModuleAdminEarly = !_isTrueAdminEarly && (user?.admin_modules || []).includes('Sales');
+  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && isCpManager(user) && pathname === '/sales';
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
     if (user.role === 'Kiosk') { router.replace('/kiosk'); return; } // Kiosk users are locked to the kiosk
-    if (_blockedFromSales) router.replace(_modHome);
-  }, [user]);
+    if (_blockedFromSales) { router.replace(_modHome); return; }
+    if (_cpOnlyOffRoot) router.replace('/sales/channel-partners');
+  }, [user, pathname]);
 
   if (user?.role === 'Kiosk') return null;
   if (_blockedFromSales) return null;
+  if (_cpOnlyOffRoot) return null;
 
   if (!user) {
     return (
@@ -219,11 +251,63 @@ export default function SalesLayout({ children }) {
   const isActive = (href) => (href === '/sales' || href === '/sales/admin') ? pathname === href : pathname.startsWith(href);
   // Real admins get these 6 appended flat, inline, in NAV's own order — unchanged.
   const trueAdminExtraItems = NAV.filter((item) => item.adminOnly);
-  // A module-scoped admin's full Admin section (14 items, mirrors a real admin's menu).
-  const adminSectionNavItems = ADMIN_SECTION_NAV;
+  // A module-scoped admin's full Admin section (mirrors a real admin's menu) —
+  // except Channel Partner, which "Sales" alone no longer implies: a Sales
+  // Admin-Modules user only gets it if their designation also starts with "cp"
+  // (isCpManager).
+  const adminSectionNavItems = ADMIN_SECTION_NAV.filter(
+    (item) => item.href !== CP_NAV_ITEM.href || isCpManager(user)
+  );
   // Whether the module-scoped admin is currently inside their Admin section — derived
   // from the URL, so a direct link or refresh lands on the right sidebar automatically.
   const inAdminSection = isSalesModuleAdmin && adminSectionNavItems.some((item) => isActive(item.href));
+
+  // Shared renderer for both the true-admin flat list and the module-scoped admin's
+  // Admin section — a nav item with `children` renders as an expand/collapse header
+  // with its sub-pages indented below, instead of navigating away directly.
+  function renderNavItem(item) {
+    if (item.children) {
+      const onOwnPage = item.children.some((c) => isActive(c.href));
+      const expanded = cpOpen || onOwnPage;
+      return (
+        <div key={item.href}>
+          <div
+            className="s-nav-link"
+            style={{ ...s.navItem, ...(onOwnPage ? s.navActive : {}), cursor: 'pointer' }}
+            onClick={() => setCpOpen((o) => !o)}
+          >
+            {onOwnPage && <div style={s.activeBar} />}
+            <span style={{ ...s.iconWrap, color: onOwnPage ? ORANGE : 'rgba(255,255,255,0.38)' }}>
+              {item.icon}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
+            <span style={{ color: 'rgba(255,255,255,0.38)', fontSize: 10, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
+          </div>
+          {expanded && item.children.map((child) => {
+            const childActive = isActive(child.href) && (child.href !== '/sales/channel-partners' || pathname === child.href);
+            return (
+              <Link key={child.href} href={child.href} className="s-nav-link"
+                style={{ ...s.navItem, paddingLeft: 44, ...(childActive ? s.navActive : {}) }}>
+                {childActive && <div style={s.activeBar} />}
+                <span style={{ fontSize: 12.5, fontWeight: childActive ? 600 : 500, color: childActive ? '#fff' : 'rgba(255,255,255,0.6)' }}>{child.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      );
+    }
+    const active = isActive(item.href);
+    return (
+      <Link key={item.href} href={item.href} className="s-nav-link"
+        style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
+        {active && <div style={s.activeBar} />}
+        <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
+          {item.icon}
+        </span>
+        <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
+      </Link>
+    );
+  }
 
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
@@ -234,9 +318,16 @@ export default function SalesLayout({ children }) {
   // Managers oversee the sales floor, so they also get the STM-portal modules
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
   const isManager = isManagerRole(user);
+  // A Manager whose designation starts with "cp" (e.g. "CP Cluster Head") gets
+  // into the Channel Partner module ONLY — not the rest of Sales. Excludes
+  // true/Sales-admin-modules admins, who already see everything (including
+  // Channel Partner) in the regular sidebar. Their lead visibility inside it
+  // still comes from the ordinary Manager project-assignment mechanism (see
+  // Team Users → Assign), same as any other Manager.
+  const isCpMgr = !isTrueAdmin && !isSalesModuleAdmin && isCpManager(user);
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
-    : (isCp || des.includes('cp cluster head'))
+    : (isCp || des.includes('cp cluster head') || isCpMgr)
     ? 'Channel Partner'
     : isStm
     ? 'Sales Executive'
@@ -267,7 +358,14 @@ export default function SalesLayout({ children }) {
 
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
-          {inAdminSection ? (
+          {isCpMgr ? (
+            <>
+              {/* A CP-designation Manager's entire Sales sidebar — just the one
+                  module, nothing else. */}
+              <div style={s.sectionLabel}>CHANNEL PARTNER</div>
+              {renderNavItem(CP_NAV_ITEM)}
+            </>
+          ) : inAdminSection ? (
             <>
               {/* Module-scoped admin, inside their Admin section — this REPLACES the
                   Sales menu entirely, the same way tapping into Sales itself replaces
@@ -278,52 +376,16 @@ export default function SalesLayout({ children }) {
                 <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Sales</span>
               </Link>
               <div style={{ ...s.divider, marginTop: 10 }} />
-              {adminSectionNavItems.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link key={item.href} href={item.href} className="s-nav-link"
-                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-                    {active && <div style={s.activeBar} />}
-                    <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
-                      {item.icon}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
-                  </Link>
-                );
-              })}
+              {adminSectionNavItems.map((item) => renderNavItem(item))}
             </>
           ) : (
             <>
               <div style={s.sectionLabel}>SALES MENU</div>
-              {NAV.filter(item => !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp) && !(item.hideForStm && isStm && !isAdmin && !isManager)).map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link key={item.href} href={item.href} className="s-nav-link"
-                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-                    {active && <div style={s.activeBar} />}
-                    <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
-                      {item.icon}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
-                  </Link>
-                );
-              })}
+              {NAV.filter(item => !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp) && !(item.hideForStm && isStm && !isAdmin && !isManager)).map((item) => renderNavItem(item))}
 
-              {isTrueAdmin && trueAdminExtraItems.map((item) => {
-                // Real admins (Chinmay, Prince, platform staff) get the flat,
-                // always-visible list exactly as before — no separate section for them.
-                const active = isActive(item.href);
-                return (
-                  <Link key={item.href} href={item.href} className="s-nav-link"
-                    style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-                    {active && <div style={s.activeBar} />}
-                    <span style={{ ...s.iconWrap, color: active ? ORANGE : 'rgba(255,255,255,0.38)' }}>
-                      {item.icon}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
-                  </Link>
-                );
-              })}
+              {isTrueAdmin && trueAdminExtraItems.map((item) => renderNavItem(item))}
+              {/* Real admins (Chinmay, Prince, platform staff) get the flat,
+                  always-visible list exactly as before — no separate section for them. */}
 
               {isSalesModuleAdmin && (
                 <Link href="/sales/admin" className="s-nav-link" style={s.navItem}>

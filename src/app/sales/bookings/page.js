@@ -20,7 +20,7 @@ async function openLoi(id) {
 
 const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected'], ['', 'All']];
 
-export function BookingsContent({ adminView = false }) {
+export function BookingsContent({ adminView = false, cpOnly = false, cpMode = false }) {
   const router = useRouter();
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -32,6 +32,7 @@ export function BookingsContent({ adminView = false }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
   const [managers, setManagers] = useState([]);
+  const [cpModuleUsers, setCpModuleUsers] = useState([]); // for the CP approver picker
   const [projects, setProjects] = useState([]);   // each carries booking_approvers
   const [cfgOpen, setCfgOpen] = useState(false);
   const [savedCfg, setSavedCfg] = useState('');
@@ -46,19 +47,23 @@ export function BookingsContent({ adminView = false }) {
 
   useEffect(() => {
     if (!isAdmin) return;
-    fetch(SALES_ENDPOINTS.distSettings + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setManagers(d.managers || [])).catch(() => {});
+    if (!cpMode) fetch(SALES_ENDPOINTS.distSettings + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setManagers(d.managers || [])).catch(() => {});
     fetch(SALES_ENDPOINTS.projects + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setProjects(Array.isArray(d) ? d : [])).catch(() => {});
-  }, [isAdmin, companyId]);
+    if (cpMode) fetch(SALES_ENDPOINTS.cpModuleUsers + cq('&'), { headers: authHeaders() }).then(r => r.json()).then((d) => setCpModuleUsers(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [isAdmin, companyId, cpMode]);
 
-  async function toggleApprover(projId, mgrId) {
+  // `field` picks which approver list to edit — 'booking_approvers' (regular) or
+  // 'cp_booking_approvers' (Channel-Partner-sourced bookings only — see backend
+  // _can_approve_cp_project). Same PATCH endpoint, just a different JSON key.
+  async function toggleApprover(projId, mgrId, field = 'booking_approvers') {
     let next = [];
     setProjects((ps) => ps.map((p) => {
       if (p.id !== projId) return p;
-      const arr = p.booking_approvers || [];
+      const arr = p[field] || [];
       next = arr.includes(mgrId) ? arr.filter((x) => x !== mgrId) : [...arr, mgrId];
-      return { ...p, booking_approvers: next };
+      return { ...p, [field]: next };
     }));
-    await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ booking_approvers: next }) }).catch(() => {});
+    await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => {});
     setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
   }
 
@@ -85,13 +90,13 @@ export function BookingsContent({ adminView = false }) {
 
   function load() {
     setLoading(true);
-    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : ''].filter(Boolean).join('&');
+    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : '', cpOnly ? 'cp_only=true' : ''].filter(Boolean).join('&');
     fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
   // Collapse state is per project name, so reset it whenever the visible set changes.
-  useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView]);
+  useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView, cpOnly]);
 
   async function act(id, action) {
     setBusy(id);
@@ -217,7 +222,7 @@ export function BookingsContent({ adminView = false }) {
         </div>
       )}
 
-      {isAdmin && (
+      {isAdmin && !cpMode && (
         <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
           <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#3D5AFE', padding: 0 }}>
             ⚙ Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
@@ -229,6 +234,30 @@ export function BookingsContent({ adminView = false }) {
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F0F3FA' }}>
                   <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{p.name}</div>
                   <ApproverDropdown project={p} managers={managers} onToggle={toggleApprover} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* A booking whose lead came through a Channel Partner is gated by this
+          separate list instead — same project, different approver(s), so a CP
+          deal doesn't depend on who approves the project's other bookings.
+          Shown only in the Channel Partner module — the main Sales Approvals
+          page keeps just the regular selector above. */}
+      {isAdmin && cpMode && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
+          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#3D5AFE', padding: 0 }}>
+            ⚙ Channel Partner Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
+          </button>
+          {cfgOpen && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 8 }}>For each project, pick who approves bookings whose lead came through a Channel Partner. Only they (not the main Sales module's regular approvers) can approve those.</div>
+              {cpModuleUsers.length === 0 ? <div style={{ fontSize: 13, color: '#8492A6' }}>No one has Channel Partner module access yet.</div> : projects.map((p) => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F0F3FA' }}>
+                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{p.name}</div>
+                  <ApproverDropdown project={p} managers={cpModuleUsers} onToggle={(projId, uid) => toggleApprover(projId, uid, 'cp_booking_approvers')} field="cp_booking_approvers" />
                 </div>
               ))}
             </div>
@@ -422,9 +451,9 @@ export default function BookingsPage() {
   return <BookingsContent />;
 }
 
-function ApproverDropdown({ project, managers, onToggle }) {
+function ApproverDropdown({ project, managers, onToggle, field = 'booking_approvers' }) {
   const [open, setOpen] = useState(false);
-  const sel = project.booking_approvers || [];
+  const sel = project[field] || [];
   const selNames = managers.filter((m) => sel.includes(m.id)).map((m) => m.name);
   return (
     <div style={{ position: 'relative', flex: 1, maxWidth: 460 }}>

@@ -30,7 +30,7 @@ const TABS = [
   { key: 'all',     label: 'All' },
 ];
 
-export function FollowUpsContent({ adminView = false }) {
+export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const user      = useSelector((s) => s.auth.user);
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -64,12 +64,13 @@ export function FollowUpsContent({ adminView = false }) {
       const params = [];
       if (companyId) params.push(`company_id=${companyId}`);
       if (adminView) params.push('admin_view=1');
+      if (cpOnly)    params.push('cp_only=true');
       const url = params.length ? `${SALES_ENDPOINTS.followUps}?${params.join('&')}` : SALES_ENDPOINTS.followUps;
       const res = await fetch(url, { headers: authHeaders() });
       if (res.ok) setItems(await res.json());
     } catch (_) {}
     setLoading(false);
-  }, [companyId, adminView]);
+  }, [companyId, adminView, cpOnly]);
 
   useEffect(() => { load(); }, [load, companyId]);
 
