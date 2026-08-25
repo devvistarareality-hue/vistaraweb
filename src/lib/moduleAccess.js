@@ -96,10 +96,9 @@ export function isCpManager(user) {
   return !!(user && user.role === 'Manager' && (user.designation || '').toLowerCase().trim().startsWith('cp'));
 }
 
-// Who can reach the Channel Partner module at all: the same admins who reach
-// every other admin-only Sales page, plus a CP-designation Manager (scoped to
-// their assigned projects once inside). Mirrors backend's
-// _is_sales_admin(user) or is_cp_manager(user) — keep in sync.
+// Who can reach the Channel Partner module: true/hard admins always can; a
+// CP-designation Manager gets in via their designation. Mirrors backend's
+// can_access_cp_module(user) — keep in sync.
 export function canAccessChannelPartner(user) {
-  return !!(user && (user.is_staff || user.role === 'Admin' || (user.admin_modules || []).includes('Sales') || isCpManager(user)));
+  return !!(user && (user.is_staff || user.role === 'Admin' || isCpManager(user)));
 }

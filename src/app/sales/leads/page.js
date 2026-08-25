@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
@@ -99,6 +99,7 @@ function DupToast({ toasts, onDismiss }) {
 // ── Add Lead Modal ──────────────────────────────────────────────────────────
 function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], cpOnly = false, channelPartners = [], onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
@@ -116,6 +117,22 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   useEffect(() => {
     if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
   }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
+  // "Assign STM" list is scoped to the project picked above — an STM assigned
+  // to specific projects (Team Users → Assign) only shows for those; refetch
+  // whenever the project selection changes.
+  const [salesCpUsers, setSalesCpUsers] = useState([]);
+  const salesCpReqId = useRef(0);
+  useEffect(() => {
+    if (!cpOnly || !_isCpHead) return;
+    // form.project starts empty and gets set moments later once seeded, so an
+    // earlier (unscoped) request can resolve AFTER a later (project-scoped)
+    // one and clobber it back to the unfiltered list — guard by request order.
+    const reqId = ++salesCpReqId.current;
+    const cq = (companyId ? `&company_id=${companyId}` : '') + (form.project ? `&project_id=${form.project}` : '');
+    fetch(SALES_ENDPOINTS.salesCpUsers + cq, { headers: authHeaders() })
+      .then((r) => r.json()).then((d) => { if (reqId === salesCpReqId.current) setSalesCpUsers(Array.isArray(d) ? d : []); })
+      .catch(() => { if (reqId === salesCpReqId.current) setSalesCpUsers([]); });
+  }, [cpOnly, _isCpHead, companyId, form.project]);
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -154,9 +171,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (form.budget_bucket)   body.budget_bucket = form.budget_bucket;
     if (form.lead_date)       body.lead_date     = form.lead_date;
     if (cpOnly) {
-      // No telecaller/STM assignment step for a Channel Partner lead — whoever
-      // adds it owns it automatically.
-      body.stm = user?.id;
+      // A Channel Partner lead is owned by whoever adds it by default — but a
+      // CP Cluster Head can hand it straight to a CP Executive (Assign CP) or
+      // a Sales-side person assigned to the project (Assign STM) instead, no
+      // approval step.
+      body.stm = (_isCpHead && form.stm) ? form.stm : user?.id;
     } else {
       if (_isAdminMgr && form.telecaller)         body.telecaller = form.telecaller;
       if ((_isAdminMgr || _isCpHead) && form.stm) body.stm        = form.stm;
@@ -395,13 +414,23 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                   </select>
                 </div>
               )}
-              {_isCpHead && (
+              {cpOnly && _isCpHead && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign CP</label>
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
                     <option value="">— None —</option>
                     {cps.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
+                </div>
+              )}
+              {cpOnly && _isCpHead && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={addLbl}>Assign STM</label>
+                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
+                    <option value="">— None —</option>
+                    {salesCpUsers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
+                  </select>
+                  <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Users assigned to this project. Assigns directly — no approval step.</p>
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
@@ -535,15 +564,17 @@ function fmtDateTime(iso) {
     + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = false, onClose, onUpdated }) {
+function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = false, channelPartners = [], onClose, onUpdated }) {
   const router = useRouter();
   const user = useSelector((s) => s.auth.user);
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Only admins/managers may (re)assign telecaller / STM. Telecaller & Sales Executive
   // portals can update status & remarks but cannot reassign leads.
   const _desig = (user?.designation || '').toLowerCase();
   const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
   const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
-  const _isCp  = _desig.includes('cp executive') || _desig.includes('channel partner') || _desig.includes('cp cluster head');
+  const _isCpHead = _desig.includes('cp cluster head');
+  const _isCp  = _desig.includes('cp executive') || _desig.includes('channel partner') || _isCpHead;
   const canAssign = !(_isTelecaller || _isStm || _isCp);
   // Telecallers see only the Telecaller (TC) section; STMs / CPs (exec + cluster
   // head) see only the STM/CP section. Admins/managers see both.
@@ -555,6 +586,23 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
   const [cityOther, setCityOther] = useState(false);  // City = "Other" → free-text box
   const [saving,    setSaving]    = useState(false);
   const [saveErr,   setSaveErr]   = useState('');   // required-field validation message
+  // "Assign STM" list is scoped to the lead's currently selected project — an
+  // STM assigned to specific projects (Team Users → Assign) only shows for
+  // those; refetch whenever the project selection changes.
+  const [salesCpUsers, setSalesCpUsers] = useState([]);
+  const salesCpReqId = useRef(0);
+  useEffect(() => {
+    if (!cpOnly || !_isCpHead) return;
+    // form starts as {} and gets seeded with the real project a moment later
+    // (see the lead-seeding effect below), so an earlier (unscoped) request
+    // can resolve AFTER the later (project-scoped) one and clobber it back to
+    // the unfiltered list — guard by request order.
+    const reqId = ++salesCpReqId.current;
+    const cq = (companyId ? `&company_id=${companyId}` : '') + (form.project ? `&project_id=${form.project}` : '');
+    fetch(SALES_ENDPOINTS.salesCpUsers + cq, { headers: authHeaders() })
+      .then((r) => r.json()).then((d) => { if (reqId === salesCpReqId.current) setSalesCpUsers(Array.isArray(d) ? d : []); })
+      .catch(() => { if (reqId === salesCpReqId.current) setSalesCpUsers([]); });
+  }, [cpOnly, _isCpHead, companyId, form.project]);
 
   // Followup form
   const [fuForm,    setFuForm]    = useState({ role_context: (_isStm || cpOnly) ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
@@ -569,12 +617,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
 
   useEffect(() => {
     setForm({
-      name: lead.name || '', alt_phone: lead.alt_phone || '',
+      name: lead.name || '', alt_phone: lead.alt_phone || '', email: lead.email || '',
       status: lead.status,
       telecaller: lead.telecaller || '', telecaller_status: lead.telecaller_status || '',
       telecaller_remarks: lead.telecaller_remarks || '',
       stm: lead.stm || '', stm_status: lead.stm_status || '', stm_remarks: lead.stm_remarks || '',
-      project: lead.project || '', source: lead.source || '',
+      project: lead.project || '', source: lead.source || '', channel_partner: lead.channel_partner || '',
       // City/Address/Purpose/Budget now ship in the list payload → prefill instantly,
       // no waiting on the detail fetch.
       city: lead.city || '', address: lead.address || '',
@@ -639,9 +687,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     }
     setSaveErr('');
     setSaving(true);
+    if (cpOnly && !form.channel_partner) { setSaveErr('Channel Partner is required.'); setSaving(false); return; }
     const body = {
       status: form.status,
       alt_phone: form.alt_phone || '',
+      email: form.email || '',
       telecaller_remarks: form.telecaller_remarks,
       stm_remarks: form.stm_remarks,
       city: form.city || '',
@@ -659,6 +709,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     if (form.stm_status && form.stm_status !== 'closed') body.stm_status = form.stm_status;
     if (form.project)          body.project          = form.project;
     if (form.source)           body.source           = form.source;
+    if (cpOnly)                body.channel_partner  = form.channel_partner;
     const res = await fetch(SALES_ENDPOINTS.lead(lead.id), {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
@@ -830,6 +881,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
                     onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
                 </div>
+                <div>
+                  <label style={mLbl}>Email</label>
+                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={mInp} placeholder="Optional"
+                    onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                </div>
               </div>
 
               {/* Requirement */}
@@ -915,6 +971,21 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
+                {cpOnly && (
+                  <div>
+                    <label style={mLbl}>Source</label>
+                    <div style={{ ...mInp, display: 'flex', alignItems: 'center', background: '#F8FAFD', color: '#3A3A5C', fontWeight: 600 }}>Channel Partner</div>
+                  </div>
+                )}
+                {cpOnly && (
+                  <div>
+                    <label style={mLbl}>Channel Partner Name<span style={{ color: '#DC2626' }}>*</span></label>
+                    <select value={form.channel_partner} onChange={(e) => setForm({ ...form, channel_partner: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                      <option value="">Select channel partner</option>
+                      {channelPartners.map((cp) => <option key={cp.id} value={cp.id}>{cp.name}{cp.firm_name ? ` · ${cp.firm_name}` : ''}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Telecaller — a Channel Partner lead skips telecaller calling entirely,
@@ -968,6 +1039,16 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   step, unlike a regular lead. */}
               {cpOnly && (
                 <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Assigned to {lead.stm_name || 'you'} automatically.</p>
+              )}
+              {cpOnly && _isCpHead && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={mLbl}>Assign STM</label>
+                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                    <option value="">— None —</option>
+                    {salesCpUsers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
+                  </select>
+                  <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Users assigned to this project. Assigns directly — no approval step.</p>
+                </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: (canAssign && !cpOnly) ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
                 {canAssign && !cpOnly && (
@@ -1336,13 +1417,18 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       cachedS ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.sources + cq,       { headers: authHeaders() }).then((r) => r.json()),
       (isCaller || cpOnly) ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }).then((r) => r.json()),
       (isCaller || cpOnly) ? Promise.resolve(null) : fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }).then((r) => r.json()),
-      // CP managers (cluster heads) assign leads to their CP executives.
-      isCpHead ? fetch(SALES_ENDPOINTS.cps + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
+      // CP managers (cluster heads) assign leads to their CP executives —
+      // only within the Channel Partner section itself, never the regular
+      // Sales "Add Lead"/"Edit Lead" forms.
+      (cpOnly && isCpHead) ? fetch(SALES_ENDPOINTS.cps + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
       // The Channel Partner section's referral-partner directory (CP Details).
       cpOnly ? fetch(SALES_ENDPOINTS.channelPartners + cq, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
       // Who a CP lead can be filtered by — everyone with CP module access, not
       // telecallers/STMs (a CP lead never has either).
       cpOnly ? fetch(SALES_ENDPOINTS.cpModuleUsers + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
+      // NOTE: the "Assign STM" list (Sales-module users, project-scoped) is
+      // fetched inside each modal itself, keyed on the selected project — see
+      // salesCpUsers state in AddLeadModal/LeadDetailModal.
     ]);
     if (pRes) { const p = Array.isArray(pRes) ? pRes : []; setCache(pKey, p); setProjects(p); }
     let resolvedSources = cachedS || null;
@@ -1808,7 +1894,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}
-          cpOnly={cpOnly}
+          cpOnly={cpOnly} channelPartners={channelPartners}
           onClose={() => setSelected(null)} onUpdated={onLeadUpdated} />
       )}
     </div>

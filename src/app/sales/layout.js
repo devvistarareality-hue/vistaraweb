@@ -49,7 +49,12 @@ const CP_CHILDREN = [
   { label: 'Site Visits', href: '/sales/channel-partners/site-visits' },
   { label: 'Follow-Ups',  href: '/sales/channel-partners/follow-ups' },
   { label: 'Closures',    href: '/sales/channel-partners/closures' },
-  { label: 'Bookings',    href: '/sales/channel-partners/bookings' },
+  // "Booking" is the actual record-a-closure flow (project → units → form),
+  // same as the main Sales module's Booking item; "Approvals" is the
+  // Drafts/Pending/Approved/Rejected list — they used to share one nav item
+  // (labelled "Bookings"), which only ever opened the approvals list.
+  { label: 'Booking',     href: '/sales/channel-partners/closure' },
+  { label: 'Approvals',   href: '/sales/channel-partners/bookings' },
 ];
 
 const CP_NAV_ITEM = { label: 'Channel Partner', href: '/sales/channel-partners', icon: <IconPartner />, children: CP_CHILDREN };
@@ -202,15 +207,23 @@ export default function SalesLayout({ children }) {
   // Box out module-scoped admins who don't own the Sales module (e.g. an HR Admin).
   const { isModuleAdmin: _isModAdmin, home: _modHome } = moduleAccess(user);
   const _blockedFromSales = _isModAdmin && !(user?.modules || []).includes('Sales');
+  // A CP-only Manager (designation starts with "cp", no Sales module/admin access)
+  // has no business on the generic '/sales' root — that dashboard is full-company
+  // Sales data they were never granted. Send them straight to their own dashboard.
+  const _isTrueAdminEarly = user?.role === 'Admin' || user?.is_staff;
+  const _isSalesModuleAdminEarly = !_isTrueAdminEarly && (user?.admin_modules || []).includes('Sales');
+  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && isCpManager(user) && pathname === '/sales';
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
     if (user.role === 'Kiosk') { router.replace('/kiosk'); return; } // Kiosk users are locked to the kiosk
-    if (_blockedFromSales) router.replace(_modHome);
-  }, [user]);
+    if (_blockedFromSales) { router.replace(_modHome); return; }
+    if (_cpOnlyOffRoot) router.replace('/sales/channel-partners');
+  }, [user, pathname]);
 
   if (user?.role === 'Kiosk') return null;
   if (_blockedFromSales) return null;
+  if (_cpOnlyOffRoot) return null;
 
   if (!user) {
     return (
@@ -236,8 +249,13 @@ export default function SalesLayout({ children }) {
   const isActive = (href) => (href === '/sales' || href === '/sales/admin') ? pathname === href : pathname.startsWith(href);
   // Real admins get these 6 appended flat, inline, in NAV's own order — unchanged.
   const trueAdminExtraItems = NAV.filter((item) => item.adminOnly);
-  // A module-scoped admin's full Admin section (14 items, mirrors a real admin's menu).
-  const adminSectionNavItems = ADMIN_SECTION_NAV;
+  // A module-scoped admin's full Admin section (mirrors a real admin's menu) —
+  // except Channel Partner, which "Sales" alone no longer implies: a Sales
+  // Admin-Modules user only gets it if their designation also starts with "cp"
+  // (isCpManager).
+  const adminSectionNavItems = ADMIN_SECTION_NAV.filter(
+    (item) => item.href !== CP_NAV_ITEM.href || isCpManager(user)
+  );
   // Whether the module-scoped admin is currently inside their Admin section — derived
   // from the URL, so a direct link or refresh lands on the right sidebar automatically.
   const inAdminSection = isSalesModuleAdmin && adminSectionNavItems.some((item) => isActive(item.href));
@@ -299,13 +317,15 @@ export default function SalesLayout({ children }) {
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
   const isManager = isManagerRole(user);
   // A Manager whose designation starts with "cp" (e.g. "CP Cluster Head") gets
-  // into the Channel Partner module ONLY — not the rest of Sales. Their lead
-  // visibility inside it still comes from the ordinary Manager project-assignment
-  // mechanism (see Team Users → Assign), same as any other Manager.
-  const isCpMgr = isCpManager(user);
+  // into the Channel Partner module ONLY — not the rest of Sales. Excludes
+  // true/Sales-admin-modules admins, who already see everything (including
+  // Channel Partner) in the regular sidebar. Their lead visibility inside it
+  // still comes from the ordinary Manager project-assignment mechanism (see
+  // Team Users → Assign), same as any other Manager.
+  const isCpMgr = !isTrueAdmin && !isSalesModuleAdmin && isCpManager(user);
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
-    : (isCp || des.includes('cp cluster head'))
+    : (isCp || des.includes('cp cluster head') || isCpMgr)
     ? 'Channel Partner'
     : isStm
     ? 'Sales Executive'

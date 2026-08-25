@@ -92,6 +92,7 @@ export const SALES_ENDPOINTS = {
   get stms()       { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=stm`; },
   get cps()        { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp`; },
   get cpModuleUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp_module`; },
+  get salesCpUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=sales_cp`; },
   get usersSlim()  { return `${BASE_URL}/api/sales/users/slim/`; },
   get team()       { return `${BASE_URL}/api/sales/team/`; },
   teamMember: (id) => `${BASE_URL}/api/sales/team/${id}/`,

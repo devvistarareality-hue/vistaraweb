@@ -10,7 +10,7 @@ import { MyBookingsList } from '../_MyBookings';
 // Read-only project picker for the Record Closure flow. Looks like the admin
 // Projects grid (screenshot) but with no Add/Edit/Deactivate/Manage-Plots — the
 // STM only selects a project to drill into its unit map.
-export default function ClosureProjectsPage() {
+export function ClosureProjectsContent({ backHref = '/sales/site-visits' }) {
   const router    = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cKey      = `projects_${companyId || 'all'}`;
@@ -57,7 +57,7 @@ export default function ClosureProjectsPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-        <button onClick={() => router.push('/sales/site-visits')} style={backBtn}>← Back</button>
+        <button onClick={() => router.push(backHref)} style={backBtn}>← Back</button>
       </div>
       {flash && (
         <div style={{ background: '#ECFDF3', border: '1px solid #A6E9C5', color: '#166534', borderRadius: 12, padding: '12px 16px', marginBottom: 14, fontSize: 14, fontWeight: 600 }}>
@@ -170,6 +170,10 @@ export default function ClosureProjectsPage() {
       ))}
     </div>
   );
+}
+
+export default function ClosureProjectsPage() {
+  return <ClosureProjectsContent />;
 }
 
 const card     = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(100,120,160,0.16)', border: '1.5px solid #DDE3EE', overflow: 'hidden', transition: 'transform 0.15s, box-shadow 0.15s' };
