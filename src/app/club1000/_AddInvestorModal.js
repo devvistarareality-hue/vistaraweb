@@ -28,15 +28,13 @@ function computeMaturity(investmentDateStr, tenureMonths) {
   return toISODate(d);
 }
 
-// Principal + full-tenure interest, day-count basis — mirrors
-// backend/club1000/services.py::maturity_value exactly.
+// Principal + the scheme's total return, applied once over the whole tenure
+// — pct is the total return BY maturity (e.g. "LEGACY 110" pays 110% total
+// over its 5-year tenure, not 110% every year), not an annualized rate to
+// scale by day-count. Mirrors backend/club1000/services.py::maturity_value.
 function computeMaturityValue(investmentDateStr, maturityDateStr, principal, pct) {
   if (!investmentDateStr || !maturityDateStr) return principal;
-  const start = new Date(`${investmentDateStr}T00:00:00`);
-  const end = new Date(`${maturityDateStr}T00:00:00`);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return principal;
-  const days = Math.round((end - start) / 86400000);
-  return principal + principal * (pct / 100) * (days / 365);
+  return principal + principal * (pct / 100);
 }
 
 // Every interest instalment (quarterly or monthly) falls on this fixed day of
@@ -110,12 +108,20 @@ function computeMonthlyDates(investmentDateStr, tenureMonths) {
 }
 
 // Day-count proration, mirrors backend/club1000/services.py::generate_payout_schedule:
-// dailyRate = principal * pct/100 / 365, each instalment = dailyRate * actual
-// calendar days since the PREVIOUS instalment (or since investment_date for
-// the first one) — so the first instalment is usually a stub.
-function prorateInstalments(dates, investmentDateStr, principal, totalReturnPct) {
-  const dailyRate = (principal * totalReturnPct) / 100 / 365;
-  let prev = new Date(`${investmentDateStr}T00:00:00`);
+// the investor's FIXED total return over the tenure (principal * pct/100 —
+// pct is the total return by maturity, not an annualized rate) is spread
+// pro-rata across the tenure's actual days: dailyRate = (principal * pct/100)
+// / tenureDays, each instalment = dailyRate * actual calendar days since the
+// PREVIOUS instalment (or since investment_date for the first one) — so the
+// first instalment is usually a stub. The sum of every instalment therefore
+// always equals principal * pct/100, exactly matching computeMaturityValue's
+// total interest.
+function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal, totalReturnPct) {
+  const start = new Date(`${investmentDateStr}T00:00:00`);
+  const end = new Date(`${maturityDateStr}T00:00:00`);
+  const tenureDays = Math.round((end - start) / 86400000);
+  const dailyRate = tenureDays > 0 ? (principal * totalReturnPct) / 100 / tenureDays : 0;
+  let prev = start;
   return dates.map((due_date) => {
     const cur = new Date(`${due_date}T00:00:00`);
     const days = Math.round((cur - prev) / 86400000);
@@ -207,7 +213,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
       : computeMonthlyDates(form.investment_date, scheme.tenure_months);
     const principal = Number(form.amount_invested) || 0;
     const totalReturn = Number(form.total_return_pct) || 0;
-    const amounts = prorateInstalments(dates, form.investment_date, principal, totalReturn);
+    const amounts = prorateInstalments(dates, form.investment_date, maturityPreview, principal, totalReturn);
     const rows = dates.map((due_date, i) => ({ due_date, amount_due: amounts[i], payout_type: 'interest' }));
     rows.push({ due_date: maturityPreview, amount_due: principal, payout_type: 'maturity' });
     return rows;
