@@ -8,6 +8,7 @@ import { stripPlotPrefix } from '../../../lib/plotNumber';
 import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
 import { computeFlat } from '../../../lib/pratishthaFlat';
+import { formatDMY } from '../../../lib/dateFormat';
 
 
 const MAX_LOI_FILE_SIZE_MB = 100;
@@ -80,7 +81,7 @@ function BookingPage() {
   const [plot,    setPlot]    = useState(null);   // primary (first) plot
   const [plots,   setPlots]   = useState([]);     // all selected plots
   const [sources, setSources] = useState([]);
-  const [cpModuleUsers, setCpModuleUsers] = useState([]); // employees with Channel Partner module access, for the Channel Partner Name picker
+  const [channelPartners, setChannelPartners] = useState([]); // CP Details directory, for the Channel Partner Name picker
   const [saving,  setSaving]  = useState(false);
   const [msg,     setMsg]     = useState('');
 
@@ -241,7 +242,7 @@ function BookingPage() {
         }
       }).catch(() => {});
     fetch(SALES_ENDPOINTS.sources + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setSources(Array.isArray(d) ? d : []));
-    fetch(SALES_ENDPOINTS.cpModuleUsers + cq('&'), { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then((d) => setCpModuleUsers(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch(SALES_ENDPOINTS.channelPartners + cq('?'), { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then((d) => setChannelPartners(Array.isArray(d) ? d : [])).catch(() => {});
     // EOI: fetch the next per-project EOI code to show in the form + the LOI/EOI PDF.
     if (eoiMode && !reviseId && projectId) fetch(`${SALES_ENDPOINTS.bookings}next-eoi/?project=${projectId}${cq('&')}${eoiBlock ? `&block=${encodeURIComponent(eoiBlock)}` : ''}`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null)).then((d) => { if (d && d.eoi_no) setEoiNo(d.eoi_no); }).catch(() => {});
@@ -720,6 +721,10 @@ function BookingPage() {
   const unit = f.area_unit || flags.areaUnit;
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
+      <style>{`
+        .dmy-date { color: transparent; }
+        .dmy-date::-webkit-calendar-picker-indicator { opacity: 1; }
+      `}</style>
       {saving && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #E0E6F0', borderTopColor: '#1a73e8', animation: 'spin 0.8s linear infinite' }} />
@@ -746,7 +751,7 @@ function BookingPage() {
         <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
         <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...(() => { const mapped = sources.map(s => srcDisplay(s.name)); const extra = ['Reference', 'Channel Partner', 'Other'].filter(n => !mapped.some(m => m.toLowerCase() === n.toLowerCase())); return [...mapped, ...extra]; })()] } /></Row>
         {/^reference$/i.test(f.source) && <Row><L>Reference Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
-        {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><Sel value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} opts={['', ...cpModuleUsers.map((u) => u.name)]} /></Row>}
+        {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><Sel value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} opts={['', ...channelPartners.map((cp) => cp.name)]} /></Row>}
         {/^other$/i.test(f.source) && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
         {/* Kiosk: the booking is created by the kiosk account, so the salesperson
@@ -995,7 +1000,7 @@ function BookingPage() {
       </>)}
 
       <Section title="Payment Schedule">
-        <Row><L>Booking Date *</L><In type="date" value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
+        <Row><L>Booking Date *</L><DateFieldDMY value={safeDate(f.booking_date)} onChange={(e) => set('booking_date', e.target.value)} /></Row>
         {/* A Regular Pratishtha unit is an all-inclusive fixed box price — no staged
             payments. A Down Payment one is paid in instalments against the box price. */}
         {pricingReady && (!prat || pratSched) && (<>
@@ -1012,7 +1017,7 @@ function BookingPage() {
                   {nsdInsts.map((r, i) => (
                     <tr key={i}>
                       <td style={td}>{i + 1}</td>
-                      <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} style={inp} /></td>
+                      <td style={td}><DateFieldDMY value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
                       <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
                       <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} style={inp} /></td>
                     </tr>
@@ -1037,7 +1042,7 @@ function BookingPage() {
               {insts.map((r, i) => (
                 <tr key={i}>
                   <td style={td}>{i + 1}</td>
-                  <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setInst(i, 'date', e.target.value)} style={inp} /></td>
+                  <td style={td}><DateFieldDMY value={safeDate(r.date)} onChange={(e) => setInst(i, 'date', e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
                   <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
                   <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
                 </tr>
@@ -1054,7 +1059,7 @@ function BookingPage() {
               )) : v.totalExtra > 0 && (
                 <tr style={{ background: '#FFF8E1' }}>
                   <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
-                  <td style={td}><input type="date" value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} /></td>
+                  <td style={td}><DateFieldDMY value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
                   <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Legal & Other Charges</td>
                   <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f0f4ff', color: '#1a73e8', fontWeight: 600 }} /></td>
                 </tr>
@@ -1078,7 +1083,7 @@ function BookingPage() {
                 {ewInsts.map((r, i) => (
                   <tr key={i}>
                     <td style={td}>{i + 1}</td>
-                    <td style={td}><input type="date" value={safeDate(r.date)} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} /></td>
+                    <td style={td}><DateFieldDMY value={safeDate(r.date)} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
                     <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
                     <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
                   </tr>
@@ -1147,6 +1152,22 @@ const In = ({ type, invalid, ...p }) => (
     style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', background: p.disabled ? '#F3F4F6' : (invalid ? '#FEF2F2' : '#fff') }} />
 );
 const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', cursor: 'pointer', background: invalid ? '#FEF2F2' : '#fff' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
+// A native <input type="date"> always displays digits in the browser's own
+// locale (Chrome defaults to MM/DD/YYYY on a US-locale PC) — that's browser
+// chrome, not content, so formatDMY() can't touch it directly. This keeps
+// the real date input (and its native picker) for editing, but hides its
+// own text and overlays our own DD/MM/YYYY label on top — click/tap
+// anywhere still opens the picker. Needs the .dmy-date CSS rule (declared
+// once near the top of this page's render) alongside it.
+const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => (
+  <div style={{ position: 'relative', flex: 1, ...wrapperStyle }}>
+    <input {...p} type="date" value={value} onChange={onChange} className="dmy-date"
+      style={{ width: '100%', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff', boxSizing: 'border-box', ...style }} />
+    <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: value ? '#1A1A2E' : '#9CA3AF', pointerEvents: 'none' }}>
+      {value ? formatDMY(value) : 'dd/mm/yyyy'}
+    </span>
+  </div>
+);
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>
