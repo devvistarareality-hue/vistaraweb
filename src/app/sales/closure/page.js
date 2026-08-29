@@ -10,7 +10,7 @@ import { MyBookingsList } from '../_MyBookings';
 // Read-only project picker for the Record Closure flow. Looks like the admin
 // Projects grid (screenshot) but with no Add/Edit/Deactivate/Manage-Plots — the
 // STM only selects a project to drill into its unit map.
-export function ClosureProjectsContent({ backHref = '/sales/site-visits' }) {
+export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly = false }) {
   const router    = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cKey      = `projects_${companyId || 'all'}`;
@@ -101,7 +101,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits' }) {
             // block picker rather than short-circuiting a project with zero plots so far.
             const goTo = () => (!p.block_industrial && noPlots)
               ? router.push(`/sales/booking?project=${p.id}&eoi=1${eoiQuery}`)
-              : router.push(`/sales/closure/${p.id}`);
+              : router.push(cpOnly ? `/sales/channel-partners/closure/${p.id}` : `/sales/closure/${p.id}`);
             return (
               <div key={p.id} onClick={goTo}
                 style={{ ...card, cursor: 'pointer' }}

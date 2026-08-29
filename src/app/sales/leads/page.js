@@ -875,9 +875,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
         } catch { /* ignore */ }
       }
 
-      // STM marked closed → save the lead, then jump straight into the booking
+      // STM/CP marked closed → save the lead, then jump straight into the booking
       // flow with this lead prefilled. The unit map lets them pick plot(s) and the
-      // booking form records the actual closure/booking.
+      // booking form records the actual closure/booking. A CP lead routes into the
+      // CP module's own closure/[id] route (not plain /sales/closure) so a CP
+      // manager stays inside their module instead of getting bounced back to the
+      // CP dashboard by the module boundary guard in sales/layout.js.
       if (form.stm_status === 'closed') {
         try {
           sessionStorage.setItem('closure_sv', JSON.stringify({
@@ -888,7 +891,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
         setSaving(false);
         onUpdated(updated);
         onClose();
-        router.push(form.project ? `/sales/closure/${form.project}` : '/sales/closure');
+        const closureBase = cpOnly ? '/sales/channel-partners/closure' : '/sales/closure';
+        router.push(form.project ? `${closureBase}/${form.project}` : closureBase);
         return;
       }
 

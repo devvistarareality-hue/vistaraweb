@@ -66,7 +66,7 @@ const TYPE_COLORS = {
   Hridaya: { bg: 'rgba(5,150,105,0.18)',  color: '#6ee7b7', border: 'rgba(5,150,105,0.5)'  },
 };
 
-export default function ClosureViewerPage() {
+export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const { id }  = useParams();
   const router  = useRouter();
   const user    = useSelector((s) => s.auth.user);
@@ -362,7 +362,7 @@ export default function ClosureViewerPage() {
     <div style={{ padding: '24px 28px', maxWidth: 1100 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <button onClick={() => router.push('/sales/closure')} style={backBtn}>← All projects</button>
+        <button onClick={() => router.push(backHref)} style={backBtn}>← All projects</button>
       </div>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>{project.name}</h1>
@@ -726,6 +726,10 @@ export default function ClosureViewerPage() {
       })()}
     </div>
   );
+}
+
+export default function ClosureViewerPage() {
+  return <ClosureViewerContent />;
 }
 
 /* ── Unit detail: floor-plan layouts + record-closure / direct-booking form ── */
