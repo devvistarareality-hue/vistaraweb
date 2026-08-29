@@ -210,11 +210,16 @@ export default function SalesLayout({ children }) {
   const { isModuleAdmin: _isModAdmin, home: _modHome } = moduleAccess(user);
   const _blockedFromSales = _isModAdmin && !(user?.modules || []).includes('Sales');
   // A CP-only Manager (designation starts with "cp", no Sales module/admin access)
-  // has no business on the generic '/sales' root — that dashboard is full-company
-  // Sales data they were never granted. Send them straight to their own dashboard.
+  // has no business anywhere in Sales outside the Channel Partner module — every
+  // other page (dashboard, leads, bookings, ...) is full-company Sales data they
+  // were never granted, and the backend only backstops the data itself, not
+  // navigation. Send them to their own dashboard the moment they land anywhere
+  // else, not just on the exact '/sales' root (a direct link or back-button into
+  // e.g. /sales/leads used to sail straight through with no guard at all).
   const _isTrueAdminEarly = user?.role === 'Admin' || user?.is_staff;
   const _isSalesModuleAdminEarly = !_isTrueAdminEarly && (user?.admin_modules || []).includes('Sales');
-  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && isCpManager(user) && pathname === '/sales';
+  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && isCpManager(user)
+    && !pathname.startsWith('/sales/channel-partners');
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
