@@ -187,6 +187,10 @@ export default function DistributionPage() {
   // Stats
   const [unassignedTc, setUnassignedTc] = useState(0);
   const [unassignedStm, setUnassignedStm] = useState(0);
+  // Leads distribution can never place: their project has nobody of the required
+  // designation assigned. _distribute silently counts these as "skipped", so
+  // without this they accumulate unnoticed.
+  const [blocked, setBlocked] = useState([]);
 
   // Log
   const [log, setLog]                 = useState([]);
@@ -222,6 +226,7 @@ export default function DistributionPage() {
     if (sRes && !sRes.detail && sRes.pending) {
       setUnassignedTc(sRes.pending.telecaller ?? 0);
       setUnassignedStm(sRes.pending.stm ?? 0);
+      setBlocked(Array.isArray(sRes.pending.blocked) ? sRes.pending.blocked : []);
     }
     if (Array.isArray(logRes)) setLog(logRes);
   }, [companyId]);
@@ -325,6 +330,34 @@ export default function DistributionPage() {
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Lead Distribution</h1>
         <p style={{ fontSize: 13, color: '#8492A6' }}>Manage availability, sign-in/sign-out times, and trigger lead assignments</p>
       </div>
+
+      {/* Stuck-leads warning — the skip _distribute never surfaces on auto-runs */}
+      {blocked.length > 0 && (
+        <div style={{ border: '1.5px solid #FCA5A5', background: '#FEF2F2', borderRadius: 12, padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 15 }}>⚠️</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#991B1B' }}>
+              {blocked.reduce((n, b) => n + b.count, 0)} lead{blocked.reduce((n, b) => n + b.count, 0) === 1 ? '' : 's'} can never be distributed
+            </span>
+          </div>
+          <p style={{ fontSize: 12, color: '#7F1D1D', marginBottom: 10 }}>
+            Distribution skips a lead when nobody of the required role is assigned to its project.
+            These stay unassigned until someone is added to the project — running Distribute again will not move them.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {blocked.map((b) => (
+              <div key={`${b.project}-${b.needs}`} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+                <span style={{ fontWeight: 800, color: '#991B1B', minWidth: 34 }}>{b.count}</span>
+                <span style={{ fontWeight: 700, color: '#1A1A2E' }}>{b.project}</span>
+                <span style={{ color: '#7F1D1D' }}>— {b.reason}</span>
+              </div>
+            ))}
+          </div>
+          <a href="/sales/projects" style={{ display: 'inline-block', marginTop: 11, fontSize: 12, fontWeight: 700, color: '#B91C1C' }}>
+            Assign someone to these projects →
+          </a>
+        </div>
+      )}
 
       {/* Row 1: Settings + Availability */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
