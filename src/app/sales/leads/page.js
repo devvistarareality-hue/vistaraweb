@@ -1440,7 +1440,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const [filters, setFilters] = useState({
     search: '', status: '', project_id: '', source_id: '',
     telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
-    campaign: '', is_duplicate: false, date_from: '', date_to: '',
+    campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
   // filtered view (?status=new, ?date_from=today, ?telecaller_status=hot, …).
@@ -1459,6 +1459,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       source_id:         p.get('source_id') || '',
       telecaller_status: p.get('telecaller_status') || '',
       stm_status:        p.get('stm_status') || '',
+      unassigned:        p.get('unassigned') === 'true',
       date_from:         df === 'today' ? today : (df || ''),
       date_to:           df === 'today' ? today : (p.get('date_to') || ''),
     }));
@@ -1588,6 +1589,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.stm_status)      params.set('stm_status',       filters.stm_status);
     if (filters.campaign)        params.set('campaign',         filters.campaign);
     if (filters.is_duplicate)    params.set('is_duplicate',     'true');
+    if (filters.unassigned)      params.set('unassigned',       'true');
     if (filters.date_from)       params.set('date_from',        filters.date_from);
     if (filters.date_to)         params.set('date_to',          filters.date_to);
     if (adminView)               params.set('admin_view', '1');
@@ -1772,8 +1774,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed'];
         const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
           filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
-          filters.campaign || filters.is_duplicate || filters.date_from || filters.date_to;
-        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, date_from:'', date_to:'' }); };
+          filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
+        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -1874,6 +1876,10 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? '#3D5AFE' : '#8492A6', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? '#3D5AFE' : '#E8ECF4'}`, background: filters.is_duplicate ? '#EEF0FF' : '#F8FAFD' }}>
                 <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 14, height: 14, accentColor: '#3D5AFE' }} />
                 Duplicates only
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.unassigned ? '#B9915E' : '#8492A6', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.unassigned ? '#B9915E' : '#E8ECF4'}`, background: filters.unassigned ? '#FDF3E6' : '#F8FAFD' }}>
+                <input type="checkbox" checked={filters.unassigned} onChange={(e) => sf('unassigned', e.target.checked)} style={{ width: 14, height: 14, accentColor: '#B9915E' }} />
+                Unassigned only
               </label>
             </div>
           </div>

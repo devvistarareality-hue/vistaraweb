@@ -174,7 +174,11 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
     // regular Dashboard's cached numbers are team-scoped and would be wrong here.
     // Same reasoning for `isCp` — a CP Cluster Head's numbers are the CP-only pool
     // (see cp_lead_q on the backend), never the whole company's.
-    const cacheKey = `stats_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}`;
+    // `_v2`: the payload gained `unassigned_leads`. Without a new key a returning
+    // user's still-fresh cached payload (2 min TTL, localStorage) short-circuits the
+    // fetch below and the Unassigned tile renders undefined. Keep the `stats_`
+    // prefix — _cache.js derives the TTL from the first `_`-delimited segment.
+    const cacheKey = `stats_v2_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}`;
     if (!adminView) {
       const { data: cached, fresh } = getCacheWithStatus(cacheKey);
       if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
@@ -199,7 +203,10 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#daeaf9', textColor: '#182350', href: leadsHref },
     { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: `${leadsHref}?date_from=today` },
-    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.new_leads, icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: `${leadsHref}?status=new` }]),
+    // `unassigned_leads`, not `new_leads`: status='new' is a pipeline stage, not an
+    // ownership check — a lead already worked by a telecaller sits at 'new' until it
+    // moves warm to an STM, so `new_leads` counted assigned leads as unassigned.
+    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.unassigned_leads, icon: <IconActivity />, color: '#fdf3e6', textColor: '#B9915E', href: `${leadsHref}?unassigned=true` }]),
     { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fdf3e6', textColor: '#B9915E', href: svHref },
     { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#daeaf9', textColor: '#182350', href: closuresHref },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fdf3e6', textColor: '#B9915E', href: projectsHref },

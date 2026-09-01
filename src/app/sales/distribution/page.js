@@ -198,11 +198,12 @@ export default function DistributionPage() {
 
   const load = useCallback(async () => {
     const cq = companyId ? `?company_id=${companyId}` : '';
-    const [sRes, aRes, wRes, stRes, logRes] = await Promise.all([
+    // No stats call here any more — the pool counts it used to supply now come
+    // from dist-settings, and /stats runs a dozen aggregates this page never read.
+    const [sRes, aRes, wRes, logRes] = await Promise.all([
       fetch(SALES_ENDPOINTS.distSettings + cq, { headers: authHeaders() }).then(r => r.json()),
       fetch(SALES_ENDPOINTS.availability  + cq, { headers: authHeaders() }).then(r => r.json()),
       fetch(SALES_ENDPOINTS.distWeight    + cq, { headers: authHeaders() }).then(r => r.json()),
-      fetch(SALES_ENDPOINTS.stats         + cq, { headers: authHeaders() }).then(r => r.json()),
       fetch(SALES_ENDPOINTS.distLog       + cq, { headers: authHeaders() }).then(r => r.json()),
     ]);
     if (sRes && !sRes.detail) setSettings(sRes);
@@ -214,9 +215,13 @@ export default function DistributionPage() {
       setWeights(wMap);
       setSavedWeights(wMap);
     }
-    if (stRes && !stRes.detail) {
-      setUnassignedTc(stRes.new_leads ?? 0);
-      setUnassignedStm(stRes.sv_done  ?? 0); // warm_transferred leads
+    // Pool sizes come from dist-settings (`pending`), which mirrors _distribute()'s
+    // own querysets. The old source was wrong on both lines: `new_leads` counted
+    // every status='new' lead including ones a telecaller/STM already owns, and
+    // `sv_done` is the completed-site-visit count, nothing to do with the STM pool.
+    if (sRes && !sRes.detail && sRes.pending) {
+      setUnassignedTc(sRes.pending.telecaller ?? 0);
+      setUnassignedStm(sRes.pending.stm ?? 0);
     }
     if (Array.isArray(logRes)) setLog(logRes);
   }, [companyId]);
