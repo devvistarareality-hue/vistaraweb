@@ -93,6 +93,8 @@ const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', mat
 
 export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved }) {
   const [form, setForm] = useState({
+    name: investor.name || '',
+    phone: investor.phone || '',
     amount_invested: String(investor.amount_invested || ''),
     interest_payout: investor.interest_payout || 'maturity',
     total_return_pct: String(investor.total_return_pct ?? ''),
@@ -210,11 +212,19 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
             Revise LOI
             <span style={{ fontSize: 10, fontWeight: 800, color: PURPLE, background: '#F3E8FF', padding: '2px 8px', borderRadius: 20 }}>R{nextRevisionNo}</span>
           </div>
-          <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{investor.name} · {investor.phone} · {scheme?.name}</div>
+          <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{form.name || investor.name} · {form.phone || investor.phone} · {scheme?.name}</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ fontSize: 11, color: '#8492A6', background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 8, padding: '8px 10px' }}>
-            Scheme, investor identity and investment date stay fixed across a revision — only the terms below can change. Matures {maturityPreview ? formatDMY(maturityPreview) : '—'}.
+            Scheme and investment date stay fixed across a revision — name, mobile number and the terms below can change. Matures {maturityPreview ? formatDMY(maturityPreview) : '—'}.
+          </div>
+          <div>
+            <label style={lbl}>Investor Name</label>
+            <input style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} required />
+          </div>
+          <div>
+            <label style={lbl}>Mobile Number</label>
+            <input style={inp} value={form.phone} onChange={(e) => set('phone', e.target.value)} required />
           </div>
           <div>
             <label style={lbl}>Amount Invested (₹)</label>
