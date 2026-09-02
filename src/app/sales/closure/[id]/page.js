@@ -19,6 +19,9 @@ const STATUS = {
   available: { label: 'Available', dot: '#22c55e', text: '#064E3B', bg: '#E8F5E9' },
   hold:      { label: 'On Hold',   dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
+  // A previously-sold unit put back on the market — bookable exactly like
+  // Available, just purple instead of green so it reads as "resold", not new.
+  resale:    { label: 'Resale',    dot: '#a78bfa', text: '#4C1D95', bg: '#F3E8FF' },
   // A unit with a saved (unsubmitted) draft — same underlying plot.status='hold' as a
   // bare in-progress selection, but shown grey and distinct so the team can tell "someone
   // is mid-paperwork on this" from "someone just clicked it a second ago".
@@ -299,7 +302,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       releasePlots([plot.id]);
       return;
     }
-    if (plot.status !== 'available') return; // only Available selectable
+    if (plot.status !== 'available' && plot.status !== 'resale') return; // Available or Resale selectable
     setBusyIds((s) => new Set(s).add(plot.id));
     try {
       const res = await fetch(SALES_ENDPOINTS.plotsHold, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plot.id] }) });
@@ -479,7 +482,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
                 // Any drafted unit is clickable — it opens the draft panel for everyone,
                 // just with different actions inside depending on who's looking.
-                const clickable = plot.status === 'available' || isSel || !!plot.drafted_booking_id;
+                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id;
                 const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
                 const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
                 const strokeC = isSel ? '#1A237E' : cfg.dot;
@@ -594,7 +597,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                       {plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}
                     </div>
                   )}
-                  {plot.status === 'available' && (
+                  {(plot.status === 'available' || plot.status === 'resale') && (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
                   )}
                   {plot.drafted_booking_id && plot.held_by_name === user?.name && (
@@ -636,7 +639,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 const cfg = plotCfg(plot);
                 const isSel = selectedSet.has(plot.id);
                 const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
-                const clickable = plot.status === 'available' || isSel || !!plot.drafted_booking_id;
+                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id;
                 const title = plot.drafted_booking_id
                   ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
                   : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
