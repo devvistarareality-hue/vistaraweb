@@ -89,6 +89,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const [sources,    setSources]    = useState([]);
   const [notice,     setNotice]     = useState(''); // transient banner (unit taken / hold expired)
   const [busyIds,    setBusyIds]    = useState(() => new Set()); // plot ids with an in-flight hold/release call
+  const [blockDropdownOpen, setBlockDropdownOpen] = useState(false);
 
   function flash(text) {
     setNotice(text);
@@ -469,25 +470,51 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       {/* Tower: choose the floor first — its plan(s) and its units are what's shown below. */}
       {floorWise && allFloors.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-          {/* Block — multi-select chips, only shown when the tower actually has more
-              than one block. Checking several shows all of their maps for the same
-              floor together, so an STM can pick a unit from any of them. */}
+          {/* Block — a dropdown with checkboxes, only shown when the tower actually
+              has more than one block. Checking several shows all of their maps for
+              the same floor together, so an STM can pick a unit from any of them. */}
           {blocks.filter(Boolean).length > 1 && (
             <>
               <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {blocks.map((b) => {
-                  const on = selectedBlocks.has(b);
-                  return (
-                    <button key={b} type="button" onClick={() => toggleBlock(b)} style={{
-                      height: 38, padding: '0 14px', borderRadius: 10, cursor: 'pointer',
-                      border: `1.5px solid ${on ? '#3D5AFE' : '#E6EBF4'}`, background: on ? '#EEF1FF' : '#fff',
-                      fontSize: 13, fontWeight: 700, color: on ? '#3D5AFE' : '#1A1A2E',
+              <div style={{ position: 'relative' }}>
+                <button type="button" onClick={() => setBlockDropdownOpen((o) => !o)} style={{
+                  height: 38, padding: '0 14px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  border: '1.5px solid #E6EBF4', background: '#fff', fontSize: 13, fontWeight: 700, color: '#1A1A2E', minWidth: 190,
+                }}>
+                  <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {selectedBlocks.size === blocks.length
+                      ? 'All Blocks'
+                      : [...selectedBlocks].map((b) => `Block ${b || '—'}`).join(', ') || 'Select block(s)'}
+                  </span>
+                  <span style={{ fontSize: 10, color: '#8492A6' }}>{blockDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+                {blockDropdownOpen && (
+                  <>
+                    <div onClick={() => setBlockDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 41, minWidth: 220,
+                      background: '#fff', border: '1.5px solid #E6EBF4', borderRadius: 10, boxShadow: '0 8px 24px rgba(100,120,160,0.18)', padding: 6,
                     }}>
-                      {on ? '✓ ' : ''}Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}
-                    </button>
-                  );
-                })}
+                      {blocks.map((b) => {
+                        const on = selectedBlocks.has(b);
+                        return (
+                          <div key={b} onClick={() => toggleBlock(b)} style={{
+                            display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                            background: on ? '#EEF1FF' : 'transparent',
+                          }}>
+                            <span style={{
+                              width: 16, height: 16, borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              border: `1.5px solid ${on ? '#3D5AFE' : '#C6D0DB'}`, background: on ? '#3D5AFE' : '#fff', color: '#fff', fontSize: 11, lineHeight: 1,
+                            }}>{on ? '✓' : ''}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E' }}>
+                              Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
             </>
           )}
