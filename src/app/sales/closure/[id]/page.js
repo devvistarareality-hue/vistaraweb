@@ -82,6 +82,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const [selectedIds, setSelectedIds] = useState([]); // multi-select: plot ids to book together
   const [hovered,  setHovered]  = useState(null);  // hovered zone id
   const [draftPanelPlot, setDraftPanelPlot] = useState(null); // drafted unit clicked into
+  const [soldPanelPlot, setSoldPanelPlot] = useState(null); // sold unit clicked into (Manager+ only) — offers Move to Resale
+  const [resaleBusy, setResaleBusy] = useState(false);
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
   const [sources,    setSources]    = useState([]);
@@ -275,6 +277,31 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     setPlots((ps) => ps.map((p) => (ids.includes(p.id) ? { ...p, status: 'available', held_by_name: null } : p)));
   }
 
+  // Put a sold unit back on the market from the map's panel — Manager/Director/
+  // Admin only (isManager gate mirrors the backend's is_admin_or_manager check
+  // on PlotDetailView.patch, the same endpoint Manage Plots uses for this).
+  // Doesn't touch the original booking or its signed LOI — see PlotDetailView,
+  // it only ever updates the Plot row itself.
+  async function moveToResaleFromPanel(plotId) {
+    if (!window.confirm('Move this unit to Resale? It becomes bookable again — the original booking and its LOI are left untouched.')) return;
+    setResaleBusy(true);
+    try {
+      const res = await fetch(SALES_ENDPOINTS.plot(plotId), {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status: 'resale' }),
+      });
+      if (res.ok) {
+        setPlots((ps) => ps.map((p) => (p.id === plotId ? { ...p, status: 'resale', held_by_name: null, agent_name: null } : p)));
+        setSoldPanelPlot(null);
+      } else {
+        flash('Could not move this unit to resale. Please try again.');
+      }
+    } catch (_) {
+      flash('Could not move this unit to resale. Please try again.');
+    } finally {
+      setResaleBusy(false);
+    }
+  }
+
   // Discard a draft from the map's panel — the drafter or a manager/admin, matching
   // the backend permission on BookingDiscardDraftView.
   async function discardDraftFromPanel(bookingId) {
@@ -300,6 +327,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     if (selectedSet.has(plot.id)) {
       setSelectedIds((ids) => ids.filter((x) => x !== plot.id));
       releasePlots([plot.id]);
+      return;
+    }
+    // A sold unit isn't for booking, but a Manager/Director/Admin can open it to
+    // put it back on the market — same "Move to Resale" action as Manage Plots,
+    // just reachable straight from this map instead of a separate admin screen.
+    if (plot.status === 'sold') {
+      if (isManager) setSoldPanelPlot(plot);
       return;
     }
     if (plot.status !== 'available' && plot.status !== 'resale') return; // Available or Resale selectable
@@ -482,7 +516,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
                 // Any drafted unit is clickable — it opens the draft panel for everyone,
                 // just with different actions inside depending on who's looking.
-                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id;
+                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || (plot.status === 'sold' && isManager);
                 const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
                 const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
                 const strokeC = isSel ? '#1A237E' : cfg.dot;
@@ -600,6 +634,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   {(plot.status === 'available' || plot.status === 'resale') && (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
                   )}
+                  {plot.status === 'sold' && isManager && (
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to move to resale →</div>
+                  )}
                   {plot.drafted_booking_id && plot.held_by_name === user?.name && (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to resume →</div>
                   )}
@@ -639,7 +676,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 const cfg = plotCfg(plot);
                 const isSel = selectedSet.has(plot.id);
                 const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
-                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id;
+                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || (plot.status === 'sold' && isManager);
                 const title = plot.drafted_booking_id
                   ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
                   : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
@@ -720,6 +757,32 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or a manager can resume or discard this.</p>
                 )}
                 <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Sold-unit panel — Manager/Director/Admin only: put the unit back on the
+          market for resale without touching the original booking or its LOI. */}
+      {soldPanelPlot && (() => {
+        const p = soldPanelPlot;
+        return (
+          <div onClick={() => !resaleBusy && setSoldPanelPlot(null)} style={overlay}>
+            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Sold</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 18px' }}>
+                {p.agent_name ? `Sold by ${p.agent_name}` : 'Sold'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={() => moveToResaleFromPanel(p.id)} disabled={resaleBusy}
+                  style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 700, fontSize: 14, cursor: resaleBusy ? 'default' : 'pointer', opacity: resaleBusy ? 0.7 : 1 }}>
+                  {resaleBusy ? 'Moving…' : '↻ Move to Resale'}
+                </button>
+                <button onClick={() => setSoldPanelPlot(null)} disabled={resaleBusy}
+                  style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>
