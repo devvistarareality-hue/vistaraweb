@@ -289,9 +289,12 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
 
   return (
     <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>{isCp ? 'Channel Partner Dashboard' : 'Sales Dashboard'}</h1>
-        <p style={{ fontSize: 13, color: '#8492A6' }}>{isCp ? 'Overview of Channel Partner activity' : 'Overview of all CRM activity'}</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>{isCp ? 'Channel Partner Dashboard' : 'Sales Dashboard'}</h1>
+          <p style={{ fontSize: 13, color: '#8492A6' }}>{isCp ? 'Overview of Channel Partner activity' : 'Overview of all CRM activity'}</p>
+        </div>
+        {!isCp && <SearchLeadButton />}
       </div>
 
       {loading ? <SkeletonGrid count={6} /> : (
