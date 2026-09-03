@@ -13,7 +13,10 @@ import { pdfToImageBlob } from '../../../../utils/pdfToImage';
 
 const STATUS_CFG = {
   available: { label: 'Available', color: '#2E7D32', bg: '#E8F5E9', border: '#2E7D32', zone: '#22c55e' },
-  hold:      { label: 'Hold',      color: '#E65100', bg: '#FFF3E0', border: '#E65100', zone: '#f59e0b' },
+  // Covers both a soft pick (auto-expires in 10 min) and a hard hold backed by
+  // a pending-approval booking — "Hold" read as one deliberate state and
+  // confused which of the two it was. "In Progress" reads correctly for both.
+  hold:      { label: 'In Progress', color: '#E65100', bg: '#FFF3E0', border: '#E65100', zone: '#f59e0b' },
   sold:      { label: 'Sold',      color: '#EF4444', bg: '#FEE2E2', border: '#EF4444', zone: '#ef4444' },
   // A previously-sold unit an admin has put back on the market — bookable
   // exactly like Available, just kept visually distinct (purple, not green)
@@ -1131,7 +1134,7 @@ export default function ManagePlotsPage() {
         {[
           { label: 'Total Plots', value: plots.length, color: '#1A1A2E' },
           { label: 'Available',   value: counts.available, color: '#2E7D32' },
-          { label: 'On Hold',     value: counts.hold,      color: '#E65100' },
+          { label: 'In Progress', value: counts.hold,      color: '#E65100' },
           { label: 'Sold',        value: counts.sold,      color: '#EF4444' },
         ].map(s => (
           <div key={s.label} style={{ backgroundColor: '#fff', borderRadius: 12, padding: '14px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.12)', textAlign: 'center' }}>
@@ -1223,7 +1226,7 @@ export default function ManagePlotsPage() {
         {[
           { key: 'all',       label: 'All',      color: '#1A1A2E', bg: '#F0F3FF', border: '#1A1A2E' },
           { key: 'available', label: 'Available', color: '#2E7D32', bg: '#E8F5E9', border: '#2E7D32' },
-          { key: 'hold',      label: 'Hold',      color: '#E65100', bg: '#FFF3E0', border: '#E65100' },
+          { key: 'hold',      label: 'In Progress', color: '#E65100', bg: '#FFF3E0', border: '#E65100' },
           { key: 'sold',      label: 'Sold',      color: '#EF4444', bg: '#FEE2E2', border: '#EF4444' },
         ].map(({ key, label, color, bg, border }) => (
           <button key={key} onClick={() => setFilter(key)}

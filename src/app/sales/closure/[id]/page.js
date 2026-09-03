@@ -17,7 +17,12 @@ const FACING_LABEL = { road: 'Road Facing', garden: 'Garden Facing' };
 
 const STATUS = {
   available: { label: 'Available', dot: '#22c55e', text: '#064E3B', bg: '#E8F5E9' },
-  hold:      { label: 'On Hold',   dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
+  // Covers two different things under one status: a soft pick that auto-expires
+  // in 10 minutes (someone just tapped it), and a hard hold backed by an actual
+  // pending-approval booking. "Hold" read as a deliberate pause either way and
+  // confused people about which one they were looking at — "In Progress" reads
+  // correctly for both ("something is actively happening with this unit").
+  hold:      { label: 'In Progress', dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
   // A previously-sold unit put back on the market — bookable exactly like
   // Available, just purple instead of green so it reads as "resold", not new.
@@ -453,7 +458,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
       {/* Filters — status + type (dim non-matching units) */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'On Hold']].map(([key, label]) => {
+        {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'In Progress']].map(([key, label]) => {
           const active = filter === key;
           const dot = STATUS[key]?.dot;
           return (
@@ -720,7 +725,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {/* Who is on a booked unit — so the team can see it without opening the plot. */}
                     {plot.agent_name && (
                       <div style={{ color: '#E2E8F0', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
-                        {plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}
+                        {plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}
                       </div>
                     )}
                     {(plot.status === 'available' || plot.status === 'resale') && (
@@ -797,7 +802,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
                     {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
                     {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
-                    {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}</span>}
+                    {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}</span>}
                   </button>
                 );
               })}
