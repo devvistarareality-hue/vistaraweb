@@ -72,6 +72,7 @@ export const SALES_ENDPOINTS = {
   get stats()      { return `${BASE_URL}/api/sales/stats/`; },
   get statsTrend() { return `${BASE_URL}/api/sales/stats/trend/`; },
   get leads()      { return `${BASE_URL}/api/sales/leads/`; },
+  get leadSearch() { return `${BASE_URL}/api/sales/leads/search/`; },
   get bulkDelete() { return `${BASE_URL}/api/sales/leads/bulk-delete/`; },
   lead: (id)       => `${BASE_URL}/api/sales/leads/${id}/`,
   get projects()   { return `${BASE_URL}/api/sales/projects/`; },

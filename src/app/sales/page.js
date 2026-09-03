@@ -68,6 +68,88 @@ function AvailabilityToggle() {
   );
 }
 
+// Company-wide "does this client already have a lead" lookup — deliberately
+// separate from the Leads page's own search box, which stays scoped to your
+// own pipeline. Point of this one is to catch a lead someone else already
+// owns (most commonly a telecaller's warm-transferred lead that never got
+// auto-distributed to an STM) before you add a duplicate for the same
+// client and silently orphan their incentive credit.
+function SearchLeadButton() {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState(null); // null = not searched yet
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const term = q.trim();
+    if (!term) { setResults(null); return; }
+    setLoading(true);
+    const t = setTimeout(() => {
+      apiFetch(`${SALES_ENDPOINTS.leadSearch}?search=${encodeURIComponent(term)}`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((d) => setResults(Array.isArray(d) ? d : []))
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [q, open]);
+
+  function close() { setOpen(false); setQ(''); setResults(null); }
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} style={{
+        marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
+        padding: '9px 16px', background: '#fff', color: '#3D5AFE', border: '1.5px solid #3D5AFE30',
+        borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+      }}>
+        <SvgIcon size={15}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></SvgIcon>
+        Search Lead
+      </button>
+      {open && (
+        <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,28,46,0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 520, maxWidth: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 16, boxShadow: '0 24px 80px rgba(24,35,80,0.25)', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0F3FA' }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 10 }}>Search Lead — whole company</div>
+              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or phone number…"
+                style={{ width: '100%', height: 42, padding: '0 14px', borderRadius: 10, border: '1.5px solid #E0E6F0', fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
+              <p style={{ fontSize: 11, color: '#8492A6', marginTop: 8 }}>Checks every lead in the company, not just your own — use this before adding a new one to avoid creating a duplicate.</p>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {loading && <p style={{ padding: 20, textAlign: 'center', color: '#8492A6', fontSize: 13 }}>Searching…</p>}
+              {!loading && results === null && (
+                <p style={{ padding: 20, textAlign: 'center', color: '#B0BAD0', fontSize: 13 }}>Start typing a name or phone number.</p>
+              )}
+              {!loading && results && results.length === 0 && (
+                <p style={{ padding: 20, textAlign: 'center', color: '#8492A6', fontSize: 13 }}>No lead found for "{q}" — safe to add as a new lead.</p>
+              )}
+              {!loading && results && results.map((l) => (
+                <div key={l.id} style={{ padding: '12px 20px', borderBottom: '1px solid #F5F6FA' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{l.name}</span>
+                    <StatusBadge status={l.status} />
+                  </div>
+                  <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{l.phone}{l.project_name ? ` · ${l.project_name}` : ''}</div>
+                  <div style={{ fontSize: 12, color: '#3D5AFE', marginTop: 4, fontWeight: 600 }}>
+                    {l.telecaller_name && `Telecaller: ${l.telecaller_name}`}
+                    {l.telecaller_name && l.stm_name && '  ·  '}
+                    {l.stm_name && `STM: ${l.stm_name}`}
+                    {!l.telecaller_name && !l.stm_name && <span style={{ color: '#B45309' }}>Unassigned</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '10px 20px', borderTop: '1px solid #F0F3FA', textAlign: 'right' }}>
+              <button onClick={close} style={{ padding: '8px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function SvgIcon({ children, size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -425,6 +507,7 @@ function TelecallerDashboard({ user }) {
           <p style={{ fontSize: 13, color: '#8492A6' }}>Telecaller · Your call queue & lead pipeline</p>
         </div>
         <AvailabilityToggle />
+        <SearchLeadButton />
       </div>
 
       {/* Date Filter */}
@@ -664,6 +747,7 @@ function STMDashboard({ user }) {
           <p style={{ fontSize: 13, color: '#8492A6' }}>{isCp ? 'Channel Partner' : 'Sales Executive'} · Your pipeline & site visits</p>
         </div>
         {!isCp && <AvailabilityToggle />}
+        <SearchLeadButton />
       </div>
 
       <DateFilter onChange={setEff} />
