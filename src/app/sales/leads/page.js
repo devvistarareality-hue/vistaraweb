@@ -153,7 +153,7 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
   );
 }
 
-function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], cpOnly = false, channelPartners = [], onClose, onAdded }) {
+function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], cpOnly = false, channelPartners = [], prefill = null, onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const _desig = (user?.designation || '').toLowerCase();
@@ -169,7 +169,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   // In the Channel Partner section, Source is fixed to the "Channel Partner"
   // LeadSource (created on demand by the parent) rather than freely chosen.
   const cpSource = cpOnly ? sources.find((s) => (s.name || '').toLowerCase() === 'channel partner') : null;
-  const [form, setForm] = useState({ name: '', phone: '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', lead_date: '' });
+  const [form, setForm] = useState({ name: prefill?.name || '', phone: prefill?.phone || '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', lead_date: '' });
   useEffect(() => {
     if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
   }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1476,6 +1476,20 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     return () => clearTimeout(t);
   }, [searchText]);
   const [addModal,    setAddModal]    = useState(false);
+  const [addPrefill,  setAddPrefill]  = useState(null);
+  // A "Search Lead" lookup on the Dashboard that came up empty hands off here to
+  // open Add Lead pre-filled with whatever was searched, instead of making the
+  // person retype it.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('quick_add_lead');
+      if (raw) {
+        sessionStorage.removeItem('quick_add_lead');
+        setAddPrefill(JSON.parse(raw));
+        setAddModal(true);
+      }
+    } catch (_) {}
+  }, []);
   const [selected,    setSelected]    = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   // Transfer straight from the row — the lead the STM is handing on, or null.
@@ -2015,8 +2029,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       {/* Modals */}
       {addModal && (
         <AddLeadModal projects={projects} sources={sources} telecallers={telecallers} stms={stms} cps={cps}
-          cpOnly={cpOnly} channelPartners={channelPartners}
-          onClose={() => setAddModal(false)} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
+          cpOnly={cpOnly} channelPartners={channelPartners} prefill={addPrefill}
+          onClose={() => { setAddModal(false); setAddPrefill(null); }} onAdded={(lead) => { if (lead?.is_duplicate) showDupToast(lead); loadLeads(); }} />
       )}
       {selected && (
         <LeadDetailModal lead={selected} projects={projects} sources={sources} telecallers={telecallers} stms={stms}

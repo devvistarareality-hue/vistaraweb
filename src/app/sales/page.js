@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import DateFilter from './_DateFilter';
@@ -75,6 +76,7 @@ function AvailabilityToggle() {
 // auto-distributed to an STM) before you add a duplicate for the same
 // client and silently orphan their incentive credit.
 function SearchLeadButton() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [results, setResults] = useState(null); // null = not searched yet
@@ -96,6 +98,24 @@ function SearchLeadButton() {
   }, [q, open]);
 
   function close() { setOpen(false); setQ(''); setResults(null); }
+
+  // Nothing found → hand the searched term to the Leads page's own Add Lead
+  // modal instead of making the person retype it there. Guess name vs phone
+  // the same way the search itself and the backend duplicate check do (10+
+  // digits, no letters = phone).
+  function addAsNewLead() {
+    const term = q.trim();
+    const digits = term.replace(/\D/g, '');
+    const isPhone = digits.length >= 10 && !/[a-zA-Z]/.test(term);
+    try {
+      sessionStorage.setItem('quick_add_lead', JSON.stringify({
+        name: isPhone ? '' : term,
+        phone: isPhone ? digits.slice(-10) : '',
+      }));
+    } catch (_) {}
+    close();
+    router.push('/sales/leads');
+  }
 
   return (
     <>
@@ -122,7 +142,12 @@ function SearchLeadButton() {
                 <p style={{ padding: 20, textAlign: 'center', color: '#B0BAD0', fontSize: 13 }}>Start typing a name or phone number.</p>
               )}
               {!loading && results && results.length === 0 && (
-                <p style={{ padding: 20, textAlign: 'center', color: '#8492A6', fontSize: 13 }}>No lead found for "{q}" — safe to add as a new lead.</p>
+                <div style={{ padding: 20, textAlign: 'center' }}>
+                  <p style={{ color: '#8492A6', fontSize: 13, marginBottom: 12 }}>No lead found for "{q}" — safe to add as a new lead.</p>
+                  <button onClick={addAsNewLead} style={{ padding: '9px 18px', background: '#3D5AFE', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                    + Add Lead
+                  </button>
+                </div>
               )}
               {!loading && results && results.map((l) => (
                 <div key={l.id} style={{ padding: '12px 20px', borderBottom: '1px solid #F5F6FA' }}>
@@ -750,7 +775,7 @@ function STMDashboard({ user }) {
           <p style={{ fontSize: 13, color: '#8492A6' }}>{isCp ? 'Channel Partner' : 'Sales Executive'} · Your pipeline & site visits</p>
         </div>
         {!isCp && <AvailabilityToggle />}
-        <SearchLeadButton />
+        {!isCp && <SearchLeadButton />}
       </div>
 
       <DateFilter onChange={setEff} />
