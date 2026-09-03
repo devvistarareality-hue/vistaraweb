@@ -22,7 +22,7 @@ const STATUS = {
   // pending-approval booking. "Hold" read as a deliberate pause either way and
   // confused people about which one they were looking at — "In Progress" reads
   // correctly for both ("something is actively happening with this unit").
-  hold:      { label: 'In Progress', dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
+  hold:      { label: 'In Progress', dot: '#94A3B8', text: '#334155', bg: '#F1F5F9' },
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
   // A previously-sold unit put back on the market — bookable exactly like
   // Available, just purple instead of green so it reads as "resold", not new.
