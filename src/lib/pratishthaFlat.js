@@ -91,8 +91,13 @@ export function computeFlat(pb, edit = {}) {
   // Regular backs the processing charge out of the box price first; Down Payment
   // divides the box price straight down, because its charges are added on top rather
   // than carved out.
+  // The 1.07 divisor strips the 7% (6% stamp + 1% GST) back out of an all-inclusive
+  // box price. Pratishtha 2 does not quote all-inclusive — its Final Unit Price is
+  // Box Price - Bank Processing flat — so its books carry a divisor of 1. Books
+  // without the key keep 1.07.
+  const dastavej_divisor = Number(pb.dastavej_divisor) || R.dastavejDivisor;
   const dastavej_value  = Math.round(
-    (isDownPayment ? box_price : box_price - bank_processing) / R.dastavejDivisor);
+    (isDownPayment ? box_price : box_price - bank_processing) / dastavej_divisor);
   // Regular taxes the agreement value; Down Payment taxes the box price, so its
   // Total Legal & Other Charges comes to Box Price x 7% plus the legal charge.
   const taxBase         = isDownPayment ? box_price : dastavej_value;
@@ -111,7 +116,7 @@ export function computeFlat(pb, edit = {}) {
 
   return {
     ...pb, kind: 'flat', is_down_payment: isDownPayment,
-    flat_area, terrace_area, flat_rate, terrace_rate, facing_premium,
+    flat_area, terrace_area, flat_rate, terrace_rate, facing_premium, dastavej_divisor,
     flat_price, terrace_price, box_price, token, bank_loan,
     bank_processing, maint_adv_6m, maint_adv_12m, legal,
     dastavej_value, stamp_duty_reg, gst, total_extra, total_legal_extra, total,

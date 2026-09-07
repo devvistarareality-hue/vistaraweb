@@ -372,7 +372,13 @@ function BookingPage() {
        [pb.is_down_payment ? 'Unit Price (Flat Price + Terrace Price)' : 'Box Price (Flat Price + Terrace Price)', rupee(pb.box_price), 'sub'],
        // Same split as the LOI: what the price is made up of, then how it is funded.
        // Both add to the Total, so listing them together reads as double the price.
-       { h: 'What This Price Includes' },
+       // With the 1.07 divisor the rows below work back out to exactly the Box Price,
+       // so "includes" is literal. Pratishtha 2 has no divisor: its stamp duty and GST
+       // are sale-deed figures sitting inside the price rather than components that
+       // sum to it, so the heading must not promise arithmetic that no longer holds.
+       { h: (!pb.is_down_payment && Number(pb.dastavej_divisor) === 1)
+         ? 'Sale Deed Figures · inside the Box Price, not added to it'
+         : 'What This Price Includes' },
        // Down Payment quotes four figures that add to the total; Regular breaks the
        // box price down into what it already contains.
        ...(pb.is_down_payment
@@ -381,7 +387,9 @@ function BookingPage() {
             ['6 Months Advance Maintenance (1.5 x 9 x Area x 6)', rupee(pb.maint_adv_6m)],
             ['12 Months Maintenance Deposit (1.5 x 9 x Area x 12)', rupee(pb.maint_adv_12m)],
             ['Total Legal & Extra Charges', rupee(pb.total_legal_extra), 'sub']]
-         : [['Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
+         : [[Number(pb.dastavej_divisor) === 1
+              ? 'Final Unit Price (Box Price - Bank Processing)'
+              : 'Final Unit Price ((Box Price - Bank Processing) / 1.07)', rupee(pb.dastavej_value)],
             ['Stamp Duty + Registration (Final Unit Price x 6%)', rupee(pb.stamp_duty_reg)],
             ['GST (Final Unit Price x 1%)', rupee(pb.gst)],
             ['Bank Processing Charges (Bank Loan x 4.5%)', rupee(pb.bank_processing)]]),
