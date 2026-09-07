@@ -300,8 +300,15 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         y += 2; tRow('Total Legal & Extra Charges', pb.total_legal_extra, { sub: true });
       } else {
         tRow('Final Unit Price', pb.dastavej_value, { subline: 'Value of the unit recorded in the sale agreement' });
-        tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
-        tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
+        // Pratishtha 2 (dastavej_divisor 1) does not quote an all-inclusive box price,
+        // so its stamp duty and GST are sale-deed figures rather than money the buyer
+        // pays on top. Printing them here listed charges the LOI does not collect, and
+        // the section stopped adding up. Omitted, the remaining rows are exact:
+        // Final Unit Price + Bank Processing = Box Price.
+        if (Number(pb.dastavej_divisor) !== 1) {
+          tRow('Stamp Duty + Registration', pb.stamp_duty_reg, { subline: 'Government charges to register the unit in your name' });
+          tRow('GST', pb.gst, { subline: 'Goods & Services Tax' });
+        }
         tRow('Bank Processing Charges', pb.bank_processing);
       }
       // Down Payment has no loan to describe, and its four rows already add to the
