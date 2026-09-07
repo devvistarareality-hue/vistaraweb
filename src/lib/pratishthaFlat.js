@@ -54,7 +54,14 @@ export function computeFlat(pb, edit = {}) {
   const token = edit.token === '' || edit.token == null
     ? (Number(pb.token) || 0) : (Number(edit.token) || 0);
 
-  const terrace_rate    = flat_rate / R.terraceRateDivisor;
+  // Pratishtha's original books price the terrace at exactly half the flat rate, so
+  // it stays derived when the book says nothing. Pratishtha 2 sets its own flat rate
+  // (Rs 12,000/sq.yd) which is NOT half of its flat rate (Rs 31,666.67 -> 15,833.33),
+  // so an explicit terrace_rate on the book wins. Stored as a rate, not a price: the
+  // Down Payment plan moves flat_price, and the terrace must not move with it.
+  const terrace_rate    = pb.terrace_rate == null || pb.terrace_rate === ''
+    ? flat_rate / R.terraceRateDivisor
+    : Number(pb.terrace_rate) || 0;
   const terrace_price   = Math.round(terrace_area * terrace_rate);
   const box_price       = flat_price + terrace_price;
   const bank_loan       = box_price - token;
