@@ -284,9 +284,14 @@ function BookingPage() {
   // `rate` and `terraceRate` are seeded from the book so the inputs open on today's
   // figures; `flatPrice` stays the single driver computeFlat reads, and setFlatEdit
   // keeps the two in step so there is never a rate/price pair that disagree.
+  // The Rate field shows the BASE rate — a road-facing unit's lump-sum premium is
+  // not part of it, so it comes off here and goes back on in setFlatEdit. Without
+  // that, editing the rate would quietly drop the premium from the price.
   const flatSeed = (pb) => ({
     plan: 'Regular', flatPrice: pb.flat_price, token: pb.token,
-    rate: pb.flat_area ? +((Number(pb.flat_price) || 0) / pb.flat_area).toFixed(4) : 0,
+    rate: pb.flat_area
+      ? +(((Number(pb.flat_price) || 0) - (Number(pb.facing_premium) || 0)) / pb.flat_area).toFixed(4)
+      : 0,
     terraceRate: pb.terrace_rate ?? '',
   });
   const flatEdit = (pb) => flatEdits[pb.unit] || flatSeed(pb);
@@ -295,10 +300,12 @@ function BookingPage() {
       const cur = m[pb.unit] || flatSeed(pb);
       const next = { ...cur, ...patch };
       const area = Number(pb.flat_area) || 0;
+      const prem = Number(pb.facing_premium) || 0;
       // Rate and price are two views of one number. Editing either recomputes the
       // other so the form can never show a rate that does not produce its price.
-      if ('rate' in patch && area) next.flatPrice = Math.round((Number(patch.rate) || 0) * area);
-      else if ('flatPrice' in patch && area) next.rate = +((Number(patch.flatPrice) || 0) / area).toFixed(4);
+      // Price = base rate x area + facing premium, in both directions.
+      if ('rate' in patch && area) next.flatPrice = Math.round((Number(patch.rate) || 0) * area) + prem;
+      else if ('flatPrice' in patch && area) next.rate = +(((Number(patch.flatPrice) || 0) - prem) / area).toFixed(4);
       return { ...m, [pb.unit]: next };
     });
   // Only a Down Payment plan may move the rate or token. On Regular the unit prices
@@ -310,7 +317,9 @@ function BookingPage() {
     // A shop's Rate is editable on any booking; flats now match. Only the negotiated
     // price and token stay behind the Down Payment plan.
     const base = { rate: e.rate, terraceRate: e.terraceRate };
-    if (Number(e.rate) && Number(pb.flat_area)) base.flatPrice = Math.round(Number(e.rate) * Number(pb.flat_area));
+    if (Number(e.rate) && Number(pb.flat_area)) {
+      base.flatPrice = Math.round(Number(e.rate) * Number(pb.flat_area)) + (Number(pb.facing_premium) || 0);
+    }
     return isDownPayment(pb) ? { ...base, ...e } : base;
   };
   const pratBooks = rawBooks.map((pb) => (pb.kind === 'shop'
@@ -348,10 +357,16 @@ function BookingPage() {
     : [['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—'],
        ['Flat Area', `${pb.flat_area} sq.yd`],
        ['Flat Rate', rupee(pb.flat_rate) + ' / sq.yd'],
+       // Road facing is a lump sum on the price, not a higher rate — shown on its
+       // own line so Area x Rate + Premium = Flat Price reads off the page.
+       ...(pb.facing_premium ? [['Road Facing Premium', rupee(pb.facing_premium)]] : []),
        ['Flat Price', rupee(pb.flat_price)],
        ...(pb.terrace_area
          ? [['Additional Terrace Area', `${pb.terrace_area} sq.yd`],
-            ['Terrace Rate (Flat Rate / 2)', rupee(pb.terrace_rate) + ' / sq.yd'],
+            // Only the original Pratishtha derives the terrace at half the flat rate;
+            // Pratishtha 2 quotes its own, so the label must not claim a formula.
+            [pb.terrace_rate === pb.flat_rate / 2 ? 'Terrace Rate (Flat Rate / 2)' : 'Terrace Rate',
+             rupee(pb.terrace_rate) + ' / sq.yd'],
             ['Additional Terrace Price (Terrace Area x Terrace Rate)', rupee(pb.terrace_price)]]
          : [['Additional Terrace Area', '—']]),
        [pb.is_down_payment ? 'Unit Price (Flat Price + Terrace Price)' : 'Box Price (Flat Price + Terrace Price)', rupee(pb.box_price), 'sub'],

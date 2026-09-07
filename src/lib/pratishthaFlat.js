@@ -50,7 +50,13 @@ export function computeFlat(pb, edit = {}) {
   const flat_price = edit.flatPrice === '' || edit.flatPrice == null
     ? Math.round(Number(pb.flat_price) || 0)
     : Math.round(Number(edit.flatPrice) || 0);
-  const flat_rate = flat_area ? flat_price / flat_area : 0;
+  // Road-facing units carry a lump-sum premium on the Flat Price rather than a
+  // higher per-sq.yd rate, so it has to come off before the rate is derived —
+  // otherwise the form would show 32,500 for a 60 sq.yd unit quoted at 31,666.67
+  // and the terrace's half-rate fallback would inherit the error. Books without the
+  // key (the original Pratishtha's) read 0 and are unaffected.
+  const facing_premium = Number(pb.facing_premium) || 0;
+  const flat_rate = flat_area ? (flat_price - facing_premium) / flat_area : 0;
   const token = edit.token === '' || edit.token == null
     ? (Number(pb.token) || 0) : (Number(edit.token) || 0);
 
@@ -105,7 +111,7 @@ export function computeFlat(pb, edit = {}) {
 
   return {
     ...pb, kind: 'flat', is_down_payment: isDownPayment,
-    flat_area, terrace_area, flat_rate, terrace_rate,
+    flat_area, terrace_area, flat_rate, terrace_rate, facing_premium,
     flat_price, terrace_price, box_price, token, bank_loan,
     bank_processing, maint_adv_6m, maint_adv_12m, legal,
     dastavej_value, stamp_duty_reg, gst, total_extra, total_legal_extra, total,
