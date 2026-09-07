@@ -59,9 +59,13 @@ export function computeFlat(pb, edit = {}) {
   // (Rs 12,000/sq.yd) which is NOT half of its flat rate (Rs 31,666.67 -> 15,833.33),
   // so an explicit terrace_rate on the book wins. Stored as a rate, not a price: the
   // Down Payment plan moves flat_price, and the terrace must not move with it.
-  const terrace_rate    = pb.terrace_rate == null || pb.terrace_rate === ''
-    ? flat_rate / R.terraceRateDivisor
-    : Number(pb.terrace_rate) || 0;
+  // Precedence: what the form's editable field says, else the book's own quoted
+  // rate, else the original's half-of-the-flat-rate rule.
+  const terrace_rate = edit.terraceRate !== '' && edit.terraceRate != null
+    ? Number(edit.terraceRate) || 0
+    : (pb.terrace_rate == null || pb.terrace_rate === ''
+      ? flat_rate / R.terraceRateDivisor
+      : Number(pb.terrace_rate) || 0);
   const terrace_price   = Math.round(terrace_area * terrace_rate);
   const box_price       = flat_price + terrace_price;
   const bank_loan       = box_price - token;

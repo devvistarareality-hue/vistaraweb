@@ -281,15 +281,38 @@ function BookingPage() {
   const shopEdit = (pb) => shopEdits[pb.unit] || shopSeed(pb);
   const setShopEdit = (pb, patch) =>
     setShopEdits((m) => ({ ...m, [pb.unit]: { ...(m[pb.unit] || shopSeed(pb)), ...patch } }));
-  const flatSeed = (pb) => ({ plan: 'Regular', flatPrice: pb.flat_price, token: pb.token });
+  // `rate` and `terraceRate` are seeded from the book so the inputs open on today's
+  // figures; `flatPrice` stays the single driver computeFlat reads, and setFlatEdit
+  // keeps the two in step so there is never a rate/price pair that disagree.
+  const flatSeed = (pb) => ({
+    plan: 'Regular', flatPrice: pb.flat_price, token: pb.token,
+    rate: pb.flat_area ? +((Number(pb.flat_price) || 0) / pb.flat_area).toFixed(4) : 0,
+    terraceRate: pb.terrace_rate ?? '',
+  });
   const flatEdit = (pb) => flatEdits[pb.unit] || flatSeed(pb);
   const setFlatEdit = (pb, patch) =>
-    setFlatEdits((m) => ({ ...m, [pb.unit]: { ...(m[pb.unit] || flatSeed(pb)), ...patch } }));
+    setFlatEdits((m) => {
+      const cur = m[pb.unit] || flatSeed(pb);
+      const next = { ...cur, ...patch };
+      const area = Number(pb.flat_area) || 0;
+      // Rate and price are two views of one number. Editing either recomputes the
+      // other so the form can never show a rate that does not produce its price.
+      if ('rate' in patch && area) next.flatPrice = Math.round((Number(patch.rate) || 0) * area);
+      else if ('flatPrice' in patch && area) next.rate = +((Number(patch.flatPrice) || 0) / area).toFixed(4);
+      return { ...m, [pb.unit]: next };
+    });
   // Only a Down Payment plan may move the rate or token. On Regular the unit prices
   // straight from the price book — passing no overrides at all, so switching back from
   // Down Payment cannot leave an edited figure behind.
   const isDownPayment = (pb) => flatEdit(pb).plan === 'Down Payment';
-  const flatOverrides = (pb) => (isDownPayment(pb) ? flatEdit(pb) : {});
+  const flatOverrides = (pb) => {
+    const e = flatEdit(pb);
+    // A shop's Rate is editable on any booking; flats now match. Only the negotiated
+    // price and token stay behind the Down Payment plan.
+    const base = { rate: e.rate, terraceRate: e.terraceRate };
+    if (Number(e.rate) && Number(pb.flat_area)) base.flatPrice = Math.round(Number(e.rate) * Number(pb.flat_area));
+    return isDownPayment(pb) ? { ...base, ...e } : base;
+  };
   const pratBooks = rawBooks.map((pb) => (pb.kind === 'shop'
     ? computeShop(pb, shopEdit(pb))
     : computeFlat(pb, flatOverrides(pb))));
@@ -796,7 +819,7 @@ function BookingPage() {
                 return (
                   <div style={{ border: '1.5px solid #C7D2FE', background: '#F5F7FF', borderRadius: 10, padding: 12, marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                      {dp ? 'Editable · everything below recalculates' : 'Plan'}
+                      Editable · everything below recalculates
                     </div>
                     <Row><L>Plan</L>
                       {/* Switching to Down Payment clears the price rather than carrying the
@@ -808,6 +831,18 @@ function BookingPage() {
                           ? { plan: ev.target.value, flatPrice: 0 }
                           : { plan: ev.target.value })} />
                     </Row>
+                    {/* Pratishtha flat areas are held in sq.yd — see FLAT_RULES.sqYdToSqFt. */}
+                    <Row><L>Rate (₹/sq.yd)</L>
+                      <In type="number" value={e.rate ?? ''}
+                        onChange={(ev) => setFlatEdit(pb, { rate: ev.target.value })} />
+                    </Row>
+                    {Number(pb.terrace_area) > 0 && (
+                      <Row><L>Terrace Rate (₹/sq.yd)</L>
+                        <In type="number" value={e.terraceRate ?? ''}
+                          placeholder={String(Math.round((Number(e.rate) || 0) / 2))}
+                          onChange={(ev) => setFlatEdit(pb, { terraceRate: ev.target.value })} />
+                      </Row>
+                    )}
                     <Row><L>Flat Price (₹)</L>
                       <In type="number" disabled={!dp} value={dp ? (e.flatPrice ?? '') : pb.flat_price}
                         onChange={(ev) => setFlatEdit(pb, { flatPrice: ev.target.value })} />
