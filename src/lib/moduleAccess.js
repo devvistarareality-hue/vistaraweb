@@ -96,9 +96,17 @@ export function isCpManager(user) {
   return !!(user && user.role === 'Manager' && (user.designation || '').toLowerCase().trim().startsWith('cp'));
 }
 
+// CP Executive — an employee-level Channel Partner who sources & works their own
+// leads (no Meta distribution), scoped to their own records only (not project-wide
+// like isCpManager). Mirrors backend/sales/views.py::is_cp exactly — keep in sync.
+export function isCp(user) {
+  const d = (user?.designation || '').toLowerCase();
+  return !!(user && (d.includes('cp executive') || d.includes('channel partner')));
+}
+
 // Who can reach the Channel Partner module: true/hard admins always can; a
-// CP-designation Manager gets in via their designation. Mirrors backend's
-// can_access_cp_module(user) — keep in sync.
+// CP-designation Manager or CP Executive gets in via their designation. Mirrors
+// backend's can_access_cp_module(user) — keep in sync.
 export function canAccessChannelPartner(user) {
-  return !!(user && (user.is_staff || user.role === 'Admin' || isCpManager(user)));
+  return !!(user && (user.is_staff || user.role === 'Admin' || isCpManager(user) || isCp(user)));
 }

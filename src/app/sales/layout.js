@@ -10,7 +10,7 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager} from '../../lib/moduleAccess';
+import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 const ORANGE = '#FF6B2B';
 const NAVY   = '#0C1E3C';
@@ -209,10 +209,11 @@ export default function SalesLayout({ children }) {
   // Box out module-scoped admins who don't own the Sales module (e.g. an HR Admin).
   const { isModuleAdmin: _isModAdmin, home: _modHome } = moduleAccess(user);
   const _blockedFromSales = _isModAdmin && !(user?.modules || []).includes('Sales');
-  // A CP-only Manager (designation starts with "cp", no Sales module/admin access)
-  // has no business anywhere in Sales outside the Channel Partner module — every
-  // other listing/data page (dashboard, leads, bookings, site visits, ...) is
-  // full-company Sales data they were never granted, and the backend only
+  // A CP-designation user (Manager or Executive; designation starts with/
+  // contains "cp", no Sales module/admin access) has no business anywhere in
+  // Sales outside the Channel Partner module — every other listing/data page
+  // (dashboard, leads, bookings, site visits, ...) is full-company (or at
+  // least non-CP) Sales data they were never granted, and the backend only
   // backstops the data itself, not navigation. Send them to their own dashboard
   // the moment they land anywhere else, not just on the exact '/sales' root (a
   // direct link or back-button into e.g. /sales/leads used to sail straight
@@ -228,7 +229,7 @@ export default function SalesLayout({ children }) {
   const _isTrueAdminEarly = user?.role === 'Admin' || user?.is_staff;
   const _isSalesModuleAdminEarly = !_isTrueAdminEarly && (user?.admin_modules || []).includes('Sales');
   const _cpSharedBookingFlow = pathname.startsWith('/sales/closure') || pathname.startsWith('/sales/booking');
-  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && isCpManager(user)
+  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && (isCpManager(user) || isCpDesignation(user))
     && !pathname.startsWith('/sales/channel-partners') && !_cpSharedBookingFlow;
   useEffect(() => {
     if (user === null) return;
@@ -327,9 +328,9 @@ export default function SalesLayout({ children }) {
   const des = (user?.designation || '').toLowerCase();
   const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
   const isTelecaller = des.includes('telecaller') || des.includes('tele caller');
-  // CP Executive — a channel partner who works their own leads (no Meta). Gets the
-  // same modules as an STM. (CP Cluster Heads are Managers, covered by isManager.)
-  const isCp = des.includes('cp executive') || des.includes('channel partner');
+  // CP Executive — a channel partner who works their own leads (no Meta).
+  // (CP Cluster Heads are Managers, covered by isManager.)
+  const isCp = isCpDesignation(user);
   // Managers oversee the sales floor, so they also get the STM-portal modules
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
   const isManager = isManagerRole(user);
@@ -340,6 +341,11 @@ export default function SalesLayout({ children }) {
   // still comes from the ordinary Manager project-assignment mechanism (see
   // Team Users → Assign), same as any other Manager.
   const isCpMgr = !isTrueAdmin && !isSalesModuleAdmin && isCpManager(user);
+  // A CP Executive gets the same module-boxing as a CP Manager — just scoped to
+  // their own records (is_cp in scope_leads_to_role) instead of project
+  // assignment. Both render the same dedicated Channel Partner nav below.
+  const isCpExec = !isTrueAdmin && !isSalesModuleAdmin && isCp;
+  const isCpBoxed = isCpMgr || isCpExec;
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
     : (isCp || des.includes('cp cluster head') || isCpMgr)
@@ -373,10 +379,10 @@ export default function SalesLayout({ children }) {
 
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
-          {isCpMgr ? (
+          {isCpBoxed ? (
             <>
-              {/* A CP-designation Manager's entire Sales sidebar — just the one
-                  module, nothing else. */}
+              {/* A CP-designation Manager or Executive's entire Sales sidebar —
+                  just the one module, nothing else. */}
               <div style={s.sectionLabel}>CHANNEL PARTNER</div>
               {renderNavItem(CP_NAV_ITEM)}
             </>

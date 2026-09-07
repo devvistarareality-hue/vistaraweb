@@ -13,8 +13,15 @@ import { pdfToImageBlob } from '../../../../utils/pdfToImage';
 
 const STATUS_CFG = {
   available: { label: 'Available', color: '#2E7D32', bg: '#E8F5E9', border: '#2E7D32', zone: '#22c55e' },
-  hold:      { label: 'Hold',      color: '#E65100', bg: '#FFF3E0', border: '#E65100', zone: '#f59e0b' },
+  // Covers both a soft pick (auto-expires in 10 min) and a hard hold backed by
+  // a pending-approval booking — "Hold" read as one deliberate state and
+  // confused which of the two it was. "In Progress" reads correctly for both.
+  hold:      { label: 'In Progress', color: '#475569', bg: '#F1F5F9', border: '#475569', zone: '#94A3B8' },
   sold:      { label: 'Sold',      color: '#EF4444', bg: '#FEE2E2', border: '#EF4444', zone: '#ef4444' },
+  // A previously-sold unit an admin has put back on the market — bookable
+  // exactly like Available, just kept visually distinct (purple, not green)
+  // so the team can tell a fresh unit from a resale one at a glance.
+  resale:    { label: 'Resale',    color: '#7C3AED', bg: '#F3E8FF', border: '#7C3AED', zone: '#a78bfa' },
 };
 
 /* ─── Zone center helper ─── */
@@ -584,22 +591,44 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
         )}
       </div>
 
-      {/* Status toggles */}
+      {/* Status toggles — Resale isn't a generic toggle here (it only ever makes
+          sense starting from Sold), so it gets its own conditional button below
+          instead of joining this fixed 3-way grid. */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 12px' }}>
-        {Object.entries(STATUS_CFG).map(([s, c]) => (
-          <button key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
+        {['available', 'hold', 'sold'].map((s) => {
+          const c = STATUS_CFG[s];
+          return (
+            <button key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
+              style={{
+                padding: '8px 4px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+                cursor: plot.status === s ? 'default' : 'pointer',
+                background: plot.status === s ? c.bg : '#F5F6FA',
+                color: plot.status === s ? c.color : '#B0BAC9',
+                border: `1.5px solid ${plot.status === s ? c.border + '60' : 'transparent'}`,
+                transition: 'all 0.15s',
+              }}>
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* Already-sold units can be put back on the market for resale — bookable
+          again, shown purple instead of green so it reads as "resold", not new. */}
+      {(plot.status === 'sold' || plot.status === 'resale') && (
+        <div style={{ padding: '0 14px 12px' }}>
+          <button onClick={() => setStatus(plot.status === 'resale' ? 'sold' : 'resale')} disabled={saving}
             style={{
-              padding: '8px 4px', borderRadius: 10, fontSize: 12, fontWeight: 700,
-              cursor: plot.status === s ? 'default' : 'pointer',
-              background: plot.status === s ? c.bg : '#F5F6FA',
-              color: plot.status === s ? c.color : '#B0BAC9',
-              border: `1.5px solid ${plot.status === s ? c.border + '60' : 'transparent'}`,
+              width: '100%', padding: '8px 4px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+              cursor: 'pointer',
+              background: plot.status === 'resale' ? STATUS_CFG.resale.bg : '#F5F6FA',
+              color: plot.status === 'resale' ? STATUS_CFG.resale.color : '#7C3AED',
+              border: `1.5px solid ${plot.status === 'resale' ? STATUS_CFG.resale.border + '60' : '#7C3AED40'}`,
               transition: 'all 0.15s',
             }}>
-            {c.label}
+            {plot.status === 'resale' ? '↩ Back to Sold' : '↻ Move to Resale'}
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Edit Info button */}
       <div style={{ borderTop: '1px solid #F0F3FA', padding: '10px 14px 12px' }}>
@@ -1105,7 +1134,7 @@ export default function ManagePlotsPage() {
         {[
           { label: 'Total Plots', value: plots.length, color: '#1A1A2E' },
           { label: 'Available',   value: counts.available, color: '#2E7D32' },
-          { label: 'On Hold',     value: counts.hold,      color: '#E65100' },
+          { label: 'In Progress', value: counts.hold,      color: '#475569' },
           { label: 'Sold',        value: counts.sold,      color: '#EF4444' },
         ].map(s => (
           <div key={s.label} style={{ backgroundColor: '#fff', borderRadius: 12, padding: '14px 18px', boxShadow: '0 2px 8px rgba(184,196,214,0.12)', textAlign: 'center' }}>
@@ -1197,7 +1226,7 @@ export default function ManagePlotsPage() {
         {[
           { key: 'all',       label: 'All',      color: '#1A1A2E', bg: '#F0F3FF', border: '#1A1A2E' },
           { key: 'available', label: 'Available', color: '#2E7D32', bg: '#E8F5E9', border: '#2E7D32' },
-          { key: 'hold',      label: 'Hold',      color: '#E65100', bg: '#FFF3E0', border: '#E65100' },
+          { key: 'hold',      label: 'In Progress', color: '#475569', bg: '#F1F5F9', border: '#475569' },
           { key: 'sold',      label: 'Sold',      color: '#EF4444', bg: '#FEE2E2', border: '#EF4444' },
         ].map(({ key, label, color, bg, border }) => (
           <button key={key} onClick={() => setFilter(key)}

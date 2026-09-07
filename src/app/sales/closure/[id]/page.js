@@ -17,8 +17,16 @@ const FACING_LABEL = { road: 'Road Facing', garden: 'Garden Facing' };
 
 const STATUS = {
   available: { label: 'Available', dot: '#22c55e', text: '#064E3B', bg: '#E8F5E9' },
-  hold:      { label: 'On Hold',   dot: '#f59e0b', text: '#78350F', bg: '#FEF3C7' },
+  // Covers two different things under one status: a soft pick that auto-expires
+  // in 10 minutes (someone just tapped it), and a hard hold backed by an actual
+  // pending-approval booking. "Hold" read as a deliberate pause either way and
+  // confused people about which one they were looking at — "In Progress" reads
+  // correctly for both ("something is actively happening with this unit").
+  hold:      { label: 'In Progress', dot: '#94A3B8', text: '#334155', bg: '#F1F5F9' },
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
+  // A previously-sold unit put back on the market — bookable exactly like
+  // Available, just purple instead of green so it reads as "resold", not new.
+  resale:    { label: 'Resale',    dot: '#a78bfa', text: '#4C1D95', bg: '#F3E8FF' },
   // A unit with a saved (unsubmitted) draft — same underlying plot.status='hold' as a
   // bare in-progress selection, but shown grey and distinct so the team can tell "someone
   // is mid-paperwork on this" from "someone just clicked it a second ago".
@@ -79,11 +87,14 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const [selectedIds, setSelectedIds] = useState([]); // multi-select: plot ids to book together
   const [hovered,  setHovered]  = useState(null);  // hovered zone id
   const [draftPanelPlot, setDraftPanelPlot] = useState(null); // drafted unit clicked into
+  const [soldPanelPlot, setSoldPanelPlot] = useState(null); // sold unit clicked into (Manager+ only) — offers Move to Resale
+  const [resaleBusy, setResaleBusy] = useState(false);
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
   const [sources,    setSources]    = useState([]);
   const [notice,     setNotice]     = useState(''); // transient banner (unit taken / hold expired)
   const [busyIds,    setBusyIds]    = useState(() => new Set()); // plot ids with an in-flight hold/release call
+  const [blockDropdownOpen, setBlockDropdownOpen] = useState(false);
 
   function flash(text) {
     setNotice(text);
@@ -152,22 +163,53 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       ? `G+${upper}`
       : `${fs.length} floor${fs.length === 1 ? '' : 's'}`;
   };
-  const [blockIdx, setBlockIdx] = useState(0);
-  const activeBlock = blocks[Math.min(blockIdx, blocks.length - 1)] ?? '';
-  const floors = useMemo(
-    () => allFloors.filter(f => (f.block || '') === activeBlock)
-                   .slice().sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0)),
-    [allFloors, activeBlock],
-  );
-  const [floorIdx, setFloorIdx] = useState(0);
-  // Open on the ground floor — that's where a walk-in starts. Re-runs on a block
-  // change so switching block lands on its ground floor, not a stale index.
+  // Multiple blocks can be viewed side by side on the same floor (e.g. Block A's
+  // and Block B's 1st floor both up at once) — an STM picks a unit from whichever
+  // block it's actually in instead of switching back and forth. Defaults to just
+  // the first block, same as the old single-select behaviour; at least one stays
+  // selected always (there's nothing useful to show with zero).
+  const [selectedBlocks, setSelectedBlocks] = useState(() => new Set());
   useEffect(() => {
-    if (!floorWise || !floors.length) return;
-    const g = floors.findIndex(f => Number(f.floor) === 0);
-    setFloorIdx(g >= 0 ? g : 0);
-  }, [floorWise, floors.length, activeBlock]);
-  const activeFloor = floorWise ? floors[Math.min(floorIdx, Math.max(floors.length - 1, 0))] : null;
+    if (blocks.length && selectedBlocks.size === 0) setSelectedBlocks(new Set([blocks[0]]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks]);
+  function toggleBlock(b) {
+    setSelectedBlocks((prev) => {
+      const next = new Set(prev);
+      if (next.has(b)) { if (next.size > 1) next.delete(b); }
+      else next.add(b);
+      return next;
+    });
+  }
+  // Floor options are the union across every selected block — blocks can differ
+  // in height, so this is whichever floor numbers exist among the blocks
+  // currently checked, not any one block's own list.
+  const floorOptions = useMemo(() => {
+    const relevant = allFloors.filter(f => selectedBlocks.has(f.block || ''));
+    const byNum = new Map();
+    relevant.forEach(f => { const n = Number(f.floor) || 0; if (!byNum.has(n)) byNum.set(n, f); });
+    return [...byNum.values()].sort((a, b) => (Number(a.floor) || 0) - (Number(b.floor) || 0));
+  }, [allFloors, selectedBlocks]);
+  const [selectedFloorNum, setSelectedFloorNum] = useState(0);
+  // Open on the ground floor — that's where a walk-in starts. Only resets when
+  // the currently-picked floor doesn't exist for any newly-selected block;
+  // otherwise toggling a block on/off keeps you where you were.
+  useEffect(() => {
+    if (!floorWise || !floorOptions.length) return;
+    if (floorOptions.some(f => Number(f.floor) === selectedFloorNum)) return;
+    const g = floorOptions.find(f => Number(f.floor) === 0);
+    setSelectedFloorNum(g ? 0 : (Number(floorOptions[0].floor) || 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [floorWise, floorOptions]);
+  // One floor_plans entry per selected block that actually has this floor number
+  // (a shorter block may not) — each becomes its own map/fallback card below.
+  const activeEntries = useMemo(() => {
+    if (!floorWise) return [];
+    return blocks
+      .filter((b) => selectedBlocks.has(b))
+      .map((b) => allFloors.find((f) => (f.block || '') === b && Number(f.floor) === selectedFloorNum))
+      .filter(Boolean);
+  }, [allFloors, blocks, selectedBlocks, selectedFloorNum, floorWise]);
 
   // Units belonging to the chosen floor — by the floor field, falling back to the
   // floor's own numbering run for units created before that field existed.
@@ -184,21 +226,29 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     for (let i = from; i <= to; i++) if (`${f.prefix || ''}${i}` === n) return true;
     return false;
   };
-  const visiblePlots = useMemo(
-    () => (floorWise && activeFloor ? plots.filter(p => onFloor(p, activeFloor)) : plots),
-    [plots, floorWise, activeFloor],
-  );
+  const visiblePlots = useMemo(() => {
+    if (!floorWise) return plots;
+    if (!activeEntries.length) return [];
+    return plots.filter((p) => activeEntries.some((f) => onFloor(p, f)));
+  }, [plots, floorWise, activeEntries]);
 
-  const zones    = floorWise ? (activeFloor?.zones || []) : (project?.site_map_zones || []);
-  const mapImage = floorWise
-    ? (activeFloor?.image_url || '')
-    : (project?.site_map_image_url || (isImageUrl(project?.master_plan_url) ? project.master_plan_url : ''));
-  const hasMap   = !!mapImage && zones.length > 0;
+  // A plotted (non-floorwise) scheme has one project-wide map. A tower instead
+  // shows one map card per selected block that has a plan drawn for this floor —
+  // any selected block without one falls into the shared fallback grid below.
+  const mapEntries = floorWise
+    ? activeEntries.filter((f) => !!f.image_url && (f.zones || []).length > 0)
+    : ((project?.site_map_image_url || isImageUrl(project?.master_plan_url))
+        ? [{ block: '', floor: null, label: null, image_url: project?.site_map_image_url || project?.master_plan_url, zones: project?.site_map_zones || [] }]
+        : []);
+  const noMapEntries = floorWise ? activeEntries.filter((f) => !(f.image_url && (f.zones || []).length > 0)) : [];
+  const noMapPlots = floorWise
+    ? (mapEntries.length ? plots.filter((p) => noMapEntries.some((f) => onFloor(p, f))) : visiblePlots)
+    : visiblePlots;
 
   // The floor row is only meaningful when a floor is actually selected — a plotted
   // scheme has none, so it shows the project row alone.
-  const floorRowLabel = floorWise && activeFloor
-    ? `${activeBlock ? `Block ${activeBlock} · ` : ''}${activeFloor.label || `Floor ${activeFloor.floor}`}`
+  const floorRowLabel = floorWise && activeEntries.length
+    ? `${activeEntries.map((f) => f.block).filter(Boolean).join(' + ') ? `Block ${activeEntries.map((f) => f.block).filter(Boolean).join(' + ')} · ` : ''}${activeEntries[0].label || `Floor ${activeEntries[0].floor}`}`
     : null;
 
   // One row of stat cards over whatever set of units it is handed, so the floor row and
@@ -272,6 +322,31 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     setPlots((ps) => ps.map((p) => (ids.includes(p.id) ? { ...p, status: 'available', held_by_name: null } : p)));
   }
 
+  // Put a sold unit back on the market from the map's panel — Manager/Director/
+  // Admin only (isManager gate mirrors the backend's is_admin_or_manager check
+  // on PlotDetailView.patch, the same endpoint Manage Plots uses for this).
+  // Doesn't touch the original booking or its signed LOI — see PlotDetailView,
+  // it only ever updates the Plot row itself.
+  async function moveToResaleFromPanel(plotId) {
+    if (!window.confirm('Move this unit to Resale? It becomes bookable again — the original booking and its LOI are left untouched.')) return;
+    setResaleBusy(true);
+    try {
+      const res = await fetch(SALES_ENDPOINTS.plot(plotId), {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status: 'resale' }),
+      });
+      if (res.ok) {
+        setPlots((ps) => ps.map((p) => (p.id === plotId ? { ...p, status: 'resale', held_by_name: null, agent_name: null } : p)));
+        setSoldPanelPlot(null);
+      } else {
+        flash('Could not move this unit to resale. Please try again.');
+      }
+    } catch (_) {
+      flash('Could not move this unit to resale. Please try again.');
+    } finally {
+      setResaleBusy(false);
+    }
+  }
+
   // Discard a draft from the map's panel — the drafter or a manager/admin, matching
   // the backend permission on BookingDiscardDraftView.
   async function discardDraftFromPanel(bookingId) {
@@ -299,7 +374,14 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       releasePlots([plot.id]);
       return;
     }
-    if (plot.status !== 'available') return; // only Available selectable
+    // A sold unit isn't for booking, but a Manager/Director/Admin can open it to
+    // put it back on the market — same "Move to Resale" action as Manage Plots,
+    // just reachable straight from this map instead of a separate admin screen.
+    if (plot.status === 'sold') {
+      if (isManager) setSoldPanelPlot(plot);
+      return;
+    }
+    if (plot.status !== 'available' && plot.status !== 'resale') return; // Available or Resale selectable
     setBusyIds((s) => new Set(s).add(plot.id));
     try {
       const res = await fetch(SALES_ENDPOINTS.plotsHold, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plot.id] }) });
@@ -326,7 +408,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   );
   // Which floor each selected unit sits on — shown only when the selection spans
   // several, so picking a shop and a flat together reads clearly.
-  const floorOf = (p) => (floors.find((f) => onFloor(p, f))?.label) || '';
+  const floorOf = (p) => (allFloors.find((f) => onFloor(p, f))?.label) || '';
   const selFloors = [...new Set(selPlots.map(floorOf).filter(Boolean))];
   const selSummary = (floorWise && selFloors.length > 1)
     ? selFloors.map((lbl) => `${lbl}: ${selPlots.filter((p) => floorOf(p) === lbl).map((p) => p.number).join(', ')}`).join(' · ')
@@ -376,7 +458,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
       {/* Filters — status + type (dim non-matching units) */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'On Hold']].map(([key, label]) => {
+        {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'In Progress']].map(([key, label]) => {
           const active = filter === key;
           const dot = STATUS[key]?.dot;
           return (
@@ -390,20 +472,55 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           );
         })}
       </div>
-      {/* Tower: choose the floor first — its plan and its units are what's shown below. */}
-      {floorWise && floors.length > 0 && (
+      {/* Tower: choose the floor first — its plan(s) and its units are what's shown below. */}
+      {floorWise && allFloors.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-          {/* Block first, then floor — only shown when the tower actually has blocks. */}
+          {/* Block — a dropdown with checkboxes, only shown when the tower actually
+              has more than one block. Checking several shows all of their maps for
+              the same floor together, so an STM can pick a unit from any of them. */}
           {blocks.filter(Boolean).length > 1 && (
             <>
               <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
-              <select value={blockIdx} onChange={(e) => setBlockIdx(Number(e.target.value))}
-                style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
-                  fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 120 }}>
-                {blocks.map((b, i) => (
-                  <option key={i} value={i}>Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}</option>
-                ))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button type="button" onClick={() => setBlockDropdownOpen((o) => !o)} style={{
+                  height: 38, padding: '0 14px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  border: '1.5px solid #E6EBF4', background: '#fff', fontSize: 13, fontWeight: 700, color: '#1A1A2E', minWidth: 190,
+                }}>
+                  <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {selectedBlocks.size === blocks.length
+                      ? 'All Blocks'
+                      : [...selectedBlocks].map((b) => `Block ${b || '—'}`).join(', ') || 'Select block(s)'}
+                  </span>
+                  <span style={{ fontSize: 10, color: '#8492A6' }}>{blockDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+                {blockDropdownOpen && (
+                  <>
+                    <div onClick={() => setBlockDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 41, minWidth: 220,
+                      background: '#fff', border: '1.5px solid #E6EBF4', borderRadius: 10, boxShadow: '0 8px 24px rgba(100,120,160,0.18)', padding: 6,
+                    }}>
+                      {blocks.map((b) => {
+                        const on = selectedBlocks.has(b);
+                        return (
+                          <div key={b} onClick={() => toggleBlock(b)} style={{
+                            display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                            background: on ? '#EEF1FF' : 'transparent',
+                          }}>
+                            <span style={{
+                              width: 16, height: 16, borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              border: `1.5px solid ${on ? '#3D5AFE' : '#C6D0DB'}`, background: on ? '#3D5AFE' : '#fff', color: '#fff', fontSize: 11, lineHeight: 1,
+                            }}>{on ? '✓' : ''}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E' }}>
+                              Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           )}
           {/* A block-industrial block is always a single ground-level entry — no real
@@ -411,17 +528,22 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           {!project?.block_industrial && (
             <>
               <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
-              <select value={floorIdx} onChange={(e) => setFloorIdx(Number(e.target.value))}
+              <select value={selectedFloorNum} onChange={(e) => setSelectedFloorNum(Number(e.target.value))}
                 style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
                   fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 190 }}>
-                {floors.map((f, i) => {
-                  const n = plots.filter((p) => onFloor(p, f)).length;
-                  return <option key={i} value={i}>{f.label || `Floor ${f.floor}`} · {n} unit{n === 1 ? '' : 's'}</option>;
+                {floorOptions.map((f) => {
+                  const num = Number(f.floor) || 0;
+                  const entriesForNum = blocks
+                    .filter((b) => selectedBlocks.has(b))
+                    .map((b) => allFloors.find((ff) => (ff.block || '') === b && Number(ff.floor) === num))
+                    .filter(Boolean);
+                  const n = plots.filter((p) => entriesForNum.some((ff) => onFloor(p, ff))).length;
+                  return <option key={num} value={num}>{f.label || `Floor ${num}`} · {n} unit{n === 1 ? '' : 's'}</option>;
                 })}
               </select>
             </>
           )}
-          {!activeFloor?.image_url && (
+          {activeEntries.length > 0 && mapEntries.length === 0 && (
             <span style={{ fontSize: 12, color: '#B45309' }}>No plan uploaded for this {project?.block_industrial ? 'block' : 'floor'} — units are listed below.</span>
           )}
         </div>
@@ -454,189 +576,209 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       {statRow(floorRowLabel, visiblePlots)}
       {statRow('Whole Project', plots)}
 
-      {/* Interactive unit map (if the admin drew zones) */}
-      {hasMap ? (
-        <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)' }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid #F0F3FA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-            <div>
-              <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>Interactive Unit Map</h2>
-              <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>Tap available (green) units to select — pick one or several to book together.</p>
+      {mapEntries.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6d1f', background: '#FBF4DF', border: '1px solid #EBD9A3', padding: '5px 12px', borderRadius: 20 }}>
+            🏠 Showing {shownCount} of {total} units
+          </span>
+        </div>
+      )}
+      {/* Interactive unit map(s) — one card per selected block that has a plan
+          drawn for this floor (usually one, but several when multiple blocks
+          are checked above, so an STM can pick a unit from any of them). */}
+      {mapEntries.map((entry, idx) => {
+        const entryZones = entry.zones || [];
+        const hoverPrefix = `${idx}:`;
+        return (
+          <div key={`${entry.block}-${entry.floor}-${idx}`} style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)', marginBottom: 18 }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #F0F3FA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>
+                  Interactive Unit Map{entry.block ? ` · Block ${entry.block}` : ''}
+                </h2>
+                <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>Tap available (green) units to select — pick one or several to book together.</p>
+              </div>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6d1f', background: '#FBF4DF', border: '1px solid #EBD9A3', padding: '5px 12px', borderRadius: 20 }}>
-              🏠 Showing {shownCount} of {total} units
-            </span>
-          </div>
-          <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
-            <img src={mapImage} alt="Site Map" draggable={false} style={{ width: '100%', display: 'block' }} />
-            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 100" preserveAspectRatio="none">
-              {zones.map(zone => {
+            <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
+              <img src={entry.image_url} alt="Site Map" draggable={false} style={{ width: '100%', display: 'block' }} />
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                {entryZones.map(zone => {
+                  const plot = plotByNumber[String(zone.plotNumber)];
+                  if (!plot) return null;
+                  const cfg = plotCfg(plot);
+                  const dim = isHidden(plot);
+                  const isHover = hovered === hoverPrefix + zone.id;
+                  const isSel = selectedSet.has(plot.id);
+                  const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
+                  // Any drafted unit is clickable — it opens the draft panel for everyone,
+                  // just with different actions inside depending on who's looking.
+                  const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || (plot.status === 'sold' && isManager);
+                  const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
+                  const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
+                  const strokeC = isSel ? '#1A237E' : cfg.dot;
+                  const sw      = isSel ? 0.95 : (isHover ? 0.7 : 0.45);
+                  const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? '#3D5AFE' : cfg.dot})` : 'none' };
+                  const ev = {
+                    onClick: () => pickPlot(plot),
+                    onMouseEnter: () => setHovered(hoverPrefix + zone.id),
+                    onMouseLeave: () => setHovered(null),
+                  };
+                  const tooltip = plot.drafted_booking_id
+                    ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
+                    : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
+                  return (
+                    <g key={zone.id}>
+                      {pts
+                        ? <polygon points={pts} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />
+                        : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />}
+                      {pts
+                        ? <polygon points={pts} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev}><title>{tooltip}</title></polygon>
+                        : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev}><title>{tooltip}</title></rect>}
+                    </g>
+                  );
+                })}
+              </svg>
+              {/* Number labels */}
+              {entryZones.map(zone => {
                 const plot = plotByNumber[String(zone.plotNumber)];
                 if (!plot) return null;
                 const cfg = plotCfg(plot);
-                const dim = isHidden(plot);
-                const isHover = hovered === zone.id;
                 const isSel = selectedSet.has(plot.id);
-                const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
-                // Any drafted unit is clickable — it opens the draft panel for everyone,
-                // just with different actions inside depending on who's looking.
-                const clickable = plot.status === 'available' || isSel || !!plot.drafted_booking_id;
-                const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
-                const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
-                const strokeC = isSel ? '#1A237E' : cfg.dot;
-                const sw      = isSel ? 0.95 : (isHover ? 0.7 : 0.45);
-                const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? '#3D5AFE' : cfg.dot})` : 'none' };
-                const ev = {
-                  onClick: () => pickPlot(plot),
-                  onMouseEnter: () => setHovered(zone.id),
-                  onMouseLeave: () => setHovered(null),
-                };
-                const tooltip = plot.drafted_booking_id
-                  ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
-                  : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
+                const { cx, cy } = zoneCenter(zone);
+                // Labels overlap on small plots when the number is type-prefixed
+                // (e.g. "Karuna24"). The type is already conveyed by colour/legend,
+                // so show just the numeric part; fall back to the full value.
+                const labelText = stripPlotPrefix(zone.plotNumber);
                 return (
-                  <g key={zone.id}>
-                    {pts
-                      ? <polygon points={pts} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />
-                      : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill="rgba(255,255,255,0.92)" stroke="none" style={{ pointerEvents: 'none' }} />}
-                    {pts
-                      ? <polygon points={pts} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev}><title>{tooltip}</title></polygon>
-                      : <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={0.4} fill={fillC} stroke={strokeC} strokeWidth={sw} style={topStyle} {...ev}><title>{tooltip}</title></rect>}
-                  </g>
-                );
-              })}
-            </svg>
-            {/* Number labels */}
-            {zones.map(zone => {
-              const plot = plotByNumber[String(zone.plotNumber)];
-              if (!plot) return null;
-              const cfg = plotCfg(plot);
-              const isSel = selectedSet.has(plot.id);
-              const { cx, cy } = zoneCenter(zone);
-              // Labels overlap on small plots when the number is type-prefixed
-              // (e.g. "Karuna24"). The type is already conveyed by colour/legend,
-              // so show just the numeric part; fall back to the full value.
-              const labelText = stripPlotPrefix(zone.plotNumber);
-              return (
-                <div key={zone.id + '-lbl'}>
-                  <div style={{
-                    position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
-                    opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
-                    pointerEvents: 'none', zIndex: 3, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
-                    fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                    borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
-                  }}>{isSel ? `✓ ${labelText}` : labelText}</div>
-                  {/* Drafted units name their drafter right on the map, not just on
-                      hover — a tablet has no hover, and this is who everyone else
-                      needs to know to ask about the unit. */}
-                  {plot.drafted_booking_id && plot.held_by_name && (
+                  <div key={zone.id + '-lbl'}>
                     <div style={{
-                      position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%, 6px)',
-                      opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s', pointerEvents: 'none', zIndex: 3,
-                      background: 'rgba(55,65,81,0.92)', color: '#fff', fontWeight: 700, fontSize: 'clamp(5px,0.6vw,9px)',
-                      lineHeight: 1, padding: '1px 5px', borderRadius: 4, whiteSpace: 'nowrap',
-                    }}>{plot.held_by_name}</div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Hover tooltip — plot summary (mirrors CP portal) */}
-            {hovered && (() => {
-              const zone = zones.find(z => z.id === hovered);
-              const plot = zone && plotByNumber[String(zone.plotNumber)];
-              if (!plot || isHidden(plot)) return null;
-              const cfg = plotCfg(plot);
-              const tc  = plot.cluster_type ? TYPE_COLORS[plot.cluster_type] : null;
-              const { tx, ty } = zoneTopCenter(zone);
-              const isRight = tx > 68;
-              // The map card clips its overflow, so a tooltip drawn above a unit near
-              // the top gets cut. Flip it below the unit in that band instead.
-              const ys = zone.points?.length ? zone.points.map(p => p.y) : [zone.y, zone.y + zone.height];
-              const below = ty < 26;
-              const anchorY = below ? Math.max(...ys) : ty;
-              const shiftX = isRight ? '-92%' : '-8%';
-              return (
-                <div style={{
-                  position: 'absolute', left: `${tx}%`, top: `${anchorY}%`,
-                  transform: below ? `translate(${shiftX}, 10px)` : `translate(${shiftX}, calc(-100% - 10px))`,
-                  background: 'rgba(10,18,30,0.96)', color: '#fff', padding: '10px 14px', borderRadius: 12,
-                  whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20, minWidth: 140,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
-                }}>
-                  <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Plot {plot.number}</div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: plot.size ? 5 : 0 }}>
-                    <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: cfg.dot + '30', color: cfg.dot, border: `1px solid ${cfg.dot}60` }}>{cfg.label}</span>
-                    {plot.cluster_type && tc && (
-                      <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>{plot.cluster_type}</span>
+                      position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
+                      opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
+                      pointerEvents: 'none', zIndex: 3, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
+                      fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
+                      borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
+                    }}>{isSel ? `✓ ${labelText}` : labelText}</div>
+                    {/* Drafted units name their drafter right on the map, not just on
+                        hover — a tablet has no hover, and this is who everyone else
+                        needs to know to ask about the unit. */}
+                    {plot.drafted_booking_id && plot.held_by_name && (
+                      <div style={{
+                        position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%, 6px)',
+                        opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s', pointerEvents: 'none', zIndex: 3,
+                        background: 'rgba(55,65,81,0.92)', color: '#fff', fontWeight: 700, fontSize: 'clamp(5px,0.6vw,9px)',
+                        lineHeight: 1, padding: '1px 5px', borderRadius: 4, whiteSpace: 'nowrap',
+                      }}>{plot.held_by_name}</div>
                     )}
                   </div>
-                  {/* A drafted unit is visible to everyone, but only its drafter can act
-                      on it — surface who so the rest of the team knows who to ask. */}
-                  {plot.drafted_booking_id && plot.held_by_name && (
-                    <div style={{ color: '#D1D5DB', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
-                  )}
-                  {plot.size && <div style={{ color: '#C9A84C', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
-                  {/* Facing and terrace both move the price, so surface them on hover
-                      rather than making the user open the unit to find out. */}
-                  {plot.facing && (
-                    <div style={{ color: '#93C5FD', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
-                      {FACING_LABEL[plot.facing] || plot.facing}
+                );
+              })}
+
+              {/* Hover tooltip — plot summary (mirrors CP portal) */}
+              {hovered && hovered.startsWith(hoverPrefix) && (() => {
+                const zoneId = hovered.slice(hoverPrefix.length);
+                const zone = entryZones.find(z => String(z.id) === zoneId);
+                const plot = zone && plotByNumber[String(zone.plotNumber)];
+                if (!plot || isHidden(plot)) return null;
+                const cfg = plotCfg(plot);
+                const tc  = plot.cluster_type ? TYPE_COLORS[plot.cluster_type] : null;
+                const { tx, ty } = zoneTopCenter(zone);
+                const isRight = tx > 68;
+                // The map card clips its overflow, so a tooltip drawn above a unit near
+                // the top gets cut. Flip it below the unit in that band instead.
+                const ys = zone.points?.length ? zone.points.map(p => p.y) : [zone.y, zone.y + zone.height];
+                const below = ty < 26;
+                const anchorY = below ? Math.max(...ys) : ty;
+                const shiftX = isRight ? '-92%' : '-8%';
+                return (
+                  <div style={{
+                    position: 'absolute', left: `${tx}%`, top: `${anchorY}%`,
+                    transform: below ? `translate(${shiftX}, 10px)` : `translate(${shiftX}, calc(-100% - 10px))`,
+                    background: 'rgba(10,18,30,0.96)', color: '#fff', padding: '10px 14px', borderRadius: 12,
+                    whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20, minWidth: 140,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Plot {plot.number}</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: plot.size ? 5 : 0 }}>
+                      <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: cfg.dot + '30', color: cfg.dot, border: `1px solid ${cfg.dot}60` }}>{cfg.label}</span>
+                      {plot.cluster_type && tc && (
+                        <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>{plot.cluster_type}</span>
+                      )}
                     </div>
-                  )}
-                  {(plot.terrace_area || '').trim() && (
-                    <div style={{ color: '#6EE7B7', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
-                      Terrace {plot.terrace_area} sq.yd
-                    </div>
-                  )}
-                  {/* Who is on a booked unit — so the team can see it without opening the plot. */}
-                  {plot.agent_name && (
-                    <div style={{ color: '#E2E8F0', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
-                      {plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}
-                    </div>
-                  )}
-                  {plot.status === 'available' && (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
-                  )}
-                  {plot.drafted_booking_id && plot.held_by_name === user?.name && (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to resume →</div>
-                  )}
-                </div>
-              );
-            })()}
+                    {/* A drafted unit is visible to everyone, but only its drafter can act
+                        on it — surface who so the rest of the team knows who to ask. */}
+                    {plot.drafted_booking_id && plot.held_by_name && (
+                      <div style={{ color: '#D1D5DB', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
+                    )}
+                    {plot.size && <div style={{ color: '#C9A84C', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
+                    {/* Facing and terrace both move the price, so surface them on hover
+                        rather than making the user open the unit to find out. */}
+                    {plot.facing && (
+                      <div style={{ color: '#93C5FD', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                        {FACING_LABEL[plot.facing] || plot.facing}
+                      </div>
+                    )}
+                    {(plot.terrace_area || '').trim() && (
+                      <div style={{ color: '#6EE7B7', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                        Terrace {plot.terrace_area} sq.yd
+                      </div>
+                    )}
+                    {/* Who is on a booked unit — so the team can see it without opening the plot. */}
+                    {plot.agent_name && (
+                      <div style={{ color: '#E2E8F0', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                        {plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}
+                      </div>
+                    )}
+                    {(plot.status === 'available' || plot.status === 'resale') && (
+                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
+                    )}
+                    {plot.status === 'sold' && isManager && (
+                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to move to resale →</div>
+                    )}
+                    {plot.drafted_booking_id && plot.held_by_name === user?.name && (
+                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to resume →</div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
-        </div>
-      ) : (
-        // Fallback: no drawn map → plain grid of unit chips so the flow still works.
+        );
+      })}
+
+      {/* Fallback grid — units for any selected block/floor that has no drawn map
+          (or, for a plotted scheme, the whole project when it has none). Never
+          duplicates a plot already shown on a map card above. */}
+      {(floorWise ? (noMapEntries.length > 0 || activeEntries.length === 0) : mapEntries.length === 0) && (
         <div style={{ background: '#fff', borderRadius: 16, padding: '18px', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Units</h2>
           <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 14 }}>No site map drawn for this project. Tap an available unit below.</p>
-          {!visiblePlots.length && project?.block_industrial ? (
+          {!noMapPlots.length && project?.block_industrial ? (
             // Block-wise industrial, this block has no plots yet — nothing to pick, so
             // raise an EOI against the block instead of a dead end. The EOI code is
             // block-prefixed (e.g. Block E → E1, E2…) via ?block= on the booking form.
             <div style={{ textAlign: 'center', padding: '28px 12px' }}>
               <p style={{ color: '#374151', fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
-                Block {activeBlock || '—'} hasn't been mapped yet.
+                Block {[...selectedBlocks].join(', ') || '—'} hasn't been mapped yet.
               </p>
               <p style={{ color: '#8492A6', fontSize: 12, marginBottom: 16 }}>
                 No units are defined here yet — raise an EOI to hold interest until it's surveyed.
               </p>
               <button
-                onClick={() => router.push(`/sales/booking?project=${id}&eoi=1&block=${encodeURIComponent(activeBlock)}`)}
+                onClick={() => router.push(`/sales/booking?project=${id}&eoi=1&block=${encodeURIComponent([...selectedBlocks][0] || '')}`)}
                 style={{ padding: '10px 22px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
                   background: 'linear-gradient(135deg,#182350,#3D5AFE)', cursor: 'pointer' }}>
-                Raise EOI for Block {activeBlock || 'this project'}
+                Raise EOI for Block {[...selectedBlocks][0] || 'this project'}
               </button>
             </div>
-          ) : !visiblePlots.length ? (
+          ) : !noMapPlots.length ? (
             <p style={{ color: '#8492A6', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No units defined for this project.</p>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {visiblePlots.filter(p => !isHidden(p)).map(plot => {
+              {noMapPlots.filter(p => !isHidden(p)).map(plot => {
                 const cfg = plotCfg(plot);
                 const isSel = selectedSet.has(plot.id);
                 const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
-                const clickable = plot.status === 'available' || isSel || !!plot.drafted_booking_id;
+                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || (plot.status === 'sold' && isManager);
                 const title = plot.drafted_booking_id
                   ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
                   : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
@@ -660,7 +802,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
                     {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
                     {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
-                    {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'On hold by' : 'Sold by'} {plot.agent_name}</span>}
+                    {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}</span>}
                   </button>
                 );
               })}
@@ -717,6 +859,32 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or a manager can resume or discard this.</p>
                 )}
                 <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Sold-unit panel — Manager/Director/Admin only: put the unit back on the
+          market for resale without touching the original booking or its LOI. */}
+      {soldPanelPlot && (() => {
+        const p = soldPanelPlot;
+        return (
+          <div onClick={() => !resaleBusy && setSoldPanelPlot(null)} style={overlay}>
+            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Sold</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 18px' }}>
+                {p.agent_name ? `Sold by ${p.agent_name}` : 'Sold'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={() => moveToResaleFromPanel(p.id)} disabled={resaleBusy}
+                  style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 700, fontSize: 14, cursor: resaleBusy ? 'default' : 'pointer', opacity: resaleBusy ? 0.7 : 1 }}>
+                  {resaleBusy ? 'Moving…' : '↻ Move to Resale'}
+                </button>
+                <button onClick={() => setSoldPanelPlot(null)} disabled={resaleBusy}
+                  style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>

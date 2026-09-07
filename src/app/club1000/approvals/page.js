@@ -69,6 +69,18 @@ export default function InvestorApprovalsPage() {
   const user = useSelector((s) => s.auth.user);
   const router = useRouter();
   const manager = isClub1000Manager(user);
+  // Being a Club 1000 manager gets you onto this page, but approval authority
+  // itself is scoped to the scheme's configured Investor Approvers (or a real
+  // admin) — mirrors backend can_approve_investor. Without this, every manager
+  // saw live Approve/Reject buttons for every scheme regardless of who was
+  // actually picked in "Investor Approvers — by scheme" above, which only
+  // 403'd on click instead of not being offered at all.
+  const isRealAdmin = user?.is_staff || user?.role === 'Admin';
+  function canApprove(inv) {
+    if (isRealAdmin) return true;
+    const scheme = schemes.find((s) => s.id === inv.scheme);
+    return !!scheme && (scheme.investor_approvers || []).includes(user?.id);
+  }
 
   const [tab, setTab] = useState('pending');
   const [investors, setInvestors] = useState([]);
@@ -242,10 +254,12 @@ export default function InvestorApprovalsPage() {
                   <td style={td}><ApprovalBadge approvalStatus={inv.approval_status} /></td>
                   <td style={td}>
                     {inv.approval_status === 'pending' && (
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✓ Approve</button>
-                        <button onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✕ Reject</button>
-                      </div>
+                      canApprove(inv) ? (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✓ Approve</button>
+                          <button onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✕ Reject</button>
+                        </div>
+                      ) : <span style={{ fontSize: 11, color: '#B0BAC9' }}>Not an approver</span>
                     )}
                   </td>
                 </tr>
