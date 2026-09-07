@@ -294,6 +294,17 @@ function BookingPage() {
     ? computeShop(pb, shopEdit(pb))
     : computeFlat(pb, flatOverrides(pb))));
   const prat = pratBooks[0] || null;
+  // A Pratishtha unit is priced entirely from its price book. When the book has not
+  // been loaded for that unit there is nothing to price from, and the generic branch
+  // below is actively wrong rather than merely empty: fieldFlags() has no
+  // 'pratishtha' case, so it returns the Kalrav field set (Land Rate, Construction
+  // Agreement, Villa Type…) under a PRATISHTHA header, and computeFormulas has no
+  // pratishtha branch either — it returns saleDeed 0. Filling that in produced a
+  // zero-priced booking with nothing on screen saying so. EOIs are exempt: they are
+  // not priced against a specific unit's book.
+  const pratBookMissing = pricingReady && formulaSet === 'pratishtha' && !eoiMode && !prat;
+  const pratMissingMsg = `Price book not loaded for ${plots.length > 1 ? 'these units' : `unit ${stripPlotPrefix(plot?.number || '')}`}. `
+    + 'Pratishtha prices every unit from its price book, so this booking cannot be priced until it is loaded.';
   const pratRowsFor = (pb) => (pb.kind === 'shop'
     ? [['Shop Area', `${pb.sq_feet} sq.ft`], ['Rate', rupee(pb.rate) + ' / sq.ft'],
        ['Shop Amount', rupee(pb.amount), 'sub'],
@@ -584,6 +595,7 @@ function BookingPage() {
     return arr;
   }
   async function doDownloadLOI() {
+    if (pratBookMissing) { setMsg(pratMissingMsg); return; }
     const e = {};
     if (!f.client_name.trim()) e.client_name = true;
     if (!f.phone.trim()) e.phone = true;
@@ -663,6 +675,7 @@ function BookingPage() {
   }
 
   async function submit() {
+    if (pratBookMissing) { setMsg(pratMissingMsg); return; }
     const e = {};
     if (!f.client_name.trim()) e.client_name = true;
     if (!f.phone.trim()) e.phone = true;
@@ -697,6 +710,7 @@ function BookingPage() {
   // Save Draft: none of Submit's completeness checks apply — the whole point is to
   // never lose typed data, even if it's just a client name so far.
   async function saveDraft() {
+    if (pratBookMissing) { setMsg(pratMissingMsg); return; }
     setSaving(true); setMsg('');
     const payload = { ...buildPayload(), ...(savedDraftId ? { id: savedDraftId } : {}) };
     try {
@@ -886,6 +900,19 @@ function BookingPage() {
             </Section>
           )}
         </>
+      ) : pratBookMissing ? (
+        <Section title="Pricing">
+          <div style={{ border: '1.5px solid #FCA5A5', background: '#FEF2F2', borderRadius: 10, padding: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#991B1B', marginBottom: 6 }}>
+              ⚠️ This unit has no price book
+            </div>
+            <p style={{ fontSize: 12, color: '#7F1D1D', margin: 0 }}>{pratMissingMsg}</p>
+            <p style={{ fontSize: 12, color: '#7F1D1D', margin: '8px 0 0' }}>
+              Load the price book for this project&rsquo;s units, then reopen this form.
+              Booking is blocked until then so nothing is saved at the wrong price.
+            </p>
+          </div>
+        </Section>
       ) : (<>
       <Section title="Plot & Type">
         <Row><L>Area Unit</L>
@@ -1129,10 +1156,10 @@ function BookingPage() {
 
       {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E8F5E9' : '#FEF2F2', color: msg[0] === '✅' ? '#15803D' : '#DC2626', fontSize: 13, marginBottom: 12 }}>{msg}</div>}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={saveDraft} disabled={saving || !projectId} style={{ ...submitBtn, background: '#fff', color: '#3D5AFE', border: '1.5px solid #3D5AFE' }}>
+        <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: '#fff', color: '#3D5AFE', border: '1.5px solid #3D5AFE', opacity: pratBookMissing ? 0.4 : 1 }}>
           {saving ? '…' : '💾 Save Draft'}
         </button>
-        <button onClick={submit} disabled={saving} style={submitBtn}>{saving ? 'Saving…' : 'Submit Booking'}</button>
+        <button onClick={submit} disabled={saving || pratBookMissing} style={{ ...submitBtn, opacity: pratBookMissing ? 0.4 : 1 }}>{saving ? 'Saving…' : 'Submit Booking'}</button>
       </div>
     </div>
   );
