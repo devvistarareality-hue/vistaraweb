@@ -24,21 +24,16 @@ function addMonthsISO(dateStr, months) {
   return `${y}-${m}-${day}`;
 }
 
-// Principal + full-tenure interest, day-count basis — mirrors
-// backend/club1000/services.py::maturity_value exactly. investor.maturity_date
-// may not exist yet (e.g. the Add Investor preview, before the row is
-// created), so it's derived from investment_date + scheme.tenure_months
-// when missing — same fallback the rest of this file already uses.
+// Principal + the scheme's total return, applied once over the whole tenure
+// — mirrors backend/club1000/services.py::maturity_value exactly.
+// total_return_pct is the total return BY maturity (e.g. a "GROWTH 35"
+// scheme pays 35% total over its 2-year tenure, not 35% every year), not an
+// annualized rate to be scaled by day-count — scaling it by days/365 was the
+// bug that made a 2-year 35% scheme pay out ~70%.
 function computeMaturityValue(investor, scheme) {
   const principal = Number(investor.amount_invested) || 0;
   const pct = Number(investor.total_return_pct) || 0;
-  const maturityDateStr = investor.maturity_date || addMonthsISO(investor.investment_date, scheme.tenure_months);
-  if (!investor.investment_date || !maturityDateStr) return principal;
-  const start = new Date(`${investor.investment_date}T00:00:00`);
-  const end = new Date(`${maturityDateStr}T00:00:00`);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return principal;
-  const days = Math.round((end - start) / 86400000);
-  return principal + principal * (pct / 100) * (days / 365);
+  return principal + principal * (pct / 100);
 }
 
 // ── Payout schedule date/proration helpers — mirror
@@ -94,9 +89,18 @@ function toISODateLocal(d) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
-function prorateInstalments(dates, investmentDateStr, principal, totalReturnPct) {
-  const dailyRate = (principal * totalReturnPct) / 100 / 365;
-  let prev = new Date(`${investmentDateStr}T00:00:00`);
+// Day-count proration, mirrors backend/club1000/services.py::generate_payout_schedule:
+// the investor's FIXED total return over the tenure (principal * pct/100 —
+// pct is the total return by maturity, not an annualized rate) is spread
+// pro-rata across the tenure's actual days, not across a flat 365 — so
+// instalments still sum to exactly computeMaturityValue's total interest
+// regardless of tenure length.
+function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal, totalReturnPct) {
+  const start = new Date(`${investmentDateStr}T00:00:00`);
+  const end = new Date(`${maturityDateStr}T00:00:00`);
+  const tenureDays = Math.round((end - start) / 86400000);
+  const dailyRate = tenureDays > 0 ? (principal * totalReturnPct) / 100 / tenureDays : 0;
+  let prev = start;
   return dates.map((due_date) => {
     const cur = new Date(`${due_date}T00:00:00`);
     const days = Math.round((cur - prev) / 86400000);
@@ -123,7 +127,7 @@ function buildScheduleRows(investor, scheme, providedSchedule) {
     const dates = investor.interest_payout === 'quarterly'
       ? computeQuarterlyDates(investor.investment_date, scheme.tenure_months)
       : computeMonthlyDates(investor.investment_date, scheme.tenure_months);
-    const amounts = prorateInstalments(dates, investor.investment_date, principal, pct);
+    const amounts = prorateInstalments(dates, investor.investment_date, maturityDateStr, principal, pct);
     entries = dates.map((due_date, i) => ({ due_date, amount_due: amounts[i], payout_type: 'interest' }));
     entries.push({ due_date: maturityDateStr, amount_due: principal, payout_type: 'maturity' });
   } else {

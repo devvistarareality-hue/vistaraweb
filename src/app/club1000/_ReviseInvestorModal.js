@@ -69,10 +69,16 @@ function computeMonthlyDates(investmentDateStr, tenureMonths) {
   }
   return dates;
 }
-// Day-count proration — mirrors backend/club1000/services.py::generate_payout_schedule.
-function prorateInstalments(dates, investmentDateStr, principal, totalReturnPct) {
-  const dailyRate = (principal * totalReturnPct) / 100 / 365;
-  let prev = new Date(`${investmentDateStr}T00:00:00`);
+// Day-count proration — mirrors backend/club1000/services.py::generate_payout_schedule:
+// the investor's FIXED total return over the tenure (principal * pct/100 —
+// pct is the total return by maturity, not an annualized rate) is spread
+// pro-rata across the tenure's actual days, not across a flat 365.
+function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal, totalReturnPct) {
+  const start = new Date(`${investmentDateStr}T00:00:00`);
+  const end = new Date(`${maturityDateStr}T00:00:00`);
+  const tenureDays = Math.round((end - start) / 86400000);
+  const dailyRate = tenureDays > 0 ? (principal * totalReturnPct) / 100 / tenureDays : 0;
+  let prev = start;
   return dates.map((due_date) => {
     const cur = new Date(`${due_date}T00:00:00`);
     const days = Math.round((cur - prev) / 86400000);
@@ -127,7 +133,7 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
       : computeMonthlyDates(investor.investment_date, scheme.tenure_months);
     const principal = Number(form.amount_invested) || 0;
     const totalReturn = Number(form.total_return_pct) || 0;
-    const amounts = prorateInstalments(dates, investor.investment_date, principal, totalReturn);
+    const amounts = prorateInstalments(dates, investor.investment_date, maturityPreview, principal, totalReturn);
     const rows = dates.map((due_date, i) => ({ due_date, amount_due: amounts[i], payout_type: 'interest' }));
     rows.push({ due_date: maturityPreview, amount_due: principal, payout_type: 'maturity' });
     return rows;
