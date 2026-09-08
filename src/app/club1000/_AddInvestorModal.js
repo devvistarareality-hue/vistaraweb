@@ -344,7 +344,14 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <style>{`
+        /* Same overlay trick as the booking form, and the same trap: color:transparent
+           leaves a focused segment painted in the browser's own highlight colour, so
+           the native digits reappear over the DD/MM/YYYY overlay. Hide the whole edit
+           region, then re-show the picker indicator. */
         .c1k-dmy-date { color: transparent; }
+        .c1k-dmy-date::-webkit-datetime-edit { opacity: 0; }
+        .c1k-dmy-date::selection { background: transparent; color: transparent; }
+        .c1k-dmy-date::-moz-selection { background: transparent; color: transparent; }
         .c1k-dmy-date::-webkit-calendar-picker-indicator { opacity: 1; }
       `}</style>
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(24,35,80,0.22)' }}>

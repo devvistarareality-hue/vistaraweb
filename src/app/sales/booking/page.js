@@ -786,7 +786,15 @@ function BookingPage() {
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       <style>{`
+        /* color:transparent alone is not enough: a focused segment is painted by the
+           browser in its own highlight colour, so clicking into the field made the
+           native 11/09/2026 reappear on top of the DD/MM/YYYY overlay. Hiding the
+           whole edit region covers every segment and its selection; the picker
+           indicator is re-shown after, so the calendar button stays visible. */
         .dmy-date { color: transparent; }
+        .dmy-date::-webkit-datetime-edit { opacity: 0; }
+        .dmy-date::selection { background: transparent; color: transparent; }
+        .dmy-date::-moz-selection { background: transparent; color: transparent; }
         .dmy-date::-webkit-calendar-picker-indicator { opacity: 1; }
       `}</style>
       {saving && (
