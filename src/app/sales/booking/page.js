@@ -8,7 +8,7 @@ import { stripPlotPrefix } from '../../../lib/plotNumber';
 import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
 import { computeFlat } from '../../../lib/pratishthaFlat';
-import { formatDMY } from '../../../lib/dateFormat';
+import DateFieldDMY from '../../../components/DateFieldDMY';
 
 
 const MAX_LOI_FILE_SIZE_MB = 100;
@@ -785,18 +785,6 @@ function BookingPage() {
   const unit = f.area_unit || flags.areaUnit;
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
-      <style>{`
-        /* color:transparent alone is not enough: a focused segment is painted by the
-           browser in its own highlight colour, so clicking into the field made the
-           native 11/09/2026 reappear on top of the DD/MM/YYYY overlay. Hiding the
-           whole edit region covers every segment and its selection; the picker
-           indicator is re-shown after, so the calendar button stays visible. */
-        .dmy-date { color: transparent; }
-        .dmy-date::-webkit-datetime-edit { opacity: 0; }
-        .dmy-date::selection { background: transparent; color: transparent; }
-        .dmy-date::-moz-selection { background: transparent; color: transparent; }
-        .dmy-date::-webkit-calendar-picker-indicator { opacity: 1; }
-      `}</style>
       {saving && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #E0E6F0', borderTopColor: '#1a73e8', animation: 'spin 0.8s linear infinite' }} />
@@ -1249,22 +1237,6 @@ const In = ({ type, invalid, ...p }) => (
     style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', background: p.disabled ? '#F3F4F6' : (invalid ? '#FEF2F2' : '#fff') }} />
 );
 const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', cursor: 'pointer', background: invalid ? '#FEF2F2' : '#fff' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
-// A native <input type="date"> always displays digits in the browser's own
-// locale (Chrome defaults to MM/DD/YYYY on a US-locale PC) — that's browser
-// chrome, not content, so formatDMY() can't touch it directly. This keeps
-// the real date input (and its native picker) for editing, but hides its
-// own text and overlays our own DD/MM/YYYY label on top — click/tap
-// anywhere still opens the picker. Needs the .dmy-date CSS rule (declared
-// once near the top of this page's render) alongside it.
-const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => (
-  <div style={{ position: 'relative', flex: 1, ...wrapperStyle }}>
-    <input {...p} type="date" value={value} onChange={onChange} className="dmy-date"
-      style={{ width: '100%', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', background: p.disabled ? '#F3F4F6' : '#fff', boxSizing: 'border-box', ...style }} />
-    <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: value ? '#1A1A2E' : '#9CA3AF', pointerEvents: 'none' }}>
-      {value ? formatDMY(value) : 'dd/mm/yyyy'}
-    </span>
-  </div>
-);
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>

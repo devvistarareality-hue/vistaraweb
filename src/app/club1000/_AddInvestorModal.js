@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
+import DateFieldDMY from '../../components/DateFieldDMY';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 
 const TEAL = '#00838F';
@@ -128,31 +129,6 @@ function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal
     prev = cur;
     return +((dailyRate * days).toFixed(2));
   });
-}
-
-// A native <input type="date"> always displays digits in the browser's own
-// locale (Chrome defaults to MM/DD/YYYY) — that's browser chrome, not content,
-// so formatDMY() can't touch it. This keeps the real date input (and its native
-// picker) for editing, but hides its built-in text and overlays our own
-// DD/MM/YYYY label on top — click/tap anywhere still opens the picker.
-function DateFieldDMY({ value, onChange, style, wrapperStyle }) {
-  return (
-    <div style={{ position: 'relative', ...wrapperStyle }}>
-      <input
-        type="date"
-        value={value}
-        onChange={onChange}
-        className="c1k-dmy-date"
-        style={{ ...inp, width: '100%', ...style }}
-      />
-      <span style={{
-        position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)',
-        fontSize: 13, color: value ? '#1A1A2E' : '#9CA3AF', pointerEvents: 'none',
-      }}>
-        {value ? formatDMY(value) : 'dd/mm/yyyy'}
-      </span>
-    </div>
-  );
 }
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
@@ -343,17 +319,6 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <style>{`
-        /* Same overlay trick as the booking form, and the same trap: color:transparent
-           leaves a focused segment painted in the browser's own highlight colour, so
-           the native digits reappear over the DD/MM/YYYY overlay. Hide the whole edit
-           region, then re-show the picker indicator. */
-        .c1k-dmy-date { color: transparent; }
-        .c1k-dmy-date::-webkit-datetime-edit { opacity: 0; }
-        .c1k-dmy-date::selection { background: transparent; color: transparent; }
-        .c1k-dmy-date::-moz-selection { background: transparent; color: transparent; }
-        .c1k-dmy-date::-webkit-calendar-picker-indicator { opacity: 1; }
-      `}</style>
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(24,35,80,0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid #F0F3FA' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Add Investor</div>
