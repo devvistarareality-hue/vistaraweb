@@ -733,10 +733,30 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
    The tower equivalent of the site map: pick a floor, then draw a zone over each unit
    on that floor's plan. Zones live inside the floor's own floor_plans entry, so every
    floor keeps its own mapping against its own drawing. */
+// Remaps a source floor's zone shapes onto a target floor. The shapes (points/rect)
+// stay identical — floors 2-7 of the same block are usually drawn on the exact same
+// plan — only each zone's plotNumber changes, swapped for the target floor's unit at
+// the SAME position in its numbering run (e.g. source's 3rd unit -> target's 3rd
+// unit: E-203 -> E-303). A zone whose plotNumber doesn't match the source floor's own
+// generated run (hand-typed, doesn't fit the from/to/prefix pattern) is left as-is —
+// there's nothing to remap it against, so it copies over literally for the admin to
+// fix by hand.
+function remapZonesToFloor(sourceFloor, targetFloor) {
+  const srcUnits = unitsForFloorNumbers(sourceFloor);
+  const destUnits = unitsForFloorNumbers(targetFloor);
+  return (sourceFloor.zones || []).map((z) => {
+    const idx = srcUnits.indexOf(String(z.plotNumber));
+    const plotNumber = (idx !== -1 && destUnits[idx] !== undefined) ? destUnits[idx] : z.plotNumber;
+    return { ...z, id: Date.now() + Math.random(), plotNumber };
+  });
+}
+
 function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
   const withPlan = floors.filter((f) => f.image_url);
   const [sel, setSel] = useState(0);
   const active = withPlan[Math.min(sel, Math.max(withPlan.length - 1, 0))];
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyTargets, setCopyTargets] = useState(() => new Set());
 
   if (!floors.length) return null;
   if (!withPlan.length) {
@@ -767,18 +787,86 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
   const setZones = (zones) => onFloorsChange(floors.map((f, i) => (i === idxInAll ? { ...f, zones } : f)));
   const setImage = (image_url) => onFloorsChange(floors.map((f, i) => (i === idxInAll ? { ...f, image_url, zones: [] } : f)));
 
+  const otherFloors = floors.map((f, i) => ({ f, i })).filter(({ i }) => i !== idxInAll);
+
+  function toggleCopyTarget(i) {
+    setCopyTargets((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
+
+  function applyCopy() {
+    const targets = [...copyTargets];
+    if (!targets.length) return;
+    const overwriting = targets.some((i) => (floors[i].zones || []).length > 0);
+    if (overwriting && !window.confirm(
+      `${targets.length} selected floor(s) already have some units mapped — copying will replace their existing mapping. Continue?`
+    )) return;
+    const next = floors.map((f, i) => {
+      if (!targets.includes(i)) return f;
+      return { ...f, image_url: f.image_url || active.image_url, zones: remapZonesToFloor(active, f) };
+    });
+    onFloorsChange(next);
+    setCopyOpen(false);
+    setCopyTargets(new Set());
+  }
+
+  const activeMapped = (active.zones || []).length;
+
   const picker = (
-    <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <label style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4 }}>Floor</label>
-      <select value={sel} onChange={(e) => setSel(Number(e.target.value))}
-        style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
-        {withPlan.map((f, i) => {
-          const mapped = (f.zones || []).length;
-          const total = unitsForFloorNumbers(f).length;
-          const name = `${f.block ? `${f.block} · ` : ''}${f.label || `Floor ${f.floor}`}`;
-          return <option key={i} value={i}>{name} — {mapped}/{total} mapped</option>;
-        })}
-      </select>
+    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <label style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4 }}>Floor</label>
+        <select value={sel} onChange={(e) => { setSel(Number(e.target.value)); setCopyOpen(false); }}
+          style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
+          {withPlan.map((f, i) => {
+            const mapped = (f.zones || []).length;
+            const total = unitsForFloorNumbers(f).length;
+            const name = `${f.block ? `${f.block} · ` : ''}${f.label || `Floor ${f.floor}`}`;
+            return <option key={i} value={i}>{name} — {mapped}/{total} mapped</option>;
+          })}
+        </select>
+        {activeMapped > 0 && otherFloors.length > 0 && (
+          <button onClick={() => setCopyOpen((v) => !v)}
+            style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #3D5AFE', background: copyOpen ? '#3D5AFE' : '#F0F3FF', color: copyOpen ? '#fff' : '#3D5AFE', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            📋 Copy this mapping to other floors…
+          </button>
+        )}
+      </div>
+
+      {copyOpen && (
+        <div style={{ border: '1.5px solid #E0E6F0', borderRadius: 10, padding: 12, background: '#FAFBFF' }}>
+          <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 8 }}>
+            Copies every zone's shape from <b>{active.block ? `${active.block} · ` : ''}{active.label || `Floor ${active.floor}`}</b> onto the floor(s) you pick below, renumbering each one to that floor's matching unit (e.g. unit 3 here → unit 3 there). Pick floors with the identical layout.
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+            {otherFloors.map(({ f, i }) => {
+              const mapped = (f.zones || []).length;
+              const total = unitsForFloorNumbers(f).length;
+              const name = `${f.block ? `${f.block} · ` : ''}${f.label || `Floor ${f.floor}`}`;
+              const checked = copyTargets.has(i);
+              return (
+                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, padding: '6px 10px', borderRadius: 8, border: `1.5px solid ${checked ? '#3D5AFE' : '#E0E6F0'}`, background: checked ? '#EEF1FF' : '#fff', cursor: 'pointer', color: '#1A1A2E' }}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleCopyTarget(i)} style={{ margin: 0 }} />
+                  {name} <span style={{ color: '#9CA3AF' }}>({mapped}/{total})</span>
+                </label>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={applyCopy} disabled={!copyTargets.size}
+              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: copyTargets.size ? '#3D5AFE' : '#C6D0DB', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: copyTargets.size ? 'pointer' : 'not-allowed' }}>
+              Copy to {copyTargets.size || ''} floor{copyTargets.size === 1 ? '' : 's'}
+            </button>
+            <button onClick={() => { setCopyOpen(false); setCopyTargets(new Set()); }}
+              style={{ padding: '8px 16px', borderRadius: 8, border: '1.5px solid #E0E6F0', background: '#fff', color: '#8492A6', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
