@@ -404,6 +404,10 @@ function BookingPage() {
   // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
   // "Shop1" -> "Shop 1", "101" -> "Flat 101".
   const unitTitle = (pb) => {
+    // C and D share one parade of shops, numbered 1-24 across both blocks, so the
+    // paperwork names them "C&D Shop 3" rather than by the block whose plot record
+    // happens to hold them. The book carries that name; `unit` stays the plot number.
+    if (pb.display_unit) return pb.display_unit;
     const kind = pb.kind === 'shop' ? 'Shop' : 'Flat';
     const n = String(pb.unit || '').trim();
     const bare = n.replace(new RegExp('^' + kind + '\\s*', 'i'), '');

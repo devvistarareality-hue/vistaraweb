@@ -144,7 +144,13 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const unitLabel = isEOI ? 'EOI No: '
     : (isPratishthaPdf && pb) ? (pb.kind === 'shop' ? 'Shop No: ' : 'Flat No: ')
     : 'Plot No: ';
-  doc.text(unitLabel + (isEOI ? (meta.plotNo || '—') : plotNumOnly), M, HDR_H + 6);
+  // A C&D shop is one of a parade numbered 1-24 across both blocks, so the LOI must
+  // name it as the paperwork does ("C&D Shop 3"), not by the block its plot record
+  // sits in. display_unit already reads as a full name, so it replaces the label too.
+  const unitText = (!isEOI && pb && pb.display_unit)
+    ? pb.display_unit
+    : unitLabel + (isEOI ? (meta.plotNo || '—') : plotNumOnly);
+  doc.text(unitText, M, HDR_H + 6);
   doc.text('Booking Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
   y = HDR_H + 10; drawBorder();
 
