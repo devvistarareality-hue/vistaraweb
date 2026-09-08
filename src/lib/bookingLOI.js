@@ -246,6 +246,10 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     // The stored unit number may already carry the word ("Shop1"), so don't repeat it:
     // "Shop1" -> "Shop 1", "101" -> "Flat 101".
     const unitTitle = (b) => {
+      // A C&D / A&B shop belongs to a parade numbered across two blocks, so a
+      // multi-unit LOI must head its sections with that name too — not just the
+      // document header. Without this a two-shop booking listed "Shop C-Shop3".
+      if (b.display_unit) return b.display_unit;
       const kind = b.kind === 'shop' ? 'Shop' : 'Flat';
       const n = String(b.unit || '').trim();
       const bare = n.replace(new RegExp('^' + kind + '\\s*', 'i'), '');
