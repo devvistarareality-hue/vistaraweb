@@ -76,6 +76,12 @@ export default function InvestorApprovalsPage() {
   // actually picked in "Investor Approvers — by scheme" above, which only
   // 403'd on click instead of not being offered at all.
   const isRealAdmin = user?.is_staff || user?.role === 'Admin';
+  // Who can SEE (let alone change) the "Investor Approvers — by scheme"
+  // picker — deliberately narrower than `manager` (which just gets you onto
+  // this page at all): only Directors and real admins get to decide who
+  // approves each scheme, same as Sales' "Booking Approvers — by project"
+  // panel restricts to isAdmin rather than every booking-approving manager.
+  const canConfigureApprovers = isRealAdmin || user?.role === 'Director';
   function canApprove(inv) {
     if (isRealAdmin) return true;
     const scheme = schemes.find((s) => s.id === inv.scheme);
@@ -213,22 +219,24 @@ export default function InvestorApprovalsPage() {
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Investor Approvals</h1>
       <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>{investors.length} {tab === 'all' ? 'total' : tab} investor{investors.length === 1 ? '' : 's'}</p>
 
-      <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginTop: 18, border: '1px solid #EDF1F7' }}>
-        <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: TEAL, padding: 0 }}>
-          ⚙ Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: savedCfg.startsWith('⚠') ? '#DC2626' : '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
-        </button>
-        {cfgOpen && (
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 8 }}>For each scheme, pick the managers who approve investors added under it. They get a notification on each new submission for that scheme.</div>
-            {managers.length === 0 ? <div style={{ fontSize: 13, color: '#8492A6' }}>No managers in this company.</div> : schemes.map((s) => (
-              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F0F3FA' }}>
-                <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{s.name}</div>
-                <ApproverDropdown scheme={s} managers={managers} onToggle={toggleApprover} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {canConfigureApprovers && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginTop: 18, border: '1px solid #EDF1F7' }}>
+          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: TEAL, padding: 0 }}>
+            ⚙ Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: savedCfg.startsWith('⚠') ? '#DC2626' : '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
+          </button>
+          {cfgOpen && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 8 }}>For each scheme, pick the managers who approve investors added under it. They get a notification on each new submission for that scheme.</div>
+              {managers.length === 0 ? <div style={{ fontSize: 13, color: '#8492A6' }}>No managers in this company.</div> : schemes.map((s) => (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F0F3FA' }}>
+                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{s.name}</div>
+                  <ApproverDropdown scheme={s} managers={managers} onToggle={toggleApprover} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
