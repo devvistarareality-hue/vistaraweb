@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS, SALES_ENDPOINTS } from '../../../constants/api';
@@ -111,16 +111,47 @@ export default function InvestorApprovalsPage() {
       .catch(() => {});
   }, [manager]);
 
+  // Per-scheme sequence counter — a manager toggling two names for the same
+  // scheme fires two independent PATCHes in flight together; without this,
+  // whichever response lands LAST wins regardless of which was sent last, so
+  // a network hiccup could silently drop the second click. Keyed so it only
+  // guards same-scheme races, not toggles on different schemes.
+  const approverPatchSeq = useRef({});
+
   async function toggleApprover(schemeId, mgrId) {
+    let prev = [];
     let next = [];
     setSchemes((ss) => ss.map((s) => {
       if (s.id !== schemeId) return s;
-      const arr = s.investor_approvers || [];
-      next = arr.includes(mgrId) ? arr.filter((x) => x !== mgrId) : [...arr, mgrId];
+      prev = s.investor_approvers || [];
+      next = prev.includes(mgrId) ? prev.filter((x) => x !== mgrId) : [...prev, mgrId];
       return { ...s, investor_approvers: next };
     }));
-    await apiFetch(CLUB1000_ENDPOINTS.scheme(schemeId), { method: 'PATCH', body: JSON.stringify({ investor_approvers: next }) }).catch(() => {});
-    setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
+
+    const seq = (approverPatchSeq.current[schemeId] || 0) + 1;
+    approverPatchSeq.current[schemeId] = seq;
+
+    let ok = false;
+    try {
+      const res = await apiFetch(CLUB1000_ENDPOINTS.scheme(schemeId), { method: 'PATCH', body: JSON.stringify({ investor_approvers: next }) });
+      ok = res.ok;
+    } catch {
+      ok = false;
+    }
+
+    // A newer toggle for this same scheme already fired while this request was
+    // in flight — let that one's outcome be the final word, not this stale one.
+    if (approverPatchSeq.current[schemeId] !== seq) return;
+
+    if (ok) {
+      setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
+    } else {
+      // The click looked like it worked (optimistic update above), but the
+      // backend rejected or lost it — undo the local change instead of
+      // leaving the UI showing a selection that was never actually saved.
+      setSchemes((ss) => ss.map((s) => (s.id === schemeId ? { ...s, investor_approvers: prev } : s)));
+      setSavedCfg('⚠ Could not save — try again'); setTimeout(() => setSavedCfg(''), 3000);
+    }
   }
 
   async function load() {
@@ -179,7 +210,7 @@ export default function InvestorApprovalsPage() {
 
       <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginTop: 18, border: '1px solid #EDF1F7' }}>
         <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: TEAL, padding: 0 }}>
-          ⚙ Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
+          ⚙ Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: savedCfg.startsWith('⚠') ? '#DC2626' : '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
         </button>
         {cfgOpen && (
           <div style={{ marginTop: 12 }}>
