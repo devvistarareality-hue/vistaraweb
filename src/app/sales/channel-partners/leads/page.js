@@ -26,6 +26,19 @@ const SEGMENT_OPTIONS = [
   { value: 'both',        label: 'Both' },
 ];
 
+// City is a broad dropdown (state-wide); Area stays free text for the actual
+// locality within it — every CP is Gujarat-based for now, so this is a flat
+// list rather than a state->city cascade.
+const GUJARAT_CITIES = [
+  'Ahmedabad', 'Amreli', 'Anand', 'Ankleshwar', 'Bardoli', 'Bharuch', 'Bhavnagar', 'Bhuj',
+  'Botad', 'Chhota Udepur', 'Dahod', 'Deesa', 'Dhoraji', 'Dholka', 'Gandhidham', 'Gandhinagar',
+  'Godhra', 'Gondal', 'Halol', 'Himatnagar', 'Idar', 'Jamnagar', 'Jetpur', 'Junagadh', 'Kalol',
+  'Keshod', 'Khambhat', 'Kheda', 'Mahuva', 'Mehsana', 'Modasa', 'Morbi', 'Nadiad', 'Navsari',
+  'Palanpur', 'Patan', 'Porbandar', 'Rajkot', 'Rajpipla', 'Sanand', 'Sidhpur', 'Surat',
+  'Surendranagar', 'Talaja', 'Umreth', 'Una', 'Unjha', 'Upleta', 'Vadnagar', 'Vadodara',
+  'Valsad', 'Vapi', 'Veraval', 'Vijapur', 'Viramgam', 'Visnagar', 'Vyara', 'Wankaner',
+];
+
 function CategoryBadge({ category }) {
   const c = CATEGORY_COLOR[category] || { bg: '#F0F3FA', color: '#8492A6' };
   const label = CATEGORY_OPTIONS.find((o) => o.value === category)?.label || category || '—';
@@ -36,15 +49,16 @@ function CategoryBadge({ category }) {
   );
 }
 
-const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: 'normal', segment: '', area: '', date_added: '', is_active: true };
+const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: 'normal', segment: '', city: '', area: '', date_added: '', is_active: true };
 
 function ChannelPartnerModal({ initial, onClose, onSaved }) {
   const [form, setForm] = useState(initial ? {
     name: initial.name || '', contact_no: initial.contact_no || '',
     firm_name: initial.firm_name || '', category: initial.category || 'normal',
-    segment: initial.segment || '', area: initial.area || '',
+    segment: initial.segment || '', city: initial.city || '', area: initial.area || '',
     is_active: initial.is_active !== false,
   } : EMPTY_CP_FORM);
+  const [cityOther, setCityOther] = useState(!!initial?.city && !GUJARAT_CITIES.includes(initial.city));
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
   const isEdit = !!initial;
@@ -97,6 +111,23 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
             style={{ ...inp, width: '100%', marginBottom: 14, cursor: 'pointer' }}>
             {SEGMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+
+          <label style={lbl}>City</label>
+          <select value={cityOther ? 'Other' : (form.city || '')}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === 'Other') { setCityOther(true); setForm({ ...form, city: '' }); }
+              else { setCityOther(false); setForm({ ...form, city: v }); }
+            }}
+            style={{ ...inp, width: '100%', marginBottom: cityOther ? 8 : 14, cursor: 'pointer' }}>
+            <option value="">— Select —</option>
+            {GUJARAT_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value="Other">Other</option>
+          </select>
+          {cityOther && (
+            <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+              placeholder="Enter city" style={{ ...inp, width: '100%', marginBottom: 14 }} />
+          )}
 
           <label style={lbl}>Area</label>
           <input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}
@@ -192,6 +223,7 @@ function CpDetailsTab({ companyId }) {
                 <th style={th}>Firm Name</th>
                 <th style={th}>Category</th>
                 <th style={th}>Segment</th>
+                <th style={th}>City</th>
                 <th style={th}>Area</th>
                 <th style={th}>Status</th>
                 <th style={th}>Leads</th>
@@ -206,6 +238,7 @@ function CpDetailsTab({ companyId }) {
                   <td style={td}>{cp.firm_name || '—'}</td>
                   <td style={td}><CategoryBadge category={cp.category} /></td>
                   <td style={td}>{cp.segment ? SEGMENT_OPTIONS.find((o) => o.value === cp.segment)?.label : '—'}</td>
+                  <td style={td}>{cp.city || '—'}</td>
                   <td style={td}>{cp.area || '—'}</td>
                   <td style={td}>
                     <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? '#E8F5E9' : '#F0F3FA', color: cp.is_active ? '#2E7D32' : '#8492A6' }}>
