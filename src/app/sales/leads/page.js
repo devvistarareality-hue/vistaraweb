@@ -153,6 +153,52 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
   );
 }
 
+function cpLabel(cp) { return `${cp.name}${cp.firm_name ? ` · ${cp.firm_name}` : ''}`; }
+
+// Channel Partner Name is picked from a list that can run into the hundreds — a
+// plain <select> makes finding one by scrolling painful. This is a type-to-filter
+// combobox: click it to open, type any part of the name/firm to narrow the list,
+// click a result to pick it — same open/query/onMouseDown pattern as the Club 1000
+// reference-name autocomplete (club1000/_AddInvestorModal.js).
+function ChannelPartnerPicker({ value, onChange, options, inputStyle, placeholder = 'Search channel partner…' }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => String(o.id) === String(value));
+  const q = query.trim().toLowerCase();
+  const filtered = q ? options.filter((o) => cpLabel(o).toLowerCase().includes(q)) : options;
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        style={inputStyle}
+        value={open ? query : (selected ? cpLabel(selected) : '')}
+        placeholder={placeholder}
+        onFocus={() => { setQuery(''); setOpen(true); }}
+        onChange={(e) => setQuery(e.target.value)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        autoComplete="off"
+      />
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, marginTop: 4,
+          background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(24,35,80,0.14)', maxHeight: 220, overflowY: 'auto',
+        }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '10px 12px', fontSize: 12.5, color: '#9CA3AF' }}>No match</div>
+          ) : filtered.map((cp, i) => (
+            <div key={cp.id}
+              onMouseDown={() => { onChange(String(cp.id)); setQuery(''); setOpen(false); }}
+              style={{ padding: '9px 12px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid #F0F3FA' : 'none', color: '#1A1A2E' }}>
+              {cpLabel(cp)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], cpOnly = false, channelPartners = [], prefill = null, onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -439,14 +485,12 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             {cpOnly && (
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Channel Partner Name<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
-                <div style={{ position: 'relative' }}>
-                  <select value={form.channel_partner} onChange={(e) => setForm({ ...form, channel_partner: e.target.value })}
-                    style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA', appearance: 'none', cursor: 'pointer', color: form.channel_partner ? '#1A1A2E' : '#9CA3AF' }}>
-                    <option value="">Select channel partner</option>
-                    {channelPartners.map((cp) => <option key={cp.id} value={cp.id}>{cp.name}{cp.firm_name ? ` · ${cp.firm_name}` : ''}</option>)}
-                  </select>
-                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: 12 }}>▾</span>
-                </div>
+                <ChannelPartnerPicker
+                  value={form.channel_partner}
+                  onChange={(id) => setForm({ ...form, channel_partner: id })}
+                  options={channelPartners}
+                  inputStyle={addInp}
+                />
               </div>
             )}
           </div>
@@ -1071,10 +1115,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 {cpOnly && (
                   <div>
                     <label style={mLbl}>Channel Partner Name<span style={{ color: '#DC2626' }}>*</span></label>
-                    <select value={form.channel_partner} onChange={(e) => setForm({ ...form, channel_partner: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
-                      <option value="">Select channel partner</option>
-                      {channelPartners.map((cp) => <option key={cp.id} value={cp.id}>{cp.name}{cp.firm_name ? ` · ${cp.firm_name}` : ''}</option>)}
-                    </select>
+                    <ChannelPartnerPicker
+                      value={form.channel_partner}
+                      onChange={(id) => setForm({ ...form, channel_partner: id })}
+                      options={channelPartners}
+                      inputStyle={mInp}
+                    />
                   </div>
                 )}
               </div>
