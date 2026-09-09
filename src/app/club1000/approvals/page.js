@@ -111,45 +111,50 @@ export default function InvestorApprovalsPage() {
       .catch(() => {});
   }, [manager]);
 
-  // Per-scheme sequence counter — a manager toggling two names for the same
-  // scheme fires two independent PATCHes in flight together; without this,
-  // whichever response lands LAST wins regardless of which was sent last, so
-  // a network hiccup could silently drop the second click. Keyed so it only
-  // guards same-scheme races, not toggles on different schemes.
+  // Per-scheme sequence counter — purely to stop a slow, out-of-order response
+  // from visually flickering the display backwards after a newer toggle for
+  // the same scheme has already landed. It's cosmetic only: the actual
+  // save-without-loss guarantee comes from the backend's atomic toggle
+  // endpoint (see SchemeToggleApproverView) — PATCHing the whole computed
+  // array from here raced the moment two toggles for the same scheme were in
+  // flight together, since whichever write landed LAST at the DB won
+  // regardless of send order, silently dropping the other click with no
+  // error either side. The toggle endpoint instead sends just the one
+  // manager id and lets the DB row lock serialize concurrent toggles, so
+  // nothing is lost no matter how the requests interleave.
   const approverPatchSeq = useRef({});
 
   async function toggleApprover(schemeId, mgrId) {
-    let prev = [];
-    let next = [];
+    // Optimistic instant feedback — the atomic call below reconciles this
+    // with the server's authoritative result once it returns.
     setSchemes((ss) => ss.map((s) => {
       if (s.id !== schemeId) return s;
-      prev = s.investor_approvers || [];
-      next = prev.includes(mgrId) ? prev.filter((x) => x !== mgrId) : [...prev, mgrId];
-      return { ...s, investor_approvers: next };
+      const cur = s.investor_approvers || [];
+      return { ...s, investor_approvers: cur.includes(mgrId) ? cur.filter((x) => x !== mgrId) : [...cur, mgrId] };
     }));
 
     const seq = (approverPatchSeq.current[schemeId] || 0) + 1;
     approverPatchSeq.current[schemeId] = seq;
 
-    let ok = false;
+    let result = null;
     try {
-      const res = await apiFetch(CLUB1000_ENDPOINTS.scheme(schemeId), { method: 'PATCH', body: JSON.stringify({ investor_approvers: next }) });
-      ok = res.ok;
-    } catch {
-      ok = false;
-    }
+      const res = await apiFetch(CLUB1000_ENDPOINTS.schemeToggleApprover(schemeId), { method: 'POST', body: JSON.stringify({ manager_id: mgrId }) });
+      if (res.ok) result = await res.json();
+    } catch { /* result stays null */ }
 
-    // A newer toggle for this same scheme already fired while this request was
-    // in flight — let that one's outcome be the final word, not this stale one.
     if (approverPatchSeq.current[schemeId] !== seq) return;
 
-    if (ok) {
+    if (result) {
+      setSchemes((ss) => ss.map((s) => (s.id === schemeId ? { ...s, investor_approvers: result.investor_approvers } : s)));
       setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
     } else {
-      // The click looked like it worked (optimistic update above), but the
-      // backend rejected or lost it — undo the local change instead of
-      // leaving the UI showing a selection that was never actually saved.
-      setSchemes((ss) => ss.map((s) => (s.id === schemeId ? { ...s, investor_approvers: prev } : s)));
+      // Undo the optimistic toggle — it never actually reached the DB, so the
+      // UI shouldn't keep showing it as selected.
+      setSchemes((ss) => ss.map((s) => {
+        if (s.id !== schemeId) return s;
+        const cur = s.investor_approvers || [];
+        return { ...s, investor_approvers: cur.includes(mgrId) ? cur.filter((x) => x !== mgrId) : [...cur, mgrId] };
+      }));
       setSavedCfg('⚠ Could not save — try again'); setTimeout(() => setSavedCfg(''), 3000);
     }
   }
