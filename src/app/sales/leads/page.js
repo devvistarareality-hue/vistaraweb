@@ -225,7 +225,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const [salesCpUsers, setSalesCpUsers] = useState([]);
   const salesCpReqId = useRef(0);
   useEffect(() => {
-    if (!cpOnly || !_isCpHead) return;
+    if (!cpOnly || !(_isCpHead || _isAdminMgr)) return;
     // form.project starts empty and gets set moments later once seeded, so an
     // earlier (unscoped) request can resolve AFTER a later (project-scoped)
     // one and clobber it back to the unfiltered list — guard by request order.
@@ -234,7 +234,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     fetch(SALES_ENDPOINTS.salesCpUsers + cq, { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { if (reqId === salesCpReqId.current) setSalesCpUsers(Array.isArray(d) ? d : []); })
       .catch(() => { if (reqId === salesCpReqId.current) setSalesCpUsers([]); });
-  }, [cpOnly, _isCpHead, companyId, form.project]);
+  }, [cpOnly, _isCpHead, _isAdminMgr, companyId, form.project]);
   const [cityOther, setCityOther] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -541,7 +541,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                   </select>
                 </div>
               )}
-              {cpOnly && _isCpHead && (
+              {cpOnly && (_isCpHead || _isAdminMgr) && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign CP</label>
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
@@ -550,7 +550,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                   </select>
                 </div>
               )}
-              {cpOnly && _isCpHead && (
+              {cpOnly && (_isCpHead || _isAdminMgr) && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign STM</label>
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
@@ -723,7 +723,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
   const [salesCpUsers, setSalesCpUsers] = useState([]);
   const salesCpReqId = useRef(0);
   useEffect(() => {
-    if (!cpOnly || !_isCpHead) return;
+    if (!cpOnly || !(_isCpHead || canAssign)) return;
     // form starts as {} and gets seeded with the real project a moment later
     // (see the lead-seeding effect below), so an earlier (unscoped) request
     // can resolve AFTER the later (project-scoped) one and clobber it back to
@@ -733,7 +733,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     fetch(SALES_ENDPOINTS.salesCpUsers + cq, { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { if (reqId === salesCpReqId.current) setSalesCpUsers(Array.isArray(d) ? d : []); })
       .catch(() => { if (reqId === salesCpReqId.current) setSalesCpUsers([]); });
-  }, [cpOnly, _isCpHead, companyId, form.project]);
+  }, [cpOnly, _isCpHead, canAssign, companyId, form.project]);
 
   // Followup form
   const [fuForm,    setFuForm]    = useState({ role_context: (_isStm || cpOnly) ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
@@ -1177,7 +1177,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               {cpOnly && (
                 <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Assigned to {lead.stm_name || 'you'} automatically.</p>
               )}
-              {cpOnly && _isCpHead && (
+              {cpOnly && (_isCpHead || canAssign) && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={mLbl}>Assign STM</label>
                   <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
