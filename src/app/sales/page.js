@@ -152,16 +152,26 @@ function SearchLeadButton() {
               {!loading && results && results.map((l) => (
                 <div key={l.id} style={{ padding: '12px 20px', borderBottom: '1px solid #F5F6FA' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{l.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {l.name}
+                      {l.is_cp && (
+                        <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 10, background: '#F3E8FF', color: '#7C3AED', textTransform: 'uppercase' }}>
+                          Channel Partner
+                        </span>
+                      )}
+                    </span>
                     <StatusBadge status={l.status} />
                   </div>
                   <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{l.phone}{l.project_name ? ` · ${l.project_name}` : ''}</div>
                   <div style={{ fontSize: 12, color: '#3D5AFE', marginTop: 4, fontWeight: 600 }}>
                     {l.telecaller_name && `Telecaller: ${l.telecaller_name}`}
                     {l.telecaller_name && l.stm_name && '  ·  '}
-                    {l.stm_name && `STM: ${l.stm_name}`}
+                    {l.stm_name && `${l.is_cp ? 'CP' : 'STM'}: ${l.stm_name}`}
                     {!l.telecaller_name && !l.stm_name && <span style={{ color: '#B45309' }}>Unassigned</span>}
                   </div>
+                  {l.is_cp && l.channel_partner_name && (
+                    <div style={{ fontSize: 11, color: '#7C3AED', marginTop: 2 }}>via {l.channel_partner_name}</div>
+                  )}
                 </div>
               ))}
             </div>
