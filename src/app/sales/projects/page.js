@@ -652,13 +652,12 @@ export default function ProjectsPage() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 6 }}>
-                    {/* A tower needs this before any units exist — that's where its
-                        floor plans live — so don't gate it on the plot count. */}
-                    {(total > 0 || p.floor_wise) && (
-                      <button onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
-                        Manage Plots
-                      </button>
-                    )}
+                    {/* Always available, even with zero plots — it's also where a fresh
+                        project's floor plans, master plan, and Rate Master get set up
+                        in the first place, all before any unit exists. */}
+                    <button onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
+                      Manage Plots
+                    </button>
                     <button onClick={() => setShowModal(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
                     <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#E65100' : '#2E7D32', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
                       {p.is_active ? 'Deactivate' : 'Activate'}
