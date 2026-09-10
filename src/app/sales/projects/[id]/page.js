@@ -9,6 +9,7 @@ import TowerFloorBuilder from '../../../../components/TowerFloorBuilder';
 import { toPlanImage } from '../../../../utils/planImage';
 import { uploadToSupabase } from '../../../../utils/supabaseStorage';
 import { pdfToImageBlob } from '../../../../utils/pdfToImage';
+import { fieldFlags } from '../../../../lib/bookingFormulas';
 
 
 const STATUS_CFG = {
@@ -1050,6 +1051,77 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
 }
 
 
+/* ─── Rate Master ─── Per-project default rates. Which fields are offered mirrors
+   fieldFlags(formula_set) exactly — the same flags the booking form itself uses to
+   decide which rate rows to show — so Kalrav/Ankhol get land/dev/construction/
+   maintenance rates, Industrial swaps construction for sale-deed/dev-agreement
+   rates, and Pratishtha (which prices per unit from Plot.price_book, not a
+   project-wide rate) doesn't get a Rate Master at all. Saved values prefill the
+   booking form when a plot in this project is picked, but stay editable per
+   booking — this only sets the starting point. */
+function rateMasterFields(formulaSet) {
+  const flags = fieldFlags(formulaSet);
+  return [
+    { key: 'land_rate', label: 'Land Rate', unit: `${flags.areaUnit}` },
+    flags.hasConstructionFields && { key: 'dev_rate', label: 'Development Rate', unit: flags.areaUnit },
+    flags.hasConstructionFields && { key: 'const_rate', label: 'Construction Rate', unit: flags.areaUnit },
+    flags.hasSaleDeedRate && { key: 'sale_deed_rate', label: 'Sale Deed Rate', unit: 'sq.ft' },
+    flags.hasDevAgreement && { key: 'dev_agreement_rate', label: 'Dev Agreement Rate', unit: 'sq.ft' },
+    { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
+  ].filter(Boolean);
+}
+
+function RateMasterEditor({ project, onProjectUpdate }) {
+  const fields = rateMasterFields(project.formula_set);
+  const [form, setForm] = useState(() => {
+    const seed = {}; fields.forEach((f) => { seed[f.key] = ''; });
+    return { ...seed, ...(project.rate_master || {}) };
+  });
+  const [saving, setSaving] = useState(false);
+  const [saved,  setSaved]  = useState('');
+
+  // Pratishtha prices per unit from Plot.price_book — none of these project-wide
+  // rate fields apply, so there's nothing for a Rate Master to configure.
+  if (project.formula_set === 'pratishtha') return null;
+
+  async function save() {
+    setSaving(true);
+    const res = await fetch(SALES_ENDPOINTS.project(project.id), {
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ rate_master: form }),
+    });
+    if (res.ok) {
+      onProjectUpdate(await res.json());
+      setSaved('Saved ✓'); setTimeout(() => setSaved(''), 1500);
+    }
+    setSaving(false);
+  }
+
+  return (
+    <div style={{ backgroundColor: '#fff', borderRadius: 12, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(184,196,214,0.12)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Rate Master</div>
+        {saved && <span style={{ fontSize: 12, fontWeight: 700, color: '#2E7D32' }}>{saved}</span>}
+      </div>
+      <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 12 }}>
+        Set this project's default rates — they'll prefill automatically when a plot here is booked, but stay editable per booking.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 12, marginBottom: 14 }}>
+        {fields.map((f) => (
+          <div key={f.key}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>{f.label} (₹/{f.unit})</label>
+            <input type="number" value={form[f.key] ?? ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+              placeholder="Not set" style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box' }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={save} disabled={saving}
+        style={{ padding: '9px 18px', background: '#3D5AFE', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+        {saving ? 'Saving…' : 'Save Rates'}
+      </button>
+    </div>
+  );
+}
+
 /* ─── Main Page ─── */
 export default function ManagePlotsPage() {
   const { id } = useParams();
@@ -1244,6 +1316,8 @@ export default function ManagePlotsPage() {
           </div>
         </div>
       )}
+
+      <RateMasterEditor project={project} onProjectUpdate={setProject} />
 
       {/* Master Plan — plotted schemes only; a tower is described by its per-floor plans. */}
       {!project.floor_wise && (
