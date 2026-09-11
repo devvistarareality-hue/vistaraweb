@@ -115,6 +115,7 @@ export const SALES_ENDPOINTS = {
   get plotsRenameType() { return `${BASE_URL}/api/sales/plots/rename-type/`; },
   get plotsHold()       { return `${BASE_URL}/api/sales/plots/hold/`; },
   get plotsRelease()    { return `${BASE_URL}/api/sales/plots/release/`; },
+  get plotsCancelHold() { return `${BASE_URL}/api/sales/plots/cancel-hold/`; },
   plot: (id)            => `${BASE_URL}/api/sales/plots/${id}/`,
   get metaWebhook()      { return `${BASE_URL}/api/sales/webhooks/meta/`; },
   get metaWebhookConfig(){ return `${BASE_URL}/api/sales/webhooks/meta/config/`; },

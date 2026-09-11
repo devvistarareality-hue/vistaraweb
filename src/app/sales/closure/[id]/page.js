@@ -23,6 +23,11 @@ const STATUS = {
   // confused people about which one they were looking at — "In Progress" reads
   // correctly for both ("something is actively happening with this unit").
   hold:      { label: 'In Progress', dot: '#94A3B8', text: '#334155', bg: '#F1F5F9' },
+  // Submitted and waiting on a manager. Shares plot.status='hold' with the two
+  // states above — submission is what clears held_by — so it is told apart by the
+  // pending booking the server reports, and coloured amber because it is a real
+  // commitment the team should not treat as still up for grabs.
+  pending:   { label: 'Hold',        dot: '#F59E0B', text: '#78350F', bg: '#FEF3C7' },
   sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
   // A previously-sold unit put back on the market — bookable exactly like
   // Available, just purple instead of green so it reads as "resold", not new.
@@ -34,7 +39,14 @@ const STATUS = {
 };
 // Visual state for a plot, folding in the drafted override — everywhere the map colours
 // a unit should go through this instead of indexing STATUS[plot.status] directly.
-const plotCfg = (plot) => (plot.drafted_booking_id ? STATUS.drafted : (STATUS[plot.status] || STATUS.available));
+const plotCfg = (plot) => (
+  plot.pending_booking_id ? STATUS.pending
+    : plot.drafted_booking_id ? STATUS.drafted
+      : (STATUS[plot.status] || STATUS.available));
+// The filter chips and the count tiles key off this, not plot.status, so
+// "In Progress" means only what is still being worked on.
+const plotState = (plot) => (
+  plot.pending_booking_id ? 'pending' : (plot.status === 'hold' ? 'hold' : plot.status));
 
 // Visual centre of a zone. Uses the polygon's area centroid (shoelace), not the average
 // of its vertices — unit outlines are notched, and a vertex average drifts toward
@@ -87,6 +99,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const [selectedIds, setSelectedIds] = useState([]); // multi-select: plot ids to book together
   const [hovered,  setHovered]  = useState(null);  // hovered zone id
   const [draftPanelPlot, setDraftPanelPlot] = useState(null); // drafted unit clicked into
+  const [holdPanelPlot, setHoldPanelPlot] = useState(null);   // in-progress unit clicked into
+  const [cancelBusy, setCancelBusy] = useState(false);
   const [soldPanelPlot, setSoldPanelPlot] = useState(null); // sold unit clicked into (Manager+ only) — offers Move to Resale
   const [resaleBusy, setResaleBusy] = useState(false);
   const [filter,     setFilter]     = useState('all'); // all | available | hold | sold
@@ -255,15 +269,15 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   // the project row are counted and shown identically.
   const statRow = (title, list) => {
     if (!title) return null;
-    const c = { available: 0, hold: 0, sold: 0 };
-    list.forEach(p => { if (c[p.status] != null) c[p.status]++; });
+    const c = { available: 0, hold: 0, pending: 0, sold: 0 };
+    list.forEach(p => { const k = plotState(p); if (c[k] != null) c[k]++; });
     const t = list.length;
     const share = (n) => (t ? Math.round(n / t * 100) : 0);
     const card = { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 14, background: '#fff', border: '1px solid #E6EBF4', boxShadow: '0 2px 8px rgba(184,196,214,0.12)' };
     return (
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7 }}>{title}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
           <div style={card}>
             <span style={{ width: 36, height: 36, borderRadius: 10, background: '#EEF1FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#3D5AFE', fontSize: 17, fontWeight: 900 }}>▦</span>
             <div>
@@ -271,7 +285,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>Total Units</div>
             </div>
           </div>
-          {[['available', c.available], ['hold', c.hold], ['sold', c.sold]].map(([key, n]) => {
+          {[['available', c.available], ['hold', c.hold], ['pending', c.pending], ['sold', c.sold]].map(([key, n]) => {
             const cfg = STATUS[key];
             return (
               <div key={key} style={card}>
@@ -301,7 +315,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
   // A plot is dimmed (not removed) when it doesn't match the active status/type filter.
   const isHidden = (plot) =>
-    (filter !== 'all' && plot.status !== filter) ||
+    (filter !== 'all' && plotState(plot) !== filter) ||
     (typeFilter !== 'all' && plot.cluster_type !== typeFilter);
 
   const shownCount = visiblePlots.filter(p => !isHidden(p)).length;
@@ -359,6 +373,27 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       .then((r) => r.json()).then((pl) => setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []))).catch(() => {});
   }
 
+  // Free a unit somebody has selected or drafted but not submitted. The server
+  // decides who may: the holder, a real admin, or one of the project's booking
+  // approvers — `can_cancel_hold` on the plot is that same answer, so the button is
+  // only offered where the call would succeed.
+  async function cancelHold(plotId) {
+    if (!window.confirm('Cancel this hold? The unit goes back on the market, and any saved draft for it is discarded.')) return;
+    setCancelBusy(true);
+    try {
+      const res = await fetch(SALES_ENDPOINTS.plotsCancelHold, {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plotId] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.detail || 'Could not cancel this hold.'); return; }
+      setHoldPanelPlot(null); setDraftPanelPlot(null);
+      const pl = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then((r) => r.json());
+      setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []));
+    } catch (_) {
+      alert('Could not cancel this hold.');
+    } finally { setCancelBusy(false); }
+  }
+
   async function pickPlot(plot) {
     if (!plot || busyIds.has(plot.id)) return;
     // A drafted unit is out of the normal select/hold flow entirely — it's not
@@ -379,6 +414,14 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     // just reachable straight from this map instead of a separate admin screen.
     if (plot.status === 'sold') {
       if (isManager) setSoldPanelPlot(plot);
+      return;
+    }
+    // Somebody else's live selection. Anyone allowed to clear it gets the panel;
+    // for everyone else this stays inert, as before. A unit already submitted for
+    // approval is excluded — can_cancel_hold is false for it, and rejecting that is
+    // the approvals screen's job.
+    if (plot.status === 'hold' && plot.can_cancel_hold) {
+      setHoldPanelPlot(plot);
       return;
     }
     if (plot.status !== 'available' && plot.status !== 'resale') return; // Available or Resale selectable
@@ -458,7 +501,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
       {/* Filters — status + type (dim non-matching units) */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'In Progress']].map(([key, label]) => {
+        {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'In Progress'], ['pending', 'Hold']].map(([key, label]) => {
           const active = filter === key;
           const dot = STATUS[key]?.dot;
           return (
@@ -612,7 +655,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
                   // Any drafted unit is clickable — it opens the draft panel for everyone,
                   // just with different actions inside depending on who's looking.
-                  const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || (plot.status === 'sold' && isManager);
+                  const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || !!plot.can_cancel_hold || (plot.status === 'sold' && isManager);
                   const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
                   const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
                   const strokeC = isSel ? '#1A237E' : cfg.dot;
@@ -778,7 +821,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 const cfg = plotCfg(plot);
                 const isSel = selectedSet.has(plot.id);
                 const isMineDraft = !!plot.drafted_booking_id && !!plot.held_by_name && plot.held_by_name === user?.name;
-                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || (plot.status === 'sold' && isManager);
+                const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || !!plot.can_cancel_hold || (plot.status === 'sold' && isManager);
                 const title = plot.drafted_booking_id
                   ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
                   : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
@@ -834,7 +877,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       {draftPanelPlot && (() => {
         const p = draftPanelPlot;
         const mine = !!p.held_by_name && p.held_by_name === user?.name;
-        const canDiscard = mine || isManager;
+        // The server's answer rather than a second guess at the rule: the drafter,
+        // an admin, or one of the project's booking approvers.
+        const canDiscard = !!p.can_cancel_hold;
         return (
           <div onClick={() => setDraftPanelPlot(null)} style={overlay}>
             <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
@@ -850,15 +895,47 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   </button>
                 )}
                 {canDiscard && (
-                  <button onClick={() => discardDraftFromPanel(p.drafted_booking_id)}
+                  <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
                     style={{ padding: '11px 16px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                     ✕ Discard Draft
                   </button>
                 )}
                 {!canDiscard && (
-                  <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or a manager can resume or discard this.</p>
+                  <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or one of this project&rsquo;s booking approvers can resume or discard this.</p>
                 )}
                 <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* In-progress panel — the holder, an admin, or one of the project's booking
+          approvers can put a unit somebody selected back on the market. Before this,
+          a unit left selected could only be freed by that person or by waiting out
+          the expiry, which on a live plot map meant it simply sat there. */}
+      {holdPanelPlot && (() => {
+        const p = holdPanelPlot;
+        const mine = !!p.held_by_name && p.held_by_name === user?.name;
+        return (
+          <div onClick={() => !cancelBusy && setHoldPanelPlot(null)} style={overlay}>
+            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · In Progress</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 6px' }}>
+                {mine ? 'Selected by you' : (p.held_by_name ? `Selected by ${p.held_by_name}` : 'Selected')}
+              </div>
+              <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 18px' }}>
+                Nothing has been submitted for this unit yet. Cancelling puts it back on the market straight away.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
+                  style={{ padding: '11px 16px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: cancelBusy ? 'default' : 'pointer', opacity: cancelBusy ? 0.7 : 1 }}>
+                  {cancelBusy ? 'Cancelling…' : '✕ Cancel Hold'}
+                </button>
+                <button onClick={() => setHoldPanelPlot(null)} disabled={cancelBusy}
+                  style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>
