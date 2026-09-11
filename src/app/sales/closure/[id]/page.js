@@ -378,19 +378,19 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   // approvers — `can_cancel_hold` on the plot is that same answer, so the button is
   // only offered where the call would succeed.
   async function cancelHold(plotId) {
-    if (!window.confirm('Cancel this hold? The unit goes back on the market, and any saved draft for it is discarded.')) return;
+    if (!window.confirm('Cancel this selection? The unit goes back on the market, and any saved draft for it is discarded.')) return;
     setCancelBusy(true);
     try {
       const res = await fetch(SALES_ENDPOINTS.plotsCancelHold, {
         method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plotId] }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(data.detail || 'Could not cancel this hold.'); return; }
+      if (!res.ok) { alert(data.detail || 'Could not cancel this selection.'); return; }
       setHoldPanelPlot(null); setDraftPanelPlot(null);
       const pl = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then((r) => r.json());
       setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []));
     } catch (_) {
-      alert('Could not cancel this hold.');
+      alert('Could not cancel this selection.');
     } finally { setCancelBusy(false); }
   }
 
@@ -932,7 +932,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
                   style={{ padding: '11px 16px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: cancelBusy ? 'default' : 'pointer', opacity: cancelBusy ? 0.7 : 1 }}>
-                  {cancelBusy ? 'Cancelling…' : '✕ Cancel Hold'}
+                  {cancelBusy ? 'Cancelling…' : '✕ Cancel In Progress'}
                 </button>
                 <button onClick={() => setHoldPanelPlot(null)} disabled={cancelBusy}
                   style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
