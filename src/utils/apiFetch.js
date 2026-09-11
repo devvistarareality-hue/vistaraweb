@@ -1,5 +1,6 @@
 import { LOGOUT } from '../redux/types/authTypes';
 import store from '../redux/store';
+import { clearAllCache } from '../app/sales/_cache';
 
 const REFRESH_URL = () => {
   // Use the same backend the rest of the app talks to (persisted by discoverServer),
@@ -33,6 +34,10 @@ function forceLogout() {
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   localStorage.removeItem('company');
+  // sc_* cache entries are keyed by company, not by user — leaving them would
+  // let whoever logs in next on this browser/device reuse this session's
+  // cached data (see authActions.login/logout for the same fix).
+  clearAllCache();
   store.dispatch({ type: LOGOUT });
   // Hard-navigate to the base origin so no stale path remains in the URL
   window.location.replace(window.location.origin + '/company');

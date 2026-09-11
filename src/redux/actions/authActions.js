@@ -1,5 +1,5 @@
 import { COMPANY_ENDPOINTS, AUTH_ENDPOINTS, SALES_ENDPOINTS, authHeaders } from '../../constants/api';
-import { setCache } from '../../app/sales/_cache';
+import { setCache, clearAllCache } from '../../app/sales/_cache';
 import {
   COMPANY_VERIFY_REQUEST, COMPANY_VERIFY_SUCCESS, COMPANY_VERIFY_FAILURE,
   LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, CLEAR_COMPANY,
@@ -40,6 +40,14 @@ export const login = (companyCode, userCode, password) => async (dispatch) => {
       localStorage.setItem('access_token',  data.tokens.access);
       localStorage.setItem('refresh_token', data.tokens.refresh);
       localStorage.setItem('user',          JSON.stringify(data.user));
+      // Every sc_* cache entry (projects, stats, team, …) is keyed by company,
+      // never by the logged-in user — without this, logging in as a second
+      // person on the same browser/device (shared machine, or switching
+      // accounts without a full sign-out) reused whatever the PREVIOUS
+      // person's session had cached: a restricted Manager's scoped project
+      // list shown to an Admin who should see everything, or worse, an
+      // Admin's full data shown to someone who shouldn't see it at all.
+      clearAllCache();
       dispatch({ type: LOGIN_SUCCESS, payload: data.user });
       // Prefetch sales stats in background so Sales page loads instantly
       fetch(SALES_ENDPOINTS.stats, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.tokens.access}` } })
@@ -64,5 +72,8 @@ export const logout = () => (dispatch) => {
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   localStorage.removeItem('company');
+  // Same reasoning as login — don't leave this session's cached data sitting
+  // around for whoever logs in next on this browser/device.
+  clearAllCache();
   dispatch({ type: LOGOUT });
 };
