@@ -27,6 +27,10 @@ const TABS = [
   { key: 'today',   label: "Today's" },
   { key: 'overdue', label: 'Overdue' },
   { key: 'pending', label: 'All Pending' },
+  // The completed count was being totalled and shown as a chip, but there was no tab
+  // to reach those rows — the only way to see a completed follow-up was to scroll
+  // "All" past every pending one.
+  { key: 'completed', label: 'Completed' },
   { key: 'all',     label: 'All' },
 ];
 
@@ -172,6 +176,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
     const at = new Date(fu.scheduled_at);
     if (filter === 'all')     return true;
     if (filter === 'pending') return fu.status === 'pending';
+    if (filter === 'completed') return fu.status === 'completed';
     if (filter === 'today')   return fu.status === 'pending' && at >= startOfToday() && at <= endOfToday();
     if (filter === 'overdue') return fu.status === 'pending' && at < now;
     return true;
