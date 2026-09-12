@@ -54,6 +54,15 @@ function AvailabilityToggle() {
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} />
           Available today{resetsLabel() ? ` · ${resetsLabel()}` : ''}
         </span>
+        {/* Signing in after the role's time forfeits a share of the day's backlog, so
+            today's count will trail the room's. Said plainly here, or it reads as
+            distribution being broken. */}
+        {state.signed_in_late && (
+          <span title={`Leads that arrived before you signed in were shared out without you. From now on you receive an equal share of everything that comes in.`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#92400E', background: '#FEF3C7', padding: '7px 12px', borderRadius: 20 }}>
+            ⏰ Signed in late{state.signin_time ? ` · after ${state.signin_time}` : ''}
+          </span>
+        )}
         <button onClick={() => toggle(false)} disabled={busy}
           style={{ padding: '7px 14px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: busy ? 'default' : 'pointer' }}>
           {busy ? '…' : 'Mark Unavailable'}
