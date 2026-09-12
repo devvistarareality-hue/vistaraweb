@@ -888,10 +888,14 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 {p.held_by_name ? `Drafted by ${p.held_by_name}` : 'Drafted'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {mine && (
+                {/* Resume is offered to anyone the server will hand the draft to —
+                    its author, an admin, or one of the project's approvers. Gating on
+                    "is it mine" left an admin looking at a draft they could discard
+                    but not open, which is the wrong way round. */}
+                {canDiscard && (
                   <button onClick={() => router.push(`/sales/booking?draft=${p.drafted_booking_id}`)}
                     style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#3D5AFE', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-                    ▸ Resume
+                    ▸ {mine ? 'Resume' : 'Open Draft'}
                   </button>
                 )}
                 {canDiscard && (

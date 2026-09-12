@@ -162,9 +162,14 @@ function BookingPage() {
   // for that explicitly rather than relying on the broader visibility rules.
   useEffect(() => {
     if (!draftId) return;
-    fetch(`${SALES_ENDPOINTS.bookings}?status=draft&mine=1${cq('&')}`, { headers: authHeaders() }).then(r => r.json()).then((arr) => {
-      const b = (Array.isArray(arr) ? arr : []).find((x) => String(x.id) === String(draftId));
-      if (!b) return;
+    // Ask for this one booking by id. Listing and searching made resuming hostage
+    // to whatever scoping the list applies — approver narrowing and the CP pool
+    // filter each silently returned nothing, leaving the form on "Loading unit
+    // pricing…" with every field blank. The endpoint answers for the drafter, an
+    // admin, or whoever approves it, so an admin can open somebody else's draft.
+    fetch(SALES_ENDPOINTS.booking(draftId), { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null)).then((b) => {
+      if (!b || !b.id) return;
       setSavedDraftId(String(b.id));
       // A signed LOI attached before an earlier Save is already on the server — show
       // it as attached instead of asking the rep to re-upload it to resume.
