@@ -372,7 +372,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                           style={{ ...actBtn, background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}>✕ Discard</button>
                       </>
                     )}
-                    {b.status === 'pending' && isApprover && (
+                    {/* The server decides per booking, not per person: routing sends a
+                        CP-sourced deal to the project's CP approvers and everything
+                        else to its regular ones. A CP manager looking at a walk-in
+                        they booked themselves is not its approver, and offering the
+                        buttons anyway made the click fail silently. */}
+                    {b.status === 'pending' && isApprover && b.can_approve && (
                       <>
                         <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#16A34A' }}>✓ Approve</button>
                         <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#DC2626' }}>✕ Reject</button>
