@@ -4,6 +4,7 @@ import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
+import { useCurrentCompany } from '../../lib/currentCompany';
 
 const AMBER = '#D97706';
 
@@ -97,6 +98,8 @@ function computeMaturity(investmentDateStr, tenureMonths) {
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
 export default function RenewInvestorModal({ investor, scheme, onClose, onSaved }) {
+  // The issuer printed on the investor LOI — company-wise, never a constant.
+  const issuer = useCurrentCompany();
   const [form, setForm] = useState({
     investment_date: toISODate(new Date()),
     amount_invested: String(investor.amount_invested || ''),
@@ -171,7 +174,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       // maturity_date is explicitly overridden (not just spread from `investor`)
       // because renewing changes investment_date — the OLD investor.maturity_date
       // would otherwise leak through and understate/misdate the schedule's totals.
-      await downloadInvestorLOI({ ...investor, ...form, maturity_date: maturityPreview || null }, scheme, { renewalNo: nextRevisionNo, schedule });
+      await downloadInvestorLOI({ ...investor, ...form, maturity_date: maturityPreview || null }, scheme, { renewalNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
       setLoiDone(true);
     } catch (_) {
       setError('Could not generate the LOI. Please try again.');
