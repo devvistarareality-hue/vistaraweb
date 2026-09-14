@@ -211,9 +211,15 @@ export default function ModuleBookingsPage() {
                       </div>
                     </div>
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                        {detailsOpen[b.id] ? '▲ Hide Details' : '▾ Details'}
-                      </button>
+                      {/* A revised deal gets its Details per version inside the
+                          history instead — the current version is one of them, so a
+                          card-level copy is the same figures twice. It also shares an
+                          id with that row, which rendered the block twice at once. */}
+                      {!b.revision_no && (
+                        <button onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                          {detailsOpen[b.id] ? '▲ Hide Details' : '▾ Details'}
+                        </button>
+                      )}
                       {b.loi_document && <>
                         <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #99F6E4', background: '#fff', color: '#0D9488', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>📄 View {isEoi(b) ? 'EOI' : 'LOI'}</button>
                         <button onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
@@ -228,7 +234,7 @@ export default function ModuleBookingsPage() {
                         </button>
                       )}
                     </div>
-                    {detailsOpen[b.id] && <BookingDetails b={b} />}
+                    {!b.revision_no && detailsOpen[b.id] && <BookingDetails b={b} />}
                     {revOpen[b.id] && (
                       <div style={{ marginTop: 12, borderTop: '1px dashed #CBD5E1', paddingTop: 10 }}>
                         <div style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', letterSpacing: 0.6, marginBottom: 8 }}>
