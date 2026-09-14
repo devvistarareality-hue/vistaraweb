@@ -280,14 +280,25 @@ export default function ModuleBookingsPage() {
 
   // `field` picks which approver list to edit — mirrors Sales' own toggleApprover.
   async function toggleApprover(projId, uid, field) {
+    let prev = [];
     let next = [];
     setProjects((ps) => ps.map((p) => {
       if (p.id !== projId) return p;
-      const arr = p[field] || [];
-      next = arr.includes(uid) ? arr.filter((x) => x !== uid) : [...arr, uid];
+      prev = p[field] || [];
+      next = prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid];
       return { ...p, [field]: next };
     }));
-    await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => {});
+    const r = await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => null);
+    if (!r || !r.ok) {
+      // Undo the optimistic tick and say so — a save that never reached the server
+      // must not sit there looking checked. Silently swallowing this (the old
+      // behaviour) is exactly how several projects here ended up missing an
+      // approver that the panel had shown as "Saved ✓": nothing surfaced the
+      // failure at the time, so it only reappeared as a mystery on the next visit.
+      setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
+      alert('Could not save this approver — please try again.');
+      return;
+    }
     setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
   }
 
