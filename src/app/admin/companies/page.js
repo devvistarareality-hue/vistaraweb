@@ -195,7 +195,7 @@ export default function CompanyManagementPage() {
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={mLbl}>Company Name <span style={{ color: '#EF4444' }}>*</span></label>
-                <input required value={createForm.name} onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))} style={mInp} placeholder="Vistara Realty Pvt. Ltd."
+                <input required value={createForm.name} onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))} style={mInp} placeholder="Company name Pvt. Ltd."
                   onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 14px', marginBottom: 20 }}>

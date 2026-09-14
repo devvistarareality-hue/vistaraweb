@@ -145,7 +145,12 @@ function buildScheduleRows(investor, scheme, providedSchedule) {
 }
 
 // investor: InvestorListSerializer shape. scheme: SchemeSerializer shape.
+// The seller on this document is the company the booking belongs to, not a constant.
+// The ERP is company-wise — Vistara Group is one tenant of several — so a hardcoded
+// name would put the wrong seller on another company's signed instrument. Callers
+// pass `companyName`; an empty one prints nothing rather than someone else's name.
 export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
+  const sellerName = (opts.companyName || '').toString().trim();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const PW = 210, PH = 297, M = 15, CW = PW - 2 * M;
   let y = 0, pageNum = 1, rowAlt = false;
@@ -189,7 +194,8 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
     sf(MB); doc.rect(0, barTop, PW, barH, 'F'); sf(ORG); doc.rect(0, barTop, PW, 0.6, 'F');
     const baseline = centerBaseline(barTop, barH, fontPt);
     st([255, 255, 255]); doc.setFontSize(fontPt); doc.setFont('helvetica', 'normal');
-    doc.text('Vistara Group • Investment Proposal • ' + new Date().toLocaleDateString('en-IN'), PW / 2, baseline, { align: 'center' });
+    const footLead = sellerName ? sellerName + ' • ' : '';
+    doc.text(footLead + 'Investment Proposal • ' + new Date().toLocaleDateString('en-IN'), PW / 2, baseline, { align: 'center' });
     doc.setFont('helvetica', 'bold'); doc.text('Page ' + pageLabel + totalLabel, PW - 12, baseline, { align: 'right' });
   }
   function secHead(title) {
@@ -370,7 +376,7 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   sd(LN); doc.setLineWidth(0.5); doc.roundedRect(M, y, BW, BH, 2, 2, 'S'); doc.roundedRect(PW - M - BW, y, BW, BH, 2, 2, 'S');
   sd([200, 200, 210]); doc.setLineWidth(0.4); doc.line(M + 8, y + 17, M + BW - 8, y + 17); doc.line(PW - M - BW + 8, y + 17, PW - M - 8, y + 17);
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); st(LT); doc.text('INVESTOR SIGNATURE', M + BW / 2, y + 5, { align: 'center' }); doc.text('BORROWER SIGNATURE', PW - M - BW / 2, y + 5, { align: 'center' });
-  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(investor.name || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text('Vistara Group', PW - M - BW / 2, y + 22, { align: 'center' });
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(investor.name || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text(sellerName || '—', PW - M - BW / 2, y + 22, { align: 'center' });
   doc.setFontSize(8.5); st(MD); doc.text('Date: ________________________', PW / 2, y + 32, { align: 'center' });
   chk(16); y += 40; sf(WASH); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(MB2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
   sf(ORG); doc.roundedRect(M + 1.2, y + 2, 1.7, 8, 0.85, 0.85, 'F');
@@ -388,7 +394,7 @@ function loiFilename(investor) {
 
 export async function downloadInvestorLOI(investor, scheme, opts = {}) {
   const jsPDF = await ensureJsPDF();
-  const companyLogo = await loadLogo('/vistara-logo.png');
+  const companyLogo = await loadLogo(opts.companyLogoUrl || '/vistara-logo.png');
   const doc = buildInvestorLOIPdf(jsPDF, investor, scheme, { companyLogo, ...opts });
   doc.save(loiFilename(investor));
   return true;
@@ -397,7 +403,7 @@ export async function downloadInvestorLOI(investor, scheme, opts = {}) {
 // Returns { name, type, data(base64) } ready for the upload-loi endpoint.
 export async function generateInvestorLOIBase64(investor, scheme, opts = {}) {
   const jsPDF = await ensureJsPDF();
-  const companyLogo = await loadLogo('/vistara-logo.png');
+  const companyLogo = await loadLogo(opts.companyLogoUrl || '/vistara-logo.png');
   const doc = buildInvestorLOIPdf(jsPDF, investor, scheme, { companyLogo, ...opts });
   const dataUri = doc.output('datauristring');
   const base64 = dataUri.split(',')[1];

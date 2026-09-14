@@ -4,6 +4,7 @@ import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
+import { useCurrentCompany } from '../../lib/currentCompany';
 
 const TEAL = '#00838F';
 const PURPLE = '#7C3AED';
@@ -98,6 +99,8 @@ function computeMaturity(investmentDateStr, tenureMonths) {
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
 export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved }) {
+  // The issuer printed on the investor LOI — company-wise, never a constant.
+  const issuer = useCurrentCompany();
   const [form, setForm] = useState({
     name: investor.name || '',
     phone: investor.phone || '',
@@ -170,7 +173,7 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
     }
     setLoiDownloading(true);
     try {
-      await downloadInvestorLOI({ ...investor, ...form }, scheme, { revisionNo: nextRevisionNo, schedule });
+      await downloadInvestorLOI({ ...investor, ...form }, scheme, { revisionNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
       setLoiDone(true);
     } catch (_) {
       setError('Could not generate the LOI. Please try again.');

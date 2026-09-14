@@ -22,7 +22,12 @@ export function ensureJsPDF() {
 // meta: { clientName, phoneNumber, gender, address, project, plotNo, bookingDate, villaType, bunglowType, cpName, loggedInUser }
 // v: computeFormulas() output. installments: [{no,date,pct,amt,isExtra}]
 // opts: { formulaSet, projectName, isRevision, revNo, extraTerms[], extraWorkInst[] }
+// The seller on this document is the company the booking belongs to, not a constant.
+// The ERP is company-wise — Vistara Group is one tenant of several — so a hardcoded
+// name would put the wrong seller on another company's signed instrument. Callers
+// pass `companyName`; an empty one prints nothing rather than someone else's name.
 export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
+  const sellerName = (opts.companyName || '').toString().trim();
   const formulaSet = opts.formulaSet || 'kalrav';
   const projNamePdf = (opts.projectName || meta.project || '').toString();
   const isRevision = !!opts.isRevision;
@@ -95,7 +100,8 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     sf(MB); doc.rect(0, PH - 11, PW, 11, 'F'); sf(ORG); doc.rect(0, PH - 11, PW, 0.6, 'F');
     st([255, 255, 255]); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
     const docType = isEOI ? 'Expression of Interest' : 'Letter of Intent';
-    doc.text('Vistara Group • ' + docType + ' • ' + new Date().toLocaleDateString('en-IN'), PW / 2, PH - 5.5, { align: 'center' });
+    const footLead = sellerName ? sellerName + ' • ' : '';
+    doc.text(footLead + docType + ' • ' + new Date().toLocaleDateString('en-IN'), PW / 2, PH - 5.5, { align: 'center' });
     doc.setFont('helvetica', 'bold'); doc.text('Page ' + pageLabel + totalLabel, PW - 12, PH - 5.5, { align: 'right' });
   }
 
@@ -523,7 +529,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   sd(LN); doc.setLineWidth(0.5); doc.roundedRect(M, y, BW, BH, 2, 2, 'S'); doc.roundedRect(PW - M - BW, y, BW, BH, 2, 2, 'S');
   sd([200, 200, 210]); doc.setLineWidth(0.4); doc.line(M + 8, y + 17, M + BW - 8, y + 17); doc.line(PW - M - BW + 8, y + 17, PW - M - 8, y + 17);
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); st(LT); doc.text('BUYER SIGNATURE', M + BW / 2, y + 5, { align: 'center' }); doc.text('SELLER SIGNATURE', PW - M - BW / 2, y + 5, { align: 'center' });
-  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(meta.clientName || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text('Vistara Group', PW - M - BW / 2, y + 22, { align: 'center' });
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(meta.clientName || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text(sellerName || '—', PW - M - BW / 2, y + 22, { align: 'center' });
   doc.setFontSize(8.5); st(MD); doc.text('Date: ________________________', PW / 2, y + 32, { align: 'center' });
   chk(16); y += 40; sf(WASH); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(MB2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
   sf(ORG); doc.roundedRect(M + 1.2, y + 2, 1.7, 8, 0.85, 0.85, 'F');
@@ -558,7 +564,10 @@ export function loadLogo(url) {
 export async function downloadLOI(meta, v, installments, opts = {}) {
   const jsPDF = await ensureJsPDF();
   const [companyLogo, projectLogo] = await Promise.all([
-    loadLogo('/vistara-logo.png'),   // whitespace-trimmed company logo
+    // The company's own logo when it has one on file; the bundled asset is only a
+    // fallback for the tenant it was made for, and disappears once each company's
+    // logo is set in Company Management.
+    loadLogo(opts.companyLogoUrl || '/vistara-logo.png'),
     loadLogo(opts.projectLogoUrl),
   ]);
   const doc = buildLOIPdf(jsPDF, meta, v, installments, { ...opts, companyLogo, projectLogo });

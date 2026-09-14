@@ -5,6 +5,7 @@ import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import DateFieldDMY from '../../components/DateFieldDMY';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
+import { useCurrentCompany } from '../../lib/currentCompany';
 
 const TEAL = '#00838F';
 
@@ -134,6 +135,8 @@ function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
 export default function AddInvestorModal({ schemes, prefillLead, onClose, onCreated }) {
+  // The issuer printed on the investor LOI — company-wise, never a constant.
+  const issuer = useCurrentCompany();
   const initialSchemeId = prefillLead?.scheme_interest || schemes[0]?.id || '';
   const initialScheme = schemes.find((s) => String(s.id) === String(initialSchemeId));
   const [form, setForm] = useState({
@@ -274,7 +277,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
     try {
       const noRes = await apiFetch(`${CLUB1000_ENDPOINTS.investorNextLoiNo}?scheme_id=${scheme.id}`);
       const { loi_no } = noRes.ok ? await noRes.json() : { loi_no: '' };
-      await downloadInvestorLOI({ ...form, loi_no }, scheme, { schedule });
+      await downloadInvestorLOI({ ...form, loi_no }, scheme, { schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
       setLoiDone(true);
     } catch (_) {
       setError('Could not generate the LOI. Please try again.');

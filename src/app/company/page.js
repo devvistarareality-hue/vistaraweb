@@ -57,11 +57,19 @@ export default function CompanyScreen() {
               <div style={s.ring2}>
                 <div style={s.ring1}>
                   <div style={s.logoBox}>
-                    <img src="/image-WBG.png" alt="Vistara Group" style={s.logoImg} />
+                    <img src="/nexora-mark.svg" alt="Nexora" style={s.logoImg} />
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* The mark carries no letters, so the name is set beside it. Gold on the X,
+              the one place the accent is allowed, same as the mark's connector. */}
+          <div style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif', fontWeight: 800,
+                        fontSize: 30, letterSpacing: '0.26em', color: '#fff', marginBottom: 30,
+                        marginRight: '-0.26em', textAlign: 'center' }}>
+            NE<span style={{ color: '#B9915E' }}>X</span>ORA
           </div>
 
           {/* Tagline */}
@@ -98,7 +106,7 @@ export default function CompanyScreen() {
 
           {/* Mobile logo */}
           <div style={s.mobileTop}>
-            <img src="/image-WBG.png" alt="Vistara" style={s.mobileLogo} />
+            <img src="/nexora-mark.svg" alt="Nexora" style={s.mobileLogo} />
           </div>
 
           {/* Step bar */}

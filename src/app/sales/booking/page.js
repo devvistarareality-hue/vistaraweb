@@ -9,6 +9,7 @@ import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
 import { computeFlat } from '../../../lib/pratishthaFlat';
 import DateFieldDMY from '../../../components/DateFieldDMY';
+import { useCurrentCompany } from '../../../lib/currentCompany';
 
 
 const MAX_LOI_FILE_SIZE_MB = 100;
@@ -52,6 +53,8 @@ function BookingPage() {
   const kioskMode = (pathname || '').startsWith('/kiosk');
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  // The seller printed on the LOI — the company this booking belongs to.
+  const issuer = useCurrentCompany();
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
 
   const reviseId  = qp.get('revise') || '';
@@ -705,7 +708,7 @@ function BookingPage() {
       villaType: f.villa_type, bunglowType: flags.bunglowTypeFixed || '', cpName: f.cp_name, loggedInUser: f.manual_stm_name.trim() || me?.name, source: f.source,
       areaUnit: f.area_unit || flags.areaUnit,
     };
-    try { await downloadLOI(meta, v, instArr(), { formulaSet, projectName: project?.name, loiVariant: project?.loi_variant, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit,
+    try { await downloadLOI(meta, v, instArr(), { formulaSet, companyName: issuer.name, companyLogoUrl: issuer.logoUrl, projectName: project?.name, loiVariant: project?.loi_variant, projectLogoUrl: project?.logo_url, isRevision: !!reviseId, revNo: (reviseId ? 1 : 0), extraWorkInst: ewArr(), extraTerms: cleanTerms(), areaUnit: f.area_unit || flags.areaUnit,
       // Pratishtha prices from the unit's fixed price book, not the form's rates.
       priceBooks: pratBooks }); setLoiDone(true); setMsg('✅ LOI downloaded — get it signed and upload below.'); }
     catch (e) { setMsg('LOI error: ' + e.message); }

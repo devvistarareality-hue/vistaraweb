@@ -134,10 +134,10 @@ export default function Sidebar({ user, onClose, className }) {
       <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={s.logoCircle}>
-            <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/nexora-mark.svg" alt="Nexora" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div>
-            <div style={s.logoName}>Vistara ERP</div>
+            <div style={s.logoName}>Nexora</div>
             <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
           </div>
         </div>

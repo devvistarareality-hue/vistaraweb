@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }) {
         <div style={s.navLeft}>
           <div style={s.logoMark}>V</div>
           <div>
-            <p style={s.logoName}>Vistara ERP</p>
+            <p style={s.logoName}>Nexora</p>
             <p style={s.logoSub}>Employee Portal</p>
           </div>
         </div>

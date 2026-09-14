@@ -104,10 +104,10 @@ export default function ModuleLayout({ children, params }) {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <div style={s.sidebar}>
         <div style={s.logoRow}>
-          <div style={s.logoCircle}><img src="/image-WBG.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
+          <div style={s.logoCircle}><img src="/nexora-mark.svg" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
           <div>
             <div style={s.logoName}>{meta.name}</div>
-            <div style={s.logoSub}>Vistara ERP</div>
+            <div style={s.logoSub}>Nexora</div>
           </div>
         </div>
         <div style={{ flex: 1, padding: '16px 10px 0' }}>
