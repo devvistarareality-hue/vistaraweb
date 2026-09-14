@@ -168,7 +168,8 @@ export default function ModuleBookingsPage() {
       setRevs((m) => ({ ...m, [id]: [] }));
     }
   }
-  // Same three filters as the Sales approvals view: booking date, project, STM.
+  // Same filters as the Sales approvals view: search, booking date, project, STM.
+  const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');   // '' = every project
   const [stm, setStm] = useState('');     // '' = every STM
@@ -242,6 +243,24 @@ export default function ModuleBookingsPage() {
   }[tab];
   const tabRows = rows.filter(inTab);
 
+  // Search across client name, phone and the LOI/unit number — same rules as the
+  // Sales approvals search. Phones are stored with spaces ("81408 05999") so digit
+  // queries compare digits-only; the LOI's stored filename and the booking id are
+  // matched too, since either can be quoted as "LOI no".
+  const ql = q.trim().toLowerCase();
+  const qDigits = ql.replace(/\D/g, '');
+  // Only treat the query as a phone/id when it is ALL digits and separators — otherwise
+  // "shop1" would strip to "1" and match every phone containing a 1.
+  const numericQuery = !!qDigits && /^[\d\s+()-]+$/.test(ql);
+  const matches = (b) => {
+    if (!ql) return true;
+    const text = [b.client_name, b.plot_numbers, b.plot_number, b.area, b.loi_document];
+    if (text.some((v) => String(v || '').toLowerCase().includes(ql))) return true;
+    if (!numericQuery) return false;
+    if (String(b.id) === qDigits) return true;
+    return qDigits.length >= 3 && String(b.phone || '').replace(/\D/g, '').includes(qDigits);
+  };
+
   // Booking date is a plain YYYY-MM-DD, so the range compares as strings. A booking
   // with no date can't be placed in time, so a live range excludes it rather than
   // silently counting it in every period.
@@ -258,11 +277,11 @@ export default function ModuleBookingsPage() {
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(tabRows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(tabRows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = dated || !!stm || !!proj;
+  const narrowed = !!ql || dated || !!stm || !!proj;
 
   const groups = {};
   tabRows
-    .filter((b) => inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
+    .filter((b) => matches(b) && inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
     .forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   // Rejected/Pending: latest first by when that Accounts action happened / booking was
@@ -322,11 +341,27 @@ export default function ModuleBookingsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 6, marginTop: 18, marginBottom: 4 }}>
-        {TABS.map(([k, label]) => (
-          <button key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            background: tab === k ? '#0D9488' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
-        ))}
+      <div style={{ display: 'flex', gap: 10, marginTop: 18, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {TABS.map(([k, label]) => (
+            <button key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: tab === k ? '#0D9488' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
+          ))}
+        </div>
+        <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8492A6', fontSize: 13 }}>🔍</span>
+          {/* Collapse state is keyed by project, so drop it as the query changes —
+              otherwise a group the user collapsed earlier would hide its own hits. */}
+          <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
+            placeholder="Search name, phone or LOI / unit no…"
+            style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid #E0E6F0',
+              background: '#fff', fontSize: 13, color: '#1A1A2E', boxSizing: 'border-box' }} />
+          {!!q && (
+            <button onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
+                color: '#8492A6', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
+          )}
+        </div>
       </div>
 
       {!loading && !err && tabRows.length > 0 && (
