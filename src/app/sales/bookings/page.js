@@ -360,9 +360,20 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 16, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
-                      <span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
+                      {/* accounts_status='rejected' overrides approval_status here — that field
+                          still reads "APPROVED" from the Sales/CP stage, which would otherwise
+                          show a green/misleading pill for something Accounts has since rejected. */}
+                      <span style={statusPill(b.status)}>{b.accounts_status === 'rejected' ? 'REJECTED BY ACCOUNTS' : (b.approval_status || b.status || '').toUpperCase()}</span>
                     </div>
                   </div>
+                  {b.accounts_status === 'rejected' && (
+                    <div style={{ marginTop: 10, background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+                        Rejected by Accounts{b.accounts_rejected_by_name ? ` · ${b.accounts_rejected_by_name}` : ''}
+                      </div>
+                      <div style={{ fontSize: 13, color: '#7F1D1D' }}>{b.accounts_rejected_reason || '—'}</div>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                     {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
                     {b.status === 'draft' && (
