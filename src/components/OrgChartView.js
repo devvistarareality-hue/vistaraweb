@@ -10,7 +10,9 @@ import { isManagerRole } from '../lib/moduleAccess';
 // `adminView` is for a Sales Admin-Modules user viewing this from the mirrored
 // Admin section — it asks the backend for the full company org via `admin_view=1`
 // (see _sees_all_company in backend/sales/views.py), without affecting real admins.
-export default function OrgChartView({ module = '', scope = '', title = 'My Team', adminView = false }) {
+// `cp` is the Channel Partner chart: scoped by CP designation rather than by module,
+// since CP staff sit in Sales and there is no module to assign them to.
+export default function OrgChartView({ module = '', scope = '', title = 'My Team', adminView = false, cp = false }) {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const companies = useSelector((s) => s.companies?.companies || []);
@@ -19,13 +21,18 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
   const query = (() => {
     const parts = [];
     if (isAdmin) {
-      if (scope === 'all') parts.push('scope=all');
+      if (cp) parts.push('cp=1');
+      else if (scope === 'all') parts.push('scope=all');
       else if (module) parts.push(`module=${encodeURIComponent(module)}`);
     }
     if (adminView) parts.push('admin_view=1');
     if (companyId) parts.push(`company_id=${companyId}`);   // honour "Viewing Company" filter
     return parts.length ? '?' + parts.join('&') : '';
   })();
+
+  // What the department node and the count are named. Separate from `module`, which
+  // is a query scope — the CP chart has a department name but no module to ask for.
+  const label = cp ? 'Channel Partner' : module;
 
   const [team,    setTeam]    = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +63,8 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
       // Manager view: show the department header on top, then the manager + their team.
       const meNode = build({ id: me?.id, name: me?.name, designation: me?.designation, role: me?.role });
       return {
-        name: module || companyName,
-        designation: module ? 'Department' : 'Company',
+        name: label || companyName,
+        designation: label ? 'Department' : 'Company',
         _root: true, children: [meNode],
       };
     }
@@ -66,19 +73,19 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
     tops = sortSiblings(tops);
     // Always show a department/company header so the context is consistent.
     return {
-      name: scope === 'all' ? companyName : (module || companyName),
-      designation: scope === 'all' ? 'Organisation' : (module ? 'Department' : 'Company'),
+      name: scope === 'all' ? companyName : (label || companyName),
+      designation: scope === 'all' ? 'Organisation' : (label ? 'Department' : 'Company'),
       _root: true, children: tops.map(build),
     };
   })();
 
   const orgView = !!(tree && !tree._isMe);
-  const showStats = module === 'Sales';   // leads/closures are sales-only
+  const showStats = cp || module === 'Sales';   // leads/closures are sales-only, and CP is part of Sales
   const n = team.length;
   const subtitle = scope === 'all'
     ? `${n} ${n === 1 ? 'person' : 'people'} across the organisation`
-    : module && isAdmin
-    ? `${n} ${n === 1 ? 'person' : 'people'} in ${module}`
+    : label && isAdmin
+    ? `${n} ${n === 1 ? 'person' : 'people'} in ${label}`
     : orgView
     ? `${n} ${n === 1 ? 'person' : 'people'} across the organisation`
     : `${n} ${n === 1 ? 'person' : 'people'} reporting under you${n ? ` · ${directs} direct` : ''}`;
@@ -107,7 +114,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
       ) : team.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 4 }}>No org chart yet.</p>
-          <p style={{ fontSize: 13, color: '#8492A6' }}>Assign people to this {module ? 'department' : 'team'} and set their <strong>Reporting Manager</strong>, and they’ll appear here.</p>
+          <p style={{ fontSize: 13, color: '#8492A6' }}>Assign people to this {label ? 'department' : 'team'} and set their <strong>Reporting Manager</strong>, and they’ll appear here.</p>
         </div>
       ) : view === 'chart' ? (
         <div style={{ background: 'radial-gradient(circle at 1px 1px, #E3E9F4 1px, transparent 0) 0 0 / 22px 22px, #FAFBFE', borderRadius: 16, border: '1px solid #E8ECF4', boxShadow: 'inset 0 0 40px rgba(190,200,220,0.18)', padding: '36px 20px', overflowX: 'auto' }}>

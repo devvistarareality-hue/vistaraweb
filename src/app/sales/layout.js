@@ -54,6 +54,9 @@ const CP_CHILDREN = [
   // Drafts/Pending/Approved/Rejected list — they used to share one nav item
   // (labelled "Bookings"), which only ever opened the approvals list.
   { label: 'Booking',     href: '/sales/channel-partners/closure' },
+  // Managers only, as in the Sales menu — a CP Executive has no reports, so the
+  // page would only ever show them an empty chart.
+  { label: 'My Team',     href: '/sales/channel-partners/my-team', managerOnly: true },
   { label: 'Approvals',   href: '/sales/channel-partners/bookings' },
 ];
 
@@ -299,7 +302,7 @@ export default function SalesLayout({ children }) {
             <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
             <span style={{ color: 'rgba(255,255,255,0.38)', fontSize: 10, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
           </div>
-          {expanded && item.children.map((child) => {
+          {expanded && item.children.filter((child) => !child.managerOnly || isAdmin || isManager).map((child) => {
             const childActive = isActive(child.href) && (child.href !== '/sales/channel-partners' || pathname === child.href);
             return (
               <Link key={child.href} href={child.href} className="s-nav-link"
