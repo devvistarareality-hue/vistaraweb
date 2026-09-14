@@ -8,6 +8,7 @@ import { fetchCompanies } from '../../../../redux/actions/companiesActions';
 import Toast from '../../../../components/Toast';
 import { ALL_MODULES } from '../../../../lib/moduleAccess';
 import { isManagerRole } from '../../../../lib/moduleAccess';
+import PasswordInput from '../../../../components/PasswordInput';
 
 // Seniority order, most senior first. Everything down to Manager carries manager
 // authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
@@ -202,9 +203,10 @@ export default function CreateUserPage() {
             </div>
             <div>
               <label style={s.label}>Password</label>
-              <input
+              {/* Shown on request: an admin setting someone's first password needs to
+                  be able to read back what they typed before passing it on. */}
+              <PasswordInput
                 required
-                type="password"
                 value={form.password}
                 onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                 style={s.input}

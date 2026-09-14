@@ -7,6 +7,7 @@ import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 import { isManagerRole } from '../../../lib/moduleAccess';
+import PasswordInput from '../../../components/PasswordInput';
 
 // Seniority order, most senior first. Everything down to Manager carries manager
 // authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
@@ -279,8 +280,16 @@ export default function UserManagementPage() {
                 ].map(({ label, key, type }) => (
                   <div key={key}>
                     <label style={mLbl}>{label}</label>
-                    <input type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
-                      onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                    {/* The password box gets a Show toggle — it reveals what is being
+                        typed, not the account's current password, which is stored
+                        one-way hashed and cannot be read back by anyone. */}
+                    {type === 'password' ? (
+                      <PasswordInput value={form[key] || ''} style={mInp}
+                        onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
+                    ) : (
+                      <input type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
+                        onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                    )}
                   </div>
                 ))}
               </div>
