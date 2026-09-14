@@ -183,6 +183,7 @@ export function MyBookingsList({ cpOnly = false }) {
   const isCp = (b) => !!b.is_cp_sourced;
   const cpCount = preWho.filter(isCp).length;
   const nonCpCount = preWho.length - cpCount;
+  const showSource = cpCount > 0 && nonCpCount > 0;
 
   const whoSet = !who || who === 'cp' || who === 'noncp' ? null
     : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
@@ -236,7 +237,7 @@ export function MyBookingsList({ cpOnly = false }) {
             {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         )}
-        {(peopleOptions.length > 0 || others.length > 0 || (cpOnly && preWho.length > 0)) && (
+        {(peopleOptions.length > 0 || others.length > 0 || showSource) && (
           <select value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
             title="Filter by who booked it — a manager includes their own reports">
             <option value="">{`All People (${preWho.length})`}</option>
@@ -259,7 +260,11 @@ export function MyBookingsList({ cpOnly = false }) {
                   this list because the deal was partner-sourced. */}
               {others.map((p) => <option key={p.id} value={p.id}>{`${p.label} (${p.count})`}</option>)}
             </optgroup>
-            {cpOnly && preWho.length > 0 && (
+            {/* Both modules: a Sales manager's list carries partner-sourced deals too,
+                through whoever on their team closed them. Shown only when the split
+                is a real one — an all-or-nothing source tells you nothing, and the
+                zero half is a dead option. */}
+            {(showSource || who === 'cp' || who === 'noncp') && (
               <optgroup label={`By source · adds up to ${preWho.length}`}>
                 <option value="cp">{`Source: CP (${cpCount})`}</option>
                 <option value="noncp">{`Every other source (${nonCpCount})`}</option>
