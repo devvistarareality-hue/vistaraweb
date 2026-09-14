@@ -18,7 +18,11 @@ async function openLoi(id) {
   } catch { alert('Could not open the LOI.'); }
 }
 
-const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected'], ['', 'All']];
+// Cancelled sits beside Rejected rather than inside it: both are stored at
+// status='rejected', but one was refused before it counted and the other was a live
+// sale that came off the books and keeps its signed LOI. The server splits them.
+const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['sold', 'Approved'],
+              ['rejected', 'Rejected'], ['cancelled', 'Cancelled'], ['', 'All']];
 
 export function BookingsContent({ adminView = false, cpOnly = false, cpMode = false }) {
   const router = useRouter();

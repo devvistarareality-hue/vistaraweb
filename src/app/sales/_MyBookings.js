@@ -10,7 +10,19 @@ import BookingDetails from '../../components/BookingDetails';
 // Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
 // and a draft has not been. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
-const TABS = [['', 'All'], ['pending', 'Pending'], ['sold', 'Approved'], ['rejected', 'Rejected']];
+const TABS = [['', 'All'], ['pending', 'Pending'], ['sold', 'Approved'],
+              ['rejected', 'Rejected'], ['cancelled', 'Cancelled']];
+
+// A cancelled booking and a rejected one are both stored at status='rejected'; the
+// difference is in approval_status. Filtering on status alone put a live sale that
+// came off the books in the same list as one an approver refused up front.
+const isCancelled = (b) => String(b.approval_status || '').toUpperCase().includes('CANCEL');
+const inTab = (b, tab) => (
+  !tab ? true
+  : tab === 'cancelled' ? isCancelled(b)
+  : tab === 'rejected' ? (b.status === 'rejected' && !isCancelled(b))
+  : b.status === tab
+);
 
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 
@@ -65,6 +77,7 @@ export function MyBookingsList({ cpOnly = false }) {
   // one shared with the card: the current version shares the booking's id, so a
   // single map let one toggle open two blocks at once.
   const [revDetails, setRevDetails] = useState({});
+  const [cardDetails, setCardDetails] = useState({});
   const toggleRevDetails = (id) => setRevDetails((o) => ({ ...o, [id]: !o[id] }));
   const me = useSelector((s) => s.auth?.user);
   const [team, setTeam] = useState([]);   // the viewer's reporting subtree
@@ -146,7 +159,7 @@ export function MyBookingsList({ cpOnly = false }) {
   // Counting over all rows instead kept the numbers still as you switched tabs, but
   // on Approved they then summed to the full 244 next to a list of 229 — a filter
   // that misreports its own result is worse than one that moves.
-  const preWho = rows.filter((b) => (!tab || b.status === tab) && matches(b) && inRange(b)
+  const preWho = rows.filter((b) => inTab(b, tab) && matches(b) && inRange(b)
     && (!proj || projName(b) === proj));
 
   // 'Booked by' — a manager's list holds their whole reporting subtree, so let them
@@ -338,7 +351,7 @@ export function MyBookingsList({ cpOnly = false }) {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
-                    <span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
+                    <span style={statusPill(isCancelled(b) ? 'cancelled' : b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
@@ -359,6 +372,15 @@ export function MyBookingsList({ cpOnly = false }) {
                     <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ Revise LOI</button>
                   )}
                   {b.status === 'pending' && <span style={{ fontSize: 12, color: '#B45309', alignSelf: 'center' }}>Awaiting approval</span>}
+                  {/* A cancelled deal is kept whole — signed LOI and every figure —
+                      so it can be explained later. Its own key space, since the card
+                      and the current version in the history share a booking id. */}
+                  {isCancelled(b) && (
+                    <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
+                      style={{ ...linkBtn, background: '#fff', cursor: 'pointer', borderColor: '#CBD5E1', color: '#334155' }}>
+                      {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
+                    </button>
+                  )}
                   {/* Only the latest version is ever listed, which is right — a deal
                       should appear once, at its current terms. But the earlier ones
                       are what was signed at the time, and there was no way to reach
@@ -370,6 +392,7 @@ export function MyBookingsList({ cpOnly = false }) {
                     </button>
                   )}
                 </div>
+                {isCancelled(b) && cardDetails[b.id] && <BookingDetails b={b} accent="#3D5AFE" />}
                 {revOpen[b.id] && (
                   <div style={{ marginTop: 12, borderTop: '1.5px solid #EEF1F7', paddingTop: 10 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginBottom: 8 }}>
@@ -429,7 +452,7 @@ export function MyBookingsList({ cpOnly = false }) {
 }
 
 function statusPill(s) {
-  const map = { draft: ['#3D5AFE', '#EEF1FF'], pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
+  const map = { draft: ['#3D5AFE', '#EEF1FF'], pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'], cancelled: ['#475569', '#F1F5F9'] };
   const [c, bg] = map[s] || ['#6B7280', '#F3F4F6'];
   return { display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
