@@ -77,7 +77,7 @@ export default function AdminLayout({ children }) {
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Vistara ERP</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Nexora</span>
         </div>
         <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
           {children}

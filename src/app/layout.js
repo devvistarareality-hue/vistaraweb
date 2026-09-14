@@ -4,10 +4,10 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import ReduxProvider from '../components/ReduxProvider';
 
 export const metadata = {
-  title:       'Vistara ERP',
-  description: 'Vistara Group Enterprise Resource Planning',
+  title:       'Nexora',
+  description: 'Nexora — sales, channel partners, accounts and people, in one system.',
   icons: {
-    icon: '/vistara-logo.png',
+    icon: '/nexora-icon.png',
   },
 };
 

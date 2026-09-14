@@ -370,11 +370,11 @@ export default function SalesLayout({ children }) {
         <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={s.logoCircle}>
-              <img src="/image-WBG.png" alt="Vistara" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/nexora-mark.svg" alt="Nexora" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div>
               <div style={s.logoName}>{portalTitle}</div>
-              <div style={s.logoSub}>Vistara Realty</div>
+              <div style={s.logoSub}>Nexora</div>
             </div>
           </div>
           <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn">✕</button>
