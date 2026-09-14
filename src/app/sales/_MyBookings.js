@@ -157,8 +157,17 @@ export function MyBookingsList({ cpOnly = false }) {
     .map((k) => ({ id: k, label: personName(k), count: countsBy[k] }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const whoSet = !who ? null : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
-  const byWho = (b) => !whoSet || whoSet.has(bookedById(b));
+  // 'Source: CP' sits in the same dropdown because it answers the same question —
+  // which slice of this list am I looking at — even though it cuts across people
+  // rather than down the tree. The flag is the server's: whether a deal is
+  // Channel-Partner-sourced depends on the lead as well as the booking's own Source,
+  // and the lead half never reaches the client.
+  const isCp = (b) => !!b.is_cp_sourced;
+  const cpCount = rows.filter(isCp).length;
+
+  const whoSet = !who || who === 'cp' ? null
+    : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
+  const byWho = (b) => (!who ? true : who === 'cp' ? isCp(b) : whoSet.has(bookedById(b)));
 
   const projName = (b) => b.project_name || '—';
   // Built from every row, not the filtered ones, so picking a project never removes
@@ -210,19 +219,31 @@ export function MyBookingsList({ cpOnly = false }) {
             {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         )}
-        {(peopleOptions.length > 0 || others.length > 0) && (
+        {(peopleOptions.length > 0 || others.length > 0 || (cpOnly && cpCount > 0)) && (
           <select value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
             title="Filter by who booked it — a manager includes their own reports">
             <option value="">All People</option>
             {!!countsBy[myId] && <option value={myId}>{`Only me (${countsBy[myId]})`}</option>}
-            {/* Indented with non-breaking spaces: a native select renders no markup,
-                so depth has to be carried by the text itself. */}
-            {peopleOptions.map((p) => (
-              <option key={p.id} value={p.id}>
-                {'\u00a0'.repeat(p.depth * 3) + (p.depth ? '└ ' : '') + p.label + ` (${p.count})`}
-              </option>
-            ))}
-            {others.map((p) => <option key={p.id} value={p.id}>{`${p.label} (${p.count})`}</option>)}
+            {cpOnly && cpCount > 0 && <option value="cp">{`Source: CP (${cpCount})`}</option>}
+            {peopleOptions.length > 0 && (
+              <optgroup label="Under me">
+                {/* Indented with non-breaking spaces: a native select renders no
+                    markup, so depth has to be carried by the text itself. */}
+                {peopleOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {'\u00a0'.repeat(p.depth * 3) + (p.depth ? '└ ' : '') + p.label + ` (${p.count})`}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {others.length > 0 && (
+              /* Booked by people who report elsewhere — in the CP module they are
+                 here because the deal was partner-sourced, which is what the group
+                 says rather than leaving them looking like part of the team. */
+              <optgroup label={cpOnly ? 'Other CP-sourced' : 'Others'}>
+                {others.map((p) => <option key={p.id} value={p.id}>{`${p.label} (${p.count})`}</option>)}
+              </optgroup>
+            )}
           </select>
         )}
       </div>
