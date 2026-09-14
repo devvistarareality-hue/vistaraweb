@@ -60,10 +60,12 @@ export function MyBookingsList({ cpOnly = false }) {
   // ever revised, so loading every chain up front would be work for nothing.
   const [revs, setRevs] = useState({});      // booking id → array of versions
   const [revOpen, setRevOpen] = useState({});
-  // Keyed by booking id, so each version in the history opens and closes on its own —
-  // the point of opening two is to read them side by side.
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
+  // Keyed by version id, so each version in the history opens and closes on its own —
+  // the point of opening two is to read them side by side. Its own state rather than
+  // one shared with the card: the current version shares the booking's id, so a
+  // single map let one toggle open two blocks at once.
+  const [revDetails, setRevDetails] = useState({});
+  const toggleRevDetails = (id) => setRevDetails((o) => ({ ...o, [id]: !o[id] }));
   const me = useSelector((s) => s.auth?.user);
   const [team, setTeam] = useState([]);   // the viewer's reporting subtree
 
@@ -89,6 +91,9 @@ export function MyBookingsList({ cpOnly = false }) {
   }, [companyId]);
 
   async function toggleRevisions(id) {
+    // Every open starts collapsed: the history is opened to scan the versions, and
+    // a panel left open from last time buries the list it was opened to read.
+    setRevDetails({});
     setRevOpen((o) => ({ ...o, [id]: !o[id] }));
     if (revs[id]) return;                      // already loaded, just reopening
     try {
@@ -401,12 +406,12 @@ export function MyBookingsList({ cpOnly = false }) {
                             question the history is opened to answer, and the figures
                             are where the answer is. The same block Accounts & Finance
                             reads, rather than a second rendering of the same deal. */}
-                        <button onClick={() => toggleDetails(v.id)}
+                        <button onClick={() => toggleRevDetails(v.id)}
                           style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer',
                             borderColor: '#CBD5E1', color: '#334155' }}>
-                          {detailsOpen[v.id] ? '▴ Hide Details' : '▾ Details'}
+                          {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}
                         </button>
-                        {detailsOpen[v.id] && (
+                        {revDetails[v.id] && (
                           <div style={{ width: '100%' }}><BookingDetails b={v} accent="#3D5AFE" /></div>
                         )}
                       </div>

@@ -60,7 +60,14 @@ export default function ModuleBookingsPage() {
   // ever revised, so loading every chain up front would be work for nothing.
   const [revs, setRevs] = useState({});      // booking id → array of versions
   const [revOpen, setRevOpen] = useState({});
+  // Details inside the history get their own key space, separate from the card's: the
+  // current version shares the booking's id, so one shared map let a single toggle
+  // open two blocks at once. Cleared on every open so the history starts collapsed —
+  // it is opened to scan the versions, and a panel left open buries that list.
+  const [revDetails, setRevDetails] = useState({});
+  const toggleRevDetails = (id) => setRevDetails((o) => ({ ...o, [id]: !o[id] }));
   async function toggleRevisions(id) {
+    setRevDetails({});
     setRevOpen((o) => ({ ...o, [id]: !o[id] }));
     if (revs[id]) return;                      // already loaded, just reopening
     try {
@@ -264,10 +271,10 @@ export default function ModuleBookingsPage() {
                               <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #99F6E4', background: '#fff', color: '#0D9488', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📄 View</button>
                               <button onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
                             </> : <span style={{ fontSize: 11, color: '#B0B8C6' }}>no document on file</span>}
-                            <button onClick={() => toggleDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                              {detailsOpen[v.id] ? '▲ Details' : '▾ Details'}
+                            <button onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                              {revDetails[v.id] ? '▲ Details' : '▾ Details'}
                             </button>
-                            {detailsOpen[v.id] && <div style={{ width: '100%' }}><BookingDetails b={v} /></div>}
+                            {revDetails[v.id] && <div style={{ width: '100%' }}><BookingDetails b={v} /></div>}
                           </div>
                         ))}
                       </div>
