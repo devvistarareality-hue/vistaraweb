@@ -284,8 +284,19 @@ export default function UserManagementPage() {
                         typed, not the account's current password, which is stored
                         one-way hashed and cannot be read back by anyone. */}
                     {type === 'password' ? (
-                      <PasswordInput value={form[key] || ''} style={mInp}
-                        onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
+                      <>
+                        <PasswordInput value={form[key] || ''} style={mInp}
+                          onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
+                        {/* Said here rather than left to be discovered: hitting Show on
+                            an empty box and getting nothing back reads as a broken
+                            toggle. The box is empty because there is nothing to show —
+                            the stored password is a one-way hash, so no screen can
+                            display it. Replacing it is the only option. */}
+                        <p style={{ fontSize: 11, color: '#8492A6', margin: '5px 2px 0', lineHeight: 1.45 }}>
+                          The current password can&apos;t be shown — it&apos;s stored encrypted, not saved
+                          anywhere readable. Type a new one here to replace it, then tell them what it is.
+                        </p>
+                      </>
                     ) : (
                       <input type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
                         onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
