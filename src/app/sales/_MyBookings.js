@@ -109,6 +109,19 @@ export function MyBookingsList({ cpOnly = false }) {
     if (!d) return false;
     return (!range.from || d >= range.from) && (!range.to || d <= range.to);
   };
+  const projName = (b) => b.project_name || '—';
+  // Built from every row, not the filtered ones, so picking a project never removes
+  // the other options from the dropdown.
+  const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
+
+  // Everything except the person filter, which is what the 'Booked by' counts are
+  // taken over: the number beside a name has to be what you get when you pick it.
+  // Counting over all rows instead kept the numbers still as you switched tabs, but
+  // on Approved they then summed to the full 244 next to a list of 229 — a filter
+  // that misreports its own result is worse than one that moves.
+  const preWho = rows.filter((b) => (!tab || b.status === tab) && matches(b) && inRange(b)
+    && (!proj || projName(b) === proj));
+
   // 'Booked by' — a manager's list holds their whole reporting subtree, so let them
   // narrow it to one person. Picking a manager keeps that manager's own reports in
   // view, because on an org chart the question is "what did this branch close", not
@@ -121,27 +134,31 @@ export function MyBookingsList({ cpOnly = false }) {
     const parent = m.reporting_manager_id == null ? '' : String(m.reporting_manager_id);
     (childrenOf[parent] = childrenOf[parent] || []).push(String(m.id));
   });
-  // Counted over every row, not the filtered ones, so the numbers beside each name
-  // stay put as you flip between tabs instead of collapsing to the current view.
-  rows.forEach((b) => {
+  preWho.forEach((b) => {
     const k = bookedById(b);
     if (!k) return;
     countsBy[k] = (countsBy[k] || 0) + 1;
-    if (!nameById[k]) nameById[k] = b.stm_name;
+  });
+  // Names come from every row, not just the counted ones: someone with nothing in
+  // the current tab can still be the selected person, and their option needs a name.
+  rows.forEach((b) => {
+    const k = bookedById(b);
+    if (k && !nameById[k]) nameById[k] = b.stm_name;
   });
   const personName = (id) => teamById[id]?.name || nameById[id] || 'Unknown';
   const subtreeCount = (id) =>
     [...subtreeIds(id, childrenOf)].reduce((n, k) => n + (countsBy[k] || 0), 0);
 
   // Depth-first from the viewer's direct reports down, so the dropdown reads as the
-  // org chart does. Anyone whose branch booked nothing is left out — an option that
-  // filters to an empty list is just a way to waste a click.
+  // org chart does. Anyone whose branch booked nothing here is left out — an option
+  // that filters to an empty list is just a way to waste a click — except whoever is
+  // currently picked, who has to stay or the dropdown would blank out under them.
   const peopleOptions = [];
   const walked = new Set();
   const walk = (id, depth) => {
     if (walked.has(id) || id === myId) return;
     walked.add(id);
-    if (subtreeCount(id)) {
+    if (subtreeCount(id) || id === who) {
       peopleOptions.push({ id, depth, label: personName(id), count: subtreeCount(id) });
     }
     (childrenOf[id] || []).forEach((kid) => walk(kid, depth + 1));
@@ -152,9 +169,10 @@ export function MyBookingsList({ cpOnly = false }) {
   }).forEach((m) => walk(String(m.id), 0));
   // People who booked but sit outside the tree — in the CP module the pool carries
   // Channel-Partner deals closed by others. They belong in the filter all the same.
-  const others = Object.keys(countsBy)
-    .filter((k) => k !== myId && !teamById[k])
-    .map((k) => ({ id: k, label: personName(k), count: countsBy[k] }))
+  const otherIds = new Set(Object.keys(countsBy).filter((k) => k !== myId && !teamById[k]));
+  if (who && who !== 'cp' && who !== myId && !teamById[who]) otherIds.add(who);   // keep the picked one
+  const others = [...otherIds]
+    .map((k) => ({ id: k, label: personName(k), count: countsBy[k] || 0 }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
   // 'Source: CP' sits in the same dropdown because it answers the same question —
@@ -163,18 +181,13 @@ export function MyBookingsList({ cpOnly = false }) {
   // Channel-Partner-sourced depends on the lead as well as the booking's own Source,
   // and the lead half never reaches the client.
   const isCp = (b) => !!b.is_cp_sourced;
-  const cpCount = rows.filter(isCp).length;
+  const cpCount = preWho.filter(isCp).length;
 
   const whoSet = !who || who === 'cp' ? null
     : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
   const byWho = (b) => (!who ? true : who === 'cp' ? isCp(b) : whoSet.has(bookedById(b)));
 
-  const projName = (b) => b.project_name || '—';
-  // Built from every row, not the filtered ones, so picking a project never removes
-  // the other options from the dropdown.
-  const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const visible = rows.filter((b) => (!tab || b.status === tab) && matches(b) && inRange(b)
-    && (!proj || projName(b) === proj) && byWho(b));
+  const visible = preWho.filter(byWho);
 
   const groups = {};
   visible.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
@@ -223,8 +236,8 @@ export function MyBookingsList({ cpOnly = false }) {
           <select value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
             title="Filter by who booked it — a manager includes their own reports">
             <option value="">All People</option>
-            {!!countsBy[myId] && <option value={myId}>{`Only me (${countsBy[myId]})`}</option>}
-            {cpOnly && cpCount > 0 && <option value="cp">{`Source: CP (${cpCount})`}</option>}
+            {(!!countsBy[myId] || who === myId) && <option value={myId}>{`Only me (${countsBy[myId] || 0})`}</option>}
+            {cpOnly && (cpCount > 0 || who === 'cp') && <option value="cp">{`Source: CP (${cpCount})`}</option>}
             {peopleOptions.length > 0 && (
               <optgroup label="Under me">
                 {/* Indented with non-breaking spaces: a native select renders no
