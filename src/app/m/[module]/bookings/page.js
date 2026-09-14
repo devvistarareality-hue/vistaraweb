@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import DateFilter from '../../../sales/_DateFilter';
 import { unitLabel } from '../../../../lib/bookingUnit';
+import BookingDetails, { fmtDateTime } from '../../../../components/BookingDetails';
 
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const isEoi = (b) => String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
@@ -42,122 +43,6 @@ function statusPill(s) {
   const map = { pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
   const [c, bg] = map[s] || ['#6B7280', '#F3F4F6'];
   return { display: 'inline-block', fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
-}
-
-const money0 = (n) => (n === '' || n == null) ? '—' : '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
-const val = (v) => (v === '' || v == null) ? '—' : String(v);
-const Row2 = ({ label, value }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '5px 0', borderBottom: '1px solid #F1F5F9' }}>
-    <span style={{ fontSize: 11, color: '#8492A6', fontWeight: 600 }}>{label}</span>
-    <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 700, textAlign: 'right' }}>{value}</span>
-  </div>
-);
-const Group = ({ title, children }) => (
-  <div>
-    <div style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 }}>{title}</div>
-    {children}
-  </div>
-);
-
-// The exact details entered on the booking form (client, property, rates, amounts, schedule).
-// Due dates are stored yyyy-mm-dd; show them as dd-mm-yyyy for the accounts view.
-function fmtDate(d) {
-  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(d || ''));
-  return m ? `${m[3].padStart(2, '0')}-${m[2].padStart(2, '0')}-${m[1]}` : (d || '—');
-}
-
-// created_at/approved_at are full ISO timestamps — show date + time (IST, matches
-// the backend's TIME_ZONE) for booking/approval time-of-day, not just the date.
-function fmtDateTime(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (isNaN(d)) return '—';
-  const date = d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Kolkata' });
-  const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
-  return `${date}, ${time}`;
-}
-
-function BookingDetails({ b }) {
-  const rawInsts = Array.isArray(b.installments) ? b.installments : [];
-  // Sort the payment schedule by due date ascending (yyyy-mm-dd sorts chronologically).
-  const insts = [...rawInsts].sort((a, x) => String(a.date || '').localeCompare(String(x.date || '')));
-  return (
-    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #CBD5E1' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        <Group title="Client & Property">
-          <Row2 label="Client" value={val(b.client_name)} />
-          <Row2 label="Phone" value={val(b.phone)} />
-          <Row2 label="Gender" value={val(b.gender)} />
-          <Row2 label="Address" value={val(b.address)} />
-          <Row2 label="Source" value={val(b.source)} />
-          {b.cp_name ? <Row2 label="Reference / CP" value={val(b.cp_name)} /> : null}
-          <Row2 label="Project" value={val(b.project_name)} />
-          <Row2 label="Unit" value={val(b.plot_numbers || b.plot_number)} />
-          <Row2 label="Type" value={val(b.villa_type || b.bunglow_type)} />
-          <Row2 label="STM" value={val(b.stm_name)} />
-          <Row2 label="Booking Date" value={val(b.booking_date)} />
-          <Row2 label="Booking Time" value={fmtDateTime(b.created_at)} />
-          <Row2 label="Approved At" value={fmtDateTime(b.approved_at)} />
-          <Row2 label="Pricing" value={String(b.formula_set || '').toUpperCase() || '—'} />
-          <Row2 label="Plot Area" value={`${val(b.area)} ${b.area_unit || ''}`.trim()} />
-          <Row2 label="Construction Area" value={val(b.const_area)} />
-        </Group>
-        <Group title="Rates & Amounts">
-          <Row2 label="Land Rate" value={money0(b.land_rate)} />
-          <Row2 label="Development Rate" value={money0(b.dev_rate)} />
-          <Row2 label="Construction Rate" value={money0(b.const_rate)} />
-          {Number(b.sale_deed_rate) ? <Row2 label="Sale Deed Rate" value={money0(b.sale_deed_rate)} /> : null}
-          <Row2 label="Sale Deed %" value={b.sale_deed_pct != null ? b.sale_deed_pct + '%' : '—'} />
-          {Number(b.land_sale_deed) ? <Row2 label="Land Sale Deed" value={money0(b.land_sale_deed)} /> : null}
-          {Number(b.const_agreement) ? <Row2 label="Construction Agreement" value={money0(b.const_agreement)} /> : null}
-          {Number(b.premium_location) ? <Row2 label="Premium Location" value={money0(b.premium_location)} /> : null}
-          <Row2 label="Plot Basic" value={money0(b.plot_basic)} />
-          <Row2 label="Plot Development" value={money0(b.plot_dev)} />
-          <Row2 label="Construction Amount" value={money0(b.const_amt)} />
-          <Row2 label="Unit Price" value={money0(b.sale_deed)} />
-          <Row2 label="Stamp Duty" value={money0(b.stamp_duty)} />
-          <Row2 label="Registration" value={money0(b.reg_fees)} />
-          <Row2 label="GST" value={money0(b.gst)} />
-          {/* Kalrav-3 / Ankhol / Industrial split maintenance into deposit + advance;
-              plain Kalrav books a single Maintenance amount and leaves both at 0. Test
-              numerically — DRF serialises decimals as strings, so "0.00" is truthy and
-              a `maint_deposit || maintenance` fallback would never fire. */}
-          {(Number(b.maint_deposit) || Number(b.maint_advance)) ? (
-            <>
-              <Row2 label="Maintenance Deposit" value={money0(b.maint_deposit)} />
-              {Number(b.maint_advance) ? <Row2 label="Maintenance Advance" value={money0(b.maint_advance)} /> : null}
-            </>
-          ) : (
-            <Row2 label="Maintenance" value={money0(b.maintenance)} />
-          )}
-          <Row2 label="Legal Charges" value={money0(b.legal_charges)} />
-          <Row2 label="Total Legal & Other" value={money0(b.total_extra)} />
-          {Number(b.discount) ? <Row2 label="Discount" value={money0(b.discount)} /> : null}
-          {Number(b.extra_work_amount) ? <Row2 label="Extra Work" value={money0(b.extra_work_amount)} /> : null}
-          <Row2 label="Final Amount" value={money0(b.final_amount)} />
-        </Group>
-      </div>
-      {insts.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>Payment Schedule</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Type'].map((h) => <th key={h} style={{ textAlign: 'left', color: '#8492A6', fontWeight: 700, fontSize: 10, padding: '4px 6px', borderBottom: '1px solid #E2E8F0' }}>{h}</th>)}</tr></thead>
-            <tbody>
-              {insts.map((i, idx) => (
-                <tr key={idx}>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{idx + 1}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{fmtDate(i.date)}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{i.pct != null ? i.pct + '%' : '—'}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9', fontWeight: 700 }}>{money0(i.amt)}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9', color: '#8492A6' }}>{i.isNsd ? 'Extra Work' : i.isExtra ? 'Legal & Other' : 'Unit Price'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
 }
 
 const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']];
@@ -260,7 +145,31 @@ export default function ModuleBookingsPage() {
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
   const [detailsOpen, setDetailsOpen] = useState({});
   const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
-  // Same three filters as the Sales approvals view: booking date, project, STM.
+  // Revision history, fetched per booking on demand: only a handful of deals are
+  // ever revised, so loading every chain up front would be work for nothing.
+  const [revs, setRevs] = useState({});      // booking id → array of versions
+  const [revOpen, setRevOpen] = useState({});
+  // Details inside the history get their own key space, separate from the card's: the
+  // current version shares the booking's id, so one shared map let a single toggle
+  // open two blocks at once. Cleared on every open so the history starts collapsed —
+  // it is opened to scan the versions, and a panel left open buries that list.
+  const [revDetails, setRevDetails] = useState({});
+  const toggleRevDetails = (id) => setRevDetails((o) => ({ ...o, [id]: !o[id] }));
+  async function toggleRevisions(id) {
+    setRevDetails({});
+    setRevOpen((o) => ({ ...o, [id]: !o[id] }));
+    if (revs[id]) return;                      // already loaded, just reopening
+    try {
+      const r = await fetch(SALES_ENDPOINTS.bookingRevisions(id)
+        + (companyId ? `?company_id=${companyId}` : ''), { headers: authHeaders() });
+      const d = await r.json();
+      setRevs((m) => ({ ...m, [id]: Array.isArray(d) ? d : [] }));
+    } catch {
+      setRevs((m) => ({ ...m, [id]: [] }));
+    }
+  }
+  // Same filters as the Sales approvals view: search, booking date, project, STM.
+  const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');   // '' = every project
   const [stm, setStm] = useState('');     // '' = every STM
@@ -334,6 +243,24 @@ export default function ModuleBookingsPage() {
   }[tab];
   const tabRows = rows.filter(inTab);
 
+  // Search across client name, phone and the LOI/unit number — same rules as the
+  // Sales approvals search. Phones are stored with spaces ("81408 05999") so digit
+  // queries compare digits-only; the LOI's stored filename and the booking id are
+  // matched too, since either can be quoted as "LOI no".
+  const ql = q.trim().toLowerCase();
+  const qDigits = ql.replace(/\D/g, '');
+  // Only treat the query as a phone/id when it is ALL digits and separators — otherwise
+  // "shop1" would strip to "1" and match every phone containing a 1.
+  const numericQuery = !!qDigits && /^[\d\s+()-]+$/.test(ql);
+  const matches = (b) => {
+    if (!ql) return true;
+    const text = [b.client_name, b.plot_numbers, b.plot_number, b.area, b.loi_document];
+    if (text.some((v) => String(v || '').toLowerCase().includes(ql))) return true;
+    if (!numericQuery) return false;
+    if (String(b.id) === qDigits) return true;
+    return qDigits.length >= 3 && String(b.phone || '').replace(/\D/g, '').includes(qDigits);
+  };
+
   // Booking date is a plain YYYY-MM-DD, so the range compares as strings. A booking
   // with no date can't be placed in time, so a live range excludes it rather than
   // silently counting it in every period.
@@ -350,11 +277,11 @@ export default function ModuleBookingsPage() {
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(tabRows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(tabRows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = dated || !!stm || !!proj;
+  const narrowed = !!ql || dated || !!stm || !!proj;
 
   const groups = {};
   tabRows
-    .filter((b) => inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
+    .filter((b) => matches(b) && inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
     .forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   // Rejected/Pending: latest first by when that Accounts action happened / booking was
@@ -414,11 +341,27 @@ export default function ModuleBookingsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 6, marginTop: 18, marginBottom: 4 }}>
-        {TABS.map(([k, label]) => (
-          <button key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            background: tab === k ? '#0D9488' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
-        ))}
+      <div style={{ display: 'flex', gap: 10, marginTop: 18, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {TABS.map(([k, label]) => (
+            <button key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: tab === k ? '#0D9488' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
+          ))}
+        </div>
+        <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8492A6', fontSize: 13 }}>🔍</span>
+          {/* Collapse state is keyed by project, so drop it as the query changes —
+              otherwise a group the user collapsed earlier would hide its own hits. */}
+          <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
+            placeholder="Search name, phone or LOI / unit no…"
+            style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid #E0E6F0',
+              background: '#fff', fontSize: 13, color: '#1A1A2E', boxSizing: 'border-box' }} />
+          {!!q && (
+            <button onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
+                color: '#8492A6', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
+          )}
+        </div>
       </div>
 
       {!loading && !err && tabRows.length > 0 && (
@@ -512,13 +455,28 @@ export default function ModuleBookingsPage() {
                       </div>
                     )}
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                        {detailsOpen[b.id] ? '▲ Hide Details' : '▾ Details'}
-                      </button>
+                      {/* A revised deal gets its Details per version inside the
+                          history instead — the current version is one of them, so a
+                          card-level copy is the same figures twice. It also shares an
+                          id with that row, which rendered the block twice at once. */}
+                      {!b.revision_no && (
+                        <button onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                          {detailsOpen[b.id] ? '▲ Hide Details' : '▾ Details'}
+                        </button>
+                      )}
                       {b.loi_document && <>
                         <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #99F6E4', background: '#fff', color: '#0D9488', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>📄 View {isEoi(b) ? 'EOI' : 'LOI'}</button>
                         <button onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
                       </>}
+                      {/* Only the latest version is listed here, at its current terms.
+                          The earlier ones are what was signed at the time — which for
+                          a team reconciling payments against documents is the whole
+                          question when a deal carries an R1. */}
+                      {b.revision_no > 0 && (
+                        <button onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                          ⟲ Revisions {revOpen[b.id] ? '▲' : '▾'}
+                        </button>
+                      )}
                       {/* Only shown when THIS viewer is actually a configured Accounts
                           approver for this booking's project (server-computed, so this
                           is never the only gate — AccountsBookingActionView re-checks). */}
@@ -529,7 +487,44 @@ export default function ModuleBookingsPage() {
                         </>
                       )}
                     </div>
-                    {detailsOpen[b.id] && <BookingDetails b={b} />}
+                    {!b.revision_no && detailsOpen[b.id] && <BookingDetails b={b} />}
+                    {revOpen[b.id] && (
+                      <div style={{ marginTop: 12, borderTop: '1px dashed #CBD5E1', paddingTop: 10 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', letterSpacing: 0.6, marginBottom: 8 }}>
+                          REVISION HISTORY
+                        </div>
+                        {!revs[b.id] ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Loading…</p>
+                         : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Couldn&apos;t load the history.</p>
+                         : revs[b.id].map((v) => (
+                          <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                            padding: '7px 0', borderBottom: '1px solid #F1F5F9' }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? '#0D9488' : '#6B7280',
+                              background: v.id === b.id ? '#CCFBF1' : '#F3F4F6', padding: '3px 8px', borderRadius: 20 }}>
+                              R{v.revision_no || 0}
+                            </span>
+                            <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
+                            <span style={{ fontSize: 12, color: '#8492A6' }}>
+                              Booked {v.booking_date || '—'} · {(v.approval_status || v.status || '').toUpperCase()}
+                              {v.stm_name ? ` · ${v.stm_name}` : ''}
+                            </span>
+                            {/* The version marked current is the one the card shows; the
+                                rest are superseded and say so rather than looking live. */}
+                            {v.id === b.id
+                              ? <span style={{ fontSize: 10, fontWeight: 800, color: '#0D9488' }}>CURRENT</span>
+                              : <span style={{ fontSize: 10, fontWeight: 700, color: '#8492A6' }}>superseded</span>}
+                            <span style={{ flex: 1 }} />
+                            {v.loi_document ? <>
+                              <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #99F6E4', background: '#fff', color: '#0D9488', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📄 View</button>
+                              <button onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
+                            </> : <span style={{ fontSize: 11, color: '#B0B8C6' }}>no document on file</span>}
+                            <button onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                              {revDetails[v.id] ? '▲ Details' : '▾ Details'}
+                            </button>
+                            {revDetails[v.id] && <div style={{ width: '100%' }}><BookingDetails b={v} /></div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
