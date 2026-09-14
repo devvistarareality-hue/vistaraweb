@@ -25,7 +25,7 @@ async function openLoi(id) {
 
 // "My Bookings" — the bookings the logged-in user submitted, grouped project → plot,
 // with a Revise LOI action. Rendered inside the Booking page under a toggle.
-export function MyBookingsList() {
+export function MyBookingsList({ cpOnly = false }) {
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [rows, setRows] = useState([]);
@@ -41,11 +41,15 @@ export function MyBookingsList() {
 
   function load() {
     setLoading(true);
-    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
+    // cp_only tells the server this is the Channel Partner module, where My Bookings
+    // also covers the CP pool. Without it the same screen in Sales shows only own and
+    // team work, which is the intended difference between the two.
+    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (cpOnly ? '&cp_only=true' : '')
+      + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
-  useEffect(load, [companyId]);
+  useEffect(load, [companyId, cpOnly]);
 
   async function discardDraft(id) {
     if (!window.confirm('Discard this draft? This can\'t be undone.')) return;

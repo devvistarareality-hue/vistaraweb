@@ -79,7 +79,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
         </p>
       )}
 
-      {view === 'mybookings' ? <MyBookingsList /> : (
+      {view === 'mybookings' ? <MyBookingsList cpOnly={cpOnly} /> : (
         loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 24 }}>
           {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 200, borderRadius: 18, background: '#EEF1F7' }} />)}
