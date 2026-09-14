@@ -60,8 +60,8 @@ export function MyBookingsList({ cpOnly = false }) {
   // ever revised, so loading every chain up front would be work for nothing.
   const [revs, setRevs] = useState({});      // booking id → array of versions
   const [revOpen, setRevOpen] = useState({});
-  // Keyed by booking id, so a version's details and the card's own open and close
-  // independently — the point of opening two is to read them side by side.
+  // Keyed by booking id, so each version in the history opens and closes on its own —
+  // the point of opening two is to read them side by side.
   const [detailsOpen, setDetailsOpen] = useState({});
   const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
   const me = useSelector((s) => s.auth?.user);
@@ -364,15 +364,7 @@ export function MyBookingsList({ cpOnly = false }) {
                       ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
                     </button>
                   )}
-                  {/* The same block Accounts & Finance reads, rather than a second
-                      rendering of the same deal — three teams reading one booking
-                      should not mean three sets of rounding. */}
-                  <button onClick={() => toggleDetails(b.id)}
-                    style={{ ...linkBtn, background: '#fff', cursor: 'pointer', borderColor: '#CBD5E1', color: '#334155' }}>
-                    {detailsOpen[b.id] ? '▴ Hide Details' : '▾ Details'}
-                  </button>
                 </div>
-                {detailsOpen[b.id] && <BookingDetails b={b} accent="#3D5AFE" />}
                 {revOpen[b.id] && (
                   <div style={{ marginTop: 12, borderTop: '1.5px solid #EEF1F7', paddingTop: 10 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginBottom: 8 }}>
@@ -404,9 +396,11 @@ export function MyBookingsList({ cpOnly = false }) {
                               📄 Signed LOI
                             </button>
                           : <span style={{ fontSize: 11, color: '#B0B8C6' }}>no LOI on file</span>}
-                        {/* Per version, so two can be open at once: what changed
-                            between R0 and R1 is the question the history is opened
-                            to answer, and the figures are where the answer is. */}
+                        {/* Details live here and only here. Per version, so two can
+                            be open at once: what changed between R0 and R1 is the
+                            question the history is opened to answer, and the figures
+                            are where the answer is. The same block Accounts & Finance
+                            reads, rather than a second rendering of the same deal. */}
                         <button onClick={() => toggleDetails(v.id)}
                           style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer',
                             borderColor: '#CBD5E1', color: '#334155' }}>
