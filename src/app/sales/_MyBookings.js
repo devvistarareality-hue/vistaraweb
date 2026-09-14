@@ -182,10 +182,14 @@ export function MyBookingsList({ cpOnly = false }) {
   // and the lead half never reaches the client.
   const isCp = (b) => !!b.is_cp_sourced;
   const cpCount = preWho.filter(isCp).length;
+  const nonCpCount = preWho.length - cpCount;
 
-  const whoSet = !who || who === 'cp' ? null
+  const whoSet = !who || who === 'cp' || who === 'noncp' ? null
     : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
-  const byWho = (b) => (!who ? true : who === 'cp' ? isCp(b) : whoSet.has(bookedById(b)));
+  const byWho = (b) => (!who ? true
+    : who === 'cp' ? isCp(b)
+    : who === 'noncp' ? !isCp(b)
+    : whoSet.has(bookedById(b)));
 
   const visible = preWho.filter(byWho);
 
@@ -232,38 +236,33 @@ export function MyBookingsList({ cpOnly = false }) {
             {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         )}
-        {(peopleOptions.length > 0 || others.length > 0 || (cpOnly && cpCount > 0)) && (
+        {(peopleOptions.length > 0 || others.length > 0 || (cpOnly && preWho.length > 0)) && (
           <select value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
             title="Filter by who booked it — a manager includes their own reports">
-            <option value="">All People</option>
-            {(!!countsBy[myId] || who === myId) && <option value={myId}>{`Only me (${countsBy[myId] || 0})`}</option>}
-            {/* Source is a different axis from who booked it — a partner-sourced deal
-                was still booked by one of the people below, so this count overlaps
-                theirs. Kept in its own group and labelled, because sitting flat among
-                the names it read as another person and invited adding it to the
-                total: 108 + 67 + 11 against a list of 119. */}
-            {cpOnly && (cpCount > 0 || who === 'cp') && (
-              <optgroup label="By source · overlaps the names below">
+            <option value="">{`All People (${preWho.length})`}</option>
+            {/* Two complete ways to slice the same list, each adding up to it on its
+                own. They are not meant to be added together — one booking has both a
+                person and a source — so they are separated and each group says what
+                it sums to. Flat in one list, "Source: CP" read as another person and
+                invited 108 + 67 + 11 against a list of 119. */}
+            <optgroup label={`By person · adds up to ${preWho.length}`}>
+              {(!!countsBy[myId] || who === myId) && <option value={myId}>{`Only me (${countsBy[myId] || 0})`}</option>}
+              {/* Indented with non-breaking spaces: a native select renders no markup,
+                  so depth has to be carried by the text itself. A nested name is part
+                  of the one above it, the way a folder holds its files. */}
+              {peopleOptions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {'\u00a0'.repeat(p.depth * 3) + (p.depth ? '└ ' : '') + p.label + ` (${p.count})`}
+                </option>
+              ))}
+              {/* Booked by people who report elsewhere — in the CP module they are on
+                  this list because the deal was partner-sourced. */}
+              {others.map((p) => <option key={p.id} value={p.id}>{`${p.label} (${p.count})`}</option>)}
+            </optgroup>
+            {cpOnly && preWho.length > 0 && (
+              <optgroup label={`By source · adds up to ${preWho.length}`}>
                 <option value="cp">{`Source: CP (${cpCount})`}</option>
-              </optgroup>
-            )}
-            {peopleOptions.length > 0 && (
-              <optgroup label="Under me">
-                {/* Indented with non-breaking spaces: a native select renders no
-                    markup, so depth has to be carried by the text itself. */}
-                {peopleOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {'\u00a0'.repeat(p.depth * 3) + (p.depth ? '└ ' : '') + p.label + ` (${p.count})`}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {others.length > 0 && (
-              /* Booked by people who report elsewhere — in the CP module they are
-                 here because the deal was partner-sourced, which is what the group
-                 says rather than leaving them looking like part of the team. */
-              <optgroup label={cpOnly ? 'Other CP-sourced' : 'Others'}>
-                {others.map((p) => <option key={p.id} value={p.id}>{`${p.label} (${p.count})`}</option>)}
+                <option value="noncp">{`Every other source (${nonCpCount})`}</option>
               </optgroup>
             )}
           </select>
