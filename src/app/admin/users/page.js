@@ -8,6 +8,7 @@ import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 import { isManagerRole } from '../../../lib/moduleAccess';
 import PasswordInput from '../../../components/PasswordInput';
+import { needsReportingManager } from '../../../lib/orgTree';
 
 // Seniority order, most senior first. Everything down to Manager carries manager
 // authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
@@ -331,7 +332,7 @@ export default function UserManagementPage() {
                 </div>
               </div>
 
-              <div style={mSec}>Reporting Manager</div>
+              <div style={mSec}>Reporting Manager{needsReportingManager(form.role) ? ' *' : ''}</div>
               <div style={{ marginBottom: 18 }}>
                 <input type="text" placeholder="Search by name or user code…" value={editManagerSearch} onChange={(e) => setEditManagerSearch(e.target.value)}
                   style={{ ...mInp, marginBottom: 8 }} onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
@@ -345,6 +346,15 @@ export default function UserManagementPage() {
                     return u.name?.toLowerCase().includes(q) || u.user_code?.toLowerCase().includes(q);
                   }).map((u) => <option key={u.id} value={u.id}>{u.name}  ·  {u.user_code}  ·  {u.role}{u.designation ? `  ·  ${u.designation}` : ''}</option>)}
                 </select>
+                {/* Said before saving rather than after: the API refuses this, and an
+                    error on submit teaches the rule one failed save at a time. */}
+                {needsReportingManager(form.role) && !form.reporting_manager_id && (
+                  <p style={{ fontSize: 11, color: '#B45309', margin: '6px 2px 0', lineHeight: 1.45 }}>
+                    Required at this role. Visibility runs on the reporting tree, so with no
+                    manager this person is invisible to every manager — their leads and bookings
+                    appear in nobody&apos;s list.
+                  </p>
+                )}
               </div>
 
               <div style={mSec}>Modules</div>

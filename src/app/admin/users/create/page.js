@@ -9,6 +9,7 @@ import Toast from '../../../../components/Toast';
 import { ALL_MODULES } from '../../../../lib/moduleAccess';
 import { isManagerRole } from '../../../../lib/moduleAccess';
 import PasswordInput from '../../../../components/PasswordInput';
+import { needsReportingManager } from '../../../../lib/orgTree';
 
 // Seniority order, most senior first. Everything down to Manager carries manager
 // authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
@@ -281,7 +282,10 @@ export default function CreateUserPage() {
 
           <div style={{ marginBottom: 24 }}>
             <label style={s.label}>
-              Reporting Manager <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(optional)</span>
+              Reporting Manager{' '}
+              {needsReportingManager(form.role)
+                ? <span style={{ fontWeight: 400, color: '#B45309' }}>(required at this role)</span>
+                : <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(optional)</span>}
             </label>
             {isVRLAdmin && !selectedCompanyId ? (
               <p style={s.hint}>Select a company first to see available managers</p>
@@ -312,6 +316,14 @@ export default function CreateUserPage() {
                       </option>
                     ))}
                 </select>
+                {/* Said before saving rather than after: the API refuses this, and an
+                    error on submit teaches the rule one failed save at a time. */}
+                {needsReportingManager(form.role) && !form.reporting_manager_id && (
+                  <p style={{ fontSize: 11, color: '#B45309', margin: '6px 2px 0', lineHeight: 1.45 }}>
+                    Visibility runs on the reporting tree, so with no manager this person is
+                    invisible to every manager — their leads and bookings appear in nobody&apos;s list.
+                  </p>
+                )}
               </>
             )}
           </div>
