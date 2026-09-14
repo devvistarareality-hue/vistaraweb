@@ -289,12 +289,13 @@ export default function UserManagementPage() {
                           onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
                         {/* Said here rather than left to be discovered: hitting Show on
                             an empty box and getting nothing back reads as a broken
-                            toggle. The box is empty because there is nothing to show —
-                            the stored password is a one-way hash, so no screen can
-                            display it. Replacing it is the only option. */}
+                            toggle. "Hashed, not encrypted" is the important word —
+                            calling it encrypted invites "so decrypt it", and there is
+                            nothing to decrypt: the original text was never stored. */}
                         <p style={{ fontSize: 11, color: '#8492A6', margin: '5px 2px 0', lineHeight: 1.45 }}>
-                          The current password can&apos;t be shown — it&apos;s stored encrypted, not saved
-                          anywhere readable. Type a new one here to replace it, then tell them what it is.
+                          The current password can&apos;t be shown to anyone. It isn&apos;t stored — only a
+                          one-way hash of it is, which can check a password but can&apos;t be turned back
+                          into one. Type a new one here to replace it, then tell them what it is.
                         </p>
                       </>
                     ) : (
