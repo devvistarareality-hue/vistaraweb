@@ -92,6 +92,8 @@ export const SALES_ENDPOINTS = {
   get bookingDraft() { return `${BASE_URL}/api/sales/bookings/draft/`; },
   booking:        (id) => `${BASE_URL}/api/sales/bookings/${id}/`,
   bookingDiscard: (id) => `${BASE_URL}/api/sales/bookings/${id}/discard/`,
+  // Every version of one deal — R0, R1, … — each with its own figures and LOI.
+  bookingRevisions: (id) => `${BASE_URL}/api/sales/bookings/${id}/revisions/`,
   get telecallers(){ return `${BASE_URL}/api/sales/users/telecallers/?crm_role=telecaller`; },
   get stms()       { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=stm`; },
   get cps()        { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp`; },

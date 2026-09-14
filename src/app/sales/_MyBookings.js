@@ -55,6 +55,10 @@ export function MyBookingsList({ cpOnly = false }) {
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');
   const [who, setWho] = useState('');     // 'booked by' — a user id, '' for everyone
+  // Revision history, fetched per booking on demand: only a handful of deals are
+  // ever revised, so loading every chain up front would be work for nothing.
+  const [revs, setRevs] = useState({});      // booking id → array of versions
+  const [revOpen, setRevOpen] = useState({});
   const me = useSelector((s) => s.auth?.user);
   const [team, setTeam] = useState([]);   // the viewer's reporting subtree
 
@@ -78,6 +82,19 @@ export function MyBookingsList({ cpOnly = false }) {
       .then((r) => (r.ok ? r.json() : [])).then((d) => setTeam(Array.isArray(d) ? d : []))
       .catch(() => {});
   }, [companyId]);
+
+  async function toggleRevisions(id) {
+    setRevOpen((o) => ({ ...o, [id]: !o[id] }));
+    if (revs[id]) return;                      // already loaded, just reopening
+    try {
+      const r = await fetch(SALES_ENDPOINTS.bookingRevisions(id)
+        + (companyId ? `?company_id=${companyId}` : ''), { headers: authHeaders() });
+      const d = await r.json();
+      setRevs((m) => ({ ...m, [id]: Array.isArray(d) ? d : [] }));
+    } catch {
+      setRevs((m) => ({ ...m, [id]: [] }));
+    }
+  }
 
   async function discardDraft(id) {
     if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
@@ -332,7 +349,52 @@ export function MyBookingsList({ cpOnly = false }) {
                     <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ Revise LOI</button>
                   )}
                   {b.status === 'pending' && <span style={{ fontSize: 12, color: '#B45309', alignSelf: 'center' }}>Awaiting approval</span>}
+                  {/* Only the latest version is ever listed, which is right — a deal
+                      should appear once, at its current terms. But the earlier ones
+                      are what was signed at the time, and there was no way to reach
+                      them from the product at all. */}
+                  {b.revision_no > 0 && (
+                    <button onClick={() => toggleRevisions(b.id)}
+                      style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>
+                      ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
+                    </button>
+                  )}
                 </div>
+                {revOpen[b.id] && (
+                  <div style={{ marginTop: 12, borderTop: '1.5px solid #EEF1F7', paddingTop: 10 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginBottom: 8 }}>
+                      REVISION HISTORY
+                    </div>
+                    {!revs[b.id] ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Loading…</p>
+                     : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Couldn&apos;t load the history.</p>
+                     : revs[b.id].map((v) => (
+                      <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                        padding: '7px 0', borderBottom: '1px solid #F5F7FA' }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? '#15803D' : '#6B7280',
+                          background: v.id === b.id ? '#E8F5E9' : '#F3F4F6', padding: '3px 8px', borderRadius: 20 }}>
+                          R{v.revision_no || 0}
+                        </span>
+                        <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
+                        <span style={{ fontSize: 12, color: '#8492A6' }}>
+                          Booked {v.booking_date || '—'} · {(v.approval_status || v.status || '').toUpperCase()}
+                          {v.stm_name ? ` · ${v.stm_name}` : ''}
+                        </span>
+                        {/* The version marked current is the one the card shows; the
+                            rest are superseded and say so rather than looking live. */}
+                        {v.id === b.id
+                          ? <span style={{ fontSize: 10, fontWeight: 800, color: '#15803D' }}>CURRENT</span>
+                          : <span style={{ fontSize: 10, fontWeight: 700, color: '#8492A6' }}>superseded</span>}
+                        <span style={{ flex: 1 }} />
+                        {v.loi_document
+                          ? <button onClick={() => openLoi(v.id)}
+                              style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>
+                              📄 Signed LOI
+                            </button>
+                          : <span style={{ fontSize: 11, color: '#B0B8C6' }}>no LOI on file</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
