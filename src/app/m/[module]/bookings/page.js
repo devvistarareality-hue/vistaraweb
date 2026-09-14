@@ -56,6 +56,22 @@ export default function ModuleBookingsPage() {
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
   const [detailsOpen, setDetailsOpen] = useState({});
   const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
+  // Revision history, fetched per booking on demand: only a handful of deals are
+  // ever revised, so loading every chain up front would be work for nothing.
+  const [revs, setRevs] = useState({});      // booking id → array of versions
+  const [revOpen, setRevOpen] = useState({});
+  async function toggleRevisions(id) {
+    setRevOpen((o) => ({ ...o, [id]: !o[id] }));
+    if (revs[id]) return;                      // already loaded, just reopening
+    try {
+      const r = await fetch(SALES_ENDPOINTS.bookingRevisions(id)
+        + (companyId ? `?company_id=${companyId}` : ''), { headers: authHeaders() });
+      const d = await r.json();
+      setRevs((m) => ({ ...m, [id]: Array.isArray(d) ? d : [] }));
+    } catch {
+      setRevs((m) => ({ ...m, [id]: [] }));
+    }
+  }
   // Same three filters as the Sales approvals view: booking date, project, STM.
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');   // '' = every project
@@ -202,8 +218,54 @@ export default function ModuleBookingsPage() {
                         <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #99F6E4', background: '#fff', color: '#0D9488', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>📄 View {isEoi(b) ? 'EOI' : 'LOI'}</button>
                         <button onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
                       </>}
+                      {/* Only the latest version is listed here, at its current terms.
+                          The earlier ones are what was signed at the time — which for
+                          a team reconciling payments against documents is the whole
+                          question when a deal carries an R1. */}
+                      {b.revision_no > 0 && (
+                        <button onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                          ⟲ Revisions {revOpen[b.id] ? '▲' : '▾'}
+                        </button>
+                      )}
                     </div>
                     {detailsOpen[b.id] && <BookingDetails b={b} />}
+                    {revOpen[b.id] && (
+                      <div style={{ marginTop: 12, borderTop: '1px dashed #CBD5E1', paddingTop: 10 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', letterSpacing: 0.6, marginBottom: 8 }}>
+                          REVISION HISTORY
+                        </div>
+                        {!revs[b.id] ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Loading…</p>
+                         : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Couldn&apos;t load the history.</p>
+                         : revs[b.id].map((v) => (
+                          <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                            padding: '7px 0', borderBottom: '1px solid #F1F5F9' }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? '#0D9488' : '#6B7280',
+                              background: v.id === b.id ? '#CCFBF1' : '#F3F4F6', padding: '3px 8px', borderRadius: 20 }}>
+                              R{v.revision_no || 0}
+                            </span>
+                            <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
+                            <span style={{ fontSize: 12, color: '#8492A6' }}>
+                              Booked {v.booking_date || '—'} · {(v.approval_status || v.status || '').toUpperCase()}
+                              {v.stm_name ? ` · ${v.stm_name}` : ''}
+                            </span>
+                            {/* The version marked current is the one the card shows; the
+                                rest are superseded and say so rather than looking live. */}
+                            {v.id === b.id
+                              ? <span style={{ fontSize: 10, fontWeight: 800, color: '#0D9488' }}>CURRENT</span>
+                              : <span style={{ fontSize: 10, fontWeight: 700, color: '#8492A6' }}>superseded</span>}
+                            <span style={{ flex: 1 }} />
+                            {v.loi_document ? <>
+                              <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #99F6E4', background: '#fff', color: '#0D9488', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📄 View</button>
+                              <button onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
+                            </> : <span style={{ fontSize: 11, color: '#B0B8C6' }}>no document on file</span>}
+                            <button onClick={() => toggleDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                              {detailsOpen[v.id] ? '▲ Details' : '▾ Details'}
+                            </button>
+                            {detailsOpen[v.id] && <div style={{ width: '100%' }}><BookingDetails b={v} /></div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
