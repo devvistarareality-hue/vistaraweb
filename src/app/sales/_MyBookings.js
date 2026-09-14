@@ -237,7 +237,16 @@ export function MyBookingsList({ cpOnly = false }) {
             title="Filter by who booked it — a manager includes their own reports">
             <option value="">All People</option>
             {(!!countsBy[myId] || who === myId) && <option value={myId}>{`Only me (${countsBy[myId] || 0})`}</option>}
-            {cpOnly && (cpCount > 0 || who === 'cp') && <option value="cp">{`Source: CP (${cpCount})`}</option>}
+            {/* Source is a different axis from who booked it — a partner-sourced deal
+                was still booked by one of the people below, so this count overlaps
+                theirs. Kept in its own group and labelled, because sitting flat among
+                the names it read as another person and invited adding it to the
+                total: 108 + 67 + 11 against a list of 119. */}
+            {cpOnly && (cpCount > 0 || who === 'cp') && (
+              <optgroup label="By source · overlaps the names below">
+                <option value="cp">{`Source: CP (${cpCount})`}</option>
+              </optgroup>
+            )}
             {peopleOptions.length > 0 && (
               <optgroup label="Under me">
                 {/* Indented with non-breaking spaces: a native select renders no
