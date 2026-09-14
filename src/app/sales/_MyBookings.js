@@ -23,6 +23,22 @@ async function openLoi(id) {
   } catch { alert('Could not open the LOI.'); }
 }
 
+// Everyone at or under `rootId` in the reporting tree. Cycle-safe on purpose: a
+// manager loop in the data is a typo someone can make in User Management, and it
+// should not hang the page that surfaces it.
+function subtreeIds(rootId, childrenOf) {
+  const out = new Set([String(rootId)]);
+  const queue = [String(rootId)];
+  while (queue.length) {
+    for (const kid of childrenOf[queue.shift()] || []) {
+      if (out.has(kid)) continue;
+      out.add(kid);
+      queue.push(kid);
+    }
+  }
+  return out;
+}
+
 // "My Bookings" — the bookings the logged-in user submitted, grouped project → plot,
 // with a Revise LOI action. Rendered inside the Booking page under a toggle.
 export function MyBookingsList({ cpOnly = false }) {
@@ -38,6 +54,9 @@ export function MyBookingsList({ cpOnly = false }) {
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');
+  const [who, setWho] = useState('');     // 'booked by' — a user id, '' for everyone
+  const me = useSelector((s) => s.auth?.user);
+  const [team, setTeam] = useState([]);   // the viewer's reporting subtree
 
   function load() {
     setLoading(true);
@@ -50,6 +69,15 @@ export function MyBookingsList({ cpOnly = false }) {
       .catch(() => setLoading(false));
   }
   useEffect(load, [companyId, cpOnly]);
+
+  // The reporting tree, for the 'Booked by' filter. Failing quietly is right here:
+  // someone with no reports gets an empty list and simply never sees the dropdown,
+  // which is the same outcome as the request erroring.
+  useEffect(() => {
+    fetch(SALES_ENDPOINTS.myTeam + (companyId ? `?company_id=${companyId}` : ''), { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : [])).then((d) => setTeam(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, [companyId]);
 
   async function discardDraft(id) {
     if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
@@ -81,12 +109,63 @@ export function MyBookingsList({ cpOnly = false }) {
     if (!d) return false;
     return (!range.from || d >= range.from) && (!range.to || d <= range.to);
   };
+  // 'Booked by' — a manager's list holds their whole reporting subtree, so let them
+  // narrow it to one person. Picking a manager keeps that manager's own reports in
+  // view, because on an org chart the question is "what did this branch close", not
+  // "what did this one desk close". 'Only me' is the exception, and says so.
+  const bookedById = (b) => (b.stm == null ? '' : String(b.stm));
+  const myId = me?.id == null ? '' : String(me.id);
+  const childrenOf = {}, teamById = {}, nameById = {}, countsBy = {};
+  team.forEach((m) => {
+    teamById[String(m.id)] = m;
+    const parent = m.reporting_manager_id == null ? '' : String(m.reporting_manager_id);
+    (childrenOf[parent] = childrenOf[parent] || []).push(String(m.id));
+  });
+  // Counted over every row, not the filtered ones, so the numbers beside each name
+  // stay put as you flip between tabs instead of collapsing to the current view.
+  rows.forEach((b) => {
+    const k = bookedById(b);
+    if (!k) return;
+    countsBy[k] = (countsBy[k] || 0) + 1;
+    if (!nameById[k]) nameById[k] = b.stm_name;
+  });
+  const personName = (id) => teamById[id]?.name || nameById[id] || 'Unknown';
+  const subtreeCount = (id) =>
+    [...subtreeIds(id, childrenOf)].reduce((n, k) => n + (countsBy[k] || 0), 0);
+
+  // Depth-first from the viewer's direct reports down, so the dropdown reads as the
+  // org chart does. Anyone whose branch booked nothing is left out — an option that
+  // filters to an empty list is just a way to waste a click.
+  const peopleOptions = [];
+  const walked = new Set();
+  const walk = (id, depth) => {
+    if (walked.has(id) || id === myId) return;
+    walked.add(id);
+    if (subtreeCount(id)) {
+      peopleOptions.push({ id, depth, label: personName(id), count: subtreeCount(id) });
+    }
+    (childrenOf[id] || []).forEach((kid) => walk(kid, depth + 1));
+  };
+  team.filter((m) => {
+    const parent = m.reporting_manager_id == null ? '' : String(m.reporting_manager_id);
+    return parent === myId || !teamById[parent];   // tops of the subtree we were given
+  }).forEach((m) => walk(String(m.id), 0));
+  // People who booked but sit outside the tree — in the CP module the pool carries
+  // Channel-Partner deals closed by others. They belong in the filter all the same.
+  const others = Object.keys(countsBy)
+    .filter((k) => k !== myId && !teamById[k])
+    .map((k) => ({ id: k, label: personName(k), count: countsBy[k] }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const whoSet = !who ? null : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
+  const byWho = (b) => !whoSet || whoSet.has(bookedById(b));
+
   const projName = (b) => b.project_name || '—';
   // Built from every row, not the filtered ones, so picking a project never removes
   // the other options from the dropdown.
   const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
   const visible = rows.filter((b) => (!tab || b.status === tab) && matches(b) && inRange(b)
-    && (!proj || projName(b) === proj));
+    && (!proj || projName(b) === proj) && byWho(b));
 
   const groups = {};
   visible.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
@@ -126,10 +205,24 @@ export function MyBookingsList({ cpOnly = false }) {
           )}
         </div>
         {projOptions.length > 1 && (
-          <select value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', background: '#fff', fontSize: 13, color: '#1A1A2E', cursor: 'pointer' }}>
+          <select value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }} style={selectStyle}>
             <option value="">All Projects</option>
             {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        )}
+        {(peopleOptions.length > 0 || others.length > 0) && (
+          <select value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
+            title="Filter by who booked it — a manager includes their own reports">
+            <option value="">All People</option>
+            {!!countsBy[myId] && <option value={myId}>{`Only me (${countsBy[myId]})`}</option>}
+            {/* Indented with non-breaking spaces: a native select renders no markup,
+                so depth has to be carried by the text itself. */}
+            {peopleOptions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {'\u00a0'.repeat(p.depth * 3) + (p.depth ? '└ ' : '') + p.label + ` (${p.count})`}
+              </option>
+            ))}
+            {others.map((p) => <option key={p.id} value={p.id}>{`${p.label} (${p.count})`}</option>)}
           </select>
         )}
       </div>
@@ -209,4 +302,5 @@ function statusPill(s) {
   return { display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
 const actBtn = { padding: '8px 16px', borderRadius: 8, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' };
+const selectStyle = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', background: '#fff', fontSize: 13, color: '#1A1A2E', cursor: 'pointer', maxWidth: 260 };
 const linkBtn = { padding: '8px 14px', borderRadius: 8, border: '1.5px solid #C7D2FE', color: '#3D5AFE', fontSize: 13, fontWeight: 700, textDecoration: 'none' };
