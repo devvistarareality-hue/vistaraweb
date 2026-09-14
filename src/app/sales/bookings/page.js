@@ -81,14 +81,23 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // 'cp_booking_approvers' (Channel-Partner-sourced bookings only — see backend
   // _can_approve_cp_project). Same PATCH endpoint, just a different JSON key.
   async function toggleApprover(projId, mgrId, field = 'booking_approvers') {
+    let prev = [];
     let next = [];
     setProjects((ps) => ps.map((p) => {
       if (p.id !== projId) return p;
-      const arr = p[field] || [];
-      next = arr.includes(mgrId) ? arr.filter((x) => x !== mgrId) : [...arr, mgrId];
+      prev = p[field] || [];
+      next = prev.includes(mgrId) ? prev.filter((x) => x !== mgrId) : [...prev, mgrId];
       return { ...p, [field]: next };
     }));
-    await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => {});
+    const r = await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => null);
+    if (!r || !r.ok) {
+      // Undo the optimistic tick and say so — a save that never reached the server
+      // must not sit there looking checked, only to silently revert on the next
+      // visit with no indication anything went wrong at the time.
+      setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
+      alert('Could not save this approver — please try again.');
+      return;
+    }
     setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
   }
 
@@ -385,9 +394,20 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 16, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
-                      <span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
+                      {/* accounts_status='rejected' overrides approval_status here — that field
+                          still reads "APPROVED" from the Sales/CP stage, which would otherwise
+                          show a green/misleading pill for something Accounts has since rejected. */}
+                      <span style={statusPill(b.status)}>{b.accounts_status === 'rejected' ? 'REJECTED BY ACCOUNTS' : (b.approval_status || b.status || '').toUpperCase()}</span>
                     </div>
                   </div>
+                  {b.accounts_status === 'rejected' && (
+                    <div style={{ marginTop: 10, background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+                        Rejected by Accounts{b.accounts_rejected_by_name ? ` · ${b.accounts_rejected_by_name}` : ''}
+                      </div>
+                      <div style={{ fontSize: 13, color: '#7F1D1D' }}>{b.accounts_rejected_reason || '—'}</div>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                     {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
                     {/* A revised deal gets its Details per version inside the history

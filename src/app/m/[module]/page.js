@@ -39,7 +39,7 @@ export default function ModuleOverview({ params }) {
               </svg>
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 5 }}>Bookings</div>
-            <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 10 }}>Review all sales bookings — LOI &amp; EOI details, project-wise (view only)</div>
+            <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 10 }}>Review LOI &amp; EOI details and approve/reject bookings, project-wise</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: meta.accent }}>Open →</div>
           </div>
         </Link>
