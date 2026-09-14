@@ -372,10 +372,11 @@ export function MyBookingsList({ cpOnly = false }) {
                     <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#7C3AED' }}>↻ Revise LOI</button>
                   )}
                   {b.status === 'pending' && <span style={{ fontSize: 12, color: '#B45309', alignSelf: 'center' }}>Awaiting approval</span>}
-                  {/* A cancelled deal is kept whole — signed LOI and every figure —
-                      so it can be explained later. Its own key space, since the card
-                      and the current version in the history share a booking id. */}
-                  {isCancelled(b) && (
+                  {/* Every figure of the deal, beside its signed LOI. A revised deal
+                      gets its Details per version inside the history instead — the
+                      current version is one of them, so a card-level copy would be
+                      the same figures twice, and the two share a booking id. */}
+                  {!b.revision_no && (
                     <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
                       style={{ ...linkBtn, background: '#fff', cursor: 'pointer', borderColor: '#CBD5E1', color: '#334155' }}>
                       {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
@@ -392,7 +393,7 @@ export function MyBookingsList({ cpOnly = false }) {
                     </button>
                   )}
                 </div>
-                {isCancelled(b) && cardDetails[b.id] && <BookingDetails b={b} accent="#3D5AFE" />}
+                {!b.revision_no && cardDetails[b.id] && <BookingDetails b={b} accent="#3D5AFE" />}
                 {revOpen[b.id] && (
                   <div style={{ marginTop: 12, borderTop: '1.5px solid #EEF1F7', paddingTop: 10 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginBottom: 8 }}>

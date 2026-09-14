@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
 import DateFilter from '../_DateFilter';
 import { isManagerRole } from '../../../lib/moduleAccess';
 import { unitLabel } from '../../../lib/bookingUnit';
+import BookingDetails from '../../../components/BookingDetails';
 
 
 // Open the confidential LOI via a short-lived signed URL (never a public link).
@@ -35,6 +36,26 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  // Details on the card, and the revision history loaded on demand — the same record
+  // My Bookings shows, because an approver deciding on a deal needs the figures in
+  // front of them, not a second screen to go and find.
+  const [cardDetails, setCardDetails] = useState({});
+  const [revs, setRevs] = useState({});      // booking id → array of versions
+  const [revOpen, setRevOpen] = useState({});
+  const [revDetails, setRevDetails] = useState({});
+  async function toggleRevisions(id) {
+    setRevDetails({});   // every open starts collapsed
+    setRevOpen((o) => ({ ...o, [id]: !o[id] }));
+    if (revs[id]) return;
+    try {
+      const r = await fetch(SALES_ENDPOINTS.bookingRevisions(id)
+        + (companyId ? `?company_id=${companyId}` : ''), { headers: authHeaders() });
+      const d = await r.json();
+      setRevs((m) => ({ ...m, [id]: Array.isArray(d) ? d : [] }));
+    } catch {
+      setRevs((m) => ({ ...m, [id]: [] }));
+    }
+  }
   const [managers, setManagers] = useState([]);
   const [cpModuleUsers, setCpModuleUsers] = useState([]); // for the CP approver picker
   const [projects, setProjects] = useState([]);   // each carries booking_approvers
@@ -369,6 +390,21 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                   </div>
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                     {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
+                    {/* A revised deal gets its Details per version inside the history
+                        instead — the current version is one of them, so a card-level
+                        copy would be the same figures twice. */}
+                    {!b.revision_no && (
+                      <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
+                        style={{ ...linkBtn, background: '#fff', cursor: 'pointer', borderColor: '#CBD5E1', color: '#334155' }}>
+                        {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
+                      </button>
+                    )}
+                    {b.revision_no > 0 && (
+                      <button onClick={() => toggleRevisions(b.id)}
+                        style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>
+                        ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
+                      </button>
+                    )}
                     {b.status === 'draft' && (
                       <>
                         <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#3D5AFE' }}>▸ Resume</button>
@@ -403,6 +439,48 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       );
                     })()}
                   </div>
+                  {!b.revision_no && cardDetails[b.id] && <BookingDetails b={b} accent="#3D5AFE" />}
+                  {revOpen[b.id] && (
+                    <div style={{ marginTop: 12, borderTop: '1.5px solid #EEF1F7', paddingTop: 10 }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginBottom: 8 }}>
+                        REVISION HISTORY
+                      </div>
+                      {!revs[b.id] ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Loading…</p>
+                       : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Couldn&apos;t load the history.</p>
+                       : revs[b.id].map((v) => (
+                        <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                          padding: '7px 0', borderBottom: '1px solid #F5F7FA' }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? '#15803D' : '#6B7280',
+                            background: v.id === b.id ? '#E8F5E9' : '#F3F4F6', padding: '3px 8px', borderRadius: 20 }}>
+                            R{v.revision_no || 0}
+                          </span>
+                          <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
+                          <span style={{ fontSize: 12, color: '#8492A6' }}>
+                            Booked {v.booking_date || '—'} · {(v.approval_status || v.status || '').toUpperCase()}
+                            {v.stm_name ? ` · ${v.stm_name}` : ''}
+                          </span>
+                          {v.id === b.id
+                            ? <span style={{ fontSize: 10, fontWeight: 800, color: '#15803D' }}>CURRENT</span>
+                            : <span style={{ fontSize: 10, fontWeight: 700, color: '#8492A6' }}>superseded</span>}
+                          <span style={{ flex: 1 }} />
+                          {v.loi_document
+                            ? <button onClick={() => openLoi(v.id)}
+                                style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>
+                                📄 Signed LOI
+                              </button>
+                            : <span style={{ fontSize: 11, color: '#B0B8C6' }}>no LOI on file</span>}
+                          <button onClick={() => setRevDetails((o) => ({ ...o, [v.id]: !o[v.id] }))}
+                            style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer',
+                              borderColor: '#CBD5E1', color: '#334155' }}>
+                            {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}
+                          </button>
+                          {revDetails[v.id] && (
+                            <div style={{ width: '100%' }}><BookingDetails b={v} accent="#3D5AFE" /></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
