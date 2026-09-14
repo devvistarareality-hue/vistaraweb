@@ -56,14 +56,23 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // 'cp_booking_approvers' (Channel-Partner-sourced bookings only — see backend
   // _can_approve_cp_project). Same PATCH endpoint, just a different JSON key.
   async function toggleApprover(projId, mgrId, field = 'booking_approvers') {
+    let prev = [];
     let next = [];
     setProjects((ps) => ps.map((p) => {
       if (p.id !== projId) return p;
-      const arr = p[field] || [];
-      next = arr.includes(mgrId) ? arr.filter((x) => x !== mgrId) : [...arr, mgrId];
+      prev = p[field] || [];
+      next = prev.includes(mgrId) ? prev.filter((x) => x !== mgrId) : [...prev, mgrId];
       return { ...p, [field]: next };
     }));
-    await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => {});
+    const r = await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => null);
+    if (!r || !r.ok) {
+      // Undo the optimistic tick and say so — a save that never reached the server
+      // must not sit there looking checked, only to silently revert on the next
+      // visit with no indication anything went wrong at the time.
+      setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
+      alert('Could not save this approver — please try again.');
+      return;
+    }
     setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
   }
 
