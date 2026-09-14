@@ -54,6 +54,7 @@ export default function ModuleBookingsPage() {
   const [err, setErr] = useState('');
   const [open, setOpen] = useState({});
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
+  const [tab, setTab] = useState('approved');   // 'approved' | 'cancelled'
   const [detailsOpen, setDetailsOpen] = useState({});
   const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
   // Revision history, fetched per booking on demand: only a handful of deals are
@@ -99,7 +100,13 @@ export default function ModuleBookingsPage() {
     if (a.includes('REJECT') || a.includes('CANCEL') || a.includes('PENDING')) return false;
     return a.includes('APPROVED') || b.status === 'sold';
   };
-  const approved = rows.filter(isApproved);
+  // A cancelled booking keeps its signed LOI, and Accounts reconciles against it —
+  // a deal that was on the books and came off is a thing that has to be explainable,
+  // not a gap. Kept on its own tab so it can never be mistaken for revenue.
+  const isCancelled = (b) => String(b.approval_status || '').toUpperCase().includes('CANCEL');
+  const approvedRows  = rows.filter(isApproved);
+  const cancelledRows = rows.filter(isCancelled);
+  const approved = tab === 'cancelled' ? cancelledRows : approvedRows;
 
   // Booking date is a plain YYYY-MM-DD, so the range compares as strings. A booking
   // with no date can't be placed in time, so a live range excludes it rather than
@@ -135,7 +142,24 @@ export default function ModuleBookingsPage() {
   return (
     <div style={{ padding: '28px 32px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Bookings</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>Approved bookings only (LOI &amp; EOI), project-wise · view only</p>
+      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>
+        {tab === 'cancelled'
+          ? 'Cancelled bookings (LOI & EOI) — kept with their signed document · view only'
+          : 'Approved bookings only (LOI & EOI), project-wise · view only'}
+      </p>
+
+      {!loading && !err && (approvedRows.length > 0 || cancelledRows.length > 0) && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          {[['approved', 'Approved', approvedRows.length], ['cancelled', 'Cancelled', cancelledRows.length]].map(([k, label, n]) => (
+            <button key={k} onClick={() => { setTab(k); setDetailsOpen({}); }}
+              style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
+                cursor: 'pointer', background: tab === k ? '#0D9488' : '#EEF1F7',
+                color: tab === k ? '#fff' : '#8492A6' }}>
+              {label} ({n})
+            </button>
+          ))}
+        </div>
+      )}
 
       {!loading && !err && approved.length > 0 && (
         <div style={{ marginTop: 16 }}>
@@ -164,9 +188,13 @@ export default function ModuleBookingsPage() {
       )}
 
       {!loading && !err && projectNames.length > 0 && (
-        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'linear-gradient(135deg,#0D9488,#0F766E)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(13,148,136,0.25)' }}>
-          <div style={{ color: '#CCFBF1', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {narrowed ? 'Matching' : 'Total'} Approved · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
+        /* Cancelled money is not revenue, so the banner stops being a revenue banner:
+           slate rather than teal, and it says cancelled value rather than total. */
+        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: tab === 'cancelled' ? 'linear-gradient(135deg,#475569,#334155)' : 'linear-gradient(135deg,#0D9488,#0F766E)', borderRadius: 14, padding: '16px 20px', boxShadow: tab === 'cancelled' ? '0 2px 8px rgba(71,85,105,0.25)' : '0 2px 8px rgba(13,148,136,0.25)' }}>
+          <div style={{ color: tab === 'cancelled' ? '#E2E8F0' : '#CCFBF1', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            {tab === 'cancelled'
+              ? `${narrowed ? 'Matching' : 'Total'} Cancelled · ${grandCount} booking${grandCount === 1 ? '' : 's'} · ${projectNames.length} project${projectNames.length === 1 ? '' : 's'}`
+              : `${narrowed ? 'Matching' : 'Total'} Approved · ${grandCount} booking${grandCount === 1 ? '' : 's'} · ${projectNames.length} project${projectNames.length === 1 ? '' : 's'}`}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}
             {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
@@ -180,7 +208,9 @@ export default function ModuleBookingsPage() {
         : err ? <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 12, padding: '14px 18px', fontSize: 13 }}>{err}</div>
         : projectNames.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 14, padding: 40, textAlign: 'center', color: '#8492A6', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
-            {narrowed ? 'No approved bookings match these filters.' : 'No bookings yet.'}
+            {narrowed
+              ? `No ${tab} bookings match these filters.`
+              : (tab === 'cancelled' ? 'No cancelled bookings.' : 'No bookings yet.')}
           </div>
         ) : projectNames.map((pn) => (
           <div key={pn} style={{ marginBottom: 12 }}>
