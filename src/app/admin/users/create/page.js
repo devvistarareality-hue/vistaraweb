@@ -62,6 +62,7 @@ export default function CreateUserPage() {
     modules:              [],
     manager_modules:      [],
     admin_modules:        [],
+    can_export_bookings:  false,
     reporting_manager_id: null,
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -364,6 +365,22 @@ export default function CreateUserPage() {
               </div>
             </div>
           )}
+
+          <div style={{ marginBottom: 28 }}>
+            <label style={s.label}>Data Access</label>
+            {/* The Sales module's booking export: every approved deal in the company,
+                Sales and CP together, with all its commercial figures. Deliberately
+                separate from module access — working your own bookings and downloading
+                everyone's are different things. */}
+            <label style={s.checkLabel}>
+              <input
+                type="checkbox"
+                checked={!!form.can_export_bookings}
+                onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))}
+              />
+              Download booking Excel — approved bookings, Sales &amp; CP, with totals
+            </label>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
             <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>

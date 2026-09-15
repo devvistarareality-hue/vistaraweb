@@ -90,6 +90,7 @@ export default function UserManagementPage() {
       modules:              u.modules         || [],
       manager_modules:      u.manager_modules || [],
       admin_modules:        u.admin_modules   || [],
+      can_export_bookings:  !!u.can_export_bookings,
       is_active:            u.is_active,
       reporting_manager_id: u.reporting_manager?.id ?? null,
     });
@@ -393,6 +394,17 @@ export default function UserManagementPage() {
                   </div>
                 </>
               )}
+
+              <div style={mSec}>Data Access</div>
+              {/* The Sales module's booking export: every approved deal in the company,
+                  Sales and CP together, with all its commercial figures. Deliberately
+                  separate from module access — working your own bookings and downloading
+                  everyone's are different things. */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.can_export_bookings ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.can_export_bookings ? '#F0FFF4' : '#FAFAFA', marginBottom: 14 }}>
+                <input type="checkbox" checked={!!form.can_export_bookings} onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))} style={{ accentColor: '#2E7D32' }} />
+                <span style={{ fontWeight: 600, color: form.can_export_bookings ? '#2E7D32' : '#6B7280' }}>Download booking Excel</span>
+                <span style={{ fontSize: 12, color: '#8492A6' }}>— approved bookings, Sales &amp; CP, with totals</span>
+              </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.is_active ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.is_active ? '#F0FFF4' : '#FAFAFA', marginBottom: 4 }}>
                 <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} style={{ accentColor: '#2E7D32' }} />

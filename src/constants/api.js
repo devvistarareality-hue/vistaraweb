@@ -88,6 +88,7 @@ export const SALES_ENDPOINTS = {
   leadTransferAction: (id) => `${BASE_URL}/api/sales/lead-transfers/${id}/action/`,
   get bookings()   { return `${BASE_URL}/api/sales/bookings/`; },
   get bookingsAll(){ return `${BASE_URL}/api/sales/bookings/all/`; },
+  get bookingsExport(){ return `${BASE_URL}/api/sales/bookings/export/`; },
   bookingLoiUrl: (id) => `${BASE_URL}/api/sales/bookings/${id}/loi-url/`,
   bookingAccountsAction: (id) => `${BASE_URL}/api/sales/bookings/${id}/accounts-action/`,
   get bookingDraft() { return `${BASE_URL}/api/sales/bookings/draft/`; },

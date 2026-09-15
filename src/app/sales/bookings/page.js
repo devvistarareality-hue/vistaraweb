@@ -84,6 +84,58 @@ function DecidedBy({ b, style }) {
   );
 }
 
+// Download the approved bookings as a workbook — Sales and Channel Partner together,
+// which is why it lives in Sales and has no counterpart in the CP module. Shown only
+// to someone granted "Download booking Excel" in User Management, and to real admins;
+// the server enforces the same rule, this just avoids offering a button that 403s.
+function ExportBookings({ projects, companyId }) {
+  const me = useSelector((s) => s.auth.user);
+  const allowed = me?.can_export_bookings || me?.role === 'Admin' || me?.is_staff;
+  const [project, setProject] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  if (!allowed) return null;
+
+  async function download() {
+    setBusy(true); setErr('');
+    try {
+      const qs = [project ? `project=${project}` : '', companyId ? `company_id=${companyId}` : '']
+        .filter(Boolean).join('&');
+      const res = await fetch(`${SALES_ENDPOINTS.bookingsExport}${qs ? `?${qs}` : ''}`, { headers: authHeaders() });
+      if (!res.ok) {
+        setErr(res.status === 403 ? 'You do not have access to download booking data.' : 'Download failed. Try again.');
+        return;
+      }
+      // The filename the server chose already names the project and the date.
+      const name = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1]
+        || 'Bookings.xlsx';
+      const url = URL.createObjectURL(await res.blob());
+      const a = Object.assign(document.createElement('a'), { href: url, download: name });
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (_) {
+      setErr('Download failed. Try again.');
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <select value={project} onChange={(e) => setProject(e.target.value)}
+        style={{ padding: '7px 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, background: '#fff', color: '#1A1A2E' }}>
+        <option value="">All projects</option>
+        {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      </select>
+      <button onClick={download} disabled={busy} title="Approved bookings, Sales and CP together"
+        style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
+                 cursor: busy ? 'default' : 'pointer', background: '#2E7D32', color: '#fff', opacity: busy ? 0.7 : 1 }}>
+        {busy ? 'Preparing…' : '⤓ Excel'}
+      </button>
+      {err && <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 600 }}>{err}</span>}
+    </div>
+  );
+}
+
 export function BookingsContent({ adminView = false, cpOnly = false, cpMode = false }) {
   const router = useRouter();
   const me = useSelector((s) => s.auth.user);
@@ -374,6 +426,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
               background: tab === k ? '#3D5AFE' : '#EEF1F7', color: tab === k ? '#fff' : '#8492A6' }}>{label}</button>
           ))}
         </div>
+        {!cpMode && <ExportBookings projects={projects} companyId={companyId} />}
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8492A6', fontSize: 13 }}>🔍</span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
