@@ -44,12 +44,42 @@ function decidedWhen(iso) {
        + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
 }
 
+// A sale now clears two gates: the Sales/CP approver puts it on the books, then
+// Accounts signs it off, and only then is the unit actually gone — until that second
+// sign-off the unit sits on hold, not sold. A rep reading only "APPROVED" would think
+// the deal was done, so both gates are shown, in order, on the same card.
 function DecidedBy({ b, style }) {
   const d = decidedBy(b);
-  if (!d) return null;
+  const acc = b.accounts_status;
+  // The Accounts gate only means anything once Sales/CP has approved. A rejected or
+  // cancelled deal never reaches it, and a pending one has not got there yet.
+  const showAccounts = b.status === 'sold' && !b.cancelled_by_name;
+  if (!d && !showAccounts) return null;
   return (
-    <div style={{ fontSize: 11.5, color: d.tone, marginTop: 4, fontWeight: 600, ...style }}>
-      {d.label} {d.who}<span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
+    <div style={{ marginTop: 4, ...style }}>
+      {d && (
+        <div style={{ fontSize: 11.5, color: d.tone, fontWeight: 600 }}>
+          {d.label} {d.who}<span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
+        </div>
+      )}
+      {showAccounts && acc === 'approved' && (
+        <div style={{ fontSize: 11.5, color: '#0D9488', fontWeight: 600 }}>
+          Accounts approved{b.accounts_approved_by_name ? ` by ${b.accounts_approved_by_name}` : ''}
+          <span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(b.accounts_approved_at)}</span>
+        </div>
+      )}
+      {showAccounts && acc === 'pending' && (
+        <div style={{ fontSize: 11.5, color: '#B45309', fontWeight: 600 }}>
+          Awaiting Accounts approval <span style={{ color: '#8492A6', fontWeight: 500 }}>· unit held, not yet sold</span>
+        </div>
+      )}
+      {showAccounts && acc === 'rejected' && (
+        <div style={{ fontSize: 11.5, color: '#DC2626', fontWeight: 600 }}>
+          Accounts rejected{b.accounts_rejected_by_name ? ` by ${b.accounts_rejected_by_name}` : ''}
+          <span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(b.accounts_rejected_at)}</span>
+          {b.accounts_rejected_reason ? <span style={{ color: '#8492A6', fontWeight: 500 }}> · {b.accounts_rejected_reason}</span> : null}
+        </div>
+      )}
     </div>
   );
 }
@@ -427,7 +457,13 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       {/* accounts_status='rejected' overrides approval_status here — that field
                           still reads "APPROVED" from the Sales/CP stage, which would otherwise
                           show a green/misleading pill for something Accounts has since rejected. */}
-                      <span style={statusPill(b.status)}>{b.accounts_status === 'rejected' ? 'REJECTED BY ACCOUNTS' : (b.approval_status || b.status || '').toUpperCase()}</span>
+                      {(() => {
+                        const awaiting = b.status === 'sold' && b.accounts_status === 'pending';
+                        const text = b.accounts_status === 'rejected' ? 'REJECTED BY ACCOUNTS'
+                          : awaiting ? 'AWAITING ACCOUNTS'
+                          : (b.approval_status || b.status || '').toUpperCase();
+                        return <span style={statusPill(awaiting ? 'pending' : b.status)}>{text}</span>;
+                      })()}
                     </div>
                   </div>
                   {b.accounts_status === 'rejected' && (
@@ -628,6 +664,9 @@ function ApproverDropdown({ project, managers, onToggle, field = 'booking_approv
   );
 }
 
+// A booking that Sales/CP has approved but Accounts has not is NOT a finished sale —
+// the unit is on hold, not sold. Showing a green APPROVED there told a rep the deal
+// was done a stage early, so the pill says what is actually true.
 function statusPill(s) {
   const map = { draft: ['#3D5AFE', '#EEF1FF'], pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'] };
   const [c, bg] = map[s] || ['#6B7280', '#F3F4F6'];
