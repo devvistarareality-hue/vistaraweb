@@ -398,6 +398,7 @@ export function MyBookingsList({ cpOnly = false }) {
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>
                       {unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text} <span style={{ color: '#8492A6', fontWeight: 600 }}>· {b.client_name || '—'}</span>
                       {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
+                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: '#0369A1', background: '#E0F2FE', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
                     </div>
                     {/* STM alongside the unit, as Bookings & Approvals shows it. Usually
                         the viewer, since this list is their own submissions — but a kiosk
@@ -407,6 +408,12 @@ export function MyBookingsList({ cpOnly = false }) {
                       {b.phone} · Booked {b.booking_date || '—'}
                       {b.stm_name ? ` · STM: ${b.stm_name}` : ''}
                     </div>
+                    {b.is_resale && b.resale_of_client && (
+                      <div style={{ fontSize: 11.5, color: '#0369A1', marginTop: 3, fontWeight: 600 }}>
+                        Resold from {b.resale_of_client}
+                        {b.stm_name ? <span style={{ color: '#8492A6', fontWeight: 500 }}> · resold by {b.stm_name}</span> : null}
+                      </div>
+                    )}
                     <DecidedBy b={b} />
                   </div>
                   <div style={{ textAlign: 'right' }}>

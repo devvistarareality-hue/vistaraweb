@@ -446,10 +446,17 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A2E' }}>
                         {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#B45309', background: '#FEF3C7', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
+                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: '#0369A1', background: '#E0F2FE', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
                       </div>
                       {/* Project lives in the group header now — don't repeat it on every card. */}
                       <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{b.phone} · {unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text}</div>
                       <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
+                      {b.is_resale && b.resale_of_client && (
+                      <div style={{ fontSize: 11.5, color: '#0369A1', marginTop: 3, fontWeight: 600 }}>
+                        Resold from {b.resale_of_client}
+                        {b.stm_name ? <span style={{ color: '#8492A6', fontWeight: 500 }}> · resold by {b.stm_name}</span> : null}
+                      </div>
+                    )}
                       <DecidedBy b={b} />
                     </div>
                     <div style={{ textAlign: 'right' }}>
