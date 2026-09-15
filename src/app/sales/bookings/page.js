@@ -104,7 +104,12 @@ export function ExportBookings({ projects, companyId }) {
         .filter(Boolean).join('&');
       const res = await fetch(`${SALES_ENDPOINTS.bookingsExport}${qs ? `?${qs}` : ''}`, { headers: authHeaders() });
       if (!res.ok) {
-        setErr(res.status === 403 ? 'You do not have access to download booking data.' : 'Download failed. Try again.');
+        // 404 means the server has no such endpoint — the feature is in the code but
+        // not on the server this browser is talking to. Saying "try again" for that
+        // sends people round in circles.
+        setErr(res.status === 403 ? 'You do not have access to download booking data.'
+             : res.status === 404 ? 'Not available on this server yet — the backend needs deploying.'
+             : 'Download failed. Try again.');
         return;
       }
       // The filename the server chose already names the project and the date.
