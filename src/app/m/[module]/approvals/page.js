@@ -45,19 +45,144 @@ function statusPill(s) {
   return { display: 'inline-block', fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
 
-const TABS = [['approved', 'Approved'], ['cancelled', 'Cancelled']];
+const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']];
+const actBtn = { padding: '8px 16px', borderRadius: 8, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 
-// Accounts & Finance — Bookings: the ledger of Sales/CP + Accounts-approved deals
-// (LOI + EOI), project-wise. A booking lands here once approved in the Approvals tab
-// and stays until (if ever) cancelled there — a cancelled one shows in its own tab,
-// with the unit already back to available. View-only besides opening/downloading the
-// signed document; approve/reject/cancel all live on the Approvals page.
-export default function ModuleBookingsPage() {
+// Which project id's Accounts approver list `field` picks — 'accounts_booking_approvers'
+// (regular) or 'accounts_cp_booking_approvers' (Channel-Partner-sourced bookings), mirroring
+// the same split Sales uses for its own approver lists.
+function ApproverDropdown({ project, users, sel, onToggle }) {
+  const [open, setOpen] = useState(false);
+  const selNames = users.filter((m) => sel.includes(m.id)).map((m) => m.name);
+  return (
+    <div style={{ position: 'relative', flex: 1, maxWidth: 460 }}>
+      <button onClick={() => setOpen((o) => !o)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        padding: '9px 12px', borderRadius: 9, border: '1.5px solid #E0E6F0', background: '#fff', cursor: 'pointer',
+        fontSize: 13, color: selNames.length ? '#1A1A2E' : '#9CA3AF', textAlign: 'left',
+      }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: selNames.length ? 600 : 400 }}>
+          {selNames.length ? selNames.join(', ') : 'Select approvers…'}
+        </span>
+        <span style={{ color: '#8492A6', flexShrink: 0 }}>{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
+          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: '#fff',
+            border: '1px solid #E4E8F0', borderRadius: 10, boxShadow: '0 10px 30px rgba(90,110,150,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
+            {users.map((m) => {
+              const on = sel.includes(m.id);
+              return (
+                <div key={m.id} onClick={() => onToggle(project.id, m.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 7, cursor: 'pointer' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#F5F7FC'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
+                  <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 800, color: '#fff', background: on ? '#0D9488' : '#fff', border: `1.5px solid ${on ? '#0D9488' : '#CBD5E1'}` }}>{on ? '✓' : ''}</span>
+                  <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 600 }}>{m.name}</span>
+                  {m.designation && <span style={{ fontSize: 11, color: '#8492A6' }}>· {m.designation}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Rejecting requires remarks — this is the only way AccountsBookingActionView will
+// accept a reject, and those remarks are what shows up in the Rejected tab.
+function RejectModal({ b, busy, onClose, onConfirm }) {
+  const [reason, setReason] = useState('');
+  const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
+  return (
+    <div onClick={busy ? undefined : onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(15,23,42,0.3)' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#DC2626', marginBottom: 6 }}>Reject this booking?</div>
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 12, lineHeight: 1.6 }}>
+          {b.client_name || '—'} · {b.project_name || '—'} · {unit}. This frees the unit back to <b>available</b>
+          {' '}and marks the booking rejected. The STM and the Sales/CP approver(s) for this project will be notified with your remarks below.
+        </p>
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Remarks (required) — why is this being rejected?"
+          rows={4} style={{ width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1.5px solid #E0E6F0', padding: 10, fontSize: 13, resize: 'vertical', marginBottom: 16 }} />
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} disabled={busy}
+            style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            Cancel
+          </button>
+          <button onClick={() => reason.trim() && onConfirm(reason.trim())} disabled={busy || !reason.trim()}
+            style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: (busy || !reason.trim()) ? '#F3B4B4' : '#DC2626', color: '#fff', fontSize: 13, fontWeight: 800, cursor: (busy || !reason.trim()) ? 'not-allowed' : 'pointer' }}>
+            {busy ? 'Rejecting…' : 'Yes, Reject'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Cancelling frees the unit and destroys the signed LOI — irreversible, so spell out
+// exactly which booking is going and what it costs before letting it through. Mirrors
+// Sales' own CancelBookingModal exactly (same endpoint, same consequence).
+function CancelBookingModal({ b, busy, onClose, onConfirm }) {
+  const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
+  return (
+    <div onClick={busy ? undefined : onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(15,23,42,0.3)' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#DC2626', marginBottom: 6 }}>Cancel this booking?</div>
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16, lineHeight: 1.6 }}>
+          This frees the unit back to <b>available</b>, permanently deletes the signed
+          {' '}{isEoi(b) ? 'EOI' : 'LOI'} from storage, and removes it from conversions. It will then show under
+          {' '}<b>Cancelled</b> in Bookings. <b>This cannot be undone.</b>
+        </p>
+        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
+          {[['Client', b.client_name || '—'], ['Project', b.project_name || '—'], ['Unit', unit], ['Amount', rupee(b.final_amount)]].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '4px 0' }}>
+              <span style={{ fontSize: 12, color: '#8492A6', fontWeight: 600 }}>{k}</span>
+              <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 700, textAlign: 'right' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} disabled={busy}
+            style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            Keep Booking
+          </button>
+          <button onClick={onConfirm} disabled={busy}
+            style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: busy ? '#F3B4B4' : '#DC2626', color: '#fff', fontSize: 13, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            {busy ? 'Cancelling…' : 'Yes, Cancel Booking'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Accounts & Finance — Approvals: review every sales booking (LOI + EOI), grouped by
+// project, and (for configured Accounts approvers) approve/reject each one's separate
+// Accounts-stage sign-off. A booking now only counts as truly "in Accounts" once
+// approved here — Sales/CP approval alone just puts it in the Pending tab. Once
+// approved it also moves to the Bookings ledger; Cancel (undoing that approval, same
+// as Sales' own Cancel Booking) lives here too, in the Approved tab.
+export default function ModuleApprovalsPage() {
+  const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
+  // Who may configure the Accounts approver lists — an Accounts Admin-Modules user
+  // (or a real admin) — mirrors Sales' own gate (isAdmin in sales/bookings/page.js),
+  // just checked against the Accounts & Finance module instead of Sales.
+  const isAccountsAdmin = me?.role === 'Admin' || me?.is_staff || (me?.admin_modules || []).includes('Accounts & Finance');
+
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-  const [tab, setTab] = useState('approved');
+  const [tab, setTab] = useState('pending');
+  const [busy, setBusy] = useState(null);
+  const [toReject, setToReject] = useState(null);  // booking awaiting reject-with-remarks
+  const [toCancel, setToCancel] = useState(null);  // approved booking awaiting cancel confirmation
   const [open, setOpen] = useState({});
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
   const [detailsOpen, setDetailsOpen] = useState({});
@@ -85,11 +210,48 @@ export default function ModuleBookingsPage() {
       setRevs((m) => ({ ...m, [id]: [] }));
     }
   }
-  // Same filters as the Approvals view: search, booking date, project, STM.
+  // Same filters as the Sales approvals view: search, booking date, project, STM.
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');   // '' = every project
   const [stm, setStm] = useState('');     // '' = every STM
+
+  // Approver Setup — Accounts-stage approvers, by project (regular + Channel Partner).
+  const [cfgOpen, setCfgOpen] = useState(false);
+  const [cpCfgOpen, setCpCfgOpen] = useState(false);
+  const [savedCfg, setSavedCfg] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [accountsUsers, setAccountsUsers] = useState([]);
+
+  useEffect(() => {
+    if (!isAccountsAdmin) return;
+    fetch(SALES_ENDPOINTS.projects + cq('?'), { headers: authHeaders() }).then(r => r.json()).then((d) => setProjects(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch(SALES_ENDPOINTS.accountsModuleUsers + cq('&'), { headers: authHeaders() }).then(r => r.json()).then((d) => setAccountsUsers(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [isAccountsAdmin, companyId]);
+
+  // `field` picks which approver list to edit — mirrors Sales' own toggleApprover.
+  async function toggleApprover(projId, uid, field) {
+    let prev = [];
+    let next = [];
+    setProjects((ps) => ps.map((p) => {
+      if (p.id !== projId) return p;
+      prev = p[field] || [];
+      next = prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid];
+      return { ...p, [field]: next };
+    }));
+    const r = await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => null);
+    if (!r || !r.ok) {
+      // Undo the optimistic tick and say so — a save that never reached the server
+      // must not sit there looking checked. Silently swallowing this (the old
+      // behaviour) is exactly how several projects here ended up missing an
+      // approver that the panel had shown as "Saved ✓": nothing surfaced the
+      // failure at the time, so it only reappeared as a mystery on the next visit.
+      setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
+      alert('Could not save this approver — please try again.');
+      return;
+    }
+    setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
+  }
 
   function load() {
     setLoading(true); setErr('');
@@ -100,15 +262,42 @@ export default function ModuleBookingsPage() {
   }
   useEffect(() => { load(); }, [companyId]);
 
-  // Cancelled sits on approval_status, not accounts_status — cancelling (from the
-  // Approvals page) marks the whole booking CANCELLED the same way Sales' own
-  // Cancel Booking does, regardless of which side's approver triggered it. Matched
-  // as a substring (not an exact 'CANCELLED') so any historical variant of the
-  // string still lands here rather than silently falling through both tabs.
-  const isCancelled = (b) => String(b.approval_status || '').toUpperCase().includes('CANCEL');
+  async function act(id, action, reason) {
+    setBusy(id);
+    const r = await fetch(SALES_ENDPOINTS.bookingAccountsAction(id) + cq('?'), {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(reason ? { action, reason } : { action }),
+    }).catch(() => null);
+    if (!r || !r.ok) {
+      const d = r ? await r.json().catch(() => ({})) : {};
+      alert((action === 'approve' ? 'Approve' : 'Reject') + ' failed: ' + (d.detail || 'Network error.'));
+    }
+    setBusy(null); setToReject(null); load();
+  }
+
+  // Cancelling an approved booking goes through its closure: that endpoint frees the
+  // plot(s), purges the signed LOI from storage and marks the booking CANCELLED — the
+  // same endpoint Sales' own Cancel Booking uses, now also reachable by an Accounts
+  // approver for the booking's project (see ClosureCancelView's dual-authority gate).
+  async function cancelBooking(b) {
+    setBusy(b.id);
+    try {
+      const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders() });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); alert('Cancel failed: ' + (d.detail || r.status)); }
+    } catch (e) { alert(e.message); }
+    setToCancel(null); setBusy(null); load();
+  }
+
+  // Accounts-stage tabs — distinct from the Sales/CP `status`/`approval_status` a
+  // booking already carries. A booking only shows up here once Sales/CP has sold it;
+  // one still awaiting THAT approval (or rejected/cancelled at that stage) never
+  // reaches any of these three tabs, same as before this feature existed. A booking
+  // cancelled after Accounts approval (approval_status='CANCELLED') drops out of
+  // Approved too — it belongs to the Cancelled view in Bookings, not here.
+  const isCancelled = (b) => String(b.approval_status || '').toUpperCase() === 'CANCELLED';
   const inTab = {
-    approved:  (b) => b.status === 'sold' && b.accounts_status === 'approved' && !isCancelled(b),
-    cancelled: isCancelled,
+    pending:  (b) => b.status === 'sold' && b.accounts_status === 'pending',
+    approved: (b) => b.status === 'sold' && b.accounts_status === 'approved' && !isCancelled(b),
+    rejected: (b) => b.accounts_status === 'rejected',
   }[tab];
   const tabRows = rows.filter(inTab);
 
@@ -153,9 +342,12 @@ export default function ModuleBookingsPage() {
     .filter((b) => matches(b) && inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
     .forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
-  // Latest first — by accounts approval time for the ledger, falling back to the
-  // Sales approval for historical bookings grandfathered in before that field existed.
-  const sortKey = (b) => (b.accounts_approved_at || b.approved_at || '');
+  // Rejected/Pending: latest first by when that Accounts action happened / booking was
+  // sold. Approved: latest accounts-approval first — falls back to approved_at (the
+  // Sales approval) for historical bookings grandfathered in before this field existed.
+  const sortKey = (b) => tab === 'rejected' ? (b.accounts_rejected_at || '')
+    : tab === 'approved' ? (b.accounts_approved_at || b.approved_at || '')
+    : (b.approved_at || '');
   projectNames.forEach((pn) => groups[pn].sort((a, b) => sortKey(b).localeCompare(sortKey(a))));
   const projectTotal = (pn) => groups[pn].reduce((s, b) => s + (Number(b.final_amount) || 0), 0);
   const grandTotal = projectNames.reduce((s, pn) => s + projectTotal(pn), 0);
@@ -164,8 +356,48 @@ export default function ModuleBookingsPage() {
 
   return (
     <div style={{ padding: '28px 32px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Bookings</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>Approved bookings and cancellations, project-wise · view only — approve, reject or cancel from Approvals</p>
+      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Approvals</h1>
+      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>LOI &amp; EOI bookings, project-wise — approve, reject, or cancel each one's Accounts-stage sign-off</p>
+
+      {isAccountsAdmin && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginTop: 16, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
+          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#0D9488', padding: 0 }}>
+            ⚙ Accounts Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
+          </button>
+          {cfgOpen && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 8 }}>For each project, pick who signs off on its bookings at the Accounts stage. A booking only leaves the Pending tab once one of them approves it.</div>
+              {accountsUsers.length === 0 ? <div style={{ fontSize: 13, color: '#8492A6' }}>No one has Accounts &amp; Finance module access yet.</div> : projects.map((p) => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F0F3FA' }}>
+                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{p.name}</div>
+                  <ApproverDropdown project={p} users={accountsUsers} sel={p.accounts_booking_approvers || []}
+                    onToggle={(pid, uid) => toggleApprover(pid, uid, 'accounts_booking_approvers')} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {isAccountsAdmin && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', marginTop: 12, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
+          <button onClick={() => setCpCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#0D9488', padding: 0 }}>
+            ⚙ Channel Partner Accounts Approvers — by project {cpCfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#15803D', fontWeight: 700 }}> {savedCfg}</span>}
+          </button>
+          {cpCfgOpen && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, color: '#8492A6', marginBottom: 8 }}>Same idea, but for bookings whose lead came through a Channel Partner — routed to this separate list instead.</div>
+              {accountsUsers.length === 0 ? <div style={{ fontSize: 13, color: '#8492A6' }}>No one has Accounts &amp; Finance module access yet.</div> : projects.map((p) => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F0F3FA' }}>
+                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{p.name}</div>
+                  <ApproverDropdown project={p} users={accountsUsers} sel={p.accounts_cp_booking_approvers || []}
+                    onToggle={(pid, uid) => toggleApprover(pid, uid, 'accounts_cp_booking_approvers')} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, marginTop: 18, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -217,8 +449,8 @@ export default function ModuleBookingsPage() {
       )}
 
       {!loading && !err && projectNames.length > 0 && (
-        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: tab === 'cancelled' ? 'linear-gradient(135deg,#475569,#334155)' : 'linear-gradient(135deg,#0D9488,#0F766E)', borderRadius: 14, padding: '16px 20px', boxShadow: tab === 'cancelled' ? '0 2px 8px rgba(71,85,105,0.25)' : '0 2px 8px rgba(13,148,136,0.25)' }}>
-          <div style={{ color: tab === 'cancelled' ? '#E2E8F0' : '#CCFBF1', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'linear-gradient(135deg,#0D9488,#0F766E)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 2px 8px rgba(13,148,136,0.25)' }}>
+          <div style={{ color: '#CCFBF1', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}
@@ -269,13 +501,15 @@ export default function ModuleBookingsPage() {
                         <div style={{ marginTop: 4 }}><span style={statusPill(b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span></div>
                         {tab === 'approved' && b.accounts_approved_at && <div style={{ fontSize: 11, color: '#15803D', marginTop: 4 }}>Accounts approved {fmtDateTime(b.accounts_approved_at)}{b.accounts_approved_by_name ? ` · ${b.accounts_approved_by_name}` : ''}</div>}
                         {tab === 'approved' && !b.accounts_approved_at && b.approved_at && <div style={{ fontSize: 11, color: '#8492A6', marginTop: 4 }}>Approved {fmtDateTime(b.approved_at)}</div>}
+                        {tab === 'pending' && b.approved_at && <div style={{ fontSize: 11, color: '#8492A6', marginTop: 4 }}>Sold {fmtDateTime(b.approved_at)}</div>}
                       </div>
                     </div>
-                    {tab === 'cancelled' && (
+                    {tab === 'rejected' && (
                       <div style={{ marginTop: 10, background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 12px' }}>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                          Cancelled — unit released back to available
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+                          Rejected by Accounts{b.accounts_rejected_by_name ? ` · ${b.accounts_rejected_by_name}` : ''}{b.accounts_rejected_at ? ` · ${fmtDateTime(b.accounts_rejected_at)}` : ''}
                         </div>
+                        <div style={{ fontSize: 13, color: '#7F1D1D' }}>{b.accounts_rejected_reason || '—'}</div>
                       </div>
                     )}
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -300,6 +534,22 @@ export default function ModuleBookingsPage() {
                         <button onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#fff', color: '#334155', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           ⟲ Revisions {revOpen[b.id] ? '▲' : '▾'}
                         </button>
+                      )}
+                      {/* Only shown when THIS viewer is actually a configured Accounts
+                          approver for this booking's project (server-computed, so this
+                          is never the only gate — AccountsBookingActionView re-checks). */}
+                      {tab === 'pending' && b.can_accounts_approve && (
+                        <>
+                          <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#16A34A' }}>✓ Approve</button>
+                          <button onClick={() => setToReject(b)} disabled={busy === b.id} style={{ ...actBtn, background: '#DC2626' }}>✕ Reject</button>
+                        </>
+                      )}
+                      {/* Undoing an Accounts approval — same authority, same server-computed
+                          gate pattern (can_accounts_cancel), only once it has a closure to
+                          cancel through (it always will if it's status='sold'). */}
+                      {tab === 'approved' && b.can_accounts_cancel && (
+                        <button onClick={() => setToCancel(b)} disabled={busy === b.id}
+                          style={{ ...actBtn, background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}>✕ Cancel Booking</button>
                       )}
                     </div>
                     {!b.revision_no && detailsOpen[b.id] && <BookingDetails b={b} />}
@@ -347,6 +597,15 @@ export default function ModuleBookingsPage() {
           </div>
         ))}
       </div>
+
+      {toReject && (
+        <RejectModal b={toReject} busy={busy === toReject.id}
+          onClose={() => setToReject(null)} onConfirm={(reason) => act(toReject.id, 'reject', reason)} />
+      )}
+      {toCancel && (
+        <CancelBookingModal b={toCancel} busy={busy === toCancel.id}
+          onClose={() => setToCancel(null)} onConfirm={() => cancelBooking(toCancel)} />
+      )}
     </div>
   );
 }

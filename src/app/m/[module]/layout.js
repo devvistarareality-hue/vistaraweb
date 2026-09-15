@@ -23,6 +23,7 @@ function SvgIcon({ children, size = 16 }) {
 const IconGrid  = () => <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
 const IconUsers = () => <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></SvgIcon>;
 const IconBook  = () => <SvgIcon><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></SvgIcon>;
+const IconCheck = () => <SvgIcon><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
 const IconBack  = () => <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>;
 
 export default function ModuleLayout({ children, params }) {
@@ -84,8 +85,15 @@ export default function ModuleLayout({ children, params }) {
     { label: 'Overview', href: base, icon: <IconGrid /> },
     // My Team is a management view — only managers/admins see it.
     ...((isManager || isAdmin) ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
-    // Accounts & Finance: read-only view of all sales bookings (LOI / EOI details).
-    ...(slug === 'accounts' ? [{ label: 'Bookings', href: `${base}/bookings`, icon: <IconBook /> }] : []),
+    // Accounts & Finance: Approvals is the Pending/Approved/Rejected review queue
+    // (approve, reject with remarks) — same split Sales uses (its own "Approvals"
+    // nav item is the Drafts/Pending/Approved/Rejected list, separate from the
+    // record-a-closure flow). Bookings is the resulting ledger once approved —
+    // read-only besides Cancel, which lives there instead.
+    ...(slug === 'accounts' ? [
+      { label: 'Approvals', href: `${base}/approvals`, icon: <IconCheck /> },
+      { label: 'Bookings',  href: `${base}/bookings`,  icon: <IconBook /> },
+    ] : []),
   ];
   // "Back to Modules" only makes sense when the user actually has more than one module
   // to switch between (or is an admin). A single-module employee is boxed into it.
