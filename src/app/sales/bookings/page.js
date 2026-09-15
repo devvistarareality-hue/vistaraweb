@@ -88,7 +88,7 @@ function DecidedBy({ b, style }) {
 // which is why it lives in Sales and has no counterpart in the CP module. Shown only
 // to someone granted "Download booking Excel" in User Management, and to real admins;
 // the server enforces the same rule, this just avoids offering a button that 403s.
-function ExportBookings({ projects, companyId }) {
+export function ExportBookings({ projects, companyId }) {
   const me = useSelector((s) => s.auth.user);
   const allowed = me?.can_export_bookings || me?.role === 'Admin' || me?.is_staff;
   const [project, setProject] = useState('');

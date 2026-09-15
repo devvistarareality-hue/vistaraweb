@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache } from '../_cache';
 import { MyBookingsList } from '../_MyBookings';
+import { ExportBookings } from '../bookings/page';
 
 
 // Read-only project picker for the Record Closure flow. Looks like the admin
@@ -77,6 +78,14 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
           {sv ? <>For <strong style={{ color: '#3D5AFE' }}>{sv.lead_name}</strong> · {sv.lead_phone}. Pick the project, then choose the booked unit.</>
               : <>Pick a project to view its units.</>}
         </p>
+      )}
+
+      {/* The booking export. Also on Approvals, but that page is manager-only in the
+          sidebar — anyone granted the permission needs to reach it from here too. */}
+      {view === 'mybookings' && !cpOnly && (
+        <div style={{ marginBottom: 16 }}>
+          <ExportBookings projects={projects} companyId={companyId} />
+        </div>
       )}
 
       {view === 'mybookings' ? <MyBookingsList cpOnly={cpOnly} /> : (
