@@ -171,10 +171,12 @@ export default function ModuleApprovalsPage() {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
-  // Who may configure the Accounts approver lists — an Accounts Admin-Modules user
-  // (or a real admin) — mirrors Sales' own gate (isAdmin in sales/bookings/page.js),
-  // just checked against the Accounts & Finance module instead of Sales.
-  const isAccountsAdmin = me?.role === 'Admin' || me?.is_staff || (me?.admin_modules || []).includes('Accounts & Finance');
+  // Who may configure the Accounts approver lists — a real admin only. Unlike
+  // Sales' own gate (isAdmin in sales/bookings/page.js), an Accounts Admin-Modules
+  // user does NOT get this — who can approve money-stage sign-offs is deliberately
+  // restricted tighter than Sales' own approver setup. Mirrors the matching
+  // server-side gate in ProjectDetailView.patch.
+  const isAccountsAdmin = me?.role === 'Admin' || me?.is_staff;
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
