@@ -54,6 +54,65 @@ function subtreeIds(rootId, childrenOf) {
 
 // "My Bookings" — the bookings the logged-in user submitted, grouped project → plot,
 // with a Revise LOI action. Rendered inside the Booking page under a toggle.
+// Who decided this booking, and when — the Sales/CP stage, not the Accounts one.
+// A deal on the books should name the person who put it there, and a cancellation
+// should name whoever took a live sale off them.
+function decidedBy(b) {
+  if (b.cancelled_by_name) return { label: 'Cancelled by', who: b.cancelled_by_name, at: b.cancelled_at, tone: '#475569' };
+  if (b.rejected_by_name)  return { label: 'Rejected by',  who: b.rejected_by_name,  at: b.rejected_at,  tone: '#DC2626' };
+  if (b.approved_by_name)  return { label: 'Approved by',  who: b.approved_by_name,  at: b.approved_at,  tone: '#15803D' };
+  return null;
+}
+
+// Full ISO timestamps render as date + time in IST, matching the backend's TIME_ZONE.
+function decidedWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return ' · ' + d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
+       + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+}
+
+// A sale now clears two gates: the Sales/CP approver puts it on the books, then
+// Accounts signs it off, and only then is the unit actually gone — until that second
+// sign-off the unit sits on hold, not sold. A rep reading only "APPROVED" would think
+// the deal was done, so both gates are shown, in order, on the same card.
+function DecidedBy({ b, style }) {
+  const d = decidedBy(b);
+  const acc = b.accounts_status;
+  // The Accounts gate only means anything once Sales/CP has approved. A rejected or
+  // cancelled deal never reaches it, and a pending one has not got there yet.
+  const showAccounts = b.status === 'sold' && !b.cancelled_by_name;
+  if (!d && !showAccounts) return null;
+  return (
+    <div style={{ marginTop: 4, ...style }}>
+      {d && (
+        <div style={{ fontSize: 11.5, color: d.tone, fontWeight: 600 }}>
+          {d.label} {d.who}<span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
+        </div>
+      )}
+      {showAccounts && acc === 'approved' && (
+        <div style={{ fontSize: 11.5, color: '#0D9488', fontWeight: 600 }}>
+          Accounts approved{b.accounts_approved_by_name ? ` by ${b.accounts_approved_by_name}` : ''}
+          <span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(b.accounts_approved_at)}</span>
+        </div>
+      )}
+      {showAccounts && acc === 'pending' && (
+        <div style={{ fontSize: 11.5, color: '#B45309', fontWeight: 600 }}>
+          Awaiting Accounts approval <span style={{ color: '#8492A6', fontWeight: 500 }}>· unit held, not yet sold</span>
+        </div>
+      )}
+      {showAccounts && acc === 'rejected' && (
+        <div style={{ fontSize: 11.5, color: '#DC2626', fontWeight: 600 }}>
+          Accounts rejected{b.accounts_rejected_by_name ? ` by ${b.accounts_rejected_by_name}` : ''}
+          <span style={{ color: '#8492A6', fontWeight: 500 }}>{decidedWhen(b.accounts_rejected_at)}</span>
+          {b.accounts_rejected_reason ? <span style={{ color: '#8492A6', fontWeight: 500 }}> · {b.accounts_rejected_reason}</span> : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MyBookingsList({ cpOnly = false }) {
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -348,10 +407,18 @@ export function MyBookingsList({ cpOnly = false }) {
                       {b.phone} · Booked {b.booking_date || '—'}
                       {b.stm_name ? ` · STM: ${b.stm_name}` : ''}
                     </div>
+                    <DecidedBy b={b} />
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
-                    <span style={statusPill(isCancelled(b) ? 'cancelled' : b.status)}>{(b.approval_status || b.status || '').toUpperCase()}</span>
+                    {(() => {
+                      const awaiting = b.status === 'sold' && b.accounts_status === 'pending';
+                      const key = isCancelled(b) ? 'cancelled' : awaiting ? 'pending' : b.status;
+                      const text = b.accounts_status === 'rejected' ? 'REJECTED BY ACCOUNTS'
+                        : awaiting ? 'AWAITING ACCOUNTS'
+                        : (b.approval_status || b.status || '').toUpperCase();
+                      return <span style={statusPill(key)}>{text}</span>;
+                    })()}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
@@ -452,6 +519,9 @@ export function MyBookingsList({ cpOnly = false }) {
   );
 }
 
+// A booking that Sales/CP has approved but Accounts has not is NOT a finished sale —
+// the unit is on hold, not sold. Showing a green APPROVED there told a rep the deal
+// was done a stage early, so the pill says what is actually true.
 function statusPill(s) {
   const map = { draft: ['#3D5AFE', '#EEF1FF'], pending: ['#B45309', '#FEF3C7'], sold: ['#15803D', '#E8F5E9'], rejected: ['#DC2626', '#FEE2E2'], hold: ['#B45309', '#FEF3C7'], cancelled: ['#475569', '#F1F5F9'] };
   const [c, bg] = map[s] || ['#6B7280', '#F3F4F6'];
