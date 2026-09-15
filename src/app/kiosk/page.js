@@ -173,9 +173,11 @@ export default function KioskPage() {
       {/* Top bar */}
       <header className="k-header">
         <div className="k-brand">
-          <div className="k-logo">V</div>
+          <div className="k-logo">{(user?.company_name || 'Nexora').trim().charAt(0).toUpperCase()}</div>
           <div>
-            <div className="k-brand-name">Vistara Realty</div>
+            {/* The ERP is company-wise, so the kiosk wears the tenant's name rather
+                than a hardcoded one — it used to read "Vistara Realty" for everybody. */}
+            <div className="k-brand-name">{user?.company_name || 'Nexora'}</div>
             <div className="k-brand-sub">Self-Service Booking Kiosk</div>
           </div>
         </div>
