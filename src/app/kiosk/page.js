@@ -75,7 +75,10 @@ export default function KioskPage() {
 
   useEffect(() => {
     if (!user) return;
-    fetch(SALES_ENDPOINTS.projects, { headers: authHeaders() })
+    // ?full=1: the kiosk draws the site map straight from the project it picks out
+    // of this list, so it is one of the few callers that needs the floor plans and
+    // zones the list otherwise leaves out.
+    fetch(SALES_ENDPOINTS.projects + '?full=1', { headers: authHeaders() })
       .then((r) => r.json())
       .then((arr) => setProjects((Array.isArray(arr) ? arr : []).filter((p) => p.kiosk_enabled && p.is_active)))
       .catch(() => setProjects([]));

@@ -531,6 +531,16 @@ export default function ProjectsPage() {
   const [loading,  setLoading]  = useState(true);
   const [showModal, setShowModal] = useState(null); // null | 'add' | project obj
 
+  // The project list leaves out floor plans and site-map zones — they are the bulk of
+  // that response and no list screen draws them. The edit form does need them, so it
+  // opens on the full record; if that request fails it falls back to the list row,
+  // which is exactly what it used to get.
+  async function openEdit(p) {
+    const full = await fetch(SALES_ENDPOINTS.project(p.id) + cq, { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    setShowModal(full || p);
+  }
+
   useEffect(() => {
     const cached = getCache(cKey);
     if (cached) { setProjects(cached); setLoading(false); return; }
@@ -658,7 +668,7 @@ export default function ProjectsPage() {
                     <button onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
                       Manage Plots
                     </button>
-                    <button onClick={() => setShowModal(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
+                    <button onClick={() => openEdit(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
                     <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#E65100' : '#2E7D32', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
                       {p.is_active ? 'Deactivate' : 'Activate'}
                     </button>
