@@ -444,6 +444,24 @@ export default function ModuleBookingsPage() {
                         </div>
                         <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{b.phone} · STM {b.stm_name || '—'}</div>
                         <div style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>Booked {fmtDateTime(b.created_at)}</div>
+                        {/* The Sales/CP decision. Accounts already shows its own stage
+                            on the right; this is who put the deal on the books, or
+                            took it off them. */}
+                        {b.cancelled_by_name && (
+                          <div style={{ fontSize: 11, color: '#475569', marginTop: 2, fontWeight: 600 }}>
+                            Cancelled by {b.cancelled_by_name}{b.cancelled_at ? ` · ${fmtDateTime(b.cancelled_at)}` : ''}
+                          </div>
+                        )}
+                        {!b.cancelled_by_name && b.rejected_by_name && (
+                          <div style={{ fontSize: 11, color: '#DC2626', marginTop: 2, fontWeight: 600 }}>
+                            Rejected by {b.rejected_by_name}{b.rejected_at ? ` · ${fmtDateTime(b.rejected_at)}` : ''}
+                          </div>
+                        )}
+                        {!b.cancelled_by_name && !b.rejected_by_name && b.approved_by_name && (
+                          <div style={{ fontSize: 11, color: '#15803D', marginTop: 2, fontWeight: 600 }}>
+                            Approved by {b.approved_by_name}{b.approved_at ? ` · ${fmtDateTime(b.approved_at)}` : ''}
+                          </div>
+                        )}
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: '#0D47A1' }}>{rupee(b.final_amount)}</div>
