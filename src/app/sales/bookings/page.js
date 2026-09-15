@@ -131,6 +131,9 @@ export function ExportBookings({ projects, companyId }) {
                  cursor: busy ? 'default' : 'pointer', background: '#2E7D32', color: '#fff', opacity: busy ? 0.7 : 1 }}>
         {busy ? 'Preparing…' : '⤓ Excel'}
       </button>
+      {/* Says what the sheet holds, because this control also sits above My Bookings
+          and the download is emphatically not that list. */}
+      <span style={{ fontSize: 12, color: '#8492A6' }}>All approved bookings · Sales + CP</span>
       {err && <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 600 }}>{err}</span>}
     </div>
   );
