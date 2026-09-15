@@ -283,12 +283,18 @@ export function MyBookingsList({ cpOnly = false }) {
   const cpCount = preWho.filter(isCp).length;
   const nonCpCount = preWho.length - cpCount;
   const showSource = cpCount > 0 && nonCpCount > 0;
+  // Resale cuts across people and sources alike, so it is its own complete slice: a
+  // unit resold and a unit sold for the first time, together making up the list.
+  const resaleCount = preWho.filter((b) => b.is_resale).length;
+  const firstSaleCount = preWho.length - resaleCount;
 
-  const whoSet = !who || who === 'cp' || who === 'noncp' ? null
+  const whoSet = !who || ['cp', 'noncp', 'resale', 'firstsale'].includes(who) ? null
     : who === myId ? new Set([myId]) : subtreeIds(who, childrenOf);
   const byWho = (b) => (!who ? true
     : who === 'cp' ? isCp(b)
     : who === 'noncp' ? !isCp(b)
+    : who === 'resale' ? !!b.is_resale
+    : who === 'firstsale' ? !b.is_resale
     : whoSet.has(bookedById(b)));
 
   const visible = preWho.filter(byWho);
@@ -363,6 +369,12 @@ export function MyBookingsList({ cpOnly = false }) {
                 through whoever on their team closed them. Shown only when the split
                 is a real one — an all-or-nothing source tells you nothing, and the
                 zero half is a dead option. */}
+            {(resaleCount > 0 || who === 'resale' || who === 'firstsale') && (
+              <optgroup label={`By type · adds up to ${preWho.length}`}>
+                <option value="resale">{`Resale (${resaleCount})`}</option>
+                <option value="firstsale">{`First sale (${firstSaleCount})`}</option>
+              </optgroup>
+            )}
             {(showSource || who === 'cp' || who === 'noncp') && (
               <optgroup label={`By source · adds up to ${preWho.length}`}>
                 <option value="cp">{`Source: CP (${cpCount})`}</option>

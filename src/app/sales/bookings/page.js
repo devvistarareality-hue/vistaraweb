@@ -127,6 +127,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const [range, setRange] = useState({ from: '', to: '' });
   const [stm, setStm] = useState('');     // '' = every STM
   const [proj, setProj] = useState('');   // '' = every project
+  // Resale cuts across every status — a resold unit can be pending, approved or
+  // cancelled — so it is a filter beside the others rather than a tab of its own.
+  const [resale, setResale] = useState('');   // '' = both, 'yes' = resales only
   const [toCancel, setToCancel] = useState(null);   // booking awaiting cancel confirmation
 
   useEffect(() => {
@@ -253,9 +256,11 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(rows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = !!ql || dated || !!stm || !!proj;
+  const narrowed = !!ql || dated || !!stm || !!proj || !!resale;
+  const resaleCount = rows.filter((b) => b.is_resale).length;
   const visible = rows.filter((b) => matches(b) && inRange(b)
-    && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj));
+    && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj)
+    && (!resale || b.is_resale));
 
   // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
   // applied to whichever tab is selected so approvers keep their per-booking actions.
@@ -402,6 +407,17 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
             <option value="">All STMs</option>
             {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
+        )}
+        {/* Only offered when this tab actually holds one — a filter that can only
+            ever return nothing is a way to waste a click. */}
+        {resaleCount > 0 && (
+          <button onClick={() => setResale(resale ? '' : 'yes')}
+            title="Units sold once, put back on the market and sold again"
+            style={{ height: 36, padding: '0 14px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', border: `1.5px solid ${resale ? '#0369A1' : '#E0E6F0'}`,
+              background: resale ? '#E0F2FE' : '#fff', color: resale ? '#0369A1' : '#8492A6' }}>
+            Resale ({resaleCount})
+          </button>
         )}
       </div>
 
