@@ -45,7 +45,7 @@ function statusPill(s) {
   return { display: 'inline-block', fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
 
-const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']];
+const TABS = [['awaiting_sales', 'Awaiting Sales'], ['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']];
 const actBtn = { padding: '8px 16px', borderRadius: 8, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 
 // Which project id's Accounts approver list `field` picks — 'accounts_booking_approvers'
@@ -288,19 +288,21 @@ export default function ModuleApprovalsPage() {
   }
 
   // Accounts-stage tabs — distinct from the Sales/CP `status`/`approval_status` a
-  // booking already carries. Pending covers the whole pipeline leading up to an
-  // Accounts decision: a booking still awaiting Sales/CP (status='pending' — same
-  // rule for a Channel-Partner-sourced one, no separate CP view here) is shown
-  // read-only, purely so Accounts can see it's in progress; can_accounts_approve is
-  // false for it (approving requires status='sold' first), so Approve/Reject simply
-  // don't render — it stays "just shown" until Sales/CP approves it. Rejected or
-  // cancelled at that earlier stage never reaches any of these three tabs, same as
+  // booking already carries. Awaiting Sales is a read-only view into the earlier
+  // stage of the pipeline: a booking still awaiting Sales/CP itself (status=
+  // 'pending' — same rule for a Channel-Partner-sourced one, no separate CP view
+  // needed) hasn't reached Accounts yet, so it sits in its own tab rather than
+  // mixed into Pending. can_accounts_approve is false for it either way (approving
+  // requires status='sold' first), so Approve/Reject simply don't render there —
+  // it stays "just shown" until Sales/CP actually approves it. Rejected or
+  // cancelled at that earlier stage never reaches any of these tabs, same as
   // before this feature existed. A booking cancelled after Accounts approval
   // (approval_status='CANCELLED') drops out of Approved too — it belongs to the
   // Cancelled view in Bookings, not here.
   const isCancelled = (b) => String(b.approval_status || '').toUpperCase() === 'CANCELLED';
   const inTab = {
-    pending:  (b) => b.status === 'pending' || (b.status === 'sold' && b.accounts_status === 'pending'),
+    awaiting_sales: (b) => b.status === 'pending',
+    pending:  (b) => b.status === 'sold' && b.accounts_status === 'pending',
     approved: (b) => b.status === 'sold' && b.accounts_status === 'approved' && !isCancelled(b),
     rejected: (b) => b.accounts_status === 'rejected',
   }[tab];
@@ -350,8 +352,11 @@ export default function ModuleApprovalsPage() {
   // Rejected/Pending: latest first by when that Accounts action happened / booking was
   // sold. Approved: latest accounts-approval first — falls back to approved_at (the
   // Sales approval) for historical bookings grandfathered in before this field existed.
+  // Awaiting Sales has no approval timestamp yet at all, so it sorts by when it was
+  // booked instead.
   const sortKey = (b) => tab === 'rejected' ? (b.accounts_rejected_at || '')
     : tab === 'approved' ? (b.accounts_approved_at || b.approved_at || '')
+    : tab === 'awaiting_sales' ? (b.created_at || '')
     : (b.approved_at || '');
   projectNames.forEach((pn) => groups[pn].sort((a, b) => sortKey(b).localeCompare(sortKey(a))));
   const projectTotal = (pn) => groups[pn].reduce((s, b) => s + (Number(b.final_amount) || 0), 0);
