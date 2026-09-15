@@ -630,7 +630,13 @@ function BookingPage() {
   // Applies to all three schedules (unit price, extra work charges, extra work) and so
   // to every pricing model and to EOIs, which share this table.
   const rebaseRows = (arr, b) => {
-    if (!arr.length || !b) return arr;
+    // b=0 must still rebase (every amount collapses to 0) — only an empty schedule
+    // has nothing to do. The old `|| !b` guard here (and the matching one in
+    // useRebase below) skipped rebasing entirely once the base went to zero, so an
+    // installment that had a real amount from an earlier, non-zero base kept that
+    // stale figure forever — invisible in the %-only total shown on screen, but
+    // still exactly what got saved and put on the signed LOI/EOI.
+    if (!arr.length) return arr;
     const next = arr.map((r) => {
       const pct = parseFloat(r.pct) || 0;
       return pct ? { ...r, amt: String(Math.round(b * pct / 100)) } : r;
@@ -643,7 +649,9 @@ function BookingPage() {
     if (last > 0 && Math.abs(pctSum - 100) < 0.5) {
       const used = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
       const rem = Math.max(0, Math.round(b - used));
-      next[last] = { ...next[last], amt: String(rem), pct: String(parseFloat((rem / b * 100).toFixed(2))) };
+      // b=0 here would divide by zero (Infinity/NaN) — the remainder itself is
+      // always 0 in that case, so the row's % is just as meaningless: 0 is correct.
+      next[last] = { ...next[last], amt: String(rem), pct: b ? String(parseFloat((rem / b * 100).toFixed(2))) : '0' };
     }
     return next;
   };
@@ -652,7 +660,7 @@ function BookingPage() {
     useEffect(() => {
       if (prev.current === b) return;
       prev.current = b;
-      if (b) setRows((arr) => rebaseRows(arr, b));
+      setRows((arr) => rebaseRows(arr, b));
     }, [b]);
   };
   useRebase(base, setInsts);
