@@ -288,14 +288,19 @@ export default function ModuleApprovalsPage() {
   }
 
   // Accounts-stage tabs — distinct from the Sales/CP `status`/`approval_status` a
-  // booking already carries. A booking only shows up here once Sales/CP has sold it;
-  // one still awaiting THAT approval (or rejected/cancelled at that stage) never
-  // reaches any of these three tabs, same as before this feature existed. A booking
-  // cancelled after Accounts approval (approval_status='CANCELLED') drops out of
-  // Approved too — it belongs to the Cancelled view in Bookings, not here.
+  // booking already carries. Pending covers the whole pipeline leading up to an
+  // Accounts decision: a booking still awaiting Sales/CP (status='pending' — same
+  // rule for a Channel-Partner-sourced one, no separate CP view here) is shown
+  // read-only, purely so Accounts can see it's in progress; can_accounts_approve is
+  // false for it (approving requires status='sold' first), so Approve/Reject simply
+  // don't render — it stays "just shown" until Sales/CP approves it. Rejected or
+  // cancelled at that earlier stage never reaches any of these three tabs, same as
+  // before this feature existed. A booking cancelled after Accounts approval
+  // (approval_status='CANCELLED') drops out of Approved too — it belongs to the
+  // Cancelled view in Bookings, not here.
   const isCancelled = (b) => String(b.approval_status || '').toUpperCase() === 'CANCELLED';
   const inTab = {
-    pending:  (b) => b.status === 'sold' && b.accounts_status === 'pending',
+    pending:  (b) => b.status === 'pending' || (b.status === 'sold' && b.accounts_status === 'pending'),
     approved: (b) => b.status === 'sold' && b.accounts_status === 'approved' && !isCancelled(b),
     rejected: (b) => b.accounts_status === 'rejected',
   }[tab];
