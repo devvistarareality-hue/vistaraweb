@@ -649,9 +649,12 @@ function BookingPage() {
     if (last > 0 && Math.abs(pctSum - 100) < 0.5) {
       const used = next.slice(0, last).reduce((a, r) => a + (parseFloat(r.amt) || 0), 0);
       const rem = Math.max(0, Math.round(b - used));
-      // b=0 here would divide by zero (Infinity/NaN) — the remainder itself is
-      // always 0 in that case, so the row's % is just as meaningless: 0 is correct.
-      next[last] = { ...next[last], amt: String(rem), pct: b ? String(parseFloat((rem / b * 100).toFixed(2))) : '0' };
+      // b=0 would divide by zero (Infinity/NaN) computing this row's %. Leave the %
+      // as-is instead of zeroing it — every other row in the map above already keeps
+      // its % untouched when the base is 0 (only amt collapses to 0), so this row
+      // should match: a % the schedule can still resum to 100 against once the base
+      // is real again, not a percentage this rebase itself just erased.
+      next[last] = { ...next[last], amt: String(rem), pct: b ? String(parseFloat((rem / b * 100).toFixed(2))) : next[last].pct };
     }
     return next;
   };
