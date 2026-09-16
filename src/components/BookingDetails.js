@@ -9,12 +9,12 @@
 const money0 = (n) => (n === '' || n == null) ? '—' : '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const val = (v) => (v === '' || v == null) ? '—' : String(v);
 const Row2 = ({ label, value }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '5px 0', borderBottom: '1px solid #F1F5F9' }}>
-    <span style={{ fontSize: 11, color: '#8492A6', fontWeight: 600 }}>{label}</span>
-    <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 700, textAlign: 'right' }}>{value}</span>
+  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '5px 0', borderBottom: '1px solid #F4F5F7' }}>
+    <span style={{ fontSize: 11, color: '#6E7278', fontWeight: 600 }}>{label}</span>
+    <span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 700, textAlign: 'right' }}>{value}</span>
   </div>
 );
-const Group = ({ title, children, accent = '#0D9488' }) => (
+const Group = ({ title, children, accent = '#23874A' }) => (
   <div>
     <div style={{ fontSize: 10, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 }}>{title}</div>
     {children}
@@ -39,12 +39,12 @@ export function fmtDateTime(iso) {
   return `${date}, ${time}`;
 }
 
-export default function BookingDetails({ b, accent = '#0D9488' }) {
+export default function BookingDetails({ b, accent = '#23874A' }) {
   const rawInsts = Array.isArray(b.installments) ? b.installments : [];
   // Sort the payment schedule by due date ascending (yyyy-mm-dd sorts chronologically).
   const insts = [...rawInsts].sort((a, x) => String(a.date || '').localeCompare(String(x.date || '')));
   return (
-    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #CBD5E1' }}>
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #C9CDD2' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <Group title="Client & Property" accent={accent}>
           <Row2 label="Client" value={val(b.client_name)} />
@@ -103,15 +103,15 @@ export default function BookingDetails({ b, accent = '#0D9488' }) {
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 10, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>Payment Schedule</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Type'].map((h) => <th key={h} style={{ textAlign: 'left', color: '#8492A6', fontWeight: 700, fontSize: 10, padding: '4px 6px', borderBottom: '1px solid #E2E8F0' }}>{h}</th>)}</tr></thead>
+            <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Type'].map((h) => <th key={h} style={{ textAlign: 'left', color: '#6E7278', fontWeight: 700, fontSize: 10, padding: '4px 6px', borderBottom: '1px solid #DFE2E6' }}>{h}</th>)}</tr></thead>
             <tbody>
               {insts.map((i, idx) => (
                 <tr key={idx}>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{idx + 1}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{fmtDate(i.date)}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9' }}>{i.pct != null ? i.pct + '%' : '—'}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9', fontWeight: 700 }}>{money0(i.amt)}</td>
-                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F1F5F9', color: '#8492A6' }}>{i.isNsd ? 'Extra Work' : i.isExtra ? 'Legal & Other' : 'Unit Price'}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F4F5F7' }}>{idx + 1}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F4F5F7' }}>{fmtDate(i.date)}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F4F5F7' }}>{i.pct != null ? i.pct + '%' : '—'}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F4F5F7', fontWeight: 700 }}>{money0(i.amt)}</td>
+                  <td style={{ padding: '4px 6px', borderBottom: '1px solid #F4F5F7', color: '#6E7278' }}>{i.isNsd ? 'Extra Work' : i.isExtra ? 'Legal & Other' : 'Unit Price'}</td>
                 </tr>
               ))}
             </tbody>

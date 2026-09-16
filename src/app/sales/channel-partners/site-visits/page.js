@@ -8,7 +8,7 @@ import { SiteVisitsContent } from '../../site-visits/page';
 export default function ChannelPartnerSiteVisitsPage() {
   const user = useSelector((s) => s.auth.user);
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: '#8492A6' }}>Admin access only.</div>;
+    return <div style={{ padding: 40, color: '#6E7278' }}>Admin access only.</div>;
   }
 
   return <SiteVisitsContent adminView cpOnly />;

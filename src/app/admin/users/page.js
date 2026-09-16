@@ -15,23 +15,23 @@ import { needsReportingManager } from '../../../lib/orgTree';
 // unattended self-booking account -- so it sits apart at the end.
 const ROLES       = ['Director', 'General Manager', 'Manager', 'Employee', 'Intern', 'Kiosk'];
 
-const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
-const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
-const mSec = { fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 };
+const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
+const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 };
+const mSec = { fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 };
 
 function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {
   if (!open) return null;
   return (
     <div style={s.overlay} onClick={onCancel}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{title}</div>
           <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <div style={{ padding: '20px 24px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{message}</div>
+        <div style={{ padding: '20px 24px', fontSize: 14, color: '#3A3C40', lineHeight: 1.6 }}>{message}</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '0 24px 20px' }}>
-          <button onClick={onCancel} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onConfirm} style={{ padding: '10px 24px', backgroundColor: confirmColor || '#182350', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
+          <button onClick={onCancel} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onConfirm} style={{ padding: '10px 24px', backgroundColor: confirmColor || '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -111,7 +111,7 @@ export default function UserManagementPage() {
       title:        'Deactivate User',
       message:      `Deactivate ${u.name}? They will no longer be able to log in.`,
       confirmLabel: 'Deactivate',
-      confirmColor: '#EA580C',
+      confirmColor: '#D98A1F',
       onConfirm:    () => {
         opLabel.current = 'deactivated';
         dispatch(updateUser(u.id, { is_active: false }));
@@ -126,7 +126,7 @@ export default function UserManagementPage() {
       title:        'Reactivate User',
       message:      `Reactivate ${u.name}? They will regain access to the system.`,
       confirmLabel: 'Activate',
-      confirmColor: '#15803D',
+      confirmColor: '#23874A',
       onConfirm:    () => {
         opLabel.current = 'reactivated';
         dispatch(updateUser(u.id, { is_active: true }));
@@ -141,7 +141,7 @@ export default function UserManagementPage() {
       title:        'Delete User',
       message:      `Permanently delete ${u.name}? This cannot be undone and all their data will be removed.`,
       confirmLabel: 'Delete',
-      confirmColor: '#DC2626',
+      confirmColor: '#D9434B',
       onConfirm:    () => {
         dispatch(deleteUser(u.id));
         showToast(`${u.name} permanently deleted.`, 'error');
@@ -182,12 +182,12 @@ export default function UserManagementPage() {
           <h1 style={s.pageTitle}>User Management</h1>
           <div style={s.statRow}>
             <span style={s.statChip}>
-              <span style={{ ...s.statDot, backgroundColor: '#22C55E' }} />
+              <span style={{ ...s.statDot, backgroundColor: '#23874A' }} />
               {activeCount} active
             </span>
             {inactiveCount > 0 && (
               <span style={s.statChip}>
-                <span style={{ ...s.statDot, backgroundColor: '#9CA3AF' }} />
+                <span style={{ ...s.statDot, backgroundColor: '#9A9EA5' }} />
                 {inactiveCount} inactive
               </span>
             )}
@@ -195,7 +195,7 @@ export default function UserManagementPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={handleRefresh} disabled={loading} title="Refresh" style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}>↻</button>
-          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: '#fff', color: '#3D5AFE', border: '1.5px solid #C7D2FE' }}>🗂 Org Chart</button>
+          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #CCE5FF' }}>🗂 Org Chart</button>
           <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>+ Create User</button>
         </div>
       </div>
@@ -219,14 +219,14 @@ export default function UserManagementPage() {
             </thead>
             <tbody>
               {filtered.map((u) => (
-                <tr key={u.id} style={{ ...s.tr, backgroundColor: u.is_active ? '#fff' : '#F9FAFB' }}>
+                <tr key={u.id} style={{ ...s.tr, backgroundColor: u.is_active ? '#fff' : '#F4F5F7' }}>
                   <td style={s.td}><code style={{ ...s.codePill, opacity: u.is_active ? 1 : 0.55 }}>{u.user_code}</code></td>
-                  <td style={s.td}><span style={{ ...s.nameText, color: u.is_active ? '#1A1A2E' : '#9CA3AF' }}>{u.name}</span></td>
+                  <td style={s.td}><span style={{ ...s.nameText, color: u.is_active ? '#1D1D1F' : '#9A9EA5' }}>{u.name}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.email}</span></td>
                   <td style={s.td}><span style={s.rolePill}>{u.role}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.modules?.length || 0}</span></td>
                   <td style={s.td}>
-                    <span style={{ ...s.statusPill, backgroundColor: u.is_active ? '#DCFCE7' : '#F3F4F6', color: u.is_active ? '#15803D' : '#6B7280', border: `1px solid ${u.is_active ? '#86EFAC' : '#D1D5DB'}` }}>
+                    <span style={{ ...s.statusPill, backgroundColor: u.is_active ? '#E9FBEA' : '#F4F5F7', color: u.is_active ? '#23874A' : '#55585E', border: `1px solid ${u.is_active ? '#A4F5A6' : '#C9CDD2'}` }}>
                       {u.is_active ? '● Active' : '○ Inactive'}
                     </span>
                   </td>
@@ -243,7 +243,7 @@ export default function UserManagementPage() {
                 </tr>
               ))}
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={7} style={{ ...s.td, textAlign: 'center', color: '#8492A6', padding: '40px 16px' }}>No users found.</td></tr>
+                <tr><td colSpan={7} style={{ ...s.td, textAlign: 'center', color: '#6E7278', padding: '40px 16px' }}>No users found.</td></tr>
               )}
             </tbody>
           </table>
@@ -253,16 +253,16 @@ export default function UserManagementPage() {
       {/* ── Edit Modal ── */}
       {editUser && (
         <div style={s.overlay} onClick={() => setEditUser(null)}>
-          <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
 
             {/* Gradient Header */}
-            <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ background: '#1D1D1F', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Edit User</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{editUser.name} · {editUser.user_code}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: editUser.is_active ? '#86EFAC' : '#D1D5DB', backgroundColor: 'rgba(255,255,255,0.12)', padding: '3px 10px', borderRadius: 10 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: editUser.is_active ? '#A4F5A6' : '#C9CDD2', backgroundColor: 'rgba(255,255,255,0.12)', padding: '3px 10px', borderRadius: 14 }}>
                   {editUser.is_active ? '● Active' : '○ Inactive'}
                 </span>
                 <button onClick={() => setEditUser(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
@@ -294,7 +294,7 @@ export default function UserManagementPage() {
                             toggle. "Hashed, not encrypted" is the important word —
                             calling it encrypted invites "so decrypt it", and there is
                             nothing to decrypt: the original text was never stored. */}
-                        <p style={{ fontSize: 11, color: '#8492A6', margin: '5px 2px 0', lineHeight: 1.45 }}>
+                        <p style={{ fontSize: 11, color: '#6E7278', margin: '5px 2px 0', lineHeight: 1.45 }}>
                           The current password can&apos;t be shown to anyone. It isn&apos;t stored — only a
                           one-way hash of it is, which can check a password but can&apos;t be turned back
                           into one. Type a new one here to replace it, then tell them what it is.
@@ -302,7 +302,7 @@ export default function UserManagementPage() {
                       </>
                     ) : (
                       <input type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
-                        onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                        onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
                     )}
                   </div>
                 ))}
@@ -336,7 +336,7 @@ export default function UserManagementPage() {
               <div style={mSec}>Reporting Manager{needsReportingManager(form.role) ? ' *' : ''}</div>
               <div style={{ marginBottom: 18 }}>
                 <input type="text" placeholder="Search by name or user code…" value={editManagerSearch} onChange={(e) => setEditManagerSearch(e.target.value)}
-                  style={{ ...mInp, marginBottom: 8 }} onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  style={{ ...mInp, marginBottom: 8 }} onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
                 <select value={form.reporting_manager_id || ''} onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value ? Number(e.target.value) : null }))} style={{ ...mInp, cursor: 'pointer' }}>
                   <option value="">— None —</option>
                   {users.filter((u) => {
@@ -350,7 +350,7 @@ export default function UserManagementPage() {
                 {/* Said before saving rather than after: the API refuses this, and an
                     error on submit teaches the rule one failed save at a time. */}
                 {needsReportingManager(form.role) && !form.reporting_manager_id && (
-                  <p style={{ fontSize: 11, color: '#B45309', margin: '6px 2px 0', lineHeight: 1.45 }}>
+                  <p style={{ fontSize: 11, color: '#A3671A', margin: '6px 2px 0', lineHeight: 1.45 }}>
                     Required at this role. Visibility runs on the reporting tree, so with no
                     manager this person is invisible to every manager — their leads and bookings
                     appear in nobody&apos;s list.
@@ -361,8 +361,8 @@ export default function UserManagementPage() {
               <div style={mSec}>Modules</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                 {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.modules||[]).includes(mod) ? '#3D5AFE' : '#E5E7EB'}`, backgroundColor: (form.modules||[]).includes(mod) ? '#F0F3FF' : '#FAFAFA' }}>
-                    <input type="checkbox" checked={(form.modules || []).includes(mod)} onChange={() => toggleModule(mod, 'modules')} style={{ accentColor: '#3D5AFE' }} />
+                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.modules||[]).includes(mod) ? '#2F6DB5' : '#DFE2E6'}`, backgroundColor: (form.modules||[]).includes(mod) ? '#F3F9FF' : '#F5F6F7' }}>
+                    <input type="checkbox" checked={(form.modules || []).includes(mod)} onChange={() => toggleModule(mod, 'modules')} style={{ accentColor: '#2F6DB5' }} />
                     {mod}
                   </label>
                 ))}
@@ -370,12 +370,12 @@ export default function UserManagementPage() {
 
               <div style={mSec}>
                 Manager Modules
-                {isManagerRole(form) && <span style={{ textTransform: 'none', fontWeight: 500, color: '#9CA3AF', letterSpacing: 0 }}> — auto-matches Modules</span>}
+                {isManagerRole(form) && <span style={{ textTransform: 'none', fontWeight: 500, color: '#9A9EA5', letterSpacing: 0 }}> — auto-matches Modules</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                 {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.manager_modules||[]).includes(mod) ? '#3D5AFE' : '#E5E7EB'}`, backgroundColor: (form.manager_modules||[]).includes(mod) ? '#F0F3FF' : '#FAFAFA' }}>
-                    <input type="checkbox" checked={(form.manager_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'manager_modules')} style={{ accentColor: '#3D5AFE' }} />
+                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.manager_modules||[]).includes(mod) ? '#2F6DB5' : '#DFE2E6'}`, backgroundColor: (form.manager_modules||[]).includes(mod) ? '#F3F9FF' : '#F5F6F7' }}>
+                    <input type="checkbox" checked={(form.manager_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'manager_modules')} style={{ accentColor: '#2F6DB5' }} />
                     {mod}
                   </label>
                 ))}
@@ -386,8 +386,8 @@ export default function UserManagementPage() {
                   <div style={mSec}>Admin Modules</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                     {ALL_MODULES.map((mod) => (
-                      <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.admin_modules||[]).includes(mod) ? '#3D5AFE' : '#E5E7EB'}`, backgroundColor: (form.admin_modules||[]).includes(mod) ? '#F0F3FF' : '#FAFAFA' }}>
-                        <input type="checkbox" checked={(form.admin_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'admin_modules')} style={{ accentColor: '#3D5AFE' }} />
+                      <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.admin_modules||[]).includes(mod) ? '#2F6DB5' : '#DFE2E6'}`, backgroundColor: (form.admin_modules||[]).includes(mod) ? '#F3F9FF' : '#F5F6F7' }}>
+                        <input type="checkbox" checked={(form.admin_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'admin_modules')} style={{ accentColor: '#2F6DB5' }} />
                         {mod}
                       </label>
                     ))}
@@ -400,21 +400,21 @@ export default function UserManagementPage() {
                   Sales and CP together, with all its commercial figures. Deliberately
                   separate from module access — working your own bookings and downloading
                   everyone's are different things. */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.can_export_bookings ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.can_export_bookings ? '#F0FFF4' : '#FAFAFA', marginBottom: 14 }}>
-                <input type="checkbox" checked={!!form.can_export_bookings} onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))} style={{ accentColor: '#2E7D32' }} />
-                <span style={{ fontWeight: 600, color: form.can_export_bookings ? '#2E7D32' : '#6B7280' }}>Download booking Excel</span>
-                <span style={{ fontSize: 12, color: '#8492A6' }}>— approved bookings, Sales &amp; CP, with totals</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.can_export_bookings ? '#C9F8CA' : '#DFE2E6'}`, backgroundColor: form.can_export_bookings ? '#E9FBEA' : '#F5F6F7', marginBottom: 14 }}>
+                <input type="checkbox" checked={!!form.can_export_bookings} onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))} style={{ accentColor: '#23874A' }} />
+                <span style={{ fontWeight: 600, color: form.can_export_bookings ? '#23874A' : '#55585E' }}>Download booking Excel</span>
+                <span style={{ fontSize: 12, color: '#6E7278' }}>— approved bookings, Sales &amp; CP, with totals</span>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.is_active ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.is_active ? '#F0FFF4' : '#FAFAFA', marginBottom: 4 }}>
-                <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} style={{ accentColor: '#2E7D32' }} />
-                <span style={{ fontWeight: 600, color: form.is_active ? '#2E7D32' : '#6B7280' }}>Account Active</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? '#C9F8CA' : '#DFE2E6'}`, backgroundColor: form.is_active ? '#E9FBEA' : '#F5F6F7', marginBottom: 4 }}>
+                <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} style={{ accentColor: '#23874A' }} />
+                <span style={{ fontWeight: 600, color: form.is_active ? '#23874A' : '#55585E' }}>Account Active</span>
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 24px', borderTop: '1px solid #F0F3FA' }}>
-              <button onClick={() => setEditUser(null)} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleSave} disabled={updating} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: updating ? 0.7 : 1, minWidth: 120 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 24px', borderTop: '1px solid #F4F5F7' }}>
+              <button onClick={() => setEditUser(null)} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleSave} disabled={updating} style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: updating ? 0.7 : 1, minWidth: 120 }}>
                 {updating ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
@@ -426,31 +426,31 @@ export default function UserManagementPage() {
 }
 
 const s = {
-  page:      { padding: '32px 36px', minHeight: '100vh', backgroundColor: '#DFE4EE' },
+  page:      { padding: '32px 36px', minHeight: '100vh', backgroundColor: 'transparent' },
   pageHeader:{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  pageTitle: { fontSize: 24, fontWeight: 800, color: '#1A1A2E', marginBottom: 8 },
+  pageTitle: { fontSize: 24, fontWeight: 800, color: '#1D1D1F', marginBottom: 8 },
   statRow:   { display: 'flex', gap: 10 },
-  statChip:  { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#6B7280', backgroundColor: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, padding: '4px 10px' },
+  statChip:  { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#55585E', backgroundColor: '#fff', border: '1px solid #DFE2E6', borderRadius: 20, padding: '4px 10px' },
   statDot:   { width: 7, height: 7, borderRadius: '50%', flexShrink: 0 },
-  createBtn:  { padding: '10px 20px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
-  refreshBtn: { padding: '10px 14px', backgroundColor: '#F0F3FA', color: '#0C1E3C', border: '1.5px solid #DDE3F0', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer', lineHeight: 1 },
-  searchInput:{ width: '100%', maxWidth: 380, padding: '10px 14px', borderRadius: 10, border: '1.5px solid #E0E6F0', fontSize: 14, marginBottom: 20, display: 'block', backgroundColor: '#fff' },
-  info:      { color: '#8492A6', fontSize: 14, padding: '20px 0' },
-  errorTxt:  { color: '#EF4444', fontSize: 14, padding: '20px 0' },
-  tableWrap: { overflowX: 'auto', backgroundColor: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #EEF1F7' },
+  createBtn:  { padding: '10px 20px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  refreshBtn: { padding: '10px 14px', backgroundColor: '#F4F5F7', color: '#1D1D1F', border: '1.5px solid #DFE2E6', borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: 'pointer', lineHeight: 1 },
+  searchInput:{ width: '100%', maxWidth: 380, padding: '10px 14px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 14, marginBottom: 20, display: 'block', backgroundColor: '#fff' },
+  info:      { color: '#6E7278', fontSize: 14, padding: '20px 0' },
+  errorTxt:  { color: '#D9434B', fontSize: 14, padding: '20px 0' },
+  tableWrap: { overflowX: 'auto', backgroundColor: '#fff', borderRadius: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #ECEEF0' },
   table:     { width: '100%', borderCollapse: 'collapse', minWidth: 800 },
-  th:        { padding: '14px 16px', fontSize: 11, fontWeight: 700, color: '#8492A6', textAlign: 'left', letterSpacing: 0.6, borderBottom: '1px solid #EEF1F7', whiteSpace: 'nowrap', backgroundColor: '#FAFBFD' },
-  tr:        { borderBottom: '1px solid #F3F4F6', transition: 'background 0.1s' },
+  th:        { padding: '14px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textAlign: 'left', letterSpacing: 0.6, borderBottom: '1px solid #ECEEF0', whiteSpace: 'nowrap', backgroundColor: '#FAFAFB' },
+  tr:        { borderBottom: '1px solid #F4F5F7', transition: 'background 0.1s' },
   td:        { padding: '13px 16px', fontSize: 13, verticalAlign: 'middle' },
-  codePill:  { fontFamily: 'monospace', backgroundColor: '#F0F3FA', padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#0C1E3C' },
+  codePill:  { fontFamily: 'monospace', backgroundColor: '#F4F5F7', padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#1D1D1F' },
   nameText:  { fontWeight: 600 },
-  muted:     { color: '#8492A6' },
-  rolePill:  { backgroundColor: '#E8EEFF', color: '#3D5AFE', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
+  muted:     { color: '#6E7278' },
+  rolePill:  { backgroundColor: '#E6F2FF', color: '#2F6DB5', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
   statusPill:{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
   rowActions:{ display: 'flex', gap: 6, flexWrap: 'nowrap' },
-  editBtn:     { padding: '5px 10px', backgroundColor: '#EEF1FF', color: '#3D5AFE', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  deactBtn:    { padding: '5px 10px', backgroundColor: '#FFF7ED', color: '#EA580C', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  activateBtn: { padding: '5px 10px', backgroundColor: '#F0FDF4', color: '#15803D', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  deleteBtn:   { padding: '5px 10px', backgroundColor: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  editBtn:     { padding: '5px 10px', backgroundColor: '#F3F9FF', color: '#2F6DB5', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  deactBtn:    { padding: '5px 10px', backgroundColor: '#FFF3E0', color: '#D98A1F', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  activateBtn: { padding: '5px 10px', backgroundColor: '#F4F5F7', color: '#23874A', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  deleteBtn:   { padding: '5px 10px', backgroundColor: '#FDECEC', color: '#D9434B', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   overlay:     { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 },
 };

@@ -7,9 +7,9 @@ import { isClub1000Manager } from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 
-const TEAL = '#00838F';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid #F5F6FA', color: '#1A1A2E' };
+const TEAL = '#23874A';
+const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
 
 function groupByReferrer(rewards) {
   const groups = new Map();
@@ -57,8 +57,8 @@ export default function ReferralRewardsPage() {
 
   return (
     <div style={{ padding: '28px 32px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Referral Rewards</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F' }}>Referral Rewards</h1>
+      <p style={{ fontSize: 13, color: '#6E7278', marginTop: 4 }}>
         {manager
           ? 'Owed to whoever referred an investor: 0.5% on a new investment, 0.25% on a renewal at maturity'
           : 'Rewards earned from investors converted off your leads'}
@@ -67,11 +67,11 @@ export default function ReferralRewardsPage() {
       {referrers.length > 0 && (
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
           {referrers.map((g) => (
-            <div key={g.reference_phone || g.reference_name} style={{ background: '#fff', borderRadius: 14, border: '1px solid #EDF1F7', padding: '14px 16px' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{g.reference_name || '—'}</div>
-              {g.reference_phone && <div style={{ fontSize: 11, color: '#8492A6', marginTop: 2 }}>{g.reference_phone}</div>}
+            <div key={g.reference_phone || g.reference_name} style={{ background: '#fff', borderRadius: 18, border: '1px solid #ECEEF0', padding: '14px 16px' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{g.reference_name || '—'}</div>
+              {g.reference_phone && <div style={{ fontSize: 11, color: '#6E7278', marginTop: 2 }}>{g.reference_phone}</div>}
               <div style={{ fontSize: 18, fontWeight: 800, color: TEAL, marginTop: 8 }}>{fmtMoney(g.total)}</div>
-              <div style={{ fontSize: 11, color: '#8492A6', marginTop: 3 }}>
+              <div style={{ fontSize: 11, color: '#6E7278', marginTop: 3 }}>
                 {g.count} referral{g.count === 1 ? '' : 's'} · {fmtMoney(g.pending)} pending
               </div>
             </div>
@@ -80,17 +80,17 @@ export default function ReferralRewardsPage() {
       )}
 
       <div style={{ marginTop: 24 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 12 }}>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 12 }}>
           <option value="">All</option>
           <option value="pending">Pending</option>
           <option value="paid">Paid</option>
         </select>
       </div>
 
-      <div style={{ marginTop: 18, background: '#fff', borderRadius: 16, border: '1px solid #EDF1F7', overflow: 'hidden', overflowX: 'auto' }}>
+      <div style={{ marginTop: 18, background: '#fff', borderRadius: 20, border: '1px solid #ECEEF0', overflow: 'hidden', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
+            <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
               <th style={th}>Reference</th>
               <th style={th}>Referred Investor</th>
               <th style={th}>Reward</th>
@@ -101,9 +101,9 @@ export default function ReferralRewardsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>Loading…</td></tr>
             ) : rewards.length === 0 ? (
-              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No referral rewards yet.</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>No referral rewards yet.</td></tr>
             ) : rewards.map((r) => (
               <tr key={r.id}>
                 <td style={td}>{r.reference_name}{r.reference_phone ? ` — ${r.reference_phone}` : ''}</td>
@@ -111,7 +111,7 @@ export default function ReferralRewardsPage() {
                 <td style={td}>{fmtMoney(r.amount)}</td>
                 <td style={td}>{formatDMY(r.created_at?.slice(0, 10))}</td>
                 <td style={td}>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: r.status === 'paid' ? '#E8F5E9' : '#FFF3E0', color: r.status === 'paid' ? '#2E7D32' : '#E65100' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: r.status === 'paid' ? '#E9FBEA' : '#FFF3E0', color: r.status === 'paid' ? '#23874A' : '#D98A1F' }}>
                     {r.status === 'paid' ? 'Paid' : 'Pending'}
                   </span>
                 </td>

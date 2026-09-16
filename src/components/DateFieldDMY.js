@@ -51,8 +51,8 @@ const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => {
         // committed one rather than sitting there looking saved.
         onBlur={() => setDraft(null)}
         style={{ width: '100%', padding: '9px 32px 9px 11px', fontSize: 13, borderRadius: 8,
-          border: '1.5px solid #E0E6F0', outline: 'none', boxSizing: 'border-box',
-          background: p.disabled ? '#F3F4F6' : '#fff', ...style }} />
+          border: '1.5px solid #DFE2E6', outline: 'none', boxSizing: 'border-box',
+          background: p.disabled ? '#F4F5F7' : '#fff', ...style }} />
       <input ref={pickerRef} type="date" value={value || ''} tabIndex={-1} aria-hidden="true"
         onChange={(e) => { setDraft(null); emit(e.target.value); }}
         style={{ position: 'absolute', right: 8, top: '50%', width: 1, height: 1,

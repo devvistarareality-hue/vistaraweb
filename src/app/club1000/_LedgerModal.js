@@ -5,18 +5,18 @@ import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { fmtMoney } from './_StatCard';
 
-const TEAL = '#00838F';
+const TEAL = '#23874A';
 
 const TYPE_COLOR = {
-  investment: { bg: '#E3F2FD', fg: '#1565C0' },
-  interest: { bg: '#E8F5E9', fg: '#2E7D32' },
-  maturity: { bg: '#F3E5F5', fg: '#7B1FA2' },
-  premature_redemption: { bg: '#FFF3E0', fg: '#E65100' },
+  investment: { bg: '#E6F2FF', fg: '#245A96' },
+  interest: { bg: '#E9FBEA', fg: '#23874A' },
+  maturity: { bg: '#E6F2FF', fg: '#245A96' },
+  premature_redemption: { bg: '#FFF3E0', fg: '#D98A1F' },
 };
 const STATUS_COLOR = {
-  completed: { bg: '#E8F5E9', fg: '#2E7D32' },
-  paid: { bg: '#E8F5E9', fg: '#2E7D32' },
-  pending: { bg: '#FFF8E1', fg: '#B45309' },
+  completed: { bg: '#E9FBEA', fg: '#23874A' },
+  paid: { bg: '#E9FBEA', fg: '#23874A' },
+  pending: { bg: '#FFF3E0', fg: '#A3671A' },
 };
 
 function Badge({ label, color }) {
@@ -47,63 +47,63 @@ export default function LedgerModal({ investorId, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(24,35,80,0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F0F3FA', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Ledger{inv ? ` — ${inv.name}` : ''}</div>
-            {inv && <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{inv.phone} · {inv.scheme_name}</div>}
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Ledger{inv ? ` — ${inv.name}` : ''}</div>
+            {inv && <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>{inv.phone} · {inv.scheme_name}</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#B0BAC9', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}>✕</button>
         </div>
 
         <div style={{ padding: '18px 22px' }}>
           {loading ? (
-            <p style={{ textAlign: 'center', color: '#8492A6', padding: '32px 0' }}>Loading…</p>
+            <p style={{ textAlign: 'center', color: '#6E7278', padding: '32px 0' }}>Loading…</p>
           ) : err ? (
-            <p style={{ textAlign: 'center', color: '#DC2626', padding: '32px 0' }}>{err}</p>
+            <p style={{ textAlign: 'center', color: '#D9434B', padding: '32px 0' }}>{err}</p>
           ) : (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
                 {[
-                  ['Invested', s.total_invested, '#1565C0'],
-                  ['Total Scheduled', s.total_payout_due, '#7B1FA2'],
-                  ['Paid Out', s.total_paid, '#2E7D32'],
-                  ['Pending', s.total_pending, '#B45309'],
+                  ['Invested', s.total_invested, '#245A96'],
+                  ['Total Scheduled', s.total_payout_due, '#245A96'],
+                  ['Paid Out', s.total_paid, '#23874A'],
+                  ['Pending', s.total_pending, '#A3671A'],
                 ].map(([label, val, color]) => (
-                  <div key={label} style={{ background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 12, padding: '12px 14px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{label}</div>
+                  <div key={label} style={{ background: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 16, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{label}</div>
                     <div style={{ fontSize: 17, fontWeight: 800, color }}>{fmtMoney(val)}</div>
                   </div>
                 ))}
               </div>
 
-              <div style={{ border: '1px solid #EDF1F7', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid #ECEEF0', borderRadius: 16, overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
-                    <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
+                    <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
                       {['Date', 'Type', 'Amount', 'Status', 'Paid On'].map((h) => (
-                        <th key={h} style={{ padding: '9px 14px', fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.4 }}>{h}</th>
+                        <th key={h} style={{ padding: '9px 14px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.4 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {data.entries.map((e, i) => (
                       <tr key={i}>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA' }}>{formatDMY(e.date)}</td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA' }}>
-                          <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: '#F3F4F6', fg: '#6B7280' }} />
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7' }}>{formatDMY(e.date)}</td>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7' }}>
+                          <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: '#F4F5F7', fg: '#55585E' }} />
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA', fontWeight: 700, color: '#1A1A2E' }}>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7', fontWeight: 700, color: '#1D1D1F' }}>
                           {fmtMoney(e.amount)}
                           {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && (
-                            <div style={{ fontSize: 11, fontWeight: 600, color: '#B45309' }}>Paid {fmtMoney(e.paid_amount)}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: '#A3671A' }}>Paid {fmtMoney(e.paid_amount)}</div>
                           )}
-                          {!!e.notes && <div style={{ fontSize: 11, fontWeight: 400, color: '#8492A6', fontStyle: 'italic', marginTop: 2 }}>"{e.notes}"</div>}
+                          {!!e.notes && <div style={{ fontSize: 11, fontWeight: 400, color: '#6E7278', fontStyle: 'italic', marginTop: 2 }}>"{e.notes}"</div>}
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA' }}>
-                          <Badge label={e.status} color={STATUS_COLOR[e.status] || { bg: '#F3F4F6', fg: '#6B7280' }} />
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7' }}>
+                          <Badge label={e.status} color={STATUS_COLOR[e.status] || { bg: '#F4F5F7', fg: '#55585E' }} />
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F5F6FA', color: '#8492A6' }}>{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7', color: '#6E7278' }}>{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

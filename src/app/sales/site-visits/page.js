@@ -13,8 +13,8 @@ function fmtDateTime(iso) {
     + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-const SV_COLOR = { scheduled: '#F9A825', completed: '#2E7D32', no_show: '#B71C1C', cancelled: '#9E9E9E' };
-const OUTCOME_COLOR = { hot: '#EF4444', warm: '#F97316', cold: '#3B82F6', not_interested: '#6B7280' };
+const SV_COLOR = { scheduled: '#D98A1F', completed: '#23874A', no_show: '#D9434B', cancelled: '#6E7278' };
+const OUTCOME_COLOR = { hot: '#D9434B', warm: '#D98A1F', cold: '#2F6DB5', not_interested: '#55585E' };
 const OUTCOME_LABEL = { hot: 'Hot', warm: 'Warm', cold: 'Cold', not_interested: 'Not Interested' };
 const TABS = [
   { key: 'today',     label: "Today's" },
@@ -28,9 +28,9 @@ const TABS = [
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
-const lbl = { fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4, display: 'block' };
-const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', background: '#FAFAFA' };
-const btnPrimary = { padding: '9px 16px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
+const lbl = { fontSize: 11, fontWeight: 700, color: '#55585E', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4, display: 'block' };
+const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', background: '#F5F6F7' };
+const btnPrimary = { padding: '9px 16px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 const smBtn = (bg, color, border) => ({ fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${border}`, color, background: bg, cursor: 'pointer' });
 
 export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
@@ -263,20 +263,20 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
     <div style={{ padding: '24px 28px', maxWidth: 920 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: 0 }}>Site Visits</h1>
-          <p style={{ fontSize: 13, color: '#8492A6', margin: '4px 0 0' }}>{visible.length} visit{visible.length === 1 ? '' : 's'}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', margin: 0 }}>Site Visits</h1>
+          <p style={{ fontSize: 13, color: '#6E7278', margin: '4px 0 0' }}>{visible.length} visit{visible.length === 1 ? '' : 's'}</p>
         </div>
         <button onClick={openSchedule} style={btnPrimary}>+ Schedule Visit</button>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E4E8F0', margin: '18px 0 20px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #ECEEF0', margin: '18px 0 20px', overflowX: 'auto' }}>
         {TABS.map((t) => {
           const active = filter === t.key;
           return (
             <button key={t.key} onClick={() => setFilter(t.key)}
               style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none', whiteSpace: 'nowrap',
-                color: active ? '#3D5AFE' : '#8492A6', borderBottom: active ? '2px solid #3D5AFE' : '2px solid transparent' }}>
+                color: active ? '#2F6DB5' : '#6E7278', borderBottom: active ? '2px solid #2F6DB5' : '2px solid transparent' }}>
               {t.label}
             </button>
           );
@@ -289,21 +289,21 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -10, marginBottom: 16 }}>
         {projOptions.length > 1 && (
           <select value={proj} onChange={(e) => setProj(e.target.value)}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? '#3D5AFE' : '#E0E6F0'}`,
-              background: '#fff', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? '#1A1A2E' : '#8492A6',
+            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? '#2F6DB5' : '#DFE2E6'}`,
+              background: '#fff', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? '#1D1D1F' : '#6E7278',
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
             <option value="">All Projects</option>
             {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         )}
-        <span style={{ fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 0.6, marginLeft: 4 }}>OUTCOME</span>
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#6E7278', letterSpacing: 0.6, marginLeft: 4 }}>OUTCOME</span>
         {['', 'hot', 'warm', 'cold', 'not_interested'].map((val) => {
           const active = outcomeFilter === val;
-          const color = val ? OUTCOME_COLOR[val] : '#5A6B85';
+          const color = val ? OUTCOME_COLOR[val] : '#55585E';
           const label = val ? OUTCOME_LABEL[val] : 'All';
           return (
             <button key={val || 'all'} onClick={() => setOutcomeFilter(val)}
-              style={{ padding: '6px 12px', borderRadius: 14, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              style={{ padding: '6px 12px', borderRadius: 18, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
               {label}
             </button>
@@ -311,54 +311,54 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
         })}
         {narrowed && (
           <button onClick={() => { setProj(''); setOutcomeFilter(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-            cursor: 'pointer', background: '#fff', color: '#8492A6', border: '1.5px solid #E0E6F0' }}>
+            cursor: 'pointer', background: '#fff', color: '#6E7278', border: '1.5px solid #DFE2E6' }}>
             ✕ Clear filters
           </button>
         )}
       </div>
 
       {loading ? (
-        <p style={{ fontSize: 13, color: '#8492A6', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
+        <p style={{ fontSize: 13, color: '#6E7278', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
       ) : visible.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#5A6B85', margin: 0 }}>{narrowed ? 'No site visits match these filters' : 'No site visits'}</p>
-          <p style={{ fontSize: 13, color: '#B0BAC9', margin: '4px 0 0' }}>Schedule one from your pipeline</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#55585E', margin: 0 }}>{narrowed ? 'No site visits match these filters' : 'No site visits'}</p>
+          <p style={{ fontSize: 13, color: '#9A9EA5', margin: '4px 0 0' }}>Schedule one from your pipeline</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {visible.map((sv) => (
-            <div key={sv.id} style={{ border: '1.5px solid #E4E8F0', background: '#fff', borderRadius: 12, padding: '14px 16px',
+            <div key={sv.id} style={{ border: '1.5px solid #ECEEF0', background: '#fff', borderRadius: 16, padding: '14px 16px',
               display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{sv.lead_name || 'Lead'}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, textTransform: 'capitalize',
-                    backgroundColor: (SV_COLOR[sv.status] || '#9E9E9E') + '18', color: SV_COLOR[sv.status] || '#9E9E9E' }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{sv.lead_name || 'Lead'}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14, textTransform: 'capitalize',
+                    backgroundColor: (SV_COLOR[sv.status] || '#6E7278') + '18', color: SV_COLOR[sv.status] || '#6E7278' }}>
                     {(sv.status || '').replace('_', ' ')}
                   </span>
                   {sv.outcome && (
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                      backgroundColor: (OUTCOME_COLOR[sv.outcome] || '#9E9E9E') + '18', color: OUTCOME_COLOR[sv.outcome] || '#9E9E9E' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14,
+                      backgroundColor: (OUTCOME_COLOR[sv.outcome] || '#6E7278') + '18', color: OUTCOME_COLOR[sv.outcome] || '#6E7278' }}>
                       {OUTCOME_LABEL[sv.outcome] || sv.outcome}
                     </span>
                   )}
                 </div>
-                <p style={{ fontSize: 12, color: '#8492A6', margin: '4px 0 0' }}>
+                <p style={{ fontSize: 12, color: '#6E7278', margin: '4px 0 0' }}>
                   {sv.lead_phone || ''}{sv.project_name ? ` · ${sv.project_name}` : ''}
                 </p>
-                {sv.referred_by_telecaller_name && <p style={{ fontSize: 11, color: '#B0BAC9', margin: '2px 0 0' }}>via TC: {sv.referred_by_telecaller_name}</p>}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 16px', marginTop: 8, fontSize: 12, color: '#8492A6' }}>
+                {sv.referred_by_telecaller_name && <p style={{ fontSize: 11, color: '#9A9EA5', margin: '2px 0 0' }}>via TC: {sv.referred_by_telecaller_name}</p>}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 16px', marginTop: 8, fontSize: 12, color: '#6E7278' }}>
                   <span>Scheduled: {fmtDateTime(sv.scheduled_at)}</span>
                   {sv.visited_at && <span>Visited: {fmtDateTime(sv.visited_at)}</span>}
                 </div>
-                {sv.remarks && <p style={{ fontSize: 12, color: '#5A6B85', margin: '6px 0 0', fontStyle: 'italic' }}>"{sv.remarks}"</p>}
+                {sv.remarks && <p style={{ fontSize: 12, color: '#55585E', margin: '6px 0 0', fontStyle: 'italic' }}>"{sv.remarks}"</p>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, flexShrink: 0 }}>
                 {sv.status === 'scheduled' && (
                   <>
-                    <button onClick={() => openDone(sv)} style={smBtn('#fff', '#2E7D32', '#2E7D32')}>✓ Done</button>
-                    <button onClick={() => updateStatus(sv, 'no_show')} style={smBtn('#fff', '#B45309', '#F59E0B')}>No Show</button>
-                    <button onClick={() => updateStatus(sv, 'cancelled')} style={smBtn('#fff', '#9CA3AF', '#D1D5DB')}>Cancel</button>
+                    <button onClick={() => openDone(sv)} style={smBtn('#fff', '#23874A', '#23874A')}>✓ Done</button>
+                    <button onClick={() => updateStatus(sv, 'no_show')} style={smBtn('#fff', '#A3671A', '#D98A1F')}>No Show</button>
+                    <button onClick={() => updateStatus(sv, 'cancelled')} style={smBtn('#fff', '#9A9EA5', '#C9CDD2')}>Cancel</button>
                   </>
                 )}
                 {sv.status === 'completed' && (
@@ -394,7 +394,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
             </div>
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <button onClick={() => setSchedOpen(false)} style={{ padding: '9px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setSchedOpen(false)} style={{ padding: '9px 16px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={scheduleVisit} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Schedule'}</button>
             </div>
           </ModalCard>
@@ -405,15 +405,15 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       {doneSv && (
         <Overlay onClose={() => setDoneSv(null)}>
           <ModalCard title="Mark Site Visit Done" onClose={() => setDoneSv(null)}>
-            <p style={{ fontSize: 13, color: '#8492A6', margin: '0 0 14px' }}>{doneSv.lead_name} · {doneSv.lead_phone}</p>
+            <p style={{ fontSize: 13, color: '#6E7278', margin: '0 0 14px' }}>{doneSv.lead_name} · {doneSv.lead_phone}</p>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Outcome *</label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[['hot', 'Hot', '#EF4444'], ['warm', 'Warm', '#F97316'], ['cold', 'Cold', '#3B82F6'], ['not_interested', 'Not Interested', '#6B7280']].map(([val, label, color]) => {
+                {[['hot', 'Hot', '#D9434B'], ['warm', 'Warm', '#D98A1F'], ['cold', 'Cold', '#2F6DB5'], ['not_interested', 'Not Interested', '#55585E']].map(([val, label, color]) => {
                   const active = doneForm.outcome === val;
                   return (
                     <button key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
-                      style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                         border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                       {label}
                     </button>
@@ -433,7 +433,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
             </div>
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <button onClick={() => setDoneSv(null)} style={{ padding: '9px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setDoneSv(null)} style={{ padding: '9px 16px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={submitDone} disabled={saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate}
                 style={{ ...btnPrimary, opacity: (saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate) ? 0.5 : 1 }}>
                 {saving ? 'Saving…' : 'Save'}
@@ -447,7 +447,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       {closureSv && (
         <Overlay onClose={() => setClosureSv(null)}>
           <ModalCard title="Record Closure" onClose={() => setClosureSv(null)}>
-            <p style={{ fontSize: 13, color: '#8492A6', margin: '0 0 14px' }}>{closureSv.lead_name} · {closureSv.lead_phone}</p>
+            <p style={{ fontSize: 13, color: '#6E7278', margin: '0 0 14px' }}>{closureSv.lead_name} · {closureSv.lead_phone}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
               <div>
                 <label style={lbl}>Closure Date *</label>
@@ -477,8 +477,8 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
             </div>
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <button onClick={() => setClosureSv(null)} style={{ padding: '9px 16px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={recordClosure} disabled={saving} style={{ padding: '9px 16px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Record Closure'}</button>
+              <button onClick={() => setClosureSv(null)} style={{ padding: '9px 16px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={recordClosure} disabled={saving} style={{ padding: '9px 16px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Record Closure'}</button>
             </div>
           </ModalCard>
         </Overlay>
@@ -501,10 +501,10 @@ function Overlay({ children, onClose }) {
 
 function ModalCard({ title, children, onClose }) {
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, width: '92%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(24,35,80,0.18)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F0F3FA' }}>
-        <span style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>{title}</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#B0BAC9', cursor: 'pointer' }}>✕</button>
+    <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, width: '92%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(29,29,31,0.18)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F4F5F7' }}>
+        <span style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>{title}</span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}>✕</button>
       </div>
       <div style={{ padding: 20 }}>{children}</div>
     </div>
@@ -512,5 +512,5 @@ function ModalCard({ title, children, onClose }) {
 }
 
 function ErrBox({ children }) {
-  return <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: '#DC2626', wordBreak: 'break-word' }}>{children}</div>;
+  return <div style={{ backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: '#D9434B', wordBreak: 'break-word' }}>{children}</div>;
 }

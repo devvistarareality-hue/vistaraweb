@@ -7,9 +7,9 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 
 const PRESET_SOURCES = ['meta', 'google', 'referral', 'walk-in', 'ivr', 'portal', 'other'];
-const NAVY = '#182350';
-const BLUE = '#3D5AFE';
-const GREEN = '#2E7D32';
+const NAVY = '#1D1D1F';
+const BLUE = '#2F6DB5';
+const GREEN = '#23874A';
 
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
@@ -26,7 +26,7 @@ function CopyBtn({ text }) {
     setTimeout(() => setCopied(false), 2000);
   }
   return (
-    <button onClick={copy} style={{ padding: '6px 12px', borderRadius: 7, border: '1.5px solid #D0D8E8', backgroundColor: copied ? '#E8F5E9' : '#fff', color: copied ? GREEN : '#5A6A85', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+    <button onClick={copy} style={{ padding: '6px 12px', borderRadius: 7, border: '1.5px solid #DFE2E6', backgroundColor: copied ? '#E9FBEA' : '#fff', color: copied ? GREEN : '#55585E', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
       {copied ? '✓ Copied' : '⧉ Copy'}
     </button>
   );
@@ -37,8 +37,8 @@ function Step({ n, title, children }) {
     <div style={{ display: 'flex', gap: 14 }}>
       <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: NAVY, color: '#fff', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>{n}</div>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E', marginBottom: 4 }}>{title}</div>
-        <div style={{ fontSize: 13, color: '#5A6A85', lineHeight: 1.6 }}>{children}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F', marginBottom: 4 }}>{title}</div>
+        <div style={{ fontSize: 13, color: '#55585E', lineHeight: 1.6 }}>{children}</div>
       </div>
     </div>
   );
@@ -234,17 +234,17 @@ export default function LeadSetupPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Lead Setup</h1>
-        <p style={{ fontSize: 13, color: '#8492A6' }}>Configure lead sources and connect external platforms</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Lead Setup</h1>
+        <p style={{ fontSize: 13, color: '#6E7278' }}>Configure lead sources and connect external platforms</p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #E4E8F0', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #ECEEF0', paddingBottom: 0 }}>
         {[{ key: 'meta', label: '🔗 Meta Integration' }, { key: 'sources', label: '📋 Lead Sources' }].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
             background: 'none', borderBottom: tab === t.key ? `2px solid ${NAVY}` : '2px solid transparent',
-            color: tab === t.key ? NAVY : '#8492A6', marginBottom: -2, transition: 'all 0.15s',
+            color: tab === t.key ? NAVY : '#6E7278', marginBottom: -2, transition: 'all 0.15s',
           }}>{t.label}</button>
         ))}
       </div>
@@ -257,28 +257,28 @@ export default function LeadSetupPage() {
           <div>
             {/* Status */}
             <div style={{ ...card, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: cfg?.is_active ? '#E8F5E9' : '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: cfg?.is_active ? '#E9FBEA' : '#FDECEC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                 {cfg?.is_active ? '✅' : '⚠️'}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: cfg?.is_active ? GREEN : '#C62828' }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: cfg?.is_active ? GREEN : '#D9434B' }}>
                   {cfg?.is_active ? 'Connected' : 'Not Connected'}
                 </div>
-                <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>
                   {cfg?.is_active
                     ? `${cfg.total_leads_received} leads received${cfg.last_lead_at ? ' · Last: ' + new Date(cfg.last_lead_at).toLocaleDateString() : ''}`
                     : 'Add your Page Access Token to activate'}
                 </div>
               </div>
               {cfg?.is_active && (
-                <div style={{ padding: '5px 12px', borderRadius: 20, backgroundColor: '#E8F5E9', color: GREEN, fontSize: 11, fontWeight: 800 }}>LIVE</div>
+                <div style={{ padding: '5px 12px', borderRadius: 20, backgroundColor: '#E9FBEA', color: GREEN, fontSize: 11, fontWeight: 800 }}>LIVE</div>
               )}
             </div>
 
             {/* Webhook URL */}
             <div style={card}>
               <div style={fieldLabel}>WEBHOOK URL</div>
-              <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10 }}>Paste this URL in Meta for Developers → Webhooks → Callback URL</p>
+              <p style={{ fontSize: 11, color: '#6E7278', marginBottom: 10 }}>Paste this URL in Meta for Developers → Webhooks → Callback URL</p>
               <div style={copyRow}>
                 <code style={codeBox}>{webhookUrl}</code>
                 <CopyBtn text={webhookUrl} />
@@ -288,8 +288,8 @@ export default function LeadSetupPage() {
             {/* Verify Token */}
             <div style={{ ...card, marginTop: 12 }}>
               <div style={fieldLabel}>VERIFY TOKEN</div>
-              <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10 }}>Paste this in Meta for Developers → Webhooks → Verify Token</p>
-              {loadingCfg ? <div style={{ color: '#8492A6', fontSize: 13 }}>Loading…</div> : (
+              <p style={{ fontSize: 11, color: '#6E7278', marginBottom: 10 }}>Paste this in Meta for Developers → Webhooks → Verify Token</p>
+              {loadingCfg ? <div style={{ color: '#6E7278', fontSize: 13 }}>Loading…</div> : (
                 <>
                   <div style={copyRow}>
                     <code style={codeBox}>{cfg?.verify_token || '—'}</code>
@@ -315,12 +315,12 @@ export default function LeadSetupPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={fieldLabel}>ACCESS TOKEN (USER / SYSTEM USER)</div>
                     {hasToken && !editing && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: GREEN, background: '#E8F8EE', padding: '3px 9px', borderRadius: 20 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: GREEN, background: '#E9FBEA', padding: '3px 9px', borderRadius: 20 }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} /> Connected
                       </span>
                     )}
                   </div>
-                  <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 11, color: '#6E7278', marginBottom: 10, lineHeight: 1.5 }}>
                     Business Settings → <strong>System Users</strong> → Generate token, with <strong>pages_show_list</strong>, <strong>leads_retrieval</strong> &amp; <strong>pages_read_engagement</strong>. A single Page token won’t work.
                   </p>
 
@@ -352,17 +352,17 @@ export default function LeadSetupPage() {
                   )}
 
                   {/* App Secret — verifies that a webhook delivery really came from Meta */}
-                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EEF1F7' }}>
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #ECEEF0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={fieldLabel}>APP SECRET</div>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
-                        color: cfg?.app_secret_set ? GREEN : '#B45309',
-                        background: cfg?.app_secret_set ? '#E8F8EE' : '#FEF3C7', padding: '3px 9px', borderRadius: 20 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg?.app_secret_set ? GREEN : '#B45309' }} />
+                        color: cfg?.app_secret_set ? GREEN : '#A3671A',
+                        background: cfg?.app_secret_set ? '#E9FBEA' : '#FFF3E0', padding: '3px 9px', borderRadius: 20 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg?.app_secret_set ? GREEN : '#A3671A' }} />
                         {cfg?.app_secret_set ? 'Verifying deliveries' : 'Not verified'}
                       </span>
                     </div>
-                    <p style={{ fontSize: 11, color: '#8492A6', marginBottom: 10, lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 11, color: '#6E7278', marginBottom: 10, lineHeight: 1.5 }}>
                       developers.facebook.com → your app → <strong>Settings → Basic → App Secret → Show</strong>.
                       Meta signs every lead delivery with it; without it we cannot tell a genuine delivery from
                       anyone else&rsquo;s. {cfg?.app_secret_set ? 'Leave blank to keep the stored secret.' : ''}
@@ -383,10 +383,10 @@ export default function LeadSetupPage() {
                     )}
                   </div>
 
-                  {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') || metaMsg.includes('No pages') ? '#EF4444' : GREEN }}>{metaMsg}</p>}
+                  {metaMsg && <p style={{ marginTop: 8, fontSize: 12, color: metaMsg.includes('Error') || metaMsg.includes('No pages') ? '#D9434B' : GREEN }}>{metaMsg}</p>}
                   {metaMsg === 'Saved!' && failedPages.length > 0 && (
-                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, backgroundColor: '#FFF3F3', border: '1px solid #FFCDD2', fontSize: 12 }}>
-                      <span style={{ color: '#EF4444', fontWeight: 700 }}>Failed to subscribe: </span>
+                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', fontSize: 12 }}>
+                      <span style={{ color: '#D9434B', fontWeight: 700 }}>Failed to subscribe: </span>
                       {failedPages.join(', ')}
                     </div>
                   )}
@@ -396,27 +396,27 @@ export default function LeadSetupPage() {
 
             {/* Form → Project Mapping */}
             <div style={{ ...card, marginTop: 12 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Form → Project Routing</div>
-              <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 16, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Form → Project Routing</div>
+              <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 16, lineHeight: 1.6 }}>
                 Map each Meta Lead Ads form to a project so leads are auto-classified on arrival.
               </p>
               {mappings.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
                   {mappings.map(m => (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, backgroundColor: '#F5F7FC', border: '1px solid #E4E8F0', marginBottom: 8 }}>
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 14, backgroundColor: '#F4F5F7', border: '1px solid #ECEEF0', marginBottom: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{m.form_name || 'Unnamed Form'}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{m.form_name || 'Unnamed Form'}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                          <code style={{ fontSize: 11, color: '#8492A6', fontFamily: 'monospace' }}>{m.form_id}</code>
+                          <code style={{ fontSize: 11, color: '#6E7278', fontFamily: 'monospace' }}>{m.form_id}</code>
                           <CopyBtn text={m.form_id} />
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>→</span>
-                        <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#E8EEFF', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
-                        <span style={{ fontSize: 11, color: '#8492A6' }}>{m.total_leads} leads</span>
+                        <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: '#E6F2FF', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
+                        <span style={{ fontSize: 11, color: '#6E7278' }}>{m.total_leads} leads</span>
                       </div>
-                      <button onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
+                      <button onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
                     </div>
                   ))}
                 </div>
@@ -441,9 +441,9 @@ export default function LeadSetupPage() {
                   {mapSaving ? '…' : '+ Add'}
                 </button>
               </div>
-              <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 8, backgroundColor: '#F0F7FF', border: '1px solid #C7DAFF', minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div style={{ fontSize: 11, color: '#3D5AFE', fontWeight: 700, marginBottom: 3 }}>How to find your Form ID</div>
-                <div style={{ fontSize: 11, color: '#5A6A85', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: '#E8EEFF', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
+              <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 8, backgroundColor: '#F3F9FF', border: '1px solid #CCE5FF', minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ fontSize: 11, color: '#2F6DB5', fontWeight: 700, marginBottom: 3 }}>How to find your Form ID</div>
+                <div style={{ fontSize: 11, color: '#55585E', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: '#E6F2FF', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
               </div>
             </div>
 
@@ -451,21 +451,21 @@ export default function LeadSetupPage() {
                 even when Meta hasn't returned pages yet (empty state + refresh). */}
             <div style={{ ...card, marginTop: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E' }}>Connected Pages & Forms</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#1D1D1F' }}>Connected Pages & Forms</div>
                 <button onClick={refreshPages} disabled={refreshingPages}
-                  style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: '#F0F3FF', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: refreshingPages ? 'default' : 'pointer', opacity: refreshingPages ? 0.6 : 1 }}>
+                  style={{ fontSize: 12, fontWeight: 700, color: '#2F6DB5', background: '#F3F9FF', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: refreshingPages ? 'default' : 'pointer', opacity: refreshingPages ? 0.6 : 1 }}>
                   {refreshingPages ? 'Refreshing…' : '↻ Refresh'}
                 </button>
               </div>
               {pagesData.length === 0 ? (
-                <div style={{ padding: '18px 14px', borderRadius: 8, background: '#FAFBFF', border: '1px dashed #D6DEEC', textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, color: '#5C6BC0', fontWeight: 600, marginBottom: 4 }}>No pages loaded for this company yet.</p>
-                  <p style={{ fontSize: 12, color: '#8492A6' }}>
+                <div style={{ padding: '18px 14px', borderRadius: 8, background: '#F3F9FF', border: '1px dashed #DFE2E6', textAlign: 'center' }}>
+                  <p style={{ fontSize: 13, color: '#2F6DB5', fontWeight: 600, marginBottom: 4 }}>No pages loaded for this company yet.</p>
+                  <p style={{ fontSize: 12, color: '#6E7278' }}>
                     {pat ? 'Click Refresh to fetch your Pages & lead forms from Meta.'
                          : 'Add and save a valid Page Access Token above, then Refresh.'}
                   </p>
                   {pagesDiag && (
-                    <p style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '8px 12px', marginTop: 12, textAlign: 'left', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 12, color: '#D9434B', background: '#FDECEC', border: '1px solid #EF9195', borderRadius: 8, padding: '8px 12px', marginTop: 12, textAlign: 'left', lineHeight: 1.5 }}>
                       {pagesDiag}
                     </p>
                   )}
@@ -476,11 +476,11 @@ export default function LeadSetupPage() {
                     const mappingMap = {};
                     mappings.forEach(m => { mappingMap[m.form_id] = m; });
                     return (
-                      <details key={pg.page_id} style={{ borderRadius: 8, border: '1.5px solid #E4E8F0', overflow: 'hidden' }}>
-                        <summary style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', backgroundColor: '#F5F7FC', cursor: 'pointer', listStyle: 'none', userSelect: 'none' }}>
+                      <details key={pg.page_id} style={{ borderRadius: 8, border: '1.5px solid #ECEEF0', overflow: 'hidden' }}>
+                        <summary style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', backgroundColor: '#F4F5F7', cursor: 'pointer', listStyle: 'none', userSelect: 'none' }}>
                           <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: GREEN, flexShrink: 0 }} />
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#182350', flex: 1 }}>{pg.page_name}</span>
-                          <span style={{ fontSize: 11, color: '#8492A6', backgroundColor: '#E8EEFF', padding: '2px 8px', borderRadius: 10 }}>{pg.forms.length} forms</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', flex: 1 }}>{pg.page_name}</span>
+                          <span style={{ fontSize: 11, color: '#6E7278', backgroundColor: '#E6F2FF', padding: '2px 8px', borderRadius: 14 }}>{pg.forms.length} forms</span>
                         </summary>
                         {pg.forms.length > 0 && (
                           <div style={{ padding: '6px 10px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -488,17 +488,17 @@ export default function LeadSetupPage() {
                               const mapped = mappingMap[f.id];
                               const leads = formLeadCounts[f.id] || 0;
                               // Highlight forms that are bringing in leads but aren't routed to a project yet.
-                              const leadBg = leads ? (mapped ? '#E8EEFF' : '#FEF3C7') : '#F3F4F6';
-                              const leadFg = leads ? (mapped ? '#3D5AFE' : '#B45309') : '#9CA3AF';
+                              const leadBg = leads ? (mapped ? '#E6F2FF' : '#FFF3E0') : '#F4F5F7';
+                              const leadFg = leads ? (mapped ? '#2F6DB5' : '#A3671A') : '#9A9EA5';
                               return (
-                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, backgroundColor: mapped ? '#F0FFF4' : (leads ? '#FFFBEB' : '#FAFAFA') }}>
-                                  <span style={{ fontSize: 12, color: '#1A1A2E', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name || 'Unnamed'}</span>
-                                  <code style={{ fontSize: 10, color: '#B0BAC9', fontFamily: 'monospace', flexShrink: 0 }}>{f.id}</code>
+                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, backgroundColor: mapped ? '#E9FBEA' : (leads ? '#FFF3E0' : '#F5F6F7') }}>
+                                  <span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name || 'Unnamed'}</span>
+                                  <code style={{ fontSize: 10, color: '#9A9EA5', fontFamily: 'monospace', flexShrink: 0 }}>{f.id}</code>
                                   <CopyBtn text={f.id} />
-                                  <span title="Leads received from this form" style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: leadBg, color: leadFg, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{leads} lead{leads === 1 ? '' : 's'}</span>
+                                  <span title="Leads received from this form" style={{ padding: '2px 8px', borderRadius: 14, backgroundColor: leadBg, color: leadFg, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{leads} lead{leads === 1 ? '' : 's'}</span>
                                   {mapped
-                                    ? <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
-                                    : <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#F3F4F6', color: '#9CA3AF', fontSize: 10, flexShrink: 0 }}>No project</span>
+                                    ? <span style={{ padding: '2px 8px', borderRadius: 14, backgroundColor: '#C9F8CA', color: '#145A32', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{mapped.project_name}</span>
+                                    : <span style={{ padding: '2px 8px', borderRadius: 14, backgroundColor: '#F4F5F7', color: '#9A9EA5', fontSize: 10, flexShrink: 0 }}>No project</span>
                                   }
                                 </div>
                               );
@@ -515,8 +515,8 @@ export default function LeadSetupPage() {
 
           {/* Right: Guide */}
           <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 2 }}>Setup Guide</div>
-            <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 0 }}>Follow these steps to connect Meta Lead Ads</p>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>Setup Guide</div>
+            <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 0 }}>Follow these steps to connect Meta Lead Ads</p>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', paddingTop: 4 }}>
               <Step n="1" title="Create a Meta App">Go to <strong>developers.facebook.com</strong> → My Apps → Create App. Choose <strong>Business</strong> type.</Step>
@@ -528,9 +528,9 @@ export default function LeadSetupPage() {
               <Step n="7" title="Test it">Use Meta's <strong>Lead Ads Testing Tool</strong> — the lead should appear in <strong>All Leads</strong> with the correct project within seconds.</Step>
             </div>
 
-            <div style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: '#FFF8E1', border: '1px solid #FFE082', minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#E65100', marginBottom: 4 }}>Important</div>
-              <div style={{ fontSize: 12, color: '#7A5000', lineHeight: 1.6 }}>
+            <div style={{ padding: '12px 14px', borderRadius: 14, backgroundColor: '#FFF3E0', border: '1px solid #F5B453', minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#D98A1F', marginBottom: 4 }}>Important</div>
+              <div style={{ fontSize: 12, color: '#6B420C', lineHeight: 1.6 }}>
                 The webhook URL must be HTTPS and publicly accessible — <code>localhost</code> will not work. Your Railway deployment URL is used automatically.
               </div>
             </div>
@@ -542,18 +542,18 @@ export default function LeadSetupPage() {
       {tab === 'sources' && (
         <div className="rg-2" style={{ gap: 20 }}>
           <div style={card}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E', marginBottom: 14 }}>Active Sources</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F', marginBottom: 14 }}>Active Sources</div>
             {loadingSrc ? (
-              <p style={{ color: '#8492A6', fontSize: 13 }}>Loading…</p>
+              <p style={{ color: '#6E7278', fontSize: 13 }}>Loading…</p>
             ) : sources.length === 0 ? (
-              <p style={{ color: '#8492A6', fontSize: 13 }}>No sources yet.</p>
+              <p style={{ color: '#6E7278', fontSize: 13 }}>No sources yet.</p>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {sources.map(s => (
-                  <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, backgroundColor: '#F0F3FA', color: '#182350', textTransform: 'capitalize' }}>
+                  <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, backgroundColor: '#F4F5F7', color: '#1D1D1F', textTransform: 'capitalize' }}>
                     {s.name}
                     <button onClick={() => deleteSource(s.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8492A6', fontSize: 14, lineHeight: 1, padding: '0 2px', display: 'flex', alignItems: 'center' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6E7278', fontSize: 14, lineHeight: 1, padding: '0 2px', display: 'flex', alignItems: 'center' }}
                       title="Delete source">
                       ×
                     </button>
@@ -563,18 +563,18 @@ export default function LeadSetupPage() {
             )}
           </div>
           <div style={card}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E', marginBottom: 14 }}>Add Source</div>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 8 }}>QUICK ADD</p>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F', marginBottom: 14 }}>Add Source</div>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 8 }}>QUICK ADD</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
               {PRESET_SOURCES.filter(n => !existingNames.has(n)).map(name => (
                 <button key={name} onClick={() => addSource(name)} disabled={adding}
-                  style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px dashed #E0E6F0', backgroundColor: '#fff', fontSize: 12, color: '#8492A6', cursor: 'pointer', textTransform: 'capitalize' }}>
+                  style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px dashed #DFE2E6', backgroundColor: '#fff', fontSize: 12, color: '#6E7278', cursor: 'pointer', textTransform: 'capitalize' }}>
                   + {name}
                 </button>
               ))}
-              {PRESET_SOURCES.every(n => existingNames.has(n)) && <p style={{ fontSize: 12, color: '#8492A6' }}>All presets added.</p>}
+              {PRESET_SOURCES.every(n => existingNames.has(n)) && <p style={{ fontSize: 12, color: '#6E7278' }}>All presets added.</p>}
             </div>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 8 }}>CUSTOM</p>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 8 }}>CUSTOM</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addSource(newName)}
                 placeholder="e.g. instagram, naukri…" style={{ ...inp, flex: 1 }} />
@@ -583,7 +583,7 @@ export default function LeadSetupPage() {
                 {adding ? '…' : 'Add'}
               </button>
             </div>
-            {srcErr && <p style={{ color: '#EF4444', fontSize: 12, marginTop: 6 }}>{srcErr}</p>}
+            {srcErr && <p style={{ color: '#D9434B', fontSize: 12, marginTop: 6 }}>{srcErr}</p>}
           </div>
         </div>
       )}
@@ -591,11 +591,11 @@ export default function LeadSetupPage() {
   );
 }
 
-const card      = { backgroundColor: '#fff', borderRadius: 14, padding: '20px', boxShadow: '0 2px 8px rgba(184,196,214,0.18)' };
-const inp       = { height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
+const card      = { backgroundColor: '#fff', borderRadius: 18, padding: '20px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
+const inp       = { height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
 const saveBtn   = { padding: '9px 16px', backgroundColor: NAVY, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 };
-const outlineBtn = { padding: '7px 14px', backgroundColor: '#fff', color: '#5A6A85', border: '1.5px solid #D0D8E8', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' };
-const cancelBtn = { padding: '9px 16px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-const fieldLabel = { fontSize: 10, fontWeight: 800, color: '#8492A6', letterSpacing: 1.2, marginBottom: 6 };
+const outlineBtn = { padding: '7px 14px', backgroundColor: '#fff', color: '#55585E', border: '1.5px solid #DFE2E6', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' };
+const cancelBtn = { padding: '9px 16px', backgroundColor: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const fieldLabel = { fontSize: 10, fontWeight: 800, color: '#6E7278', letterSpacing: 1.2, marginBottom: 6 };
 const copyRow   = { display: 'flex', alignItems: 'center', gap: 8 };
-const codeBox   = { flex: 1, fontSize: 11, fontFamily: 'monospace', backgroundColor: '#F5F7FC', padding: '8px 12px', borderRadius: 8, color: '#3D5AFE', wordBreak: 'break-all', border: '1px solid #E4E8F0' };
+const codeBox   = { flex: 1, fontSize: 11, fontFamily: 'monospace', backgroundColor: '#F4F5F7', padding: '8px 12px', borderRadius: 8, color: '#2F6DB5', wordBreak: 'break-all', border: '1px solid #ECEEF0' };

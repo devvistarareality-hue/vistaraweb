@@ -23,8 +23,8 @@ export default function RootPage() {
   }, [user]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(160deg, #050D1A 0%, #0C1E3C 55%, #112240 100%)' }}>
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(255,107,43,0.3)', borderTopColor: '#FF6B2B', animation: 'spin 0.8s linear infinite' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(162,210,255,0.3)', borderTopColor: '#2F6DB5', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

@@ -845,27 +845,27 @@ function BookingPage() {
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       {saving && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #E0E6F0', borderTopColor: '#1a73e8', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>Submitting booking…</div>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #DFE2E6', borderTopColor: '#2f6db5', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>Submitting booking…</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
       <button onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: '8px 0 2px' }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', margin: '8px 0 2px' }}>
         {/* A tower sells flats and shops, not plots — name what's actually being booked. */}
         {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI'
           : (plots.length > 1 ? 'Book Units' : prat ? (prat.kind === 'shop' ? 'Book Shop' : 'Book Flat') : 'Book Unit')}{' '}
-        {eoiMode ? <span style={{ color: '#E4571A' }}>{eoiNo || '…'}</span> : plotNumbers}
+        {eoiMode ? <span style={{ color: '#D98A1F' }}>{eoiNo || '…'}</span> : plotNumbers}
       </h1>
       {reviseError && (
-        <div style={{ margin: '10px 0 16px', padding: '10px 12px', borderRadius: 8, background: '#FEE2E2', color: '#B91C1C', fontSize: 13, fontWeight: 600 }}>
+        <div style={{ margin: '10px 0 16px', padding: '10px 12px', borderRadius: 8, background: '#FDECEC', color: '#D9434B', fontSize: 13, fontWeight: 600 }}>
           This booking could not be opened for revision. Ask an admin to check your access to it.
         </div>
       )}
-      <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 18 }}>
-        {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#3D5AFE' }}>{pricingReady ? formulaSet : '…'}</span> pricing
-        {eoiMode && <span style={{ color: '#E4571A', fontWeight: 700 }}> · Expression of Interest · no plot</span>}
-        {plots.length > 1 && <span style={{ color: '#2E7D32', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
+      <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 18 }}>
+        {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#2F6DB5' }}>{pricingReady ? formulaSet : '…'}</span> pricing
+        {eoiMode && <span style={{ color: '#D98A1F', fontWeight: 700 }}> · Expression of Interest · no plot</span>}
+        {plots.length > 1 && <span style={{ color: '#23874A', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
       </p>
 
       <Section title="Client">
@@ -885,7 +885,7 @@ function BookingPage() {
 
       {!pricingReady ? (
         <Section title="Pricing">
-          <p style={{ fontSize: 13, color: '#8492A6', margin: 0 }}>Loading unit pricing…</p>
+          <p style={{ fontSize: 13, color: '#6E7278', margin: 0 }}>Loading unit pricing…</p>
         </Section>
       ) : prat ? (
         /* Pratishtha: each unit is priced from its price book, driven by a few editable
@@ -895,7 +895,7 @@ function BookingPage() {
           {pratBooks.map((pb, idx) => (
             <Section key={idx} title={`Unit Pricing · ${unitTitle(pb)}`}>
               {idx === 0 && (
-                <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 12px' }}>
+                <p style={{ fontSize: 12, color: '#6E7278', margin: '0 0 12px' }}>
                   Figures come from the Pratishtha price book. Adjust the highlighted drivers and every dependent line recalculates.
                 </p>
               )}
@@ -903,8 +903,8 @@ function BookingPage() {
                 const e = flatEdit(pb);
                 const dp = isDownPayment(pb);
                 return (
-                  <div style={{ border: '1.5px solid #C7D2FE', background: '#F5F7FF', borderRadius: 10, padding: 12, marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  <div style={{ border: '1.5px solid #CCE5FF', background: '#F3F9FF', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                       Editable · everything below recalculates
                     </div>
                     <Row><L>Plan</L>
@@ -940,7 +940,7 @@ function BookingPage() {
                         <In type="number" disabled value={pb.token} />
                       </Row>
                     )}
-                    <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
+                    <p style={{ fontSize: 11, color: '#6E7278', margin: '4px 0 0' }}>
                       {dp
                         ? `${rupee(pb.flat_price)} / ${pb.flat_area} sq.yd = ${rupee(pb.flat_rate)} per sq.yd${pb.terrace_area ? ` · terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
                         : 'Regular plan — priced from the approved price book. Switch to Down Payment to change the rate or token.'}
@@ -951,8 +951,8 @@ function BookingPage() {
               {pb.kind === 'shop' && (() => {
                 const e = shopEdit(pb);
                 return (
-                  <div style={{ border: '1.5px solid #C7D2FE', background: '#F5F7FF', borderRadius: 10, padding: 12, marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#3D5AFE', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  <div style={{ border: '1.5px solid #CCE5FF', background: '#F3F9FF', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                       Editable · everything below recalculates
                     </div>
                     <Row><L>Rate (₹/sq.ft)</L>
@@ -963,15 +963,15 @@ function BookingPage() {
                         {[['pct', '%'], ['amount', '₹']].map(([m, lbl]) => (
                           <button key={m} type="button" onClick={() => setShopEdit(pb, { mode: m })}
                             style={{ width: 44, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                              border: `1.5px solid ${e.mode === m ? '#3D5AFE' : '#E0E6F0'}`,
-                              background: e.mode === m ? '#3D5AFE' : '#fff', color: e.mode === m ? '#fff' : '#8492A6' }}>{lbl}</button>
+                              border: `1.5px solid ${e.mode === m ? '#2F6DB5' : '#DFE2E6'}`,
+                              background: e.mode === m ? '#2F6DB5' : '#fff', color: e.mode === m ? '#fff' : '#6E7278' }}>{lbl}</button>
                         ))}
                         {e.mode === 'amount'
                           ? <In type="number" value={e.unitAmount ?? ''} onChange={(ev) => setShopEdit(pb, { unitAmount: ev.target.value })} />
                           : <In type="number" value={e.unitPct ?? ''} onChange={(ev) => setShopEdit(pb, { unitPct: ev.target.value })} />}
                       </div>
                     </Row>
-                    <p style={{ fontSize: 11, color: '#8492A6', margin: '4px 0 0' }}>
+                    <p style={{ fontSize: 11, color: '#6E7278', margin: '4px 0 0' }}>
                       {e.mode === 'amount'
                         ? `Entered as an amount · ${pb.amount ? ((pb.loan_amount / pb.amount) * 100).toFixed(2) : '0'}% of the shop amount`
                         : `${e.unitPct || 0}% of ${rupee(pb.amount)} = ${rupee(pb.loan_amount)}`}
@@ -979,21 +979,21 @@ function BookingPage() {
                   </div>
                 );
               })()}
-              <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid #DFE2E6', borderRadius: 14, overflow: 'hidden' }}>
                 {pratRowsFor(pb).map((row, i) => (
                   Array.isArray(row) ? (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
-                      background: row[2] === 'sub' ? '#EEF2FF' : (i % 2 ? '#FAFBFE' : '#fff'), borderBottom: '1px solid #F0F3FA' }}>
-                      <span style={{ fontSize: 13, color: row[2] === 'sub' ? '#1A1A2E' : '#6B7280', fontWeight: row[2] === 'sub' ? 700 : 400 }}>{row[0]}</span>
-                      <span style={{ fontSize: 13, fontWeight: row[2] === 'sub' ? 800 : 700, color: '#1A1A2E' }}>{row[1]}</span>
+                      background: row[2] === 'sub' ? '#F3F9FF' : (i % 2 ? '#FAFAFB' : '#fff'), borderBottom: '1px solid #F4F5F7' }}>
+                      <span style={{ fontSize: 13, color: row[2] === 'sub' ? '#1D1D1F' : '#55585E', fontWeight: row[2] === 'sub' ? 700 : 400 }}>{row[0]}</span>
+                      <span style={{ fontSize: 13, fontWeight: row[2] === 'sub' ? 800 : 700, color: '#1D1D1F' }}>{row[1]}</span>
                     </div>
                   ) : (
-                    <div key={i} style={{ padding: '9px 14px', background: '#F5F7FF', borderBottom: '1px solid #E5EAF5',
-                      fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#3D5AFE' }}>{row.h}</div>
+                    <div key={i} style={{ padding: '9px 14px', background: '#F3F9FF', borderBottom: '1px solid #ECEEF0',
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#2F6DB5' }}>{row.h}</div>
                   )
                 ))}
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px',
-                  background: pratBooks.length > 1 ? '#4B5563' : '#182350' }}>
+                  background: pratBooks.length > 1 ? '#3A3C40' : '#1D1D1F' }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
                     {pb.kind === 'shop' ? 'Grand Total' : 'Total'}
                   </span>
@@ -1005,15 +1005,15 @@ function BookingPage() {
           {/* Only meaningful with more than one unit — a single unit's total is above. */}
           {pratBooks.length > 1 && (
             <Section title={`Combined Total · ${pratBooks.length} units`}>
-              <div style={{ border: '1px solid #E0E6F0', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid #DFE2E6', borderRadius: 14, overflow: 'hidden' }}>
                 {pratBooks.map((pb, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
-                    background: i % 2 ? '#FAFBFE' : '#fff', borderBottom: '1px solid #F0F3FA' }}>
-                    <span style={{ fontSize: 13, color: '#6B7280' }}>{unitTitle(pb)}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>{rupee(pbTotal(pb))}</span>
+                    background: i % 2 ? '#FAFAFB' : '#fff', borderBottom: '1px solid #F4F5F7' }}>
+                    <span style={{ fontSize: 13, color: '#55585E' }}>{unitTitle(pb)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{rupee(pbTotal(pb))}</span>
                   </div>
                 ))}
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: '#182350' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: '#1D1D1F' }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Total All Inclusive Amount</span>
                   <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pratTotal)}</span>
                 </div>
@@ -1023,12 +1023,12 @@ function BookingPage() {
         </>
       ) : pratBookMissing ? (
         <Section title="Pricing">
-          <div style={{ border: '1.5px solid #FCA5A5', background: '#FEF2F2', borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#991B1B', marginBottom: 6 }}>
+          <div style={{ border: '1.5px solid #EF9195', background: '#FDECEC', borderRadius: 14, padding: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#A52A31', marginBottom: 6 }}>
               ⚠️ This unit has no price book
             </div>
-            <p style={{ fontSize: 12, color: '#7F1D1D', margin: 0 }}>{pratMissingMsg}</p>
-            <p style={{ fontSize: 12, color: '#7F1D1D', margin: '8px 0 0' }}>
+            <p style={{ fontSize: 12, color: '#A52A31', margin: 0 }}>{pratMissingMsg}</p>
+            <p style={{ fontSize: 12, color: '#A52A31', margin: '8px 0 0' }}>
               Load the price book for this project&rsquo;s units, then reopen this form.
               Booking is blocked until then so nothing is saved at the wrong price.
             </p>
@@ -1042,8 +1042,8 @@ function BookingPage() {
               <button key={u} type="button" onClick={() => set('area_unit', u)}
                 style={{ flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   transition: 'all 0.12s',
-                  border: `1.5px solid ${unit === u ? '#3D5AFE' : '#E0E6F0'}`,
-                  background: unit === u ? '#3D5AFE' : '#fff', color: unit === u ? '#fff' : '#6B7280' }}>{u}</button>
+                  border: `1.5px solid ${unit === u ? '#2F6DB5' : '#DFE2E6'}`,
+                  background: unit === u ? '#2F6DB5' : '#fff', color: unit === u ? '#fff' : '#55585E' }}>{u}</button>
             ))}
           </div>
         </Row>
@@ -1154,9 +1154,9 @@ function BookingPage() {
         {pricingReady && (!prat || pratSched) && (<>
         {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
         {(hasSaleDeedSplit || pratShop) && nsdBase > 0 && (
-          <div style={{ marginBottom: 14, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 2 }}>Extra Work Amount Installments</div>
-            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(nsdBase)}</div>
+          <div style={{ marginBottom: 14, borderBottom: '1px solid #DFE2E6', paddingBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#145A32', marginBottom: 2 }}>Extra Work Amount Installments</div>
+            <div style={{ fontSize: 11, color: '#55585E', marginBottom: 8 }}>{rupee(nsdBase)}</div>
             <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
             {nsdInsts.length > 0 && (
               <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
@@ -1173,13 +1173,13 @@ function BookingPage() {
                 </tbody>
               </table>
             )}
-            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
+            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#23874A' : '#D9434B' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
           </div>
         )}
         {(hasSaleDeedSplit || pratSched) && (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>{pratShop ? 'Final Unit Price Installments' : 'Unit Price Installments'}</div>
-            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>{rupee(base)}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', marginBottom: 2 }}>{pratShop ? 'Final Unit Price Installments' : 'Unit Price Installments'}</div>
+            <div style={{ fontSize: 11, color: '#55585E', marginBottom: 8 }}>{rupee(base)}</div>
           </>
         )}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
@@ -1198,24 +1198,24 @@ function BookingPage() {
               {/* Pratishtha's three charge lines all fall due on the sale deed or
                   possession, so they carry that wording instead of a date picker. */}
               {pratSched ? pratExtras().map((x) => (
-                <tr key={x.label} style={{ background: '#FFF8E1' }}>
-                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
-                  <td style={{ ...td, fontSize: 10, fontStyle: 'italic', color: '#6B7280' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
-                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>{x.label}</td>
-                  <td style={td}><input value={rupee(x.amt)} readOnly style={{ ...inp, background: '#f0f4ff', color: '#1a73e8', fontWeight: 600 }} /></td>
+                <tr key={x.label} style={{ background: '#FFF3E0' }}>
+                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>Extra</td>
+                  <td style={{ ...td, fontSize: 10, fontStyle: 'italic', color: '#55585E' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
+                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>{x.label}</td>
+                  <td style={td}><input value={rupee(x.amt)} readOnly style={{ ...inp, background: '#f3f9ff', color: '#2f6db5', fontWeight: 600 }} /></td>
                 </tr>
               )) : v.totalExtra > 0 && (
-                <tr style={{ background: '#FFF8E1' }}>
-                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Extra</td>
+                <tr style={{ background: '#FFF3E0' }}>
+                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>Extra</td>
                   <td style={td}><DateFieldDMY value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
-                  <td style={{ ...td, fontWeight: 700, color: '#92400E', fontSize: 11 }}>Legal & Other Charges</td>
-                  <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f0f4ff', color: '#1a73e8', fontWeight: 600 }} /></td>
+                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>Legal & Other Charges</td>
+                  <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f3f9ff', color: '#2f6db5', fontWeight: 600 }} /></td>
                 </tr>
               )}
             </tbody>
           </table>
         )}
-        {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Total: {pctTotal.toFixed(2)}%{pratDp ? '' : ` · Legal & Other Charges ${rupee(v.totalExtra)}`}</div>}
+        {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#23874A' : '#D9434B' }}>Total: {pctTotal.toFixed(2)}%{pratDp ? '' : ` · Legal & Other Charges ${rupee(v.totalExtra)}`}</div>}
         </>)}
       </Section>
 
@@ -1239,45 +1239,45 @@ function BookingPage() {
               </tbody>
             </table>
           )}
-          {ewInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(ewPctTotal - 100) < 0.01 ? '#15803D' : '#DC2626' }}>Extra Work Total: {ewPctTotal.toFixed(2)}%</div>}
+          {ewInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(ewPctTotal - 100) < 0.01 ? '#23874A' : '#D9434B' }}>Extra Work Total: {ewPctTotal.toFixed(2)}%</div>}
         </Section>
       )}
 
       <Section title="📝 Extra Terms & Conditions (optional — added below the default terms)">
         {extraTerms.map((t, i) => (
-          <div key={i} style={{ border: '1px solid #E0E6F0', borderRadius: 10, padding: 12, marginBottom: 10, background: '#FAFBFE' }}>
+          <div key={i} style={{ border: '1px solid #DFE2E6', borderRadius: 14, padding: 12, marginBottom: 10, background: '#FAFAFB' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#8492A6' }}>Term {i + 1}</span>
-              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕ Remove</button>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#6E7278' }}>Term {i + 1}</span>
+              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕ Remove</button>
             </div>
             <input value={t.title} onChange={(e) => setTerm(i, 'title', e.target.value)} placeholder="Title (e.g. Possession)"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', marginBottom: 8 }} />
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #DFE2E6', outline: 'none', marginBottom: 8 }} />
             <textarea value={t.desc} onChange={(e) => setTerm(i, 'desc', e.target.value)} placeholder="Description / clause text" rows={2}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #E0E6F0', outline: 'none', resize: 'vertical' }} />
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #DFE2E6', outline: 'none', resize: 'vertical' }} />
           </div>
         ))}
-        <button onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1.5px dashed #3D5AFE', background: '#EEF1FF', color: '#3D5AFE', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
+        <button onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 14, border: '1.5px dashed #2F6DB5', background: '#F3F9FF', color: '#2F6DB5', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
       </Section>
 
       <Section title="LOI Document">
-        <button onClick={doDownloadLOI} style={{ ...submitBtn, background: 'linear-gradient(135deg,#7b2ff7,#5a00d8)', marginBottom: 12 }}>
+        <button onClick={doDownloadLOI} style={{ ...submitBtn, background: '#2f6db5', marginBottom: 12 }}>
           📥 Download LOI PDF  (Print → Sign → Upload)
         </button>
-        {loiDone && <div style={{ fontSize: 12, color: '#92400e', background: '#fffbeb', border: '1px solid #f59e0b', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>✅ LOI downloaded. Get it signed and upload below.</div>}
+        {loiDone && <div style={{ fontSize: 12, color: '#a3671a', background: '#fff3e0', border: '1px solid #d98a1f', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>✅ LOI downloaded. Get it signed and upload below.</div>}
         {savedLoiPath && !loiFile && (
-          <div style={{ fontSize: 12, color: '#15803D', background: '#E8F5E9', border: '1px solid #86EFAC', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ fontSize: 12, color: '#23874A', background: '#E9FBEA', border: '1px solid #A4F5A6', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <span>📎 Signed LOI already attached from your last save.</span>
-            <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: '#15803D', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
+            <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: '#23874A', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
           </div>
         )}
-        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
+        <label style={{ fontSize: 13, fontWeight: 600, color: '#3A3C40' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
         <input type="file" accept="image/*,.pdf" onChange={onFile} style={{ display: 'block', marginTop: 8, fontSize: 13 }} />
-        {loiFile && <div style={{ fontSize: 12, color: '#15803D', marginTop: 6 }}>📎 {loiFile.name}</div>}
+        {loiFile && <div style={{ fontSize: 12, color: '#23874A', marginTop: 6 }}>📎 {loiFile.name}</div>}
       </Section>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E8F5E9' : '#FEF2F2', color: msg[0] === '✅' ? '#15803D' : '#DC2626', fontSize: 13, marginBottom: 12 }}>{msg}</div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E9FBEA' : '#FDECEC', color: msg[0] === '✅' ? '#23874A' : '#D9434B', fontSize: 13, marginBottom: 12 }}>{msg}</div>}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: '#fff', color: '#3D5AFE', border: '1.5px solid #3D5AFE', opacity: pratBookMissing ? 0.4 : 1 }}>
+        <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #2F6DB5', opacity: pratBookMissing ? 0.4 : 1 }}>
           {saving ? '…' : '💾 Save Draft'}
         </button>
         <button onClick={submit} disabled={saving || pratBookMissing} style={{ ...submitBtn, opacity: pratBookMissing ? 0.4 : 1 }}>{saving ? 'Saving…' : 'Submit Booking'}</button>
@@ -1287,44 +1287,44 @@ function BookingPage() {
 }
 
 const Section = ({ title, children }) => (
-  <div style={{ background: '#fff', borderRadius: 14, padding: '16px 18px', marginBottom: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)' }}>
-    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: '#3D5AFE', marginBottom: 12 }}>{title}</div>
+  <div style={{ background: '#fff', borderRadius: 18, padding: '16px 18px', marginBottom: 14, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: '#2F6DB5', marginBottom: 12 }}>{title}</div>
     {children}
   </div>
 );
 const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>{children}</div>;
-const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: '#374151' }}>{children}</label>;
+const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: '#3A3C40' }}>{children}</label>;
 const In = ({ type, invalid, ...p }) => (
   // number → plain text + numeric keypad, so scrolling never changes the value (no spinner)
   <input {...p} type={type === 'number' ? 'text' : (type || 'text')} inputMode={type === 'number' ? 'decimal' : undefined}
-    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', background: p.disabled ? '#F3F4F6' : (invalid ? '#FEF2F2' : '#fff') }} />
+    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#D9434B' : '#DFE2E6'}`, outline: 'none', background: p.disabled ? '#F4F5F7' : (invalid ? '#FDECEC' : '#fff') }} />
 );
-const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#DC2626' : '#E0E6F0'}`, outline: 'none', cursor: 'pointer', background: invalid ? '#FEF2F2' : '#fff' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
+const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#D9434B' : '#DFE2E6'}`, outline: 'none', cursor: 'pointer', background: invalid ? '#FDECEC' : '#fff' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>
-    <L>{label}{sub && <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400, fontStyle: 'italic' }}>{sub}</span>}</L>
-    <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #C5D8FB', background: '#F0F4FF', color: '#1a73e8' }}>{rupee(val)}</div>
+    <L>{label}{sub && <span style={{ display: 'block', fontSize: 11, color: '#9A9EA5', fontWeight: 400, fontStyle: 'italic' }}>{sub}</span>}</L>
+    <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #CCE5FF', background: '#F3F9FF', color: '#2f6db5' }}>{rupee(val)}</div>
   </Row>
 );
 const T = ({ label, sub, sub2, val, valFmt, big, subtotal }) => (
   <div style={{
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: big ? '10px 0 0' : subtotal ? '8px 10px' : '6px 0',
-    borderTop: big ? '2px solid #B3CDF9' : 'none', marginTop: big ? 6 : 0,
-    ...(subtotal ? { background: '#DBEAFE', borderRadius: 6, margin: '4px 0' } : {}),
+    borderTop: big ? '2px solid #A2D2FF' : 'none', marginTop: big ? 6 : 0,
+    ...(subtotal ? { background: '#E6F2FF', borderRadius: 6, margin: '4px 0' } : {}),
   }}>
-    <span style={{ flex: 1, paddingRight: 12, fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? '#0D47A1' : '#4B5563' }}>
+    <span style={{ flex: 1, paddingRight: 12, fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? '#245A96' : '#3A3C40' }}>
       {label}
-      {sub && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub}</small>}
-      {sub2 && <small style={{ display: 'block', fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>{sub2}</small>}
+      {sub && <small style={{ display: 'block', fontSize: 11, color: '#9A9EA5', fontWeight: 400 }}>{sub}</small>}
+      {sub2 && <small style={{ display: 'block', fontSize: 11, color: '#9A9EA5', fontWeight: 400 }}>{sub2}</small>}
     </span>
-    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#0D47A1' : '#1F2937' }}>{valFmt || rupee(val)}</span>
+    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#245A96' : '#1D1D1F' }}>{valFmt || rupee(val)}</span>
   </div>
 );
-const totalBox = { background: 'linear-gradient(135deg,#F0F7FF,#E8F0FE)', border: '1.5px solid #C5D8FB', borderRadius: 12, padding: '10px 18px', marginBottom: 14 };
-const back = { background: 'none', border: 'none', color: '#3D5AFE', fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 };
-const th = { fontSize: 11, fontWeight: 700, color: '#8492A6', textAlign: 'left', padding: '6px 8px' };
+const totalBox = { background: 'linear-gradient(135deg,#F3F9FF,#E6F2FF)', border: '1.5px solid #CCE5FF', borderRadius: 16, padding: '10px 18px', marginBottom: 14 };
+const back = { background: 'none', border: 'none', color: '#2F6DB5', fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 };
+const th = { fontSize: 11, fontWeight: 700, color: '#6E7278', textAlign: 'left', padding: '6px 8px' };
 const td = { padding: '4px 8px', fontSize: 13 };
-const inp = { width: '100%', padding: '7px 9px', fontSize: 13, borderRadius: 6, border: '1.5px solid #E0E6F0', outline: 'none' };
-const submitBtn = { width: '100%', padding: 13, border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#1a73e8,#0d47a1)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' };
+const inp = { width: '100%', padding: '7px 9px', fontSize: 13, borderRadius: 6, border: '1.5px solid #DFE2E6', outline: 'none' };
+const submitBtn = { width: '100%', padding: 13, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#2f6db5,#245a96)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' };

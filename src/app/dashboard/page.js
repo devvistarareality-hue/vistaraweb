@@ -58,7 +58,7 @@ export default function DashboardPage() {
       {userModules.length === 0 ? (
         <div style={s.emptyState}>
           <div style={s.emptyIcon}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#B0BAC9" strokeWidth="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9A9EA5" strokeWidth="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
           </div>
           <p style={s.emptyTitle}>No modules assigned yet</p>
           <p style={s.emptyDesc}>Contact your administrator to get access to modules.</p>
@@ -89,7 +89,7 @@ const s = {
     display:         'flex',
     justifyContent:  'space-between',
     alignItems:      'center',
-    backgroundColor: '#182350',
+    backgroundColor: '#1D1D1F',
     borderRadius:    18,
     padding:         '28px 32px',
     marginBottom:    32,
@@ -99,13 +99,13 @@ const s = {
   statBlock: {
     textAlign:       'right',
     backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius:    14,
+    borderRadius: 18,
     padding:         '14px 22px',
   },
-  statNum:   { display: 'block', fontSize: 30, fontWeight: 800, color: '#B9915E' },
+  statNum:   { display: 'block', fontSize: 30, fontWeight: 800, color: '#D98A1F' },
   statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
   sectionTitle: {
-    fontSize: 11, fontWeight: 700, color: '#8492A6',
+    fontSize: 11, fontWeight: 700, color: '#6E7278',
     letterSpacing: 0.8, marginBottom: 16,
   },
   grid: {
@@ -115,21 +115,21 @@ const s = {
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius:    16,
+    borderRadius: 20,
     padding:         '22px',
-    boxShadow:       '0 4px 12px rgba(184,196,214,0.18)',
+    boxShadow:       '0 4px 12px rgba(140,148,160,0.18)',
     display:         'flex',
     flexDirection:   'column',
     cursor:          'pointer',
     textDecoration:  'none',
   },
   iconBg: {
-    width: 52, height: 52, borderRadius: 14,
+    width: 52, height: 52, borderRadius: 18,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: 14,
   },
-  cardName:  { fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 4 },
-  cardSub:   { fontSize: 12, color: '#8492A6', marginBottom: 14, flex: 1 },
+  cardName:  { fontSize: 15, fontWeight: 700, color: '#1D1D1F', marginBottom: 4 },
+  cardSub:   { fontSize: 12, color: '#6E7278', marginBottom: 14, flex: 1 },
   openArrow: { fontSize: 12, fontWeight: 700 },
   emptyState: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -137,10 +137,10 @@ const s = {
   },
   emptyIcon: {
     width: 80, height: 80, borderRadius: '50%',
-    backgroundColor: '#EEF1F7',
+    backgroundColor: '#ECEEF0',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
-  emptyTitle: { fontSize: 16, fontWeight: 700, color: '#1A1A2E', marginBottom: 8 },
-  emptyDesc:  { fontSize: 14, color: '#8492A6', maxWidth: 300 },
+  emptyTitle: { fontSize: 16, fontWeight: 700, color: '#1D1D1F', marginBottom: 8 },
+  emptyDesc:  { fontSize: 14, color: '#6E7278', maxWidth: 300 },
 };

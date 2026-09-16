@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
-const RED = '#DC2626';
+const RED = '#D9434B';
 
 // Trial-data reset (admin only). Wipes transactional CRM data and resets plots —
 // keeps company, users, projects, plot definitions, sources and config.
@@ -80,31 +80,31 @@ export default function DataResetPage() {
   }
 
   if (!isAdmin) {
-    return <div style={{ padding: 40, color: '#8492A6' }}>Admin access only.</div>;
+    return <div style={{ padding: 40, color: '#6E7278' }}>Admin access only.</div>;
   }
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 680 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Data Reset</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', marginBottom: 20 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Data Reset</h1>
+      <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 20 }}>
         Clear trial CRM data before go-live. This <b>keeps</b> your company, users, projects, plot
         definitions, lead sources and configuration — it only deletes transactional data and resets plots.
       </p>
 
       {/* Select what to clear */}
-      <div style={{ background: '#fff', border: '1px solid #E6EBF4', borderRadius: 14, padding: 18, marginBottom: 18 }}>
+      <div style={{ background: '#fff', border: '1px solid #ECEEF0', borderRadius: 18, padding: 18, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: '#9CA3AF', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: '#9A9EA5', textTransform: 'uppercase' }}>
             Select what to clear {loading ? '…' : ''}
           </div>
           {!loading && (
             <button onClick={toggleAll}
-              style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              style={{ fontSize: 12, fontWeight: 700, color: '#2F6DB5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               {allOn ? 'Clear all' : 'Select all'}
             </button>
           )}
         </div>
-        {loading ? <p style={{ color: '#8492A6', fontSize: 13 }}>Loading counts…</p> : (
+        {loading ? <p style={{ color: '#6E7278', fontSize: 13 }}>Loading counts…</p> : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 18px' }}>
             {ITEMS.map(([k, label]) => {
               const isImplied = implied(k) && !selected.has(k);
@@ -112,19 +112,19 @@ export default function DataResetPage() {
               return (
                 <label key={k} title={isImplied ? 'Deleted together with Leads' : ''}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13,
-                    color: '#374151', cursor: isImplied ? 'not-allowed' : 'pointer', padding: '5px 0', opacity: isImplied ? 0.7 : 1 }}>
+                    color: '#3A3C40', cursor: isImplied ? 'not-allowed' : 'pointer', padding: '5px 0', opacity: isImplied ? 0.7 : 1 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                     <input type="checkbox" checked={checked} disabled={isImplied} onChange={() => toggle(k)} />
-                    {label}{isImplied && <span style={{ fontSize: 10, color: '#9CA3AF' }}>(via Leads)</span>}
+                    {label}{isImplied && <span style={{ fontSize: 10, color: '#9A9EA5' }}>(via Leads)</span>}
                   </span>
-                  <span style={{ fontWeight: 800, color: (counts?.[k] || 0) > 0 ? (k === 'plots_to_reset' ? '#2E7D32' : RED) : '#9CA3AF' }}>{counts?.[k] ?? 0}</span>
+                  <span style={{ fontWeight: 800, color: (counts?.[k] || 0) > 0 ? (k === 'plots_to_reset' ? '#23874A' : RED) : '#9A9EA5' }}>{counts?.[k] ?? 0}</span>
                 </label>
               );
             })}
           </div>
         )}
         {!loading && (selected.has('leads') || selected.has('bookings')) && (
-          <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 8, lineHeight: 1.6 }}>
             {selected.has('leads') && (
               <>Deleting <b>Leads</b> also removes their history, follow-ups &amp; site visits.
                 Closures are <b>kept</b> — they stay in step with your bookings.<br /></>
@@ -137,43 +137,43 @@ export default function DataResetPage() {
       </div>
 
       {/* Options */}
-      <div style={{ background: '#fff', border: '1px solid #E6EBF4', borderRadius: 14, padding: 18, marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+      <div style={{ background: '#fff', border: '1px solid #ECEEF0', borderRadius: 18, padding: 18, marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#3A3C40', cursor: 'pointer' }}>
           <input type="checkbox" checked={withLoi} onChange={(e) => setWithLoi(e.target.checked)} />
           Also delete signed LOI PDFs from storage
         </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#3A3C40', cursor: 'pointer' }}>
           <input type="checkbox" checked={withAttendance} onChange={(e) => setWithAttendance(e.target.checked)} />
           Also clear attendance & leave records
         </label>
       </div>
 
       {/* Danger zone */}
-      <div style={{ background: '#FEF2F2', border: `1.5px solid ${RED}`, borderRadius: 14, padding: 18 }}>
+      <div style={{ background: '#FDECEC', border: `1.5px solid ${RED}`, borderRadius: 18, padding: 18 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: RED, marginBottom: 6 }}>⚠️ Danger zone — this cannot be undone</div>
-        <p style={{ fontSize: 13, color: '#7F1D1D', marginBottom: 12 }}>
+        <p style={{ fontSize: 13, color: '#A52A31', marginBottom: 12 }}>
           Take a Railway database backup first. Then type <b>DELETE</b> and enter the reset key.
         </p>
         <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="Type DELETE"
-          style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 10, border: `1.5px solid ${RED}66`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }} />
+          style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 14, border: `1.5px solid ${RED}66`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }} />
         {/* The key is held in the server environment, not in the app — so being signed
             in as an admin is not by itself enough to wipe the company's data. */}
         <input type="password" value={resetKey} onChange={(e) => setResetKey(e.target.value)}
           placeholder="Reset key" autoComplete="new-password"
-          style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 10, border: `1.5px solid ${RED}66`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box', display: 'block' }} />
+          style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 14, border: `1.5px solid ${RED}66`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box', display: 'block' }} />
         <div>
           {(() => {
             const ready = confirmText === 'DELETE' && !!resetKey.trim() && !busy && !nothingSelected;
             return (
               <button onClick={doReset} disabled={!ready}
-                style={{ padding: '11px 22px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 800,
-                  background: ready ? RED : '#F3B4B4', color: '#fff', cursor: ready ? 'pointer' : 'not-allowed' }}>
+                style={{ padding: '11px 22px', borderRadius: 14, border: 'none', fontSize: 14, fontWeight: 800,
+                  background: ready ? RED : '#F7C3C6', color: '#fff', cursor: ready ? 'pointer' : 'not-allowed' }}>
                 {busy ? 'Clearing…' : nothingSelected ? 'Select at least one item' : !resetKey.trim() ? 'Enter the reset key' : `Permanently delete ${total} records`}
               </button>
             );
           })()}
         </div>
-        {!!msg && <p style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#15803D' : RED }}>{msg}</p>}
+        {!!msg && <p style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#23874A' : RED }}>{msg}</p>}
       </div>
     </div>
   );

@@ -33,10 +33,10 @@ function shortDate(dateStr) {
 const cardStyle = {
   flex: 1,
   background: '#fff',
-  borderRadius: 16,
-  border: '1px solid #F0F3FA',
+  borderRadius: 20,
+  border: '1px solid #F4F5F7',
   padding: '18px 20px',
-  boxShadow: '0 2px 12px rgba(24,35,80,0.06)',
+  boxShadow: '0 2px 12px rgba(29,29,31,0.06)',
   minWidth: 0,
 };
 
@@ -44,10 +44,10 @@ const CustomTooltip = ({ active, payload, label, color, metricLabel, showAmount 
   if (!active || !payload?.length) return null;
   const amt = payload[0].payload?.amount;
   return (
-    <div style={{ background: '#1A1A2E', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+    <div style={{ background: '#1D1D1F', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
       <div style={{ fontWeight: 700, marginBottom: 2 }}>{label ? shortDate(label) : ''}</div>
       <div style={{ color }}>{metricLabel}: <strong>{payload[0].value}</strong></div>
-      {showAmount && <div style={{ color: '#B9915E', marginTop: 2 }}>Amount: <strong>{fmtAmount(amt)}</strong></div>}
+      {showAmount && <div style={{ color: '#D98A1F', marginTop: 2 }}>Amount: <strong>{fmtAmount(amt)}</strong></div>}
     </div>
   );
 };
@@ -61,10 +61,10 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{title}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{title}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 28, fontWeight: 800, color: '#1A1A2E' }}>{total}</span>
-            <span style={{ fontSize: 12, color: '#8492A6', fontWeight: 600 }}>total</span>
+            <span style={{ fontSize: 28, fontWeight: 800, color: '#1D1D1F' }}>{total}</span>
+            <span style={{ fontSize: 12, color: '#6E7278', fontWeight: 600 }}>total</span>
           </div>
         </div>
         <div style={{ padding: '4px 12px', borderRadius: 20, background: color + '20', color, fontSize: 12, fontWeight: 700 }}>
@@ -73,7 +73,7 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
       </div>
 
       {data.length === 0 ? (
-        <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C0C8D8', fontSize: 13 }}>
+        <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C9CDD2', fontSize: 13 }}>
           {emptyMsg}
         </div>
       ) : (
@@ -85,9 +85,9 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
                 <stop offset="95%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F0F3FA" vertical={false} />
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} interval={labelInterval} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#B0BAD0' }} tickLine={false} axisLine={false} width={32} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#F4F5F7" vertical={false} />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: '#A2D2FF' }} tickLine={false} axisLine={false} interval={labelInterval} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#A2D2FF' }} tickLine={false} axisLine={false} width={32} />
             <Tooltip content={<CustomTooltip color={color} metricLabel={metricLabel} showAmount={showAmount} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 2' }} />
             <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2.5} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
           </AreaChart>
@@ -113,9 +113,9 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
         {[1, 2, 3].map(i => (
           <div key={i} style={{ ...cardStyle, height: 196 }}>
-            <div style={{ height: 16, width: 120, background: '#F0F3FA', borderRadius: 6, marginBottom: 10 }} />
-            <div style={{ height: 28, width: 60, background: '#F0F3FA', borderRadius: 6, marginBottom: 20 }} />
-            <div style={{ height: 120, background: '#F8FAFD', borderRadius: 8 }} />
+            <div style={{ height: 16, width: 120, background: '#F4F5F7', borderRadius: 6, marginBottom: 10 }} />
+            <div style={{ height: 28, width: 60, background: '#F4F5F7', borderRadius: 6, marginBottom: 20 }} />
+            <div style={{ height: 120, background: '#F4F5F7', borderRadius: 8 }} />
           </div>
         ))}
       </div>
@@ -128,7 +128,7 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
         title="Called / MQL"
         badge="MQL Trend"
         data={mqlData}
-        color="#3D5AFE"
+        color="#2F6DB5"
         gradientId="mqlGrad"
         metricLabel="MQL"
         emptyMsg="No MQL data for this range"
@@ -137,7 +137,7 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
         title="Site Visits"
         badge="SV Trend"
         data={svData}
-        color="#10B981"
+        color="#23874A"
         gradientId="svGrad"
         metricLabel="SV"
         emptyMsg="No SV data for this range"
@@ -146,7 +146,7 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
         title="Warm / SQL"
         badge="Warm Trend"
         data={warmData}
-        color="#F59E0B"
+        color="#D98A1F"
         gradientId="warmGrad"
         metricLabel="Warm"
         emptyMsg="No warm data for this range"

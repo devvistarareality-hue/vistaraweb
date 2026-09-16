@@ -22,14 +22,14 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
     <div>
       {/* Has types toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <span style={{ fontSize: 13, color: '#1A1A2E', fontWeight: 600 }}>Does this project have plot types?</span>
+        <span style={{ fontSize: 13, color: '#1D1D1F', fontWeight: 600 }}>Does this project have plot types?</span>
         <div style={{ display: 'flex', gap: 6 }}>
           {[['No', false], ['Yes', true]].map(([label, val]) => (
             <button key={label} type="button" onClick={() => setHasTypes(val)}
               style={{ padding: '5px 16px', borderRadius: 7, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                borderColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#E0E6F0',
-                backgroundColor: hasTypes === val ? (val ? '#3D5AFE' : '#182350') : '#fff',
-                color: hasTypes === val ? '#fff' : '#8492A6' }}>
+                borderColor: hasTypes === val ? (val ? '#2F6DB5' : '#1D1D1F') : '#DFE2E6',
+                backgroundColor: hasTypes === val ? (val ? '#2F6DB5' : '#1D1D1F') : '#fff',
+                color: hasTypes === val ? '#fff' : '#6E7278' }}>
               {label}
             </button>
           ))}
@@ -43,7 +43,7 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
             onChange={e => setNoTypePlots(e.target.value)}
             style={{ ...inp, maxWidth: 160 }} placeholder="e.g. 20" />
           {Number(noTypePlots) > 0 && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#3D5AFE', background: '#F0F3FF', padding: '8px 12px', borderRadius: 8 }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#2F6DB5', background: '#F3F9FF', padding: '8px 12px', borderRadius: 8 }}>
               Will create <strong>{noTypePlots}</strong> plots numbered <strong>{startNo}</strong> to <strong>{startNo + Number(noTypePlots) - 1}</strong>
             </div>
           )}
@@ -62,24 +62,24 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
               <input type="number" min="1" value={pt.from} onChange={e => updateType(i, 'from', e.target.value)} style={inp} placeholder="1" />
               <input type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)} style={inp} placeholder="10" />
               <button type="button" onClick={() => removeType(i)}
-                style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? '#EF4444' : '#D1D5DB', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
+                style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? '#D9434B' : '#C9CDD2', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
                 disabled={plotTypes.length === 1}>✕</button>
             </div>
           ))}
           <button type="button" onClick={addType}
-            style={{ fontSize: 12, fontWeight: 700, color: '#3D5AFE', background: 'none', border: '1.5px dashed #3D5AFE', borderRadius: 8, padding: '6px 16px', cursor: 'pointer', marginBottom: 10 }}>
+            style={{ fontSize: 12, fontWeight: 700, color: '#2F6DB5', background: 'none', border: '1.5px dashed #2F6DB5', borderRadius: 8, padding: '6px 16px', cursor: 'pointer', marginBottom: 10 }}>
             + Add Type
           </button>
           {validTypes.length > 0 && (
-            <div style={{ background: '#F8FAFD', borderRadius: 10, padding: '12px 14px', fontSize: 12, color: '#8492A6' }}>
+            <div style={{ background: '#F4F5F7', borderRadius: 14, padding: '12px 14px', fontSize: 12, color: '#6E7278' }}>
               {validTypes.map(pt => (
                 <div key={pt.name} style={{ marginBottom: 3 }}>
-                  <span style={{ fontWeight: 700, color: '#1A1A2E' }}>{pt.name}</span>{': '}
-                  <span style={{ color: '#3D5AFE' }}>{pt.name}{pt.from} → {pt.name}{pt.to}</span>
+                  <span style={{ fontWeight: 700, color: '#1D1D1F' }}>{pt.name}</span>{': '}
+                  <span style={{ color: '#2F6DB5' }}>{pt.name}{pt.from} → {pt.name}{pt.to}</span>
                   <span style={{ marginLeft: 6 }}>({Number(pt.to) - Number(pt.from) + 1} plots)</span>
                 </div>
               ))}
-              <div style={{ marginTop: 6, fontWeight: 700, color: '#182350', borderTop: '1px solid #E8ECF4', paddingTop: 6 }}>
+              <div style={{ marginTop: 6, fontWeight: 700, color: '#1D1D1F', borderTop: '1px solid #ECEEF0', paddingTop: 6 }}>
                 Total: {totalTypePlots} plots
               </div>
             </div>
@@ -278,16 +278,16 @@ function ProjectModal({ project, onClose, onSaved }) {
     onClose();
   }
 
-  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' };
-  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 };
-  const mSec = { fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 4 };
+  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
+  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 };
+  const mSec = { fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 4 };
 
   return (
     <div style={overlay}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 580, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 580, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ background: '#1D1D1F', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>{isEdit ? 'Edit Project' : 'Add Project'}</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{isEdit ? 'Update project details' : 'Fill in details to create a new project'}</div>
@@ -301,20 +301,20 @@ function ProjectModal({ project, onClose, onSaved }) {
           <div style={mSec}>Basic Info</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
             <div>
-              <label style={mLbl}>Project Name <span style={{ color: '#EF4444' }}>*</span></label>
+              <label style={mLbl}>Project Name <span style={{ color: '#D9434B' }}>*</span></label>
               <input value={form.name} onChange={e => set('name', e.target.value)} style={mInp} placeholder="e.g. Vistara Heights Phase 1"
-                onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
             </div>
             <div>
               <label style={mLbl}>Tagline</label>
               <input value={form.tagline} onChange={e => set('tagline', e.target.value)} style={mInp} placeholder="Where Nature Meets Luxury"
-                onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={mLbl}>Location</label>
                 <input value={form.location} onChange={e => set('location', e.target.value)} style={mInp} placeholder="Pune, Maharashtra"
-                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
               </div>
               <div>
                 <label style={mLbl}>Type</label>
@@ -330,17 +330,17 @@ function ProjectModal({ project, onClose, onSaved }) {
               </div>
             </div>
             <div>
-              <label style={mLbl}>Pricing Model <span style={{ color: '#EF4444' }}>*</span></label>
+              <label style={mLbl}>Pricing Model <span style={{ color: '#D9434B' }}>*</span></label>
               <select value={form.formula_set} onChange={e => set('formula_set', e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
                 <option value="kalrav">Kalrav (villa / plots)</option>
                 <option value="ankhol">Ankhol (bunglow · sale-deed %)</option>
                 <option value="industrial">Industrial</option>
                 <option value="pratishtha">Pratishtha (tower · fixed price book)</option>
               </select>
-              <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>Drives the booking / EOI pricing formulas. This is separate from the display Type above.</p>
+              <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 5 }}>Drives the booking / EOI pricing formulas. This is separate from the display Type above.</p>
             </div>
             <div>
-              <label style={mLbl}>Layout <span style={{ color: '#EF4444' }}>*</span></label>
+              <label style={mLbl}>Layout <span style={{ color: '#D9434B' }}>*</span></label>
               <select
                 value={form.block_industrial ? 'block' : form.floor_wise ? 'floor' : 'plot'}
                 onChange={e => {
@@ -352,7 +352,7 @@ function ProjectModal({ project, onClose, onSaved }) {
                 <option value="floor">Floor-wise (tower) — units defined per floor</option>
                 <option value="block">Block-wise industrial — units grouped in blocks (A, B, C…)</option>
               </select>
-              <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>
+              <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 5 }}>
                 {form.block_industrial
                   ? 'Units are grouped by block. A mapped block (site plan + zones drawn) books normally; an unmapped block raises a block-prefixed EOI (e.g. Block E → E1, E2…) until it’s surveyed.'
                   : form.floor_wise
@@ -364,24 +364,24 @@ function ProjectModal({ project, onClose, onSaved }) {
               <div>
                 <label style={mLbl}>RERA Number</label>
                 <input value={form.rera} onChange={e => set('rera', e.target.value)} style={mInp} placeholder="RERA/PNE/2024/001"
-                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
               </div>
               <div>
                 <label style={mLbl}>Total Area</label>
                 <input value={form.total_area} onChange={e => set('total_area', e.target.value)} style={mInp} placeholder="25 Acres"
-                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={mLbl}>Price Range</label>
                 <input value={form.price_range} onChange={e => set('price_range', e.target.value)} style={mInp} placeholder="₹45L – ₹1.2Cr"
-                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
               </div>
               <div>
                 <label style={mLbl}>Possession Date</label>
                 <input value={form.possession} onChange={e => set('possession', e.target.value)} style={mInp} placeholder="Dec 2026"
-                  onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+                  onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
               </div>
             </div>
             <div>
@@ -389,13 +389,13 @@ function ProjectModal({ project, onClose, onSaved }) {
               <textarea value={form.description} onChange={e => set('description', e.target.value)}
                 rows={3} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.is_active ? '#BBF7D0' : '#E5E7EB'}`, backgroundColor: form.is_active ? '#F0FFF4' : '#FAFAFA' }}>
-              <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} style={{ accentColor: '#2E7D32' }} />
-              <span style={{ fontWeight: 600, color: form.is_active ? '#2E7D32' : '#6B7280' }}>Active project</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? '#C9F8CA' : '#DFE2E6'}`, backgroundColor: form.is_active ? '#E9FBEA' : '#F5F6F7' }}>
+              <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} style={{ accentColor: '#23874A' }} />
+              <span style={{ fontWeight: 600, color: form.is_active ? '#23874A' : '#55585E' }}>Active project</span>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1A1A2E', cursor: 'pointer', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${form.kiosk_enabled ? '#C7D2FE' : '#E5E7EB'}`, backgroundColor: form.kiosk_enabled ? '#EEF2FF' : '#FAFAFA' }}>
-              <input type="checkbox" checked={form.kiosk_enabled} onChange={e => set('kiosk_enabled', e.target.checked)} style={{ accentColor: '#4F46E5' }} />
-              <span style={{ fontWeight: 600, color: form.kiosk_enabled ? '#4338CA' : '#6B7280' }}>Enable Kiosk self-booking</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.kiosk_enabled ? '#CCE5FF' : '#DFE2E6'}`, backgroundColor: form.kiosk_enabled ? '#F3F9FF' : '#F5F6F7' }}>
+              <input type="checkbox" checked={form.kiosk_enabled} onChange={e => set('kiosk_enabled', e.target.checked)} style={{ accentColor: '#2F6DB5' }} />
+              <span style={{ fontWeight: 600, color: form.kiosk_enabled ? '#2F6DB5' : '#55585E' }}>Enable Kiosk self-booking</span>
             </label>
           </div>
 
@@ -445,15 +445,15 @@ function ProjectModal({ project, onClose, onSaved }) {
                         <div key={i} style={{ position: 'relative' }}>
                           <input value={t.current}
                             onChange={e => setEditableTypes(prev => prev.map((x, xi) => xi === i ? { ...x, current: e.target.value } : x))}
-                            style={{ fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20, background: t.original !== t.current ? '#FFF7ED' : '#EDE7F6', color: t.original !== t.current ? '#C2410C' : '#673AB7', border: `1.5px solid ${t.original !== t.current ? '#FED7AA' : '#C4B5E0'}`, outline: 'none', minWidth: 70, textAlign: 'center' }} />
+                            style={{ fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20, background: t.original !== t.current ? '#FFF3E0' : '#E6F2FF', color: t.original !== t.current ? '#D9434B' : '#2F6DB5', border: `1.5px solid ${t.original !== t.current ? '#FFD89D' : '#A2D2FF'}`, outline: 'none', minWidth: 70, textAlign: 'center' }} />
                           {t.original !== t.current && (
-                            <span style={{ position: 'absolute', top: -6, right: -4, fontSize: 9, background: '#C2410C', color: '#fff', borderRadius: 10, padding: '1px 5px', fontWeight: 700 }}>renamed</span>
+                            <span style={{ position: 'absolute', top: -6, right: -4, fontSize: 9, background: '#D9434B', color: '#fff', borderRadius: 14, padding: '1px 5px', fontWeight: 700 }}>renamed</span>
                           )}
                         </div>
                       ))}
                     </div>
                     {editableTypes.some(t => t.original !== t.current) && (
-                      <p style={{ fontSize: 11, color: '#C2410C', marginTop: 6 }}>⚠ Renaming will update all plots with that type name.</p>
+                      <p style={{ fontSize: 11, color: '#D9434B', marginTop: 6 }}>⚠ Renaming will update all plots with that type name.</p>
                     )}
                   </div>
                 )}
@@ -462,12 +462,12 @@ function ProjectModal({ project, onClose, onSaved }) {
                   <input type="number" min="0" value={form.total_plots}
                     onChange={e => set('total_plots', e.target.value)}
                     disabled={isEdit} readOnly={isEdit}
-                    style={{ ...mInp, ...(isEdit ? { background: '#F3F4F6', color: '#6B7280', cursor: 'not-allowed' } : {}) }}
+                    style={{ ...mInp, ...(isEdit ? { background: '#F4F5F7', color: '#55585E', cursor: 'not-allowed' } : {}) }}
                     placeholder="e.g. 36" />
-                  {isEdit && <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>Reflects actual plots — use “Add More Plots” or Manage Plots to change.</p>}
+                  {isEdit && <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 4 }}>Reflects actual plots — use “Add More Plots” or Manage Plots to change.</p>}
                 </div>
                 <button type="button" onClick={() => setAddingMore(m => !m)}
-                  style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#EF4444' : '#3D5AFE', background: 'none', border: `1.5px dashed ${addingMore ? '#EF4444' : '#3D5AFE'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer', width: 'fit-content' }}>
+                  style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#D9434B' : '#2F6DB5', background: 'none', border: `1.5px dashed ${addingMore ? '#D9434B' : '#2F6DB5'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer', width: 'fit-content' }}>
                   {addingMore ? '✕ Cancel adding plots' : '+ Add More Plots'}
                 </button>
                 {addingMore && <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} startNo={existingMaxNo + 1} />}
@@ -482,7 +482,7 @@ function ProjectModal({ project, onClose, onSaved }) {
           {/* EOI Unit Types — standard pre-approval sizes used to prefill the EOI form */}
           <div style={mSec}>EOI Unit Types</div>
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 10 }}>Standard sizes shown when creating an EOI (before plots are approved). Plot Area &amp; Construction Area auto-fill from the chosen type.</p>
+            <p style={{ fontSize: 11, color: '#9A9EA5', marginBottom: 10 }}>Standard sizes shown when creating an EOI (before plots are approved). Plot Area &amp; Construction Area auto-fill from the chosen type.</p>
             {(form.eoi_unit_types || []).length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 32px', gap: 8, marginBottom: 6 }}>
                 <span style={mLbl}>Type</span><span style={mLbl}>Plot Area</span><span style={mLbl}>Const. Area</span><span />
@@ -493,20 +493,20 @@ function ProjectModal({ project, onClose, onSaved }) {
                 <input value={t.type} onChange={e => updateEoiType(i, 'type', e.target.value)} style={mInp} placeholder="e.g. 2 BHK" />
                 <input value={t.plot_area} onChange={e => updateEoiType(i, 'plot_area', e.target.value)} style={mInp} placeholder="585" />
                 <input value={t.const_area} onChange={e => updateEoiType(i, 'const_area', e.target.value)} style={mInp} placeholder="167" />
-                <button type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                <button type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
               </div>
             ))}
             <button type="button" onClick={addEoiType}
-              style={{ fontSize: 12, fontWeight: 700, color: '#E4571A', background: 'none', border: '1.5px dashed #FF6B2B', borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
+              style={{ fontSize: 12, fontWeight: 700, color: '#D98A1F', background: 'none', border: '1.5px dashed #D98A1F', borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
               + Add Unit Type
             </button>
           </div>
 
-          {err && <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: '#DC2626' }}>{err}</div>}
+          {err && <div style={{ backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: '#D9434B' }}>{err}</div>}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
+            <button type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={saving} style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
               {saving ? 'Saving…' : isEdit ? 'Save Changes' : '+ Add Project'}
             </button>
           </div>
@@ -576,8 +576,8 @@ export default function ProjectsPage() {
     <div style={{ padding: '24px 28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Projects</h1>
-          <p style={{ fontSize: 13, color: '#8492A6' }}>{projects.length} projects</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Projects</h1>
+          <p style={{ fontSize: 13, color: '#6E7278' }}>{projects.length} projects</p>
         </div>
         <button onClick={() => setShowModal('add')} style={saveBtn}>+ Add Project</button>
       </div>
@@ -587,7 +587,7 @@ export default function ProjectsPage() {
           {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 200 }} />)}
         </div>
       ) : projects.length === 0 ? (
-        <div style={{ textAlign: 'center', marginTop: 80, color: '#8492A6' }}>
+        <div style={{ textAlign: 'center', marginTop: 80, color: '#6E7278' }}>
           <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>No projects yet</p>
           <p style={{ fontSize: 13 }}>Add your first real estate project to start assigning leads.</p>
         </div>
@@ -601,22 +601,22 @@ export default function ProjectsPage() {
             return (
               <div key={p.id} style={card}>
                 {/* Image area — contain so nothing is cropped */}
-                <div style={{ position: 'relative', background: '#F2F4F8', height: 180, overflow: 'hidden' }}>
+                <div style={{ position: 'relative', background: '#F4F5F7', height: 180, overflow: 'hidden' }}>
                   {p.cover_image_url ? (
                     <img src={p.cover_image_url} alt={p.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
                   ) : (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C0C8D8" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                      <span style={{ fontSize: 12, color: '#C0C8D8' }}>No cover image</span>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C9CDD2" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      <span style={{ fontSize: 12, color: '#C9CDD2' }}>No cover image</span>
                     </div>
                   )}
                   {/* Status badge + type chip overlaid */}
                   <div style={{ position: 'absolute', top: 10, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: '#8492A6', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: '#6E7278', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
                       {p.project_type}
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: p.is_active ? '#E8F5E9' : '#FEF2F2', color: p.is_active ? '#2E7D32' : '#C62828', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: p.is_active ? '#E9FBEA' : '#FDECEC', color: p.is_active ? '#23874A' : '#D9434B', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
                       {p.is_active ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                   </div>
@@ -625,9 +625,9 @@ export default function ProjectsPage() {
                 {/* Card content */}
                 <div style={{ padding: '14px 16px 16px' }}>
                   {/* Name + location */}
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E', marginBottom: 2 }}>{p.name}</p>
-                  {p.location && <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 6 }}>📍 {p.location}</p>}
-                  {p.tagline && <p style={{ fontSize: 11, color: '#A0AABA', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>{p.name}</p>
+                  {p.location && <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 6 }}>📍 {p.location}</p>}
+                  {p.tagline && <p style={{ fontSize: 11, color: '#9A9EA5', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
 
                   {/* Meta chips */}
                   {(p.total_area || p.price_range || p.possession) && (
@@ -641,22 +641,22 @@ export default function ProjectsPage() {
                   {/* Plot stats */}
                   {total > 0 && (
                     <div style={{ marginBottom: 10 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8492A6', marginBottom: 5 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6E7278', marginBottom: 5 }}>
                         <span style={{ fontWeight: 600 }}>{total} plots</span>
                         <span style={{ display: 'flex', gap: 10 }}>
-                          <span style={{ color: '#2E7D32', fontWeight: 600 }}>✓ {pc.available}</span>
-                          <span style={{ color: '#E65100', fontWeight: 600 }}>⏸ {pc.hold}</span>
-                          <span style={{ color: '#EF4444', fontWeight: 600 }}>✕ {pc.sold}</span>
+                          <span style={{ color: '#23874A', fontWeight: 600 }}>✓ {pc.available}</span>
+                          <span style={{ color: '#D98A1F', fontWeight: 600 }}>⏸ {pc.hold}</span>
+                          <span style={{ color: '#D9434B', fontWeight: 600 }}>✕ {pc.sold}</span>
                         </span>
                       </div>
-                      <div style={{ height: 4, borderRadius: 4, background: '#EEF1F7', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#3D5AFE,#E91E63)', borderRadius: 4 }} />
+                      <div style={{ height: 4, borderRadius: 4, background: '#ECEEF0', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#2F6DB5,#D9434B)', borderRadius: 4 }} />
                       </div>
                     </div>
                   )}
 
                   {/* Leads */}
-                  <p style={{ fontSize: 12, color: '#3D5AFE', fontWeight: 700, marginBottom: 12 }}>
+                  <p style={{ fontSize: 12, color: '#2F6DB5', fontWeight: 700, marginBottom: 12 }}>
                     {p.lead_count} {p.lead_count === 1 ? 'lead' : 'leads'}
                   </p>
 
@@ -669,10 +669,10 @@ export default function ProjectsPage() {
                       Manage Plots
                     </button>
                     <button onClick={() => openEdit(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
-                    <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#E65100' : '#2E7D32', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
+                    <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#D98A1F' : '#23874A', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
                       {p.is_active ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#EF4444', borderColor: '#EF444440', padding: '7px 10px' }}>✕</button>
+                    <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#D9434B', borderColor: '#EF444440', padding: '7px 10px' }}>✕</button>
                   </div>
                 </div>
               </div>
@@ -692,15 +692,15 @@ export default function ProjectsPage() {
   );
 }
 
-const inp            = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box' };
-const lbl            = { display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 5 };
-const saveBtn        = { padding: '9px 20px', backgroundColor: '#182350', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const cancelBtn      = { padding: '9px 16px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-const outlineBtn     = { padding: '7px 12px', backgroundColor: '#fff', border: '1.5px solid #C6D0DB', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1A1A2E', cursor: 'pointer' };
-const primaryOutlineBtn = { padding: '7px 12px', backgroundColor: '#F0F3FF', border: '1.5px solid #3D5AFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#3D5AFE', cursor: 'pointer' };
-const card           = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(100,120,160,0.16)', border: '1.5px solid #DDE3EE', overflow: 'hidden' };
-const metaChip       = { fontSize: 11, fontWeight: 600, color: '#6B7A90', backgroundColor: '#F0F3F8', padding: '3px 8px', borderRadius: 6 };
+const inp            = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
+const lbl            = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
+const saveBtn        = { padding: '9px 20px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
+const cancelBtn      = { padding: '9px 16px', backgroundColor: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const outlineBtn     = { padding: '7px 12px', backgroundColor: '#fff', border: '1.5px solid #C9CDD2', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D1D1F', cursor: 'pointer' };
+const primaryOutlineBtn = { padding: '7px 12px', backgroundColor: '#F3F9FF', border: '1.5px solid #2F6DB5', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#2F6DB5', cursor: 'pointer' };
+const card           = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(47,109,181,0.16)', border: '1.5px solid #DFE2E6', overflow: 'hidden' };
+const metaChip       = { fontSize: 11, fontWeight: 600, color: '#55585E', backgroundColor: '#F4F5F7', padding: '3px 8px', borderRadius: 6 };
 const overlay        = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-const modal          = { backgroundColor: '#fff', borderRadius: 16, width: '90%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
-const modalHeader    = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F0F3FA' };
-const closeBtn       = { background: 'none', border: 'none', fontSize: 16, color: '#8492A6', cursor: 'pointer', padding: '2px 6px' };
+const modal          = { backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
+const modalHeader    = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' };
+const closeBtn       = { background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer', padding: '2px 6px' };

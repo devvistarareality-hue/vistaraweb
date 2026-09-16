@@ -6,28 +6,28 @@ import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
 import AddInvestorModal from '../_AddInvestorModal';
 
-const TEAL = '#00838F';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid #F5F6FA', color: '#1A1A2E' };
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 5 };
+const TEAL = '#23874A';
+const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
+const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
+const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
 
 const STATUS_COLORS = {
-  new: { bg: '#E3F2FD', fg: '#1565C0' },
-  contacted: { bg: '#FFF3E0', fg: '#E65100' },
-  interested: { bg: '#E8F5E9', fg: '#2E7D32' },
-  not_interested: { bg: '#F3F4F6', fg: '#6B7280' },
-  converted: { bg: '#F3E5F5', fg: '#7B1FA2' },
-  lost: { bg: '#FFEBEE', fg: '#C62828' },
+  new: { bg: '#E6F2FF', fg: '#245A96' },
+  contacted: { bg: '#FFF3E0', fg: '#D98A1F' },
+  interested: { bg: '#E9FBEA', fg: '#23874A' },
+  not_interested: { bg: '#F4F5F7', fg: '#55585E' },
+  converted: { bg: '#E6F2FF', fg: '#245A96' },
+  lost: { bg: '#FDECEC', fg: '#D9434B' },
 };
 
 function StatusBadge({ status }) {
-  const c = STATUS_COLORS[status] || { bg: '#F3F4F6', fg: '#6B7280' };
+  const c = STATUS_COLORS[status] || { bg: '#F4F5F7', fg: '#55585E' };
   return <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: c.bg, color: c.fg, textTransform: 'capitalize' }}>{(status || '').replace(/_/g, ' ')}</span>;
 }
 
 const HISTORY_LABEL = { created: 'Lead Created', status: 'Status', assigned_to: 'Assigned To' };
-const HISTORY_COLOR = { created: '#64748B', status: '#3D5AFE', assigned_to: '#7B1FA2' };
+const HISTORY_COLOR = { created: '#55585E', status: '#2F6DB5', assigned_to: '#245A96' };
 
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost'];
@@ -84,9 +84,9 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <form onSubmit={submit} style={{ background: '#fff', borderRadius: 16, width: '90%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', marginBottom: 16 }}>Add Lead</h2>
-        {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#DC2626' }}>{error}</div>}
+      <form onSubmit={submit} style={{ background: '#fff', borderRadius: 20, width: '90%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', marginBottom: 16 }}>Add Lead</h2>
+        {error && <div style={{ background: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#D9434B' }}>{error}</div>}
 
         <div style={{ marginBottom: 12 }}>
           <label style={lbl}>Name *</label>
@@ -144,7 +144,7 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 16px', background: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button type="button" onClick={onClose} style={{ padding: '9px 16px', background: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
           <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: busy ? 0.7 : 1 }}>{busy ? 'Saving…' : 'Add Lead'}</button>
         </div>
       </form>
@@ -185,21 +185,21 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
   const tabStyle = (key) => ({
     padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
     background: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent',
-    color: activeTab === key ? TEAL : '#8492A6',
+    color: activeTab === key ? TEAL : '#6E7278',
   });
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <div style={{ background: '#fff', borderRadius: 16, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 24px 0', flexShrink: 0 }}>
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E' }}>{lead.name}</h2>
-            <div style={{ fontSize: 13, color: '#8492A6', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F' }}>{lead.name}</h2>
+            <div style={{ fontSize: 13, color: '#6E7278', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: '#8492A6', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer' }}>✕</button>
         </div>
 
-        <div style={{ display: 'flex', borderBottom: '1px solid #F0F3FA', marginTop: 14, flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #F4F5F7', marginTop: 14, flexShrink: 0 }}>
           {[['detail', 'Detail'], ['history', 'History']].map(([k, label]) => (
             <button key={k} onClick={() => setActiveTab(k)} style={tabStyle(k)}>{label}</button>
           ))}
@@ -226,7 +226,7 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
                 {lead.source === 'referral' && <div><div style={lbl}>Reference</div><div>{lead.reference_name || '—'}</div></div>}
                 <div><div style={lbl}>Status</div><StatusBadge status={lead.status} /></div>
               </div>
-              {lead.remarks && <div style={{ marginBottom: 16, fontSize: 13, color: '#3A3A5C' }}><div style={lbl}>Remarks</div>{lead.remarks}</div>}
+              {lead.remarks && <div style={{ marginBottom: 16, fontSize: 13, color: '#1D1D1F' }}><div style={lbl}>Remarks</div>{lead.remarks}</div>}
 
               <div style={{ marginBottom: 16 }}>
                 <label style={lbl}>Change Status</label>
@@ -238,11 +238,11 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
               {/* Next follow-up — hidden once the lead is in a terminal status (nothing
                   left to follow up on), matching the backend's auto-clear behaviour. */}
               {!isTerminal && (
-                <div style={{ marginBottom: 16, background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 10, padding: 12 }}>
+                <div style={{ marginBottom: 16, background: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 14, padding: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={lbl}>Next Follow-up</div>
-                      <div style={{ fontSize: 13, color: lead.next_follow_up_date ? '#1A1A2E' : '#8492A6', fontWeight: lead.next_follow_up_date ? 700 : 400 }}>
+                      <div style={{ fontSize: 13, color: lead.next_follow_up_date ? '#1D1D1F' : '#6E7278', fontWeight: lead.next_follow_up_date ? 700 : 400 }}>
                         {lead.next_follow_up_date ? fmtDateTime(lead.next_follow_up_date) : 'Not scheduled'}
                       </div>
                     </div>
@@ -265,7 +265,7 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button onClick={onClose} style={{ padding: '9px 16px', background: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+                <button onClick={onClose} style={{ padding: '9px 16px', background: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
                 {lead.status !== 'converted' && (
                   <button onClick={() => onConvert(lead)} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Convert to Investor</button>
                 )}
@@ -275,13 +275,13 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
 
           {activeTab === 'history' && (
             <div>
-              {!detail && <p style={{ fontSize: 13, color: '#8492A6' }}>Loading…</p>}
+              {!detail && <p style={{ fontSize: 13, color: '#6E7278' }}>Loading…</p>}
               {detail && detail.history?.length === 0 && (
-                <p style={{ fontSize: 13, color: '#B0BAC9', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
+                <p style={{ fontSize: 13, color: '#9A9EA5', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
               )}
               {(detail?.history || []).map((h, idx, arr) => {
                 const isLast = idx === arr.length - 1;
-                const color = HISTORY_COLOR[h.field_changed] || '#8492A6';
+                const color = HISTORY_COLOR[h.field_changed] || '#6E7278';
                 const icon = h.field_changed === 'created' ? '📥' : h.field_changed === 'assigned_to' ? '👤' : '🔄';
                 const singleValue = h.field_changed === 'created' || !h.old_value;
                 const byLabel = h.changed_by_name || (h.field_changed === 'created' ? 'System (auto)' : null);
@@ -289,23 +289,23 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
                   <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: isLast ? 0 : 18 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{icon}</div>
-                      {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F0F3FA', marginTop: 4 }} />}
+                      {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />}
                     </div>
                     <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
-                      <p style={{ fontSize: 12, color: '#3A3A5C', margin: '3px 0 0' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
+                      <p style={{ fontSize: 12, color: '#1D1D1F', margin: '3px 0 0' }}>
                         {singleValue ? (
                           <span style={{ color, fontWeight: 600, textTransform: 'capitalize' }}>{(h.new_value || '—').replace(/_/g, ' ')}</span>
                         ) : (
                           <>
-                            <span style={{ color: '#8492A6', textTransform: 'capitalize' }}>{(h.old_value || '—').replace(/_/g, ' ')}</span>
+                            <span style={{ color: '#6E7278', textTransform: 'capitalize' }}>{(h.old_value || '—').replace(/_/g, ' ')}</span>
                             {' → '}
                             <span style={{ color, fontWeight: 600, textTransform: 'capitalize' }}>{(h.new_value || '—').replace(/_/g, ' ')}</span>
                           </>
                         )}
                       </p>
-                      {byLabel && <p style={{ fontSize: 11, color: '#8492A6', margin: '2px 0 0' }}>by {byLabel}</p>}
-                      <p style={{ fontSize: 11, color: '#B0BAC9', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
+                      {byLabel && <p style={{ fontSize: 11, color: '#6E7278', margin: '2px 0 0' }}>by {byLabel}</p>}
+                      <p style={{ fontSize: 11, color: '#9A9EA5', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
                     </div>
                   </div>
                 );
@@ -460,64 +460,64 @@ export default function Club1000LeadsPage() {
 
   const fSel = {
     height: 36, padding: '0 10px', borderRadius: 8,
-    border: '1.5px solid #E8ECF4', fontSize: 12, background: '#F8FAFD',
-    cursor: 'pointer', outline: 'none', color: '#1A1A2E', fontWeight: 500,
+    border: '1.5px solid #ECEEF0', fontSize: 12, background: '#F4F5F7',
+    cursor: 'pointer', outline: 'none', color: '#1D1D1F', fontWeight: 500,
   };
-  const activeSelStyle = (val) => val ? { ...fSel, borderColor: TEAL, background: '#E0F5F6', color: TEAL, fontWeight: 600 } : fSel;
+  const activeSelStyle = (val) => val ? { ...fSel, borderColor: TEAL, background: '#E9FBEA', color: TEAL, fontWeight: 600 } : fSel;
   const qBtn = (active) => ({
     height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700,
     cursor: 'pointer', border: 'none',
-    background: active ? '#182350' : '#F0F2F8',
-    color: active ? '#fff' : '#8492A6',
+    background: active ? '#1D1D1F' : '#F4F5F7',
+    color: active ? '#fff' : '#6E7278',
     transition: 'all 0.15s',
   });
-  const divider = { width: 1, height: 24, background: '#E8ECF4', flexShrink: 0 };
+  const divider = { width: 1, height: 24, background: '#ECEEF0', flexShrink: 0 };
 
   return (
     <div style={{ padding: '28px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E' }}>Leads</h1>
-          <p style={{ fontSize: 13, color: '#8492A6', marginTop: 4 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F' }}>Leads</h1>
+          <p style={{ fontSize: 13, color: '#6E7278', marginTop: 4 }}>
             {leads.length.toLocaleString()} {manager ? 'total leads' : 'leads assigned to you and your team'}
             {selectedIds.size > 0 && <span style={{ marginLeft: 8, color: TEAL, fontWeight: 600 }}>· {selectedIds.size} selected</span>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {manager && selectedIds.size > 0 && (
-            <button onClick={bulkDelete} disabled={deleting} style={{ padding: '10px 18px', background: '#EF4444', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.7 : 1 }}>
+            <button onClick={bulkDelete} disabled={deleting} style={{ padding: '10px 18px', background: '#D9434B', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.7 : 1 }}>
               {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
             </button>
           )}
-          <button onClick={() => setShowAdd(true)} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add Lead</button>
+          <button onClick={() => setShowAdd(true)} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add Lead</button>
         </div>
       </div>
 
       {/* Filters */}
-      <div style={{ backgroundColor: '#fff', borderRadius: 14, border: '1.5px solid #E8ECF4', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 18, border: '1.5px solid #ECEEF0', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
         {/* Search bar */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F3FA' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #F4F5F7' }}>
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#B0BAD0' }}>🔍</span>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}>🔍</span>
             <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search name, phone, email…"
-              style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 10, border: '1.5px solid #E8ECF4', fontSize: 13, background: '#F8FAFD', outline: 'none', boxSizing: 'border-box', color: '#1A1A2E' }} />
+              style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid #ECEEF0', fontSize: 13, background: '#F4F5F7', outline: 'none', boxSizing: 'border-box', color: '#1D1D1F' }} />
           </div>
         </div>
 
         {/* Row 1: Date range + quick buttons */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #F0F3FA' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#B0BAD0', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #F4F5F7' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
           <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
-          <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
+          <span style={{ fontSize: 12, color: '#C9CDD2' }}>→</span>
           <input type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
           <div style={divider} />
           <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
           <button onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
           <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
           {anyFilter && (
-            <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: '#FFF5F5', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
+            <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #EF9195', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
               ✕ Clear all
             </button>
           )}
@@ -546,10 +546,10 @@ export default function Club1000LeadsPage() {
         </div>
       </div>
 
-      <div style={{ backgroundColor: '#fff', borderRadius: 16, border: '1px solid #EDF1F7', overflow: 'hidden', overflowX: 'auto' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, border: '1px solid #ECEEF0', overflow: 'hidden', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
+            <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
               {manager && (
                 <th style={th}>
                   <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />
@@ -566,9 +566,9 @@ export default function Club1000LeadsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={manager ? 8 : 7} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>Loading…</td></tr>
+              <tr><td colSpan={manager ? 8 : 7} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>Loading…</td></tr>
             ) : leads.length === 0 ? (
-              <tr><td colSpan={manager ? 8 : 7} style={{ ...td, textAlign: 'center', color: '#8492A6' }}>No leads found.</td></tr>
+              <tr><td colSpan={manager ? 8 : 7} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>No leads found.</td></tr>
             ) : leads.map((l) => {
               const overdue = l.next_follow_up_date && new Date(l.next_follow_up_date) < new Date();
               return (
@@ -583,7 +583,7 @@ export default function Club1000LeadsPage() {
                 <td style={{ ...td, textTransform: 'capitalize' }}>{SOURCE_LABELS[l.source] || l.source}</td>
                 <td style={td}>{l.assigned_to_name || '—'}</td>
                 <td style={td}><StatusBadge status={l.status} /></td>
-                <td style={{ ...td, color: overdue ? '#C62828' : '#1A1A2E', fontWeight: overdue ? 700 : 400 }}>
+                <td style={{ ...td, color: overdue ? '#D9434B' : '#1D1D1F', fontWeight: overdue ? 700 : 400 }}>
                   {l.next_follow_up_date ? fmtDateTime(l.next_follow_up_date) : '—'}
                 </td>
                 <td style={td}>{new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>

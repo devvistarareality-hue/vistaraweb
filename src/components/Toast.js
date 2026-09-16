@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react';
 
 const BG = {
-  success: '#2E7D32',
-  error:   '#C62828',
-  info:    '#1565C0',
+  success: '#23874A',
+  error:   '#D9434B',
+  info:    '#245A96',
 };
 
 export default function Toast({ visible, message, type = 'success', duration = 2500, onHide }) {
@@ -31,7 +31,7 @@ export default function Toast({ visible, message, type = 'success', duration = 2
       backgroundColor: BG[type] ?? BG.info,
       color:           '#fff',
       padding:         '12px 20px',
-      borderRadius:    10,
+      borderRadius: 14,
       fontSize:        14,
       fontWeight:      600,
       boxShadow:       '0 4px 16px rgba(0,0,0,0.22)',

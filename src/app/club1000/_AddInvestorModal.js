@@ -7,10 +7,10 @@ import DateFieldDMY from '../../components/DateFieldDMY';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 
-const TEAL = '#00838F';
+const TEAL = '#23874A';
 
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 5 };
+const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
+const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
 
 // Format using LOCAL date parts, never toISOString() — that converts to UTC and
@@ -322,9 +322,9 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(24,35,80,0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F0F3FA' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Add Investor</div>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Add Investor</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -335,7 +335,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
               ))}
             </select>
             {scheme && (
-              <div style={{ fontSize: 11, color: '#8492A6', marginTop: 5 }}>
+              <div style={{ fontSize: 11, color: '#6E7278', marginTop: 5 }}>
                 Min ticket ₹{Number(scheme.min_ticket_size).toLocaleString('en-IN')}
                 {maturityPreview && <> · Matures {formatDMY(maturityPreview)}</>}
               </div>
@@ -348,7 +348,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Date of Maturity</label>
-              <input style={{ ...inp, backgroundColor: '#F8FAFC', color: '#8492A6' }} value={maturityPreview ? formatDMY(maturityPreview) : '—'} disabled />
+              <input style={{ ...inp, backgroundColor: '#F4F5F7', color: '#6E7278' }} value={maturityPreview ? formatDMY(maturityPreview) : '—'} disabled />
             </div>
           </div>
           <div>
@@ -370,9 +370,9 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             </div>
           </div>
           {Number(form.amount_invested) > 0 && Number(form.total_return_pct) > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F0FBFA', border: '1px solid #CDEEEC', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
-              <span style={{ color: '#0D6E64', fontWeight: 600 }}>Maturity Value</span>
-              <span style={{ color: '#0D6E64', fontWeight: 800 }}>₹{Math.round(maturityValuePreview).toLocaleString('en-IN')}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+              <span style={{ color: '#23874A', fontWeight: 600 }}>Maturity Value</span>
+              <span style={{ color: '#23874A', fontWeight: 800 }}>₹{Math.round(maturityValuePreview).toLocaleString('en-IN')}</span>
             </div>
           )}
           {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
@@ -381,10 +381,10 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
                 <label style={{ ...lbl, marginBottom: 0 }}>Payout Schedule (confirm or edit)</label>
                 <button type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
               </div>
-              <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ border: '1.5px solid #DFE2E6', borderRadius: 8, overflow: 'hidden' }}>
                 {schedule.map((row, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', borderTop: idx > 0 ? '1px solid #F0F3FA' : 'none' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: row.payout_type === 'maturity' ? '#7B1FA2' : '#0D9488', width: 58, flexShrink: 0 }}>
+                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', borderTop: idx > 0 ? '1px solid #F4F5F7' : 'none' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: row.payout_type === 'maturity' ? '#245A96' : '#23874A', width: 58, flexShrink: 0 }}>
                       {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
                     </span>
                     <DateFieldDMY
@@ -426,17 +426,17 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
                 {refDropdownOpen && filteredRefSuggestions.length > 0 && (
                   <div style={{
                     position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, marginTop: 4,
-                    background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 8,
-                    boxShadow: '0 8px 24px rgba(24,35,80,0.14)', maxHeight: 160, overflowY: 'auto',
+                    background: '#fff', border: '1.5px solid #DFE2E6', borderRadius: 8,
+                    boxShadow: '0 8px 24px rgba(29,29,31,0.14)', maxHeight: 160, overflowY: 'auto',
                   }}>
                     {filteredRefSuggestions.map((r, i) => (
                       <div
                         key={`${r.reference_phone}-${i}`}
                         onMouseDown={() => selectReferenceSuggestion(r)}
-                        style={{ padding: '8px 10px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid #F0F3FA' : 'none' }}
+                        style={{ padding: '8px 10px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid #F4F5F7' : 'none' }}
                       >
-                        <span style={{ fontWeight: 600, color: '#1A1A2E' }}>{r.reference_name}</span>
-                        {r.reference_phone && <span style={{ color: '#8492A6' }}> — {r.reference_phone}</span>}
+                        <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{r.reference_name}</span>
+                        {r.reference_phone && <span style={{ color: '#6E7278' }}> — {r.reference_phone}</span>}
                       </div>
                     ))}
                   </div>
@@ -469,7 +469,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
           <div>
             <label style={lbl}>Scan Document (KYC / ID proof)</label>
             <input type="file" accept="image/*,.pdf" onChange={handleFileChange} style={{ fontSize: 12 }} />
-            {documentFile && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 4 }}>Selected: {documentFile.name}</div>}
+            {documentFile && <div style={{ fontSize: 11, color: '#23874A', marginTop: 4 }}>Selected: {documentFile.name}</div>}
           </div>
           <div>
             <label style={lbl}>Security (for LOI — optional)</label>
@@ -480,24 +480,24 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             <input style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
           </div>
 
-          <div style={{ background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 10, padding: 12 }}>
+          <div style={{ background: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 14, padding: 12 }}>
             <label style={lbl}>Investment Proposal Form (LOI)</label>
             <button type="button" onClick={doDownloadLoi} disabled={loiDownloading}
               style={{ width: '100%', padding: '9px 0', background: '#fff', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
               {loiDownloading ? 'Generating…' : '📥 Download LOI PDF (Print → Sign → Upload)'}
             </button>
-            {loiDone && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 6 }}>LOI downloaded — get it signed and upload below.</div>}
+            {loiDone && <div style={{ fontSize: 11, color: '#23874A', marginTop: 6 }}>LOI downloaded — get it signed and upload below.</div>}
             <div style={{ marginTop: 10 }}>
               <label style={lbl}>Upload Signed LOI *</label>
               <input type="file" accept="image/*,.pdf" onChange={handleLoiFileChange} style={{ fontSize: 12 }} />
-              {loiFile && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 4 }}>Selected: {loiFile.name}</div>}
+              {loiFile && <div style={{ fontSize: 11, color: '#23874A', marginTop: 4 }}>Selected: {loiFile.name}</div>}
             </div>
           </div>
 
-          {error && <div style={{ fontSize: 12, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#D9434B', background: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
           <button type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
             {busy ? 'Submitting…' : 'Submit for Approval'}
           </button>

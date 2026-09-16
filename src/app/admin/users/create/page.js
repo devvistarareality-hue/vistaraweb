@@ -136,7 +136,7 @@ export default function CreateUserPage() {
       </div>
 
       <div style={{ ...s.card, padding: 0, overflow: 'hidden' }}>
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '22px 28px 20px' }}>
+        <div style={{ background: '#1D1D1F', padding: '22px 28px 20px' }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>New User</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details below to create a new user account</div>
         </div>
@@ -146,13 +146,13 @@ export default function CreateUserPage() {
           {isVRLAdmin && (
             <div style={{ marginBottom: 24 }}>
               <label style={s.label}>
-                Company <span style={{ color: '#EF4444' }}>*</span>
+                Company <span style={{ color: '#D9434B' }}>*</span>
               </label>
               <select
                 required
                 value={selectedCompanyId}
                 onChange={(e) => setSelectedCompanyId(e.target.value)}
-                style={{ ...s.input, maxWidth: 420, color: selectedCompanyId ? '#1A1A2E' : '#8492A6' }}
+                style={{ ...s.input, maxWidth: 420, color: selectedCompanyId ? '#1D1D1F' : '#6E7278' }}
               >
                 <option value="">— Select a company —</option>
                 {companies.map((c) => (
@@ -267,7 +267,7 @@ export default function CreateUserPage() {
             <select
               value={form.designation}
               onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
-              style={{ ...s.input, maxWidth: 360, color: form.designation ? '#1A1A2E' : '#8492A6' }}
+              style={{ ...s.input, maxWidth: 360, color: form.designation ? '#1D1D1F' : '#6E7278' }}
               disabled={availableDesignations.length === 0}
             >
               <option value="">
@@ -285,8 +285,8 @@ export default function CreateUserPage() {
             <label style={s.label}>
               Reporting Manager{' '}
               {needsReportingManager(form.role)
-                ? <span style={{ fontWeight: 400, color: '#B45309' }}>(required at this role)</span>
-                : <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(optional)</span>}
+                ? <span style={{ fontWeight: 400, color: '#A3671A' }}>(required at this role)</span>
+                : <span style={{ fontWeight: 400, color: '#9A9EA5' }}>(optional)</span>}
             </label>
             {isVRLAdmin && !selectedCompanyId ? (
               <p style={s.hint}>Select a company first to see available managers</p>
@@ -320,7 +320,7 @@ export default function CreateUserPage() {
                 {/* Said before saving rather than after: the API refuses this, and an
                     error on submit teaches the rule one failed save at a time. */}
                 {needsReportingManager(form.role) && !form.reporting_manager_id && (
-                  <p style={{ fontSize: 11, color: '#B45309', margin: '6px 2px 0', lineHeight: 1.45 }}>
+                  <p style={{ fontSize: 11, color: '#A3671A', margin: '6px 2px 0', lineHeight: 1.45 }}>
                     Visibility runs on the reporting tree, so with no manager this person is
                     invisible to every manager — their leads and bookings appear in nobody&apos;s list.
                   </p>
@@ -383,8 +383,8 @@ export default function CreateUserPage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-            <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" disabled={creating} style={{ padding: '10px 28px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: creating ? 0.7 : 1, minWidth: 130 }}>
+            <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={creating} style={{ padding: '10px 28px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: creating ? 0.7 : 1, minWidth: 130 }}>
               {creating ? 'Creating…' : 'Create User'}
             </button>
           </div>
@@ -398,31 +398,31 @@ export default function CreateUserPage() {
 const s = {
   page:       { padding: '32px 36px' },
   pageHeader: { display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 },
-  backBtn:    { background: 'none', border: 'none', fontSize: 14, color: '#8492A6', cursor: 'pointer', fontWeight: 600 },
-  pageTitle:  { fontSize: 24, fontWeight: 800, color: '#1A1A2E' },
+  backBtn:    { background: 'none', border: 'none', fontSize: 14, color: '#6E7278', cursor: 'pointer', fontWeight: 600 },
+  pageTitle:  { fontSize: 24, fontWeight: 800, color: '#1D1D1F' },
   card: {
     backgroundColor: '#fff',
-    borderRadius:    16,
+    borderRadius: 20,
     padding:         '32px',
-    boxShadow:       '0 4px 12px rgba(184,196,214,0.18)',
+    boxShadow:       '0 4px 12px rgba(140,148,160,0.18)',
     maxWidth:        780,
   },
   grid2:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 24px' },
-  label:      { display: 'block', fontSize: 13, fontWeight: 600, color: '#8492A6', marginBottom: 6 },
-  hintInline: { fontSize: 11, fontWeight: 500, color: '#9CA3AF' },
-  input:      { width: '100%', height: 44, padding: '0 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14, boxSizing: 'border-box' },
-  hint:       { fontSize: 11, color: '#8492A6', marginTop: 5 },
+  label:      { display: 'block', fontSize: 13, fontWeight: 600, color: '#6E7278', marginBottom: 6 },
+  hintInline: { fontSize: 11, fontWeight: 500, color: '#9A9EA5' },
+  input:      { width: '100%', height: 44, padding: '0 12px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 14, boxSizing: 'border-box' },
+  hint:       { fontSize: 11, color: '#6E7278', marginTop: 5 },
   prefixBox: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     height: 44, padding: '0 12px', borderRadius: 8,
-    border: '1.5px solid #E0E6F0', backgroundColor: '#F5F6FA',
+    border: '1.5px solid #DFE2E6', backgroundColor: '#F4F5F7',
     fontSize: 14, boxSizing: 'border-box',
   },
-  prefixValue: { fontWeight: 700, color: '#1A1A2E', letterSpacing: 2 },
-  prefixAuto:  { fontSize: 11, fontWeight: 600, color: '#8492A6', backgroundColor: '#E0E6F0', borderRadius: 4, padding: '2px 7px' },
+  prefixValue: { fontWeight: 700, color: '#1D1D1F', letterSpacing: 2 },
+  prefixAuto:  { fontSize: 11, fontWeight: 600, color: '#6E7278', backgroundColor: '#DFE2E6', borderRadius: 4, padding: '2px 7px' },
   checkGrid:  { display: 'flex', flexWrap: 'wrap', gap: '10px 20px' },
-  checkLabel: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1A1A2E', cursor: 'pointer' },
+  checkLabel: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer' },
   formFooter: { display: 'flex', justifyContent: 'flex-end', gap: 12 },
-  cancelBtn:  { padding: '10px 20px', backgroundColor: '#F0F3FA', color: '#8492A6', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  saveBtn:    { padding: '10px 28px', backgroundColor: '#182350', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  cancelBtn:  { padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  saveBtn:    { padding: '10px 28px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
 };

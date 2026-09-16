@@ -23,8 +23,8 @@ const HISTORY_LABEL = {
   warm_transfer: 'Transferred to STM', site_visit: 'Site Visit', closure: 'Closure',
 };
 const HISTORY_COLOR = {
-  created: '#64748B', status: '#3D5AFE', telecaller_status: '#0097A7', stm_status: '#FF6B2B',
-  telecaller: '#7B1FA2', stm: '#2E7D32', warm_transfer: '#EF4444', site_visit: '#F9A825', closure: '#15803D',
+  created: '#55585E', status: '#2F6DB5', telecaller_status: '#23874A', stm_status: '#D98A1F',
+  telecaller: '#245A96', stm: '#23874A', warm_transfer: '#D9434B', site_visit: '#D98A1F', closure: '#23874A',
 };
 
 // In-place lead detail + full history. Opens instantly with the row data we already
@@ -58,7 +58,7 @@ function LeadHistoryModal({ lead, onClose }) {
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 480, maxWidth: '100%', maxHeight: '88vh', backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
         {/* Header */}
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', padding: '18px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ background: '#1D1D1F', padding: '18px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff' }}>{lead.name || '—'}</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{d.phone || lead.phone || ''}</div>
@@ -71,34 +71,34 @@ function LeadHistoryModal({ lead, onClose }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: 20 }}>
             {rows.map(([k, v]) => (
               <div key={k}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.4 }}>{k}</div>
-                <div style={{ fontSize: 13, color: '#1A1A2E', marginTop: 2, textTransform: k === 'Status' ? 'capitalize' : 'none' }}>{v || '—'}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.4 }}>{k}</div>
+                <div style={{ fontSize: 13, color: '#1D1D1F', marginTop: 2, textTransform: k === 'Status' ? 'capitalize' : 'none' }}>{v || '—'}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ fontSize: 12, fontWeight: 800, color: '#0C1E3C', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>History</div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: '#1D1D1F', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>History</div>
 
           {/* Lead received */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#3D5AFE18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>📥</div>
-              <div style={{ width: 2, flex: 1, backgroundColor: '#F0F3FA', marginTop: 4 }} />
+              <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />
             </div>
             <div style={{ paddingBottom: 18, flex: 1 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>Lead Received</p>
-              <p style={{ fontSize: 11, color: '#8492A6', margin: '3px 0 0' }}>Source: {d.source_name || '—'} · Project: {d.project_name || lead.project_name || '—'}</p>
-              <p style={{ fontSize: 11, color: '#B0BAC9', margin: '3px 0 0' }}>{fmtDateTime(d.created_at)}</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: 0 }}>Lead Received</p>
+              <p style={{ fontSize: 11, color: '#6E7278', margin: '3px 0 0' }}>Source: {d.source_name || '—'} · Project: {d.project_name || lead.project_name || '—'}</p>
+              <p style={{ fontSize: 11, color: '#9A9EA5', margin: '3px 0 0' }}>{fmtDateTime(d.created_at)}</p>
             </div>
           </div>
 
-          {!detail && <p style={{ fontSize: 13, color: '#8492A6' }}>Loading…</p>}
+          {!detail && <p style={{ fontSize: 13, color: '#6E7278' }}>Loading…</p>}
           {detail && (detail.history || []).filter(h => h.field_changed !== 'created').length === 0 && (
-            <p style={{ fontSize: 13, color: '#B0BAC9', textAlign: 'center', marginTop: 8 }}>No changes recorded yet.</p>
+            <p style={{ fontSize: 13, color: '#9A9EA5', textAlign: 'center', marginTop: 8 }}>No changes recorded yet.</p>
           )}
           {(detail?.history || []).filter(h => h.field_changed !== 'created').map((h, idx, arr) => {
             const isLast = idx === arr.length - 1;
-            const color  = HISTORY_COLOR[h.field_changed] || '#8492A6';
+            const color  = HISTORY_COLOR[h.field_changed] || '#6E7278';
             const icon   = h.field_changed === 'warm_transfer' ? '🔥'
                          : h.field_changed === 'telecaller'    ? '👤'
                          : h.field_changed === 'stm'           ? '🏢'
@@ -111,23 +111,23 @@ function LeadHistoryModal({ lead, onClose }) {
               <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: isLast ? 0 : 18 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{icon}</div>
-                  {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F0F3FA', marginTop: 4 }} />}
+                  {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />}
                 </div>
                 <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
-                  <p style={{ fontSize: 12, color: '#3A3A5C', margin: '3px 0 0' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
+                  <p style={{ fontSize: 12, color: '#1D1D1F', margin: '3px 0 0' }}>
                     {singleValue ? (
                       <span style={{ color, fontWeight: 600 }}>{h.new_value || '—'}</span>
                     ) : (
                       <>
-                        <span style={{ color: '#8492A6' }}>{h.old_value || '—'}</span>
+                        <span style={{ color: '#6E7278' }}>{h.old_value || '—'}</span>
                         {' → '}
                         <span style={{ color, fontWeight: 600 }}>{h.new_value || '—'}</span>
                       </>
                     )}
                   </p>
-                  {byLabel && <p style={{ fontSize: 11, color: '#8492A6', margin: '2px 0 0' }}>by {byLabel}</p>}
-                  <p style={{ fontSize: 11, color: '#B0BAC9', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
+                  {byLabel && <p style={{ fontSize: 11, color: '#6E7278', margin: '2px 0 0' }}>by {byLabel}</p>}
+                  <p style={{ fontSize: 11, color: '#9A9EA5', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
                 </div>
               </div>
             );
@@ -139,20 +139,20 @@ function LeadHistoryModal({ lead, onClose }) {
 }
 
 const SV_COLOR = {
-  scheduled: { bg: '#FFF3E0', text: '#E65100' },
-  completed: { bg: '#E8F5E9', text: '#2E7D32' },
-  no_show: { bg: '#FFEBEE', text: '#C62828' },
-  cancelled: { bg: '#F5F5F5', text: '#757575' },
+  scheduled: { bg: '#FFF3E0', text: '#D98A1F' },
+  completed: { bg: '#E9FBEA', text: '#23874A' },
+  no_show: { bg: '#FDECEC', text: '#D9434B' },
+  cancelled: { bg: '#F5F6F7', text: '#55585E' },
 };
 
 const CLOSURE_STATUS_COLOR = {
-  booked: { bg: '#E8F5E9', text: '#2E7D32' },
-  cancelled: { bg: '#FFEBEE', text: '#C62828' },
-  refunded: { bg: '#FFF3E0', text: '#E65100' },
+  booked: { bg: '#E9FBEA', text: '#23874A' },
+  cancelled: { bg: '#FDECEC', text: '#D9434B' },
+  refunded: { bg: '#FFF3E0', text: '#D98A1F' },
 };
 
 function StatusBadge({ status, colors }) {
-  const c = colors[status] || { bg: '#F5F5F5', text: '#757575' };
+  const c = colors[status] || { bg: '#F5F6F7', text: '#55585E' };
   return (
     <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.text }}>
       {(status || '').replace(/_/g, ' ').toUpperCase()}
@@ -206,18 +206,18 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const svCompleted = visits.filter(v => v.status === 'completed');
   const allClosures = closures;
 
-  const card = { backgroundColor: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden' };
-  const th = { padding: '10px 14px', fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'left', borderBottom: '1px solid #F3F4F6', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#fff', zIndex: 1 };
+  const card = { backgroundColor: '#fff', borderRadius: 18, border: '1px solid #DFE2E6', overflow: 'hidden' };
+  const th = { padding: '10px 14px', fontSize: 11, fontWeight: 700, color: '#55585E', textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'left', borderBottom: '1px solid #F4F5F7', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#fff', zIndex: 1 };
   // Both tables are long (200+ closures) and now wide enough to need sideways room,
   // so each gets its own fixed-height scroller instead of stretching the page.
   const scroller = { maxHeight: 560, overflowY: 'auto', overflowX: 'auto' };
-  const td = { padding: '10px 14px', fontSize: 13, color: '#1F2937', borderBottom: '1px solid #F9FAFB' };
+  const td = { padding: '10px 14px', fontSize: 13, color: '#1D1D1F', borderBottom: '1px solid #F4F5F7' };
 
   return (
     <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0C1E3C', margin: 0 }}>My Conversions</h1>
-        <p style={{ fontSize: 13, color: '#6B7280', margin: '4px 0 0' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', margin: 0 }}>My Conversions</h1>
+        <p style={{ fontSize: 13, color: '#55585E', margin: '4px 0 0' }}>
           {isStm
             ? 'Track all your site visits and closures across the leads you handle'
             : 'Track site visits and closures from leads you referred to the sales team'}
@@ -226,22 +226,22 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
 
       {/* Stats cards */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
-        <div style={{ flex: 1, backgroundColor: '#E8F5E9', borderRadius: 14, padding: '18px 20px', border: '1px solid #C8E6C9' }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#2E7D32' }}>{svCompleted.length}</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#1B5E20', marginTop: 4 }}>Site Visits Done</div>
+        <div style={{ flex: 1, backgroundColor: '#E9FBEA', borderRadius: 18, padding: '18px 20px', border: '1px solid #C9F8CA' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#23874A' }}>{svCompleted.length}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#23874A', marginTop: 4 }}>Site Visits Done</div>
         </div>
-        <div style={{ flex: 1, backgroundColor: '#E8EAF6', borderRadius: 14, padding: '18px 20px', border: '1px solid #C5CAE9' }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#283593' }}>{allClosures.length}</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#1A237E', marginTop: 4 }}>Total Closures</div>
+        <div style={{ flex: 1, backgroundColor: '#ECEEF0', borderRadius: 18, padding: '18px 20px', border: '1px solid #C9CDD2' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#245A96' }}>{allClosures.length}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#1D1D1F', marginTop: 4 }}>Total Closures</div>
         </div>
-        <div style={{ flex: 1, backgroundColor: '#FFF3E0', borderRadius: 14, padding: '18px 20px', border: '1px solid #FFE0B2' }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#E65100' }}>{visits.filter(v => v.status === 'scheduled').length}</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#BF360C', marginTop: 4 }}>Upcoming Visits</div>
+        <div style={{ flex: 1, backgroundColor: '#FFF3E0', borderRadius: 18, padding: '18px 20px', border: '1px solid #FFF3E0' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#D98A1F' }}>{visits.filter(v => v.status === 'scheduled').length}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#A52A31', marginTop: 4 }}>Upcoming Visits</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid #F3F4F6' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid #F4F5F7' }}>
         {[
           { key: 'sv', label: 'Site Visits' },
           { key: 'closures', label: 'Closures' },
@@ -249,8 +249,8 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{
               padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              border: 'none', background: 'none', color: tab === t.key ? '#FF6B2B' : '#9CA3AF',
-              borderBottom: tab === t.key ? '2px solid #FF6B2B' : '2px solid transparent',
+              border: 'none', background: 'none', color: tab === t.key ? '#D98A1F' : '#9A9EA5',
+              borderBottom: tab === t.key ? '2px solid #D98A1F' : '2px solid transparent',
               marginBottom: -2,
             }}>
             {t.label}
@@ -259,11 +259,11 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>Loading...</div>
+        <div style={{ textAlign: 'center', padding: 60, color: '#9A9EA5', fontSize: 14 }}>Loading...</div>
       ) : tab === 'sv' ? (
         <div style={card}>
           {svCompleted.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>
+            <div style={{ textAlign: 'center', padding: 60, color: '#9A9EA5', fontSize: 14 }}>
               {isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.'}
             </div>
           ) : (
@@ -282,14 +282,14 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
               </thead>
               <tbody>
                 {visits.map(v => (
-                  <tr key={v.id} onClick={() => openLead(v)} style={{ transition: 'background 0.1s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                  <tr key={v.id} onClick={() => openLead(v)} style={{ transition: 'background 0.1s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F4F5F7'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{v.lead_name || '—'}</span></td>
-                    <td style={{ ...td, color: '#6B7280' }}>{v.lead_phone || '—'}</td>
+                    <td style={{ ...td, color: '#55585E' }}>{v.lead_phone || '—'}</td>
                     <td style={td}>{v.project_name || '—'}</td>
                     <td style={td}>{v.visited_at ? fmtDate(v.visited_at) : (v.scheduled_at ? fmtDate(v.scheduled_at) : '—')}</td>
                     <td style={td}><StatusBadge status={v.status} colors={SV_COLOR} /></td>
-                    <td style={{ ...td, color: '#6B7280' }}>{v.stm_name || '—'}</td>
-                    <td style={{ ...td, color: '#6B7280' }}>{v.referred_by_telecaller_name || '—'}</td>
+                    <td style={{ ...td, color: '#55585E' }}>{v.stm_name || '—'}</td>
+                    <td style={{ ...td, color: '#55585E' }}>{v.referred_by_telecaller_name || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -300,7 +300,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
       ) : (
         <div style={card}>
           {allClosures.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>
+            <div style={{ textAlign: 'center', padding: 60, color: '#9A9EA5', fontSize: 14 }}>
               {isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
           ) : (
@@ -322,15 +322,15 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
               <tbody>
                 {/* A closure outlives its lead (trial reset) — no lead, no history to open. */}
                 {allClosures.map(c => (
-                  <tr key={c.id} onClick={() => openLead(c)} style={{ transition: 'background 0.1s', cursor: c.lead ? 'pointer' : 'default' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                  <tr key={c.id} onClick={() => openLead(c)} style={{ transition: 'background 0.1s', cursor: c.lead ? 'pointer' : 'default' }} onMouseOver={e => e.currentTarget.style.background = '#F4F5F7'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{c.lead_name || '—'}</span></td>
-                    <td style={{ ...td, color: '#6B7280' }}>{c.lead_phone || '—'}</td>
+                    <td style={{ ...td, color: '#55585E' }}>{c.lead_phone || '—'}</td>
                     <td style={td}>{c.project_name || '—'}</td>
                     <td style={td}>{(c.unit_type || '') + ' ' + (c.unit_no || '')}</td>
                     <td style={{ ...td, fontWeight: 600 }}>{c.total_amount ? '₹' + new Intl.NumberFormat('en-IN').format(c.total_amount) : '—'}</td>
                     <td style={td}>{c.closure_date ? fmtDate(c.closure_date) : '—'}</td>
-                    <td style={{ ...td, color: '#6B7280' }}>{c.stm_name || '—'}</td>
-                    <td style={{ ...td, color: '#6B7280' }}>{c.referred_by_telecaller_name || '—'}</td>
+                    <td style={{ ...td, color: '#55585E' }}>{c.stm_name || '—'}</td>
+                    <td style={{ ...td, color: '#55585E' }}>{c.referred_by_telecaller_name || '—'}</td>
                     <td style={td}><StatusBadge status={c.status} colors={CLOSURE_STATUS_COLOR} /></td>
                   </tr>
                 ))}
@@ -345,10 +345,10 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
           which makes a fixed-height table look truncated rather than scrollable. */}
       <style>{`
         .convScroll::-webkit-scrollbar { width: 10px; height: 10px; }
-        .convScroll::-webkit-scrollbar-track { background: #F3F4F6; border-radius: 8px; }
-        .convScroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; border: 2px solid #F3F4F6; }
-        .convScroll::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-        .convScroll { scrollbar-width: thin; scrollbar-color: #CBD5E1 #F3F4F6; }
+        .convScroll::-webkit-scrollbar-track { background: #F4F5F7; border-radius: 8px; }
+        .convScroll::-webkit-scrollbar-thumb { background: #C9CDD2; border-radius: 8px; border: 2px solid #F4F5F7; }
+        .convScroll::-webkit-scrollbar-thumb:hover { background: #2F6DB5; }
+        .convScroll { scrollbar-width: thin; scrollbar-color: #C9CDD2 #F4F5F7; }
       `}</style>
 
       {historyLead && <LeadHistoryModal lead={historyLead} onClose={() => setHistoryLead(null)} />}

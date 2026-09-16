@@ -6,11 +6,11 @@ import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 
-const TEAL = '#00838F';
-const PURPLE = '#7C3AED';
+const TEAL = '#23874A';
+const PURPLE = '#2F6DB5';
 
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C6D0DB', fontSize: 13, boxSizing: 'border-box' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 5 };
+const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
+const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
 
 function toISODate(d) {
   const y = d.getFullYear();
@@ -215,16 +215,16 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(24,35,80,0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F0F3FA' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: 8 }}>
             Revise LOI
-            <span style={{ fontSize: 10, fontWeight: 800, color: PURPLE, background: '#F3E8FF', padding: '2px 8px', borderRadius: 20 }}>R{nextRevisionNo}</span>
+            <span style={{ fontSize: 10, fontWeight: 800, color: PURPLE, background: '#E6F2FF', padding: '2px 8px', borderRadius: 20 }}>R{nextRevisionNo}</span>
           </div>
-          <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>{form.name || investor.name} · {form.phone || investor.phone} · {scheme?.name}</div>
+          <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>{form.name || investor.name} · {form.phone || investor.phone} · {scheme?.name}</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 11, color: '#8492A6', background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 8, padding: '8px 10px' }}>
+          <div style={{ fontSize: 11, color: '#6E7278', background: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 8, padding: '8px 10px' }}>
             Scheme and investment date stay fixed across a revision — name, mobile number and the terms below can change. Matures {maturityPreview ? formatDMY(maturityPreview) : '—'}.
           </div>
           <div>
@@ -259,13 +259,13 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
                 <label style={{ ...lbl, marginBottom: 0 }}>Payout Schedule (confirm or edit)</label>
                 <button type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
               </div>
-              <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ border: '1.5px solid #DFE2E6', borderRadius: 8, overflow: 'hidden' }}>
                 {schedule.map((row, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', borderTop: idx > 0 ? '1px solid #F0F3FA' : 'none' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: row.payout_type === 'maturity' ? '#7B1FA2' : '#0D9488', width: 58, flexShrink: 0 }}>
+                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', borderTop: idx > 0 ? '1px solid #F4F5F7' : 'none' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: row.payout_type === 'maturity' ? '#245A96' : '#23874A', width: 58, flexShrink: 0 }}>
                       {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
                     </span>
-                    <span style={{ fontSize: 12, color: '#1A1A2E', flex: 1 }}>{formatDMY(row.due_date)}</span>
+                    <span style={{ fontSize: 12, color: '#1D1D1F', flex: 1 }}>{formatDMY(row.due_date)}</span>
                     <input
                       type="number" step="0.01" value={row.amount_due}
                       onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)}
@@ -285,24 +285,24 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
             <input style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
           </div>
 
-          <div style={{ background: '#F8FAFC', border: '1px solid #EDF1F7', borderRadius: 10, padding: 12 }}>
+          <div style={{ background: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 14, padding: 12 }}>
             <label style={lbl}>Revised Investment Proposal Form (LOI)</label>
             <button type="button" onClick={doDownloadLoi} disabled={loiDownloading}
               style={{ width: '100%', padding: '9px 0', background: '#fff', color: PURPLE, border: `1.5px solid ${PURPLE}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
               {loiDownloading ? 'Generating…' : `📥 Download Revised LOI (R${nextRevisionNo})`}
             </button>
-            {loiDone && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 6 }}>Revised LOI downloaded — get it signed and upload below.</div>}
+            {loiDone && <div style={{ fontSize: 11, color: '#23874A', marginTop: 6 }}>Revised LOI downloaded — get it signed and upload below.</div>}
             <div style={{ marginTop: 10 }}>
               <label style={lbl}>Upload Signed Revised LOI *</label>
               <input type="file" accept="image/*,.pdf" onChange={handleLoiFileChange} style={{ fontSize: 12 }} />
-              {loiFile && <div style={{ fontSize: 11, color: '#2E7D32', marginTop: 4 }}>Selected: {loiFile.name}</div>}
+              {loiFile && <div style={{ fontSize: 11, color: '#23874A', marginTop: 4 }}>Selected: {loiFile.name}</div>}
             </div>
           </div>
 
-          {error && <div style={{ fontSize: 12, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#D9434B', background: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
           <button type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: PURPLE, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
             {busy ? 'Submitting…' : 'Submit Revision for Approval'}
           </button>

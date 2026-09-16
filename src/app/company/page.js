@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { verifyCompany } from '../../redux/actions/authActions';
 
-const ORANGE = '#FF6B2B';
-const NAVY   = '#0C1E3C';
+const ORANGE = '#A2D2FF';
+const NAVY   = '#1D1D1F';
 
 const CSS = `
   @keyframes spin      { to { transform: rotate(360deg); } }
@@ -14,11 +14,11 @@ const CSS = `
   @keyframes floatRing { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-  input::placeholder { color:#A0AABB; font-weight:400; }
+  input::placeholder { color:#9A9EA5; font-weight:400; }
   .code-input:focus { outline:none; }
-  .input-wrap:focus-within { border-color:${NAVY} !important; box-shadow:0 0 0 4px rgba(12,30,60,0.08) !important; }
+  .input-wrap:focus-within { border-color:${NAVY} !important; box-shadow:0 0 0 4px rgba(29,29,31,0.08) !important; }
   .submit-btn { transition:transform 0.18s,box-shadow 0.18s; }
-  .submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(12,30,60,0.28) !important; }
+  .submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(29,29,31,0.28) !important; }
   @media (max-width:860px) { .left-panel{display:none!important;} .right-panel{width:100%!important;} }
 `;
 
@@ -46,8 +46,8 @@ export default function CompanyScreen() {
       {/* ═══ LEFT — branding ═══ */}
       <div className="left-panel" style={s.left}>
         <div style={s.dotBg} />
-        <div style={{ ...s.glow, top:'8%', left:'55%', width:340, height:340, background:'radial-gradient(circle,rgba(255,107,43,0.13) 0%,transparent 70%)' }} />
-        <div style={{ ...s.glow, bottom:'8%', left:'-8%', width:260, height:260, background:'radial-gradient(circle,rgba(61,90,254,0.09) 0%,transparent 70%)' }} />
+        <div style={{ ...s.glow, top:'8%', left:'55%', width:340, height:340, background:'radial-gradient(circle,rgba(162,210,255,0.38) 0%,transparent 70%)' }} />
+        <div style={{ ...s.glow, bottom:'8%', left:'-8%', width:260, height:260, background:'radial-gradient(circle,rgba(164,245,166,0.22) 0%,transparent 70%)' }} />
 
         <div style={s.leftInner}>
 
@@ -69,7 +69,7 @@ export default function CompanyScreen() {
           <div style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif', fontWeight: 800,
                         fontSize: 30, letterSpacing: '0.26em', color: '#fff', marginBottom: 30,
                         marginRight: '-0.26em', textAlign: 'center' }}>
-            NE<span style={{ color: '#B9915E' }}>X</span>ORA
+            NE<span style={{ color: '#A2D2FF' }}>X</span>ORA
           </div>
 
           {/* Tagline */}
@@ -117,7 +117,7 @@ export default function CompanyScreen() {
             </div>
             <div style={s.stepLine} />
             <div style={{ display:'flex', alignItems:'center', gap:8, opacity:0.35 }}>
-              <div style={{ ...s.stepNum, backgroundColor:'#C8D0DC', color:'#fff' }}>2</div>
+              <div style={{ ...s.stepNum, backgroundColor:'#C9CDD2', color:'#fff' }}>2</div>
               <span style={{ fontSize:13, fontWeight:600, color:NAVY }}>Sign In</span>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function CompanyScreen() {
           <form onSubmit={handleSubmit}>
             <label style={s.label}>COMPANY CODE</label>
             <div className="input-wrap" style={s.inputBox}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AABC2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F6DB5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
               <input
@@ -145,7 +145,7 @@ export default function CompanyScreen() {
 
             {companyError && (
               <div style={s.errorBox}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D9434B" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 {companyError}
               </div>
             )}
@@ -154,7 +154,7 @@ export default function CompanyScreen() {
               type="submit"
               disabled={!canSubmit}
               className="submit-btn"
-              style={{ ...s.btn, background: canSubmit ? `linear-gradient(135deg,${NAVY} 0%,#051229 100%)` : '#D1D8E4', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+              style={{ ...s.btn, background: canSubmit ? `NAVY` : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
             >
               {companyLoading
                 ? <span style={s.spinner} />
@@ -164,7 +164,7 @@ export default function CompanyScreen() {
           </form>
 
           <div style={s.secureRow}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B0BAC9" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9A9EA5" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <span>256-bit encrypted &amp; secured connection</span>
           </div>
         </div>
@@ -178,7 +178,7 @@ const s = {
 
   /* LEFT */
   left: {
-    width:'52%', background:'linear-gradient(145deg,#050D1A 0%,#0B1D3A 50%,#0F2348 100%)',
+    width:'calc(52% - 32px)', background:'#1D1D1F', margin:16, borderRadius:32,
     display:'flex', flexDirection:'column', position:'relative', overflow:'hidden',
   },
   dotBg: {
@@ -197,36 +197,36 @@ const s = {
   ringsWrap: { marginBottom:40, display:'flex', justifyContent:'center', animation:'floatRing 4s ease-in-out infinite' },
   ring3: {
     width:180, height:180, borderRadius:'50%',
-    border:'1.5px solid rgba(255,107,43,0.15)',
+    border:'1.5px solid rgba(162,210,255,0.15)',
     backgroundColor:'rgba(255,255,255,0.02)',
     display:'flex', alignItems:'center', justifyContent:'center',
   },
   ring2: {
     width:146, height:146, borderRadius:'50%',
-    border:'1.5px solid rgba(255,107,43,0.3)',
+    border:'1.5px solid rgba(162,210,255,0.3)',
     backgroundColor:'rgba(255,255,255,0.04)',
     display:'flex', alignItems:'center', justifyContent:'center',
   },
   ring1: {
     width:114, height:114, borderRadius:'50%',
-    border:'2px solid rgba(255,107,43,0.6)',
+    border:'2px solid rgba(162,210,255,0.6)',
     backgroundColor:'rgba(255,255,255,0.07)',
     display:'flex', alignItems:'center', justifyContent:'center',
-    boxShadow:'0 0 24px rgba(255,107,43,0.15)',
+    boxShadow:'0 0 24px rgba(162,210,255,0.15)',
   },
   logoBox: {
     width:90, height:90, borderRadius:'50%',
     backgroundColor:'#FFFFFF',
     display:'flex', alignItems:'center', justifyContent:'center',
-    boxShadow:'0 4px 20px rgba(255,107,43,0.4)',
+    boxShadow:'0 4px 20px rgba(162,210,255,0.4)',
     overflow:'hidden', padding:8,
   },
   logoImg: { width:'100%', height:'100%', objectFit:'contain' },
 
   taglineBlock: { marginBottom:36 },
   pill: {
-    display:'inline-block', backgroundColor:'rgba(255,107,43,0.15)',
-    border:'1px solid rgba(255,107,43,0.3)', borderRadius:20,
+    display:'inline-block', backgroundColor:'rgba(162,210,255,0.15)',
+    border:'1px solid rgba(162,210,255,0.3)', borderRadius:20,
     padding:'4px 14px', fontSize:11, fontWeight:700, color:ORANGE,
     letterSpacing:2, marginBottom:16,
   },
@@ -247,13 +247,13 @@ const s = {
 
   /* RIGHT */
   right: {
-    width:'48%', backgroundColor:'#F0F2F8',
+    width:'48%', backgroundColor:'transparent',
     display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 32px',
   },
   formCard: {
     width:'100%', maxWidth:420,
-    backgroundColor:'#FFFFFF', borderRadius:24,
-    padding:'44px 40px', boxShadow:'0 4px 40px rgba(0,0,0,0.09)',
+    backgroundColor:'#FFFFFF', borderRadius:28,
+    padding:'44px 40px', boxShadow:'0 1px 2px rgba(29,29,31,0.04), 0 12px 40px rgba(60,90,130,0.10)',
     animation:'fadeIn 0.4s ease',
   },
 
@@ -266,19 +266,19 @@ const s = {
     display:'flex', alignItems:'center', justifyContent:'center',
     fontSize:12, fontWeight:700, flexShrink:0,
   },
-  stepLine: { flex:1, height:1.5, backgroundColor:'#E4E9F2' },
+  stepLine: { flex:1, height:1.5, backgroundColor:'#ECEEF0' },
 
   formTitle: { fontSize:26, fontWeight:800, color:NAVY, marginBottom:8 },
-  formDesc:  { fontSize:14, color:'#7A8599', lineHeight:1.65, marginBottom:28 },
+  formDesc:  { fontSize:14, color:'#6E7278', lineHeight:1.65, marginBottom:28 },
 
   label: {
-    display:'block', fontSize:10, fontWeight:700, color:'#8492A6',
+    display:'block', fontSize:10, fontWeight:700, color:'#6E7278',
     letterSpacing:1.4, textTransform:'uppercase', marginBottom:10,
   },
   inputBox: {
     display:'flex', alignItems:'center', gap:12,
-    border:'1.5px solid #E4E9F2', borderRadius:12,
-    padding:'0 16px', height:52, backgroundColor:'#FAFBFD',
+    border:'1.5px solid #ECEEF0', borderRadius: 16,
+    padding:'0 16px', height:52, backgroundColor:'#FAFAFB',
     marginBottom:6, transition:'all 0.2s',
   },
   input: {
@@ -287,13 +287,13 @@ const s = {
   },
   errorBox: {
     display:'flex', alignItems:'center', gap:8,
-    backgroundColor:'#FEF2F2', border:'1px solid #FECACA',
-    borderRadius:10, padding:'10px 14px',
-    fontSize:13, color:'#DC2626', marginTop:10, marginBottom:4,
+    backgroundColor:'#FDECEC', border:'1px solid #F7C3C6',
+    borderRadius: 14, padding:'10px 14px',
+    fontSize:13, color:'#D9434B', marginTop:10, marginBottom:4,
   },
   btn: {
     display:'flex', alignItems:'center', justifyContent:'center',
-    width:'100%', height:52, border:'none', borderRadius:12,
+    width:'100%', height:52, border:'none', borderRadius: 999,
     fontSize:15, fontWeight:700, color:'#fff', marginTop:22,
   },
   spinner: {
@@ -303,6 +303,6 @@ const s = {
   },
   secureRow: {
     display:'flex', alignItems:'center', justifyContent:'center',
-    gap:6, marginTop:22, fontSize:12, color:'#B0BAC9',
+    gap:6, marginTop:22, fontSize:12, color:'#9A9EA5',
   },
 };

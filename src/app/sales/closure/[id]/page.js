@@ -16,26 +16,26 @@ const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?'
 const FACING_LABEL = { road: 'Road Facing', garden: 'Garden Facing' };
 
 const STATUS = {
-  available: { label: 'Available', dot: '#22c55e', text: '#064E3B', bg: '#E8F5E9' },
+  available: { label: 'Available', dot: '#23874a', text: '#145A32', bg: '#E9FBEA' },
   // Covers two different things under one status: a soft pick that auto-expires
   // in 10 minutes (someone just tapped it), and a hard hold backed by an actual
   // pending-approval booking. "Hold" read as a deliberate pause either way and
   // confused people about which one they were looking at — "In Progress" reads
   // correctly for both ("something is actively happening with this unit").
-  hold:      { label: 'In Progress', dot: '#94A3B8', text: '#334155', bg: '#F1F5F9' },
+  hold:      { label: 'In Progress', dot: '#2F6DB5', text: '#1D1D1F', bg: '#F4F5F7' },
   // Submitted and waiting on a manager. Shares plot.status='hold' with the two
   // states above — submission is what clears held_by — so it is told apart by the
   // pending booking the server reports, and coloured amber because it is a real
   // commitment the team should not treat as still up for grabs.
-  pending:   { label: 'Hold',        dot: '#F59E0B', text: '#78350F', bg: '#FEF3C7' },
-  sold:      { label: 'Sold',      dot: '#ef4444', text: '#7F1D1D', bg: '#FEE2E2' },
+  pending:   { label: 'Hold',        dot: '#D98A1F', text: '#6B420C', bg: '#FFF3E0' },
+  sold:      { label: 'Sold',      dot: '#d9434b', text: '#A52A31', bg: '#FDECEC' },
   // A previously-sold unit put back on the market — bookable exactly like
   // Available, just purple instead of green so it reads as "resold", not new.
-  resale:    { label: 'Resale',    dot: '#a78bfa', text: '#4C1D95', bg: '#F3E8FF' },
+  resale:    { label: 'Resale',    dot: '#a2d2ff', text: '#245A96', bg: '#E6F2FF' },
   // A unit with a saved (unsubmitted) draft — same underlying plot.status='hold' as a
   // bare in-progress selection, but shown grey and distinct so the team can tell "someone
   // is mid-paperwork on this" from "someone just clicked it a second ago".
-  drafted:   { label: 'Drafted',   dot: '#9CA3AF', text: '#374151', bg: '#F3F4F6' },
+  drafted:   { label: 'Drafted',   dot: '#9A9EA5', text: '#3A3C40', bg: '#F4F5F7' },
 };
 // Visual state for a plot, folding in the drafted override — everywhere the map colours
 // a unit should go through this instead of indexing STATUS[plot.status] directly.
@@ -80,10 +80,10 @@ function zoneTopCenter(zone) {
 
 // Type badge colours (mirrors the CP portal hover tooltip).
 const TYPE_COLORS = {
-  Ananda:  { bg: 'rgba(139,92,246,0.18)', color: '#c4b5fd', border: 'rgba(139,92,246,0.5)' },
-  Maitri:  { bg: 'rgba(37,99,235,0.18)',  color: '#93c5fd', border: 'rgba(37,99,235,0.5)'  },
-  Karuna:  { bg: 'rgba(217,119,6,0.18)',  color: '#fcd34d', border: 'rgba(217,119,6,0.5)'  },
-  Hridaya: { bg: 'rgba(5,150,105,0.18)',  color: '#6ee7b7', border: 'rgba(5,150,105,0.5)'  },
+  Ananda:  { bg: 'rgba(47,109,181,0.18)', color: '#a2d2ff', border: 'rgba(47,109,181,0.5)' },
+  Maitri:  { bg: 'rgba(47,109,181,0.18)',  color: '#a2d2ff', border: 'rgba(47,109,181,0.5)'  },
+  Karuna:  { bg: 'rgba(163,103,26,0.18)',  color: '#f5b453', border: 'rgba(163,103,26,0.5)'  },
+  Hridaya: { bg: 'rgba(35,135,74,0.18)',  color: '#a4f5a6', border: 'rgba(35,135,74,0.5)'  },
 };
 
 export function ClosureViewerContent({ backHref = '/sales/closure' }) {
@@ -273,26 +273,26 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     list.forEach(p => { const k = plotState(p); if (c[k] != null) c[k]++; });
     const t = list.length;
     const share = (n) => (t ? Math.round(n / t * 100) : 0);
-    const card = { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 14, background: '#fff', border: '1px solid #E6EBF4', boxShadow: '0 2px 8px rgba(184,196,214,0.12)' };
+    const card = { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 18, background: '#fff', border: '1px solid #ECEEF0', boxShadow: '0 2px 8px rgba(140,148,160,0.12)' };
     return (
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7 }}>{title}</div>
+        <div style={{ fontSize: 11, fontWeight: 800, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7 }}>{title}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
           <div style={card}>
-            <span style={{ width: 36, height: 36, borderRadius: 10, background: '#EEF1FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#3D5AFE', fontSize: 17, fontWeight: 900 }}>▦</span>
+            <span style={{ width: 36, height: 36, borderRadius: 14, background: '#F3F9FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#2F6DB5', fontSize: 17, fontWeight: 900 }}>▦</span>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{t}</div>
-              <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>Total Units</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#1D1D1F', lineHeight: 1 }}>{t}</div>
+              <div style={{ fontSize: 12, color: '#6E7278', marginTop: 3 }}>Total Units</div>
             </div>
           </div>
           {[['available', c.available], ['hold', c.hold], ['pending', c.pending], ['sold', c.sold]].map(([key, n]) => {
             const cfg = STATUS[key];
             return (
               <div key={key} style={card}>
-                <span style={{ width: 36, height: 36, borderRadius: 10, background: cfg.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: cfg.dot, fontSize: 18, fontWeight: 900 }}>•</span>
+                <span style={{ width: 36, height: 36, borderRadius: 14, background: cfg.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: cfg.dot, fontSize: 18, fontWeight: 900 }}>•</span>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#1A1A2E', lineHeight: 1 }}>{n}</div>
-                  <div style={{ fontSize: 12, color: '#8492A6', marginTop: 3 }}>{cfg.label} · {share(n)}%</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#1D1D1F', lineHeight: 1 }}>{n}</div>
+                  <div style={{ fontSize: 12, color: '#6E7278', marginTop: 3 }}>{cfg.label} · {share(n)}%</div>
                 </div>
               </div>
             );
@@ -477,10 +477,10 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   }
 
   if (loading) {
-    return <div style={{ padding: '60px 28px', textAlign: 'center', color: '#8492A6' }}>Loading project…</div>;
+    return <div style={{ padding: '60px 28px', textAlign: 'center', color: '#6E7278' }}>Loading project…</div>;
   }
   if (!project) {
-    return <div style={{ padding: '60px 28px', textAlign: 'center', color: '#8492A6' }}>Project not found.</div>;
+    return <div style={{ padding: '60px 28px', textAlign: 'center', color: '#6E7278' }}>Project not found.</div>;
   }
 
   return (
@@ -490,10 +490,10 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         <button onClick={() => router.push(backHref)} style={backBtn}>← All projects</button>
       </div>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>{project.name}</h1>
-        {project.location && <p style={{ fontSize: 13, color: '#8492A6' }}>📍 {project.location}</p>}
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>{project.name}</h1>
+        {project.location && <p style={{ fontSize: 13, color: '#6E7278' }}>📍 {project.location}</p>}
         {sv && (
-          <p style={{ fontSize: 13, color: '#3D5AFE', marginTop: 6, fontWeight: 600 }}>
+          <p style={{ fontSize: 13, color: '#2F6DB5', marginTop: 6, fontWeight: 600 }}>
             Recording closure for {sv.lead_name} · {sv.lead_phone} — tap an available unit.
           </p>
         )}
@@ -507,7 +507,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           return (
             <button key={key} onClick={() => setFilter(key)} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              border: `1.5px solid ${active ? '#C9A84C' : '#E6EBF4'}`, background: active ? '#FBF4DF' : '#fff', color: active ? '#8a6d1f' : '#6B7280',
+              border: `1.5px solid ${active ? '#D98A1F' : '#ECEEF0'}`, background: active ? '#FFF3E0' : '#fff', color: active ? '#a3671a' : '#55585E',
             }}>
               {dot && <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot }} />}
               {label}
@@ -523,38 +523,38 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               the same floor together, so an STM can pick a unit from any of them. */}
           {blocks.filter(Boolean).length > 1 && (
             <>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
               <div style={{ position: 'relative' }}>
                 <button type="button" onClick={() => setBlockDropdownOpen((o) => !o)} style={{
-                  height: 38, padding: '0 14px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                  border: '1.5px solid #E6EBF4', background: '#fff', fontSize: 13, fontWeight: 700, color: '#1A1A2E', minWidth: 190,
+                  height: 38, padding: '0 14px', borderRadius: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  border: '1.5px solid #ECEEF0', background: '#fff', fontSize: 13, fontWeight: 700, color: '#1D1D1F', minWidth: 190,
                 }}>
                   <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {selectedBlocks.size === blocks.length
                       ? 'All Blocks'
                       : [...selectedBlocks].map((b) => `Block ${b || '—'}`).join(', ') || 'Select block(s)'}
                   </span>
-                  <span style={{ fontSize: 10, color: '#8492A6' }}>{blockDropdownOpen ? '▲' : '▼'}</span>
+                  <span style={{ fontSize: 10, color: '#6E7278' }}>{blockDropdownOpen ? '▲' : '▼'}</span>
                 </button>
                 {blockDropdownOpen && (
                   <>
                     <div onClick={() => setBlockDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
                     <div style={{
                       position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 41, minWidth: 220,
-                      background: '#fff', border: '1.5px solid #E6EBF4', borderRadius: 10, boxShadow: '0 8px 24px rgba(100,120,160,0.18)', padding: 6,
+                      background: '#fff', border: '1.5px solid #ECEEF0', borderRadius: 14, boxShadow: '0 8px 24px rgba(47,109,181,0.18)', padding: 6,
                     }}>
                       {blocks.map((b) => {
                         const on = selectedBlocks.has(b);
                         return (
                           <div key={b} onClick={() => toggleBlock(b)} style={{
                             display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                            background: on ? '#EEF1FF' : 'transparent',
+                            background: on ? '#F3F9FF' : 'transparent',
                           }}>
                             <span style={{
                               width: 16, height: 16, borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              border: `1.5px solid ${on ? '#3D5AFE' : '#C6D0DB'}`, background: on ? '#3D5AFE' : '#fff', color: '#fff', fontSize: 11, lineHeight: 1,
+                              border: `1.5px solid ${on ? '#2F6DB5' : '#C9CDD2'}`, background: on ? '#2F6DB5' : '#fff', color: '#fff', fontSize: 11, lineHeight: 1,
                             }}>{on ? '✓' : ''}</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A2E' }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>
                               Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}
                             </span>
                           </div>
@@ -570,10 +570,10 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               floor concept, so picking one is redundant clutter, unlike an actual tower. */}
           {!project?.block_industrial && (
             <>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
               <select value={selectedFloorNum} onChange={(e) => setSelectedFloorNum(Number(e.target.value))}
-                style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E6EBF4', background: '#fff',
-                  fontSize: 13, fontWeight: 700, color: '#1A1A2E', cursor: 'pointer', minWidth: 190 }}>
+                style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid #ECEEF0', background: '#fff',
+                  fontSize: 13, fontWeight: 700, color: '#1D1D1F', cursor: 'pointer', minWidth: 190 }}>
                 {floorOptions.map((f) => {
                   const num = Number(f.floor) || 0;
                   const entriesForNum = blocks
@@ -587,7 +587,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
             </>
           )}
           {activeEntries.length > 0 && mapEntries.length === 0 && (
-            <span style={{ fontSize: 12, color: '#B45309' }}>No plan uploaded for this {project?.block_industrial ? 'block' : 'floor'} — units are listed below.</span>
+            <span style={{ fontSize: 12, color: '#A3671A' }}>No plan uploaded for this {project?.block_industrial ? 'block' : 'floor'} — units are listed below.</span>
           )}
         </div>
       )}
@@ -599,7 +599,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
             return (
               <button key={t} onClick={() => setTypeFilter(t)} style={{
                 padding: '6px 13px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                border: `1.5px solid ${active ? '#C9A84C' : '#E6EBF4'}`, background: active ? '#FBF4DF' : '#fff', color: active ? '#8a6d1f' : '#6B7280',
+                border: `1.5px solid ${active ? '#D98A1F' : '#ECEEF0'}`, background: active ? '#FFF3E0' : '#fff', color: active ? '#a3671a' : '#55585E',
               }}>
                 {t === 'all' ? 'All Types' : t}
               </button>
@@ -609,7 +609,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       )}
 
       {notice && (
-        <div style={{ padding: '10px 14px', borderRadius: 10, background: '#FEF3C7', border: '1px solid #f59e0b', color: '#78350F', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+        <div style={{ padding: '10px 14px', borderRadius: 14, background: '#FFF3E0', border: '1px solid #d98a1f', color: '#6B420C', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
           ⚠ {notice}
         </div>
       )}
@@ -621,7 +621,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
       {mapEntries.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6d1f', background: '#FBF4DF', border: '1px solid #EBD9A3', padding: '5px 12px', borderRadius: 20 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#a3671a', background: '#FFF3E0', border: '1px solid #FFD89D', padding: '5px 12px', borderRadius: 20 }}>
             🏠 Showing {shownCount} of {total} units
           </span>
         </div>
@@ -633,13 +633,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         const entryZones = entry.zones || [];
         const hoverPrefix = `${idx}:`;
         return (
-          <div key={`${entry.block}-${entry.floor}-${idx}`} style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)', marginBottom: 18 }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid #F0F3FA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+          <div key={`${entry.block}-${entry.floor}-${idx}`} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', border: '1px solid #ECEEF0', boxShadow: '0 4px 20px rgba(47,109,181,0.12)', marginBottom: 18 }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
               <div>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E' }}>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F' }}>
                   Interactive Unit Map{entry.block ? ` · Block ${entry.block}` : ''}
                 </h2>
-                <p style={{ fontSize: 12, color: '#8492A6', marginTop: 2 }}>Tap available (green) units to select — pick one or several to book together.</p>
+                <p style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>Tap available (green) units to select — pick one or several to book together.</p>
               </div>
             </div>
             <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
@@ -657,10 +657,10 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   // just with different actions inside depending on who's looking.
                   const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || !!plot.can_cancel_hold || (plot.status === 'sold' && isManager);
                   const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
-                  const fillC   = isSel ? '#3D5AFE' : cfg.dot + (isHover ? 'cc' : '99');
-                  const strokeC = isSel ? '#1A237E' : cfg.dot;
+                  const fillC   = isSel ? '#2F6DB5' : cfg.dot + (isHover ? 'cc' : '99');
+                  const strokeC = isSel ? '#1D1D1F' : cfg.dot;
                   const sw      = isSel ? 0.95 : (isHover ? 0.7 : 0.45);
-                  const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? '#3D5AFE' : cfg.dot})` : 'none' };
+                  const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? '#2F6DB5' : cfg.dot})` : 'none' };
                   const ev = {
                     onClick: () => pickPlot(plot),
                     onMouseEnter: () => setHovered(hoverPrefix + zone.id),
@@ -697,9 +697,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     <div style={{
                       position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
                       opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
-                      pointerEvents: 'none', zIndex: 3, background: isSel ? '#3D5AFE' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
+                      pointerEvents: 'none', zIndex: 3, background: isSel ? '#2F6DB5' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
                       fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                      borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1A237E' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
+                      borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1D1D1F' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
                     }}>{isSel ? `✓ ${labelText}` : labelText}</div>
                     {/* Drafted units name their drafter right on the map, not just on
                         hover — a tablet has no hover, and this is who everyone else
@@ -708,7 +708,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                       <div style={{
                         position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%, 6px)',
                         opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s', pointerEvents: 'none', zIndex: 3,
-                        background: 'rgba(55,65,81,0.92)', color: '#fff', fontWeight: 700, fontSize: 'clamp(5px,0.6vw,9px)',
+                        background: 'rgba(58,60,64,0.92)', color: '#fff', fontWeight: 700, fontSize: 'clamp(5px,0.6vw,9px)',
                         lineHeight: 1, padding: '1px 5px', borderRadius: 4, whiteSpace: 'nowrap',
                       }}>{plot.held_by_name}</div>
                     )}
@@ -736,7 +736,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   <div style={{
                     position: 'absolute', left: `${tx}%`, top: `${anchorY}%`,
                     transform: below ? `translate(${shiftX}, 10px)` : `translate(${shiftX}, calc(-100% - 10px))`,
-                    background: 'rgba(10,18,30,0.96)', color: '#fff', padding: '10px 14px', borderRadius: 12,
+                    background: 'rgba(29,29,31,0.96)', color: '#fff', padding: '10px 14px', borderRadius: 16,
                     whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20, minWidth: 140,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
                   }}>
@@ -750,24 +750,24 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {/* A drafted unit is visible to everyone, but only its drafter can act
                         on it — surface who so the rest of the team knows who to ask. */}
                     {plot.drafted_booking_id && plot.held_by_name && (
-                      <div style={{ color: '#D1D5DB', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
+                      <div style={{ color: '#C9CDD2', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
                     )}
-                    {plot.size && <div style={{ color: '#C9A84C', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
+                    {plot.size && <div style={{ color: '#D98A1F', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
                     {/* Facing and terrace both move the price, so surface them on hover
                         rather than making the user open the unit to find out. */}
                     {plot.facing && (
-                      <div style={{ color: '#93C5FD', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      <div style={{ color: '#A2D2FF', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
                         {FACING_LABEL[plot.facing] || plot.facing}
                       </div>
                     )}
                     {(plot.terrace_area || '').trim() && (
-                      <div style={{ color: '#6EE7B7', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      <div style={{ color: '#A4F5A6', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
                         Terrace {plot.terrace_area} sq.yd
                       </div>
                     )}
                     {/* Who is on a booked unit — so the team can see it without opening the plot. */}
                     {plot.agent_name && (
-                      <div style={{ color: '#E2E8F0', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      <div style={{ color: '#DFE2E6', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
                         {plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}
                       </div>
                     )}
@@ -792,29 +792,29 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           (or, for a plotted scheme, the whole project when it has none). Never
           duplicates a plot already shown on a map card above. */}
       {(floorWise ? (noMapEntries.length > 0 || activeEntries.length === 0) : mapEntries.length === 0) && (
-        <div style={{ background: '#fff', borderRadius: 16, padding: '18px', border: '1px solid #E6EBF4', boxShadow: '0 4px 20px rgba(100,120,160,0.12)' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Units</h2>
-          <p style={{ fontSize: 12, color: '#8492A6', marginBottom: 14 }}>No site map drawn for this project. Tap an available unit below.</p>
+        <div style={{ background: '#fff', borderRadius: 20, padding: '18px', border: '1px solid #ECEEF0', boxShadow: '0 4px 20px rgba(47,109,181,0.12)' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Units</h2>
+          <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 14 }}>No site map drawn for this project. Tap an available unit below.</p>
           {!noMapPlots.length && project?.block_industrial ? (
             // Block-wise industrial, this block has no plots yet — nothing to pick, so
             // raise an EOI against the block instead of a dead end. The EOI code is
             // block-prefixed (e.g. Block E → E1, E2…) via ?block= on the booking form.
             <div style={{ textAlign: 'center', padding: '28px 12px' }}>
-              <p style={{ color: '#374151', fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
+              <p style={{ color: '#3A3C40', fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
                 Block {[...selectedBlocks].join(', ') || '—'} hasn't been mapped yet.
               </p>
-              <p style={{ color: '#8492A6', fontSize: 12, marginBottom: 16 }}>
+              <p style={{ color: '#6E7278', fontSize: 12, marginBottom: 16 }}>
                 No units are defined here yet — raise an EOI to hold interest until it's surveyed.
               </p>
               <button
                 onClick={() => router.push(`/sales/booking?project=${id}&eoi=1&block=${encodeURIComponent([...selectedBlocks][0] || '')}`)}
-                style={{ padding: '10px 22px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
-                  background: 'linear-gradient(135deg,#182350,#3D5AFE)', cursor: 'pointer' }}>
+                style={{ padding: '10px 22px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
+                  background: '#1D1D1F', cursor: 'pointer' }}>
                 Raise EOI for Block {[...selectedBlocks][0] || 'this project'}
               </button>
             </div>
           ) : !noMapPlots.length ? (
-            <p style={{ color: '#8492A6', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No units defined for this project.</p>
+            <p style={{ color: '#6E7278', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No units defined for this project.</p>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {noMapPlots.filter(p => !isHidden(p)).map(plot => {
@@ -829,10 +829,10 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
                     title={title}
                     style={{
-                      minWidth: 84, padding: '10px 12px', borderRadius: 10,
+                      minWidth: 84, padding: '10px 12px', borderRadius: 14,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                      border: `1.5px solid ${isSel ? '#1A237E' : cfg.dot}`,
-                      background: isSel ? '#3D5AFE' : cfg.dot + (clickable ? '22' : '14'),
+                      border: `1.5px solid ${isSel ? '#1D1D1F' : cfg.dot}`,
+                      background: isSel ? '#2F6DB5' : cfg.dot + (clickable ? '22' : '14'),
                       color: isSel ? '#fff' : cfg.text, fontWeight: 800, fontSize: 13,
                       cursor: clickable ? 'pointer' : 'not-allowed', opacity: clickable ? 1 : 0.6,
                     }}>
@@ -858,11 +858,11 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       {selPlots.length > 0 && (
         <div style={selBar}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#1D1D1F' }}>
               {selPlots.length} plot{selPlots.length > 1 ? 's' : ''} selected
-              {selArea > 0 && <span style={{ color: '#2E7D32', marginLeft: 8 }}>· {+selArea.toFixed(2)} total area</span>}
+              {selArea > 0 && <span style={{ color: '#23874A', marginLeft: 8 }}>· {+selArea.toFixed(2)} total area</span>}
             </div>
-            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 12, color: '#55585E', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {sv ? `${sv.lead_name} · ` : ''}{selSummary}
             </div>
           </div>
@@ -883,8 +883,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         return (
           <div onClick={() => setDraftPanelPlot(null)} style={overlay}>
             <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Drafted</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 18px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Drafted</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', margin: '4px 0 18px' }}>
                 {p.held_by_name ? `Drafted by ${p.held_by_name}` : 'Drafted'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -894,20 +894,20 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     but not open, which is the wrong way round. */}
                 {canDiscard && (
                   <button onClick={() => router.push(`/sales/booking?draft=${p.drafted_booking_id}`)}
-                    style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#3D5AFE', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                    style={{ padding: '11px 16px', borderRadius: 14, border: 'none', background: '#2F6DB5', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                     ▸ {mine ? 'Resume' : 'Open Draft'}
                   </button>
                 )}
                 {canDiscard && (
                   <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
-                    style={{ padding: '11px 16px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                    style={{ padding: '11px 16px', borderRadius: 14, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                     ✕ Discard Draft
                   </button>
                 )}
                 {!canDiscard && (
-                  <p style={{ fontSize: 12, color: '#8492A6', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or one of this project&rsquo;s booking approvers can resume or discard this.</p>
+                  <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or one of this project&rsquo;s booking approvers can resume or discard this.</p>
                 )}
-                <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: '#F4F5F7', color: '#55585E', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>
@@ -926,20 +926,20 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         return (
           <div onClick={() => !cancelBusy && setHoldPanelPlot(null)} style={overlay}>
             <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · In Progress</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 6px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · In Progress</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', margin: '4px 0 6px' }}>
                 {mine ? 'Selected by you' : (p.held_by_name ? `Selected by ${p.held_by_name}` : 'Selected')}
               </div>
-              <p style={{ fontSize: 12, color: '#8492A6', margin: '0 0 18px' }}>
+              <p style={{ fontSize: 12, color: '#6E7278', margin: '0 0 18px' }}>
                 Nothing has been submitted for this unit yet. Cancelling puts it back on the market straight away.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
-                  style={{ padding: '11px 16px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: cancelBusy ? 'default' : 'pointer', opacity: cancelBusy ? 0.7 : 1 }}>
+                  style={{ padding: '11px 16px', borderRadius: 14, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontWeight: 700, fontSize: 14, cursor: cancelBusy ? 'default' : 'pointer', opacity: cancelBusy ? 0.7 : 1 }}>
                   {cancelBusy ? 'Cancelling…' : '✕ Cancel In Progress'}
                 </button>
                 <button onClick={() => setHoldPanelPlot(null)} disabled={cancelBusy}
-                  style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: '#F4F5F7', color: '#55585E', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>
@@ -955,17 +955,17 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         return (
           <div onClick={() => !resaleBusy && setSoldPanelPlot(null)} style={overlay}>
             <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Sold</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 18px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Sold</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', margin: '4px 0 18px' }}>
                 {p.agent_name ? `Sold by ${p.agent_name}` : 'Sold'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button onClick={() => moveToResaleFromPanel(p.id)} disabled={resaleBusy}
-                  style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 700, fontSize: 14, cursor: resaleBusy ? 'default' : 'pointer', opacity: resaleBusy ? 0.7 : 1 }}>
+                  style={{ padding: '11px 16px', borderRadius: 14, border: 'none', background: '#2F6DB5', color: '#fff', fontWeight: 700, fontSize: 14, cursor: resaleBusy ? 'default' : 'pointer', opacity: resaleBusy ? 0.7 : 1 }}>
                   {resaleBusy ? 'Moving…' : '↻ Move to Resale'}
                 </button>
                 <button onClick={() => setSoldPanelPlot(null)} disabled={resaleBusy}
-                  style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: '#F3F4F6', color: '#6B7280', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: '#F4F5F7', color: '#55585E', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>
@@ -1022,14 +1022,14 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             {plot.cluster_type && (
-              <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 8, background: '#fff', color: '#673AB7', border: '1px solid #E0D6F5' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 8, background: '#fff', color: '#2F6DB5', border: '1px solid #CCE5FF' }}>
                 {plot.cluster_type}
               </span>
             )}
             <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 20, background: '#fff', color: cfg.dot, border: `1px solid ${cfg.dot}55` }}>
               {cfg.label}{plot.held_by_name && plot.status === 'hold' ? ` · ${plot.held_by_name}` : ''}
             </span>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, color: '#374151' }}>✕</button>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, color: '#3A3C40' }}>✕</button>
           </div>
         </div>
 
@@ -1045,7 +1045,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
               behind this panel, so it's intentionally not repeated here. */}
           {typePlans.length > 0 && (
             <div style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#9A9EA5', marginBottom: 10 }}>
                 Floor Plan Layouts
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1079,9 +1079,9 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
 
 function InfoBox({ label, value, full }) {
   return (
-    <div style={{ gridColumn: full ? '1 / -1' : 'auto', borderRadius: 12, padding: '12px 14px', background: '#FAFBFF', border: '1px solid #EDF0F7' }}>
-      <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{value}</div>
+    <div style={{ gridColumn: full ? '1 / -1' : 'auto', borderRadius: 16, padding: '12px 14px', background: '#F3F9FF', border: '1px solid #ECEEF0' }}>
+      <div style={{ fontSize: 11, color: '#9A9EA5', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{value}</div>
     </div>
   );
 }
@@ -1095,13 +1095,13 @@ function Field({ label, children }) {
   );
 }
 
-const overlay    = { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,28,46,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
-const panel      = { background: '#fff', borderRadius: 18, width: '94%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(24,35,80,0.22)' };
-const planBtn    = { padding: '11px', borderRadius: 12, fontSize: 12, fontWeight: 700, color: '#B8960C', background: 'rgba(184,150,12,0.08)', border: '1px solid rgba(184,150,12,0.22)', cursor: 'pointer' };
-const primaryBtn = { width: '100%', padding: '12px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: 'pointer' };
-const primaryBtn2 = { padding: '11px 18px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
-const selBar     = { position: 'fixed', left: '50%', bottom: 20, transform: 'translateX(-50%)', zIndex: 900, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#fff', borderRadius: 14, boxShadow: '0 10px 40px rgba(24,35,80,0.22)', border: '1px solid #E6EBF4', width: 'min(680px, calc(100% - 40px))' };
-const cancelBtn  = { padding: '11px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-const backBtn    = { padding: '7px 14px', backgroundColor: '#F0F3FA', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#5C6BC0', cursor: 'pointer' };
-const lbl        = { fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4, display: 'block' };
-const inp        = { width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', background: '#FAFAFA' };
+const overlay    = { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(29,29,31,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
+const panel      = { background: '#fff', borderRadius: 18, width: '94%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(29,29,31,0.22)' };
+const planBtn    = { padding: '11px', borderRadius: 16, fontSize: 12, fontWeight: 700, color: '#A3671A', background: 'rgba(163,103,26,0.08)', border: '1px solid rgba(163,103,26,0.22)', cursor: 'pointer' };
+const primaryBtn = { width: '100%', padding: '12px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 16, fontSize: 14, fontWeight: 800, cursor: 'pointer' };
+const primaryBtn2 = { padding: '11px 18px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
+const selBar     = { position: 'fixed', left: '50%', bottom: 20, transform: 'translateX(-50%)', zIndex: 900, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#fff', borderRadius: 18, boxShadow: '0 10px 40px rgba(29,29,31,0.22)', border: '1px solid #ECEEF0', width: 'min(680px, calc(100% - 40px))' };
+const cancelBtn  = { padding: '11px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const backBtn    = { padding: '7px 14px', backgroundColor: '#F4F5F7', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#2F6DB5', cursor: 'pointer' };
+const lbl        = { fontSize: 11, fontWeight: 700, color: '#55585E', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4, display: 'block' };
+const inp        = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', background: '#F5F6F7' };

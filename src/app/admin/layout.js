@@ -32,8 +32,8 @@ export default function AdminLayout({ children }) {
 
   if (!user) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(160deg, #050D1A, #0C1E3C)' }}>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(255,107,43,0.3)', borderTopColor: '#FF6B2B', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(162,210,255,0.3)', borderTopColor: '#2F6DB5', animation: 'spin 0.8s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -45,11 +45,11 @@ export default function AdminLayout({ children }) {
   return (
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open-active' : ''}`}>
       <style suppressHydrationWarning>{`
-        .app-shell { display: flex; min-height: 100vh; background: #DFE4EE; }
-        .mobile-header { display: none; align-items: center; gap: 12px; padding: 12px 16px; background: #0C1E3C; position: sticky; top: 0; z-index: 190; flex-shrink: 0; }
-        .hamburger-btn { background: none; border: none; cursor: pointer; color: #fff; padding: 4px; display: flex; align-items: center; border-radius: 6px; }
-        .hamburger-btn:hover { background: rgba(255,255,255,0.1); }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 199; }
+        .app-shell { display: flex; min-height: 100vh; background: transparent; }
+        .mobile-header { display: none; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); box-shadow: 0 1px 0 rgba(29,29,31,0.06); position: sticky; top: 0; z-index: 190; flex-shrink: 0; }
+        .hamburger-btn { background: none; border: none; cursor: pointer; color: #1D1D1F; padding: 4px; display: flex; align-items: center; border-radius: 6px; }
+        .hamburger-btn:hover { background: rgba(29,29,31,0.08); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(29,29,31,0.32); backdrop-filter: blur(3px); z-index: 199; }
         .sidebar-open-active .sidebar-overlay { display: block; }
         @media (max-width: 768px) {
           .app-sidebar { position: fixed !important; left: 0; top: 0; height: 100% !important; transform: translateX(-100%); transition: transform 0.25s ease; z-index: 200; }
@@ -77,7 +77,7 @@ export default function AdminLayout({ children }) {
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Nexora</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F' }}>Nexora</span>
         </div>
         <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
           {children}

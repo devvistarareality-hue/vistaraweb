@@ -38,10 +38,10 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
 
   return (
     <div>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8492A6', marginBottom: 6 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 6 }}>{label}</label>}
 
       {value ? (
-        <div style={{ border: '1.5px solid #E0E6F0', borderRadius: 10, overflow: 'hidden', background: '#FAFBFF' }}>
+        <div style={{ border: '1.5px solid #DFE2E6', borderRadius: 14, overflow: 'hidden', background: '#F3F9FF' }}>
           {isImage(value) ? (
             <div style={{ position: 'relative' }}>
               <img src={value} alt="preview" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }} />
@@ -55,47 +55,47 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 24 }}>📄</span>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E' }}>PDF Uploaded</div>
-                  <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#3D5AFE' }}>View PDF ↗</a>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#1D1D1F' }}>PDF Uploaded</div>
+                  <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#2F6DB5' }}>View PDF ↗</a>
                 </div>
               </div>
-              <button onClick={handleRemove} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Remove</button>
+              <button onClick={handleRemove} style={{ background: 'none', border: 'none', color: '#D9434B', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Remove</button>
             </div>
           ) : (
             <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#3D5AFE', wordBreak: 'break-all' }}>
+              <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#2F6DB5', wordBreak: 'break-all' }}>
                 {value.split('/').pop()?.split('?')[0] || 'View file ↗'}
               </a>
-              <button onClick={handleRemove} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 12, cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>Remove</button>
+              <button onClick={handleRemove} style={{ background: 'none', border: 'none', color: '#D9434B', fontSize: 12, cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>Remove</button>
             </div>
           )}
         </div>
       ) : (
         <div onClick={() => !progress && fileRef.current?.click()}
           style={{
-            border: '2px dashed #C8D5E8', borderRadius: 10, minHeight: 90,
+            border: '2px dashed #C9CDD2', borderRadius: 14, minHeight: 90,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: 6, cursor: progress ? 'default' : 'pointer', background: '#FAFBFF',
+            gap: 6, cursor: progress ? 'default' : 'pointer', background: '#F3F9FF',
             transition: 'border-color 0.15s',
           }}
-          onMouseEnter={e => !progress && (e.currentTarget.style.borderColor = '#3D5AFE')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = '#C8D5E8')}
+          onMouseEnter={e => !progress && (e.currentTarget.style.borderColor = '#2F6DB5')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = '#C9CDD2')}
         >
           {progress !== null ? (
             <>
-              <div style={{ width: '70%', height: 5, background: '#E0E6F0', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#3D5AFE,#7C3AED)', borderRadius: 4, transition: 'width 0.3s' }} />
+              <div style={{ width: '70%', height: 5, background: '#DFE2E6', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progress}%`, background: '#2F6DB5', borderRadius: 4, transition: 'width 0.3s' }} />
               </div>
-              <span style={{ fontSize: 11, color: '#8492A6' }}>Uploading… {progress}%</span>
+              <span style={{ fontSize: 11, color: '#6E7278' }}>Uploading… {progress}%</span>
             </>
           ) : (
             <>
               <span style={{ fontSize: 22 }}>☁</span>
-              <span style={{ fontSize: 12, color: '#8492A6', fontWeight: 500 }}>{hint || 'Click to upload'}</span>
+              <span style={{ fontSize: 12, color: '#6E7278', fontWeight: 500 }}>{hint || 'Click to upload'}</span>
               {/* Describe what this picker will actually take — the file dialog is
                   filtered by `accept`, so promising PDF when it only allows images
                   reads as the upload being broken. */}
-              <span style={{ fontSize: 11, color: '#B0BAC9' }}>
+              <span style={{ fontSize: 11, color: '#9A9EA5' }}>
                 {accept.includes('pdf') ? 'Images or PDF' : 'Images'} up to {MAX_MB}MB
               </span>
             </>
@@ -103,7 +103,7 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
         </div>
       )}
 
-      {error && <p style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>{error}</p>}
+      {error && <p style={{ fontSize: 11, color: '#D9434B', marginTop: 4 }}>{error}</p>}
       <input ref={fileRef} type="file" accept={accept} style={{ display: 'none' }} onChange={handleFile} />
     </div>
   );

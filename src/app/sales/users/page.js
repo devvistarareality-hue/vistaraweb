@@ -6,13 +6,13 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
 function RoleBadge({ role }) {
-  if (!role) return <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>;
+  if (!role) return <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>;
   const colors = {
-    Admin:    { bg: '#FEE2E2', color: '#DC2626' },
-    Manager:  { bg: '#E8EEFF', color: '#3D5AFE' },
-    Employee: { bg: '#E8F5E9', color: '#2E7D32' },
+    Admin:    { bg: '#FDECEC', color: '#D9434B' },
+    Manager:  { bg: '#E6F2FF', color: '#2F6DB5' },
+    Employee: { bg: '#E9FBEA', color: '#23874A' },
   };
-  const c = colors[role] || { bg: '#F0F3FA', color: '#8492A6' };
+  const c = colors[role] || { bg: '#F4F5F7', color: '#6E7278' };
   return (
     <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {role}
@@ -21,9 +21,9 @@ function RoleBadge({ role }) {
 }
 
 function DesigBadge({ desig }) {
-  if (!desig) return <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>;
+  if (!desig) return <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>;
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: '#F0F3FA', color: '#8492A6', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: '#F4F5F7', color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {desig}
     </span>
   );
@@ -41,7 +41,7 @@ const canHoldProjects = (m) =>
 
 function FilterChip({ label, active, onClick }) {
   return (
-    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? '#182350' : '#E0E6F0'}`, background: active ? '#182350' : '#EEF1F7', color: active ? '#fff' : '#8492A6', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? '#1D1D1F' : '#DFE2E6'}`, background: active ? '#1D1D1F' : '#ECEEF0', color: active ? '#fff' : '#6E7278', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
   );
 }
 
@@ -73,10 +73,10 @@ function AssignProjectsModal({ member, projects, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(24,35,80,0.18)', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Assign Projects</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{member.name} · {member.designation}</div>
@@ -87,21 +87,21 @@ function AssignProjectsModal({ member, projects, onClose }) {
         {/* Project list */}
         <div style={{ padding: '16px 22px', maxHeight: 380, overflowY: 'auto' }}>
           {loading ? (
-            <p style={{ textAlign: 'center', color: '#8492A6', padding: '30px 0' }}>Loading…</p>
+            <p style={{ textAlign: 'center', color: '#6E7278', padding: '30px 0' }}>Loading…</p>
           ) : projects.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8492A6', padding: '30px 0' }}>No projects found.</p>
+            <p style={{ textAlign: 'center', color: '#6E7278', padding: '30px 0' }}>No projects found.</p>
           ) : (
             projects.map(p => {
               const checked = selected.includes(p.id);
               return (
                 <div key={p.id} onClick={() => toggle(p.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 12, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#3D5AFE' : '#E8ECF4'}`, backgroundColor: checked ? '#F0F3FF' : '#FAFAFA', transition: 'all 0.15s' }}>
-                  <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#3D5AFE' : '#C8D0E0'}`, backgroundColor: checked ? '#3D5AFE' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 16, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#2F6DB5' : '#ECEEF0'}`, backgroundColor: checked ? '#F3F9FF' : '#F5F6F7', transition: 'all 0.15s' }}>
+                  <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#2F6DB5' : '#C9CDD2'}`, backgroundColor: checked ? '#2F6DB5' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
                     {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</span>}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{p.name}</div>
-                    {p.location && <div style={{ fontSize: 12, color: '#8492A6', marginTop: 1 }}>{p.location}</div>}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{p.name}</div>
+                    {p.location && <div style={{ fontSize: 12, color: '#6E7278', marginTop: 1 }}>{p.location}</div>}
                   </div>
                 </div>
               );
@@ -110,9 +110,9 @@ function AssignProjectsModal({ member, projects, onClose }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid #F0F3FA' }}>
-          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid #F4F5F7' }}>
+          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -206,10 +206,10 @@ export default function SalesUsersPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 }}>Sales Team</h1>
-            <p style={{ fontSize: 13, color: '#8492A6' }}>{members.length} team members</p>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Sales Team</h1>
+            <p style={{ fontSize: 13, color: '#6E7278' }}>{members.length} team members</p>
           </div>
-          <button onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid #E0E6F0', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: '#8492A6' }}>↺</button>
+          <button onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid #DFE2E6', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: '#6E7278' }}>↺</button>
         </div>
       </div>
 
@@ -219,39 +219,39 @@ export default function SalesUsersPage() {
           placeholder="Search by name, user code or designation…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ width: '100%', maxWidth: 360, height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid #E0E6F0', fontSize: 13, boxSizing: 'border-box' }}
+          style={{ width: '100%', maxWidth: 360, height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box' }}
         />
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, color: '#9CA3AF', marginRight: 4 }}>ROLE</span>
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#9A9EA5', marginRight: 4 }}>ROLE</span>
         <FilterChip label="All" active={!roleFilter} onClick={() => setRoleFilter(null)} />
         {roles.map((r) => <FilterChip key={r} label={r} active={roleFilter === r} onClick={() => setRoleFilter(roleFilter === r ? null : r)} />)}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, color: '#9CA3AF', marginRight: 4 }}>DESIG</span>
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#9A9EA5', marginRight: 4 }}>DESIG</span>
         <FilterChip label="All" active={!desigFilter} onClick={() => setDesigFilter(null)} />
         {desigs.map((d) => <FilterChip key={d} label={`${d} (${members.filter((m) => m.designation?.toUpperCase() === d).length})`} active={desigFilter === d} onClick={() => setDesigFilter(desigFilter === d ? null : d)} />)}
       </div>
 
       {apiError && (
-        <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '12px 16px', marginBottom: 16, color: '#EF4444', fontSize: 13 }}>
+        <div style={{ backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 14, padding: '12px 16px', marginBottom: 16, color: '#D9434B', fontSize: 13 }}>
           {apiError}
         </div>
       )}
 
       {loading ? (
-        <p style={{ color: '#8492A6', textAlign: 'center', marginTop: 60 }}>Loading…</p>
+        <p style={{ color: '#6E7278', textAlign: 'center', marginTop: 60 }}>Loading…</p>
       ) : filtered.length === 0 ? (
-        <p style={{ color: '#8492A6', textAlign: 'center', marginTop: 60, fontSize: 14 }}>
+        <p style={{ color: '#6E7278', textAlign: 'center', marginTop: 60, fontSize: 14 }}>
           {search ? 'No users match your search.' : 'No team members found.'}
         </p>
       ) : (
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(184,196,214,0.18)', overflowX: 'auto' }}>
+        <div style={{ backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
           <div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
-              <thead style={{ backgroundColor: '#F8FAFD' }}>
+              <thead style={{ backgroundColor: '#F4F5F7' }}>
                 <tr>
                   {['Name', 'User Code', 'Designation', 'Role', 'Projects', 'Phone', 'Email'].map((h) => (
                     <th key={h} style={th}>{h}</th>
@@ -260,28 +260,28 @@ export default function SalesUsersPage() {
               </thead>
               <tbody>
                 {filtered.map((m) => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #F0F3FA' }}>
+                  <tr key={m.id} style={{ borderBottom: '1px solid #F4F5F7' }}>
                     <td style={td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={avatarStyle}>{(m.name || 'U')[0].toUpperCase()}</div>
-                        <div style={{ fontWeight: 600, color: '#1A1A2E' }}>{m.name}</div>
+                        <div style={{ fontWeight: 600, color: '#1D1D1F' }}>{m.name}</div>
                       </div>
                     </td>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#8492A6', fontSize: 12 }}>{m.user_code}</td>
+                    <td style={{ ...td, fontFamily: 'monospace', color: '#6E7278', fontSize: 12 }}>{m.user_code}</td>
                     <td style={td}><DesigBadge desig={m.designation} /></td>
                     <td style={td}><RoleBadge role={m.role} /></td>
                     <td style={td}>
                       {isAssignable(m) ? (
                         <button onClick={() => setAssignMember(m)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid #3D5AFE', backgroundColor: '#F0F3FF', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid #2F6DB5', backgroundColor: '#F3F9FF', color: '#2F6DB5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                           🗂 {projectCounts[m.id] > 0 ? `${projectCounts[m.id]} assigned` : 'Assign'}
                         </button>
                       ) : (
-                        <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>
+                        <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>
                       )}
                     </td>
-                    <td style={{ ...td, color: '#8492A6' }}>{m.phone || '—'}</td>
-                    <td style={{ ...td, color: '#8492A6', fontSize: 12 }}>{m.email || '—'}</td>
+                    <td style={{ ...td, color: '#6E7278' }}>{m.phone || '—'}</td>
+                    <td style={{ ...td, color: '#6E7278', fontSize: 12 }}>{m.email || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -301,6 +301,6 @@ export default function SalesUsersPage() {
   );
 }
 
-const th = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#8492A6', padding: '10px 16px', textTransform: 'uppercase', letterSpacing: 0.5 };
+const th = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '10px 16px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', fontSize: 13 };
-const avatarStyle = { width: 34, height: 34, borderRadius: 9, backgroundColor: '#E8EEFF', color: '#3D5AFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 };
+const avatarStyle = { width: 34, height: 34, borderRadius: 9, backgroundColor: '#E6F2FF', color: '#2F6DB5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 };

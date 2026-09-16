@@ -6,12 +6,12 @@ import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 
 const MODULE_COLOR = {
-  Sales:      { bg: '#FFF8E1', text: '#E6960A', dot: '#F9A825' },
-  HR:         { bg: '#E8EEFF', text: '#3D5AFE', dot: '#3D5AFE' },
-  Execution:  { bg: '#FFF0E6', text: '#EA580C', dot: '#EA580C' },
-  Purchase:   { bg: '#F3E5F5', text: '#7B1FA2', dot: '#7B1FA2' },
-  Land:       { bg: '#E8F5E9', text: '#2E7D32', dot: '#22C55E' },
-  'Club 1000': { bg: '#E0F7FA', text: '#00838F', dot: '#00838F' },
+  Sales:      { bg: '#FFF3E0', text: '#D98A1F', dot: '#D98A1F' },
+  HR:         { bg: '#E6F2FF', text: '#2F6DB5', dot: '#2F6DB5' },
+  Execution:  { bg: '#FFF3E0', text: '#D98A1F', dot: '#D98A1F' },
+  Purchase:   { bg: '#E6F2FF', text: '#245A96', dot: '#245A96' },
+  Land:       { bg: '#E9FBEA', text: '#23874A', dot: '#23874A' },
+  'Club 1000': { bg: '#E9FBEA', text: '#23874A', dot: '#23874A' },
 };
 
 export default function DesignationMasterPage() {
@@ -57,37 +57,37 @@ export default function DesignationMasterPage() {
       </div>
 
       {/* Create form */}
-      <div style={{ backgroundColor: '#fff', borderRadius: 16, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #EEF1F7', overflow: 'hidden' }}>
-        <div style={{ background: 'linear-gradient(135deg, #182350 0%, #2D3E8C 100%)', padding: '18px 24px 16px' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: 20, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #ECEEF0', overflow: 'hidden' }}>
+        <div style={{ background: '#1D1D1F', padding: '18px 24px 16px' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>Add New Designation</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Define designations per module for user profiles</div>
         </div>
         <form onSubmit={handleCreate} style={{ padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 140 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Module</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Module</label>
             <select value={form.module} onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
-              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, backgroundColor: '#FAFAFA', outline: 'none', cursor: 'pointer' }}>
+              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, backgroundColor: '#F5F6F7', outline: 'none', cursor: 'pointer' }}>
               {ALL_MODULES.map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
           <div style={{ flex: 2, minWidth: 200 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 5 }}>Designation Name</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Designation Name</label>
             <input required type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Site Team Manager, HR Executive"
-              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#FAFAFA' }}
-              onFocus={e => e.target.style.borderColor='#3D5AFE'} onBlur={e => e.target.style.borderColor='#E5E7EB'} />
+              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' }}
+              onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
           </div>
           <div>
-            <button type="submit" style={{ height: 40, padding: '0 22px', background: 'linear-gradient(135deg, #182350 0%, #3D5AFE 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
+            <button type="submit" style={{ height: 40, padding: '0 22px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
           </div>
         </form>
-        {error && <div style={{ margin: '0 24px 16px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#DC2626' }}>{error}</div>}
+        {error && <div style={{ margin: '0 24px 16px', backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#D9434B' }}>{error}</div>}
       </div>
 
       {/* Designations grouped by module */}
       <div style={s.grid}>
         {ALL_MODULES.map((mod) => {
-          const c    = MODULE_COLOR[mod] || { bg: '#F5F6FA', text: '#6B7280', dot: '#9CA3AF' };
+          const c    = MODULE_COLOR[mod] || { bg: '#F4F5F7', text: '#55585E', dot: '#9A9EA5' };
           const list = grouped[mod] || [];
           return (
             <div key={mod} style={s.moduleCard}>
@@ -123,26 +123,26 @@ export default function DesignationMasterPage() {
 }
 
 const s = {
-  page:        { padding: '32px 36px', minHeight: '100vh', backgroundColor: '#DFE4EE' },
+  page:        { padding: '32px 36px', minHeight: '100vh', backgroundColor: 'transparent' },
   pageHeader:  { marginBottom: 24 },
-  pageTitle:   { fontSize: 24, fontWeight: 800, color: '#1A1A2E', marginBottom: 4 },
-  pageSubtitle:{ fontSize: 13, color: '#8492A6', margin: 0 },
+  pageTitle:   { fontSize: 24, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 },
+  pageSubtitle:{ fontSize: 13, color: '#6E7278', margin: 0 },
 
-  card:      { backgroundColor: '#fff', borderRadius: 16, padding: '24px', marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #EEF1F7' },
-  cardTitle: { fontSize: 15, fontWeight: 700, color: '#1A1A2E', marginBottom: 16, marginTop: 0 },
+  card:      { backgroundColor: '#fff', borderRadius: 20, padding: '24px', marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #ECEEF0' },
+  cardTitle: { fontSize: 15, fontWeight: 700, color: '#1D1D1F', marginBottom: 16, marginTop: 0 },
   formRow:   { display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' },
-  label:     { display: 'block', fontSize: 12, fontWeight: 600, color: '#8492A6', marginBottom: 6 },
-  select:    { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14, backgroundColor: '#fff' },
-  input:     { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #E0E6F0', fontSize: 14, boxSizing: 'border-box' },
-  addBtn:    { padding: '10px 22px', backgroundColor: '#0C1E3C', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  label:     { display: 'block', fontSize: 12, fontWeight: 600, color: '#6E7278', marginBottom: 6 },
+  select:    { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 14, backgroundColor: '#fff' },
+  input:     { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 14, boxSizing: 'border-box' },
+  addBtn:    { padding: '10px 22px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
 
   grid:        { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 },
-  moduleCard:  { backgroundColor: '#fff', borderRadius: 14, padding: '18px 20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid #EEF1F7', minHeight: 120 },
+  moduleCard:  { backgroundColor: '#fff', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid #ECEEF0', minHeight: 120 },
   moduleHeader:{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 },
   moduleDot:   { width: 9, height: 9, borderRadius: '50%', flexShrink: 0 },
   moduleName:  { fontSize: 14, fontWeight: 700, flex: 1 },
-  moduleCount: { fontSize: 11, fontWeight: 600, color: '#9CA3AF', backgroundColor: '#F3F4F6', borderRadius: 10, padding: '2px 8px' },
-  emptyHint:   { fontSize: 12, color: '#9CA3AF', margin: 0, fontStyle: 'italic' },
+  moduleCount: { fontSize: 11, fontWeight: 600, color: '#9A9EA5', backgroundColor: '#F4F5F7', borderRadius: 14, padding: '2px 8px' },
+  emptyHint:   { fontSize: 12, color: '#9A9EA5', margin: 0, fontStyle: 'italic' },
   chipList:    { display: 'flex', flexWrap: 'wrap', gap: 8 },
   chip:        { display: 'flex', alignItems: 'center', gap: 6, borderRadius: 20, padding: '4px 10px 4px 12px' },
   chipText:    { fontSize: 13, fontWeight: 600 },

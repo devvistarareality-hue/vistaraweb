@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 
-const TEAL = '#00838F';
+const TEAL = '#23874A';
 
 function fmtDateTime(iso) {
   if (!iso) return '';
@@ -22,7 +22,7 @@ function toDatetimeLocal(d) {
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
-const fuStatusColor = { pending: '#F9A825', completed: '#2E7D32', missed: '#B71C1C', rescheduled: '#0097A7' };
+const fuStatusColor = { pending: '#D98A1F', completed: '#23874A', missed: '#D9434B', rescheduled: '#23874A' };
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost'];
 // A lead in one of these has nothing left to follow up on — matches the backend's
 // terminal-status handling in LeadDetailView.patch (clears next_follow_up_date).
@@ -118,12 +118,12 @@ export default function Club1000FollowUpsPage() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 900 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E', margin: 0 }}>Follow-Ups</h1>
-      <p style={{ fontSize: 13, color: '#8492A6', margin: '4px 0 18px' }}>
+      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F', margin: 0 }}>Follow-Ups</h1>
+      <p style={{ fontSize: 13, color: '#6E7278', margin: '4px 0 18px' }}>
         {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}
       </p>
 
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E4E8F0', marginBottom: 20, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #ECEEF0', marginBottom: 20, overflowX: 'auto' }}>
         {TABS.map((t) => {
           const active = filter === t.key;
           return (
@@ -131,7 +131,7 @@ export default function Club1000FollowUpsPage() {
               style={{
                 padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 background: 'none', border: 'none', whiteSpace: 'nowrap',
-                color: active ? TEAL : '#8492A6',
+                color: active ? TEAL : '#6E7278',
                 borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
               }}>
               {t.label}
@@ -141,11 +141,11 @@ export default function Club1000FollowUpsPage() {
       </div>
 
       {loading ? (
-        <p style={{ fontSize: 13, color: '#8492A6', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
+        <p style={{ fontSize: 13, color: '#6E7278', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
       ) : visible.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#5A6B85', margin: 0 }}>No follow-ups</p>
-          <p style={{ fontSize: 13, color: '#B0BAC9', margin: '4px 0 0' }}>Schedule follow-ups from a lead's details</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#55585E', margin: 0 }}>No follow-ups</p>
+          <p style={{ fontSize: 13, color: '#9A9EA5', margin: '4px 0 0' }}>Schedule follow-ups from a lead's details</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -153,31 +153,31 @@ export default function Club1000FollowUpsPage() {
             const overdue = fu.status === 'pending' && new Date(fu.scheduled_at) < now;
             return (
               <div key={fu.id} style={{
-                border: `1.5px solid ${overdue ? '#FECACA' : '#E4E8F0'}`,
-                background: overdue ? '#FEF2F2' : '#fff',
-                borderRadius: 12, padding: '14px 16px',
+                border: `1.5px solid ${overdue ? '#F7C3C6' : '#ECEEF0'}`,
+                background: overdue ? '#FDECEC' : '#fff',
+                borderRadius: 16, padding: '14px 16px',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
               }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>{fu.lead_name || 'Lead'}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                      backgroundColor: (fuStatusColor[fu.status] || '#9E9E9E') + '18',
-                      color: fuStatusColor[fu.status] || '#9E9E9E' }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{fu.lead_name || 'Lead'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14,
+                      backgroundColor: (fuStatusColor[fu.status] || '#6E7278') + '18',
+                      color: fuStatusColor[fu.status] || '#6E7278' }}>
                       {fu.status}
                     </span>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: overdue ? '#DC2626' : '#3A3A5C', margin: '6px 0 0' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: overdue ? '#D9434B' : '#1D1D1F', margin: '6px 0 0' }}>
                     {fmtDateTime(fu.scheduled_at)}
                   </p>
-                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#8492A6', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
-                  {fu.remarks && <p style={{ fontSize: 12, color: '#3A3A5C', margin: '6px 0 0', fontStyle: 'italic' }}>"{fu.remarks}"</p>}
-                  {fu.outcome && <p style={{ fontSize: 12, color: '#2E7D32', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
+                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#6E7278', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
+                  {fu.remarks && <p style={{ fontSize: 12, color: '#1D1D1F', margin: '6px 0 0', fontStyle: 'italic' }}>"{fu.remarks}"</p>}
+                  {fu.outcome && <p style={{ fontSize: 12, color: '#23874A', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
                 {fu.status === 'pending' && (
                   <button onClick={() => openDone(fu)}
                     style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
-                      border: '1.5px solid #2E7D32', color: '#2E7D32', background: '#fff', cursor: 'pointer' }}>
+                      border: '1.5px solid #23874A', color: '#23874A', background: '#fff', cursor: 'pointer' }}>
                     Mark Done
                   </button>
                 )}
@@ -189,42 +189,42 @@ export default function Club1000FollowUpsPage() {
 
       {/* Complete follow-up: lead status + remarks + optional next follow-up */}
       {done && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(29,29,31,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
           onClick={() => !submitting && setDone(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Complete follow-up</div>
-            <div style={{ fontSize: 12, color: '#8492A6', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Complete follow-up</div>
+            <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
 
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>Lead Status</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E' }}>Lead Status</label>
             <select value={leadStatus} onChange={(e) => setLeadStatus(e.target.value)}
-              style={{ width: '100%', height: 38, marginTop: 6, borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none', padding: '0 10px' }}>
+              style={{ width: '100%', height: 38, marginTop: 6, borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', padding: '0 10px' }}>
               {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
             </select>
 
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280', display: 'block', marginTop: 14 }}>Remarks</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E', display: 'block', marginTop: 14 }}>Remarks</label>
             <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
-              style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
+              style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
 
             {!isTerminal && (
               <>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: '#1A1A2E', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: '#1D1D1F', cursor: 'pointer' }}>
                   <input type="checkbox" checked={schedNext} onChange={(e) => setSchedNext(e.target.checked)} style={{ accentColor: TEAL }} />
                   Schedule next follow-up
                 </label>
                 {schedNext && (
                   <div style={{ marginTop: 12, paddingLeft: 4 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B7280' }}>Next follow-up date &amp; time</label>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E' }}>Next follow-up date &amp; time</label>
                     <input type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
-                      style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                      style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                   </div>
                 )}
               </>
             )}
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={completeFollowUp} disabled={submitting || (schedNext && !isTerminal && !nextAt)}
-                style={{ padding: '9px 20px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !isTerminal && !nextAt)) ? 0.6 : 1 }}>
+                style={{ padding: '9px 20px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !isTerminal && !nextAt)) ? 0.6 : 1 }}>
                 {submitting ? 'Saving…' : 'Mark Done'}
               </button>
             </div>

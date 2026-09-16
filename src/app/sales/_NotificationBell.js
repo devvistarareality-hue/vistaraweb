@@ -35,10 +35,10 @@ const ICON = {
   followup_overdue: '⏰', sv_overdue: '⏰', availability_reminder: '🟢',
 };
 const TYPE_COLOR = {
-  new_lead: '#2E7D32', followup: '#3D5AFE', sv: '#0D9488', sv_done: '#2E7D32',
-  booking_approval: '#B45309', booking_approved: '#15803D', booking_rejected: '#DC2626',
-  closure: '#7C3AED', overdue: '#DC2626', mark_available: '#15803D', test: '#3D5AFE',
-  followup_overdue: '#DC2626', sv_overdue: '#DC2626', availability_reminder: '#15803D',
+  new_lead: '#23874A', followup: '#2F6DB5', sv: '#23874A', sv_done: '#23874A',
+  booking_approval: '#A3671A', booking_approved: '#23874A', booking_rejected: '#D9434B',
+  closure: '#2F6DB5', overdue: '#D9434B', mark_available: '#23874A', test: '#2F6DB5',
+  followup_overdue: '#D9434B', sv_overdue: '#D9434B', availability_reminder: '#23874A',
 };
 
 export default function NotificationBell({ up = false, align = 'right' }) {
@@ -81,35 +81,35 @@ export default function NotificationBell({ up = false, align = 'right' }) {
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => { setOpen((o) => !o); if (!open && unread) markAll(); }}
         aria-label="Notifications"
-        style={{ position: 'relative', width: 38, height: 38, borderRadius: 10, border: '1.5px solid #E4E8F0', background: '#fff', cursor: 'pointer', fontSize: 18, lineHeight: '36px' }}>
+        style={{ position: 'relative', width: 38, height: 38, borderRadius: 14, border: '1.5px solid #ECEEF0', background: '#fff', cursor: 'pointer', fontSize: 18, lineHeight: '36px' }}>
         🔔
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9, background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9, background: '#D9434B', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {unread > 99 ? '99+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div style={{ position: 'absolute', ...(up ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), ...(align === 'left' ? { left: 0 } : { right: 0 }), width: 340, maxWidth: 'min(340px, calc(100vw - 24px))', background: '#fff', borderRadius: 12, border: '1px solid #E4E8F0', boxShadow: '0 12px 40px rgba(60,80,120,0.22)', zIndex: 1000, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid #F0F3FA' }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E' }}>Notifications</span>
-            <button onClick={markAll} style={{ background: 'none', border: 'none', color: '#3D5AFE', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
+        <div style={{ position: 'absolute', ...(up ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), ...(align === 'left' ? { left: 0 } : { right: 0 }), width: 340, maxWidth: 'min(340px, calc(100vw - 24px))', background: '#fff', borderRadius: 16, border: '1px solid #ECEEF0', boxShadow: '0 12px 40px rgba(36,90,150,0.22)', zIndex: 1000, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid #F4F5F7' }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#1D1D1F' }}>Notifications</span>
+            <button onClick={markAll} style={{ background: 'none', border: 'none', color: '#2F6DB5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
           </div>
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             {rows.length === 0 ? (
-              <div style={{ padding: 30, textAlign: 'center', color: '#8492A6', fontSize: 13 }}>You're all caught up 🎉</div>
+              <div style={{ padding: 30, textAlign: 'center', color: '#6E7278', fontSize: 13 }}>You're all caught up 🎉</div>
             ) : rows.map((n) => {
               const url = URL_FOR_TYPE[n.type];
-              const color = TYPE_COLOR[n.type] || '#3D5AFE';
+              const color = TYPE_COLOR[n.type] || '#2F6DB5';
               return (
               <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}
-                style={{ display: 'flex', gap: 11, padding: '12px 14px', borderBottom: '1px solid #F5F7FB', borderLeft: `3px solid ${n.is_read ? 'transparent' : color}`, background: n.is_read ? '#fff' : '#FAFBFF', cursor: url ? 'pointer' : 'default' }}>
+                style={{ display: 'flex', gap: 11, padding: '12px 14px', borderBottom: '1px solid #F4F5F7', borderLeft: `3px solid ${n.is_read ? 'transparent' : color}`, background: n.is_read ? '#fff' : '#F3F9FF', cursor: url ? 'pointer' : 'default' }}>
                 <span style={{ width: 34, height: 34, borderRadius: 17, background: color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{ICON[n.type] || '🔔'}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>{n.title}</div>
-                  {n.body && <div style={{ fontSize: 12, color: '#5B6B82', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>{ago(n.created_at)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#1D1D1F' }}>{n.title}</div>
+                  {n.body && <div style={{ fontSize: 12, color: '#55585E', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                  <div style={{ fontSize: 11, color: '#9A9EA5', marginTop: 4 }}>{ago(n.created_at)}</div>
                 </div>
                 {!n.is_read && <span style={{ width: 8, height: 8, borderRadius: 4, background: color, flexShrink: 0, marginTop: 6 }} />}
               </div>
