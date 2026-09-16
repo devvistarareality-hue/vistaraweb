@@ -279,10 +279,17 @@ function BookingPage() {
           // the area and construction area reverted, and villa_type was blanked
           // outright — which is what made a resumed draft look like it had not loaded.
           const fromPlot = !(reviseId || draftId || convertEoiId);
+          // Plot Area is the one exception: an EOI has no plot of its own yet, so there
+          // is no saved area to protect — converting it is exactly the moment a real
+          // plot gets picked for the first time, as the effect above this one already
+          // says ("Plot & Plot Area come from the newly-picked plot"). Excluding
+          // convertEoiId here (same as fromPlot) left Plot Area blank on every
+          // EOI→LOI conversion; Construction Area and Villa Type are different — on a
+          // conversion those still come from the EOI itself, so they keep `fromPlot`.
+          const fromPlotArea = !(reviseId || draftId);
           setF((s) => ({
             ...s,
-            area: (fromPlot && sumArea) ? String(+sumArea.toFixed(2)) : s.area,
-            // When converting an EOI, Construction Area comes from the EOI, not the plot.
+            area: (fromPlotArea && sumArea) ? String(+sumArea.toFixed(2)) : s.area,
             const_area: (fromPlot && sumConst) ? String(+sumConst.toFixed(2)) : s.const_area,
             villa_type: fromPlot ? '' : s.villa_type,
           }));
