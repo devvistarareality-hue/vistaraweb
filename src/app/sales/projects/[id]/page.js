@@ -1065,6 +1065,7 @@ function rateMasterFields(formulaSet) {
     { key: 'land_rate', label: 'Land Rate', unit: `${flags.areaUnit}` },
     flags.hasConstructionFields && { key: 'dev_rate', label: 'Development Rate', unit: flags.areaUnit },
     flags.hasConstructionFields && { key: 'const_rate', label: 'Construction Rate', unit: flags.areaUnit },
+    flags.hasPlcRate && { key: 'plc_rate', label: 'PLC Rate', unit: flags.areaUnit },
     flags.hasSaleDeedRate && { key: 'sale_deed_rate', label: 'Sale Deed Rate', unit: 'sq.ft' },
     flags.hasDevAgreement && { key: 'dev_agreement_rate', label: 'Dev Agreement Rate', unit: 'sq.ft' },
     { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
