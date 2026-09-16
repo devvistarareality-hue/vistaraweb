@@ -13,6 +13,8 @@ import { useCurrentCompany } from '../../../lib/currentCompany';
 
 
 import Icon from '../../../components/Icon';
+import { confirmDialog, notify } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 const MAX_LOI_FILE_SIZE_MB = 100;
 const MAX_LOI_FILE_SIZE = MAX_LOI_FILE_SIZE_MB * 1024 * 1024;
 
@@ -23,8 +25,8 @@ async function openLoi(id) {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
     const d = await r.json();
     if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else alert('Could not open the LOI.');
-  } catch { alert('Could not open the LOI.'); }
+    else notify('Could not open the LOI.');
+  } catch { notify('Could not open the LOI.'); }
 }
 
 // Normalise legacy lowercase source names stored in the DB to display equivalents.
@@ -42,7 +44,7 @@ function safeDate(s) {
 }
 
 export default function BookingPageWrapper() {
-  return <Suspense fallback={<div style={{ padding: 40 }}>Loading…</div>}><BookingPage /></Suspense>;
+  return <Suspense fallback={<Loader fullScreen label="Loading…" />}><BookingPage /></Suspense>;
 }
 
 function BookingPage() {
@@ -523,8 +525,8 @@ function BookingPage() {
   useEffect(() => {
     if (!isDirty) return;
     window.history.pushState(null, '', window.location.href);
-    const onPop = () => {
-      if (window.confirm('Are you sure you want to go back? Your unsaved booking details will be lost.')) {
+    const onPop = async () => {
+      if ((await confirmDialog('Are you sure you want to go back? Your unsaved booking details will be lost.'))) {
         window.removeEventListener('popstate', onPop);
         router.back();
       } else {
@@ -846,27 +848,27 @@ function BookingPage() {
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       {saving && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #DFE2E6', borderTopColor: '#2f6db5', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>Submitting booking…</div>
+          <Loader />
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Submitting booking…</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
       <button onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', margin: '8px 0 2px' }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '8px 0 2px' }}>
         {/* A tower sells flats and shops, not plots — name what's actually being booked. */}
         {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI'
           : (plots.length > 1 ? 'Book Units' : prat ? (prat.kind === 'shop' ? 'Book Shop' : 'Book Flat') : 'Book Unit')}{' '}
-        {eoiMode ? <span style={{ color: '#D98A1F' }}>{eoiNo || '…'}</span> : plotNumbers}
+        {eoiMode ? <span style={{ color: 'var(--warning-2)' }}>{eoiNo || '…'}</span> : plotNumbers}
       </h1>
       {reviseError && (
-        <div style={{ margin: '10px 0 16px', padding: '10px 12px', borderRadius: 8, background: '#FDECEC', color: '#D9434B', fontSize: 13, fontWeight: 600 }}>
+        <div style={{ margin: '10px 0 16px', padding: '10px 12px', borderRadius: 8, background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>
           This booking could not be opened for revision. Ask an admin to check your access to it.
         </div>
       )}
-      <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 18 }}>
-        {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#2F6DB5' }}>{pricingReady ? formulaSet : '…'}</span> pricing
-        {eoiMode && <span style={{ color: '#D98A1F', fontWeight: 700 }}> · Expression of Interest · no plot</span>}
-        {plots.length > 1 && <span style={{ color: '#23874A', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 18 }}>
+        {project?.name || '…'} · <span style={{ textTransform: 'uppercase', fontWeight: 700, color: 'var(--accent)' }}>{pricingReady ? formulaSet : '…'}</span> pricing
+        {eoiMode && <span style={{ color: 'var(--warning-2)', fontWeight: 700 }}> · Expression of Interest · no plot</span>}
+        {plots.length > 1 && <span style={{ color: 'var(--success)', fontWeight: 700 }}> · {plots.length} plots · area summed</span>}
       </p>
 
       <Section title="Client">
@@ -886,7 +888,7 @@ function BookingPage() {
 
       {!pricingReady ? (
         <Section title="Pricing">
-          <p style={{ fontSize: 13, color: '#6E7278', margin: 0 }}>Loading unit pricing…</p>
+          <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>Loading unit pricing…</p>
         </Section>
       ) : prat ? (
         /* Pratishtha: each unit is priced from its price book, driven by a few editable
@@ -896,7 +898,7 @@ function BookingPage() {
           {pratBooks.map((pb, idx) => (
             <Section key={idx} title={`Unit Pricing · ${unitTitle(pb)}`}>
               {idx === 0 && (
-                <p style={{ fontSize: 12, color: '#6E7278', margin: '0 0 12px' }}>
+                <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 12px' }}>
                   Figures come from the Pratishtha price book. Adjust the highlighted drivers and every dependent line recalculates.
                 </p>
               )}
@@ -904,8 +906,8 @@ function BookingPage() {
                 const e = flatEdit(pb);
                 const dp = isDownPayment(pb);
                 return (
-                  <div style={{ border: '1.5px solid #CCE5FF', background: '#F3F9FF', borderRadius: 14, padding: 12, marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  <div style={{ border: '1.5px solid var(--blue-2)', background: 'var(--accent-softer)', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                       Editable · everything below recalculates
                     </div>
                     <Row><L>Plan</L>
@@ -941,7 +943,7 @@ function BookingPage() {
                         <In type="number" disabled value={pb.token} />
                       </Row>
                     )}
-                    <p style={{ fontSize: 11, color: '#6E7278', margin: '4px 0 0' }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', margin: '4px 0 0' }}>
                       {dp
                         ? `${rupee(pb.flat_price)} / ${pb.flat_area} sq.yd = ${rupee(pb.flat_rate)} per sq.yd${pb.terrace_area ? ` · terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
                         : 'Regular plan — priced from the approved price book. Switch to Down Payment to change the rate or token.'}
@@ -952,8 +954,8 @@ function BookingPage() {
               {pb.kind === 'shop' && (() => {
                 const e = shopEdit(pb);
                 return (
-                  <div style={{ border: '1.5px solid #CCE5FF', background: '#F3F9FF', borderRadius: 14, padding: 12, marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  <div style={{ border: '1.5px solid var(--blue-2)', background: 'var(--accent-softer)', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                       Editable · everything below recalculates
                     </div>
                     <Row><L>Rate (₹/sq.ft)</L>
@@ -964,15 +966,15 @@ function BookingPage() {
                         {[['pct', '%'], ['amount', '₹']].map(([m, lbl]) => (
                           <button key={m} type="button" onClick={() => setShopEdit(pb, { mode: m })}
                             style={{ width: 44, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                              border: `1.5px solid ${e.mode === m ? '#2F6DB5' : '#DFE2E6'}`,
-                              background: e.mode === m ? '#2F6DB5' : '#fff', color: e.mode === m ? '#fff' : '#6E7278' }}>{lbl}</button>
+                              border: `1.5px solid ${e.mode === m ? 'var(--accent)' : 'var(--border)'}`,
+                              background: e.mode === m ? 'var(--primary)' : 'var(--surface)', color: e.mode === m ? '#fff' : 'var(--muted)' }}>{lbl}</button>
                         ))}
                         {e.mode === 'amount'
                           ? <In type="number" value={e.unitAmount ?? ''} onChange={(ev) => setShopEdit(pb, { unitAmount: ev.target.value })} />
                           : <In type="number" value={e.unitPct ?? ''} onChange={(ev) => setShopEdit(pb, { unitPct: ev.target.value })} />}
                       </div>
                     </Row>
-                    <p style={{ fontSize: 11, color: '#6E7278', margin: '4px 0 0' }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', margin: '4px 0 0' }}>
                       {e.mode === 'amount'
                         ? `Entered as an amount · ${pb.amount ? ((pb.loan_amount / pb.amount) * 100).toFixed(2) : '0'}% of the shop amount`
                         : `${e.unitPct || 0}% of ${rupee(pb.amount)} = ${rupee(pb.loan_amount)}`}
@@ -980,21 +982,21 @@ function BookingPage() {
                   </div>
                 );
               })()}
-              <div style={{ border: '1px solid #DFE2E6', borderRadius: 14, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                 {pratRowsFor(pb).map((row, i) => (
                   Array.isArray(row) ? (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
-                      background: row[2] === 'sub' ? '#F3F9FF' : (i % 2 ? '#FAFAFB' : '#fff'), borderBottom: '1px solid #F4F5F7' }}>
-                      <span style={{ fontSize: 13, color: row[2] === 'sub' ? '#1D1D1F' : '#55585E', fontWeight: row[2] === 'sub' ? 700 : 400 }}>{row[0]}</span>
-                      <span style={{ fontSize: 13, fontWeight: row[2] === 'sub' ? 800 : 700, color: '#1D1D1F' }}>{row[1]}</span>
+                      background: row[2] === 'sub' ? 'var(--accent-softer)' : (i % 2 ? 'var(--surface-2)' : 'var(--surface)'), borderBottom: '1px solid var(--surface-2)' }}>
+                      <span style={{ fontSize: 13, color: row[2] === 'sub' ? 'var(--text)' : 'var(--text-3)', fontWeight: row[2] === 'sub' ? 700 : 400 }}>{row[0]}</span>
+                      <span style={{ fontSize: 13, fontWeight: row[2] === 'sub' ? 800 : 700, color: 'var(--text)' }}>{row[1]}</span>
                     </div>
                   ) : (
-                    <div key={i} style={{ padding: '9px 14px', background: '#F3F9FF', borderBottom: '1px solid #ECEEF0',
-                      fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: '#2F6DB5' }}>{row.h}</div>
+                    <div key={i} style={{ padding: '9px 14px', background: 'var(--accent-softer)', borderBottom: '1px solid var(--surface-3)',
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--accent)' }}>{row.h}</div>
                   )
                 ))}
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px',
-                  background: pratBooks.length > 1 ? '#3A3C40' : '#1D1D1F' }}>
+                  background: pratBooks.length > 1 ? 'var(--strong-2)' : 'var(--strong)' }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
                     {pb.kind === 'shop' ? 'Grand Total' : 'Total'}
                   </span>
@@ -1006,15 +1008,15 @@ function BookingPage() {
           {/* Only meaningful with more than one unit — a single unit's total is above. */}
           {pratBooks.length > 1 && (
             <Section title={`Combined Total · ${pratBooks.length} units`}>
-              <div style={{ border: '1px solid #DFE2E6', borderRadius: 14, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                 {pratBooks.map((pb, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 14px',
-                    background: i % 2 ? '#FAFAFB' : '#fff', borderBottom: '1px solid #F4F5F7' }}>
-                    <span style={{ fontSize: 13, color: '#55585E' }}>{unitTitle(pb)}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{rupee(pbTotal(pb))}</span>
+                    background: i % 2 ? 'var(--surface-2)' : 'var(--surface)', borderBottom: '1px solid var(--surface-2)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{unitTitle(pb)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{rupee(pbTotal(pb))}</span>
                   </div>
                 ))}
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: '#1D1D1F' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: 'var(--strong)' }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Total All Inclusive Amount</span>
                   <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{rupee(pratTotal)}</span>
                 </div>
@@ -1024,12 +1026,12 @@ function BookingPage() {
         </>
       ) : pratBookMissing ? (
         <Section title="Pricing">
-          <div style={{ border: '1.5px solid #EF9195', background: '#FDECEC', borderRadius: 14, padding: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#A52A31', marginBottom: 6 }}>
+          <div style={{ border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', borderRadius: 14, padding: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--danger-deep)', marginBottom: 6 }}>
               <Icon name="alert" /> This unit has no price book
             </div>
-            <p style={{ fontSize: 12, color: '#A52A31', margin: 0 }}>{pratMissingMsg}</p>
-            <p style={{ fontSize: 12, color: '#A52A31', margin: '8px 0 0' }}>
+            <p style={{ fontSize: 12, color: 'var(--danger-deep)', margin: 0 }}>{pratMissingMsg}</p>
+            <p style={{ fontSize: 12, color: 'var(--danger-deep)', margin: '8px 0 0' }}>
               Load the price book for this project&rsquo;s units, then reopen this form.
               Booking is blocked until then so nothing is saved at the wrong price.
             </p>
@@ -1043,8 +1045,8 @@ function BookingPage() {
               <button key={u} type="button" onClick={() => set('area_unit', u)}
                 style={{ flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   transition: 'all 0.12s',
-                  border: `1.5px solid ${unit === u ? '#2F6DB5' : '#DFE2E6'}`,
-                  background: unit === u ? '#2F6DB5' : '#fff', color: unit === u ? '#fff' : '#55585E' }}>{u}</button>
+                  border: `1.5px solid ${unit === u ? 'var(--accent)' : 'var(--border)'}`,
+                  background: unit === u ? 'var(--primary)' : 'var(--surface)', color: unit === u ? '#fff' : 'var(--text-3)' }}>{u}</button>
             ))}
           </div>
         </Row>
@@ -1155,9 +1157,9 @@ function BookingPage() {
         {pricingReady && (!prat || pratSched) && (<>
         {/* Extra Work Amount Installments — shown ABOVE the sale-deed installments */}
         {(hasSaleDeedSplit || pratShop) && nsdBase > 0 && (
-          <div style={{ marginBottom: 14, borderBottom: '1px solid #DFE2E6', paddingBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#145A32', marginBottom: 2 }}>Extra Work Amount Installments</div>
-            <div style={{ fontSize: 11, color: '#55585E', marginBottom: 8 }}>{rupee(nsdBase)}</div>
+          <div style={{ marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--success-deep)', marginBottom: 2 }}>Extra Work Amount Installments</div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>{rupee(nsdBase)}</div>
             <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
             {nsdInsts.length > 0 && (
               <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
@@ -1174,13 +1176,13 @@ function BookingPage() {
                 </tbody>
               </table>
             )}
-            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? '#23874A' : '#D9434B' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
+            {nsdInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(nsdPctTotal - 100) < 0.01 ? 'var(--success)' : 'var(--danger)' }}>Total: {nsdPctTotal.toFixed(2)}%</div>}
           </div>
         )}
         {(hasSaleDeedSplit || pratSched) && (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', marginBottom: 2 }}>{pratShop ? 'Final Unit Price Installments' : 'Unit Price Installments'}</div>
-            <div style={{ fontSize: 11, color: '#55585E', marginBottom: 8 }}>{rupee(base)}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{pratShop ? 'Final Unit Price Installments' : 'Unit Price Installments'}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>{rupee(base)}</div>
           </>
         )}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
@@ -1199,24 +1201,24 @@ function BookingPage() {
               {/* Pratishtha's three charge lines all fall due on the sale deed or
                   possession, so they carry that wording instead of a date picker. */}
               {pratSched ? pratExtras().map((x) => (
-                <tr key={x.label} style={{ background: '#FFF3E0' }}>
-                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>Extra</td>
-                  <td style={{ ...td, fontSize: 10, fontStyle: 'italic', color: '#55585E' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
-                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>{x.label}</td>
-                  <td style={td}><input value={rupee(x.amt)} readOnly style={{ ...inp, background: '#f3f9ff', color: '#2f6db5', fontWeight: 600 }} /></td>
+                <tr key={x.label} style={{ background: 'var(--warning-soft)' }}>
+                  <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Extra</td>
+                  <td style={{ ...td, fontSize: 10, fontStyle: 'italic', color: 'var(--text-3)' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
+                  <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>{x.label}</td>
+                  <td style={td}><input value={rupee(x.amt)} readOnly style={{ ...inp, background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
                 </tr>
               )) : v.totalExtra > 0 && (
-                <tr style={{ background: '#FFF3E0' }}>
-                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>Extra</td>
+                <tr style={{ background: 'var(--warning-soft)' }}>
+                  <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Extra</td>
                   <td style={td}><DateFieldDMY value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
-                  <td style={{ ...td, fontWeight: 700, color: '#A3671A', fontSize: 11 }}>Legal & Other Charges</td>
-                  <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: '#f3f9ff', color: '#2f6db5', fontWeight: 600 }} /></td>
+                  <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Legal & Other Charges</td>
+                  <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
                 </tr>
               )}
             </tbody>
           </table>
         )}
-        {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? '#23874A' : '#D9434B' }}>Total: {pctTotal.toFixed(2)}%{pratDp ? '' : ` · Legal & Other Charges ${rupee(v.totalExtra)}`}</div>}
+        {insts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(pctTotal - 100) < 0.01 ? 'var(--success)' : 'var(--danger)' }}>Total: {pctTotal.toFixed(2)}%{pratDp ? '' : ` · Legal & Other Charges ${rupee(v.totalExtra)}`}</div>}
         </>)}
       </Section>
 
@@ -1240,45 +1242,45 @@ function BookingPage() {
               </tbody>
             </table>
           )}
-          {ewInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(ewPctTotal - 100) < 0.01 ? '#23874A' : '#D9434B' }}>Extra Work Total: {ewPctTotal.toFixed(2)}%</div>}
+          {ewInsts.length > 0 && <div style={{ fontSize: 12, marginTop: 6, color: Math.abs(ewPctTotal - 100) < 0.01 ? 'var(--success)' : 'var(--danger)' }}>Extra Work Total: {ewPctTotal.toFixed(2)}%</div>}
         </Section>
       )}
 
       <Section title="Extra Terms & Conditions (optional — added below the default terms)">
         {extraTerms.map((t, i) => (
-          <div key={i} style={{ border: '1px solid #DFE2E6', borderRadius: 14, padding: 12, marginBottom: 10, background: '#FAFAFB' }}>
+          <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 14, padding: 12, marginBottom: 10, background: 'var(--surface-2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#6E7278' }}>Term {i + 1}</span>
-              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Remove</button>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Term {i + 1}</span>
+              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Remove</button>
             </div>
             <input value={t.title} onChange={(e) => setTerm(i, 'title', e.target.value)} placeholder="Title (e.g. Possession)"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #DFE2E6', outline: 'none', marginBottom: 8 }} />
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid var(--border)', outline: 'none', marginBottom: 8 }} />
             <textarea value={t.desc} onChange={(e) => setTerm(i, 'desc', e.target.value)} placeholder="Description / clause text" rows={2}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #DFE2E6', outline: 'none', resize: 'vertical' }} />
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid var(--border)', outline: 'none', resize: 'vertical' }} />
           </div>
         ))}
-        <button onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 14, border: '1.5px dashed #2F6DB5', background: '#F3F9FF', color: '#2F6DB5', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
+        <button onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 14, border: '1.5px dashed var(--accent)', background: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
       </Section>
 
       <Section title="LOI Document">
-        <button onClick={doDownloadLOI} style={{ ...submitBtn, background: '#2f6db5', marginBottom: 12 }}>
+        <button onClick={doDownloadLOI} style={{ ...submitBtn, background: 'var(--primary)', marginBottom: 12 }}>
           <Icon name="download" /> Download LOI PDF  (Print → Sign → Upload)
         </button>
-        {loiDone && <div style={{ fontSize: 12, color: '#a3671a', background: '#fff3e0', border: '1px solid #d98a1f', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}><Icon name="check-circle" /> LOI downloaded. Get it signed and upload below.</div>}
+        {loiDone && <div style={{ fontSize: 12, color: 'var(--warning)', background: 'var(--warning-soft)', border: '1px solid var(--warning-2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}><Icon name="check-circle" /> LOI downloaded. Get it signed and upload below.</div>}
         {savedLoiPath && !loiFile && (
-          <div style={{ fontSize: 12, color: '#23874A', background: '#E9FBEA', border: '1px solid #A4F5A6', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ fontSize: 12, color: 'var(--success)', background: 'var(--success-soft)', border: '1px solid var(--success-2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <span><Icon name="clip" /> Signed LOI already attached from your last save.</span>
-            <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: '#23874A', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
+            <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: 'var(--success)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
           </div>
         )}
-        <label style={{ fontSize: 13, fontWeight: 600, color: '#3A3C40' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
+        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
         <input type="file" accept="image/*,.pdf" onChange={onFile} style={{ display: 'block', marginTop: 8, fontSize: 13 }} />
-        {loiFile && <div style={{ fontSize: 12, color: '#23874A', marginTop: 6 }}><Icon name="clip" /> {loiFile.name}</div>}
+        {loiFile && <div style={{ fontSize: 12, color: 'var(--success)', marginTop: 6 }}><Icon name="clip" /> {loiFile.name}</div>}
       </Section>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E9FBEA' : '#FDECEC', color: msg[0] === '✅' ? '#23874A' : '#D9434B', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? 'var(--success-soft)' : 'var(--danger-soft)', color: msg[0] === '✅' ? 'var(--success)' : 'var(--danger)', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</div>}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #2F6DB5', opacity: pratBookMissing ? 0.4 : 1 }}>
+        <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid var(--accent)', opacity: pratBookMissing ? 0.4 : 1 }}>
           {saving ? '…' : <><Icon name="save" /> Save Draft</>}
         </button>
         <button onClick={submit} disabled={saving || pratBookMissing} style={{ ...submitBtn, opacity: pratBookMissing ? 0.4 : 1 }}>{saving ? 'Saving…' : 'Submit Booking'}</button>
@@ -1288,44 +1290,44 @@ function BookingPage() {
 }
 
 const Section = ({ title, children }) => (
-  <div style={{ background: '#fff', borderRadius: 18, padding: '16px 18px', marginBottom: 14, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: '#2F6DB5', marginBottom: 12 }}>{title}</div>
+  <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', marginBottom: 14, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>{title}</div>
     {children}
   </div>
 );
 const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>{children}</div>;
-const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: '#3A3C40' }}>{children}</label>;
+const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{children}</label>;
 const In = ({ type, invalid, ...p }) => (
   // number → plain text + numeric keypad, so scrolling never changes the value (no spinner)
   <input {...p} type={type === 'number' ? 'text' : (type || 'text')} inputMode={type === 'number' ? 'decimal' : undefined}
-    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#D9434B' : '#DFE2E6'}`, outline: 'none', background: p.disabled ? '#F4F5F7' : (invalid ? '#FDECEC' : '#fff') }} />
+    style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? 'var(--danger)' : 'var(--border)'}`, outline: 'none', background: p.disabled ? 'var(--surface-2)' : (invalid ? 'var(--danger-soft)' : 'var(--surface)') }} />
 );
-const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? '#D9434B' : '#DFE2E6'}`, outline: 'none', cursor: 'pointer', background: invalid ? '#FDECEC' : '#fff' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
+const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? 'var(--danger)' : 'var(--border)'}`, outline: 'none', cursor: 'pointer', background: invalid ? 'var(--danger-soft)' : 'var(--surface)' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>
-    <L>{label}{sub && <span style={{ display: 'block', fontSize: 11, color: '#9A9EA5', fontWeight: 400, fontStyle: 'italic' }}>{sub}</span>}</L>
-    <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #CCE5FF', background: '#F3F9FF', color: '#2f6db5' }}>{rupee(val)}</div>
+    <L>{label}{sub && <span style={{ display: 'block', fontSize: 11, color: 'var(--faint)', fontWeight: 400, fontStyle: 'italic' }}>{sub}</span>}</L>
+    <div style={{ flex: 1, padding: '9px 11px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid var(--blue-2)', background: 'var(--accent-softer)', color: 'var(--accent)' }}>{rupee(val)}</div>
   </Row>
 );
 const T = ({ label, sub, sub2, val, valFmt, big, subtotal }) => (
   <div style={{
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: big ? '10px 0 0' : subtotal ? '8px 10px' : '6px 0',
-    borderTop: big ? '2px solid #A2D2FF' : 'none', marginTop: big ? 6 : 0,
-    ...(subtotal ? { background: '#E6F2FF', borderRadius: 6, margin: '4px 0' } : {}),
+    borderTop: big ? '2px solid var(--blue-2)' : 'none', marginTop: big ? 6 : 0,
+    ...(subtotal ? { background: 'var(--accent-soft)', borderRadius: 6, margin: '4px 0' } : {}),
   }}>
-    <span style={{ flex: 1, paddingRight: 12, fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? '#245A96' : '#3A3C40' }}>
+    <span style={{ flex: 1, paddingRight: 12, fontSize: big ? 15 : 13, fontWeight: (big || subtotal) ? 800 : 500, color: (big || subtotal) ? 'var(--accent-deep)' : 'var(--text-2)' }}>
       {label}
-      {sub && <small style={{ display: 'block', fontSize: 11, color: '#9A9EA5', fontWeight: 400 }}>{sub}</small>}
-      {sub2 && <small style={{ display: 'block', fontSize: 11, color: '#9A9EA5', fontWeight: 400 }}>{sub2}</small>}
+      {sub && <small style={{ display: 'block', fontSize: 11, color: 'var(--faint)', fontWeight: 400 }}>{sub}</small>}
+      {sub2 && <small style={{ display: 'block', fontSize: 11, color: 'var(--faint)', fontWeight: 400 }}>{sub2}</small>}
     </span>
-    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? '#245A96' : '#1D1D1F' }}>{valFmt || rupee(val)}</span>
+    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: big ? 15 : 13, fontWeight: big ? 800 : 700, color: (big || subtotal) ? 'var(--accent-deep)' : 'var(--text)' }}>{valFmt || rupee(val)}</span>
   </div>
 );
-const totalBox = { background: 'linear-gradient(135deg,#F3F9FF,#E6F2FF)', border: '1.5px solid #CCE5FF', borderRadius: 16, padding: '10px 18px', marginBottom: 14 };
-const back = { background: 'none', border: 'none', color: '#2F6DB5', fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 };
-const th = { fontSize: 11, fontWeight: 700, color: '#6E7278', textAlign: 'left', padding: '6px 8px' };
+const totalBox = { background: 'linear-gradient(135deg,var(--accent-softer),var(--accent-soft))', border: '1.5px solid var(--blue-2)', borderRadius: 16, padding: '10px 18px', marginBottom: 14 };
+const back = { background: 'none', border: 'none', color: 'var(--accent)', fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 };
+const th = { fontSize: 11, fontWeight: 700, color: 'var(--muted)', textAlign: 'left', padding: '6px 8px' };
 const td = { padding: '4px 8px', fontSize: 13 };
-const inp = { width: '100%', padding: '7px 9px', fontSize: 13, borderRadius: 6, border: '1.5px solid #DFE2E6', outline: 'none' };
-const submitBtn = { width: '100%', padding: 13, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#2f6db5,#245a96)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' };
+const inp = { width: '100%', padding: '7px 9px', fontSize: 13, borderRadius: 6, border: '1.5px solid var(--border)', outline: 'none' };
+const submitBtn = { width: '100%', padding: 13, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,var(--primary),var(--primary-deep))', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' };

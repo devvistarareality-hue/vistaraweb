@@ -4,9 +4,9 @@ import Icon from './Icon';
 
 // White card with a tinted icon badge — same toast design as the app.
 const KIND = {
-  success: { icon: 'check-circle', color: '#23874A', bg: '#E9FBEA' },
-  error:   { icon: 'alert',        color: '#D9434B', bg: '#FDECEC' },
-  info:    { icon: 'info',         color: '#2F6DB5', bg: '#E6F2FF' },
+  success: { icon: 'check-circle', color: 'var(--success)', bg: 'var(--success-soft)' },
+  error:   { icon: 'alert',        color: 'var(--danger)', bg: 'var(--danger-soft)' },
+  info:    { icon: 'info',         color: 'var(--accent)', bg: 'var(--accent-soft)' },
 };
 
 export default function Toast({ visible, message, type = 'success', duration = 2500, onHide }) {
@@ -34,13 +34,13 @@ export default function Toast({ visible, message, type = 'success', duration = 2
       display:         'flex',
       alignItems:      'center',
       gap:             12,
-      backgroundColor: '#fff',
-      color:           '#1D1D1F',
+      backgroundColor: 'var(--surface)',
+      color:           'var(--text)',
       padding:         '10px 18px 10px 10px',
       borderRadius:    20,
       fontSize:        14,
       fontWeight:      600,
-      boxShadow:       '0 1px 2px rgba(29,29,31,0.06), 0 16px 40px rgba(60,90,130,0.18)',
+      boxShadow:       '0 1px 2px rgba(var(--ink-rgb),0.06), 0 16px 40px rgba(60,90,130,0.18)',
       animation:       'toastIn 0.2s ease',
       maxWidth:        380,
     }}>

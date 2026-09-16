@@ -8,7 +8,7 @@ import { MyConversionsContent } from '../../my-conversions/page';
 export default function ChannelPartnerClosuresPage() {
   const user = useSelector((s) => s.auth.user);
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: '#6E7278' }}>Admin access only.</div>;
+    return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
   }
 
   return <MyConversionsContent adminView cpOnly />;

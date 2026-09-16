@@ -4,12 +4,14 @@ import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
+import { confirmDialog } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 
-const TEAL = '#23874A';
-const inp  = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
-const lbl  = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
-const th   = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td   = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
+const TEAL = 'var(--success)';
+const inp  = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
+const lbl  = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
+const th   = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td   = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
 
 const EMPTY_FORM = {
   name: '', tenure_months: 12, min_ticket_size: '',
@@ -89,10 +91,10 @@ function SchemeModal({ scheme, onClose, onSaved }) {
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>{isEdit ? 'Edit Scheme' : 'New Scheme'}</div>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isEdit ? 'Edit Scheme' : 'New Scheme'}</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -116,7 +118,7 @@ function SchemeModal({ scheme, onClose, onSaved }) {
                 const checked = form.interest_payout_options.includes(key);
                 return (
                   <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#1D1D1F', width: 130, flexShrink: 0 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text)', width: 130, flexShrink: 0 }}>
                       <input
                         type="checkbox"
                         checked={checked}
@@ -131,14 +133,14 @@ function SchemeModal({ scheme, onClose, onSaved }) {
                       value={form.payout_rates[key] ?? ''}
                       onChange={(e) => setRate(key, e.target.value)}
                     />
-                    <span style={{ fontSize: 12, color: '#6E7278', width: 14 }}>%</span>
+                    <span style={{ fontSize: 12, color: 'var(--muted)', width: 14 }}>%</span>
                   </div>
                 );
               })}
             </div>
-            <div style={{ fontSize: 11, color: '#6E7278', marginTop: 5 }}>Only the checked option(s) will be selectable when adding investors to this scheme — each carries its own annual return %.</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 5 }}>Only the checked option(s) will be selectable when adding investors to this scheme — each carries its own annual return %.</div>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
             <input type="checkbox" checked={form.premature_redemption_allowed} onChange={(e) => set('premature_redemption_allowed', e.target.checked)} />
             Allow premature redemption
           </label>
@@ -154,11 +156,11 @@ function SchemeModal({ scheme, onClose, onSaved }) {
               </div>
             </div>
           )}
-          {error && <div style={{ fontSize: 12, color: '#D9434B', background: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
             {busy ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Scheme'}
           </button>
         </div>
@@ -188,7 +190,7 @@ export default function SchemesPage() {
   useEffect(() => { if (user) load(); }, [user]);
 
   async function disableScheme(id) {
-    if (!confirm('Disable this scheme?')) return;
+    if (!(await confirmDialog('Disable this scheme?'))) return;
     const res = await apiFetch(CLUB1000_ENDPOINTS.scheme(id), { method: 'DELETE' });
     if (res.status === 204 || res.ok) load();
   }
@@ -197,20 +199,20 @@ export default function SchemesPage() {
     <div style={{ padding: '28px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F' }}>Schemes</h1>
-          <p style={{ fontSize: 13, color: '#6E7278', marginTop: 4 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Schemes</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
             {manager ? 'Define investment plans investors can be added against' : 'Investment plans investors can be added against'}
           </p>
         </div>
         {manager && (
-          <button onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
+          <button onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
         )}
       </div>
 
-      <div style={{ marginTop: 24, background: '#fff', borderRadius: 20, border: '1px solid #ECEEF0', overflow: 'hidden' }}>
+      <div style={{ marginTop: 24, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
+            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Name</th>
               <th style={th}>Tenure</th>
               <th style={th}>Min Ticket</th>
@@ -221,9 +223,9 @@ export default function SchemesPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>Loading…</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
             ) : schemes.length === 0 ? (
-              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>No schemes yet — create one to get started.</td></tr>
+              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>No schemes yet — create one to get started.</td></tr>
             ) : schemes.map((s) => (
               <tr key={s.id}>
                 <td style={td}>{s.name}</td>
@@ -242,8 +244,8 @@ export default function SchemesPage() {
                 {manager && (
                   <td style={td}>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: '#E9FBEA', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
-                      <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: '#FDECEC', color: '#D9434B', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
+                      <button onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                      <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: 'var(--danger-soft)', color: 'var(--danger)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
                     </div>
                   </td>
                 )}

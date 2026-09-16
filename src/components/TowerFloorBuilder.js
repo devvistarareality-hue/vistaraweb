@@ -4,6 +4,7 @@ import MediaUpload from './MediaUpload';
 import { toPlanImage } from '../utils/planImage';
 
 import Icon from './Icon';
+import { confirmDialog, promptDialog } from '../lib/notify';
 /* Shared by Add/Edit Project and the Manage Plots page so a tower is defined the same
    way in both — the modal is the only route in before any units exist. */
 /* ─── Tower Floor Builder ───
@@ -74,9 +75,9 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
     commit(floors.map((f) => ((f.block || '') === from ? { ...f, block: to } : f)));
   }
 
-  function removeBlock(block) {
+  async function removeBlock(block) {
     const n = floors.filter((f) => (f.block || '') === block).length;
-    if (!window.confirm(`Remove Block ${block || '—'} and its ${n} floor${n === 1 ? '' : 's'} from the plan? Units already generated are kept.`)) return;
+    if (!(await confirmDialog(`Remove Block ${block || '—'} and its ${n} floor${n === 1 ? '' : 's'} from the plan? Units already generated are kept.`))) return;
     commit(floors.filter((f) => (f.block || '') !== block));
   }
 
@@ -98,8 +99,8 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
     commit(next);
   }
 
-  function removeFloor(i) {
-    if (!window.confirm(`Remove ${floors[i].label} from the plan? Units already generated are kept.`)) return;
+  async function removeFloor(i) {
+    if (!(await confirmDialog(`Remove ${floors[i].label} from the plan? Units already generated are kept.`))) return;
     commit(floors.filter((_, ix) => ix !== i));
   }
 
@@ -115,7 +116,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
   const toCreate = planned.filter((u) => !existing.has(u.number));
   const dupes = planned.length - new Set(planned.map((u) => u.number)).size;
 
-  const inp = { height: 34, padding: '0 9px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
+  const inp = { height: 34, padding: '0 9px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
 
   return (
     <div>
@@ -123,12 +124,12 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
         <div />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           
-          <button type="button" onClick={addBlock} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #CCE5FF', background: '#fff', color: '#2F6DB5', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button type="button" onClick={addBlock} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid var(--blue-2)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             + Add Block
           </button>
           {/* Industrial blocks are single-level — no floor concept, so no way to add one. */}
           {!industrial && (
-            <button type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid #CCE5FF', background: '#fff', color: '#2F6DB5', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            <button type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid var(--blue-2)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
               + Add Floor
             </button>
           )}
@@ -136,7 +137,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
       </div>
 
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {floors.length === 0 && <p style={{ fontSize: 13, color: '#6E7278' }}>{industrial ? 'No blocks yet — add one to begin.' : 'No floors yet — add one to begin.'}</p>}
+        {floors.length === 0 && <p style={{ fontSize: 13, color: 'var(--muted)' }}>{industrial ? 'No blocks yet — add one to begin.' : 'No floors yet — add one to begin.'}</p>}
         {/* Grouped by block. A single-block tower has one unnamed group and looks
             exactly as it did before blocks existed. */}
         {blocksOf(floors).map((blk) => {
@@ -147,23 +148,23 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
         <div key={`blk-${blk}`} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {(blocksOf(floors).length > 1 || blk) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.6 }}>Block</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Block</span>
               <input value={blk} onChange={(e) => renameBlock(blk, e.target.value.trim().toUpperCase())}
                 placeholder="A" style={{ ...inp, width: 64, fontWeight: 800, textAlign: 'center' }} />
-              <span style={{ fontSize: 12, color: '#6E7278' }}>{industrial ? `${blkUnits} units` : `${rows.length} floor${rows.length === 1 ? '' : 's'} · ${blkUnits} units`}</span>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{industrial ? `${blkUnits} units` : `${rows.length} floor${rows.length === 1 ? '' : 's'} · ${blkUnits} units`}</span>
               {!industrial && (
                 <button type="button" onClick={() => addFloor(blk)}
-                  style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #DFE2E6', background: '#fff', color: '#2F6DB5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ Floor</button>
+                  style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ Floor</button>
               )}
               <button type="button" onClick={() => removeBlock(blk)}
-                style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove block</button>
+                style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove block</button>
             </div>
           )}
           {rows.map(({ f, i }) => {
           const units = unitsForFloor(f);
           const isNew = units.filter((n) => !existing.has(n)).length;
           return (
-            <div key={i} style={{ border: '1.5px solid #ECEEF0', borderRadius: 16, padding: 14 }}>
+            <div key={i} style={{ border: '1.5px solid var(--surface-3)', borderRadius: 16, padding: 14 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 {/* Industrial blocks are single-level — the floor number is meaningless. */}
                 {!industrial && (
@@ -194,20 +195,20 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                     onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                 </div>
                 <button type="button" onClick={() => removeFloor(i)} title="Remove floor"
-                  style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /></button>
+                  style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /></button>
               </div>
 
               <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: units.length ? '#3A3C40' : '#D9434B' }}>
+                <span style={{ fontSize: 12, color: units.length ? 'var(--text-2)' : 'var(--danger)' }}>
                   {units.length
                     ? <>{units.length} unit{units.length === 1 ? '' : 's'}: <b>{units.slice(0, 3).join(', ')}{units.length > 3 ? ` … ${units[units.length - 1]}` : ''}</b>
-                        {isNew === 0 && <span style={{ color: '#23874A', marginLeft: 6 }}>· all exist</span>}
-                        {isNew > 0 && isNew < units.length && <span style={{ color: '#A3671A', marginLeft: 6 }}>· {isNew} new</span>}</>
+                        {isNew === 0 && <span style={{ color: 'var(--success)', marginLeft: 6 }}>· all exist</span>}
+                        {isNew > 0 && isNew < units.length && <span style={{ color: 'var(--warning)', marginLeft: 6 }}>· {isNew} new</span>}</>
                     : 'Set From / To to generate unit numbers.'}
                 </span>
                 {!industrial && (
-                  <button type="button" onClick={() => { const top = Number(window.prompt('Repeat this floor\'s layout up to which floor?', '13')); if (top) repeatUpTo(i, top); }}
-                    style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #DFE2E6', background: '#fff', color: '#2F6DB5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  <button type="button" onClick={async () => { const top = Number((await promptDialog('Repeat this floor\'s layout up to which floor?', '13'))); if (top) repeatUpTo(i, top); }}
+                    style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                     ↓ Repeat up to…
                   </button>
                 )}
@@ -215,14 +216,14 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
 
               <div style={{ marginTop: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
                 {converting === i ? (
-                  <span style={{ fontSize: 12, color: '#2F6DB5', fontWeight: 600 }}>Converting PDF to an image…</span>
+                  <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>Converting PDF to an image…</span>
                 ) : f.image_url ? (
                   <>
                     {/\.pdf(\?|$)/i.test(f.image_url)
-                      ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#2F6DB5', fontWeight: 600 }}><Icon name="file" /> View PDF ↗</a>
-                      : <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid #ECEEF0' }} />}
+                      ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}><Icon name="file" /> View PDF ↗</a>
+                      : <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--surface-3)' }} />}
                     <button type="button" onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
-                      style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
+                      style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
                   </>
                 ) : (
                   <div style={{ flex: 1, minWidth: 240 }}>
@@ -242,30 +243,30 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
       </div>
 
       {planned.length > 0 && (
-        <div style={{ marginTop: 16, borderTop: '1px solid #F4F5F7', paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 13, color: '#3A3C40' }}>
+        <div style={{ marginTop: 16, borderTop: '1px solid var(--surface-2)', paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
             <b>{planned.length}</b> units planned
             {industrial
               ? (blocksOf(floors).filter(Boolean).length > 0 && <> across <b>{blocksOf(floors).filter(Boolean).length}</b> block{blocksOf(floors).filter(Boolean).length === 1 ? '' : 's'}</>)
               : <> across <b>{floors.length}</b> floor{floors.length === 1 ? '' : 's'}
                   {blocksOf(floors).filter(Boolean).length > 1 && <> in <b>{blocksOf(floors).filter(Boolean).length}</b> blocks</>}</>} ·{' '}
-            <span style={{ color: toCreate.length ? '#A3671A' : '#23874A', fontWeight: 700 }}>
+            <span style={{ color: toCreate.length ? 'var(--warning)' : 'var(--success)', fontWeight: 700 }}>
               {toCreate.length ? `${toCreate.length} to create` : 'all already created'}
             </span>
-            {dupes > 0 && <span style={{ color: '#D9434B', fontWeight: 700 }}> · {dupes} duplicate number{dupes === 1 ? '' : 's'} across {industrial ? 'blocks' : 'floors'}</span>}
-            {note && <div style={{ fontSize: 11, color: '#6E7278', marginTop: 4 }}>{note}</div>}
+            {dupes > 0 && <span style={{ color: 'var(--danger)', fontWeight: 700 }}> · {dupes} duplicate number{dupes === 1 ? '' : 's'} across {industrial ? 'blocks' : 'floors'}</span>}
+            {note && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{note}</div>}
           </div>
           {onGenerate && (
             <button type="button" onClick={() => onGenerate(toCreate)} disabled={generating || !toCreate.length}
               style={{ padding: '10px 20px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
-                background: toCreate.length && !generating ? '#1D1D1F' : '#CCE5FF', cursor: toCreate.length && !generating ? 'pointer' : 'not-allowed' }}>
+                background: toCreate.length && !generating ? 'var(--strong)' : 'var(--blue-2)', cursor: toCreate.length && !generating ? 'pointer' : 'not-allowed' }}>
               {generating ? 'Generating…' : `Generate ${toCreate.length} Units`}
             </button>
           )}
         </div>
       )}
-      {!!msg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#23874A' : '#D9434B', display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
+      {!!msg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? 'var(--success)' : 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
     </div>
   );
 }
-const lblSm = { display: 'block', fontSize: 10, fontWeight: 700, color: '#9A9EA5', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 };
+const lblSm = { display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 };

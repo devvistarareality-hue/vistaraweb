@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { verifyCompany } from '../../redux/actions/authActions';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const ORANGE = '#A2D2FF';
-const NAVY   = '#1D1D1F';
+const NAVY   = 'var(--text)';
 
 const CSS = `
   @keyframes spin      { to { transform: rotate(360deg); } }
@@ -14,11 +15,11 @@ const CSS = `
   @keyframes floatRing { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-  input::placeholder { color:#9A9EA5; font-weight:400; }
+  input::placeholder { color:var(--faint); font-weight:400; }
   .code-input:focus { outline:none; }
-  .input-wrap:focus-within { border-color:${NAVY} !important; box-shadow:0 0 0 4px rgba(29,29,31,0.08) !important; }
+  .input-wrap:focus-within { border-color:${NAVY} !important; box-shadow:0 0 0 4px rgba(var(--ink-rgb),0.08) !important; }
   .submit-btn { transition:transform 0.18s,box-shadow 0.18s; }
-  .submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(29,29,31,0.28) !important; }
+  .submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(var(--ink-rgb),0.28) !important; }
   @media (max-width:860px) { .left-panel{display:none!important;} .right-panel{width:100%!important;} }
 `;
 
@@ -101,7 +102,8 @@ export default function CompanyScreen() {
       </div>
 
       {/* ═══ RIGHT — form ═══ */}
-      <div className="right-panel" style={s.right}>
+      <div className="right-panel" style={{ ...s.right, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 20, right: 24 }}><ThemeToggle compact /></div>
         <div style={s.formCard}>
 
           {/* Mobile logo */}
@@ -112,12 +114,12 @@ export default function CompanyScreen() {
           {/* Step bar */}
           <div style={s.steps}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ ...s.stepNum, backgroundColor:NAVY, color:'#fff' }}>1</div>
+              <div style={{ ...s.stepNum, backgroundColor:'var(--strong)', color:'#fff' }}>1</div>
               <span style={{ fontSize:13, fontWeight:700, color:NAVY }}>Workspace</span>
             </div>
             <div style={s.stepLine} />
             <div style={{ display:'flex', alignItems:'center', gap:8, opacity:0.35 }}>
-              <div style={{ ...s.stepNum, backgroundColor:'#C9CDD2', color:'#fff' }}>2</div>
+              <div style={{ ...s.stepNum, backgroundColor:'var(--border-strong)', color:'#fff' }}>2</div>
               <span style={{ fontSize:13, fontWeight:600, color:NAVY }}>Sign In</span>
             </div>
           </div>
@@ -154,7 +156,7 @@ export default function CompanyScreen() {
               type="submit"
               disabled={!canSubmit}
               className="submit-btn"
-              style={{ ...s.btn, background: canSubmit ? NAVY : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+              style={{ ...s.btn, background: canSubmit ? 'var(--strong)' : 'var(--border)', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
             >
               {companyLoading
                 ? <span style={s.spinner} />
@@ -178,7 +180,7 @@ const s = {
 
   /* LEFT */
   left: {
-    width:'calc(52% - 32px)', background:'#1D1D1F', margin:16, borderRadius:32,
+    width:'calc(52% - 32px)', background:'var(--hero)', margin:16, borderRadius:32,
     display:'flex', flexDirection:'column', position:'relative', overflow:'hidden',
   },
   dotBg: {
@@ -216,7 +218,7 @@ const s = {
   },
   logoBox: {
     width:90, height:90, borderRadius:'50%',
-    backgroundColor:'#FFFFFF',
+    backgroundColor:'#fff',
     display:'flex', alignItems:'center', justifyContent:'center',
     boxShadow:'0 4px 20px rgba(162,210,255,0.4)',
     overflow:'hidden', padding:8,
@@ -242,7 +244,7 @@ const s = {
     padding:'18px 52px', borderTop:'1px solid rgba(255,255,255,0.05)',
     display:'flex', alignItems:'center', gap:8, position:'relative', zIndex:1,
   },
-  footerDot:  { width:6, height:6, borderRadius:'50%', backgroundColor:ORANGE, animation:'pulseDot 2s infinite' },
+  footerDot:  { width:6, height:6, borderRadius:'50%', backgroundColor:'var(--blue)', animation:'pulseDot 2s infinite' },
   footerText: { fontSize:12, color:'rgba(255,255,255,0.3)' },
 
   /* RIGHT */
@@ -252,8 +254,8 @@ const s = {
   },
   formCard: {
     width:'100%', maxWidth:420,
-    backgroundColor:'#FFFFFF', borderRadius:28,
-    padding:'44px 40px', boxShadow:'0 1px 2px rgba(29,29,31,0.04), 0 12px 40px rgba(60,90,130,0.10)',
+    backgroundColor:'var(--surface)', borderRadius:28,
+    padding:'44px 40px', boxShadow:'0 1px 2px rgba(var(--ink-rgb),0.04), 0 12px 40px rgba(60,90,130,0.10)',
     animation:'fadeIn 0.4s ease',
   },
 
@@ -266,19 +268,19 @@ const s = {
     display:'flex', alignItems:'center', justifyContent:'center',
     fontSize:12, fontWeight:700, flexShrink:0,
   },
-  stepLine: { flex:1, height:1.5, backgroundColor:'#ECEEF0' },
+  stepLine: { flex:1, height:1.5, backgroundColor:'var(--surface-3)' },
 
   formTitle: { fontSize:26, fontWeight:800, color:NAVY, marginBottom:8 },
-  formDesc:  { fontSize:14, color:'#6E7278', lineHeight:1.65, marginBottom:28 },
+  formDesc:  { fontSize:14, color:'var(--muted)', lineHeight:1.65, marginBottom:28 },
 
   label: {
-    display:'block', fontSize:10, fontWeight:700, color:'#6E7278',
+    display:'block', fontSize:10, fontWeight:700, color:'var(--muted)',
     letterSpacing:1.4, textTransform:'uppercase', marginBottom:10,
   },
   inputBox: {
     display:'flex', alignItems:'center', gap:12,
-    border:'1.5px solid #ECEEF0', borderRadius: 16,
-    padding:'0 16px', height:52, backgroundColor:'#FAFAFB',
+    border:'1.5px solid var(--surface-3)', borderRadius: 16,
+    padding:'0 16px', height:52, backgroundColor:'var(--surface-2)',
     marginBottom:6, transition:'all 0.2s',
   },
   input: {
@@ -287,9 +289,9 @@ const s = {
   },
   errorBox: {
     display:'flex', alignItems:'center', gap:8,
-    backgroundColor:'#FDECEC', border:'1px solid #F7C3C6',
+    backgroundColor:'var(--danger-soft)', border:'1px solid var(--danger-2)',
     borderRadius: 14, padding:'10px 14px',
-    fontSize:13, color:'#D9434B', marginTop:10, marginBottom:4,
+    fontSize:13, color:'var(--danger)', marginTop:10, marginBottom:4,
   },
   btn: {
     display:'flex', alignItems:'center', justifyContent:'center',
@@ -303,6 +305,6 @@ const s = {
   },
   secureRow: {
     display:'flex', alignItems:'center', justifyContent:'center',
-    gap:6, marginTop:22, fontSize:12, color:'#9A9EA5',
+    gap:6, marginTop:22, fontSize:12, color:'var(--faint)',
   },
 };

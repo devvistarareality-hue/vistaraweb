@@ -6,9 +6,11 @@ import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { SalesLeadsContent } from '../../leads/page';
 
 import Icon from '../../../../components/Icon';
-const NAVY  = '#1D1D1F';
-const BLUE  = '#2F6DB5';
-const RED   = '#D9434B';
+import { confirmDialog } from '../../../../lib/notify';
+import Loader from '../../../../components/Loader';
+const NAVY  = 'var(--text)';
+const BLUE  = 'var(--accent)';
+const RED   = 'var(--danger)';
 
 const CATEGORY_OPTIONS = [
   { value: 'premium',  label: 'Premium' },
@@ -16,9 +18,9 @@ const CATEGORY_OPTIONS = [
   { value: 'referral', label: 'Referral' },
 ];
 const CATEGORY_COLOR = {
-  premium:  { bg: '#FFF3E0', color: '#A3671A' },
-  normal:   { bg: '#E6F2FF', color: BLUE },
-  referral: { bg: '#E9FBEA', color: '#23874A' },
+  premium:  { bg: 'var(--warning-soft)', color: 'var(--warning)' },
+  normal:   { bg: 'var(--accent-soft)', color: BLUE },
+  referral: { bg: 'var(--success-soft)', color: 'var(--success)' },
 };
 const SEGMENT_OPTIONS = [
   { value: '', label: '— Select —' },
@@ -41,7 +43,7 @@ const GUJARAT_CITIES = [
 ];
 
 function CategoryBadge({ category }) {
-  const c = CATEGORY_COLOR[category] || { bg: '#F4F5F7', color: '#6E7278' };
+  const c = CATEGORY_COLOR[category] || { bg: 'var(--surface-2)', color: 'var(--muted)' };
   const label = CATEGORY_OPTIONS.find((o) => o.value === category)?.label || category || '—';
   return (
     <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color }}>
@@ -85,7 +87,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
     <div style={overlay} onClick={onClose}>
       <div style={modal} onClick={(e) => e.stopPropagation()}>
         <div style={modalHeader}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>{isEdit ? 'Edit Channel Partner' : 'Add Channel Partner'}</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isEdit ? 'Edit Channel Partner' : 'Add Channel Partner'}</div>
           <button onClick={onClose} style={closeBtn}><Icon name="x" /></button>
         </div>
         <div style={{ padding: '18px 20px' }}>
@@ -140,7 +142,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
               <input type="date" value={form.date_added} max={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => setForm({ ...form, date_added: e.target.value })}
                 style={{ ...inp, maxWidth: 220, marginBottom: 4 }} />
-              <p style={{ fontSize: 11, color: '#9A9EA5', marginBottom: 14 }}>Leave blank to use today. Set this if the partnership actually started earlier.</p>
+              <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 14 }}>Leave blank to use today. Set this if the partnership actually started earlier.</p>
             </>
           )}
 
@@ -148,11 +150,11 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
           <div style={{ display: 'flex', gap: 8 }}>
             {[[true, 'Active'], [false, 'Inactive']].map(([val, label]) => {
               const active = form.is_active === val;
-              const color = val ? '#23874A' : '#6E7278';
+              const color = val ? 'var(--success)' : 'var(--muted)';
               return (
                 <button key={label} type="button" onClick={() => setForm({ ...form, is_active: val })}
                   style={{ flex: 1, padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    border: `1.5px solid ${active ? color : '#DFE2E6'}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                    border: `1.5px solid ${active ? color : 'var(--border)'}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                   {label}
                 </button>
               );
@@ -191,7 +193,7 @@ function CpDetailsTab({ companyId }) {
   useEffect(() => { load(); }, [load]);
 
   async function del(cp) {
-    if (!window.confirm(`Remove ${cp.name}? Leads already linked to them keep their history.`)) return;
+    if (!(await confirmDialog(`Remove ${cp.name}? Leads already linked to them keep their history.`))) return;
     const res = await fetch(SALES_ENDPOINTS.channelPartner(cp.id) + cq, { method: 'DELETE', headers: authHeaders() });
     if (res.ok || res.status === 204) setCps((prev) => prev.filter((c) => c.id !== cp.id));
   }
@@ -203,17 +205,17 @@ function CpDetailsTab({ companyId }) {
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>Channel Partners {loading ? '' : `(${filteredCps.length})`}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Channel Partners {loading ? '' : `(${filteredCps.length})`}</div>
         <button onClick={() => setModalCp(null)} style={saveBtn}>+ Add Channel Partner</button>
       </div>
       <input value={search} onChange={(e) => setSearch(e.target.value)}
         placeholder="Search name, contact no or firm name…" style={{ ...inp, width: '100%', marginBottom: 16 }} />
       {loading ? (
-        <p style={{ color: '#6E7278', fontSize: 13 }}>Loading…</p>
+        <Loader label="Loading…" style={{ padding: '28px 0' }} />
       ) : cps.length === 0 ? (
-        <p style={{ color: '#6E7278', fontSize: 13 }}>No channel partners yet. Add the first one above.</p>
+        <p style={{ color: 'var(--muted)', fontSize: 13 }}>No channel partners yet. Add the first one above.</p>
       ) : filteredCps.length === 0 ? (
-        <p style={{ color: '#6E7278', fontSize: 13 }}>No channel partners match "{search}".</p>
+        <p style={{ color: 'var(--muted)', fontSize: 13 }}>No channel partners match "{search}".</p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={tbl}>
@@ -233,8 +235,8 @@ function CpDetailsTab({ companyId }) {
             </thead>
             <tbody>
               {filteredCps.map((cp) => (
-                <tr key={cp.id} style={{ borderTop: '1px solid #F4F5F7' }}>
-                  <td style={{ ...td, fontWeight: 600, color: '#1D1D1F' }}>{cp.name}</td>
+                <tr key={cp.id} style={{ borderTop: '1px solid var(--surface-2)' }}>
+                  <td style={{ ...td, fontWeight: 600, color: 'var(--text)' }}>{cp.name}</td>
                   <td style={td}>{cp.contact_no}</td>
                   <td style={td}>{cp.firm_name || '—'}</td>
                   <td style={td}><CategoryBadge category={cp.category} /></td>
@@ -242,7 +244,7 @@ function CpDetailsTab({ companyId }) {
                   <td style={td}>{cp.city || '—'}</td>
                   <td style={td}>{cp.area || '—'}</td>
                   <td style={td}>
-                    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? '#E9FBEA' : '#F4F5F7', color: cp.is_active ? '#23874A' : '#6E7278' }}>
+                    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: cp.is_active ? 'var(--success)' : 'var(--muted)' }}>
                       {cp.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
@@ -278,23 +280,23 @@ export default function ChannelPartnerLeadsPage() {
   const [tab, setTab] = useState('leads');
 
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: '#6E7278' }}>Admin access only.</div>;
+    return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
   }
 
   return (
     <>
       <div style={{ padding: '24px 28px 0' }}>
         <div style={{ marginBottom: 12 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, color: '#6E7278', textTransform: 'uppercase' }}>Channel Partner</span>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, color: 'var(--muted)', textTransform: 'uppercase' }}>Channel Partner</span>
         </div>
 
-        <div style={{ display: 'inline-flex', padding: 4, borderRadius: 14, backgroundColor: '#ECEEF0', marginBottom: 24, gap: 2 }}>
+        <div style={{ display: 'inline-flex', padding: 4, borderRadius: 14, backgroundColor: 'var(--surface-3)', marginBottom: 24, gap: 2 }}>
           {[{ key: 'leads', label: 'CP Leads' }, { key: 'details', label: 'CP Details' }].map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               padding: '8px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
-              borderRadius: 8, backgroundColor: tab === t.key ? '#fff' : 'transparent',
-              color: tab === t.key ? NAVY : '#6E7278',
-              boxShadow: tab === t.key ? '0 1px 4px rgba(29,29,31,0.15)' : 'none',
+              borderRadius: 8, backgroundColor: tab === t.key ? 'var(--surface)' : 'transparent',
+              color: tab === t.key ? NAVY : 'var(--muted)',
+              boxShadow: tab === t.key ? '0 1px 4px rgba(var(--ink-rgb),0.15)' : 'none',
               transition: 'all 0.15s',
             }}>{t.label}</button>
           ))}
@@ -311,16 +313,16 @@ export default function ChannelPartnerLeadsPage() {
   );
 }
 
-const card       = { backgroundColor: '#fff', borderRadius: 18, padding: '20px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
-const inp        = { height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
-const lbl        = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
+const card       = { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
+const inp        = { height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
+const lbl        = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
 const tbl        = { width: '100%', borderCollapse: 'collapse', minWidth: 720 };
-const th         = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '10px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td         = { padding: '10px 14px', fontSize: 13, color: '#1D1D1F' };
-const saveBtn    = { padding: '9px 16px', backgroundColor: NAVY, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const cancelBtn  = { padding: '9px 16px', backgroundColor: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const th         = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '10px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td         = { padding: '10px 14px', fontSize: 13, color: 'var(--text)' };
+const saveBtn    = { padding: '9px 16px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
+const cancelBtn  = { padding: '9px 16px', backgroundColor: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 const iconBtn    = { background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, padding: '4px 8px' };
-const overlay    = { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-const modal      = { backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
-const modalHeader= { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' };
-const closeBtn   = { background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer', padding: '2px 6px' };
+const overlay    = { position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const modal      = { backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
+const modalHeader= { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' };
+const closeBtn   = { background: 'none', border: 'none', fontSize: 16, color: 'var(--muted)', cursor: 'pointer', padding: '2px 6px' };

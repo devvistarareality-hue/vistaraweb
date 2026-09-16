@@ -18,8 +18,8 @@ export default function PasswordInput({ style, ...props }) {
         {...props}
         type={shown ? 'text' : 'password'}
         style={{ ...style, paddingRight: 58 }}
-        onFocus={(e) => { e.target.style.borderColor = '#2F6DB5'; }}
-        onBlur={(e) => { e.target.style.borderColor = '#DFE2E6'; }}
+        onFocus={(e) => { e.target.style.borderColor = 'var(--accent)'; }}
+        onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
       />
       {/* type="button" so it never submits the form it sits in. */}
       <button
@@ -29,7 +29,7 @@ export default function PasswordInput({ style, ...props }) {
         style={{
           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
           border: 'none', background: 'none', cursor: 'pointer', padding: '4px 6px',
-          fontSize: 12, fontWeight: 700, color: '#2F6DB5', lineHeight: 1,
+          fontSize: 12, fontWeight: 700, color: 'var(--accent)', lineHeight: 1,
         }}>
         {shown ? 'Hide' : 'Show'}
       </button>

@@ -8,8 +8,9 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { LOGIN_SUCCESS } from '../../redux/types/authTypes';
 
 import Icon from '../../components/Icon';
+import ThemeToggle from '../../components/ThemeToggle';
 const ORANGE = '#A2D2FF';
-const NAVY   = '#1D1D1F';
+const NAVY   = 'var(--text)';
 
 const CSS = `
   @keyframes spin      { to { transform: rotate(360deg); } }
@@ -18,12 +19,12 @@ const CSS = `
   @keyframes floatRing { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-  input::placeholder { color:#9A9EA5; font-weight:400; }
+  input::placeholder { color:var(--faint); font-weight:400; }
   .field-input:focus { outline:none; }
-  .field-wrap:focus-within { border-color:${NAVY} !important; box-shadow:0 0 0 4px rgba(29,29,31,0.08) !important; }
+  .field-wrap:focus-within { border-color:var(--accent) !important; box-shadow:var(--ring) !important; }
   .signin-btn { transition:transform 0.18s,box-shadow 0.18s; }
-  .signin-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(29,29,31,0.28) !important; }
-  .change-ws:hover { background:#F4F5F7 !important; color:${NAVY} !important; }
+  .signin-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(var(--ink-rgb),0.28) !important; }
+  .change-ws:hover { background:var(--surface-2) !important; color:${'var(--strong)'} !important; }
   .change-ws { transition:all 0.15s; }
   .resend-link:hover { opacity:0.75; }
   @media (max-width:860px) { .left-panel{display:none!important;} .right-panel{width:100%!important;} }
@@ -239,7 +240,8 @@ export default function LoginScreen() {
       </div>
 
       {/* ═══ RIGHT ═══ */}
-      <div className="right-panel" style={s.right}>
+      <div className="right-panel" style={{ ...s.right, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 20, right: 24 }}><ThemeToggle compact /></div>
         <div style={s.formCard}>
 
           <div style={s.mobileTop}>
@@ -249,19 +251,19 @@ export default function LoginScreen() {
           {/* Step bar */}
           <div style={s.steps}>
             <div style={{ display:'flex', alignItems:'center', gap:8, opacity:0.55 }}>
-              <div style={{ ...s.stepNum, backgroundColor:'#23874A', color:'#fff' }}><Icon name="check" /></div>
+              <div style={{ ...s.stepNum, backgroundColor:'var(--success-solid)', color:'#fff' }}><Icon name="check" /></div>
               <span style={{ fontSize:13, fontWeight:600, color:NAVY }}>Workspace</span>
             </div>
             <div style={s.stepLine} />
             <div style={{ display:'flex', alignItems:'center', gap:8, opacity: otpStep ? 0.55 : 1 }}>
-              <div style={{ ...s.stepNum, backgroundColor: otpStep ? '#23874A' : NAVY, color:'#fff' }}>{otpStep ? <Icon name="check" /> : '2'}</div>
+              <div style={{ ...s.stepNum, backgroundColor: otpStep ? 'var(--success-solid)' : 'var(--strong)', color:'#fff' }}>{otpStep ? <Icon name="check" /> : '2'}</div>
               <span style={{ fontSize:13, fontWeight: otpStep ? 600 : 700, color:NAVY }}>Sign In</span>
             </div>
             {otpStep && (
               <>
                 <div style={s.stepLine} />
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <div style={{ ...s.stepNum, backgroundColor:NAVY, color:'#fff' }}>3</div>
+                  <div style={{ ...s.stepNum, backgroundColor:'var(--strong)', color:'#fff' }}>3</div>
                   <span style={{ fontSize:13, fontWeight:700, color:NAVY }}>Verify OTP</span>
                 </div>
               </>
@@ -311,7 +313,7 @@ export default function LoginScreen() {
               )}
 
               <button type="submit" disabled={!canSubmit} className="signin-btn"
-                style={{ ...s.btn, background: canSubmit ? NAVY : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed', marginTop:22 }}
+                style={{ ...s.btn, background: canSubmit ? 'var(--strong)' : 'var(--border)', cursor: canSubmit ? 'pointer' : 'not-allowed', marginTop:22 }}
               >
                 {loading
                   ? <span style={s.spinner} />
@@ -321,7 +323,7 @@ export default function LoginScreen() {
 
               <div style={{ textAlign:'center', marginTop:18 }}>
                 {resendSecs > 0 ? (
-                  <span style={{ fontSize:13, color:'#6E7278' }}>Resend OTP in {resendSecs}s</span>
+                  <span style={{ fontSize:13, color:'var(--muted)' }}>Resend OTP in {resendSecs}s</span>
                 ) : (
                   <button type="button" onClick={handleResendOtp} disabled={loading} className="resend-link"
                     style={{ fontSize:13, fontWeight:700, color:NAVY, background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}
@@ -382,7 +384,7 @@ export default function LoginScreen() {
               )}
 
               <button type="submit" disabled={!canSubmit} className="signin-btn"
-                style={{ ...s.btn, background: canSubmit ? NAVY : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+                style={{ ...s.btn, background: canSubmit ? 'var(--strong)' : 'var(--border)', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
               >
                 {loading
                   ? <span style={s.spinner} />
@@ -415,7 +417,7 @@ const s = {
   page: { display:'flex', minHeight:'100vh', overflow:'hidden' },
 
   left: {
-    width:'calc(52% - 32px)', background:'#1D1D1F', margin:16, borderRadius:32,
+    width:'calc(52% - 32px)', background:'var(--hero)', margin:16, borderRadius:32,
     display:'flex', flexDirection:'column', position:'relative', overflow:'hidden',
   },
   dotBg: {
@@ -452,7 +454,7 @@ const s = {
   },
   logoBox: {
     width:90, height:90, borderRadius:'50%',
-    backgroundColor:'#FFFFFF',
+    backgroundColor:'#fff',
     display:'flex', alignItems:'center', justifyContent:'center',
     boxShadow:'0 4px 20px rgba(162,210,255,0.4)',
     overflow:'hidden', padding:8,
@@ -484,14 +486,14 @@ const s = {
   wsCode:       { fontSize:13, fontWeight:800, color:'#fff', marginBottom:2 },
   wsName:       { fontSize:11, color:'rgba(255,255,255,0.45)' },
   wsStatus:     { display:'flex', alignItems:'center', gap:6 },
-  wsDot:        { width:7, height:7, borderRadius:'50%', backgroundColor:'#23874A', animation:'pulseDot 2s infinite' },
-  wsStatusText: { fontSize:12, fontWeight:600, color:'#23874A' },
+  wsDot:        { width:7, height:7, borderRadius:'50%', backgroundColor:'var(--success-solid)', animation:'pulseDot 2s infinite' },
+  wsStatusText: { fontSize:12, fontWeight:600, color:'var(--success)' },
 
   leftFooter: {
     padding:'18px 52px', borderTop:'1px solid rgba(255,255,255,0.05)',
     display:'flex', alignItems:'center', gap:8, position:'relative', zIndex:1,
   },
-  footerDot:  { width:6, height:6, borderRadius:'50%', backgroundColor:ORANGE, animation:'pulseDot 2s infinite' },
+  footerDot:  { width:6, height:6, borderRadius:'50%', backgroundColor:'var(--blue)', animation:'pulseDot 2s infinite' },
   footerText: { fontSize:12, color:'rgba(255,255,255,0.3)' },
 
   right: {
@@ -500,8 +502,8 @@ const s = {
   },
   formCard: {
     width:'100%', maxWidth:420,
-    backgroundColor:'#FFFFFF', borderRadius:28,
-    padding:'44px 40px', boxShadow:'0 1px 2px rgba(29,29,31,0.04), 0 12px 40px rgba(60,90,130,0.10)',
+    backgroundColor:'var(--surface)', borderRadius:28,
+    padding:'44px 40px', boxShadow:'0 1px 2px rgba(var(--ink-rgb),0.04), 0 12px 40px rgba(60,90,130,0.10)',
     animation:'fadeIn 0.4s ease',
   },
 
@@ -514,27 +516,27 @@ const s = {
     display:'flex', alignItems:'center', justifyContent:'center',
     fontSize:12, fontWeight:700, flexShrink:0,
   },
-  stepLine: { flex:1, height:1.5, backgroundColor:'#ECEEF0' },
+  stepLine: { flex:1, height:1.5, backgroundColor:'var(--surface-3)' },
 
   companyChip: {
     display:'inline-flex', alignItems:'center', gap:7,
-    backgroundColor:'#F3F9FF', border:'1px solid #CCE5FF',
+    backgroundColor:'var(--accent-softer)', border:'1px solid var(--blue-2)',
     borderRadius:20, padding:'5px 14px', marginBottom:20,
   },
-  chipDot:  { width:7, height:7, borderRadius:'50%', backgroundColor:'#2F6DB5', flexShrink:0 },
-  chipText: { fontSize:12, fontWeight:700, color:'#2F6DB5' },
+  chipDot:  { width:7, height:7, borderRadius:'50%', backgroundColor:'var(--primary)', flexShrink:0 },
+  chipText: { fontSize:12, fontWeight:700, color:'var(--accent)' },
 
   formTitle: { fontSize:26, fontWeight:800, color:NAVY, marginBottom:8 },
-  formDesc:  { fontSize:14, color:'#6E7278', lineHeight:1.65, marginBottom:28 },
+  formDesc:  { fontSize:14, color:'var(--muted)', lineHeight:1.65, marginBottom:28 },
 
   label: {
-    display:'block', fontSize:10, fontWeight:700, color:'#6E7278',
+    display:'block', fontSize:10, fontWeight:700, color:'var(--muted)',
     letterSpacing:1.4, textTransform:'uppercase', marginBottom:10,
   },
   inputBox: {
     display:'flex', alignItems:'center', gap:12,
-    border:'1.5px solid #ECEEF0', borderRadius: 16,
-    padding:'0 16px', height:52, backgroundColor:'#FAFAFB', transition:'all 0.2s',
+    border:'1.5px solid var(--surface-3)', borderRadius: 16,
+    padding:'0 16px', height:52, backgroundColor:'var(--surface-2)', transition:'all 0.2s',
   },
   input: {
     flex:1, fontSize:15, fontWeight:600, color:NAVY,
@@ -543,9 +545,9 @@ const s = {
   eyeBtn: { background:'none', border:'none', cursor:'pointer', padding:4, display:'flex', alignItems:'center' },
   errorBox: {
     display:'flex', alignItems:'center', gap:8,
-    backgroundColor:'#FDECEC', border:'1px solid #F7C3C6',
+    backgroundColor:'var(--danger-soft)', border:'1px solid var(--danger-2)',
     borderRadius: 14, padding:'10px 14px',
-    fontSize:13, color:'#D9434B', marginTop:12,
+    fontSize:13, color:'var(--danger)', marginTop:12,
   },
   btn: {
     display:'flex', alignItems:'center', justifyContent:'center',
@@ -557,15 +559,15 @@ const s = {
     border:'3px solid rgba(255,255,255,0.3)', borderTopColor:'#fff',
     animation:'spin 0.75s linear infinite', display:'inline-block',
   },
-  divider: { height:1, backgroundColor:'#ECEEF0', margin:'22px 0 16px' },
+  divider: { height:1, backgroundColor:'var(--surface-3)', margin:'22px 0 16px' },
   changeWsBtn: {
     display:'flex', alignItems:'center', justifyContent:'center',
     width:'100%', padding:'12px 0', borderRadius: 16,
-    border:'1.5px solid #ECEEF0', background:'#FAFAFB',
-    fontSize:13, fontWeight:600, color:'#6E7278', cursor:'pointer',
+    border:'1.5px solid var(--surface-3)', background:'var(--surface-2)',
+    fontSize:13, fontWeight:600, color:'var(--muted)', cursor:'pointer',
   },
   secureRow: {
     display:'flex', alignItems:'center', justifyContent:'center',
-    gap:6, marginTop:18, fontSize:12, color:'#9A9EA5',
+    gap:6, marginTop:18, fontSize:12, color:'var(--faint)',
   },
 };

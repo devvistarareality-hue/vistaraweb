@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
 import Icon from '../../../components/Icon';
+import { confirmDialog, notify } from '../../../lib/notify';
 function fmt(iso) {
   return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
@@ -19,8 +20,8 @@ function currentIST() {
 // ── Check / cross icon ────────────────────────────────────────────────────────
 function CheckIcon({ on }) {
   return on
-    ? <span style={{ color: '#23874A', fontSize: 14, fontWeight: 800 }}><Icon name="check" /></span>
-    : <span style={{ color: '#C9CDD2', fontSize: 14, fontWeight: 800 }}><Icon name="x" /></span>;
+    ? <span style={{ color: 'var(--success)', fontSize: 14, fontWeight: 800 }}><Icon name="check" /></span>
+    : <span style={{ color: 'var(--border-strong)', fontSize: 14, fontWeight: 800 }}><Icon name="x" /></span>;
 }
 
 // Format an ISO timestamp to a local time like "5:04 PM".
@@ -35,12 +36,12 @@ const fmtDay = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', 
 // ── Assigned-project chips shown under each availability name ──────────────────
 function ProjectTags({ projects }) {
   if (!projects || projects.length === 0) {
-    return <span style={{ fontSize: 10, color: '#9A9EA5' }}>No project assigned</span>;
+    return <span style={{ fontSize: 10, color: 'var(--faint)' }}>No project assigned</span>;
   }
   return (
     <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {projects.map((p, i) => (
-        <span key={i} style={{ fontSize: 10, fontWeight: 700, color: '#2F6DB5', background: '#F3F9FF', padding: '1px 7px', borderRadius: 20 }}>
+        <span key={i} style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-softer)', padding: '1px 7px', borderRadius: 20 }}>
           {p}
         </span>
       ))}
@@ -51,7 +52,7 @@ function ProjectTags({ projects }) {
 // ── Mini progress bar ─────────────────────────────────────────────────────────
 function WeightBar({ pct, color }) {
   return (
-    <div style={{ width: 56, height: 5, backgroundColor: color + '30', borderRadius: 4, overflow: 'hidden' }}>
+    <div style={{ width: 56, height: 5, backgroundColor: `color-mix(in srgb, ${color} 19%, transparent)`, borderRadius: 4, overflow: 'hidden' }}>
       <div style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 4, transition: 'width 0.3s' }} />
     </div>
   );
@@ -61,7 +62,7 @@ function WeightStepper({ value, onChange, color, border }) {
   const clamp = (n) => Math.min(20, Math.max(1, n));
   const btn = {
     width: 24, height: 26, borderRadius: 6, border: `1.5px solid ${border}`,
-    backgroundColor: '#fff', color, fontSize: 16, fontWeight: 700, lineHeight: '1',
+    backgroundColor: 'var(--surface)', color, fontSize: 16, fontWeight: 700, lineHeight: '1',
     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
     userSelect: 'none', padding: 0,
   };
@@ -98,11 +99,11 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
       </div>
       {/* Fixed height with its own scroll: the two panels sit side by side, so a long
           project list otherwise stretched both and left the shorter one mostly blank. */}
-      <div className="availScroll" style={{ maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: '#DFE2E6 transparent' }}>
+      <div className="availScroll" style={{ maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: 'var(--border) transparent' }}>
       {members.length === 0
-        ? <p style={{ fontSize: 12, color: '#6E7278' }}>No active {title.toLowerCase()}</p>
+        ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>No active {title.toLowerCase()}</p>
         : projectNames.length === 0
-          ? <p style={{ fontSize: 12, color: '#6E7278' }}>No projects assigned yet — assign projects above so leads can route.</p>
+          ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>No projects assigned yet — assign projects above so leads can route.</p>
           : projectNames.map(pn => {
               const grp   = byProject[pn];
               const total = grp.reduce((s, m) => s + (weights[m.user_id] ?? 1), 0);
@@ -116,8 +117,8 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
                     const w   = weights[m.user_id] ?? 1;
                     const pct = total > 0 ? Math.round((w / total) * 100) : 0;
                     return (
-                      <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: '7px 10px', border: `1px solid ${borderColor}`, marginBottom: 6 }}>
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                      <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: 'var(--surface)', borderRadius: 8, padding: '7px 10px', border: `1px solid ${borderColor}`, marginBottom: 6 }}>
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
                         <WeightBar pct={pct} color={barColor} />
                         <span style={{ fontSize: 11, fontWeight: 700, color: headColor, width: 30, textAlign: 'right' }}>{pct}%</span>
                         <WeightStepper value={w} color={headColor} border={borderColor}
@@ -133,9 +134,9 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
             })
       }
       {noProject.length > 0 && (
-        <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, backgroundColor: '#FDECEC', border: '1px solid #F7C3C6' }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#D9434B', marginBottom: 3 }}>Not assigned to any project — won&apos;t receive leads:</p>
-          <p style={{ fontSize: 12, color: '#A52A31' }}>{noProject.map(m => m.name).join(', ')}</p>
+        <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)' }}>
+          <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger)', marginBottom: 3 }}>Not assigned to any project — won&apos;t receive leads:</p>
+          <p style={{ fontSize: 12, color: 'var(--danger-deep)' }}>{noProject.map(m => m.name).join(', ')}</p>
         </div>
       )}
       </div>
@@ -173,14 +174,14 @@ export default function DistributionPage() {
     try {
       const res = await fetch(`${SALES_ENDPOINTS.availabilityHistoryExport}?date_from=${histFrom}&date_to=${histTo}`,
         { headers: authHeaders() });
-      if (!res.ok) { alert(res.status === 403 ? 'You do not have access to download this.' : 'Download failed. Try again.'); return; }
+      if (!res.ok) { notify(res.status === 403 ? 'You do not have access to download this.' : 'Download failed. Try again.'); return; }
       const name = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'Sign-in-History.xlsx';
       const url = URL.createObjectURL(await res.blob());
       const a = Object.assign(document.createElement('a'), { href: url, download: name });
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     } catch (_) {
-      alert('Download failed. Try again.');
+      notify('Download failed. Try again.');
     } finally { setHistDl(false); }
   }
   const [histLoading, setHistLoading] = useState(false);
@@ -289,9 +290,9 @@ export default function DistributionPage() {
     // Confirm first: the whole row is the button, so a stray click used to silently
     // sign someone in or out and change who receives leads.
     const name = availability.find(a => a.user_id === user_id)?.name || 'this user';
-    const ok = window.confirm(current
+    const ok = (await confirmDialog(current
       ? `Mark ${name} as unavailable?\n\nThey will stop receiving new leads.`
-      : `Mark ${name} as available?\n\nThey will start receiving new leads.`);
+      : `Mark ${name} as available?\n\nThey will start receiving new leads.`));
     if (!ok) return;
     const res = await fetch(SALES_ENDPOINTS.availability, {
       method: 'POST', headers: authHeaders(),
@@ -325,7 +326,7 @@ export default function DistributionPage() {
   }
 
   async function clearHistory() {
-    if (!window.confirm('Clear all distribution history? This cannot be undone.')) return;
+    if (!(await confirmDialog('Clear all distribution history? This cannot be undone.'))) return;
     setClearingLog(true);
     const cq = companyId ? `?company_id=${companyId}` : '';
     await fetch(SALES_ENDPOINTS.distLog + cq, { method: 'DELETE', headers: authHeaders() });
@@ -342,38 +343,38 @@ export default function DistributionPage() {
       <style>{`
         .availScroll::-webkit-scrollbar { width: 8px; }
         .availScroll::-webkit-scrollbar-track { background: transparent; }
-        .availScroll::-webkit-scrollbar-thumb { background: #DFE2E6; border-radius: 8px; }
-        .availScroll::-webkit-scrollbar-thumb:hover { background: #C9CDD2; }
+        .availScroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+        .availScroll::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
       `}</style>
       {/* Header */}
       <div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Lead Distribution</h1>
-        <p style={{ fontSize: 13, color: '#6E7278' }}>Manage availability, sign-in/sign-out times, and trigger lead assignments</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Lead Distribution</h1>
+        <p style={{ fontSize: 13, color: 'var(--muted)' }}>Manage availability, sign-in/sign-out times, and trigger lead assignments</p>
       </div>
 
       {/* Stuck-leads warning — the skip _distribute never surfaces on auto-runs */}
       {blocked.length > 0 && (
-        <div style={{ border: '1.5px solid #EF9195', background: '#FDECEC', borderRadius: 16, padding: '14px 16px' }}>
+        <div style={{ border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', borderRadius: 16, padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <span style={{ fontSize: 15 }}><Icon name="alert" /></span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#A52A31' }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--danger-deep)' }}>
               {blocked.reduce((n, b) => n + b.count, 0)} lead{blocked.reduce((n, b) => n + b.count, 0) === 1 ? '' : 's'} can never be distributed
             </span>
           </div>
-          <p style={{ fontSize: 12, color: '#A52A31', marginBottom: 10 }}>
+          <p style={{ fontSize: 12, color: 'var(--danger-deep)', marginBottom: 10 }}>
             Distribution skips a lead when nobody of the required role is assigned to its project.
             These stay unassigned until someone is added to the project — running Distribute again will not move them.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {blocked.map((b) => (
               <div key={`${b.project}-${b.needs}`} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
-                <span style={{ fontWeight: 800, color: '#A52A31', minWidth: 34 }}>{b.count}</span>
-                <span style={{ fontWeight: 700, color: '#1D1D1F' }}>{b.project}</span>
-                <span style={{ color: '#A52A31' }}>— {b.reason}</span>
+                <span style={{ fontWeight: 800, color: 'var(--danger-deep)', minWidth: 34 }}>{b.count}</span>
+                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{b.project}</span>
+                <span style={{ color: 'var(--danger-deep)' }}>— {b.reason}</span>
               </div>
             ))}
           </div>
-          <a href="/sales/projects" style={{ display: 'inline-block', marginTop: 11, fontSize: 12, fontWeight: 700, color: '#D9434B' }}>
+          <a href="/sales/projects" style={{ display: 'inline-block', marginTop: 11, fontSize: 12, fontWeight: 700, color: 'var(--danger)' }}>
             Assign someone to these projects →
           </a>
         </div>
@@ -432,16 +433,16 @@ export default function DistributionPage() {
                 { role: 'Telecaller', signin: settings.tc_signin_time, signout: settings.tc_signout_time },
                 { role: 'STM',        signin: settings.stm_signin_time, signout: settings.stm_signout_time },
               ].map(({ role, signin, signout }) => (
-                <div key={role} style={{ backgroundColor: '#ECEEF0', borderRadius: 14, padding: '12px 14px' }}>
+                <div key={role} style={{ backgroundColor: 'var(--surface-3)', borderRadius: 14, padding: '12px 14px' }}>
                   <p style={sectionLabel}>{role}</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span style={{ color: '#6E7278' }}>Sign-in</span>
-                      <span style={{ fontWeight: 700, color: '#1D1D1F' }}>{signin}</span>
+                      <span style={{ color: 'var(--muted)' }}>Sign-in</span>
+                      <span style={{ fontWeight: 700, color: 'var(--text)' }}>{signin}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span style={{ color: '#6E7278' }}>Sign-out</span>
-                      <span style={{ fontWeight: 700, color: '#1D1D1F' }}>{signout}</span>
+                      <span style={{ color: 'var(--muted)' }}>Sign-out</span>
+                      <span style={{ fontWeight: 700, color: 'var(--text)' }}>{signout}</span>
                     </div>
                   </div>
                 </div>
@@ -458,9 +459,9 @@ export default function DistributionPage() {
               {[['today', 'Today'], ['history', 'History']].map(([k, lbl]) => (
                 <button key={k} onClick={() => setAvailTab(k)}
                   style={{ padding: '4px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                    border: `1.5px solid ${availTab === k ? '#2F6DB5' : '#DFE2E6'}`,
-                    background: availTab === k ? '#2F6DB5' : '#fff',
-                    color: availTab === k ? '#fff' : '#6E7278' }}>{lbl}</button>
+                    border: `1.5px solid ${availTab === k ? 'var(--accent)' : 'var(--border)'}`,
+                    background: availTab === k ? 'var(--primary)' : 'var(--surface)',
+                    color: availTab === k ? '#fff' : 'var(--muted)' }}>{lbl}</button>
               ))}
             </div>
           </div>
@@ -469,28 +470,28 @@ export default function DistributionPage() {
             <div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
                 <input type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...inp, width: 142 }} />
-                <span style={{ fontSize: 12, color: '#C9CDD2' }}>→</span>
+                <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
                 <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...inp, width: 142 }} />
                 {/* The same records this card is showing, over the same range — a sheet
                     is the form you sort and pivot them in. */}
                 <button onClick={downloadHistory} disabled={histDl}
                   style={{ padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700,
-                           cursor: histDl ? 'default' : 'pointer', background: '#23874A', color: '#fff',
+                           cursor: histDl ? 'default' : 'pointer', background: 'var(--success-solid)', color: '#fff',
                            opacity: histDl ? 0.7 : 1, marginLeft: 'auto' }}>
                   {histDl ? 'Preparing…' : '⤓ Excel'}
                 </button>
               </div>
               {/* Fixed height with its own scroll: a 30-day range would otherwise stretch
                   the card far past the settings column beside it. */}
-              <div className="availScroll" style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: '#DFE2E6 transparent' }}>
-              {histLoading ? <p style={{ fontSize: 12, color: '#6E7278' }}>Loading…</p>
-                : history.length === 0 ? <p style={{ fontSize: 12, color: '#6E7278' }}>Nobody marked available in this range.</p>
+              <div className="availScroll" style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: 'var(--border) transparent' }}>
+              {histLoading ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>Loading…</p>
+                : history.length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>Nobody marked available in this range.</p>
                 : history.map(day => (
-                  <div key={day.date} style={{ borderTop: '1px solid #F4F5F7', padding: '12px 0' }}>
+                  <div key={day.date} style={{ borderTop: '1px solid var(--surface-2)', padding: '12px 0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap',
-                      position: 'sticky', top: 0, background: '#fff', paddingBottom: 4, zIndex: 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: '#1D1D1F' }}>{fmtDay(day.date)}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#23874A', background: '#E9FBEA', padding: '1px 8px', borderRadius: 20 }}>
+                      position: 'sticky', top: 0, background: 'var(--surface)', paddingBottom: 4, zIndex: 1 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{fmtDay(day.date)}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 8px', borderRadius: 20 }}>
                         {day.telecaller_count} TC · {day.stm_count} STM
                       </span>
                     </div>
@@ -502,9 +503,9 @@ export default function DistributionPage() {
                             ? <p style={{ fontSize: 12, color: '#A2D2FF' }}>—</p>
                             : list.map(x => (
                               <div key={x.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-                                <span style={{ fontSize: 12.5, color: x.is_available ? '#1D1D1F' : '#6E7278' }}>{x.name}</span>
+                                <span style={{ fontSize: 12.5, color: x.is_available ? 'var(--text)' : 'var(--muted)' }}>{x.name}</span>
                                 {x.checked_in_at && (
-                                  <span style={{ fontSize: 10, fontWeight: 700, color: '#23874A', background: '#E9FBEA', padding: '1px 7px', borderRadius: 20 }}>
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
                                     ⏱ {fmtTime(x.checked_in_at)}
                                   </span>
                                 )}
@@ -525,16 +526,16 @@ export default function DistributionPage() {
                 Telecallers · {tcAvail.length}/{allTc.length} available
               </p>
               {allTc.length === 0
-                ? <p style={{ fontSize: 12, color: '#6E7278' }}>No telecallers</p>
+                ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>No telecallers</p>
                 : allTc.map(a => (
                   <button key={a.user_id} onClick={() => toggleAvail(a.user_id, a.is_available)}
                     style={{ display: 'flex', alignItems: 'flex-start', gap: 8, width: '100%', background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>
                     <CheckIcon on={a.is_available} />
                     <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 13, color: a.is_available ? '#1D1D1F' : '#6E7278' }}>{a.name}</span>
+                        <span style={{ fontSize: 13, color: a.is_available ? 'var(--text)' : 'var(--muted)' }}>{a.name}</span>
                         {a.is_available && a.checked_in_at && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: '#23874A', background: '#E9FBEA', padding: '1px 7px', borderRadius: 20 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
                             ⏱ {fmtTime(a.checked_in_at)}
                           </span>
                         )}
@@ -551,16 +552,16 @@ export default function DistributionPage() {
                 STMs · {stmAvail.length}/{allStm.length} available
               </p>
               {allStm.length === 0
-                ? <p style={{ fontSize: 12, color: '#6E7278' }}>No STMs</p>
+                ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>No STMs</p>
                 : allStm.map(a => (
                   <button key={a.user_id} onClick={() => toggleAvail(a.user_id, a.is_available)}
                     style={{ display: 'flex', alignItems: 'flex-start', gap: 8, width: '100%', background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>
                     <CheckIcon on={a.is_available} />
                     <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 13, color: a.is_available ? '#1D1D1F' : '#6E7278' }}>{a.name}</span>
+                        <span style={{ fontSize: 13, color: a.is_available ? 'var(--text)' : 'var(--muted)' }}>{a.name}</span>
                         {a.is_available && a.checked_in_at && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: '#23874A', background: '#E9FBEA', padding: '1px 7px', borderRadius: 20 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
                             ⏱ {fmtTime(a.checked_in_at)}
                           </span>
                         )}
@@ -581,7 +582,7 @@ export default function DistributionPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h2 style={cardTitle}><Icon name="chart" /> Lead Distribution Ratio</h2>
-            <span style={{ fontSize: 12, color: '#6E7278' }}>Per project · share splits among assigned members</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Per project · share splits among assigned members</span>
           </div>
           <button onClick={saveWeights} disabled={savingWeights || !weightsChanged}
             style={{ ...primaryBtn, opacity: (!weightsChanged || savingWeights) ? 0.4 : 1 }}>
@@ -610,13 +611,13 @@ export default function DistributionPage() {
             afterSignout: tcAfterSignout,
             signin: settings.tc_signin_time,
             signout: settings.tc_signout_time,
-            accentOpen: '#C9F8CA',
-            bgOpen: '#F4F5F7',
-            accentClose: '#F7C3C6',
-            bgClose: '#FDECEC',
-            badgeOpen: { bg: '#E9FBEA', color: '#23874A' },
-            badgeClose: { bg: '#FDECEC', color: '#D9434B' },
-            badgeWait: { bg: '#F4F5F7', color: '#55585E' },
+            accentOpen: 'var(--success-2)',
+            bgOpen: 'var(--surface-2)',
+            accentClose: 'var(--danger-2)',
+            bgClose: 'var(--danger-soft)',
+            badgeOpen: { bg: 'var(--success-soft)', color: 'var(--success)' },
+            badgeClose: { bg: 'var(--danger-soft)', color: 'var(--danger)' },
+            badgeWait: { bg: 'var(--surface-2)', color: 'var(--text-3)' },
           },
           {
             type: 'stm',
@@ -628,16 +629,16 @@ export default function DistributionPage() {
             signin: settings.stm_signin_time,
             signout: settings.stm_signout_time,
             accentOpen: '#CCE5FF',
-            bgOpen: '#F3F9FF',
-            accentClose: '#F7C3C6',
-            bgClose: '#FDECEC',
-            badgeOpen: { bg: '#E6F2FF', color: '#2F6DB5' },
-            badgeClose: { bg: '#FDECEC', color: '#D9434B' },
-            badgeWait: { bg: '#F4F5F7', color: '#55585E' },
+            bgOpen: 'var(--accent-softer)',
+            accentClose: 'var(--danger-2)',
+            bgClose: 'var(--danger-soft)',
+            badgeOpen: { bg: 'var(--accent-soft)', color: 'var(--accent)' },
+            badgeClose: { bg: 'var(--danger-soft)', color: 'var(--danger)' },
+            badgeWait: { bg: 'var(--surface-2)', color: 'var(--text-3)' },
           },
         ].map(({ type, label, unassigned, avail, windowOpen, afterSignout, signin, signout, accentOpen, bgOpen, accentClose, bgClose, badgeOpen, badgeClose, badgeWait }) => {
           const badge   = windowOpen ? badgeOpen : afterSignout ? badgeClose : badgeWait;
-          const bdrClr  = windowOpen ? accentOpen : afterSignout ? accentClose : '#DFE2E6';
+          const bdrClr  = windowOpen ? accentOpen : afterSignout ? accentClose : 'var(--border)';
           const bgClr   = windowOpen ? bgOpen : afterSignout ? bgClose : '#fff';
           const disabled = !!distributing || afterSignout || avail === 0;
           const resultThis = result?.type === type ? result : null;
@@ -645,8 +646,8 @@ export default function DistributionPage() {
             <div key={type} style={{ ...card, border: `2px solid ${bdrClr}`, backgroundColor: bgClr }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
-                  <p style={{ fontWeight: 700, fontSize: 14, color: '#1D1D1F', marginBottom: 3 }}>{label}</p>
-                  <p style={{ fontSize: 12, color: '#6E7278' }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)', marginBottom: 3 }}>{label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--muted)' }}>
                     {unassigned} unassigned lead{unassigned !== 1 ? 's' : ''} · {avail} {type === 'telecaller' ? 'TC' : 'STM'}{avail !== 1 ? 's' : ''} signed in
                   </p>
                 </div>
@@ -656,12 +657,12 @@ export default function DistributionPage() {
               </div>
 
               {!windowOpen && !afterSignout && (
-                <p style={{ fontSize: 11, color: '#A3671A', marginBottom: 10 }}>
+                <p style={{ fontSize: 11, color: 'var(--warning)', marginBottom: 10 }}>
                   Current time ({now}) is before sign-in ({signin}). You can still distribute manually.
                 </p>
               )}
               {afterSignout && (
-                <p style={{ fontSize: 11, color: '#D9434B', marginBottom: 10 }}>
+                <p style={{ fontSize: 11, color: 'var(--danger)', marginBottom: 10 }}>
                   Sign-out time ({signout}) has passed. Leads will remain unassigned until tomorrow.
                 </p>
               )}
@@ -669,14 +670,14 @@ export default function DistributionPage() {
               {resultThis && (
                 <div style={{
                   padding: '8px 12px', borderRadius: 8, marginBottom: 10, fontSize: 13, fontWeight: 600,
-                  backgroundColor: resultThis.ok ? '#F4F5F7' : '#FDECEC',
-                  color: resultThis.ok ? '#23874A' : '#D9434B',
+                  backgroundColor: resultThis.ok ? 'var(--surface-2)' : 'var(--danger-soft)',
+                  color: resultThis.ok ? 'var(--success)' : 'var(--danger)',
                 }}>
                   {resultThis.ok
                     ? `${resultThis.distributed} leads distributed`
                     : `${resultThis.detail || resultThis.message || 'Failed'}`}
                   {resultThis.assignments && resultThis.distributed > 0 && (
-                    <p style={{ fontSize: 11, fontWeight: 400, marginTop: 3, color: '#55585E' }}>
+                    <p style={{ fontSize: 11, fontWeight: 400, marginTop: 3, color: 'var(--text-3)' }}>
                       {Object.entries(resultThis.assignments).map(([n, c]) => `${n}: ${c}`).join(' · ')}
                     </p>
                   )}
@@ -691,7 +692,7 @@ export default function DistributionPage() {
                 {distributing === type ? 'Distributing…' : `Distribute to ${type === 'telecaller' ? 'Telecallers' : 'STMs'}`}
               </button>
               {avail === 0 && !afterSignout && (
-                <p style={{ fontSize: 11, color: '#6E7278', textAlign: 'center', marginTop: 6 }}>
+                <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginTop: 6 }}>
                   No {type === 'telecaller' ? 'telecallers' : 'STMs'} have signed in today
                 </p>
               )}
@@ -702,26 +703,26 @@ export default function DistributionPage() {
 
       {/* Row 4: Distribution History */}
       <div style={{ ...card, padding: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #F4F5F7' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--surface-2)' }}>
           <h2 style={cardTitle}><Icon name="clock" /> Recent Distribution History</h2>
           {log.length > 0 && (
             <button onClick={clearHistory} disabled={clearingLog}
-              style={{ ...outlineBtn, color: '#D9434B', borderColor: '#F7C3C6', fontSize: 12 }}>
+              style={{ ...outlineBtn, color: 'var(--danger)', borderColor: 'var(--danger-2)', fontSize: 12 }}>
               {clearingLog ? 'Clearing…' : <><Icon name="trash" /> Clear History</>}
             </button>
           )}
         </div>
         {log.length === 0
-          ? <p style={{ textAlign: 'center', color: '#6E7278', padding: '40px 0', fontSize: 13 }}>No distributions run yet</p>
+          ? <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0', fontSize: 13 }}>No distributions run yet</p>
           : (
             <div className="availScroll" style={{ overflowX: 'auto', maxHeight: 420, overflowY: 'auto',
-              scrollbarWidth: 'thin', scrollbarColor: '#DFE2E6 transparent' }}>
+              scrollbarWidth: 'thin', scrollbarColor: 'var(--border) transparent' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #F4F5F7' }}>
+                  <tr style={{ borderBottom: '1px solid var(--surface-2)' }}>
                     {['Type', 'Leads', 'Triggered By', 'When', 'Details'].map(h => (
                       /* sticky so the columns stay labelled while the rows scroll */
-                      <th key={h} style={{ textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '8px 16px', textTransform: 'uppercase', letterSpacing: 0.5, position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>{h}</th>
+                      <th key={h} style={{ textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '8px 16px', textTransform: 'uppercase', letterSpacing: 0.5, position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -731,22 +732,22 @@ export default function DistributionPage() {
                       ? row.details.assignments.map(a => `${a.name}: ${a.count}`).join(' · ')
                       : '—';
                     return (
-                      <tr key={row.id} style={{ borderBottom: '1px solid #F4F5F7' }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FAFAFB'}
+                      <tr key={row.id} style={{ borderBottom: '1px solid var(--surface-2)' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--surface-2)'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                         <td style={{ padding: '10px 16px' }}>
                           <span style={{
                             fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 20,
-                            backgroundColor: row.dist_type === 'telecaller' ? '#FFF3E0' : '#F3F9FF',
-                            color:           row.dist_type === 'telecaller' ? '#D98A1F'  : '#2F6DB5',
+                            backgroundColor: row.dist_type === 'telecaller' ? 'var(--warning-soft)' : 'var(--accent-softer)',
+                            color:           row.dist_type === 'telecaller' ? 'var(--warning-2)'  : 'var(--accent)',
                           }}>
                             {row.dist_type === 'telecaller' ? 'Telecaller' : 'STM'}
                           </span>
                         </td>
                         <td style={{ padding: '10px 16px', fontWeight: 700, fontSize: 13 }}>{row.leads_distributed}</td>
-                        <td style={{ padding: '10px 16px', fontSize: 13, color: '#1D1D1F' }}>{row.triggered_by_name ?? 'System'}</td>
-                        <td style={{ padding: '10px 16px', fontSize: 12, color: '#6E7278' }}>{fmt(row.created_at)}</td>
-                        <td style={{ padding: '10px 16px', fontSize: 12, color: '#6E7278', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 13, color: 'var(--text)' }}>{row.triggered_by_name ?? 'System'}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: 'var(--muted)' }}>{fmt(row.created_at)}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: 'var(--muted)', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details}</td>
                       </tr>
                     );
                   })}
@@ -760,11 +761,11 @@ export default function DistributionPage() {
   );
 }
 
-const card       = { backgroundColor: '#fff', borderRadius: 18, padding: '20px 22px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
-const cardTitle  = { fontSize: 14, fontWeight: 700, color: '#1D1D1F', margin: 0 };
-const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.6 };
-const lbl        = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 4 };
-const hint       = { fontSize: 10, color: '#6E7278', marginTop: 3 };
-const inp        = { width: '100%', height: 36, padding: '0 10px', borderRadius: 7, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box' };
-const primaryBtn = { padding: '9px 18px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 };
-const outlineBtn = { padding: '7px 14px', backgroundColor: '#fff', border: '1.5px solid #DFE2E6', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D1D1F', cursor: 'pointer' };
+const card       = { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
+const cardTitle  = { fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 };
+const sectionLabel = { fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 };
+const lbl        = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 4 };
+const hint       = { fontSize: 10, color: 'var(--muted)', marginTop: 3 };
+const inp        = { width: '100%', height: 36, padding: '0 10px', borderRadius: 7, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' };
+const primaryBtn = { padding: '9px 18px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 };
+const outlineBtn = { padding: '7px 14px', backgroundColor: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 12, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' };

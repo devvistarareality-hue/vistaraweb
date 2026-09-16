@@ -13,15 +13,15 @@ export default function GlobalError({ error, reset }) {
 
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif', background: '#f4f5f7', color: '#1d1d1f' }}>
+      <body style={{ margin: 0, fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif', background: 'var(--surface-2)', color: 'var(--text)' }}>
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
           <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Something went wrong</div>
-          <div style={{ fontSize: 14, color: '#55585e', marginBottom: 20, maxWidth: 420 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-3)', marginBottom: 20, maxWidth: 420 }}>
             An unexpected error occurred. Please try again — if it keeps happening, contact your administrator.
           </div>
           <button
             onClick={() => reset()}
-            style={{ padding: '10px 22px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            style={{ padding: '10px 22px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >
             Try again
           </button>

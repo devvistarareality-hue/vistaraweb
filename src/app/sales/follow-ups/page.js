@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
 import Icon from '../../../components/Icon';
+import Loader from '../../../components/Loader';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -16,7 +17,7 @@ function fmtDateTime(iso) {
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
-const fuStatusColor = { pending: '#D98A1F', completed: '#23874A', missed: '#D9434B', rescheduled: '#23874A' };
+const fuStatusColor = { pending: 'var(--warning-2)', completed: 'var(--success)', missed: 'var(--danger)', rescheduled: 'var(--success)' };
 
 // Lead-status options a follow-up can set when completed, by the follow-up's role.
 // Telecaller updates TC Status; STM updates STM Status (a manager completing either
@@ -185,30 +186,30 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 900 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', margin: 0 }}>Follow-Ups</h1>
-      <p style={{ fontSize: 13, color: '#6E7278', margin: '4px 0 18px' }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Follow-Ups</h1>
+      <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 18px' }}>
         {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}
       </p>
 
       {/* Date range filter + status-wise counts */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.6 }}>Date</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Date</span>
         <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid #ECEEF0', fontSize: 12.5, color: '#1D1D1F', outline: 'none' }} />
-        <span style={{ color: '#9A9EA5' }}>→</span>
+          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid var(--surface-3)', fontSize: 12.5, color: 'var(--text)', outline: 'none' }} />
+        <span style={{ color: 'var(--faint)' }}>→</span>
         <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid #ECEEF0', fontSize: 12.5, color: '#1D1D1F', outline: 'none' }} />
+          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid var(--surface-3)', fontSize: 12.5, color: 'var(--text)', outline: 'none' }} />
         {(dateFrom || dateTo) && (
           <button onClick={() => { setDateFrom(''); setDateTo(''); }}
-            style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #ECEEF0', background: '#fff', color: '#55585E', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+            style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid var(--surface-3)', background: 'var(--surface)', color: 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
         )}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
         {[
-          { label: 'Total',     n: counts.total,     c: '#2F6DB5', bg: '#F3F9FF' },
-          { label: 'Pending',   n: counts.pending,   c: '#A3671A', bg: '#FFF3E0' },
-          { label: 'Overdue',   n: counts.overdue,   c: '#D9434B', bg: '#FDECEC' },
-          { label: 'Completed', n: counts.completed, c: '#23874A', bg: '#E9FBEA' },
+          { label: 'Total',     n: counts.total,     c: 'var(--accent)', bg: 'var(--accent-softer)' },
+          { label: 'Pending',   n: counts.pending,   c: 'var(--warning)', bg: 'var(--warning-soft)' },
+          { label: 'Overdue',   n: counts.overdue,   c: 'var(--danger)', bg: 'var(--danger-soft)' },
+          { label: 'Completed', n: counts.completed, c: 'var(--success)', bg: 'var(--success-soft)' },
         ].map((s) => (
           <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 12px', borderRadius: 20, background: s.bg }}>
             <span style={{ fontSize: 15, fontWeight: 800, color: s.c }}>{s.n}</span>
@@ -218,7 +219,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #ECEEF0', marginBottom: 20, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--surface-3)', marginBottom: 20, overflowX: 'auto' }}>
         {TABS.map((t) => {
           const active = filter === t.key;
           return (
@@ -226,8 +227,8 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
               style={{
                 padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 background: 'none', border: 'none', whiteSpace: 'nowrap',
-                color: active ? '#2F6DB5' : '#6E7278',
-                borderBottom: active ? '2px solid #2F6DB5' : '2px solid transparent',
+                color: active ? 'var(--accent)' : 'var(--muted)',
+                borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
               }}>
               {t.label}
             </button>
@@ -236,11 +237,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       </div>
 
       {loading ? (
-        <p style={{ fontSize: 13, color: '#6E7278', textAlign: 'center', padding: '40px 0' }}>Loading…</p>
+        <Loader label="Loading…" style={{ padding: '28px 0' }} />
       ) : visible.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#55585E', margin: 0 }}>No follow-ups</p>
-          <p style={{ fontSize: 13, color: '#9A9EA5', margin: '4px 0 0' }}>Schedule follow-ups from lead details</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-3)', margin: 0 }}>No follow-ups</p>
+          <p style={{ fontSize: 13, color: 'var(--faint)', margin: '4px 0 0' }}>Schedule follow-ups from lead details</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -248,35 +249,35 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             const overdue = fu.status === 'pending' && new Date(fu.scheduled_at) < now;
             return (
               <div key={fu.id} style={{
-                border: `1.5px solid ${overdue ? '#F7C3C6' : '#ECEEF0'}`,
-                background: overdue ? '#FDECEC' : '#fff',
+                border: `1.5px solid ${overdue ? 'var(--danger-2)' : 'var(--surface-3)'}`,
+                background: overdue ? 'var(--danger-soft)' : 'var(--surface)',
                 borderRadius: 16, padding: '14px 16px',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
               }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{fu.lead_name || 'Lead'}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{fu.lead_name || 'Lead'}</span>
                     <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
-                      color: fu.role_context === 'stm' ? '#D98A1F' : '#23874A' }}>
+                      color: fu.role_context === 'stm' ? 'var(--warning-2)' : 'var(--success)' }}>
                       {fu.role_context?.toUpperCase()}
                     </span>
                     <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14,
-                      backgroundColor: (fuStatusColor[fu.status] || '#6E7278') + '18',
-                      color: fuStatusColor[fu.status] || '#6E7278' }}>
+                      backgroundColor: `color-mix(in srgb, ${(fuStatusColor[fu.status] || 'var(--muted-solid)')} 9%, transparent)`,
+                      color: fuStatusColor[fu.status] || 'var(--muted)' }}>
                       {fu.status}
                     </span>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: overdue ? '#D9434B' : '#1D1D1F', margin: '6px 0 0' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: overdue ? 'var(--danger)' : 'var(--text)', margin: '6px 0 0' }}>
                     {fmtDateTime(fu.scheduled_at)}
                   </p>
-                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#6E7278', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
-                  {fu.remarks && <p style={{ fontSize: 12, color: '#1D1D1F', margin: '6px 0 0', fontStyle: 'italic' }}>“{fu.remarks}”</p>}
-                  {fu.outcome && <p style={{ fontSize: 12, color: '#23874A', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
+                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
+                  {fu.remarks && <p style={{ fontSize: 12, color: 'var(--text)', margin: '6px 0 0', fontStyle: 'italic' }}>“{fu.remarks}”</p>}
+                  {fu.outcome && <p style={{ fontSize: 12, color: 'var(--success)', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
                 {fu.status === 'pending' && (
                   <button onClick={() => openDone(fu)}
                     style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
-                      border: '1.5px solid #23874A', color: '#23874A', background: '#fff', cursor: 'pointer' }}>
+                      border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
                     Mark Done
                   </button>
                 )}
@@ -288,75 +289,75 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
 
       {/* Complete follow-up: remarks + optional next follow-up */}
       {done && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(29,29,31,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
           onClick={() => !submitting && setDone(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Complete follow-up</div>
-            <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2, marginBottom: 16 }}>{done.lead_name}{!!done.lead_phone && ` · ${done.lead_phone}`} · {fmtDateTime(done.scheduled_at)}</div>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 16 }}>{done.lead_name}{!!done.lead_phone && ` · ${done.lead_phone}`} · {fmtDateTime(done.scheduled_at)}</div>
 
             {/* Update the lead's status after this call (TC or STM, per the follow-up's role). */}
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E' }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>
               {done.role_context === 'stm' ? 'Update STM Status' : 'Update TC Status'}
             </label>
             <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}
-              style={{ width: '100%', marginTop: 6, marginBottom: 4, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', cursor: 'pointer', background: '#fff' }}>
+              style={{ width: '100%', marginTop: 6, marginBottom: 4, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', cursor: 'pointer', background: 'var(--surface)' }}>
               <option value="">— No change —</option>
               {(done.role_context === 'stm' ? STM_STATUS_OPTS : TC_STATUS_OPTS).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
               ))}
             </select>
             {newStatus === 'warm' && done.role_context !== 'stm' && (done.lead_telecaller_status || '') !== 'warm' && (
-              <p style={{ fontSize: 11, color: '#A3671A', margin: '2px 0 0' }}>Marking warm will transfer this lead to the STM pipeline.</p>
+              <p style={{ fontSize: 11, color: 'var(--warning)', margin: '2px 0 0' }}>Marking warm will transfer this lead to the STM pipeline.</p>
             )}
 
             {/* Same two hand-offs the lead modal offers, so a status set here behaves
                 identically to one set on the lead. */}
             {newStatus === 'sv_scheduled' && (
-              <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: 14, marginTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#23874A', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 10 }}>
+              <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', borderRadius: 16, padding: 14, marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 10 }}>
                   <Icon name="pin" /> Schedule Site Visit
                 </div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#23874A' }}>Date &amp; Time <span style={{ color: '#D9434B' }}>*</span></label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>Date &amp; Time <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <input type="datetime-local" value={svAt} onChange={(e) => setSvAt(e.target.value)}
-                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#23874A', display: 'block', marginTop: 10 }}>Visit Remarks</label>
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)', display: 'block', marginTop: 10 }}>Visit Remarks</label>
                 <input value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…"
-                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
-                {!svAt && <p style={{ fontSize: 11, color: '#23874A', margin: '8px 0 0' }}>Set a date &amp; time to create the site visit automatically.</p>}
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                {!svAt && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Set a date &amp; time to create the site visit automatically.</p>}
               </div>
             )}
             {newStatus === 'closed' && (
-              <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: '12px 14px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ color: '#23874A' }}><Icon name="check-circle" /></span>
-                <span style={{ fontSize: 12, color: '#23874A', fontWeight: 600 }}>
+              <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', borderRadius: 16, padding: '12px 14px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: 'var(--success)' }}><Icon name="check-circle" /></span>
+                <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>
                   Marking done takes you to the booking flow — pick the unit(s) and record the booking for this lead.
                 </span>
               </div>
             )}
 
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E', display: 'block', marginTop: 14 }}>Remarks</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', display: 'block', marginTop: 14 }}>Remarks</label>
             <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
-              style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
+              style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: '#1D1D1F', cursor: 'pointer' }}>
-              <input type="checkbox" checked={schedNext} onChange={(e) => setSchedNext(e.target.checked)} style={{ accentColor: '#2F6DB5' }} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={schedNext} onChange={(e) => setSchedNext(e.target.checked)} style={{ accentColor: 'var(--accent)' }} />
               Schedule next follow-up
             </label>
             {schedNext && (
               <div style={{ marginTop: 12, paddingLeft: 4 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E' }}>Next follow-up date &amp; time</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>Next follow-up date &amp; time</label>
                 <input type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
-                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#55585E', display: 'block', marginTop: 10 }}>Next follow-up note</label>
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', display: 'block', marginTop: 10 }}>Next follow-up note</label>
                 <textarea value={nextRemarks} onChange={(e) => setNextRemarks(e.target.value)} rows={2} placeholder="What to discuss next…"
-                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
+                  style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={completeFollowUp} disabled={submitting || (schedNext && !nextAt)}
-                style={{ padding: '9px 20px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !nextAt)) ? 0.6 : 1 }}>
+                style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !nextAt)) ? 0.6 : 1 }}>
                 {submitting ? 'Saving…' : newStatus === 'closed' ? 'Record Closure →' : 'Mark Done'}
               </button>
             </div>

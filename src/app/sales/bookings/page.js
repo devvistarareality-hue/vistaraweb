@@ -10,14 +10,16 @@ import BookingDetails from '../../../components/BookingDetails';
 
 
 import Icon from '../../../components/Icon';
+import { confirmDialog, notify } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 // Open the confidential LOI via a short-lived signed URL (never a public link).
 async function openLoi(id) {
   try {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
     const d = await r.json();
     if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else alert('Could not open the LOI.');
-  } catch { alert('Could not open the LOI.'); }
+    else notify('Could not open the LOI.');
+  } catch { notify('Could not open the LOI.'); }
 }
 
 // Cancelled sits beside Rejected rather than inside it: both are stored at
@@ -30,9 +32,9 @@ const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['sold', 'Approved'],
 // A deal on the books should name the person who put it there, and a cancellation
 // should name whoever took a live sale off them.
 function decidedBy(b) {
-  if (b.cancelled_by_name) return { label: 'Cancelled by', who: b.cancelled_by_name, at: b.cancelled_at, tone: '#3A3C40' };
-  if (b.rejected_by_name)  return { label: 'Rejected by',  who: b.rejected_by_name,  at: b.rejected_at,  tone: '#D9434B' };
-  if (b.approved_by_name)  return { label: 'Approved by',  who: b.approved_by_name,  at: b.approved_at,  tone: '#23874A' };
+  if (b.cancelled_by_name) return { label: 'Cancelled by', who: b.cancelled_by_name, at: b.cancelled_at, tone: 'var(--text-2)' };
+  if (b.rejected_by_name)  return { label: 'Rejected by',  who: b.rejected_by_name,  at: b.rejected_at,  tone: 'var(--danger)' };
+  if (b.approved_by_name)  return { label: 'Approved by',  who: b.approved_by_name,  at: b.approved_at,  tone: 'var(--success)' };
   return null;
 }
 
@@ -60,25 +62,25 @@ function DecidedBy({ b, style }) {
     <div style={{ marginTop: 4, ...style }}>
       {d && (
         <div style={{ fontSize: 11.5, color: d.tone, fontWeight: 600 }}>
-          {d.label} {d.who}<span style={{ color: '#6E7278', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
+          {d.label} {d.who}<span style={{ color: 'var(--muted)', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
         </div>
       )}
       {showAccounts && acc === 'approved' && (
-        <div style={{ fontSize: 11.5, color: '#23874A', fontWeight: 600 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--success)', fontWeight: 600 }}>
           Accounts approved{b.accounts_approved_by_name ? ` by ${b.accounts_approved_by_name}` : ''}
-          <span style={{ color: '#6E7278', fontWeight: 500 }}>{decidedWhen(b.accounts_approved_at)}</span>
+          <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{decidedWhen(b.accounts_approved_at)}</span>
         </div>
       )}
       {showAccounts && acc === 'pending' && (
-        <div style={{ fontSize: 11.5, color: '#A3671A', fontWeight: 600 }}>
-          Awaiting Accounts approval <span style={{ color: '#6E7278', fontWeight: 500 }}>· unit held, not yet sold</span>
+        <div style={{ fontSize: 11.5, color: 'var(--warning)', fontWeight: 600 }}>
+          Awaiting Accounts approval <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· unit held, not yet sold</span>
         </div>
       )}
       {showAccounts && acc === 'rejected' && (
-        <div style={{ fontSize: 11.5, color: '#D9434B', fontWeight: 600 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--danger)', fontWeight: 600 }}>
           Accounts rejected{b.accounts_rejected_by_name ? ` by ${b.accounts_rejected_by_name}` : ''}
-          <span style={{ color: '#6E7278', fontWeight: 500 }}>{decidedWhen(b.accounts_rejected_at)}</span>
-          {b.accounts_rejected_reason ? <span style={{ color: '#6E7278', fontWeight: 500 }}> · {b.accounts_rejected_reason}</span> : null}
+          <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{decidedWhen(b.accounts_rejected_at)}</span>
+          {b.accounts_rejected_reason ? <span style={{ color: 'var(--muted)', fontWeight: 500 }}> · {b.accounts_rejected_reason}</span> : null}
         </div>
       )}
     </div>
@@ -128,19 +130,19 @@ export function ExportBookings({ projects, companyId }) {
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
       <select value={project} onChange={(e) => setProject(e.target.value)}
-        style={{ padding: '7px 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, background: '#fff', color: '#1D1D1F' }}>
+        style={{ padding: '7px 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)' }}>
         <option value="">All projects</option>
         {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
       <button onClick={download} disabled={busy} title="Approved bookings, Sales and CP together"
         style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
-                 cursor: busy ? 'default' : 'pointer', background: '#23874A', color: '#fff', opacity: busy ? 0.7 : 1 }}>
+                 cursor: busy ? 'default' : 'pointer', background: 'var(--success-solid)', color: '#fff', opacity: busy ? 0.7 : 1 }}>
         {busy ? 'Preparing…' : '⤓ Excel'}
       </button>
       {/* Says what the sheet holds, because this control also sits above My Bookings
           and the download is emphatically not that list. */}
-      <span style={{ fontSize: 12, color: '#6E7278' }}>All approved bookings · Sales + CP</span>
-      {err && <span style={{ fontSize: 12, color: '#D9434B', fontWeight: 600 }}>{err}</span>}
+      <span style={{ fontSize: 12, color: 'var(--muted)' }}>All approved bookings · Sales + CP</span>
+      {err && <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600 }}>{err}</span>}
     </div>
   );
 }
@@ -218,7 +220,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       // must not sit there looking checked, only to silently revert on the next
       // visit with no indication anything went wrong at the time.
       setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
-      alert('Could not save this approver — please try again.');
+      notify('Could not save this approver — please try again.');
       return;
     }
     setSavedCfg("Saved"); setTimeout(() => setSavedCfg(''), 1500);
@@ -267,7 +269,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // Discarding a draft releases whatever plot(s) it still holds and deletes the row —
   // irreversible, but a draft is scratch work, not a real submission.
   async function discardDraft(id) {
-    if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
+    if (!(await confirmDialog('Discard this draft? This can\'t be undone.'))) return;
     setBusy(id);
     await fetch(SALES_ENDPOINTS.bookingDiscard(id) + cq('?'), { method: 'POST', headers: authHeaders() }).catch(() => {});
     setBusy(null); load();
@@ -280,8 +282,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
     setBusy(b.id);
     try {
       const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders() });
-      if (!r.ok) { const d = await r.json().catch(() => ({})); alert('Cancel failed: ' + (d.detail || r.status)); }
-    } catch (e) { alert(e.message); }
+      if (!r.ok) { const d = await r.json().catch(() => ({})); notify('Cancel failed: ' + (d.detail || r.status)); }
+    } catch (e) { notify(e.message); }
     setToCancel(null); setBusy(null); load();
   }
 
@@ -344,37 +346,37 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Bookings &amp; Approvals</h1>
-      <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 16 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Bookings &amp; Approvals</h1>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         {narrowed ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
       </p>
 
       {xfers.length > 0 && (
-        <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', borderLeft: '4px solid #A3671A' }}>
-          <p style={{ fontSize: 13, fontWeight: 800, color: '#A3671A', margin: '0 0 2px' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', borderLeft: '4px solid var(--warning)' }}>
+          <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--warning)', margin: '0 0 2px' }}>
             ⇄ Lead Transfers awaiting your approval · {xfers.length}
           </p>
-          <p style={{ fontSize: 12, color: '#6E7278', margin: '0 0 12px' }}>
+          <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 12px' }}>
             The lead stays with the current STM until you approve.
           </p>
           <div style={{ display: 'grid', gap: 8 }}>
             {xfers.map((x) => (
               <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-                border: '1px solid #F4F5F7', borderRadius: 14, padding: '10px 12px', background: '#FFF3E0' }}>
+                border: '1px solid var(--surface-2)', borderRadius: 14, padding: '10px 12px', background: 'var(--warning-soft)' }}>
                 <div style={{ flex: '1 1 320px', minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
-                    {x.lead_name || 'Lead'} {x.project_name && <span style={{ fontWeight: 500, color: '#6E7278' }}>· {x.project_name}</span>}
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+                    {x.lead_name || 'Lead'} {x.project_name && <span style={{ fontWeight: 500, color: 'var(--muted)' }}>· {x.project_name}</span>}
                   </p>
-                  <p style={{ fontSize: 12, color: '#55585E', margin: '3px 0 0' }}>
-                    {x.from_stm_name || 'Unassigned'} <span style={{ color: '#A3671A', fontWeight: 700 }}>→</span> {x.to_stm_name}
-                    {x.reason ? <span style={{ color: '#6E7278' }}> · {x.reason}</span> : null}
+                  <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '3px 0 0' }}>
+                    {x.from_stm_name || 'Unassigned'} <span style={{ color: 'var(--warning)', fontWeight: 700 }}>→</span> {x.to_stm_name}
+                    {x.reason ? <span style={{ color: 'var(--muted)' }}> · {x.reason}</span> : null}
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => actOnTransfer(x.id, 'reject')} disabled={xferBusy === x.id}
-                    style={{ padding: '8px 14px', background: '#fff', color: '#D9434B', border: '1.5px solid #F7C3C6', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Reject</button>
+                    style={{ padding: '8px 14px', background: 'var(--surface)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Reject</button>
                   <button onClick={() => actOnTransfer(x.id, 'approve')} disabled={xferBusy === x.id}
-                    style={{ padding: '8px 16px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    style={{ padding: '8px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     {xferBusy === x.id ? '…' : 'Approve'}
                   </button>
                 </div>
@@ -385,16 +387,16 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       )}
 
       {isAdmin && !cpMode && (
-        <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#2F6DB5', padding: 0 }}>
-            <Icon name="settings" /> Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#23874A', fontWeight: 700 }}> {savedCfg}</span>}
+        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
+            <Icon name="settings" /> Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: 'var(--success)', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: '#6E7278', marginBottom: 8 }}>For each project, pick the managers who approve its bookings. They get a push notification on each new booking for that project.</div>
-              {managers.length === 0 ? <div style={{ fontSize: 13, color: '#6E7278' }}>No managers in this company.</div> : projects.map((p) => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F4F5F7' }}>
-                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{p.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>For each project, pick the managers who approve its bookings. They get a push notification on each new booking for that project.</div>
+              {managers.length === 0 ? <div style={{ fontSize: 13, color: 'var(--muted)' }}>No managers in this company.</div> : projects.map((p) => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid var(--surface-2)' }}>
+                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{p.name}</div>
                   <ApproverDropdown project={p} managers={managers} onToggle={toggleApprover} />
                 </div>
               ))}
@@ -409,16 +411,16 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           Shown only in the Channel Partner module — the main Sales Approvals
           page keeps just the regular selector above. */}
       {isAdmin && cpMode && (
-        <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#2F6DB5', padding: 0 }}>
-            <Icon name="settings" /> Channel Partner Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#23874A', fontWeight: 700 }}> {savedCfg}</span>}
+        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
+            <Icon name="settings" /> Channel Partner Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: 'var(--success)', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: '#6E7278', marginBottom: 8 }}>For each project, pick who approves bookings whose lead came through a Channel Partner. Only they (not the main Sales module's regular approvers) can approve those.</div>
-              {cpModuleUsers.length === 0 ? <div style={{ fontSize: 13, color: '#6E7278' }}>No one has Channel Partner module access yet.</div> : projects.map((p) => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid #F4F5F7' }}>
-                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{p.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>For each project, pick who approves bookings whose lead came through a Channel Partner. Only they (not the main Sales module's regular approvers) can approve those.</div>
+              {cpModuleUsers.length === 0 ? <div style={{ fontSize: 13, color: 'var(--muted)' }}>No one has Channel Partner module access yet.</div> : projects.map((p) => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid var(--surface-2)' }}>
+                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{p.name}</div>
                   <ApproverDropdown project={p} managers={cpModuleUsers} onToggle={(projId, uid) => toggleApprover(projId, uid, 'cp_booking_approvers')} field="cp_booking_approvers" />
                 </div>
               ))}
@@ -435,30 +437,30 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
             <button key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              background: tab === k ? '#2F6DB5' : '#ECEEF0', color: tab === k ? '#fff' : '#6E7278' }}>{label}</button>
+              background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
         {!cpMode && <ExportBookings projects={projects} companyId={companyId} />}
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}><Icon name="search" /></span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group the user collapsed earlier would hide its own hits. */}
           <input value={q} onChange={(e) => { setQ(e.target.value); setOpenProj({}); }}
             placeholder="Search name, phone or LOI / unit no…"
-            style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid #DFE2E6',
-              background: '#fff', fontSize: 13, color: '#1D1D1F', boxSizing: 'border-box' }} />
+            style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid var(--border)',
+              background: 'var(--surface)', fontSize: 13, color: 'var(--text)', boxSizing: 'border-box' }} />
           {!!q && (
             <button onClick={() => { setQ(''); setOpenProj({}); }} title="Clear search"
               style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
-                color: '#6E7278', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
+                color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
         {/* Which project, and whose bookings — one value at a time. Options come from
             the loaded tab, so a tab holding a single project or STM shows no control. */}
         {projOptions.length > 1 && (
           <select value={proj} onChange={(e) => { setProj(e.target.value); setOpenProj({}); }}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? '#2F6DB5' : '#DFE2E6'}`,
-              background: '#fff', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? '#1D1D1F' : '#6E7278',
+            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? 'var(--accent)' : 'var(--border)'}`,
+              background: 'var(--surface)', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)',
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
             <option value="">All Projects</option>
             {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -466,8 +468,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         )}
         {stmOptions.length > 1 && (
           <select value={stm} onChange={(e) => { setStm(e.target.value); setOpenProj({}); }}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${stm ? '#2F6DB5' : '#DFE2E6'}`,
-              background: '#fff', fontSize: 13, fontWeight: stm ? 700 : 500, color: stm ? '#1D1D1F' : '#6E7278',
+            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${stm ? 'var(--accent)' : 'var(--border)'}`,
+              background: 'var(--surface)', fontSize: 13, fontWeight: stm ? 700 : 500, color: stm ? 'var(--text)' : 'var(--muted)',
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
             <option value="">All STMs</option>
             {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -479,8 +481,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           <button onClick={() => setResale(resale ? '' : 'yes')}
             title="Units sold once, put back on the market and sold again"
             style={{ height: 36, padding: '0 14px', borderRadius: 8, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', border: `1.5px solid ${resale ? '#245A96' : '#DFE2E6'}`,
-              background: resale ? '#E6F2FF' : '#fff', color: resale ? '#245A96' : '#6E7278' }}>
+              cursor: 'pointer', border: `1.5px solid ${resale ? 'var(--accent-deep)' : 'var(--border)'}`,
+              background: resale ? 'var(--accent-soft)' : 'var(--surface)', color: resale ? 'var(--accent-deep)' : 'var(--muted)' }}>
             Resale ({resaleCount})
           </button>
         )}
@@ -488,8 +490,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
       {!loading && visible.length > 0 && (
         <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
-          background: 'linear-gradient(135deg,#2F6DB5,#245A96)', borderRadius: 18, padding: '16px 20px', boxShadow: '0 2px 8px rgba(47,109,181,0.25)' }}>
-          <div style={{ color: '#E6F2FF', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+          background: 'linear-gradient(135deg,var(--primary),var(--primary-deep))', borderRadius: 18, padding: '16px 20px', boxShadow: '0 2px 8px rgba(47,109,181,0.25)' }}>
+          <div style={{ color: 'var(--accent-soft)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
@@ -499,8 +501,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         </div>
       )}
 
-      {loading ? <p style={{ color: '#6E7278' }}>Loading…</p> : visible.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 18, padding: 40, textAlign: 'center', color: '#6E7278', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+      {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} /> : visible.length === 0 ? (
+        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           {ql ? <>No bookings match “{q.trim()}”.</>
             : stm || proj ? <>No bookings for {[stm, proj].filter(Boolean).join(' · ')}{dated ? ' in this date range' : ''}.</>
             : dated ? 'No bookings were booked in this date range.'
@@ -509,39 +511,39 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       ) : projectNames.map((pn) => (
         <div key={pn} style={{ marginBottom: 12 }}>
           <div onClick={() => toggleProj(pn)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 16,
-              padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: isOpen(pn) ? '1.5px solid #CCE5FF' : '1.5px solid transparent' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              <Icon name="building" /> {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--surface)', borderRadius: 16,
+              padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: isOpen(pn) ? '1.5px solid var(--blue-2)' : '1.5px solid transparent' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Icon name="building" /> {pn} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontSize: 14, fontWeight: 800, color: '#245A96' }}>{rupee(projectTotal(pn))}</span>
-              <span style={{ color: '#6E7278', fontSize: 13, fontWeight: 800, transform: isOpen(pn) ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--accent-deep)' }}>{rupee(projectTotal(pn))}</span>
+              <span style={{ color: 'var(--muted)', fontSize: 13, fontWeight: 800, transform: isOpen(pn) ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
             </div>
           </div>
           {isOpen(pn) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
               {groups[pn].map((b) => (
-                <div key={b.id} style={{ background: '#fff', borderRadius: 18, padding: '16px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+                <div key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F' }}>
-                        {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#A3671A', background: '#FFF3E0', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
-                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: '#245A96', background: '#E6F2FF', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
+                        {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
+                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-deep)', background: 'var(--accent-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
                       </div>
                       {/* Project lives in the group header now — don't repeat it on every card. */}
-                      <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>{b.phone} · {unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text}</div>
-                      <div style={{ fontSize: 12, color: '#55585E', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{b.phone} · {unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>STM: {b.stm_name || '—'} · Booked {b.booking_date || '—'}</div>
                       {b.is_resale && b.resale_of_client && (
-                      <div style={{ fontSize: 11.5, color: '#245A96', marginTop: 3, fontWeight: 600 }}>
+                      <div style={{ fontSize: 11.5, color: 'var(--accent-deep)', marginTop: 3, fontWeight: 600 }}>
                         Resold from {b.resale_of_client}
-                        {b.stm_name ? <span style={{ color: '#6E7278', fontWeight: 500 }}> · resold by {b.stm_name}</span> : null}
+                        {b.stm_name ? <span style={{ color: 'var(--muted)', fontWeight: 500 }}> · resold by {b.stm_name}</span> : null}
                       </div>
                     )}
                       <DecidedBy b={b} />
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#245A96' }}>{rupee(b.final_amount)}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--accent-deep)' }}>{rupee(b.final_amount)}</div>
                       {/* accounts_status='rejected' overrides approval_status here — that field
                           still reads "APPROVED" from the Sales/CP stage, which would otherwise
                           show a green/misleading pill for something Accounts has since rejected. */}
@@ -555,35 +557,35 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     </div>
                   </div>
                   {b.accounts_status === 'rejected' && (
-                    <div style={{ marginTop: 10, background: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 14, padding: '10px 12px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#D9434B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+                    <div style={{ marginTop: 10, background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 14, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
                         Rejected by Accounts{b.accounts_rejected_by_name ? ` · ${b.accounts_rejected_by_name}` : ''}
                       </div>
-                      <div style={{ fontSize: 13, color: '#A52A31' }}>{b.accounts_rejected_reason || '—'}</div>
+                      <div style={{ fontSize: 13, color: 'var(--danger-deep)' }}>{b.accounts_rejected_reason || '—'}</div>
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                    {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
+                    {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                     {/* A revised deal gets its Details per version inside the history
                         instead — the current version is one of them, so a card-level
                         copy would be the same figures twice. */}
                     {!b.revision_no && (
                       <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
-                        style={{ ...linkBtn, background: '#fff', cursor: 'pointer', borderColor: '#C9CDD2', color: '#1D1D1F' }}>
+                        style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer', borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                         {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
                       </button>
                     )}
                     {b.revision_no > 0 && (
                       <button onClick={() => toggleRevisions(b.id)}
-                        style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>
+                        style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}>
                         ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
                       </button>
                     )}
                     {b.status === 'draft' && (
                       <>
-                        <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#2F6DB5' }}>▸ Resume</button>
+                        <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
                         <button onClick={() => discardDraft(b.id)} disabled={busy === b.id}
-                          style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}><Icon name="x" /> Discard</button>
+                          style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
                       </>
                     )}
                     {/* The server decides per booking, not per person: routing sends a
@@ -593,21 +595,21 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                         buttons anyway made the click fail silently. */}
                     {b.status === 'pending' && isApprover && b.can_approve && (
                       <>
-                        <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#23874A' }}><Icon name="check" /> Approve</button>
-                        <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#D9434B' }}><Icon name="x" /> Reject</button>
+                        <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
+                        <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
                       </>
                     )}
                     {b.status === 'sold' && (() => {
                       const isEoi = String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
                       return (
                         <>
-                          {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#D98A1F' }}>→ Convert to LOI</button>}
-                          <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: '#2F6DB5' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
+                          {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>}
+                          <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
                           {/* Only an approver can cancel, and only once the booking has a
                               closure to cancel through. */}
                           {isApprover && b.closure && (
                             <button onClick={() => setToCancel(b)} disabled={busy === b.id}
-                              style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}><Icon name="x" /> Cancel Booking</button>
+                              style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Cancel Booking</button>
                           )}
                         </>
                       );
@@ -615,37 +617,37 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                   </div>
                   {!b.revision_no && cardDetails[b.id] && <BookingDetails b={b} accent="#2F6DB5" />}
                   {revOpen[b.id] && (
-                    <div style={{ marginTop: 12, borderTop: '1.5px solid #ECEEF0', paddingTop: 10 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: '#6E7278', letterSpacing: 0.6, marginBottom: 8 }}>
+                    <div style={{ marginTop: 12, borderTop: '1.5px solid var(--surface-3)', paddingTop: 10 }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginBottom: 8 }}>
                         REVISION HISTORY
                       </div>
-                      {!revs[b.id] ? <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Loading…</p>
-                       : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Couldn&apos;t load the history.</p>
+                      {!revs[b.id] ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Loading…</p>
+                       : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Couldn&apos;t load the history.</p>
                        : revs[b.id].map((v) => (
                         <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
-                          padding: '7px 0', borderBottom: '1px solid #F4F5F7' }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? '#23874A' : '#55585E',
-                            background: v.id === b.id ? '#E9FBEA' : '#F4F5F7', padding: '3px 8px', borderRadius: 20 }}>
+                          padding: '7px 0', borderBottom: '1px solid var(--surface-2)' }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
+                            background: v.id === b.id ? 'var(--success-soft)' : 'var(--surface-2)', padding: '3px 8px', borderRadius: 20 }}>
                             R{v.revision_no || 0}
                           </span>
-                          <span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
-                          <span style={{ fontSize: 12, color: '#6E7278' }}>
+                          <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
+                          <span style={{ fontSize: 12, color: 'var(--muted)' }}>
                             Booked {v.booking_date || '—'} · {(v.approval_status || v.status || '').toUpperCase()}
                             {v.stm_name ? ` · ${v.stm_name}` : ''}
                           </span>
                           {v.id === b.id
-                            ? <span style={{ fontSize: 10, fontWeight: 800, color: '#23874A' }}>CURRENT</span>
-                            : <span style={{ fontSize: 10, fontWeight: 700, color: '#6E7278' }}>superseded</span>}
+                            ? <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)' }}>CURRENT</span>
+                            : <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>superseded</span>}
                           <span style={{ flex: 1 }} />
                           {v.loi_document
                             ? <button onClick={() => openLoi(v.id)}
-                                style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>
+                                style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer' }}>
                                 <Icon name="file" /> Signed LOI
                               </button>
-                            : <span style={{ fontSize: 11, color: '#9A9EA5' }}>no LOI on file</span>}
+                            : <span style={{ fontSize: 11, color: 'var(--faint)' }}>no LOI on file</span>}
                           <button onClick={() => setRevDetails((o) => ({ ...o, [v.id]: !o[v.id] }))}
-                            style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer',
-                              borderColor: '#C9CDD2', color: '#1D1D1F' }}>
+                            style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer',
+                              borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                             {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}
                           </button>
                           {revDetails[v.id] && (
@@ -676,30 +678,30 @@ function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div onClick={busy ? undefined : onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(29,29,31,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()}
-        style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(29,29,31,0.3)' }}>
-        <div style={{ fontSize: 18, fontWeight: 800, color: '#D9434B', marginBottom: 6 }}>Cancel this booking?</div>
-        <p style={{ fontSize: 13, color: '#55585E', marginBottom: 16, lineHeight: 1.6 }}>
+        style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
           This frees the unit back to <b>available</b>, permanently deletes the signed
           {' '}{String(b.plot_numbers || '').toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'} from storage,
           and removes it from conversions. <b>This cannot be undone.</b>
         </p>
-        <div style={{ background: '#F4F5F7', border: '1px solid #DFE2E6', borderRadius: 14, padding: '12px 14px', marginBottom: 20 }}>
+        <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 20 }}>
           {[['Client', b.client_name || '—'], ['Project', b.project_name || '—'], ['Unit', unit], ['Amount', rupee(b.final_amount)]].map(([k, v]) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '4px 0' }}>
-              <span style={{ fontSize: 12, color: '#6E7278', fontWeight: 600 }}>{k}</span>
-              <span style={{ fontSize: 13, color: '#1D1D1F', fontWeight: 700, textAlign: 'right' }}>{v}</span>
+              <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>{k}</span>
+              <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 700, textAlign: 'right' }}>{v}</span>
             </div>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button onClick={onClose} disabled={busy}
-            style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid #C9CDD2', background: '#fff', color: '#1D1D1F', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
             Keep Booking
           </button>
           <button onClick={onConfirm} disabled={busy}
-            style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: busy ? '#F7C3C6' : '#D9434B', color: '#fff', fontSize: 13, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: busy ? 'var(--danger-2)' : 'var(--danger-solid)', color: '#fff', fontSize: 13, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer' }}>
             {busy ? 'Cancelling…' : 'Yes, Cancel Booking'}
           </button>
         </div>
@@ -720,28 +722,28 @@ function ApproverDropdown({ project, managers, onToggle, field = 'booking_approv
     <div style={{ position: 'relative', flex: 1, maxWidth: 460 }}>
       <button onClick={() => setOpen((o) => !o)} style={{
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-        padding: '9px 12px', borderRadius: 9, border: '1.5px solid #DFE2E6', background: '#fff', cursor: 'pointer',
-        fontSize: 13, color: selNames.length ? '#1D1D1F' : '#9A9EA5', textAlign: 'left',
+        padding: '9px 12px', borderRadius: 9, border: '1.5px solid var(--border)', background: 'var(--surface)', cursor: 'pointer',
+        fontSize: 13, color: selNames.length ? 'var(--text)' : 'var(--faint)', textAlign: 'left',
       }}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: selNames.length ? 600 : 400 }}>
           {selNames.length ? selNames.join(', ') : 'Select approvers…'}
         </span>
-        <span style={{ color: '#6E7278', flexShrink: 0 }}>{open ? '▴' : '▾'}</span>
+        <span style={{ color: 'var(--muted)', flexShrink: 0 }}>{open ? '▴' : '▾'}</span>
       </button>
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: '#fff',
-            border: '1px solid #ECEEF0', borderRadius: 14, boxShadow: '0 10px 30px rgba(110,114,120,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
+          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
+            border: '1px solid var(--surface-3)', borderRadius: 14, boxShadow: '0 10px 30px rgba(110,114,120,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
             {managers.map((m) => {
               const on = sel.includes(m.id);
               return (
                 <div key={m.id} onClick={() => onToggle(project.id, m.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 7, cursor: 'pointer' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#F4F5F7'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
                   <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 800, color: '#fff', background: on ? '#2F6DB5' : '#fff', border: `1.5px solid ${on ? '#2F6DB5' : '#C9CDD2'}` }}>{on ? <Icon name="check" /> : ''}</span>
-                  <span style={{ fontSize: 13, color: '#1D1D1F', fontWeight: 600 }}>{m.name}</span>
-                  {m.designation && <span style={{ fontSize: 11, color: '#6E7278' }}>· {m.designation}</span>}
+                    fontSize: 11, fontWeight: 800, color: '#fff', background: on ? 'var(--primary)' : 'var(--surface)', border: `1.5px solid ${on ? 'var(--accent)' : 'var(--border-strong)'}` }}>{on ? <Icon name="check" /> : ''}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>{m.name}</span>
+                  {m.designation && <span style={{ fontSize: 11, color: 'var(--muted)' }}>· {m.designation}</span>}
                 </div>
               );
             })}
@@ -756,9 +758,9 @@ function ApproverDropdown({ project, managers, onToggle, field = 'booking_approv
 // the unit is on hold, not sold. Showing a green APPROVED there told a rep the deal
 // was done a stage early, so the pill says what is actually true.
 function statusPill(s) {
-  const map = { draft: ['#2F6DB5', '#F3F9FF'], pending: ['#A3671A', '#FFF3E0'], sold: ['#23874A', '#E9FBEA'], rejected: ['#D9434B', '#FDECEC'], hold: ['#A3671A', '#FFF3E0'] };
-  const [c, bg] = map[s] || ['#55585E', '#F4F5F7'];
+  const map = { draft: ['var(--accent)', 'var(--accent-softer)'], pending: ['var(--warning)', 'var(--warning-soft)'], sold: ['var(--success)', 'var(--success-soft)'], rejected: ['var(--danger)', 'var(--danger-soft)'], hold: ['var(--warning)', 'var(--warning-soft)'] };
+  const [c, bg] = map[s] || ['var(--text-3)', 'var(--surface-2)'];
   return { display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
 const actBtn = { padding: '8px 16px', borderRadius: 8, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const linkBtn = { padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CCE5FF', color: '#2F6DB5', fontSize: 13, fontWeight: 700, textDecoration: 'none' };
+const linkBtn = { padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--blue-2)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, textDecoration: 'none' };

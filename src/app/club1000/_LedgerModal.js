@@ -6,18 +6,19 @@ import { formatDMY } from '../../lib/dateFormat';
 import { fmtMoney } from './_StatCard';
 
 import Icon from '../../components/Icon';
-const TEAL = '#23874A';
+import Loader from '../../components/Loader';
+const TEAL = 'var(--success)';
 
 const TYPE_COLOR = {
-  investment: { bg: '#E6F2FF', fg: '#245A96' },
-  interest: { bg: '#E9FBEA', fg: '#23874A' },
-  maturity: { bg: '#E6F2FF', fg: '#245A96' },
-  premature_redemption: { bg: '#FFF3E0', fg: '#D98A1F' },
+  investment: { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
+  interest: { bg: 'var(--success-soft)', fg: 'var(--success)' },
+  maturity: { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
+  premature_redemption: { bg: 'var(--warning-soft)', fg: 'var(--warning-2)' },
 };
 const STATUS_COLOR = {
-  completed: { bg: '#E9FBEA', fg: '#23874A' },
-  paid: { bg: '#E9FBEA', fg: '#23874A' },
-  pending: { bg: '#FFF3E0', fg: '#A3671A' },
+  completed: { bg: 'var(--success-soft)', fg: 'var(--success)' },
+  paid: { bg: 'var(--success-soft)', fg: 'var(--success)' },
+  pending: { bg: 'var(--warning-soft)', fg: 'var(--warning)' },
 };
 
 function Badge({ label, color }) {
@@ -47,64 +48,64 @@ export default function LedgerModal({ investorId, onClose }) {
   const s = data?.summary;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Ledger{inv ? ` — ${inv.name}` : ''}</div>
-            {inv && <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>{inv.phone} · {inv.scheme_name}</div>}
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Ledger{inv ? ` — ${inv.name}` : ''}</div>
+            {inv && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{inv.phone} · {inv.scheme_name}</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}><Icon name="x" /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--faint)', cursor: 'pointer' }}><Icon name="x" /></button>
         </div>
 
         <div style={{ padding: '18px 22px' }}>
           {loading ? (
-            <p style={{ textAlign: 'center', color: '#6E7278', padding: '32px 0' }}>Loading…</p>
+            <Loader label="Loading…" style={{ padding: '28px 0' }} />
           ) : err ? (
-            <p style={{ textAlign: 'center', color: '#D9434B', padding: '32px 0' }}>{err}</p>
+            <p style={{ textAlign: 'center', color: 'var(--danger)', padding: '32px 0' }}>{err}</p>
           ) : (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
                 {[
-                  ['Invested', s.total_invested, '#245A96'],
-                  ['Total Scheduled', s.total_payout_due, '#245A96'],
-                  ['Paid Out', s.total_paid, '#23874A'],
-                  ['Pending', s.total_pending, '#A3671A'],
+                  ['Invested', s.total_invested, 'var(--accent-deep)'],
+                  ['Total Scheduled', s.total_payout_due, 'var(--accent-deep)'],
+                  ['Paid Out', s.total_paid, 'var(--success)'],
+                  ['Pending', s.total_pending, 'var(--warning)'],
                 ].map(([label, val, color]) => (
-                  <div key={label} style={{ background: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 16, padding: '12px 14px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{label}</div>
+                  <div key={label} style={{ background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 16, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{label}</div>
                     <div style={{ fontSize: 17, fontWeight: 800, color }}>{fmtMoney(val)}</div>
                   </div>
                 ))}
               </div>
 
-              <div style={{ border: '1px solid #ECEEF0', borderRadius: 16, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--surface-3)', borderRadius: 16, overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
-                    <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
+                    <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                       {['Date', 'Type', 'Amount', 'Status', 'Paid On'].map((h) => (
-                        <th key={h} style={{ padding: '9px 14px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.4 }}>{h}</th>
+                        <th key={h} style={{ padding: '9px 14px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {data.entries.map((e, i) => (
                       <tr key={i}>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7' }}>{formatDMY(e.date)}</td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7' }}>
-                          <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: '#F4F5F7', fg: '#55585E' }} />
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid var(--surface-2)' }}>{formatDMY(e.date)}</td>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid var(--surface-2)' }}>
+                          <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7', fontWeight: 700, color: '#1D1D1F' }}>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid var(--surface-2)', fontWeight: 700, color: 'var(--text)' }}>
                           {fmtMoney(e.amount)}
                           {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && (
-                            <div style={{ fontSize: 11, fontWeight: 600, color: '#A3671A' }}>Paid {fmtMoney(e.paid_amount)}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--warning)' }}>Paid {fmtMoney(e.paid_amount)}</div>
                           )}
-                          {!!e.notes && <div style={{ fontSize: 11, fontWeight: 400, color: '#6E7278', fontStyle: 'italic', marginTop: 2 }}>"{e.notes}"</div>}
+                          {!!e.notes && <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--muted)', fontStyle: 'italic', marginTop: 2 }}>"{e.notes}"</div>}
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7' }}>
-                          <Badge label={e.status} color={STATUS_COLOR[e.status] || { bg: '#F4F5F7', fg: '#55585E' }} />
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid var(--surface-2)' }}>
+                          <Badge label={e.status} color={STATUS_COLOR[e.status] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
                         </td>
-                        <td style={{ padding: '10px 14px', borderTop: '1px solid #F4F5F7', color: '#6E7278' }}>{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
+                        <td style={{ padding: '10px 14px', borderTop: '1px solid var(--surface-2)', color: 'var(--muted)' }}>{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

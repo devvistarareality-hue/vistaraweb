@@ -13,17 +13,19 @@ import { fieldFlags } from '../../../../lib/bookingFormulas';
 
 
 import Icon from '../../../../components/Icon';
+import { confirmDialog, notify } from '../../../../lib/notify';
+import Loader from '../../../../components/Loader';
 const STATUS_CFG = {
-  available: { label: 'Available', color: '#23874A', bg: '#E9FBEA', border: '#23874A', zone: '#23874a' },
+  available: { label: 'Available', color: 'var(--success)', bg: 'var(--success-soft)', border: 'var(--success)', zone: 'var(--success)' },
   // Covers both a soft pick (auto-expires in 10 min) and a hard hold backed by
   // a pending-approval booking — "Hold" read as one deliberate state and
   // confused which of the two it was. "In Progress" reads correctly for both.
-  hold:      { label: 'In Progress', color: '#3A3C40', bg: '#F4F5F7', border: '#3A3C40', zone: '#2F6DB5' },
-  sold:      { label: 'Sold',      color: '#D9434B', bg: '#FDECEC', border: '#D9434B', zone: '#d9434b' },
+  hold:      { label: 'In Progress', color: 'var(--text-2)', bg: 'var(--surface-2)', border: 'var(--text-2)', zone: 'var(--accent)' },
+  sold:      { label: 'Sold',      color: 'var(--danger)', bg: 'var(--danger-soft)', border: 'var(--danger)', zone: 'var(--danger)' },
   // A previously-sold unit an admin has put back on the market — bookable
   // exactly like Available, just kept visually distinct (purple, not green)
   // so the team can tell a fresh unit from a resale one at a glance.
-  resale:    { label: 'Resale',    color: '#2F6DB5', bg: '#E6F2FF', border: '#2F6DB5', zone: '#a2d2ff' },
+  resale:    { label: 'Resale',    color: 'var(--accent)', bg: 'var(--accent-soft)', border: 'var(--accent)', zone: '#a2d2ff' },
 };
 
 /* ─── Zone center helper ─── */
@@ -206,8 +208,8 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
 
   const deleteZone = (zoneId) => persistZones(zones.filter(z => z.id !== zoneId));
 
-  const clearAll = () => {
-    if (!window.confirm('Delete all zones? This cannot be undone.')) return;
+  const clearAll = async () => {
+    if (!(await confirmDialog('Delete all zones? This cannot be undone.'))) return;
     persistZones([]);
   };
 
@@ -227,33 +229,33 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
 
   const getZoneColor = (plotNumber) => {
     const plot = plots.find(p => String(p.number) === String(plotNumber));
-    if (!plot) return '#A3671A';
-    return STATUS_CFG[plot.status]?.zone || '#A3671A';
+    if (!plot) return 'var(--warning)';
+    return STATUS_CFG[plot.status]?.zone || 'var(--warning)';
   };
 
   return (
-    <div style={{ backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, overflow: 'hidden', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
       {/* Header */}
-      <div style={{ padding: '14px 18px', borderBottom: '1px solid #F4F5F7', background: '#F3F9FF' }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--surface-2)', background: 'var(--accent-softer)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {heading || 'Interactive Site Map'}
           </div>
           {siteMapImage && (
             <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-              background: zones.length === totalPlots ? '#E9FBEA' : '#F3F9FF',
-              color: zones.length === totalPlots ? '#23874A' : '#2F6DB5' }}>
+              background: zones.length === totalPlots ? 'var(--success-soft)' : 'var(--accent-softer)',
+              color: zones.length === totalPlots ? 'var(--success)' : 'var(--accent)' }}>
               {zones.length}/{totalPlots} mapped
             </span>
           )}
         </div>
-        <p style={{ fontSize: 12, color: '#6E7278', marginTop: 4 }}>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
           {blurb || 'Drag rectangles or click polygon vertices over each plot on the master plan. Zones turn green/red automatically based on plot status.'}
         </p>
         {extraHeader}
         {siteMapImage && totalPlots > 0 && (
-          <div style={{ height: 5, borderRadius: 4, background: '#F4F5F7', overflow: 'hidden', marginTop: 8 }}>
-            <div style={{ height: '100%', width: `${mappedPct}%`, background: 'linear-gradient(90deg,#2F6DB5,#23874a)', borderRadius: 4, transition: 'width 0.4s' }} />
+          <div style={{ height: 5, borderRadius: 4, background: 'var(--surface-2)', overflow: 'hidden', marginTop: 8 }}>
+            <div style={{ height: '100%', width: `${mappedPct}%`, background: 'linear-gradient(90deg,var(--primary),var(--success-solid))', borderRadius: 4, transition: 'width 0.4s' }} />
           </div>
         )}
       </div>
@@ -262,10 +264,10 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
 
         {/* PDF converting state */}
         {converting && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '28px 20px', background: '#F3F9FF', borderRadius: 14, border: '1px solid #DFE2E6' }}>
-            <div style={{ width: 36, height: 36, border: '3px solid #DFE2E6', borderTopColor: '#2F6DB5', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ fontSize: 13, color: '#2F6DB5', fontWeight: 600 }}>Converting PDF to image…</span>
-            <span style={{ fontSize: 11, color: '#6E7278' }}>This may take a few seconds</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '28px 20px', background: 'var(--accent-softer)', borderRadius: 14, border: '1px solid var(--border)' }}>
+            <Loader />
+            <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Converting PDF to image…</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>This may take a few seconds</span>
           </div>
         )}
 
@@ -273,12 +275,12 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
         {!siteMapImage && !converting && (
           <div>
             {convertErr && (
-              <div style={{ padding: '10px 14px', borderRadius: 8, background: '#FDECEC', border: '1px solid #EF9195', fontSize: 12, color: '#D9434B', marginBottom: 12 }}>
+              <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--danger-soft)', border: '1px solid var(--danger-3)', fontSize: 12, color: 'var(--danger)', marginBottom: 12 }}>
                 {convertErr} — please upload an image manually below.
               </div>
             )}
             {!project.master_plan_url && (
-              <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 10 }}>Upload the master plan on this project first (in the section above), then come back here to draw zones.</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Upload the master plan on this project first (in the section above), then come back here to draw zones.</p>
             )}
             <MediaUpload
               value=""
@@ -294,8 +296,8 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
         {siteMapImage && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>Draw zones over each plot</span>
-              {saving && <span style={{ fontSize: 11, color: '#6E7278' }}>Saving…</span>}
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Draw zones over each plot</span>
+              {saving && <span style={{ fontSize: 11, color: 'var(--muted)' }}>Saving…</span>}
             </div>
 
             {/* Mode toggle */}
@@ -307,9 +309,9 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                 <button key={m.id} onClick={() => switchMode(m.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                    background: drawMode === m.id ? '#F3F9FF' : '#fff',
-                    color:      drawMode === m.id ? '#2F6DB5' : '#6E7278',
-                    border:     `1.5px solid ${drawMode === m.id ? '#3D5AFE60' : '#DFE2E6'}`,
+                    background: drawMode === m.id ? 'var(--accent-softer)' : 'var(--surface)',
+                    color:      drawMode === m.id ? 'var(--accent)' : 'var(--muted)',
+                    border:     `1.5px solid ${drawMode === m.id ? '#3D5AFE60' : 'var(--border)'}`,
                   }}>
                   <span style={{ fontSize: 15 }}>{m.icon}</span>
                   {m.label}
@@ -319,11 +321,11 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
             </div>
 
             {/* Instruction */}
-            <div style={{ padding: '8px 12px', borderRadius: 8, background: '#F3F9FF', border: '1px solid #DFE2E6', fontSize: 12, color: '#2F6DB5', marginBottom: 10 }}>
+            <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--accent-softer)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--accent)', marginBottom: 10 }}>
               {drawMode === 'rect'
                 ? <><strong>Drag</strong> on the image to draw a rectangle around a plot, then enter its plot number.</>
                 : <><strong>Click</strong> each corner of the plot. <strong>Double-click</strong> or press "Done" to close the shape, then enter plot number.
-                    {polyPoints.length > 0 && <strong style={{ color: '#2F6DB5' }}> {polyPoints.length} pts placed{polyPoints.length >= 3 ? ' — ready to close' : ''}</strong>}
+                    {polyPoints.length > 0 && <strong style={{ color: 'var(--accent)' }}> {polyPoints.length} pts placed{polyPoints.length >= 3 ? ' — ready to close' : ''}</strong>}
                   </>
               }
             </div>
@@ -366,7 +368,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                     text gets distorted by preserveAspectRatio="none") */}
                 {zones.map(zone => {
                   const color = getZoneColor(zone.plotNumber);
-                  const shapeProps = { fill: color + '55', stroke: color, strokeWidth: 0.6 };
+                  const shapeProps = { fill: `color-mix(in srgb, ${color} 33%, transparent)`, stroke: color, strokeWidth: 0.6 };
                   return (
                     <g key={zone.id}>
                       {zone.points?.length
@@ -419,9 +421,9 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                 return (
                   <div key={zone.id + '-lbl'} style={{
                     position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
-                    pointerEvents: 'none', zIndex: 3, background: 'rgba(255,255,255,0.96)', color: '#1D1D1F',
+                    pointerEvents: 'none', zIndex: 3, background: 'rgba(255,255,255,0.96)', color: 'var(--text)',
                     fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                    borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${color}88`, whiteSpace: 'nowrap',
+                    borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, ${color} 53%, transparent)`, whiteSpace: 'nowrap',
                   }}>{labelText}</div>
                 );
               })}
@@ -429,19 +431,19 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
 
             {/* Plot number input */}
             {pendingZone && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 10, padding: '12px 14px', borderRadius: 14, background: '#F3F9FF', border: '1.5px solid #3D5AFE40' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#2F6DB5' }}>Plot number for this zone:</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 10, padding: '12px 14px', borderRadius: 14, background: 'var(--accent-softer)', border: '1.5px solid #3D5AFE40' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>Plot number for this zone:</span>
                 {unmapped.length > 0 ? (
                   <select ref={plotNumRef} value={plotInput}
                     onChange={e => setPlotInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && confirmZone()}
                     autoFocus
-                    style={{ minWidth: 130, padding: '6px 10px', borderRadius: 8, border: '1.5px solid #3D5AFE60', fontSize: 13, fontWeight: 700, outline: 'none', cursor: 'pointer', background: '#fff' }}>
+                    style={{ minWidth: 130, padding: '6px 10px', borderRadius: 8, border: '1.5px solid #3D5AFE60', fontSize: 13, fontWeight: 700, outline: 'none', cursor: 'pointer', background: 'var(--surface)' }}>
                     <option value="">Select plot…</option>
                     {unmapped.map(n => <option key={n} value={String(n)}>Plot {n}</option>)}
                   </select>
                 ) : (
-                  <span style={{ fontSize: 12, color: '#6E7278' }}>All plots already mapped.</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>All plots already mapped.</span>
                 )}
                 <button onClick={confirmZone} disabled={!plotInput} style={{ ...doneBtn, opacity: plotInput ? 1 : 0.5, cursor: plotInput ? 'pointer' : 'not-allowed' }}><Icon name="check" /> Save Zone</button>
                 <button onClick={() => { setPendingZone(null); setPlotInput(''); }} style={ghostBtn}><Icon name="x" /> Discard</button>
@@ -450,11 +452,11 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
 
             {/* Zone summary */}
             {zones.length > 0 && (
-              <div style={{ marginTop: 14, padding: '12px 14px', borderRadius: 14, background: '#F3F9FF', border: '1px solid #DFE2E6' }}>
+              <div style={{ marginTop: 14, padding: '12px 14px', borderRadius: 14, background: 'var(--accent-softer)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#1D1D1F' }}>Saved zones ({zones.length})</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>Saved zones ({zones.length})</span>
                   <button onClick={clearAll}
-                    style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: 'rgba(217,67,75,0.07)', color: '#D9434B', border: '1px solid rgba(217,67,75,0.2)', cursor: 'pointer' }}>
+                    style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: 'rgba(217,67,75,0.07)', color: 'var(--danger)', border: '1px solid rgba(217,67,75,0.2)', cursor: 'pointer' }}>
                     Clear all
                   </button>
                 </div>
@@ -465,7 +467,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                       const shape = zone.points?.length ? '⬡' : '▭';
                       return (
                         <div key={zone.id} className="group"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: color + '18', border: `1px solid ${color}55`, color }}>
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: `color-mix(in srgb, ${color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 33%, transparent)`, color }}>
                           <span style={{ opacity: 0.6, fontSize: 9 }}>{shape}</span>
                           {zone.plotNumber}
                           <button onClick={() => deleteZone(zone.id)}
@@ -475,8 +477,8 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                     })}
                 </div>
                 {unmapped.length > 0 && (
-                  <p style={{ fontSize: 11, color: '#6E7278' }}>
-                    <strong style={{ color: '#1D1D1F' }}>Not yet mapped:</strong>{' '}
+                  <p style={{ fontSize: 11, color: 'var(--muted)' }}>
+                    <strong style={{ color: 'var(--text)' }}>Not yet mapped:</strong>{' '}
                     {unmapped.slice(0, 24).join(', ')}{unmapped.length > 24 ? ` +${unmapped.length - 24} more` : ''}
                   </p>
                 )}
@@ -559,21 +561,21 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
     setSaving(false);
   }
 
-  const inpStyle = { width: '100%', padding: '12px 14px', borderRadius: 16, border: '1.5px solid #F5B453', fontSize: 14, outline: 'none', boxSizing: 'border-box', background: '#fff' };
-  const lblStyle = { fontSize: 10, fontWeight: 700, color: '#9A9EA5', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, display: 'block' };
+  const inpStyle = { width: '100%', padding: '12px 14px', borderRadius: 16, border: '1.5px solid var(--peach-2)', fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--surface)' };
+  const lblStyle = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, display: 'block' };
 
   return (
     <div style={{
-      backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden',
+      backgroundColor: 'var(--surface)', borderRadius: 18, overflow: 'hidden',
       boxShadow: '0 2px 10px rgba(140,148,160,0.18)',
-      border: '1.5px solid #ECEEF0',
+      border: '1.5px solid var(--surface-3)',
       opacity: saving ? 0.75 : 1, transition: 'opacity 0.2s',
     }}>
       {/* Header: #num | type badge | status (status always right-aligned) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 6px' }}>
-        <span style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>#{displayNum}</span>
+        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>#{displayNum}</span>
         {plot.cluster_type && (
-          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: '#E6F2FF', color: '#2F6DB5', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'var(--accent-soft)', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
             {plot.cluster_type}
           </span>
         )}
@@ -584,10 +586,10 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
       {/* Size sub-row — always rendered so all cards stay the same height. A terrace is
           charged on top of the flat and only half the flats have one, so it is called
           out here rather than hidden behind Edit Info. */}
-      <div style={{ padding: '0 14px 4px', fontSize: 11, minHeight: 14, color: plot.size ? '#9A9EA5' : '#C9CDD2', fontStyle: plot.size ? 'normal' : 'italic' }}>
+      <div style={{ padding: '0 14px 4px', fontSize: 11, minHeight: 14, color: plot.size ? 'var(--faint)' : 'var(--border-strong)', fontStyle: plot.size ? 'normal' : 'italic' }}>
         {plot.size || 'Area not set'}
         {(plot.terrace_area || '').trim() && (
-          <span style={{ color: '#2F6DB5', fontWeight: 700, fontStyle: 'normal' }}>
+          <span style={{ color: 'var(--accent)', fontWeight: 700, fontStyle: 'normal' }}>
             {' '}+ {plot.terrace_area.trim()} terrace
           </span>
         )}
@@ -604,9 +606,9 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
               style={{
                 padding: '8px 4px', borderRadius: 14, fontSize: 12, fontWeight: 700,
                 cursor: plot.status === s ? 'default' : 'pointer',
-                background: plot.status === s ? c.bg : '#F4F5F7',
-                color: plot.status === s ? c.color : '#9A9EA5',
-                border: `1.5px solid ${plot.status === s ? c.border + '60' : 'transparent'}`,
+                background: plot.status === s ? c.bg : 'var(--surface-2)',
+                color: plot.status === s ? c.color : 'var(--faint)',
+                border: `1.5px solid ${plot.status === s ? `color-mix(in srgb, ${c.border} 38%, transparent)` : 'transparent'}`,
                 transition: 'all 0.15s',
               }}>
               {c.label}
@@ -622,9 +624,9 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
             style={{
               width: '100%', padding: '8px 4px', borderRadius: 14, fontSize: 12, fontWeight: 700,
               cursor: 'pointer',
-              background: plot.status === 'resale' ? STATUS_CFG.resale.bg : '#F4F5F7',
-              color: plot.status === 'resale' ? STATUS_CFG.resale.color : '#2F6DB5',
-              border: `1.5px solid ${plot.status === 'resale' ? STATUS_CFG.resale.border + '60' : '#7C3AED40'}`,
+              background: plot.status === 'resale' ? STATUS_CFG.resale.bg : 'var(--surface-2)',
+              color: plot.status === 'resale' ? STATUS_CFG.resale.color : 'var(--accent)',
+              border: `1.5px solid ${plot.status === 'resale' ? `color-mix(in srgb, ${STATUS_CFG.resale.border} 38%, transparent)` : '#7C3AED40'}`,
               transition: 'all 0.15s',
             }}>
             {plot.status === 'resale' ? '↩ Back to Sold' : '↻ Move to Resale'}
@@ -633,16 +635,16 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
       )}
 
       {/* Edit Info button */}
-      <div style={{ borderTop: '1px solid #F4F5F7', padding: '10px 14px 12px' }}>
+      <div style={{ borderTop: '1px solid var(--surface-2)', padding: '10px 14px 12px' }}>
         <button onClick={() => editing ? setEditing(false) : openEdit()}
-          style={{ width: '100%', padding: '11px', background: '#1D1D1F', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+          style={{ width: '100%', padding: '11px', background: 'var(--strong)', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
           <Icon name="pencil" /> Edit Info
         </button>
       </div>
 
       {/* Expandable edit form */}
       {editing && (
-        <div style={{ borderTop: '1px solid #F4F5F7', padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 12, background: '#F3F9FF' }}>
+        <div style={{ borderTop: '1px solid var(--surface-2)', padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--accent-softer)' }}>
           {/* Size value + unit */}
           <div>
             <label style={lblStyle}>Label / Size</label>
@@ -673,7 +675,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
                     return (
                       <button key={val} type="button" onClick={() => setFacing(on ? '' : val)}
                         style={{ flex: 1, padding: '10px 8px', borderRadius: 16, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                          border: `1.5px solid ${on ? '#2F6DB5' : '#F5B453'}`, background: on ? '#F3F9FF' : '#fff', color: on ? '#2F6DB5' : '#6E7278' }}>
+                          border: `1.5px solid ${on ? 'var(--accent)' : 'var(--peach-2)'}`, background: on ? 'var(--accent-softer)' : 'var(--surface)', color: on ? 'var(--accent)' : 'var(--muted)' }}>
                         {on ? <Icon name="check" /> : ''}{label}
                       </button>
                     );
@@ -717,11 +719,11 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
           {/* Save + Cancel */}
           <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
             <button onClick={saveEdit} disabled={saving}
-              style={{ flex: 1, padding: '12px', background: '#D98A1F', color: '#fff', border: 'none', borderRadius: 16, fontSize: 14, fontWeight: 800, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+              style={{ flex: 1, padding: '12px', background: 'var(--warning-solid)', color: '#fff', border: 'none', borderRadius: 16, fontSize: 14, fontWeight: 800, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Saving…' : 'Save'}
             </button>
             <button onClick={() => setEditing(false)}
-              style={{ padding: '12px 20px', background: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ padding: '12px 20px', background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -763,9 +765,9 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
   if (!floors.length) return null;
   if (!withPlan.length) {
     return (
-      <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '18px 20px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Floor Plan Mapping</div>
-        <p style={{ fontSize: 12, color: '#6E7278', marginTop: 6 }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '18px 20px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Floor Plan Mapping</div>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
           Upload a plan for at least one floor above to start mapping its units.
         </p>
       </div>
@@ -799,13 +801,13 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
     });
   }
 
-  function applyCopy() {
+  async function applyCopy() {
     const targets = [...copyTargets];
     if (!targets.length) return;
     const overwriting = targets.some((i) => (floors[i].zones || []).length > 0);
-    if (overwriting && !window.confirm(
+    if (overwriting && !(await confirmDialog(
       `${targets.length} selected floor(s) already have some units mapped — copying will replace their existing mapping. Continue?`
-    )) return;
+    ))) return;
     const next = floors.map((f, i) => {
       if (!targets.includes(i)) return f;
       return { ...f, image_url: f.image_url || active.image_url, zones: remapZonesToFloor(active, f) };
@@ -820,9 +822,9 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
   const picker = (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <label style={{ fontSize: 11, fontWeight: 700, color: '#9A9EA5', textTransform: 'uppercase', letterSpacing: 0.4 }}>Floor</label>
+        <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Floor</label>
         <select value={sel} onChange={(e) => { setSel(Number(e.target.value)); setCopyOpen(false); }}
-          style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
+          style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', cursor: 'pointer' }}>
           {withPlan.map((f, i) => {
             const mapped = (f.zones || []).length;
             const total = unitsForFloorNumbers(f).length;
@@ -832,15 +834,15 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
         </select>
         {activeMapped > 0 && otherFloors.length > 0 && (
           <button onClick={() => setCopyOpen((v) => !v)}
-            style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #2F6DB5', background: copyOpen ? '#2F6DB5' : '#F3F9FF', color: copyOpen ? '#fff' : '#2F6DB5', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid var(--accent)', background: copyOpen ? 'var(--primary)' : 'var(--accent-softer)', color: copyOpen ? '#fff' : 'var(--accent)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
             <Icon name="clipboard" /> Copy this mapping to other floors…
           </button>
         )}
       </div>
 
       {copyOpen && (
-        <div style={{ border: '1.5px solid #DFE2E6', borderRadius: 14, padding: 12, background: '#F3F9FF' }}>
-          <div style={{ fontSize: 12, color: '#6E7278', marginBottom: 8 }}>
+        <div style={{ border: '1.5px solid var(--border)', borderRadius: 14, padding: 12, background: 'var(--accent-softer)' }}>
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
             Copies every zone's shape from <b>{active.block ? `${active.block} · ` : ''}{active.label || `Floor ${active.floor}`}</b> onto the floor(s) you pick below, renumbering each one to that floor's matching unit (e.g. unit 3 here → unit 3 there). Pick floors with the identical layout.
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
@@ -850,20 +852,20 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
               const name = `${f.block ? `${f.block} · ` : ''}${f.label || `Floor ${f.floor}`}`;
               const checked = copyTargets.has(i);
               return (
-                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, padding: '6px 10px', borderRadius: 8, border: `1.5px solid ${checked ? '#2F6DB5' : '#DFE2E6'}`, background: checked ? '#F3F9FF' : '#fff', cursor: 'pointer', color: '#1D1D1F' }}>
+                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, padding: '6px 10px', borderRadius: 8, border: `1.5px solid ${checked ? 'var(--accent)' : 'var(--border)'}`, background: checked ? 'var(--accent-softer)' : 'var(--surface)', cursor: 'pointer', color: 'var(--text)' }}>
                   <input type="checkbox" checked={checked} onChange={() => toggleCopyTarget(i)} style={{ margin: 0 }} />
-                  {name} <span style={{ color: '#9A9EA5' }}>({mapped}/{total})</span>
+                  {name} <span style={{ color: 'var(--faint)' }}>({mapped}/{total})</span>
                 </label>
               );
             })}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={applyCopy} disabled={!copyTargets.size}
-              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: copyTargets.size ? '#2F6DB5' : '#C9CDD2', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: copyTargets.size ? 'pointer' : 'not-allowed' }}>
+              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: copyTargets.size ? 'var(--primary)' : 'var(--border-strong)', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: copyTargets.size ? 'pointer' : 'not-allowed' }}>
               Copy to {copyTargets.size || ''} floor{copyTargets.size === 1 ? '' : 's'}
             </button>
             <button onClick={() => { setCopyOpen(false); setCopyTargets(new Set()); }}
-              style={{ padding: '8px 16px', borderRadius: 8, border: '1.5px solid #DFE2E6', background: '#fff', color: '#6E7278', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ padding: '8px 16px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--muted)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -936,8 +938,8 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
     persist(updated);
   }
 
-  function removeType(idx) {
-    if (!window.confirm(`Remove plot type "${plans[idx].name}" and all its floor plans?`)) return;
+  async function removeType(idx) {
+    if (!(await confirmDialog(`Remove plot type "${plans[idx].name}" and all its floor plans?`))) return;
     const updated = plans.filter((_, i) => i !== idx);
     setPlans(updated);
     setActiveType(Math.max(0, activeType - (idx <= activeType ? 1 : 0)));
@@ -961,11 +963,11 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
   const current = plans[activeType];
 
   return (
-    <div style={{ backgroundColor: '#fff', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Plot Type Floor Plans</span>
-        {saving && <span style={{ fontSize: 11, color: '#2F6DB5' }}>Saving…</span>}
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Plot Type Floor Plans</span>
+        {saving && <span style={{ fontSize: 11, color: 'var(--accent)' }}>Saving…</span>}
       </div>
 
       {/* Type tabs — large cards like reference UI */}
@@ -976,14 +978,14 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
           return (
             <button key={i} onClick={() => setActiveType(i)} style={{
               padding: '14px 28px', borderRadius: 18,
-              border: `2px solid ${active ? '#A2D2FF' : '#ECEEF0'}`,
-              background: active ? '#E6F2FF' : '#F3F9FF',
+              border: `2px solid ${active ? 'var(--blue-2)' : 'var(--surface-3)'}`,
+              background: active ? 'var(--accent-soft)' : 'var(--accent-softer)',
               cursor: 'pointer', textAlign: 'center', minWidth: 130,
               boxShadow: active ? '0 2px 10px rgba(47,109,181,0.10)' : 'none',
               transition: 'all 0.15s',
             }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: active ? '#2F6DB5' : '#1D1D1F', marginBottom: 4 }}>{t.name}</div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: active ? '#2F6DB5' : '#9A9EA5' }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: active ? 'var(--accent)' : 'var(--text)', marginBottom: 4 }}>{t.name}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: active ? 'var(--accent)' : 'var(--faint)' }}>
                 {count > 0 ? `${count} plan${count > 1 ? 's' : ''}` : 'No plans yet'}
               </div>
             </button>
@@ -995,20 +997,20 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <input autoFocus value={newTypeName} onChange={e => setNewTypeName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') addType(); if (e.key === 'Escape') { setAddingType(false); setNewTypeName(''); } }}
-              placeholder="Type name" style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid #2F6DB5', fontSize: 13, width: 150, outline: 'none' }} />
-            <button onClick={addType} style={{ height: 38, padding: '0 14px', background: '#2F6DB5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add</button>
-            <button onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 38, padding: '0 12px', background: '#F4F5F7', color: '#6E7278', border: '1px solid #DFE2E6', borderRadius: 14, fontSize: 13, cursor: 'pointer' }}><Icon name="x" /></button>
+              placeholder="Type name" style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--accent)', fontSize: 13, width: 150, outline: 'none' }} />
+            <button onClick={addType} style={{ height: 38, padding: '0 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add</button>
+            <button onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 38, padding: '0 12px', background: 'var(--surface-2)', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 14, fontSize: 13, cursor: 'pointer' }}><Icon name="x" /></button>
           </div>
         ) : (
           <button onClick={() => setAddingType(true)} style={{
-            padding: '14px 28px', borderRadius: 18, border: '2px dashed #A2D2FF', background: '#F3F9FF',
-            color: '#2F6DB5', fontSize: 14, fontWeight: 700, cursor: 'pointer', minWidth: 130,
+            padding: '14px 28px', borderRadius: 18, border: '2px dashed var(--blue-2)', background: 'var(--accent-softer)',
+            color: 'var(--accent)', fontSize: 14, fontWeight: 700, cursor: 'pointer', minWidth: 130,
           }}>+ Add Type</button>
         )}
       </div>
 
       {plans.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '32px', color: '#9A9EA5', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: '32px', color: 'var(--faint)', fontSize: 13 }}>
           No plot types yet. Add a type (e.g. "Type A", "Villa 3BHK") to upload floor plans.
         </div>
       )}
@@ -1021,24 +1023,24 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
               {current.floor_plans.map((fp, fi) => (
                 <div key={fi}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{fp.label}</span>
-                    <button onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}><Icon name="x" /></button>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{fp.label}</span>
+                    <button onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}><Icon name="x" /></button>
                   </div>
                   <img src={fp.url} alt={fp.label}
-                    style={{ width: '100%', aspectRatio: '4/3', objectFit: 'contain', borderRadius: 14, background: '#F4F5F7', border: '1px solid #ECEEF0', display: 'block' }} />
+                    style={{ width: '100%', aspectRatio: '4/3', objectFit: 'contain', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)', display: 'block' }} />
                 </div>
               ))}
             </div>
           )}
 
           {/* Upload section */}
-          <div style={{ background: '#F3F9FF', borderRadius: 16, padding: '16px', border: '1px solid #E6F2FF' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+          <div style={{ background: 'var(--accent-softer)', borderRadius: 16, padding: '16px', border: '1px solid var(--accent-soft)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
               Add Floor Plan to "{current.name}"
             </div>
             <input value={newFloorLabel} onChange={e => setNewFloorLabel(e.target.value)}
               placeholder="Floor label (e.g. Ground Floor, 1st Floor…)"
-              style={{ width: '100%', height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid #CCE5FF', fontSize: 13, marginBottom: 10, boxSizing: 'border-box', outline: 'none' }} />
+              style={{ width: '100%', height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid var(--blue-2)', fontSize: 13, marginBottom: 10, boxSizing: 'border-box', outline: 'none' }} />
             <MediaUpload value="" label=""
               onChange={url => addFloor(url)}
               folder={`erp/projects/${id}/floor-plans`}
@@ -1098,25 +1100,25 @@ function RateMasterEditor({ project, onProjectUpdate }) {
   }
 
   return (
-    <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Rate Master</div>
-        {saved && <span style={{ fontSize: 12, fontWeight: 700, color: '#23874A' }}>{saved}</span>}
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Rate Master</div>
+        {saved && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>{saved}</span>}
       </div>
-      <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 12 }}>
+      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
         Set this project's default rates — they'll prefill automatically when a plot here is booked, but stay editable per booking.
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 12, marginBottom: 14 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 4 }}>{f.label} (₹/{f.unit})</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 4 }}>{f.label} (₹/{f.unit})</label>
             <input type="number" value={form[f.key] ?? ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-              placeholder="Not set" style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box' }} />
+              placeholder="Not set" style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' }} />
           </div>
         ))}
       </div>
       <button onClick={save} disabled={saving}
-        style={{ padding: '9px 18px', background: '#2F6DB5', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+        style={{ padding: '9px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
         {saving ? 'Saving…' : 'Save Rates'}
       </button>
     </div>
@@ -1258,9 +1260,9 @@ export default function ManagePlotsPage() {
   );
 
   if (!project?.name) return (
-    <div style={{ padding: '24px 28px', color: '#6E7278' }}>
+    <div style={{ padding: '24px 28px', color: 'var(--muted)' }}>
       Project not found.{' '}
-      <button onClick={() => router.back()} style={{ color: '#2F6DB5', background: 'none', border: 'none', cursor: 'pointer' }}>Go back</button>
+      <button onClick={() => router.back()} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>Go back</button>
     </div>
   );
 
@@ -1269,11 +1271,11 @@ export default function ManagePlotsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#6E7278', fontSize: 12, cursor: 'pointer', padding: 0, marginBottom: 6 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, marginBottom: 6 }}>
             ← Back to Projects
           </button>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>{project.name}</h1>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 13, color: '#6E7278' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>{project.name}</h1>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 13, color: 'var(--muted)' }}>
             {project.location && <span><Icon name="pin" /> {project.location}</span>}
             {project.total_area && <span>• {project.total_area}</span>}
             {project.price_range && <span>• {project.price_range}</span>}
@@ -1283,8 +1285,8 @@ export default function ManagePlotsPage() {
         </div>
         <span style={{
           fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, alignSelf: 'flex-start',
-          backgroundColor: project.is_active ? '#E9FBEA' : '#FDECEC',
-          color: project.is_active ? '#23874A' : '#D9434B',
+          backgroundColor: project.is_active ? 'var(--success-soft)' : 'var(--danger-soft)',
+          color: project.is_active ? 'var(--success)' : 'var(--danger)',
         }}>
           {project.is_active ? 'ACTIVE' : 'INACTIVE'}
         </span>
@@ -1293,27 +1295,27 @@ export default function ManagePlotsPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Total Plots', value: plots.length, color: '#1D1D1F' },
-          { label: 'Available',   value: counts.available, color: '#23874A' },
-          { label: 'In Progress', value: counts.hold,      color: '#3A3C40' },
-          { label: 'Sold',        value: counts.sold,      color: '#D9434B' },
+          { label: 'Total Plots', value: plots.length, color: 'var(--text)' },
+          { label: 'Available',   value: counts.available, color: 'var(--success)' },
+          { label: 'In Progress', value: counts.hold,      color: 'var(--text-2)' },
+          { label: 'Sold',        value: counts.sold,      color: 'var(--danger)' },
         ].map(s => (
-          <div key={s.label} style={{ backgroundColor: '#fff', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.12)', textAlign: 'center' }}>
+          <div key={s.label} style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.12)', textAlign: 'center' }}>
             <div style={{ fontSize: 26, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: 11, color: '#6E7278', marginTop: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Progress */}
       {plots.length > 0 && (
-        <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '14px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6E7278', marginBottom: 8 }}>
-            <span style={{ fontWeight: 600, color: '#1D1D1F' }}>Sales Progress</span>
+        <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
+            <span style={{ fontWeight: 600, color: 'var(--text)' }}>Sales Progress</span>
             <span>{soldPct}% sold</span>
           </div>
-          <div style={{ height: 8, borderRadius: 6, background: '#F4F5F7', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${soldPct}%`, background: 'linear-gradient(90deg,#2F6DB5,#D9434B)', borderRadius: 6, transition: 'width 0.5s' }} />
+          <div style={{ height: 8, borderRadius: 6, background: 'var(--surface-2)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${soldPct}%`, background: 'linear-gradient(90deg,var(--primary),var(--danger-solid))', borderRadius: 6, transition: 'width 0.5s' }} />
           </div>
         </div>
       )}
@@ -1322,21 +1324,21 @@ export default function ManagePlotsPage() {
 
       {/* Master Plan — plotted schemes only; a tower is described by its per-floor plans. */}
       {!project.floor_wise && (
-      <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Master Plan</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Master Plan</div>
           {project.master_plan_url && (
             <a href={project.master_plan_url} target="_blank" rel="noreferrer"
-              style={{ fontSize: 12, color: '#2F6DB5', fontWeight: 600, textDecoration: 'none' }}>View Full ↗</a>
+              style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>View Full ↗</a>
           )}
         </div>
         {project.master_plan_url ? (
           <>
             {project.master_plan_url.match(/\.(jpg|jpeg|png|webp|gif)$/i)
-              ? <img src={project.master_plan_url} alt="Master Plan" style={{ width: '100%', maxHeight: 380, objectFit: 'contain', borderRadius: 8, border: '1px solid #DFE2E6', background: '#F3F9FF' }} />
-              : <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px', background: '#F4F5F7', borderRadius: 8 }}>
+              ? <img src={project.master_plan_url} alt="Master Plan" style={{ width: '100%', maxHeight: 380, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--accent-softer)' }} />
+              : <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px', background: 'var(--surface-2)', borderRadius: 8 }}>
                   <span style={{ fontSize: 26 }}><Icon name="file" /></span>
-                  <a href={project.master_plan_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#2F6DB5', fontWeight: 600 }}>Open PDF ↗</a>
+                  <a href={project.master_plan_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Open PDF ↗</a>
                 </div>
             }
             <div style={{ marginTop: 10 }}>
@@ -1356,9 +1358,9 @@ export default function ManagePlotsPage() {
           a plotted scheme is positioned on a site map. Set it in Edit Project. */}
       {project.floor_wise ? (
         <>
-          <div style={{ backgroundColor: '#fff', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F' }}>{project.block_industrial ? <><Icon name="factory" /> Block Setup</> : <><Icon name="building" /> Floor-wise Setup</>}</div>
-          <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2, marginBottom: 4 }}>
+          <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{project.block_industrial ? <><Icon name="factory" /> Block Setup</> : <><Icon name="building" /> Floor-wise Setup</>}</div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 4 }}>
             {project.block_industrial
               ? "Define each block's unit numbering and plan once it's surveyed."
               : "Define each floor's unit numbering and plan. Ground is floor 0."}
@@ -1387,17 +1389,17 @@ export default function ManagePlotsPage() {
       {/* Filter tabs + Delete All */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         {[
-          { key: 'all',       label: 'All',      color: '#1D1D1F', bg: '#F3F9FF', border: '#1D1D1F' },
-          { key: 'available', label: 'Available', color: '#23874A', bg: '#E9FBEA', border: '#23874A' },
-          { key: 'hold',      label: 'In Progress', color: '#3A3C40', bg: '#F4F5F7', border: '#3A3C40' },
-          { key: 'sold',      label: 'Sold',      color: '#D9434B', bg: '#FDECEC', border: '#D9434B' },
+          { key: 'all',       label: 'All',      color: 'var(--text)', bg: 'var(--accent-softer)', border: 'var(--text)' },
+          { key: 'available', label: 'Available', color: 'var(--success)', bg: 'var(--success-soft)', border: 'var(--success)' },
+          { key: 'hold',      label: 'In Progress', color: 'var(--text-2)', bg: 'var(--surface-2)', border: 'var(--text-2)' },
+          { key: 'sold',      label: 'Sold',      color: 'var(--danger)', bg: 'var(--danger-soft)', border: 'var(--danger)' },
         ].map(({ key, label, color, bg, border }) => (
           <button key={key} onClick={() => setFilter(key)}
             style={{
               padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              background: filter === key ? bg : '#fff',
-              color:      filter === key ? color : '#6E7278',
-              border:     `1.5px solid ${filter === key ? border + '60' : '#DFE2E6'}`,
+              background: filter === key ? bg : 'var(--surface)',
+              color:      filter === key ? color : 'var(--muted)',
+              border:     `1.5px solid ${filter === key ? `color-mix(in srgb, ${border} 38%, transparent)` : 'var(--border)'}`,
               transition: 'all 0.15s',
             }}>
             {label} <span style={{ opacity: 0.65 }}>({counts[key]})</span>
@@ -1418,21 +1420,21 @@ export default function ManagePlotsPage() {
         )}
         {(blockF || floorF) && (
           <button onClick={() => { setBlockF(''); setFloorF(''); }}
-            style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#fff', color: '#6E7278', border: '1.5px solid #DFE2E6' }}>
+            style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'var(--surface)', color: 'var(--muted)', border: '1.5px solid var(--border)' }}>
             <Icon name="x" /> Clear
           </button>
         )}
         {plots.length > 0 && (
           <button onClick={async () => {
-            if (!window.confirm(`Delete all ${plots.length} plots for this project? This cannot be undone.`)) return;
+            if (!(await confirmDialog(`Delete all ${plots.length} plots for this project? This cannot be undone.`))) return;
             const res = await fetch(SALES_ENDPOINTS.plotsBulkDelete, {
               method: 'DELETE', headers: authHeaders(),
               body: JSON.stringify({ project_id: project.id }),
             });
             if (res.ok) { setPlots([]); }
-            else { const e = await res.json(); alert(e.detail || 'Failed to delete plots'); }
+            else { const e = await res.json(); notify(e.detail || 'Failed to delete plots'); }
           }}
-            style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}>
+            style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}>
             <Icon name="trash" /> Delete All Plots
           </button>
         )}
@@ -1440,7 +1442,7 @@ export default function ManagePlotsPage() {
 
       {/* Plot grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6E7278' }}>
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
           <p style={{ fontWeight: 600 }}>
             {blockF || floorF ? 'No plots match this block/floor.' : 'No plots with this status.'}
           </p>
@@ -1464,6 +1466,6 @@ export default function ManagePlotsPage() {
 }
 
 // Block / Floor pickers above the plot grid — sized to sit level with the status tabs.
-const gridSel  = { height: 32, padding: '0 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#1D1D1F', background: '#fff', border: '1.5px solid #DFE2E6', cursor: 'pointer', outline: 'none' };
-const doneBtn  = { padding: '7px 14px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' };
-const ghostBtn = { padding: '7px 14px', background: '#F4F5F7', color: '#6E7278', border: '1px solid #DFE2E6', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' };
+const gridSel  = { height: 32, padding: '0 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, color: 'var(--text)', background: 'var(--surface)', border: '1.5px solid var(--border)', cursor: 'pointer', outline: 'none' };
+const doneBtn  = { padding: '7px 14px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' };
+const ghostBtn = { padding: '7px 14px', background: 'var(--surface-2)', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' };

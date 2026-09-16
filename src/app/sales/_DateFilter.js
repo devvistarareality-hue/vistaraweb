@@ -59,15 +59,15 @@ export default function DateFilter({ onChange }) {
 
   useEffect(() => { onChange && onChange(effectiveDates); }, [effectiveDates.from, effectiveDates.to]);
 
-  const fSel    = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #ECEEF0', fontSize: 12, background: '#F4F5F7', cursor: 'pointer', outline: 'none', color: '#1D1D1F', fontWeight: 500 };
-  const qBtn    = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#1D1D1F' : '#F4F5F7', color: active ? '#fff' : '#6E7278' });
-  const divider = { width: 1, height: 24, background: '#ECEEF0', flexShrink: 0 };
+  const fSel    = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--surface-3)', fontSize: 12, background: 'var(--surface-2)', cursor: 'pointer', outline: 'none', color: 'var(--text)', fontWeight: 500 };
+  const qBtn    = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? 'var(--strong)' : 'var(--surface-2)', color: active ? '#fff' : 'var(--muted)' });
+  const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: '#fff', borderRadius: 16, border: '1px solid #F4F5F7' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
       <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
       <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={{ ...fSel, width: 136 }} />
-      <span style={{ fontSize: 12, color: '#C9CDD2' }}>→</span>
+      <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
       <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={{ ...fSel, width: 136 }} />
       <div style={divider} />
       <button onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
@@ -86,14 +86,14 @@ export default function DateFilter({ onChange }) {
         {showYearDrop && (
           <>
             <div onClick={() => setShowYearDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-            <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(29,29,31,0.14)', border: '1px solid #F4F5F7', minWidth: 170, padding: '8px 0' }}>
-              {selectedFyYear !== null && <button onClick={() => { setSelectedFyYear(null); setShowYearDrop(false); }} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#D9434B', cursor: 'pointer', borderBottom: '1px solid #F4F5F7', marginBottom: 4 }}>Clear</button>}
+            <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 170, padding: '8px 0' }}>
+              {selectedFyYear !== null && <button onClick={() => { setSelectedFyYear(null); setShowYearDrop(false); }} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>Clear</button>}
               {FY_OPTIONS.map(({ key, label }) => {
                 const sel = selectedFyYear === key;
                 return (
-                  <button key={key} onClick={() => { setSelectedFyYear(sel ? null : key); setSelectedMonths([]); setSelectedQuarter([]); setDateFrom(''); setDateTo(''); setShowYearDrop(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#F3F9FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
-                    <div style={{ width: 17, height: 17, borderRadius: '50%', border: `2px solid ${sel ? '#1D1D1F' : '#C9CDD2'}`, background: sel ? '#1D1D1F' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{sel && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff' }} />}</div>
-                    <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#1D1D1F' : '#3A3C40' }}>{label}</span>
+                  <button key={key} onClick={() => { setSelectedFyYear(sel ? null : key); setSelectedMonths([]); setSelectedQuarter([]); setDateFrom(''); setDateTo(''); setShowYearDrop(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? 'var(--accent-softer)' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                    <div style={{ width: 17, height: 17, borderRadius: '50%', border: `2px solid ${sel ? 'var(--text)' : 'var(--border-strong)'}`, background: sel ? 'var(--strong)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{sel && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--surface)' }} />}</div>
+                    <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? 'var(--text)' : 'var(--text-2)' }}>{label}</span>
                   </button>
                 );
               })}
@@ -112,14 +112,14 @@ export default function DateFilter({ onChange }) {
         {showMonthDrop && (
           <>
             <div onClick={() => setShowMonthDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-            <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(29,29,31,0.14)', border: '1px solid #F4F5F7', minWidth: 210, maxHeight: 300, overflowY: 'auto', padding: '8px 0' }}>
-              {selectedMonths.length > 0 && <button onClick={() => setSelectedMonths([])} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#D9434B', cursor: 'pointer', borderBottom: '1px solid #F4F5F7', marginBottom: 4 }}>Clear All</button>}
+            <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, maxHeight: 300, overflowY: 'auto', padding: '8px 0' }}>
+              {selectedMonths.length > 0 && <button onClick={() => setSelectedMonths([])} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>Clear All</button>}
               {monthOptions.map(({ key, label }) => {
                 const sel = selectedMonths.includes(key);
                 return (
-                  <button key={key} onClick={() => { setSelectedQuarter([]); setSelectedFyYear(null); setDateFrom(''); setDateTo(''); setSelectedMonths(prev => sel ? prev.filter(m => m !== key) : [...prev, key]); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#F3F9FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
-                    <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? '#1D1D1F' : '#C9CDD2'}`, background: sel ? '#1D1D1F' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}</div>
-                    <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#1D1D1F' : '#3A3C40' }}>{label}</span>
+                  <button key={key} onClick={() => { setSelectedQuarter([]); setSelectedFyYear(null); setDateFrom(''); setDateTo(''); setSelectedMonths(prev => sel ? prev.filter(m => m !== key) : [...prev, key]); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? 'var(--accent-softer)' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                    <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? 'var(--text)' : 'var(--border-strong)'}`, background: sel ? 'var(--strong)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}</div>
+                    <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? 'var(--text)' : 'var(--text-2)' }}>{label}</span>
                   </button>
                 );
               })}
@@ -138,15 +138,15 @@ export default function DateFilter({ onChange }) {
         {showQuarterDrop && (
           <>
             <div onClick={() => setShowQuarterDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-            <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(29,29,31,0.14)', border: '1px solid #F4F5F7', minWidth: 210, padding: '8px 0' }}>
-              {selectedQuarter.length > 0 && <button onClick={() => setSelectedQuarter([])} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#D9434B', cursor: 'pointer', borderBottom: '1px solid #F4F5F7', marginBottom: 4 }}>Clear All</button>}
+            <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, padding: '8px 0' }}>
+              {selectedQuarter.length > 0 && <button onClick={() => setSelectedQuarter([])} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>Clear All</button>}
               {QUARTERS.map(({ key, label, sub }) => {
                 const sel = selectedQuarter.includes(key);
                 return (
-                  <button key={key} onClick={() => { setSelectedQuarter(prev => sel ? prev.filter(k => k !== key) : [...prev, key]); setSelectedMonths([]); setSelectedFyYear(null); setDateFrom(''); setDateTo(''); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#F3F9FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
-                    <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? '#1D1D1F' : '#C9CDD2'}`, background: sel ? '#1D1D1F' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}</div>
-                    <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#1D1D1F' : '#3A3C40' }}>{label}</span>
-                    <span style={{ fontSize: 11, color: '#6E7278', marginLeft: 'auto' }}>{sub}</span>
+                  <button key={key} onClick={() => { setSelectedQuarter(prev => sel ? prev.filter(k => k !== key) : [...prev, key]); setSelectedMonths([]); setSelectedFyYear(null); setDateFrom(''); setDateTo(''); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? 'var(--accent-softer)' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                    <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? 'var(--text)' : 'var(--border-strong)'}`, background: sel ? 'var(--strong)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}</div>
+                    <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? 'var(--text)' : 'var(--text-2)' }}>{label}</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 'auto' }}>{sub}</span>
                   </button>
                 );
               })}

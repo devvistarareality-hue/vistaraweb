@@ -10,9 +10,11 @@ import { MODULE_META } from './moduleMeta';
 import {SLUG_TO_MODULE, isManagerRole, moduleAccess} from '../../../lib/moduleAccess';
 import { AUTH_ENDPOINTS } from '../../../constants/api';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
+import Loader from '../../../components/Loader';
+import ThemeToggle from '../../../components/ThemeToggle';
 
-const ORANGE = '#2F6DB5';
-const NAVY = '#1D1D1F';
+const ORANGE = 'var(--accent)';
+const NAVY = 'var(--text)';
 
 function SvgIcon({ children, size = 16 }) {
   return (
@@ -124,7 +126,7 @@ export default function ModuleLayout({ children, params }) {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-                <span style={{ ...s.iconWrap, color: active ? '#A2D2FF' : 'rgba(29,29,31,0.6)' }}>{item.icon}</span>
+                <span style={{ ...s.iconWrap, color: active ? 'var(--nav-active-fg)' : 'rgba(var(--ink-rgb),0.6)' }}>{item.icon}</span>
                 <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
               </Link>
             );
@@ -133,18 +135,18 @@ export default function ModuleLayout({ children, params }) {
             <div style={{ marginTop: 18 }}>
               <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
               <div style={{ position: 'relative' }}>
-                <select value={companyId ?? ''} onChange={handleCompanyChange}
-                  style={{ width: '100%', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(29,29,31,0.056)', border: '1px solid rgba(29,29,31,0.112)', borderRadius: 9, padding: '8px 28px 8px 12px', color: companyId ? '#1D1D1F' : 'rgba(29,29,31,0.67)', fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
-                  <option value="" style={{ backgroundColor: '#fff', color: 'rgba(29,29,31,0.72)' }}>All Companies</option>
+                <select data-plain value={companyId ?? ''} onChange={handleCompanyChange}
+                  style={{ width: '100%', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(var(--ink-rgb),0.056)', border: '1px solid rgba(var(--ink-rgb),0.112)', borderRadius: 9, padding: '8px 28px 8px 12px', color: companyId ? 'var(--text)' : 'rgba(var(--ink-rgb),0.67)', fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
+                  <option value="" style={{ backgroundColor: 'var(--surface)', color: 'rgba(var(--ink-rgb),0.72)' }}>All Companies</option>
                   {companies.map((c) => (
-                    <option key={c.id} value={c.id} style={{ backgroundColor: '#fff', color: '#1D1D1F' }}>{c.name}</option>
+                    <option key={c.id} value={c.id} style={{ backgroundColor: 'var(--surface)', color: 'var(--text)' }}>{c.name}</option>
                   ))}
                 </select>
-                <svg style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(29,29,31,0.62)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(var(--ink-rgb),0.62)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
               {companyId && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 6, backgroundColor: 'rgba(162,210,255,0.12)', border: '1px solid rgba(162,210,255,0.22)' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ORANGE, flexShrink: 0 }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)', flexShrink: 0 }} />
                   <span style={{ fontSize: 10, fontWeight: 700, color: ORANGE }}>{companies.find((c) => c.id === companyId)?.name || 'Filtered'}</span>
                 </div>
               )}
@@ -154,14 +156,15 @@ export default function ModuleLayout({ children, params }) {
           {back && <>
             <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
             <Link href={back.href} style={s.navItem}>
-              <span style={{ ...s.iconWrap, color: 'rgba(29,29,31,0.6)' }}><IconBack /></span>
+              <span style={{ ...s.iconWrap, color: 'rgba(var(--ink-rgb),0.6)' }}><IconBack /></span>
               <span style={{ fontSize: 13, fontWeight: 500 }}>{back.label}</span>
             </Link>
           </>}
         </div>
         <div style={{ padding: '0 10px 18px' }}>
-          <div style={{ height: 1, background: 'rgba(29,29,31,0.056)', marginBottom: 14 }} />
-          <button onClick={openProfile} style={{ ...s.userRow, width: '100%', border: '1px solid rgba(29,29,31,0.04)', cursor: 'pointer', textAlign: 'left' }}>
+          <ThemeToggle style={{ marginBottom: 12 }} />
+          <div style={{ height: 1, background: 'var(--border)', marginBottom: 14 }} />
+          <button onClick={openProfile} style={{ ...s.userRow, width: '100%', border: '1px solid rgba(var(--ink-rgb),0.04)', cursor: 'pointer', textAlign: 'left' }}>
             <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={s.userName}>{user?.name || 'User'}</div>
@@ -175,30 +178,30 @@ export default function ModuleLayout({ children, params }) {
 
       {/* ── Profile Modal ── */}
       {profileOpen && (
-        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: 300, marginLeft: 16, marginBottom: 20, backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
-            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' }}>
+        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 300, marginLeft: 16, marginBottom: 20, backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: 'rgba(162,210,255,0.12)', border: '1.5px solid rgba(162,210,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: ORANGE, flexShrink: 0 }}>{(user?.name || 'A')[0].toUpperCase()}</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F' }}>{user?.name}</div>
-                  <div style={{ fontSize: 11, color: '#6E7278', marginTop: 2 }}>{user?.designation || user?.role}</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{user?.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{user?.designation || user?.role}</div>
                 </div>
               </div>
             </div>
             <div style={{ padding: '6px 0' }}>
               {profileLoading ? (
-                <div style={{ padding: '28px 0', textAlign: 'center', color: '#6E7278', fontSize: 13 }}>Loading…</div>
+                <Loader label="Loading…" style={{ padding: '28px 0' }} />
               ) : PROFILE_FIELDS.map((f, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 20px', borderBottom: i < PROFILE_FIELDS.length - 1 ? '1px solid #F4F5F7' : 'none' }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', maxWidth: 160, textAlign: 'right', wordBreak: 'break-all' }}>{f.value || '—'}</span>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 20px', borderBottom: i < PROFILE_FIELDS.length - 1 ? '1px solid var(--surface-2)' : 'none' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', maxWidth: 160, textAlign: 'right', wordBreak: 'break-all' }}>{f.value || '—'}</span>
                 </div>
               ))}
             </div>
             <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid #DFE2E6', backgroundColor: '#fff', color: '#1D1D1F', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Change Password</button>
-              <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid #F7C3C6', backgroundColor: '#FDECEC', color: '#D9434B', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
+              <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Change Password</button>
+              <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
             </div>
           </div>
         </div>
@@ -210,20 +213,20 @@ export default function ModuleLayout({ children, params }) {
 }
 
 const s = {
-  sidebar: { width: 230, minWidth: 230, height: '100vh', backgroundColor: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', boxShadow: '0 1px 2px rgba(29,29,31,0.04), 0 8px 24px rgba(60,90,130,0.08)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 },
-  logoRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '20px 18px 18px', borderBottom: '1px solid rgba(29,29,31,0.048)' },
+  sidebar: { width: 230, minWidth: 230, height: '100vh', backgroundColor: 'var(--glass)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 },
+  logoRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '20px 18px 18px', borderBottom: '1px solid rgba(var(--ink-rgb),0.048)' },
   logoCircle: { width: 36, height: 36, borderRadius: 14, backgroundColor: '#fff', padding: 5, overflow: 'hidden', flexShrink: 0 },
-  logoName: { fontSize: 13, fontWeight: 800, color: '#1D1D1F' },
-  logoSub: { fontSize: 10, color: 'rgba(29,29,31,0.58)', marginTop: 2 },
-  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6E7278', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5 },
-  navItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 999, color: 'rgba(29,29,31,0.74)', marginBottom: 1, textDecoration: 'none', position: 'relative', overflow: 'hidden' },
-  navActive: { backgroundColor: '#1D1D1F', color: '#fff', boxShadow: '0 4px 12px rgba(29,29,31,0.18)' },
-  navChildActive: { backgroundColor: '#E6F2FF', color: '#1D1D1F' },
-  activeBar: { position: 'absolute', left: 0, top: '18%', bottom: '18%', width: 3, backgroundColor: ORANGE, borderRadius: '0 3px 3px 0' },
+  logoName: { fontSize: 13, fontWeight: 800, color: 'var(--text)' },
+  logoSub: { fontSize: 10, color: 'rgba(var(--ink-rgb),0.58)', marginTop: 2 },
+  sectionLabel: { fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5 },
+  navItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 999, color: 'rgba(var(--ink-rgb),0.74)', marginBottom: 1, textDecoration: 'none', position: 'relative', overflow: 'hidden' },
+  navActive: { backgroundColor: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: '0 6px 16px -6px rgba(47,109,181,0.45)' },
+  navChildActive: { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' },
+  activeBar: { position: 'absolute', left: 0, top: '18%', bottom: '18%', width: 3, backgroundColor: 'var(--primary)', borderRadius: '0 3px 3px 0' },
   iconWrap: { display: 'flex', alignItems: 'center', flexShrink: 0 },
-  userRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px', borderRadius: 14, backgroundColor: 'rgba(29,29,31,0.032)', border: '1px solid rgba(29,29,31,0.04)' },
+  userRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px', borderRadius: 14, backgroundColor: 'rgba(var(--ink-rgb),0.032)', border: '1px solid rgba(var(--ink-rgb),0.04)' },
   avatar: { width: 32, height: 32, borderRadius: 9, flexShrink: 0, backgroundColor: 'rgba(162,210,255,0.15)', border: '1px solid rgba(162,210,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: ORANGE },
-  userName: { fontSize: 12, fontWeight: 700, color: '#1D1D1F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  userBadge: { fontSize: 10, color: 'rgba(29,29,31,0.57)', marginTop: 2 },
+  userName: { fontSize: 12, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  userBadge: { fontSize: 10, color: 'rgba(var(--ink-rgb),0.57)', marginTop: 2 },
   logoutBtn: { marginTop: 10, width: '100%', padding: '9px 0', borderRadius: 9, border: '1px solid rgba(217,67,75,0.3)', background: 'rgba(217,67,75,0.08)', color: 'rgba(217,67,75,0.85)', fontSize: 12, fontWeight: 600, cursor: 'pointer' },
 };

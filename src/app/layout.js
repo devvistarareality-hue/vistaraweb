@@ -11,9 +11,15 @@ export const metadata = {
   },
 };
 
+// Runs before first paint so the saved theme never flashes the other one.
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem('nx-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','light')}})();`;
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body>
         <ReduxProvider>
           {children}

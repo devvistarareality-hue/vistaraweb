@@ -62,21 +62,21 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
         <button onClick={() => router.push(backHref)} style={backBtn}>← Back</button>
       </div>
       {flash && (
-        <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', color: '#23874A', borderRadius: 16, padding: '12px 16px', marginBottom: 14, fontSize: 14, fontWeight: 600 }}>
+        <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', color: 'var(--success)', borderRadius: 16, padding: '12px 16px', marginBottom: 14, fontSize: 14, fontWeight: 600 }}>
           <Icon name="check-circle" /> {flash}
         </div>
       )}
       {/* Toggle: Record Closure ↔ My Bookings */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
         {[['closures', 'Record Closure'], ['mybookings', 'My Bookings']].map(([k, label]) => (
-          <button key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? '#2F6DB5' : '#ECEEF0', color: view === k ? '#fff' : '#6E7278' }}>{label}</button>
+          <button key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? 'var(--primary)' : 'var(--surface-3)', color: view === k ? '#fff' : 'var(--muted)' }}>{label}</button>
         ))}
       </div>
 
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>{view === 'mybookings' ? 'My Bookings' : 'Record Closure — Select Project'}</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{view === 'mybookings' ? 'My Bookings' : 'Record Closure — Select Project'}</h1>
       {view === 'closures' && (
-        <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 22 }}>
-          {sv ? <>For <strong style={{ color: '#2F6DB5' }}>{sv.lead_name}</strong> · {sv.lead_phone}. Pick the project, then choose the booked unit.</>
+        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 22 }}>
+          {sv ? <>For <strong style={{ color: 'var(--accent)' }}>{sv.lead_name}</strong> · {sv.lead_phone}. Pick the project, then choose the booked unit.</>
               : <>Pick a project to view its units.</>}
         </p>
       )}
@@ -92,10 +92,10 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
       {view === 'mybookings' ? <MyBookingsList cpOnly={cpOnly} /> : (
         loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 24 }}>
-          {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 200, borderRadius: 18, background: '#ECEEF0' }} />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="s-skel" style={{ height: 200, borderRadius: 18, background: 'var(--surface-3)' }} />)}
         </div>
       ) : !visible.length ? (
-        <p style={{ textAlign: 'center', color: '#6E7278', padding: '60px 0' }}>No active projects available.</p>
+        <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '60px 0' }}>No active projects available.</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 24 }}>
           {visible.map(p => {
@@ -117,30 +117,30 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
                 style={{ ...card, cursor: 'pointer' }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 36px rgba(47,109,181,0.24)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = card.boxShadow; }}>
-                <div style={{ position: 'relative', background: '#F4F5F7', height: 180, overflow: 'hidden' }}>
+                <div style={{ position: 'relative', background: 'var(--surface-2)', height: 180, overflow: 'hidden' }}>
                   {p.cover_image_url ? (
                     <img src={p.cover_image_url} alt={p.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
                   ) : (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
                       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C9CDD2" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                      <span style={{ fontSize: 12, color: '#C9CDD2' }}>No cover image</span>
+                      <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>No cover image</span>
                     </div>
                   )}
                   <div style={{ position: 'absolute', top: 10, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: '#6E7278', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: 'var(--muted)', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
                       {p.project_type}
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: '#E9FBEA', color: '#23874A', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: 'var(--success-soft)', color: 'var(--success)', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
                       ACTIVE
                     </span>
                   </div>
                 </div>
 
                 <div style={{ padding: '14px 16px 16px' }}>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>{p.name}</p>
-                  {p.location && <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 6 }}><Icon name="pin" /> {p.location}</p>}
-                  {p.tagline && <p style={{ fontSize: 11, color: '#9A9EA5', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
+                  <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>{p.name}</p>
+                  {p.location && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><Icon name="pin" /> {p.location}</p>}
+                  {p.tagline && <p style={{ fontSize: 11, color: 'var(--faint)', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
 
                   {(p.total_area || p.price_range || p.possession) && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
@@ -152,24 +152,24 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
 
                   {total > 0 && (
                     <div style={{ marginBottom: 10 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6E7278', marginBottom: 5 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', marginBottom: 5 }}>
                         <span style={{ fontWeight: 600 }}>{total} plots</span>
                         <span style={{ display: 'flex', gap: 10 }}>
-                          <span style={{ color: '#23874A', fontWeight: 600 }}><Icon name="check" /> {pc.available}</span>
-                          <span style={{ color: '#D98A1F', fontWeight: 600 }}>⏸ {pc.hold}</span>
-                          <span style={{ color: '#D9434B', fontWeight: 600 }}><Icon name="x" /> {pc.sold}</span>
+                          <span style={{ color: 'var(--success)', fontWeight: 600 }}><Icon name="check" /> {pc.available}</span>
+                          <span style={{ color: 'var(--warning-2)', fontWeight: 600 }}>⏸ {pc.hold}</span>
+                          <span style={{ color: 'var(--danger)', fontWeight: 600 }}><Icon name="x" /> {pc.sold}</span>
                         </span>
                       </div>
-                      <div style={{ height: 4, borderRadius: 4, background: '#ECEEF0', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#2F6DB5,#D9434B)', borderRadius: 4 }} />
+                      <div style={{ height: 4, borderRadius: 4, background: 'var(--surface-3)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,var(--primary),var(--danger-solid))', borderRadius: 4 }} />
                       </div>
                     </div>
                   )}
 
                   <div style={{ marginTop: 4, padding: '8px 12px', borderRadius: 14,
-                    background: noPlots ? '#FFF3E0' : '#F3F9FF',
+                    background: noPlots ? 'var(--warning-soft)' : 'var(--accent-softer)',
                     border: `1.5px solid ${noPlots ? '#FF6B2B40' : '#3D5AFE30'}`,
-                    fontSize: 12, fontWeight: 700, color: noPlots ? '#D98A1F' : '#2F6DB5', textAlign: 'center' }}>
+                    fontSize: 12, fontWeight: 700, color: noPlots ? 'var(--warning-2)' : 'var(--accent)', textAlign: 'center' }}>
                     {noPlots ? 'Create EOI →' : 'View units →'}
                   </div>
                 </div>
@@ -186,6 +186,6 @@ export default function ClosureProjectsPage() {
   return <ClosureProjectsContent />;
 }
 
-const card     = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(47,109,181,0.16)', border: '1.5px solid #DFE2E6', overflow: 'hidden', transition: 'transform 0.15s, box-shadow 0.15s' };
-const metaChip = { fontSize: 11, fontWeight: 600, color: '#55585E', backgroundColor: '#F4F5F7', padding: '3px 8px', borderRadius: 6 };
-const backBtn  = { padding: '7px 14px', backgroundColor: '#F4F5F7', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#2F6DB5', cursor: 'pointer' };
+const card     = { backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 6px 28px rgba(47,109,181,0.16)', border: '1.5px solid var(--border)', overflow: 'hidden', transition: 'transform 0.15s, box-shadow 0.15s' };
+const metaChip = { fontSize: 11, fontWeight: 600, color: 'var(--text-3)', backgroundColor: 'var(--surface-2)', padding: '3px 8px', borderRadius: 6 };
+const backBtn  = { padding: '7px 14px', backgroundColor: 'var(--surface-2)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' };

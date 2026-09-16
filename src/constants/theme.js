@@ -1,65 +1,65 @@
 export const COLORS = {
   // Palette (shared with the Labour ledger design)
   blue:       '#A2D2FF',
-  blueStrong: '#2F6DB5',
-  blueSoft:   '#E6F2FF',
+  blueStrong: 'var(--accent)',
+  blueSoft:   'var(--accent-soft)',
   green:      '#A4F5A6',
-  greenStrong:'#23874A',
-  greenSoft:  '#E9FBEA',
+  greenStrong:'var(--success)',
+  greenSoft:  'var(--success-soft)',
   peach:      '#FFD89D',
-  peachStrong:'#A3671A',
-  peachSoft:  '#FFF3E0',
-  grey:       '#ECEEF0',
-  ink:        '#1D1D1F',
+  peachStrong:'var(--warning)',
+  peachSoft:  'var(--warning-soft)',
+  grey:       'var(--surface-3)',
+  ink:        'var(--text)',
 
   // Backgrounds
-  screenBg:  '#F4F5F7',
+  screenBg:  'var(--surface-2)',
   cardBg:    '#FFFFFF',
 
   // Text
-  textPrimary:   '#1D1D1F',
-  textSecondary: '#6E7278',
+  textPrimary:   'var(--text)',
+  textSecondary: 'var(--muted)',
 
   // Brand
-  navy:       '#1D1D1F',
+  navy:       'var(--text)',
   powderBlue: '#A2D2FF',
-  gold:       '#D98A1F',
+  gold:       'var(--warning-2)',
 
   // Interactive
-  link: '#2F6DB5',
+  link: 'var(--accent)',
 
   // Semantic
-  error:   '#D9434B',
-  success: '#23874A',
+  error:   'var(--danger)',
+  success: 'var(--success)',
 
   // Legacy aliases
-  primary:    '#1D1D1F',
-  accent:     '#D98A1F',
-  secondary:  '#2F6DB5',
+  primary:    'var(--text)',
+  accent:     'var(--warning-2)',
+  secondary:  'var(--accent)',
   white:      '#FFFFFF',
-  background: '#F4F5F7',
-  text:       '#1D1D1F',
-  lightGray:  '#DFE2E6',
+  background: 'var(--surface-2)',
+  text:       'var(--text)',
+  lightGray:  'var(--border)',
 };
 
-export const CARD_SHADOW = '0 1px 2px rgba(29,29,31,0.04), 0 8px 24px rgba(60,90,130,0.07)';
+export const CARD_SHADOW = '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.07)';
 
 export const MODULE_ACCENT = {
-  HR:          { bg: '#E6F2FF', icon: '#2F6DB5' },
-  Sales:       { bg: '#FFF3E0', icon: '#D98A1F' },
-  Execution:   { bg: '#E9FBEA', icon: '#23874A' },
-  Purchase:    { bg: '#FFF3E0', icon: '#D98A1F' },
-  Land:        { bg: '#E6F2FF', icon: '#245A96' },
-  'Accounts & Finance': { bg: '#E9FBEA', icon: '#23874A' },
-  'Club 1000': { bg: '#A4F5A6', icon: '#23874A' },
-  Reports:     { bg: '#E9FBEA', icon: '#23874A' },
-  Settings:    { bg: '#E6F2FF', icon: '#245A96' },
-  Admin:       { bg: '#E6F2FF', icon: '#2F6DB5' },
-  Projects:    { bg: '#E9FBEA', icon: '#23874A' },
-  Sites:       { bg: '#E9FBEA', icon: '#23874A' },
-  Contractors: { bg: '#FFF3E0', icon: '#D98A1F' },
-  Inventory:   { bg: '#FFF3E0', icon: '#D98A1F' },
-  Payments:    { bg: '#E9FBEA', icon: '#23874A' },
-  Clients:     { bg: '#E6F2FF', icon: '#2F6DB5' },
-  'Channel Partner': { bg: '#FDECEC', icon: '#D9434B' },
+  HR:          { bg: 'var(--accent-soft)', icon: 'var(--accent)' },
+  Sales:       { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
+  Execution:   { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  Purchase:    { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
+  Land:        { bg: 'var(--accent-soft)', icon: 'var(--accent-deep)' },
+  'Accounts & Finance': { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  'Club 1000': { bg: 'var(--green)', icon: 'var(--success)' },
+  Reports:     { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  Settings:    { bg: 'var(--accent-soft)', icon: 'var(--accent-deep)' },
+  Admin:       { bg: 'var(--accent-soft)', icon: 'var(--accent)' },
+  Projects:    { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  Sites:       { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  Contractors: { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
+  Inventory:   { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
+  Payments:    { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  Clients:     { bg: 'var(--accent-soft)', icon: 'var(--accent)' },
+  'Channel Partner': { bg: 'var(--danger-soft)', icon: 'var(--danger)' },
 };

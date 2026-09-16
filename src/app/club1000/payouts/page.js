@@ -7,12 +7,13 @@ import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
+import Loader from '../../../components/Loader';
 
-const TEAL = '#23874A';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
+const TEAL = 'var(--success)';
+const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
+const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
+const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Maturity', premature_redemption: 'Premature Redemption' };
 
@@ -84,21 +85,21 @@ export default function PayoutsPage() {
 
   return (
     <div style={{ padding: '28px 32px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F' }}>Payouts</h1>
-      <p style={{ fontSize: 13, color: '#6E7278', marginTop: 4 }}>Interest, maturity, and premature-redemption ledger</p>
+      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Payouts</h1>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Interest, maturity, and premature-redemption ledger</p>
 
       <div style={{ marginTop: 18 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 12 }}>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All</option>
           <option value="pending">Pending</option>
           <option value="paid">Paid</option>
         </select>
       </div>
 
-      <div style={{ marginTop: 18, background: '#fff', borderRadius: 20, border: '1px solid #ECEEF0', overflow: 'hidden', overflowX: 'auto' }}>
+      <div style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
+            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Investor</th>
               <th style={th}>Scheme</th>
               <th style={th}>Type</th>
@@ -110,9 +111,9 @@ export default function PayoutsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>Loading…</td></tr>
+              <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
             ) : payouts.length === 0 ? (
-              <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>No payouts.</td></tr>
+              <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>No payouts.</td></tr>
             ) : payouts.map((p) => (
               <tr key={p.id}>
                 <td style={td}>{p.investor_name}</td>
@@ -122,18 +123,18 @@ export default function PayoutsPage() {
                 <td style={td}>
                   {fmtMoney(p.amount_due)}
                   {p.status === 'paid' && p.paid_amount != null && Number(p.paid_amount) !== Number(p.amount_due) && (
-                    <div style={{ fontSize: 11, color: '#A3671A', marginTop: 2 }}>Paid {fmtMoney(p.paid_amount)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--warning)', marginTop: 2 }}>Paid {fmtMoney(p.paid_amount)}</div>
                   )}
                 </td>
                 <td style={td}>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: p.status === 'paid' ? '#E9FBEA' : '#FFF3E0', color: p.status === 'paid' ? '#23874A' : '#D98A1F' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: p.status === 'paid' ? 'var(--success-soft)' : 'var(--warning-soft)', color: p.status === 'paid' ? 'var(--success)' : 'var(--warning-2)' }}>
                     {p.status === 'paid' ? 'Paid' : 'Pending'}
                   </span>
-                  {p.status === 'paid' && p.notes && <div style={{ fontSize: 11, color: '#6E7278', marginTop: 4, fontStyle: 'italic' }}>"{p.notes}"</div>}
+                  {p.status === 'paid' && p.notes && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, fontStyle: 'italic' }}>"{p.notes}"</div>}
                 </td>
                 <td style={td}>
                   {p.status === 'pending' && (
-                    <button onClick={() => openMarkPaid(p)} style={{ padding: '5px 10px', background: TEAL, color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
+                    <button onClick={() => openMarkPaid(p)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
                   )}
                 </td>
               </tr>
@@ -143,11 +144,11 @@ export default function PayoutsPage() {
       </div>
 
       {payingFor && (
-        <div onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: '100%', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
-            <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Mark Payout Paid</div>
-              <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>
+        <div onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: '100%', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+            <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Mark Payout Paid</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                 {payingFor.investor_name} · {TYPE_LABELS[payingFor.payout_type] || payingFor.payout_type} · Due {formatDMY(payingFor.due_date)}
               </div>
             </div>
@@ -156,7 +157,7 @@ export default function PayoutsPage() {
                 <label style={lbl}>Amount Paid (₹)</label>
                 <input style={inp} type="number" min="0" step="0.01" value={payForm.amount}
                   onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
-                <div style={{ fontSize: 11, color: '#6E7278', marginTop: 4 }}>Scheduled: {fmtMoney(payingFor.amount_due)}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Scheduled: {fmtMoney(payingFor.amount_due)}</div>
               </div>
               <div>
                 <label style={lbl}>Remarks</label>
@@ -164,10 +165,10 @@ export default function PayoutsPage() {
                   value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
                   placeholder="e.g. paid via NEFT, rounded to nearest ₹10…" />
               </div>
-              {err && <div style={{ fontSize: 12, color: '#D9434B' }}>{err}</div>}
+              {err && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button onClick={() => setPayingFor(null)} style={{ padding: '9px 16px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={submitMarkPaid} disabled={saving} style={{ padding: '9px 16px', background: TEAL, color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                <button onClick={() => setPayingFor(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={submitMarkPaid} disabled={saving} style={{ padding: '9px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? 'Saving…' : 'Mark Paid'}
                 </button>
               </div>

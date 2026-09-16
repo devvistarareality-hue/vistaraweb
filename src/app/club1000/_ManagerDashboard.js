@@ -6,8 +6,9 @@ import { apiFetch } from '../../utils/apiFetch';
 import StatCard, { fmtMoney } from './_StatCard';
 import AddInvestorModal from './_AddInvestorModal';
 import DateFilter from '../sales/_DateFilter';
+import Loader from '../../components/Loader';
 
-const TEAL = '#23874A';
+const TEAL = 'var(--success)';
 
 export default function ManagerDashboard() {
   const [stats, setStats] = useState(null);
@@ -40,18 +41,18 @@ export default function ManagerDashboard() {
     <div style={{ padding: '28px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F' }}>Club 1000</h1>
-          <p style={{ fontSize: 13, color: '#6E7278', marginTop: 4 }}>Investment portfolio and returns tracking — manager view</p>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Club 1000</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Investment portfolio and returns tracking — manager view</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
           <div style={{ display: 'flex', gap: 10 }}>
             <Link href="/club1000/schemes" style={{ textDecoration: 'none' }}>
-              <button style={{ padding: '10px 18px', background: '#F4F5F7', color: '#1D1D1F', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Manage Schemes</button>
+              <button style={{ padding: '10px 18px', background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Manage Schemes</button>
             </Link>
-            <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
+            <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
           </div>
           {!loading && !schemes.length && (
-            <div style={{ fontSize: 11, color: '#D98A1F' }}>Create a scheme first — the button unlocks once one exists.</div>
+            <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>Create a scheme first — the button unlocks once one exists.</div>
           )}
         </div>
       </div>
@@ -61,7 +62,7 @@ export default function ManagerDashboard() {
       </div>
 
       {loading ? (
-        <div style={{ marginTop: 40, textAlign: 'center', color: '#6E7278', fontSize: 13 }}>Loading…</div>
+        <Loader label="Loading…" style={{ padding: '28px 0' }} />
       ) : (
         <>
           <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
@@ -75,11 +76,11 @@ export default function ManagerDashboard() {
           </div>
 
           <div style={{ marginTop: 28 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', marginBottom: 12 }}>By Scheme</div>
-            <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #ECEEF0', overflow: 'hidden' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>By Scheme</div>
+            <div style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
-                  <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
+                  <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                     <th style={th}>Scheme</th>
                     <th style={th}>Investors</th>
                     <th style={th}>Amount</th>
@@ -87,7 +88,7 @@ export default function ManagerDashboard() {
                 </thead>
                 <tbody>
                   {(stats?.by_scheme || []).length === 0 ? (
-                    <tr><td colSpan={3} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>No investors yet.</td></tr>
+                    <tr><td colSpan={3} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>No investors yet.</td></tr>
                   ) : stats.by_scheme.map((row) => (
                     <tr key={row.scheme}>
                       <td style={td}>{row.scheme}</td>
@@ -113,5 +114,5 @@ export default function ManagerDashboard() {
   );
 }
 
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
+const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };

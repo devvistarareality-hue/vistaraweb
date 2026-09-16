@@ -7,6 +7,7 @@ import { isManagerRole } from '../../../lib/moduleAccess';
 
 
 import Icon from '../../../components/Icon';
+import { notify } from '../../../lib/notify';
 const AUTO_PATTERNS = {
   name:      /^(full.?name|name|customer.?name|lead.?name|first.?name|fullname)$/i,
   name2:     /^(last.?name|surname|family.?name|lastname)$/i,
@@ -151,12 +152,12 @@ export default function ImportPage() {
       setHeaders(hdrs);
       setRawRows(data);
       setMapping(autoDetect(hdrs));
-    } catch { alert('Failed to parse file'); }
+    } catch { notify('Failed to parse file'); }
     finally { setParsing(false); }
   }
 
   function buildPreview() {
-    if (!mapping.name || !mapping.phone) { alert('Map Name and Phone columns first'); return; }
+    if (!mapping.name || !mapping.phone) { notify('Map Name and Phone columns first'); return; }
     let valid = 0, invalid = 0;
     const rows = rawRows.map((raw, idx) => {
       const mapped = applyMapping(raw, mapping);
@@ -355,7 +356,7 @@ export default function ImportPage() {
   function ColSelect({ field, label }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 13, color: '#6E7278', width: 160, flexShrink: 0 }}>{label}</span>
+        <span style={{ fontSize: 13, color: 'var(--muted)', width: 160, flexShrink: 0 }}>{label}</span>
         <select value={mapping[field] || ''} onChange={(e) => setMapping((m) => ({ ...m, [field]: e.target.value }))} style={{ ...inp, flex: 1 }}>
           <option value="">— skip —</option>
           {headers.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -368,13 +369,13 @@ export default function ImportPage() {
     <div style={{ padding: '24px 28px', maxWidth: 860 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Import Leads</h1>
-          <p style={{ fontSize: 13, color: '#6E7278' }}>Upload Excel or CSV — Meta Ads export, CRM export, or any spreadsheet</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Import Leads</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>Upload Excel or CSV — Meta Ads export, CRM export, or any spreadsheet</p>
         </div>
         <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 6 }}>Download template</p>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 6 }}>Download template</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => downloadTemplate('full')} style={{ ...outlineBtn, borderColor: '#2F6DB5', color: '#2F6DB5', fontWeight: 700 }}>↓ Full Pipeline</button>
+            <button onClick={() => downloadTemplate('full')} style={{ ...outlineBtn, borderColor: 'var(--accent)', color: 'var(--accent)', fontWeight: 700 }}>↓ Full Pipeline</button>
             <button onClick={() => downloadTemplate('meta')} style={outlineBtn}>↓ Meta Ads</button>
             <button onClick={() => downloadTemplate('general')} style={outlineBtn}>↓ General</button>
           </div>
@@ -387,11 +388,11 @@ export default function ImportPage() {
           const s = i + 1;
           return (
             <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0, backgroundColor: step === s ? '#1D1D1F' : step > s ? '#23874A' : '#DFE2E6', color: step >= s ? '#fff' : '#6E7278' }}>
+              <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0, backgroundColor: step === s ? 'var(--strong)' : step > s ? 'var(--success-solid)' : 'var(--border)', color: step >= s ? '#fff' : 'var(--muted)' }}>
                 {step > s ? <Icon name="check" /> : s}
               </span>
-              <span style={{ fontSize: 13, color: step === s ? '#1D1D1F' : '#6E7278', fontWeight: step === s ? 600 : 400 }}>{label}</span>
-              {i < 2 && <span style={{ color: '#C9CDD2', margin: '0 4px' }}>›</span>}
+              <span style={{ fontSize: 13, color: step === s ? 'var(--text)' : 'var(--muted)', fontWeight: step === s ? 600 : 400 }}>{label}</span>
+              {i < 2 && <span style={{ color: 'var(--border-strong)', margin: '0 4px' }}>›</span>}
             </div>
           );
         })}
@@ -402,23 +403,23 @@ export default function ImportPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Drop zone */}
           <div
-            style={{ border: `2px dashed ${rawRows.length ? '#23874A' : '#C9CDD2'}`, borderRadius: 18, padding: '48px 24px', textAlign: 'center', cursor: 'pointer', backgroundColor: rawRows.length ? '#F4F5F7' : '#FAFAFB' }}
+            style={{ border: `2px dashed ${rawRows.length ? 'var(--success)' : 'var(--border-strong)'}`, borderRadius: 18, padding: '48px 24px', textAlign: 'center', cursor: 'pointer', backgroundColor: rawRows.length ? 'var(--surface-2)' : 'var(--surface-2)' }}
             onClick={() => fileRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           >
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
             {parsing ? (
-              <p style={{ color: '#6E7278' }}>Parsing file…</p>
+              <p style={{ color: 'var(--muted)' }}>Parsing file…</p>
             ) : rawRows.length ? (
               <>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#23874A', marginBottom: 4 }}><Icon name="chart" /> {fileName}</p>
-                <p style={{ color: '#6E7278', fontSize: 13 }}>{rawRows.length.toLocaleString()} rows · {headers.length} columns · Click to change</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--success)', marginBottom: 4 }}><Icon name="chart" /> {fileName}</p>
+                <p style={{ color: 'var(--muted)', fontSize: 13 }}>{rawRows.length.toLocaleString()} rows · {headers.length} columns · Click to change</p>
               </>
             ) : (
               <>
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', marginBottom: 4 }}>Drop file here or click to browse</p>
-                <p style={{ color: '#6E7278', fontSize: 13 }}>Supports .xlsx, .xls, .csv</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Drop file here or click to browse</p>
+                <p style={{ color: 'var(--muted)', fontSize: 13 }}>Supports .xlsx, .xls, .csv</p>
               </>
             )}
           </div>
@@ -427,8 +428,8 @@ export default function ImportPage() {
             <>
               {/* Project + Source */}
               <div style={card}>
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', marginBottom: 4 }}>Default project / source (optional)</h3>
-                <p style={{ color: '#6E7278', fontSize: 12, marginBottom: 12 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Default project / source (optional)</h3>
+                <p style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 12 }}>
                   If a row's Project or Source column in the file is blank or doesn't match an existing name, it'll fall back to whatever you pick here. Rows with a valid Project/Source in the file always use that instead.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -452,8 +453,8 @@ export default function ImportPage() {
               {/* Column mapping */}
               <div style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>Map columns</h3>
-                  <span style={{ fontSize: 11, color: '#6E7278', backgroundColor: '#F4F5F7', padding: '3px 8px', borderRadius: 6 }}>Auto-detected</span>
+                  <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Map columns</h3>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', backgroundColor: 'var(--surface-2)', padding: '3px 8px', borderRadius: 6 }}>Auto-detected</span>
                 </div>
                 <ColSelect field="name"      label="Full Name *" />
                 <ColSelect field="name2"     label="Last Name (optional)" />
@@ -468,26 +469,26 @@ export default function ImportPage() {
                   const detected = pipelineFields.filter((f) => mapping[f]);
                   const kinds = isStm ? 'STM, site visit & closure' : 'telecaller, STM, site visit & closure';
                   return (
-                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #DFE2E6' }}>
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--border)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: detected.length ? '#23874A' : '#6E7278', margin: 0 }}>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: detected.length ? 'var(--success)' : 'var(--muted)', margin: 0 }}>
                           {detected.length
                             ? `${detected.length} pipeline columns auto-detected (${kinds})`
                             : `No pipeline columns auto-detected (${kinds})`}
                         </p>
                         <button type="button" onClick={() => setShowPipelineMap((v) => !v)}
-                          style={{ fontSize: 11, fontWeight: 700, color: '#2F6DB5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                          style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                           {showPipelineMap ? 'Hide manual mapping' : 'Map manually / fix a mismatch →'}
                         </button>
                       </div>
                       {detected.length > 0 && !showPipelineMap && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                          {detected.map((f) => <span key={f} style={{ fontSize: 11, fontWeight: 600, color: '#2F6DB5', background: '#F3F9FF', padding: '3px 8px', borderRadius: 6 }}>{f}</span>)}
+                          {detected.map((f) => <span key={f} style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-softer)', padding: '3px 8px', borderRadius: 6 }}>{f}</span>)}
                         </div>
                       )}
                       {showPipelineMap && (
                         <div style={{ marginTop: 10 }}>
-                          <p style={{ fontSize: 11, color: '#6E7278', marginBottom: 8 }}>
+                          <p style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8 }}>
                             Only fields with a header that matched exactly (e.g. "stm_code") get auto-mapped — if your file uses an older or different header, pick the right column here.
                           </p>
                           {pipelineFields.map((f) => <ColSelect key={f} field={f} label={HEADER_LABELS[f] || f} />)}
@@ -500,12 +501,12 @@ export default function ImportPage() {
 
               {/* Raw preview */}
               <div style={{ ...card, overflowX: 'auto' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>File preview — first 5 rows</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>File preview — first 5 rows</p>
                 <table style={{ ...tbl, fontSize: 12 }}>
-                  <thead><tr style={{ backgroundColor: '#F4F5F7' }}>{headers.map((h) => <th key={h} style={{ ...th, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
+                  <thead><tr style={{ backgroundColor: 'var(--surface-2)' }}>{headers.map((h) => <th key={h} style={{ ...th, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
                   <tbody>
                     {rawRows.slice(0, 5).map((r, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #F4F5F7' }}>{headers.map((h) => <td key={h} style={{ ...tdS, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(r[h] instanceof Date ? r[h].toLocaleDateString() : (r[h] ?? ''))}</td>)}</tr>
+                      <tr key={i} style={{ borderBottom: '1px solid var(--surface-2)' }}>{headers.map((h) => <td key={h} style={{ ...tdS, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(r[h] instanceof Date ? r[h].toLocaleDateString() : (r[h] ?? ''))}</td>)}</tr>
                     ))}
                   </tbody>
                 </table>
@@ -524,39 +525,39 @@ export default function ImportPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="rg-3" style={{ gap: 12 }}>
             {[
-              { label: 'Total rows', value: rawRows.length, color: '#1D1D1F' },
-              { label: 'Ready to import', value: totalValid, color: '#23874A' },
-              { label: 'Will be skipped', value: totalInvalid, color: '#D9434B' },
+              { label: 'Total rows', value: rawRows.length, color: 'var(--text)' },
+              { label: 'Ready to import', value: totalValid, color: 'var(--success)' },
+              { label: 'Will be skipped', value: totalInvalid, color: 'var(--danger)' },
             ].map((s) => (
               <div key={s.label} style={{ ...card, textAlign: 'center' }}>
                 <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value.toLocaleString()}</p>
-                <p style={{ fontSize: 12, color: '#6E7278', marginTop: 4 }}>{s.label}</p>
+                <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{s.label}</p>
               </div>
             ))}
           </div>
 
           {totalInvalid > 0 && (
-            <div style={{ backgroundColor: '#FFF3E0', border: '1px solid #F5B453', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: '#A3671A' }}>
+            <div style={{ backgroundColor: 'var(--warning-soft)', border: '1px solid var(--peach-2)', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: 'var(--warning)' }}>
               <Icon name="alert" /> Rows missing Name or a valid Phone will be skipped. Duplicate phone numbers will be flagged in leads.
             </div>
           )}
 
           <div style={{ ...card, overflowX: 'auto' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Mapped preview — first 20 rows</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Mapped preview — first 20 rows</p>
             <table style={tbl}>
-              <thead style={{ backgroundColor: '#F4F5F7' }}><tr>{['#','Name','Phone','Email','Campaign','Valid?'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+              <thead style={{ backgroundColor: 'var(--surface-2)' }}><tr>{['#','Name','Phone','Email','Campaign','Valid?'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
               <tbody>
                 {preview.slice(0, 20).map((r) => (
-                  <tr key={r.idx} style={{ borderBottom: '1px solid #F4F5F7', backgroundColor: !r.valid ? '#FDECEC' : '' }}>
+                  <tr key={r.idx} style={{ borderBottom: '1px solid var(--surface-2)', backgroundColor: !r.valid ? 'var(--danger-soft)' : '' }}>
                     <td style={tdS}>{r.idx + 1}</td>
-                    <td style={{ ...tdS, fontWeight: 600 }}>{r.name || <span style={{ color: '#D9434B' }}>—</span>}</td>
-                    <td style={{ ...tdS, fontFamily: 'monospace' }}>{r.phone || <span style={{ color: '#D9434B' }}>—</span>}</td>
+                    <td style={{ ...tdS, fontWeight: 600 }}>{r.name || <span style={{ color: 'var(--danger)' }}>—</span>}</td>
+                    <td style={{ ...tdS, fontFamily: 'monospace' }}>{r.phone || <span style={{ color: 'var(--danger)' }}>—</span>}</td>
                     <td style={tdS}>{r.email || '—'}</td>
                     <td style={{ ...tdS, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign || '—'}</td>
                     <td style={tdS}>
                       {r.valid
-                        ? <span style={{ color: '#23874A', fontWeight: 700 }}><Icon name="check" /> OK</span>
-                        : <span style={{ color: '#D9434B', fontWeight: 700 }}>{r.error}</span>}
+                        ? <span style={{ color: 'var(--success)', fontWeight: 700 }}><Icon name="check" /> OK</span>
+                        : <span style={{ color: 'var(--danger)', fontWeight: 700 }}>{r.error}</span>}
                     </td>
                   </tr>
                 ))}
@@ -578,52 +579,52 @@ export default function ImportPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {importing ? (
             <div style={{ ...card, textAlign: 'center', padding: '60px 24px' }}>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#1D1D1F', marginBottom: 8 }}>Importing leads…</p>
-              <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 20 }}>Please don't close this tab</p>
-              <div style={{ height: 8, backgroundColor: '#DFE2E6', borderRadius: 4, overflow: 'hidden', maxWidth: 320, margin: '0 auto' }}>
-                <div style={{ height: '100%', backgroundColor: '#1D1D1F', borderRadius: 4, width: `${progress}%`, transition: 'width 0.3s' }} />
+              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Importing leads…</p>
+              <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>Please don't close this tab</p>
+              <div style={{ height: 8, backgroundColor: 'var(--border)', borderRadius: 4, overflow: 'hidden', maxWidth: 320, margin: '0 auto' }}>
+                <div style={{ height: '100%', backgroundColor: 'var(--strong)', borderRadius: 4, width: `${progress}%`, transition: 'width 0.3s' }} />
               </div>
-              <p style={{ fontSize: 12, color: '#6E7278', marginTop: 8 }}>{progress}%</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>{progress}%</p>
             </div>
           ) : result && (
             <>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#23874A' }}><Icon name="check" /> Import complete</p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--success)' }}><Icon name="check" /> Import complete</p>
               <div className="rg-3" style={{ gap: 12 }}>
                 {[
-                  { label: 'New leads imported', value: result.imported, color: '#23874A' },
-                  { label: 'Duplicates flagged', value: result.duplicates, color: '#D98A1F' },
-                  { label: 'Errors / failed', value: result.errors, color: '#D9434B' },
+                  { label: 'New leads imported', value: result.imported, color: 'var(--success)' },
+                  { label: 'Duplicates flagged', value: result.duplicates, color: 'var(--warning-2)' },
+                  { label: 'Errors / failed', value: result.errors, color: 'var(--danger)' },
                 ].map((s) => (
                   <div key={s.label} style={{ ...card, textAlign: 'center' }}>
                     <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value.toLocaleString()}</p>
-                    <p style={{ fontSize: 12, color: '#6E7278', marginTop: 4 }}>{s.label}</p>
+                    <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{s.label}</p>
                   </div>
                 ))}
               </div>
               {(result.siteVisits > 0 || result.closures > 0) && (
                 <div className="rg-3" style={{ gap: 12 }}>
                   {[
-                    { label: 'Site visits created', value: result.siteVisits, color: '#245A96' },
-                    { label: 'Closures created', value: result.closures, color: '#2F6DB5' },
+                    { label: 'Site visits created', value: result.siteVisits, color: 'var(--accent-deep)' },
+                    { label: 'Closures created', value: result.closures, color: 'var(--accent)' },
                   ].map((s) => (
                     <div key={s.label} style={{ ...card, textAlign: 'center' }}>
                       <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{(s.value || 0).toLocaleString()}</p>
-                      <p style={{ fontSize: 12, color: '#6E7278', marginTop: 4 }}>{s.label}</p>
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{s.label}</p>
                     </div>
                   ))}
                 </div>
               )}
               {result.warnings && result.warnings.length > 0 && (
-                <div style={{ ...card, borderColor: '#FFD89D', backgroundColor: '#FFF3E0' }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#A3671A', marginBottom: 8 }}>
+                <div style={{ ...card, borderColor: 'var(--peach)', backgroundColor: 'var(--warning-soft)' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--warning)', marginBottom: 8 }}>
                     <Icon name="alert" /> {result.warnings.length} code{result.warnings.length > 1 ? 's' : ''} didn't match anyone — those leads still imported, just without that assignment
                   </p>
                   <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                     <table style={{ ...tbl, fontSize: 12 }}>
-                      <thead style={{ backgroundColor: '#FFF3E0' }}><tr>{['Row', 'Name', 'Field', 'Value you entered'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                      <thead style={{ backgroundColor: 'var(--warning-soft)' }}><tr>{['Row', 'Name', 'Field', 'Value you entered'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
                       <tbody>
                         {result.warnings.map((w, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid #FFD89D' }}>
+                          <tr key={i} style={{ borderBottom: '1px solid var(--peach)' }}>
                             <td style={tdS}>{w.row}</td>
                             <td style={{ ...tdS, fontWeight: 600 }}>{w.name}</td>
                             <td style={tdS}>{w.field}</td>
@@ -633,10 +634,10 @@ export default function ImportPage() {
                       </tbody>
                     </table>
                   </div>
-                  <p style={{ fontSize: 11, color: '#A3671A', marginTop: 8 }}>Check the value against the Reference sheet's User Code column, fix it, and re-import just those rows.</p>
+                  <p style={{ fontSize: 11, color: 'var(--warning)', marginTop: 8 }}>Check the value against the Reference sheet's User Code column, fix it, and re-import just those rows.</p>
                 </div>
               )}
-              <div style={{ backgroundColor: '#F3F9FF', border: '1px solid #CCE5FF', borderRadius: 14, padding: '12px 16px', fontSize: 13, color: '#245A96' }}>
+              <div style={{ backgroundColor: 'var(--accent-softer)', border: '1px solid var(--blue-2)', borderRadius: 14, padding: '12px 16px', fontSize: 13, color: 'var(--accent-deep)' }}>
                 <strong>What happens next?</strong><br />
                 Rows that carried a <strong>{isStm ? 'STM Code' : 'Telecaller Code / STM Code'}</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
               </div>
@@ -649,11 +650,11 @@ export default function ImportPage() {
   );
 }
 
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
-const card = { backgroundColor: '#fff', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
+const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' };
+const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
+const card = { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
 const tbl  = { width: '100%', borderCollapse: 'collapse' };
-const th   = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '8px 12px', textTransform: 'uppercase', letterSpacing: 0.5 };
+const th   = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '8px 12px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const tdS  = { padding: '8px 12px', fontSize: 12 };
-const saveBtn   = { padding: '10px 22px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const outlineBtn = { padding: '8px 16px', backgroundColor: '#fff', border: '1.5px solid #DFE2E6', borderRadius: 9, fontSize: 13, color: '#1D1D1F', fontWeight: 600, cursor: 'pointer' };
+const saveBtn   = { padding: '10px 22px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
+const outlineBtn = { padding: '8px 16px', backgroundColor: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', fontWeight: 600, cursor: 'pointer' };

@@ -7,12 +7,12 @@ import { ALL_MODULES } from '../../../lib/moduleAccess';
 
 import Icon from '../../../components/Icon';
 const MODULE_COLOR = {
-  Sales:      { bg: '#FFF3E0', text: '#D98A1F', dot: '#D98A1F' },
-  HR:         { bg: '#E6F2FF', text: '#2F6DB5', dot: '#2F6DB5' },
-  Execution:  { bg: '#FFF3E0', text: '#D98A1F', dot: '#D98A1F' },
-  Purchase:   { bg: '#E6F2FF', text: '#245A96', dot: '#245A96' },
-  Land:       { bg: '#E9FBEA', text: '#23874A', dot: '#23874A' },
-  'Club 1000': { bg: '#E9FBEA', text: '#23874A', dot: '#23874A' },
+  Sales:      { bg: 'var(--warning-soft)', text: 'var(--warning-2)', dot: 'var(--warning-2)' },
+  HR:         { bg: 'var(--accent-soft)', text: 'var(--accent)', dot: 'var(--accent)' },
+  Execution:  { bg: 'var(--warning-soft)', text: 'var(--warning-2)', dot: 'var(--warning-2)' },
+  Purchase:   { bg: 'var(--accent-soft)', text: 'var(--accent-deep)', dot: 'var(--accent-deep)' },
+  Land:       { bg: 'var(--success-soft)', text: 'var(--success)', dot: 'var(--success)' },
+  'Club 1000': { bg: 'var(--success-soft)', text: 'var(--success)', dot: 'var(--success)' },
 };
 
 export default function DesignationMasterPage() {
@@ -58,37 +58,37 @@ export default function DesignationMasterPage() {
       </div>
 
       {/* Create form */}
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #ECEEF0', overflow: 'hidden' }}>
-        <div style={{ background: '#1D1D1F', padding: '18px 24px 16px' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--hero)', padding: '18px 24px 16px' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>Add New Designation</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Define designations per module for user profiles</div>
         </div>
         <form onSubmit={handleCreate} style={{ padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 140 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Module</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Module</label>
             <select value={form.module} onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
-              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, backgroundColor: '#F5F6F7', outline: 'none', cursor: 'pointer' }}>
+              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, backgroundColor: 'var(--surface-2)', outline: 'none', cursor: 'pointer' }}>
               {ALL_MODULES.map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
           <div style={{ flex: 2, minWidth: 200 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Designation Name</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Designation Name</label>
             <input required type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Site Team Manager, HR Executive"
-              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' }}
-              onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+              style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' }}
+              onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
           </div>
           <div>
-            <button type="submit" style={{ height: 40, padding: '0 22px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
+            <button type="submit" style={{ height: 40, padding: '0 22px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
           </div>
         </form>
-        {error && <div style={{ margin: '0 24px 16px', backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#D9434B' }}>{error}</div>}
+        {error && <div style={{ margin: '0 24px 16px', backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
       </div>
 
       {/* Designations grouped by module */}
       <div style={s.grid}>
         {ALL_MODULES.map((mod) => {
-          const c    = MODULE_COLOR[mod] || { bg: '#F4F5F7', text: '#55585E', dot: '#9A9EA5' };
+          const c    = MODULE_COLOR[mod] || { bg: 'var(--surface-2)', text: 'var(--text-3)', dot: 'var(--faint)' };
           const list = grouped[mod] || [];
           return (
             <div key={mod} style={s.moduleCard}>
@@ -126,24 +126,24 @@ export default function DesignationMasterPage() {
 const s = {
   page:        { padding: '32px 36px', minHeight: '100vh', backgroundColor: 'transparent' },
   pageHeader:  { marginBottom: 24 },
-  pageTitle:   { fontSize: 24, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 },
-  pageSubtitle:{ fontSize: 13, color: '#6E7278', margin: 0 },
+  pageTitle:   { fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 4 },
+  pageSubtitle:{ fontSize: 13, color: 'var(--muted)', margin: 0 },
 
-  card:      { backgroundColor: '#fff', borderRadius: 20, padding: '24px', marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #ECEEF0' },
-  cardTitle: { fontSize: 15, fontWeight: 700, color: '#1D1D1F', marginBottom: 16, marginTop: 0 },
+  card:      { backgroundColor: 'var(--surface)', borderRadius: 20, padding: '24px', marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid var(--surface-3)' },
+  cardTitle: { fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 16, marginTop: 0 },
   formRow:   { display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' },
-  label:     { display: 'block', fontSize: 12, fontWeight: 600, color: '#6E7278', marginBottom: 6 },
-  select:    { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 14, backgroundColor: '#fff' },
-  input:     { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 14, boxSizing: 'border-box' },
-  addBtn:    { padding: '10px 22px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  label:     { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 6 },
+  select:    { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 14, backgroundColor: 'var(--surface)' },
+  input:     { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 14, boxSizing: 'border-box' },
+  addBtn:    { padding: '10px 22px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
 
   grid:        { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 },
-  moduleCard:  { backgroundColor: '#fff', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid #ECEEF0', minHeight: 120 },
+  moduleCard:  { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--surface-3)', minHeight: 120 },
   moduleHeader:{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 },
   moduleDot:   { width: 9, height: 9, borderRadius: '50%', flexShrink: 0 },
   moduleName:  { fontSize: 14, fontWeight: 700, flex: 1 },
-  moduleCount: { fontSize: 11, fontWeight: 600, color: '#9A9EA5', backgroundColor: '#F4F5F7', borderRadius: 14, padding: '2px 8px' },
-  emptyHint:   { fontSize: 12, color: '#9A9EA5', margin: 0, fontStyle: 'italic' },
+  moduleCount: { fontSize: 11, fontWeight: 600, color: 'var(--faint)', backgroundColor: 'var(--surface-2)', borderRadius: 14, padding: '2px 8px' },
+  emptyHint:   { fontSize: 12, color: 'var(--faint)', margin: 0, fontStyle: 'italic' },
   chipList:    { display: 'flex', flexWrap: 'wrap', gap: 8 },
   chip:        { display: 'flex', alignItems: 'center', gap: 6, borderRadius: 20, padding: '4px 10px 4px 12px' },
   chipText:    { fontSize: 13, fontWeight: 600 },

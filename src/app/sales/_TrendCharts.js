@@ -32,11 +32,11 @@ function shortDate(dateStr) {
 
 const cardStyle = {
   flex: 1,
-  background: '#fff',
+  background: 'var(--surface)',
   borderRadius: 20,
-  border: '1px solid #F4F5F7',
+  border: '1px solid var(--surface-2)',
   padding: '18px 20px',
-  boxShadow: '0 2px 12px rgba(29,29,31,0.06)',
+  boxShadow: '0 2px 12px rgba(var(--ink-rgb),0.06)',
   minWidth: 0,
 };
 
@@ -44,10 +44,10 @@ const CustomTooltip = ({ active, payload, label, color, metricLabel, showAmount 
   if (!active || !payload?.length) return null;
   const amt = payload[0].payload?.amount;
   return (
-    <div style={{ background: '#1D1D1F', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+    <div style={{ background: 'var(--strong)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
       <div style={{ fontWeight: 700, marginBottom: 2 }}>{label ? shortDate(label) : ''}</div>
       <div style={{ color }}>{metricLabel}: <strong>{payload[0].value}</strong></div>
-      {showAmount && <div style={{ color: '#D98A1F', marginTop: 2 }}>Amount: <strong>{fmtAmount(amt)}</strong></div>}
+      {showAmount && <div style={{ color: 'var(--warning-2)', marginTop: 2 }}>Amount: <strong>{fmtAmount(amt)}</strong></div>}
     </div>
   );
 };
@@ -61,19 +61,19 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{title}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{title}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 28, fontWeight: 800, color: '#1D1D1F' }}>{total}</span>
-            <span style={{ fontSize: 12, color: '#6E7278', fontWeight: 600 }}>total</span>
+            <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)' }}>{total}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>total</span>
           </div>
         </div>
-        <div style={{ padding: '4px 12px', borderRadius: 20, background: color + '20', color, fontSize: 12, fontWeight: 700 }}>
+        <div style={{ padding: '4px 12px', borderRadius: 20, background: `color-mix(in srgb, ${color} 13%, transparent)`, color, fontSize: 12, fontWeight: 700 }}>
           {badge}
         </div>
       </div>
 
       {data.length === 0 ? (
-        <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C9CDD2', fontSize: 13 }}>
+        <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--border-strong)', fontSize: 13 }}>
           {emptyMsg}
         </div>
       ) : (
@@ -113,9 +113,9 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
         {[1, 2, 3].map(i => (
           <div key={i} style={{ ...cardStyle, height: 196 }}>
-            <div style={{ height: 16, width: 120, background: '#F4F5F7', borderRadius: 6, marginBottom: 10 }} />
-            <div style={{ height: 28, width: 60, background: '#F4F5F7', borderRadius: 6, marginBottom: 20 }} />
-            <div style={{ height: 120, background: '#F4F5F7', borderRadius: 8 }} />
+            <div style={{ height: 16, width: 120, background: 'var(--surface-2)', borderRadius: 6, marginBottom: 10 }} />
+            <div style={{ height: 28, width: 60, background: 'var(--surface-2)', borderRadius: 6, marginBottom: 20 }} />
+            <div style={{ height: 120, background: 'var(--surface-2)', borderRadius: 8 }} />
           </div>
         ))}
       </div>

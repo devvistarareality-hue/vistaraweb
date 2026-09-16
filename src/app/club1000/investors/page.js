@@ -12,21 +12,23 @@ import RenewInvestorModal from '../_RenewInvestorModal';
 import LedgerModal from '../_LedgerModal';
 
 import Icon from '../../../components/Icon';
-const TEAL = '#23874A';
-const PURPLE = '#2F6DB5';
-const AMBER = '#A3671A';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
+import { confirmDialog, notify } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
+const TEAL = 'var(--success)';
+const PURPLE = 'var(--accent)';
+const AMBER = 'var(--warning)';
+const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
+const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
 
 const STATUS_COLORS = {
-  active: { bg: '#E9FBEA', fg: '#23874A' },
-  matured: { bg: '#E6F2FF', fg: '#245A96' },
-  redeemed: { bg: '#E6F2FF', fg: '#245A96' },
-  premature_redeemed: { bg: '#FFF3E0', fg: '#D98A1F' },
+  active: { bg: 'var(--success-soft)', fg: 'var(--success)' },
+  matured: { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
+  redeemed: { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
+  premature_redeemed: { bg: 'var(--warning-soft)', fg: 'var(--warning-2)' },
 };
 
 function StatusBadge({ status }) {
-  const c = STATUS_COLORS[status] || { bg: '#F4F5F7', fg: '#55585E' };
+  const c = STATUS_COLORS[status] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' };
   return <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: c.bg, color: c.fg, textTransform: 'capitalize' }}>{status.replace(/_/g, ' ')}</span>;
 }
 
@@ -79,26 +81,26 @@ export default function InvestorsPage() {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
     const data = await res.json();
     if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-    else alert(data?.detail || 'Could not open the LOI.');
+    else notify(data?.detail || 'Could not open the LOI.');
   }
 
   async function redeem(id) {
-    if (!confirm('Redeem this investment now? This applies the premature-redemption rate for the elapsed period.')) return;
+    if (!(await confirmDialog('Redeem this investment now? This applies the premature-redemption rate for the elapsed period.'))) return;
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeem(id), { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
-      alert(data?.detail || 'Could not redeem.');
+      notify(data?.detail || 'Could not redeem.');
       return;
     }
     load();
   }
 
   async function maturePayout(id) {
-    if (!confirm('Pay out this matured investment now? The investor will be marked redeemed — mark the scheduled maturity payout paid separately from the Payouts screen.')) return;
+    if (!(await confirmDialog('Pay out this matured investment now? The investor will be marked redeemed — mark the scheduled maturity payout paid separately from the Payouts screen.'))) return;
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorMaturePayout(id), { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
-      alert(data?.detail || 'Could not process the payout.');
+      notify(data?.detail || 'Could not process the payout.');
       return;
     }
     load();
@@ -108,15 +110,15 @@ export default function InvestorsPage() {
     <div style={{ padding: '28px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F' }}>Investors</h1>
-          <p style={{ fontSize: 13, color: '#6E7278', marginTop: 4 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Investors</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
             {manager ? 'All approved investors across Club 1000' : 'Your approved investors'}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
+          <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
           {!loading && !schemes.length && (
-            <div style={{ fontSize: 11, color: '#D98A1F' }}>{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
+            <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
           )}
         </div>
       </div>
@@ -125,18 +127,18 @@ export default function InvestorsPage() {
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
         <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search name, phone, email, investor no.…"
-          style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+          style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
         {searchText && (
-          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#6E7278', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
+          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
         )}
       </div>
 
       <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
-        <select value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 12 }}>
+        <select value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Schemes</option>
           {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 12 }}>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Statuses</option>
           <option value="active">Active</option>
           <option value="matured">Matured</option>
@@ -145,10 +147,10 @@ export default function InvestorsPage() {
         </select>
       </div>
 
-      <div style={{ marginTop: 18, background: '#fff', borderRadius: 20, border: '1px solid #ECEEF0', overflow: 'hidden', overflowX: 'auto' }}>
+      <div style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ background: '#F4F5F7', textAlign: 'left' }}>
+            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Name</th>
               <th style={th}>Mobile</th>
               <th style={th}>Scheme</th>
@@ -167,15 +169,15 @@ export default function InvestorsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>Loading…</td></tr>
+              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
             ) : investors.length === 0 ? (
-              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: '#6E7278' }}>{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
+              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
             ) : investors.map((inv) => (
               <tr key={inv.id}>
                 <td style={td}>
                   {inv.name}
-                  {inv.revision_no > 0 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: '#E6F2FF', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
-                  {inv.is_matured && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: '#FFF3E0', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
+                  {inv.revision_no > 0 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
+                  {inv.is_matured && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
                 </td>
                 <td style={td}>{inv.phone || '—'}</td>
                 <td style={td}>{inv.scheme_name}</td>
@@ -195,18 +197,18 @@ export default function InvestorsPage() {
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
                 <td style={td}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: '#E9FBEA', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
-                    <button onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: '#E6F2FF', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
+                    <button onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
+                    <button onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: 'var(--accent-soft)', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
                     {inv.is_matured ? (
                       <>
-                        <button onClick={() => setRenewing(inv)} style={{ padding: '5px 10px', background: '#FFF3E0', color: AMBER, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Renew</button>
+                        <button onClick={() => setRenewing(inv)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: AMBER, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Renew</button>
                         {manager && (
-                          <button onClick={() => maturePayout(inv.id)} style={{ padding: '5px 10px', background: '#FFF3E0', color: '#D98A1F', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Payout</button>
+                          <button onClick={() => maturePayout(inv.id)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Payout</button>
                         )}
                       </>
                     ) : (
                       manager && inv.status === 'active' && (
-                        <button onClick={() => redeem(inv.id)} style={{ padding: '5px 10px', background: '#FFF3E0', color: '#D98A1F', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Redeem</button>
+                        <button onClick={() => redeem(inv.id)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Redeem</button>
                       )
                     )}
                   </div>

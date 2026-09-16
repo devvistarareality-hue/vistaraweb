@@ -35,22 +35,22 @@ export default function ChangePasswordModal({ open, onClose, onSuccess }) {
     setBusy(false);
   };
 
-  const inp = { width: '100%', padding: '10px 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', marginBottom: 10 };
+  const inp = { width: '100%', padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', marginBottom: 10 };
   const disabled = busy || !cur || !nw || !conf;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 380, maxWidth: '100%', background: '#fff', borderRadius: 20, padding: 22, boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
-        <div style={{ fontSize: 17, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Change Password</div>
-        <div style={{ fontSize: 12, color: '#6E7278', marginBottom: 16 }}>Enter your current password and choose a new one.</div>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 380, maxWidth: '100%', background: 'var(--surface)', borderRadius: 20, padding: 22, boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
+        <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Change Password</div>
+        <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Enter your current password and choose a new one.</div>
         <form onSubmit={submit}>
           <input type="password" placeholder="Current password" value={cur} onChange={(e) => setCur(e.target.value)} style={inp} autoFocus />
           <input type="password" placeholder="New password" value={nw} onChange={(e) => setNw(e.target.value)} style={inp} />
           <input type="password" placeholder="Confirm new password" value={conf} onChange={(e) => setConf(e.target.value)} style={inp} />
-          {msg && <div style={{ fontSize: 12, fontWeight: 600, color: msg.type === 'ok' ? '#23874A' : '#D9434B', marginBottom: 10 }}>{msg.text}</div>}
+          {msg && <div style={{ fontSize: 12, fontWeight: 600, color: msg.type === 'ok' ? 'var(--success)' : 'var(--danger)', marginBottom: 10 }}>{msg.text}</div>}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 14, border: '1.5px solid #DFE2E6', background: '#fff', color: '#55585E', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" disabled={disabled} style={{ flex: 1, padding: '10px 0', borderRadius: 14, border: 'none', background: '#1D1D1F', color: '#fff', fontSize: 13, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1 }}>{busy ? 'Saving…' : 'Change Password'}</button>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={disabled} style={{ flex: 1, padding: '10px 0', borderRadius: 14, border: 'none', background: 'var(--strong)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1 }}>{busy ? 'Saving…' : 'Change Password'}</button>
           </div>
         </form>
       </div>

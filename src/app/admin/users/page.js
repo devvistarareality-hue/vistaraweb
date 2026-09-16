@@ -16,23 +16,23 @@ import Icon from '../../../components/Icon';
 // unattended self-booking account -- so it sits apart at the end.
 const ROLES       = ['Director', 'General Manager', 'Manager', 'Employee', 'Intern', 'Kiosk'];
 
-const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
-const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 };
-const mSec = { fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 };
+const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
+const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 };
+const mSec = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 };
 
 function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {
   if (!open) return null;
   return (
     <div style={s.overlay} onClick={onCancel}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{title}</div>
           <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
-        <div style={{ padding: '20px 24px', fontSize: 14, color: '#3A3C40', lineHeight: 1.6 }}>{message}</div>
+        <div style={{ padding: '20px 24px', fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6 }}>{message}</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '0 24px 20px' }}>
-          <button onClick={onCancel} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onConfirm} style={{ padding: '10px 24px', backgroundColor: confirmColor || '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
+          <button onClick={onCancel} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onConfirm} style={{ padding: '10px 24px', backgroundColor: confirmColor || 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -112,7 +112,7 @@ export default function UserManagementPage() {
       title:        'Deactivate User',
       message:      `Deactivate ${u.name}? They will no longer be able to log in.`,
       confirmLabel: 'Deactivate',
-      confirmColor: '#D98A1F',
+      confirmColor: 'var(--warning-solid)',
       onConfirm:    () => {
         opLabel.current = 'deactivated';
         dispatch(updateUser(u.id, { is_active: false }));
@@ -127,7 +127,7 @@ export default function UserManagementPage() {
       title:        'Reactivate User',
       message:      `Reactivate ${u.name}? They will regain access to the system.`,
       confirmLabel: 'Activate',
-      confirmColor: '#23874A',
+      confirmColor: 'var(--success-solid)',
       onConfirm:    () => {
         opLabel.current = 'reactivated';
         dispatch(updateUser(u.id, { is_active: true }));
@@ -142,7 +142,7 @@ export default function UserManagementPage() {
       title:        'Delete User',
       message:      `Permanently delete ${u.name}? This cannot be undone and all their data will be removed.`,
       confirmLabel: 'Delete',
-      confirmColor: '#D9434B',
+      confirmColor: 'var(--danger-solid)',
       onConfirm:    () => {
         dispatch(deleteUser(u.id));
         showToast(`${u.name} permanently deleted.`, 'error');
@@ -183,12 +183,12 @@ export default function UserManagementPage() {
           <h1 style={s.pageTitle}>User Management</h1>
           <div style={s.statRow}>
             <span style={s.statChip}>
-              <span style={{ ...s.statDot, backgroundColor: '#23874A' }} />
+              <span style={{ ...s.statDot, backgroundColor: 'var(--success-solid)' }} />
               {activeCount} active
             </span>
             {inactiveCount > 0 && (
               <span style={s.statChip}>
-                <span style={{ ...s.statDot, backgroundColor: '#9A9EA5' }} />
+                <span style={{ ...s.statDot, backgroundColor: 'var(--faint-solid)' }} />
                 {inactiveCount} inactive
               </span>
             )}
@@ -196,7 +196,7 @@ export default function UserManagementPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={handleRefresh} disabled={loading} title="Refresh" style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}>↻</button>
-          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #CCE5FF' }}><Icon name="folder" /> Org Chart</button>
+          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid var(--blue-2)' }}><Icon name="folder" /> Org Chart</button>
           <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>+ Create User</button>
         </div>
       </div>
@@ -220,14 +220,14 @@ export default function UserManagementPage() {
             </thead>
             <tbody>
               {filtered.map((u) => (
-                <tr key={u.id} style={{ ...s.tr, backgroundColor: u.is_active ? '#fff' : '#F4F5F7' }}>
+                <tr key={u.id} style={{ ...s.tr, backgroundColor: u.is_active ? 'var(--surface)' : 'var(--surface-2)' }}>
                   <td style={s.td}><code style={{ ...s.codePill, opacity: u.is_active ? 1 : 0.55 }}>{u.user_code}</code></td>
-                  <td style={s.td}><span style={{ ...s.nameText, color: u.is_active ? '#1D1D1F' : '#9A9EA5' }}>{u.name}</span></td>
+                  <td style={s.td}><span style={{ ...s.nameText, color: u.is_active ? 'var(--text)' : 'var(--faint)' }}>{u.name}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.email}</span></td>
                   <td style={s.td}><span style={s.rolePill}>{u.role}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.modules?.length || 0}</span></td>
                   <td style={s.td}>
-                    <span style={{ ...s.statusPill, backgroundColor: u.is_active ? '#E9FBEA' : '#F4F5F7', color: u.is_active ? '#23874A' : '#55585E', border: `1px solid ${u.is_active ? '#A4F5A6' : '#C9CDD2'}` }}>
+                    <span style={{ ...s.statusPill, backgroundColor: u.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: u.is_active ? 'var(--success)' : 'var(--text-3)', border: `1px solid ${u.is_active ? 'var(--success-2)' : 'var(--border-strong)'}` }}>
                       {u.is_active ? '● Active' : '○ Inactive'}
                     </span>
                   </td>
@@ -244,7 +244,7 @@ export default function UserManagementPage() {
                 </tr>
               ))}
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={7} style={{ ...s.td, textAlign: 'center', color: '#6E7278', padding: '40px 16px' }}>No users found.</td></tr>
+                <tr><td colSpan={7} style={{ ...s.td, textAlign: 'center', color: 'var(--muted)', padding: '40px 16px' }}>No users found.</td></tr>
               )}
             </tbody>
           </table>
@@ -254,16 +254,16 @@ export default function UserManagementPage() {
       {/* ── Edit Modal ── */}
       {editUser && (
         <div style={s.overlay} onClick={() => setEditUser(null)}>
-          <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
 
             {/* Gradient Header */}
-            <div style={{ background: '#1D1D1F', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Edit User</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{editUser.name} · {editUser.user_code}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: editUser.is_active ? '#A4F5A6' : '#C9CDD2', backgroundColor: 'rgba(255,255,255,0.12)', padding: '3px 10px', borderRadius: 14 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: editUser.is_active ? '#A4F5A6' : 'var(--border-strong)', backgroundColor: 'rgba(255,255,255,0.12)', padding: '3px 10px', borderRadius: 14 }}>
                   {editUser.is_active ? '● Active' : '○ Inactive'}
                 </span>
                 <button onClick={() => setEditUser(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
@@ -295,7 +295,7 @@ export default function UserManagementPage() {
                             toggle. "Hashed, not encrypted" is the important word —
                             calling it encrypted invites "so decrypt it", and there is
                             nothing to decrypt: the original text was never stored. */}
-                        <p style={{ fontSize: 11, color: '#6E7278', margin: '5px 2px 0', lineHeight: 1.45 }}>
+                        <p style={{ fontSize: 11, color: 'var(--muted)', margin: '5px 2px 0', lineHeight: 1.45 }}>
                           The current password can&apos;t be shown to anyone. It isn&apos;t stored — only a
                           one-way hash of it is, which can check a password but can&apos;t be turned back
                           into one. Type a new one here to replace it, then tell them what it is.
@@ -303,7 +303,7 @@ export default function UserManagementPage() {
                       </>
                     ) : (
                       <input type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
-                        onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                        onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                     )}
                   </div>
                 ))}
@@ -337,7 +337,7 @@ export default function UserManagementPage() {
               <div style={mSec}>Reporting Manager{needsReportingManager(form.role) ? ' *' : ''}</div>
               <div style={{ marginBottom: 18 }}>
                 <input type="text" placeholder="Search by name or user code…" value={editManagerSearch} onChange={(e) => setEditManagerSearch(e.target.value)}
-                  style={{ ...mInp, marginBottom: 8 }} onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                  style={{ ...mInp, marginBottom: 8 }} onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 <select value={form.reporting_manager_id || ''} onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value ? Number(e.target.value) : null }))} style={{ ...mInp, cursor: 'pointer' }}>
                   <option value="">— None —</option>
                   {users.filter((u) => {
@@ -351,7 +351,7 @@ export default function UserManagementPage() {
                 {/* Said before saving rather than after: the API refuses this, and an
                     error on submit teaches the rule one failed save at a time. */}
                 {needsReportingManager(form.role) && !form.reporting_manager_id && (
-                  <p style={{ fontSize: 11, color: '#A3671A', margin: '6px 2px 0', lineHeight: 1.45 }}>
+                  <p style={{ fontSize: 11, color: 'var(--warning)', margin: '6px 2px 0', lineHeight: 1.45 }}>
                     Required at this role. Visibility runs on the reporting tree, so with no
                     manager this person is invisible to every manager — their leads and bookings
                     appear in nobody&apos;s list.
@@ -362,8 +362,8 @@ export default function UserManagementPage() {
               <div style={mSec}>Modules</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                 {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.modules||[]).includes(mod) ? '#2F6DB5' : '#DFE2E6'}`, backgroundColor: (form.modules||[]).includes(mod) ? '#F3F9FF' : '#F5F6F7' }}>
-                    <input type="checkbox" checked={(form.modules || []).includes(mod)} onChange={() => toggleModule(mod, 'modules')} style={{ accentColor: '#2F6DB5' }} />
+                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.modules||[]).includes(mod) ? 'var(--accent)' : 'var(--border)'}`, backgroundColor: (form.modules||[]).includes(mod) ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
+                    <input type="checkbox" checked={(form.modules || []).includes(mod)} onChange={() => toggleModule(mod, 'modules')} style={{ accentColor: 'var(--accent)' }} />
                     {mod}
                   </label>
                 ))}
@@ -371,12 +371,12 @@ export default function UserManagementPage() {
 
               <div style={mSec}>
                 Manager Modules
-                {isManagerRole(form) && <span style={{ textTransform: 'none', fontWeight: 500, color: '#9A9EA5', letterSpacing: 0 }}> — auto-matches Modules</span>}
+                {isManagerRole(form) && <span style={{ textTransform: 'none', fontWeight: 500, color: 'var(--faint)', letterSpacing: 0 }}> — auto-matches Modules</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                 {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.manager_modules||[]).includes(mod) ? '#2F6DB5' : '#DFE2E6'}`, backgroundColor: (form.manager_modules||[]).includes(mod) ? '#F3F9FF' : '#F5F6F7' }}>
-                    <input type="checkbox" checked={(form.manager_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'manager_modules')} style={{ accentColor: '#2F6DB5' }} />
+                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.manager_modules||[]).includes(mod) ? 'var(--accent)' : 'var(--border)'}`, backgroundColor: (form.manager_modules||[]).includes(mod) ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
+                    <input type="checkbox" checked={(form.manager_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'manager_modules')} style={{ accentColor: 'var(--accent)' }} />
                     {mod}
                   </label>
                 ))}
@@ -387,8 +387,8 @@ export default function UserManagementPage() {
                   <div style={mSec}>Admin Modules</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
                     {ALL_MODULES.map((mod) => (
-                      <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.admin_modules||[]).includes(mod) ? '#2F6DB5' : '#DFE2E6'}`, backgroundColor: (form.admin_modules||[]).includes(mod) ? '#F3F9FF' : '#F5F6F7' }}>
-                        <input type="checkbox" checked={(form.admin_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'admin_modules')} style={{ accentColor: '#2F6DB5' }} />
+                      <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.admin_modules||[]).includes(mod) ? 'var(--accent)' : 'var(--border)'}`, backgroundColor: (form.admin_modules||[]).includes(mod) ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
+                        <input type="checkbox" checked={(form.admin_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'admin_modules')} style={{ accentColor: 'var(--accent)' }} />
                         {mod}
                       </label>
                     ))}
@@ -401,21 +401,21 @@ export default function UserManagementPage() {
                   Sales and CP together, with all its commercial figures. Deliberately
                   separate from module access — working your own bookings and downloading
                   everyone's are different things. */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.can_export_bookings ? '#C9F8CA' : '#DFE2E6'}`, backgroundColor: form.can_export_bookings ? '#E9FBEA' : '#F5F6F7', marginBottom: 14 }}>
-                <input type="checkbox" checked={!!form.can_export_bookings} onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))} style={{ accentColor: '#23874A' }} />
-                <span style={{ fontWeight: 600, color: form.can_export_bookings ? '#23874A' : '#55585E' }}>Download booking Excel</span>
-                <span style={{ fontSize: 12, color: '#6E7278' }}>— approved bookings, Sales &amp; CP, with totals</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.can_export_bookings ? 'var(--success-2)' : 'var(--border)'}`, backgroundColor: form.can_export_bookings ? 'var(--success-soft)' : 'var(--surface-2)', marginBottom: 14 }}>
+                <input type="checkbox" checked={!!form.can_export_bookings} onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))} style={{ accentColor: 'var(--success)' }} />
+                <span style={{ fontWeight: 600, color: form.can_export_bookings ? 'var(--success)' : 'var(--text-3)' }}>Download booking Excel</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>— approved bookings, Sales &amp; CP, with totals</span>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? '#C9F8CA' : '#DFE2E6'}`, backgroundColor: form.is_active ? '#E9FBEA' : '#F5F6F7', marginBottom: 4 }}>
-                <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} style={{ accentColor: '#23874A' }} />
-                <span style={{ fontWeight: 600, color: form.is_active ? '#23874A' : '#55585E' }}>Account Active</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? 'var(--success-2)' : 'var(--border)'}`, backgroundColor: form.is_active ? 'var(--success-soft)' : 'var(--surface-2)', marginBottom: 4 }}>
+                <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} style={{ accentColor: 'var(--success)' }} />
+                <span style={{ fontWeight: 600, color: form.is_active ? 'var(--success)' : 'var(--text-3)' }}>Account Active</span>
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 24px', borderTop: '1px solid #F4F5F7' }}>
-              <button onClick={() => setEditUser(null)} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleSave} disabled={updating} style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: updating ? 0.7 : 1, minWidth: 120 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 24px', borderTop: '1px solid var(--surface-2)' }}>
+              <button onClick={() => setEditUser(null)} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleSave} disabled={updating} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: updating ? 0.7 : 1, minWidth: 120 }}>
                 {updating ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
@@ -429,29 +429,29 @@ export default function UserManagementPage() {
 const s = {
   page:      { padding: '32px 36px', minHeight: '100vh', backgroundColor: 'transparent' },
   pageHeader:{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  pageTitle: { fontSize: 24, fontWeight: 800, color: '#1D1D1F', marginBottom: 8 },
+  pageTitle: { fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 8 },
   statRow:   { display: 'flex', gap: 10 },
-  statChip:  { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#55585E', backgroundColor: '#fff', border: '1px solid #DFE2E6', borderRadius: 20, padding: '4px 10px' },
+  statChip:  { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: 'var(--text-3)', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '4px 10px' },
   statDot:   { width: 7, height: 7, borderRadius: '50%', flexShrink: 0 },
-  createBtn:  { padding: '10px 20px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
-  refreshBtn: { padding: '10px 14px', backgroundColor: '#F4F5F7', color: '#1D1D1F', border: '1.5px solid #DFE2E6', borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: 'pointer', lineHeight: 1 },
-  searchInput:{ width: '100%', maxWidth: 380, padding: '10px 14px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 14, marginBottom: 20, display: 'block', backgroundColor: '#fff' },
-  info:      { color: '#6E7278', fontSize: 14, padding: '20px 0' },
-  errorTxt:  { color: '#D9434B', fontSize: 14, padding: '20px 0' },
-  tableWrap: { overflowX: 'auto', backgroundColor: '#fff', borderRadius: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #ECEEF0' },
+  createBtn:  { padding: '10px 20px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  refreshBtn: { padding: '10px 14px', backgroundColor: 'var(--surface-2)', color: 'var(--text)', border: '1.5px solid var(--border)', borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: 'pointer', lineHeight: 1 },
+  searchInput:{ width: '100%', maxWidth: 380, padding: '10px 14px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 14, marginBottom: 20, display: 'block', backgroundColor: 'var(--surface)' },
+  info:      { color: 'var(--muted)', fontSize: 14, padding: '20px 0' },
+  errorTxt:  { color: 'var(--danger)', fontSize: 14, padding: '20px 0' },
+  tableWrap: { overflowX: 'auto', backgroundColor: 'var(--surface)', borderRadius: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid var(--surface-3)' },
   table:     { width: '100%', borderCollapse: 'collapse', minWidth: 800 },
-  th:        { padding: '14px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textAlign: 'left', letterSpacing: 0.6, borderBottom: '1px solid #ECEEF0', whiteSpace: 'nowrap', backgroundColor: '#FAFAFB' },
-  tr:        { borderBottom: '1px solid #F4F5F7', transition: 'background 0.1s' },
+  th:        { padding: '14px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textAlign: 'left', letterSpacing: 0.6, borderBottom: '1px solid var(--surface-3)', whiteSpace: 'nowrap', backgroundColor: 'var(--surface-2)' },
+  tr:        { borderBottom: '1px solid var(--surface-2)', transition: 'background 0.1s' },
   td:        { padding: '13px 16px', fontSize: 13, verticalAlign: 'middle' },
-  codePill:  { fontFamily: 'monospace', backgroundColor: '#F4F5F7', padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#1D1D1F' },
+  codePill:  { fontFamily: 'monospace', backgroundColor: 'var(--surface-2)', padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)' },
   nameText:  { fontWeight: 600 },
-  muted:     { color: '#6E7278' },
-  rolePill:  { backgroundColor: '#E6F2FF', color: '#2F6DB5', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
+  muted:     { color: 'var(--muted)' },
+  rolePill:  { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
   statusPill:{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
   rowActions:{ display: 'flex', gap: 6, flexWrap: 'nowrap' },
-  editBtn:     { padding: '5px 10px', backgroundColor: '#F3F9FF', color: '#2F6DB5', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  deactBtn:    { padding: '5px 10px', backgroundColor: '#FFF3E0', color: '#D98A1F', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  activateBtn: { padding: '5px 10px', backgroundColor: '#F4F5F7', color: '#23874A', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  deleteBtn:   { padding: '5px 10px', backgroundColor: '#FDECEC', color: '#D9434B', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  overlay:     { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 },
+  editBtn:     { padding: '5px 10px', backgroundColor: 'var(--accent-softer)', color: 'var(--accent)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  deactBtn:    { padding: '5px 10px', backgroundColor: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  activateBtn: { padding: '5px 10px', backgroundColor: 'var(--surface-2)', color: 'var(--success)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  deleteBtn:   { padding: '5px 10px', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  overlay:     { position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 },
 };

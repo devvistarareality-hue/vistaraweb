@@ -8,6 +8,8 @@ import DateFilter from './_DateFilter';
 import BookingDetails from '../../components/BookingDetails';
 
 import Icon from '../../components/Icon';
+import { confirmDialog, notify } from '../../lib/notify';
+import Loader from '../../components/Loader';
 // Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
 // and a draft has not been. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
@@ -33,8 +35,8 @@ async function openLoi(id) {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
     const d = await r.json();
     if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else alert('Could not open the LOI.');
-  } catch { alert('Could not open the LOI.'); }
+    else notify('Could not open the LOI.');
+  } catch { notify('Could not open the LOI.'); }
 }
 
 // Everyone at or under `rootId` in the reporting tree. Cycle-safe on purpose: a
@@ -59,9 +61,9 @@ function subtreeIds(rootId, childrenOf) {
 // A deal on the books should name the person who put it there, and a cancellation
 // should name whoever took a live sale off them.
 function decidedBy(b) {
-  if (b.cancelled_by_name) return { label: 'Cancelled by', who: b.cancelled_by_name, at: b.cancelled_at, tone: '#3A3C40' };
-  if (b.rejected_by_name)  return { label: 'Rejected by',  who: b.rejected_by_name,  at: b.rejected_at,  tone: '#D9434B' };
-  if (b.approved_by_name)  return { label: 'Approved by',  who: b.approved_by_name,  at: b.approved_at,  tone: '#23874A' };
+  if (b.cancelled_by_name) return { label: 'Cancelled by', who: b.cancelled_by_name, at: b.cancelled_at, tone: 'var(--text-2)' };
+  if (b.rejected_by_name)  return { label: 'Rejected by',  who: b.rejected_by_name,  at: b.rejected_at,  tone: 'var(--danger)' };
+  if (b.approved_by_name)  return { label: 'Approved by',  who: b.approved_by_name,  at: b.approved_at,  tone: 'var(--success)' };
   return null;
 }
 
@@ -89,25 +91,25 @@ function DecidedBy({ b, style }) {
     <div style={{ marginTop: 4, ...style }}>
       {d && (
         <div style={{ fontSize: 11.5, color: d.tone, fontWeight: 600 }}>
-          {d.label} {d.who}<span style={{ color: '#6E7278', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
+          {d.label} {d.who}<span style={{ color: 'var(--muted)', fontWeight: 500 }}>{decidedWhen(d.at)}</span>
         </div>
       )}
       {showAccounts && acc === 'approved' && (
-        <div style={{ fontSize: 11.5, color: '#23874A', fontWeight: 600 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--success)', fontWeight: 600 }}>
           Accounts approved{b.accounts_approved_by_name ? ` by ${b.accounts_approved_by_name}` : ''}
-          <span style={{ color: '#6E7278', fontWeight: 500 }}>{decidedWhen(b.accounts_approved_at)}</span>
+          <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{decidedWhen(b.accounts_approved_at)}</span>
         </div>
       )}
       {showAccounts && acc === 'pending' && (
-        <div style={{ fontSize: 11.5, color: '#A3671A', fontWeight: 600 }}>
-          Awaiting Accounts approval <span style={{ color: '#6E7278', fontWeight: 500 }}>· unit held, not yet sold</span>
+        <div style={{ fontSize: 11.5, color: 'var(--warning)', fontWeight: 600 }}>
+          Awaiting Accounts approval <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· unit held, not yet sold</span>
         </div>
       )}
       {showAccounts && acc === 'rejected' && (
-        <div style={{ fontSize: 11.5, color: '#D9434B', fontWeight: 600 }}>
+        <div style={{ fontSize: 11.5, color: 'var(--danger)', fontWeight: 600 }}>
           Accounts rejected{b.accounts_rejected_by_name ? ` by ${b.accounts_rejected_by_name}` : ''}
-          <span style={{ color: '#6E7278', fontWeight: 500 }}>{decidedWhen(b.accounts_rejected_at)}</span>
-          {b.accounts_rejected_reason ? <span style={{ color: '#6E7278', fontWeight: 500 }}> · {b.accounts_rejected_reason}</span> : null}
+          <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{decidedWhen(b.accounts_rejected_at)}</span>
+          {b.accounts_rejected_reason ? <span style={{ color: 'var(--muted)', fontWeight: 500 }}> · {b.accounts_rejected_reason}</span> : null}
         </div>
       )}
     </div>
@@ -180,7 +182,7 @@ export function MyBookingsList({ cpOnly = false }) {
   }
 
   async function discardDraft(id) {
-    if (!window.confirm('Discard this draft? This can\'t be undone.')) return;
+    if (!(await confirmDialog('Discard this draft? This can\'t be undone.'))) return;
     await fetch(SALES_ENDPOINTS.bookingDiscard(id) + (companyId ? `?company_id=${companyId}` : ''), { method: 'POST', headers: authHeaders() }).catch(() => {});
     load();
   }
@@ -307,7 +309,7 @@ export function MyBookingsList({ cpOnly = false }) {
 
   return (
     <>
-      <p style={{ fontSize: 13, color: '#6E7278', marginBottom: 14 }}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
         {visible.length === rows.length
           ? `${rows.length} booking${rows.length === 1 ? '' : 's'} you submitted · revise the LOI anytime`
           : `${visible.length} of ${rows.length} bookings · revise the LOI anytime`}
@@ -320,21 +322,21 @@ export function MyBookingsList({ cpOnly = false }) {
           {TABS.map(([k, label]) => (
             <button key={k} onClick={() => { setTab(k); setOpen({}); }}
               style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                background: tab === k ? '#2F6DB5' : '#ECEEF0', color: tab === k ? '#fff' : '#6E7278' }}>{label}</button>
+                background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}><Icon name="search" /></span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group collapsed earlier would hide its own hits. */}
           <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
             placeholder="Search name, phone or LOI / unit no…"
-            style={{ width: '100%', height: 36, padding: '0 32px', borderRadius: 8, border: '1.5px solid #DFE2E6',
-              background: '#fff', fontSize: 13, color: '#1D1D1F', boxSizing: 'border-box' }} />
+            style={{ width: '100%', height: 36, padding: '0 32px', borderRadius: 8, border: '1.5px solid var(--border)',
+              background: 'var(--surface)', fontSize: 13, color: 'var(--text)', boxSizing: 'border-box' }} />
           {!!q && (
             <button onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
               style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
-                color: '#6E7278', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
+                color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
         {projOptions.length > 1 && (
@@ -386,8 +388,8 @@ export function MyBookingsList({ cpOnly = false }) {
         )}
       </div>
 
-      {loading ? <p style={{ color: '#6E7278' }}>Loading…</p> : projectNames.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 18, padding: 40, textAlign: 'center', color: '#6E7278', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+      {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} /> : projectNames.length === 0 ? (
+        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           {/* Distinguish "nothing matched" from "nothing exists" — telling someone
               they have never booked a unit while a filter hides 121 of them is worse
               than saying nothing at all. */}
@@ -396,41 +398,41 @@ export function MyBookingsList({ cpOnly = false }) {
       ) : projectNames.map((pn) => (
         <div key={pn} style={{ marginBottom: 12 }}>
           <div onClick={() => toggle(pn)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid #CCE5FF' : '1.5px solid transparent' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              <Icon name="building" /> {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid var(--blue-2)' : '1.5px solid transparent' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Icon name="building" /> {pn} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
             </div>
-            <span style={{ color: '#6E7278', fontSize: 13, fontWeight: 800, transform: open[pn] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+            <span style={{ color: 'var(--muted)', fontSize: 13, fontWeight: 800, transform: open[pn] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
           </div>
           {open[pn] && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
             {groups[pn].map((b) => (
-              <div key={b.id} style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+              <div key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>
-                      {unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {b.client_name || '—'}</span>
-                      {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: '#A3671A', background: '#FFF3E0', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
-                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: '#245A96', background: '#E6F2FF', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+                      {unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {b.client_name || '—'}</span>
+                      {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
+                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-deep)', background: 'var(--accent-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
                     </div>
                     {/* STM alongside the unit, as Bookings & Approvals shows it. Usually
                         the viewer, since this list is their own submissions — but a kiosk
                         booking records the assisting salesperson in manual_stm_name, which
                         stm_name prefers, so it is not always. */}
-                    <div style={{ fontSize: 12, color: '#6E7278', marginTop: 3 }}>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>
                       {b.phone} · Booked {b.booking_date || '—'}
                       {b.stm_name ? ` · STM: ${b.stm_name}` : ''}
                     </div>
                     {b.is_resale && b.resale_of_client && (
-                      <div style={{ fontSize: 11.5, color: '#245A96', marginTop: 3, fontWeight: 600 }}>
+                      <div style={{ fontSize: 11.5, color: 'var(--accent-deep)', marginTop: 3, fontWeight: 600 }}>
                         Resold from {b.resale_of_client}
-                        {b.stm_name ? <span style={{ color: '#6E7278', fontWeight: 500 }}> · resold by {b.stm_name}</span> : null}
+                        {b.stm_name ? <span style={{ color: 'var(--muted)', fontWeight: 500 }}> · resold by {b.stm_name}</span> : null}
                       </div>
                     )}
                     <DecidedBy b={b} />
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#245A96' }}>{rupee(b.final_amount)}</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent-deep)' }}>{rupee(b.final_amount)}</div>
                     {(() => {
                       const awaiting = b.status === 'sold' && b.accounts_status === 'pending';
                       const key = isCancelled(b) ? 'cancelled' : awaiting ? 'pending' : b.status;
@@ -442,30 +444,30 @@ export function MyBookingsList({ cpOnly = false }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                  {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
+                  {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                   {b.status === 'draft' && (
                     <>
-                      <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#2F6DB5' }}>▸ Resume</button>
-                      <button onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}><Icon name="x" /> Discard</button>
+                      <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
+                      <button onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
                     </>
                   )}
                   {b.status === 'sold' && String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
                     <>
-                      <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: '#D98A1F' }}>→ Convert to LOI</button>
-                      <button onClick={() => router.push(`/sales/booking?revise=${b.id}&eoi=1`)} style={{ ...actBtn, background: '#2F6DB5' }}>↻ Revise EOI</button>
+                      <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>
+                      <button onClick={() => router.push(`/sales/booking?revise=${b.id}&eoi=1`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise EOI</button>
                     </>
                   )}
                   {b.status === 'sold' && !String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
-                    <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: '#2F6DB5' }}>↻ Revise LOI</button>
+                    <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise LOI</button>
                   )}
-                  {b.status === 'pending' && <span style={{ fontSize: 12, color: '#A3671A', alignSelf: 'center' }}>Awaiting approval</span>}
+                  {b.status === 'pending' && <span style={{ fontSize: 12, color: 'var(--warning)', alignSelf: 'center' }}>Awaiting approval</span>}
                   {/* Every figure of the deal, beside its signed LOI. A revised deal
                       gets its Details per version inside the history instead — the
                       current version is one of them, so a card-level copy would be
                       the same figures twice, and the two share a booking id. */}
                   {!b.revision_no && (
                     <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
-                      style={{ ...linkBtn, background: '#fff', cursor: 'pointer', borderColor: '#C9CDD2', color: '#1D1D1F' }}>
+                      style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer', borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                       {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
                     </button>
                   )}
@@ -475,51 +477,51 @@ export function MyBookingsList({ cpOnly = false }) {
                       them from the product at all. */}
                   {b.revision_no > 0 && (
                     <button onClick={() => toggleRevisions(b.id)}
-                      style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>
+                      style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}>
                       ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
                     </button>
                   )}
                 </div>
                 {!b.revision_no && cardDetails[b.id] && <BookingDetails b={b} accent="#2F6DB5" />}
                 {revOpen[b.id] && (
-                  <div style={{ marginTop: 12, borderTop: '1.5px solid #ECEEF0', paddingTop: 10 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: '#6E7278', letterSpacing: 0.6, marginBottom: 8 }}>
+                  <div style={{ marginTop: 12, borderTop: '1.5px solid var(--surface-3)', paddingTop: 10 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginBottom: 8 }}>
                       REVISION HISTORY
                     </div>
-                    {!revs[b.id] ? <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Loading…</p>
-                     : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Couldn&apos;t load the history.</p>
+                    {!revs[b.id] ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Loading…</p>
+                     : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Couldn&apos;t load the history.</p>
                      : revs[b.id].map((v) => (
                       <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
-                        padding: '7px 0', borderBottom: '1px solid #F4F5F7' }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? '#23874A' : '#55585E',
-                          background: v.id === b.id ? '#E9FBEA' : '#F4F5F7', padding: '3px 8px', borderRadius: 20 }}>
+                        padding: '7px 0', borderBottom: '1px solid var(--surface-2)' }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
+                          background: v.id === b.id ? 'var(--success-soft)' : 'var(--surface-2)', padding: '3px 8px', borderRadius: 20 }}>
                           R{v.revision_no || 0}
                         </span>
-                        <span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
-                        <span style={{ fontSize: 12, color: '#6E7278' }}>
+                        <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 700 }}>{rupee(v.final_amount)}</span>
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>
                           Booked {v.booking_date || '—'} · {(v.approval_status || v.status || '').toUpperCase()}
                           {v.stm_name ? ` · ${v.stm_name}` : ''}
                         </span>
                         {/* The version marked current is the one the card shows; the
                             rest are superseded and say so rather than looking live. */}
                         {v.id === b.id
-                          ? <span style={{ fontSize: 10, fontWeight: 800, color: '#23874A' }}>CURRENT</span>
-                          : <span style={{ fontSize: 10, fontWeight: 700, color: '#6E7278' }}>superseded</span>}
+                          ? <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)' }}>CURRENT</span>
+                          : <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>superseded</span>}
                         <span style={{ flex: 1 }} />
                         {v.loi_document
                           ? <button onClick={() => openLoi(v.id)}
-                              style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>
+                              style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer' }}>
                               <Icon name="file" /> Signed LOI
                             </button>
-                          : <span style={{ fontSize: 11, color: '#9A9EA5' }}>no LOI on file</span>}
+                          : <span style={{ fontSize: 11, color: 'var(--faint)' }}>no LOI on file</span>}
                         {/* Details live here and only here. Per version, so two can
                             be open at once: what changed between R0 and R1 is the
                             question the history is opened to answer, and the figures
                             are where the answer is. The same block Accounts & Finance
                             reads, rather than a second rendering of the same deal. */}
                         <button onClick={() => toggleRevDetails(v.id)}
-                          style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer',
-                            borderColor: '#C9CDD2', color: '#1D1D1F' }}>
+                          style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer',
+                            borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                           {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}
                         </button>
                         {revDetails[v.id] && (
@@ -543,10 +545,10 @@ export function MyBookingsList({ cpOnly = false }) {
 // the unit is on hold, not sold. Showing a green APPROVED there told a rep the deal
 // was done a stage early, so the pill says what is actually true.
 function statusPill(s) {
-  const map = { draft: ['#2F6DB5', '#F3F9FF'], pending: ['#A3671A', '#FFF3E0'], sold: ['#23874A', '#E9FBEA'], rejected: ['#D9434B', '#FDECEC'], hold: ['#A3671A', '#FFF3E0'], cancelled: ['#3A3C40', '#F4F5F7'] };
-  const [c, bg] = map[s] || ['#55585E', '#F4F5F7'];
+  const map = { draft: ['var(--accent)', 'var(--accent-softer)'], pending: ['var(--warning)', 'var(--warning-soft)'], sold: ['var(--success)', 'var(--success-soft)'], rejected: ['var(--danger)', 'var(--danger-soft)'], hold: ['var(--warning)', 'var(--warning-soft)'], cancelled: ['var(--text-2)', 'var(--surface-2)'] };
+  const [c, bg] = map[s] || ['var(--text-3)', 'var(--surface-2)'];
   return { display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
 const actBtn = { padding: '8px 16px', borderRadius: 8, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const selectStyle = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', background: '#fff', fontSize: 13, color: '#1D1D1F', cursor: 'pointer', maxWidth: 260 };
-const linkBtn = { padding: '8px 14px', borderRadius: 8, border: '1.5px solid #CCE5FF', color: '#2F6DB5', fontSize: 13, fontWeight: 700, textDecoration: 'none' };
+const selectStyle = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface)', fontSize: 13, color: 'var(--text)', cursor: 'pointer', maxWidth: 260 };
+const linkBtn = { padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--blue-2)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, textDecoration: 'none' };

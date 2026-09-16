@@ -10,7 +10,7 @@ export default function ChannelPartnerClosureViewerPage() {
   const user = useSelector((s) => s.auth.user);
 
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: '#6E7278' }}>Admin access only.</div>;
+    return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
   }
 
   return <ClosureViewerContent backHref="/sales/channel-partners/closure" />;

@@ -9,7 +9,8 @@ import { setAdminCompany, restoreAdminFilter } from '../redux/reducers/adminFilt
 import NotificationBell from '../app/sales/_NotificationBell';
 
 import Icon from './Icon';
-const ORANGE = '#2F6DB5';
+import ThemeToggle from './ThemeToggle';
+const ORANGE = 'var(--accent)';
 
 function SvgIcon({ children, size = 16 }) {
   return (
@@ -84,7 +85,7 @@ const PARKED_ITEMS = [
 
 const CSS = `
   .nav-link { transition: background 0.14s, color 0.14s; }
-  .nav-link:hover { background: rgba(29,29,31,0.05); color: #1D1D1F; }
+  .nav-link:hover { background: rgba(var(--ink-rgb),0.05); color: var(--text); }
   .logout-btn:hover { background: rgba(217,67,75,0.18) !important; border-color: rgba(217,67,75,0.4) !important; }
   .sidebar-scroll::-webkit-scrollbar { width: 0; }
   .sidebar-scroll { scrollbar-width: none; }
@@ -142,7 +143,7 @@ export default function Sidebar({ user, onClose, className }) {
             <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
           </div>
         </div>
-        <button onClick={onClose} className="sidebar-close-x" style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 4px', lineHeight: 1 }}><Icon name="x" /></button>
+        <button onClick={onClose} className="sidebar-close-x" style={{ background: 'none', border: 'none', color: 'rgba(var(--ink-rgb),0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 4px', lineHeight: 1 }}><Icon name="x" /></button>
       </div>
 
       {/* ── Navigation ── */}
@@ -158,7 +159,7 @@ export default function Sidebar({ user, onClose, className }) {
               className={`nav-link${active ? ' nav-link-active' : ''}`}
               style={{ ...s.navItem, ...(active ? s.navActive : {}) }}
             >
-              <span style={{ ...s.iconWrap, color: active ? '#A2D2FF' : 'rgba(29,29,31,0.6)' }}>
+              <span style={{ ...s.iconWrap, color: active ? 'var(--nav-active-fg)' : 'rgba(var(--ink-rgb),0.6)' }}>
                 {item.icon}
               </span>
               <span style={{ fontSize: 13, fontWeight: active ? 600 : 500, lineHeight: 1 }}>
@@ -172,31 +173,31 @@ export default function Sidebar({ user, onClose, className }) {
           <div style={{ marginTop: 18, marginBottom: 4 }}>
             <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
             <div style={{ position: 'relative' }}>
-              <select
+              <select data-plain
                 value={companyId ?? ''}
                 onChange={handleCompanyChange}
                 style={{
                   width: '100%', appearance: 'none', WebkitAppearance: 'none',
-                  backgroundColor: 'rgba(29,29,31,0.056)',
-                  border: '1px solid rgba(29,29,31,0.112)',
+                  backgroundColor: 'rgba(var(--ink-rgb),0.056)',
+                  border: '1px solid rgba(var(--ink-rgb),0.112)',
                   borderRadius: 9, padding: '8px 28px 8px 12px',
-                  color: companyId ? '#1D1D1F' : 'rgba(29,29,31,0.67)',
+                  color: companyId ? 'var(--text)' : 'rgba(var(--ink-rgb),0.67)',
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none',
                 }}
               >
-                <option value="" style={{ backgroundColor: '#fff', color: 'rgba(29,29,31,0.72)' }}>All Companies</option>
+                <option value="" style={{ backgroundColor: 'var(--surface)', color: 'rgba(var(--ink-rgb),0.72)' }}>All Companies</option>
                 {companies.map(c => (
-                  <option key={c.id} value={c.id} style={{ backgroundColor: '#fff', color: '#1D1D1F' }}>{c.name}</option>
+                  <option key={c.id} value={c.id} style={{ backgroundColor: 'var(--surface)', color: 'var(--text)' }}>{c.name}</option>
                 ))}
               </select>
               <svg style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(29,29,31,0.62)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(var(--ink-rgb),0.62)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </div>
             {companyId && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 6, backgroundColor: 'rgba(162,210,255,0.12)', border: '1px solid rgba(162,210,255,0.22)' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ORANGE, flexShrink: 0 }} />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)', flexShrink: 0 }} />
                 <span style={{ fontSize: 10, fontWeight: 700, color: ORANGE }}>
                   {companies.find(c => c.id === companyId)?.name || 'Filtered'}
                 </span>
@@ -208,7 +209,7 @@ export default function Sidebar({ user, onClose, className }) {
         <div style={{ ...s.sectionLabel, marginTop: 22 }}>MODULES</div>
         {PARKED_ITEMS.map((item) => (
           <Link key={item.href} href={item.href} className="nav-link" style={s.navItem}>
-            <span style={{ ...s.iconWrap, color: item.live ? 'rgba(29,29,31,0.74)' : 'rgba(29,29,31,0.5)' }}>{item.icon}</span>
+            <span style={{ ...s.iconWrap, color: item.live ? 'rgba(var(--ink-rgb),0.74)' : 'rgba(var(--ink-rgb),0.5)' }}>{item.icon}</span>
             <span style={{ flex: 1, fontSize: 13, fontWeight: item.live ? 600 : 500 }}>{item.label}</span>
             {!item.live && <span style={s.soonChip}>SOON</span>}
             {item.live && <span style={s.liveChip}>LIVE</span>}
@@ -219,9 +220,10 @@ export default function Sidebar({ user, onClose, className }) {
       {/* ── Notifications + User + Logout ── */}
       <div style={s.bottomArea}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(29,29,31,0.62)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.62)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
           <NotificationBell up align="left" />
         </div>
+        <ThemeToggle style={{ marginBottom: 12 }} />
         <div style={s.divider} />
         <div style={s.userRow}>
           <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
@@ -244,45 +246,45 @@ export default function Sidebar({ user, onClose, className }) {
 const s = {
   sidebar: {
     width: 240, minWidth: 240, height: '100vh',
-    backgroundColor: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: '0 1px 2px rgba(29,29,31,0.04), 0 8px 24px rgba(60,90,130,0.08)',
+    backgroundColor: 'var(--glass)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)',
     display: 'flex', flexDirection: 'column',
     flexShrink: 0, position: 'sticky', top: 0,
-    borderRight: '1px solid rgba(29,29,31,0.04)',
+    borderRight: '1px solid rgba(var(--ink-rgb),0.04)',
   },
 
   logoRow: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '20px 18px 18px',
-    borderBottom: '1px solid rgba(29,29,31,0.048)',
+    borderBottom: '1px solid rgba(var(--ink-rgb),0.048)',
     flexShrink: 0,
   },
   logoCircle: {
     width: 36, height: 36, borderRadius: 14,
     backgroundColor: '#fff', padding: 5,
     overflow: 'hidden', flexShrink: 0,
-    boxShadow: '0 2px 8px rgba(29,29,31,0.10)',
+    boxShadow: '0 2px 8px rgba(var(--ink-rgb),0.10)',
   },
-  logoName: { fontSize: 13, fontWeight: 800, color: '#1D1D1F', letterSpacing: 0.2 },
-  logoSub:  { fontSize: 10, color: 'rgba(29,29,31,0.58)', marginTop: 2, letterSpacing: 0.3 },
+  logoName: { fontSize: 13, fontWeight: 800, color: 'var(--text)', letterSpacing: 0.2 },
+  logoSub:  { fontSize: 10, color: 'rgba(var(--ink-rgb),0.58)', marginTop: 2, letterSpacing: 0.3 },
 
   scroll: { flex: 1, overflowY: 'auto', padding: '16px 10px 0' },
   sectionLabel: {
-    fontSize: 11, fontWeight: 700, color: '#6E7278', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5,
+    fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5,
     textTransform: 'uppercase',
   },
   navItem: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 14px', borderRadius: 999,
-    color: 'rgba(29,29,31,0.74)', marginBottom: 1,
+    color: 'rgba(var(--ink-rgb),0.74)', marginBottom: 1,
     cursor: 'pointer', textDecoration: 'none', position: 'relative',
     overflow: 'hidden',
   },
-  navActive: { backgroundColor: '#1D1D1F', color: '#fff', boxShadow: '0 4px 12px rgba(29,29,31,0.18)' },
-  navChildActive: { backgroundColor: '#E6F2FF', color: '#1D1D1F' },
+  navActive: { backgroundColor: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: '0 6px 16px -6px rgba(47,109,181,0.45)' },
+  navChildActive: { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' },
   activeBar: {
     position: 'absolute', left: 0, top: '18%', bottom: '18%',
-    width: 3, backgroundColor: ORANGE, borderRadius: '0 3px 3px 0',
+    width: 3, backgroundColor: 'var(--primary)', borderRadius: '0 3px 3px 0',
   },
   iconWrap: { display: 'flex', alignItems: 'center', flexShrink: 0 },
   soonChip: {
@@ -297,12 +299,12 @@ const s = {
   },
 
   bottomArea: { padding: '0 10px 18px', flexShrink: 0 },
-  divider:   { height: 1, backgroundColor: 'rgba(29,29,31,0.056)', marginBottom: 14 },
+  divider:   { height: 1, backgroundColor: 'rgba(var(--ink-rgb),0.056)', marginBottom: 14 },
   userRow: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 10px', marginBottom: 10, borderRadius: 14,
-    backgroundColor: 'rgba(29,29,31,0.032)',
-    border: '1px solid rgba(29,29,31,0.04)',
+    backgroundColor: 'rgba(var(--ink-rgb),0.032)',
+    border: '1px solid rgba(var(--ink-rgb),0.04)',
   },
   avatar: {
     width: 32, height: 32, borderRadius: 9, flexShrink: 0,
@@ -312,16 +314,16 @@ const s = {
     fontSize: 14, fontWeight: 800, color: ORANGE,
   },
   userName: {
-    fontSize: 12, fontWeight: 700, color: '#1D1D1F',
+    fontSize: 12, fontWeight: 700, color: 'var(--text)',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   },
-  userBadge: { fontSize: 10, color: 'rgba(29,29,31,0.57)', marginTop: 2 },
+  userBadge: { fontSize: 10, color: 'rgba(var(--ink-rgb),0.57)', marginTop: 2 },
   logoutBtn: {
     display: 'flex', alignItems: 'center', gap: 8, width: '100%',
     padding: '9px 14px',
     backgroundColor: 'rgba(217,67,75,0.07)',
     border: '1px solid rgba(217,67,75,0.18)',
-    borderRadius: 9, color: '#EF9195',
+    borderRadius: 9, color: 'var(--danger-3)',
     fontSize: 13, fontWeight: 600, cursor: 'pointer',
     transition: 'background 0.15s',
   },

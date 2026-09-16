@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 import Icon from '../../../components/Icon';
+import { confirmDialog } from '../../../lib/notify';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -33,32 +34,32 @@ const BUDGET_OPTIONS = [
 ];
 
 const STATUS_COLOR = {
-  new:              '#2F6DB5',
-  assigned:         '#245A96',
-  contacted:        '#23874A',
-  not_reachable:    '#6E7278',
-  warm_transferred: '#D98A1F',
-  hot:              '#D9434B',
-  warm:             '#D98A1F',
-  cold:             '#2F6DB5',
-  not_interested:   '#6E7278',
-  sv_scheduled:     '#D98A1F',
-  sv_done:          '#23874A',
-  closed:           '#23874A',
-  lost:             '#D9434B',
+  new:              'var(--accent)',
+  assigned:         'var(--accent-deep)',
+  contacted:        'var(--success)',
+  not_reachable:    'var(--muted)',
+  warm_transferred: 'var(--warning-2)',
+  hot:              'var(--danger)',
+  warm:             'var(--warning-2)',
+  cold:             'var(--accent)',
+  not_interested:   'var(--muted)',
+  sv_scheduled:     'var(--warning-2)',
+  sv_done:          'var(--success)',
+  closed:           'var(--success)',
+  lost:             'var(--danger)',
 };
 
 const ALL_STATUSES = ['new','assigned','contacted','not_reachable','warm_transferred','hot','warm','cold','not_interested','sv_scheduled','sv_done','closed','lost'];
 
-const OUTCOME_COLOR = { hot: '#D9434B', warm: '#D98A1F', cold: '#2F6DB5', not_interested: '#55585E' };
+const OUTCOME_COLOR = { hot: 'var(--danger)', warm: 'var(--warning-2)', cold: 'var(--accent)', not_interested: 'var(--text-3)' };
 
 // `outcome` (SV Hot/Warm/Cold, only meaningful for sv_done) is shown alongside
 // the stage — "SV DONE · HOT" — rather than replacing it, so the pipeline stage
 // and the visit's outcome are both visible without conflating the two.
 function StatusBadge({ status, outcome }) {
-  const color = STATUS_COLOR[status] || '#6E7278';
+  const color = STATUS_COLOR[status] || 'var(--muted)';
   return (
-    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: color + '18', color }}>
+    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, color }}>
       {status?.replace(/_/g, ' ').toUpperCase()}
       {status === 'sv_done' && outcome && (
         <span style={{ color: OUTCOME_COLOR[outcome] || color }}> · {outcome.replace(/_/g, ' ').toUpperCase()}</span>
@@ -70,7 +71,7 @@ function StatusBadge({ status, outcome }) {
 function DupBadge({ count }) {
   return (
     <span title={`Duplicate phone — seen ${count || 1} time(s) before`}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 800, backgroundColor: '#FDECEC', color: '#D9434B', border: '1px solid #F7C3C6', letterSpacing: 0.3 }}>
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 800, backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', border: '1px solid var(--danger-2)', letterSpacing: 0.3 }}>
       <Icon name="alert" /> DUP
     </span>
   );
@@ -82,14 +83,14 @@ function DupToast({ toasts, onDismiss }) {
   return (
     <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360 }}>
       {toasts.map((t) => (
-        <div key={t.id} style={{ backgroundColor: '#fff', border: '1.5px solid #F7C3C6', borderLeft: '4px solid #D9434B', borderRadius: 16, padding: '12px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'slideIn 0.25s ease' }}>
+        <div key={t.id} style={{ backgroundColor: 'var(--surface)', border: '1.5px solid var(--danger-2)', borderLeft: '4px solid var(--danger)', borderRadius: 16, padding: '12px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'slideIn 0.25s ease' }}>
           <span style={{ fontSize: 20, flexShrink: 0 }}><Icon name="alert" /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#D9434B', marginBottom: 2 }}>Duplicate Lead</div>
-            <div style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-            <div style={{ fontSize: 11, color: '#6E7278', marginTop: 1 }}>{t.phone} · already in system</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--danger)', marginBottom: 2 }}>Duplicate Lead</div>
+            <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{t.phone} · already in system</div>
           </div>
-          <button onClick={() => onDismiss(t.id)} style={{ background: 'none', border: 'none', color: '#9A9EA5', cursor: 'pointer', fontSize: 16, flexShrink: 0, padding: 0 }}><Icon name="x" /></button>
+          <button onClick={() => onDismiss(t.id)} style={{ background: 'none', border: 'none', color: 'var(--faint)', cursor: 'pointer', fontSize: 16, flexShrink: 0, padding: 0 }}><Icon name="x" /></button>
         </div>
       ))}
     </div>
@@ -119,16 +120,16 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
     } catch { setErr('Could not request the transfer.'); setBusy(false); }
   }
 
-  const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
+  const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(29,29,31,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, width: 'min(100%, 460px)', boxShadow: '0 18px 50px rgba(29,29,31,0.28)', overflow: 'hidden' }}>
-        <div style={{ background: '#1D1D1F', padding: '16px 20px' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: 'min(100%, 460px)', boxShadow: '0 18px 50px rgba(var(--ink-rgb),0.28)', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--hero)', padding: '16px 20px' }}>
           <p style={{ color: '#fff', fontSize: 16, fontWeight: 800, margin: 0 }}>Transfer to another STM</p>
           <p style={{ color: '#CCE5FF', fontSize: 12, margin: '3px 0 0' }}>{lead.name}{lead.project_name ? ` · ${lead.project_name}` : ''}</p>
         </div>
         <div style={{ padding: 20, display: 'grid', gap: 10 }}>
-          <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>
+          <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>
             Needs approval from this project&rsquo;s booking approvers. The lead stays with you until then.
           </p>
           <select value={to} onChange={(e) => setTo(e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
@@ -136,15 +137,15 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
             {options.map((u) => <option key={u.id} value={u.id}>{u.name}{u.user_code ? ` · ${u.user_code}` : ''}</option>)}
           </select>
           {options.length === 0 && (
-            <p style={{ fontSize: 12, color: '#A3671A', margin: 0 }}>No other STM in your company to transfer to.</p>
+            <p style={{ fontSize: 12, color: 'var(--warning)', margin: 0 }}>No other STM in your company to transfer to.</p>
           )}
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why is it moving? (optional)"
             style={{ ...inp, height: 64, padding: '8px 12px', resize: 'vertical' }} />
-          {!!err && <p style={{ fontSize: 12.5, color: '#D9434B', fontWeight: 600, margin: 0 }}>{err}</p>}
+          {!!err && <p style={{ fontSize: 12.5, color: 'var(--danger)', fontWeight: 600, margin: 0 }}>{err}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-            <button onClick={onClose} style={{ padding: '10px 18px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={onClose} style={{ padding: '10px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
             <button onClick={submit} disabled={!to || busy}
-              style={{ padding: '10px 20px', background: (!to || busy) ? '#CCE5FF' : '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: (!to || busy) ? 'default' : 'pointer' }}>
+              style={{ padding: '10px 20px', background: (!to || busy) ? 'var(--blue-2)' : 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: (!to || busy) ? 'default' : 'pointer' }}>
               {busy ? 'Sending…' : 'Request transfer'}
             </button>
           </div>
@@ -182,15 +183,15 @@ function ChannelPartnerPicker({ value, onChange, options, inputStyle, placeholde
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, marginTop: 4,
-          background: '#fff', border: '1.5px solid #DFE2E6', borderRadius: 8,
-          boxShadow: '0 8px 24px rgba(29,29,31,0.14)', maxHeight: 220, overflowY: 'auto',
+          background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(var(--ink-rgb),0.14)', maxHeight: 220, overflowY: 'auto',
         }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: '10px 12px', fontSize: 12.5, color: '#9A9EA5' }}>No match</div>
+            <div style={{ padding: '10px 12px', fontSize: 12.5, color: 'var(--faint)' }}>No match</div>
           ) : filtered.map((cp, i) => (
             <div key={cp.id}
               onMouseDown={() => { onChange(String(cp.id)); setQuery(''); setOpen(false); }}
-              style={{ padding: '9px 12px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid #F4F5F7' : 'none', color: '#1D1D1F' }}>
+              style={{ padding: '9px 12px', fontSize: 13, cursor: 'pointer', borderTop: i > 0 ? '1px solid var(--surface-2)' : 'none', color: 'var(--text)' }}>
               {cpLabel(cp)}
             </div>
           ))}
@@ -252,8 +253,8 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   // Same inline scheduler as the Lead Detail modal — filled in here it's created
   // right after the lead itself, so a manual lead can arrive with its first call booked.
   const [fuForm, setFuForm] = useState({ role_context: (_isStm || cpOnly) ? 'stm' : 'telecaller', scheduled_at: '', remarks: '' });
-  const addLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 };
-  const addInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
+  const addLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 };
+  const addInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
   const addSel = { ...addInp, cursor: 'pointer' };
   const addTa  = { ...addInp, height: 56, padding: '8px 12px', resize: 'vertical' };
 
@@ -359,9 +360,9 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
 
   return (
     <div style={overlay}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <div style={{ background: '#1D1D1F', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Add Manual Lead</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details to create a new lead</div>
@@ -371,7 +372,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
 
         <form onSubmit={submit} style={{ padding: '22px 24px 24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {/* Contact Info */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 18 }}>
             {[
               { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Client name', required: true },
@@ -380,14 +381,14 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               { label: 'Email',     key: 'email', type: 'email', placeholder: 'Optional' },
             ].map(({ label, key, type, placeholder, required }) => (
               <div key={key}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>
-                  {label}{required && <span style={{ color: '#D9434B', marginLeft: 2 }}>*</span>}
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>
+                  {label}{required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}
                 </label>
                 <input type={type} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                   placeholder={placeholder}
-                  style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7', transition: 'border-color 0.2s' }}
-                  onFocus={e => e.target.style.borderColor = '#2F6DB5'}
-                  onBlur={e => e.target.style.borderColor = '#DFE2E6'}
+                  style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)', transition: 'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
                 />
               </div>
             ))}
@@ -401,11 +402,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 if (isWalkIn) setSvVisitedDate(e.target.value || new Date().toLocaleDateString('en-CA'));
               }}
               style={{ ...addInp, maxWidth: 220 }} />
-            <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 5 }}>Leave blank to use today. Set this if the lead actually came in earlier (e.g. a walk-in logged a day later).</p>
+            <p style={{ fontSize: 11, color: 'var(--faint)', marginTop: 5 }}>Leave blank to use today. Set this if the lead actually came in earlier (e.g. a walk-in logged a day later).</p>
           </div>
 
           {/* Requirement */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Requirement</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Requirement</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
             <div>
               <label style={addLbl}>City</label>
@@ -441,7 +442,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 return (
                   <button key={p.value} type="button"
                     onClick={() => setForm((f) => { const cur = Array.isArray(f.purpose) ? f.purpose : []; return { ...f, purpose: on ? cur.filter((x) => x !== p.value) : [...cur, p.value] }; })}
-                    style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid #2F6DB5' : '1px solid #DFE2E6', background: on ? '#F3F9FF' : '#fff', color: on ? '#2F6DB5' : '#1D1D1F' }}>
+                    style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid var(--accent)' : '1px solid var(--border)', background: on ? 'var(--accent-softer)' : 'var(--surface)', color: on ? 'var(--accent)' : 'var(--text)' }}>
                     {on ? <Icon name="check" /> : ''}{p.label}
                   </button>
                 );
@@ -450,23 +451,23 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           </div>
 
           {/* Project & Source */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Assignment</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Assignment</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Project<span style={{ color: '#D9434B', marginLeft: 2 }}>*</span></label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Project<span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })}
-                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7', appearance: 'none', cursor: 'pointer', color: form.project ? '#1D1D1F' : '#9A9EA5' }}>
+                  style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)', appearance: 'none', cursor: 'pointer', color: form.project ? 'var(--text)' : 'var(--faint)' }}>
                   <option value="">Select project</option>
                   {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
-                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9A9EA5', fontSize: 12 }}>▾</span>
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--faint)', fontSize: 12 }}>▾</span>
               </div>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Source<span style={{ color: '#D9434B', marginLeft: 2 }}>*</span></label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Source<span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span></label>
               {cpOnly ? (
-                <div style={{ ...addInp, display: 'flex', alignItems: 'center', color: '#1D1D1F', fontWeight: 600 }}>Channel Partner</div>
+                <div style={{ ...addInp, display: 'flex', alignItems: 'center', color: 'var(--text)', fontWeight: 600 }}>Channel Partner</div>
               ) : (
                 <div style={{ position: 'relative' }}>
                   <select value={form.source} onChange={(e) => {
@@ -475,17 +476,17 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                       setForm((f) => ({ ...f, source: v, ...(walkIn && showStm ? { stm_status: 'sv_done' } : {}) }));
                       if (walkIn) setSvVisitedDate(form.lead_date || new Date().toLocaleDateString('en-CA'));
                     }}
-                    style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7', appearance: 'none', cursor: 'pointer', color: form.source ? '#1D1D1F' : '#9A9EA5', textTransform: 'capitalize' }}>
+                    style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)', appearance: 'none', cursor: 'pointer', color: form.source ? 'var(--text)' : 'var(--faint)', textTransform: 'capitalize' }}>
                     <option value="">Select source</option>
                     {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
                   </select>
-                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9A9EA5', fontSize: 12 }}>▾</span>
+                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--faint)', fontSize: 12 }}>▾</span>
                 </div>
               )}
             </div>
             {cpOnly && (
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 }}>Channel Partner Name<span style={{ color: '#D9434B', marginLeft: 2 }}>*</span></label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Channel Partner Name<span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span></label>
                 <ChannelPartnerPicker
                   value={form.channel_partner}
                   onChange={(id) => setForm({ ...form, channel_partner: id })}
@@ -500,7 +501,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               entirely: it goes straight into the STM pipeline. */}
           {showTC && !cpOnly && (
             <>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Telecaller (Pre-Sales)</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Telecaller (Pre-Sales)</div>
               {_isAdminMgr && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign Telecaller</label>
@@ -511,14 +512,14 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
-                <label style={addLbl}>TC Status{_isTelecaller &&  <span style={{ color: '#D9434B' }}>*</span>}</label>
+                <label style={addLbl}>TC Status{_isTelecaller &&  <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={addLbl}>TC Remarks{_isTelecaller &&  <span style={{ color: '#D9434B' }}>*</span>}</label>
+                <label style={addLbl}>TC Remarks{_isTelecaller &&  <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder={_isTelecaller ? 'What was discussed' : 'Optional'} style={addTa} />
               </div>
             </>
@@ -527,11 +528,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           {/* STM (Sales) — labelled CP for Channel Partners (same underlying field) */}
           {showStm && (
             <>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>{cpOnly ? 'Status' : _isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>{cpOnly ? 'Status' : _isCp ? 'CP (Channel Partner)' : 'STM (Sales)'}</div>
               {/* A Channel Partner lead is automatically owned by whoever adds it —
                   no telecaller/STM assignment step, unlike a regular lead. */}
               {cpOnly && (
-                <p style={{ fontSize: 11, color: '#9A9EA5', marginBottom: 12 }}>Assigned to you ({user?.name}) automatically.</p>
+                <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 12 }}>Assigned to you ({user?.name}) automatically.</p>
               )}
               {_isAdminMgr && !cpOnly && (
                 <div style={{ marginBottom: 12 }}>
@@ -558,31 +559,31 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                     <option value="">— None —</option>
                     {salesCpUsers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
-                  <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 5 }}>Users assigned to this project. Assigns directly — no approval step.</p>
+                  <p style={{ fontSize: 11, color: 'var(--faint)', marginTop: 5 }}>Users assigned to this project. Assigns directly — no approval step.</p>
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
-                <label style={addLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'}{_isStm && <span style={{ color: '#D9434B' }}>*</span>}</label>
+                <label style={addLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'}{_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={addLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'}{_isStm && <span style={{ color: '#D9434B' }}>*</span>}</label>
+                <label style={addLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'}{_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder={_isStm ? 'What was discussed' : 'Optional'} style={addTa} />
               </div>
 
               {/* A lead added directly at sv_done needs its visit outcome recorded too —
                   same panel as the Lead Detail modal's inline "Visit Outcome". */}
               {form.stm_status === 'sv_done' && (
-                <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: 14, marginBottom: 18 }}>
+                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', borderRadius: 16, padding: 14, marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                    <span style={{ color: '#23874A' }}><Icon name="pin" /></span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#23874A', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome <span style={{ color: '#D9434B' }}>*</span></span>
+                    <span style={{ color: 'var(--success)' }}><Icon name="pin" /></span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome <span style={{ color: 'var(--danger)' }}>*</span></span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {[['hot', 'Hot', '#D9434B'], ['warm', 'Warm', '#D98A1F'], ['cold', 'Cold', '#2F6DB5'], ['not_interested', 'Not Interested', '#55585E']].map(([val, label, color]) => {
+                    {[['hot', 'Hot', 'var(--danger)'], ['warm', 'Warm', 'var(--warning-2)'], ['cold', 'Cold', 'var(--accent)'], ['not_interested', 'Not Interested', 'var(--text-3)']].map(([val, label, color]) => {
                       const active = svOutcome === val;
                       return (
                         <button key={val} type="button" onClick={() => setSvOutcome(val)}
@@ -594,11 +595,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                     })}
                   </div>
                   <div style={{ marginTop: 10 }}>
-                    <label style={{ ...addLbl, color: '#23874A' }}>Visit Date *</label>
+                    <label style={{ ...addLbl, color: 'var(--success)' }}>Visit Date *</label>
                     <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
                       onChange={(e) => setSvVisitedDate(e.target.value)} style={addInp} />
                   </div>
-                  {!svOutcome && <p style={{ fontSize: 11, color: '#23874A', margin: '8px 0 0' }}>
+                  {!svOutcome && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>
                     {isWalkIn
                       ? 'Walk-in — the visit already happened, so an outcome is required.'
                       : 'Pick how the visit went — recorded on the site visit.'}
@@ -609,9 +610,9 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           )}
 
           {/* ── FOLLOW-UPS ── mirrors the Lead Detail modal's inline scheduler */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Follow-ups</div>
-          <div style={{ background: '#F4F5F7', borderRadius: 16, padding: 16, border: '1px solid #ECEEF0', marginBottom: 18 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Follow-ups</div>
+          <div style={{ background: 'var(--surface-2)', borderRadius: 16, padding: 16, border: '1px solid var(--surface-3)', marginBottom: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
             <div style={{ display: 'grid', gridTemplateColumns: (_isAdminMgr && !cpOnly) ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
               {/* Role picker only for admins/managers — telecaller/STM portals auto-set
                   their own role, and a Channel Partner lead has no telecaller stage
@@ -636,22 +637,22 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
                 placeholder="Call notes, instructions…" rows={2} style={addTa} />
             </div>
-            <p style={{ fontSize: 11, color: '#6E7278', margin: 0, fontStyle: 'italic' }}>Optional — pick a date &amp; time and it's scheduled when you click Add Lead below.</p>
+            <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0, fontStyle: 'italic' }}>Optional — pick a date &amp; time and it's scheduled when you click Add Lead below.</p>
           </div>
 
           {err && (
-            <div style={{ backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: '#D9434B' }}>
+            <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: 'var(--danger)' }}>
               {err}
             </div>
           )}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button type="button" onClick={onClose}
-              style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+              style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
               {saving ? 'Adding…' : '+ Add Lead'}
             </button>
           </div>
@@ -676,17 +677,17 @@ const HISTORY_LABEL = {
   closure:            'Closure',
 };
 const HISTORY_COLOR = {
-  created:            '#55585E',
-  status:             '#2F6DB5',
-  telecaller_status:  '#23874A',
-  stm_status:         '#D98A1F',
-  telecaller_remarks: '#23874A',
-  stm_remarks:        '#D98A1F',
-  telecaller:         '#245A96',
-  stm:                '#23874A',
-  warm_transfer:      '#D9434B',
-  site_visit:         '#D98A1F',
-  closure:            '#23874A',
+  created:            'var(--text-3)',
+  status:             'var(--accent)',
+  telecaller_status:  'var(--success)',
+  stm_status:         'var(--warning-2)',
+  telecaller_remarks: 'var(--success)',
+  stm_remarks:        'var(--warning-2)',
+  telecaller:         'var(--accent-deep)',
+  stm:                'var(--success)',
+  warm_transfer:      'var(--danger)',
+  site_visit:         'var(--warning-2)',
+  closure:            'var(--success)',
 };
 
 function fmtDateTime(iso) {
@@ -965,25 +966,25 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
 
   const tabStyle = (key) => ({
     padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
-    background: 'none', borderBottom: activeTab === key ? '2px solid #2F6DB5' : '2px solid transparent',
-    color: activeTab === key ? '#2F6DB5' : '#6E7278',
+    background: 'none', borderBottom: activeTab === key ? '2px solid var(--accent)' : '2px solid transparent',
+    color: activeTab === key ? 'var(--accent)' : 'var(--muted)',
   });
 
-  const fuStatusColor = { pending: '#D98A1F', completed: '#23874A', missed: '#D9434B', rescheduled: '#23874A' };
+  const fuStatusColor = { pending: 'var(--warning-2)', completed: 'var(--success)', missed: 'var(--danger)', rescheduled: 'var(--success)' };
 
-  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
-  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#55585E', marginBottom: 5 };
-  const mSec = { fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 };
+  const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
+  const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 };
+  const mSec = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 };
 
   return (
     <div style={overlay}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: '92%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '92%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
         {/* Gradient Header */}
-        <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3, display: 'flex', alignItems: 'center', gap: 8 }}>
               {lead.name}
-              {lead.is_duplicate && <span style={{ fontSize: 9, fontWeight: 800, backgroundColor: '#D9434B', color: '#fff', padding: '2px 7px', borderRadius: 6 }}><Icon name="alert" /> DUP</span>}
+              {lead.is_duplicate && <span style={{ fontSize: 9, fontWeight: 800, backgroundColor: 'var(--danger-solid)', color: '#fff', padding: '2px 7px', borderRadius: 6 }}><Icon name="alert" /> DUP</span>}
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
           </div>
@@ -991,7 +992,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #F4F5F7', flexShrink: 0, backgroundColor: '#F3F9FF' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-2)', flexShrink: 0, backgroundColor: 'var(--accent-softer)' }}>
           {[['detail','Detail'],['history','History']].map(([k,label]) => (
             <button key={k} onClick={() => setActiveTab(k)} style={tabStyle(k)}>{label}</button>
           ))}
@@ -1010,17 +1011,17 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 <div>
                   <label style={mLbl}>Name</label>
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={mInp}
-                    onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                    onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 </div>
                 <div>
                   <label style={mLbl}>Alternate Phone</label>
                   <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
-                    onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                    onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 </div>
                 <div>
                   <label style={mLbl}>Email</label>
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={mInp} placeholder="Optional"
-                    onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                    onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 </div>
               </div>
 
@@ -1044,7 +1045,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   {cityOther && (
                     <input value={form.city || ''} onChange={(e) => setForm({ ...form, city: e.target.value })}
                       style={{ ...mInp, marginTop: 8 }} placeholder="Enter city"
-                      onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                      onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                   )}
                 </div>
                 <div>
@@ -1059,7 +1060,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 <label style={mLbl}>Address</label>
                 <textarea value={form.address || ''} onChange={(e) => setForm({ ...form, address: e.target.value })}
                   style={{ ...mInp, minHeight: 56, resize: 'vertical' }} placeholder="Address"
-                  onFocus={e => e.target.style.borderColor='#2F6DB5'} onBlur={e => e.target.style.borderColor='#DFE2E6'} />
+                  onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
               <div style={{ marginBottom: 18 }}>
                 <label style={mLbl}>Purpose</label>
@@ -1074,8 +1075,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                         })}
                         style={{
                           padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                          border: on ? '1px solid #2F6DB5' : '1px solid #DFE2E6',
-                          background: on ? '#F3F9FF' : '#fff', color: on ? '#2F6DB5' : '#1D1D1F',
+                          border: on ? '1px solid var(--accent)' : '1px solid var(--border)',
+                          background: on ? 'var(--accent-softer)' : 'var(--surface)', color: on ? 'var(--accent)' : 'var(--text)',
                         }}>
                         {on ? <Icon name="check" /> : ''}{p.label}
                       </button>
@@ -1095,7 +1096,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     </select>
                   ) : (
                     // Auto-derived from the workflow — read-only for telecallers / STMs.
-                    <div style={{ ...mInp, display: 'flex', alignItems: 'center', background: '#F4F5F7', color: '#1D1D1F', textTransform: 'capitalize' }}>
+                    <div style={{ ...mInp, display: 'flex', alignItems: 'center', background: 'var(--surface-2)', color: 'var(--text)', textTransform: 'capitalize' }}>
                       {(form.status || '—').replace(/_/g, ' ')}
                     </div>
                   )}
@@ -1110,12 +1111,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 {cpOnly && (
                   <div>
                     <label style={mLbl}>Source</label>
-                    <div style={{ ...mInp, display: 'flex', alignItems: 'center', background: '#F4F5F7', color: '#1D1D1F', fontWeight: 600 }}>Channel Partner</div>
+                    <div style={{ ...mInp, display: 'flex', alignItems: 'center', background: 'var(--surface-2)', color: 'var(--text)', fontWeight: 600 }}>Channel Partner</div>
                   </div>
                 )}
                 {cpOnly && (
                   <div>
-                    <label style={mLbl}>Channel Partner Name<span style={{ color: '#D9434B' }}>*</span></label>
+                    <label style={mLbl}>Channel Partner Name<span style={{ color: 'var(--danger)' }}>*</span></label>
                     <ChannelPartnerPicker
                       value={form.channel_partner}
                       onChange={(id) => setForm({ ...form, channel_partner: id })}
@@ -1134,12 +1135,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 <div style={{ ...mSec, marginBottom: 6 }}>Telecaller (Pre-Sales)</div>
               )}
               {!showTC && !cpOnly && (lead.telecaller_name || lead.telecaller_remarks) && (
-                <div style={{ marginBottom: 18, padding: 12, borderRadius: 14, background: '#F4F5F7', border: '1px solid #ECEEF0' }}>
+                <div style={{ marginBottom: 18, padding: 12, borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)' }}>
                   {lead.telecaller_name && (
-                    <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Telecaller: <span style={{ color: '#1D1D1F', fontWeight: 600 }}>{lead.telecaller_name}</span>{lead.telecaller_status ? ` · ${lead.telecaller_status.replace(/_/g, ' ')}` : ''}</p>
+                    <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Telecaller: <span style={{ color: 'var(--text)', fontWeight: 600 }}>{lead.telecaller_name}</span>{lead.telecaller_status ? ` · ${lead.telecaller_status.replace(/_/g, ' ')}` : ''}</p>
                   )}
                   {lead.telecaller_remarks && (
-                    <p style={{ fontSize: 13, color: '#1D1D1F', margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{lead.telecaller_remarks}</p>
+                    <p style={{ fontSize: 13, color: 'var(--text)', margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{lead.telecaller_remarks}</p>
                   )}
                 </div>
               )}
@@ -1156,7 +1157,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
                 )}
                 <div>
-                  <label style={mLbl}>TC Status {_isTelecaller && <span style={{ color: '#D9434B' }}>*</span>}</label>
+                  <label style={mLbl}>TC Status {_isTelecaller && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                   <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -1164,7 +1165,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={mLbl}>TC Remarks {_isTelecaller && <span style={{ color: '#D9434B' }}>*</span>}</label>
+                <label style={mLbl}>TC Remarks {_isTelecaller && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
@@ -1176,7 +1177,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               {/* A Channel Partner lead is owned by whoever added it — no reassignment
                   step, unlike a regular lead. */}
               {cpOnly && (
-                <p style={{ fontSize: 11, color: '#9A9EA5', marginBottom: 12 }}>Assigned to {lead.stm_name || 'you'} automatically.</p>
+                <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 12 }}>Assigned to {lead.stm_name || 'you'} automatically.</p>
               )}
               {cpOnly && (_isCpHead || canAssign) && (
                 <div style={{ marginBottom: 12 }}>
@@ -1185,7 +1186,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     <option value="">— None —</option>
                     {salesCpUsers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
-                  <p style={{ fontSize: 11, color: '#9A9EA5', marginTop: 5 }}>Users assigned to this project. Assigns directly — no approval step.</p>
+                  <p style={{ fontSize: 11, color: 'var(--faint)', marginTop: 5 }}>Users assigned to this project. Assigns directly — no approval step.</p>
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: (canAssign && !cpOnly) ? '1fr 1fr' : '1fr', gap: '12px 16px', marginBottom: 12 }}>
@@ -1199,7 +1200,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
                 )}
                 <div>
-                  <label style={mLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: '#D9434B' }}>*</span>}</label>
+                  <label style={mLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                   <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -1207,29 +1208,29 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={mLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: '#D9434B' }}>*</span>}</label>
+                <label style={mLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
 
               {/* Inline site-visit scheduling when STM picks "sv_scheduled" */}
               {form.stm_status === 'sv_scheduled' && (
-                <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: 14, marginBottom: 18 }}>
+                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', borderRadius: 16, padding: 14, marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                    <span style={{ color: '#23874A' }}><Icon name="pin" /></span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#23874A', textTransform: 'uppercase', letterSpacing: 0.4 }}>Schedule Site Visit</span>
+                    <span style={{ color: 'var(--success)' }}><Icon name="pin" /></span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Schedule Site Visit</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
                     <div>
-                      <label style={{ ...mLbl, color: '#23874A' }}>Date &amp; Time <span style={{ color: '#D9434B' }}>*</span></label>
+                      <label style={{ ...mLbl, color: 'var(--success)' }}>Date &amp; Time <span style={{ color: 'var(--danger)' }}>*</span></label>
                       <input type="datetime-local" value={svScheduledAt} onChange={(e) => setSvScheduledAt(e.target.value)} style={mInp} />
                     </div>
                     <div>
-                      <label style={{ ...mLbl, color: '#23874A' }}>Visit Remarks</label>
+                      <label style={{ ...mLbl, color: 'var(--success)' }}>Visit Remarks</label>
                       <input value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…" style={mInp} />
                     </div>
                   </div>
-                  {!svScheduledAt && <p style={{ fontSize: 11, color: '#23874A', margin: '8px 0 0' }}>Set a date &amp; time to create a site visit entry automatically on save.</p>}
+                  {!svScheduledAt && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Set a date &amp; time to create a site visit entry automatically on save.</p>}
                 </div>
               )}
 
@@ -1239,13 +1240,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   STM Status stays "sv done". Uses STM Remarks above as the visit's
                   remarks — no separate field needed since it's already required. */}
               {form.stm_status === 'sv_done' && (
-                <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: 14, marginBottom: 18 }}>
+                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', borderRadius: 16, padding: 14, marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                    <span style={{ color: '#23874A' }}><Icon name="pin" /></span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#23874A', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome <span style={{ color: '#D9434B' }}>*</span></span>
+                    <span style={{ color: 'var(--success)' }}><Icon name="pin" /></span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Visit Outcome <span style={{ color: 'var(--danger)' }}>*</span></span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {[['hot', 'Hot', '#D9434B'], ['warm', 'Warm', '#D98A1F'], ['cold', 'Cold', '#2F6DB5'], ['not_interested', 'Not Interested', '#55585E']].map(([val, label, color]) => {
+                    {[['hot', 'Hot', 'var(--danger)'], ['warm', 'Warm', 'var(--warning-2)'], ['cold', 'Cold', 'var(--accent)'], ['not_interested', 'Not Interested', 'var(--text-3)']].map(([val, label, color]) => {
                       const active = svOutcome === val;
                       return (
                         <button key={val} type="button" onClick={() => setSvOutcome(val)}
@@ -1257,20 +1258,20 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     })}
                   </div>
                   <div style={{ marginTop: 10 }}>
-                    <label style={{ ...mLbl, color: '#23874A' }}>Visit Date *</label>
+                    <label style={{ ...mLbl, color: 'var(--success)' }}>Visit Date *</label>
                     <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
                       onChange={(e) => setSvVisitedDate(e.target.value)} style={mInp} />
                   </div>
-                  {!svOutcome && <p style={{ fontSize: 11, color: '#23874A', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
+                  {!svOutcome && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
                 </div>
               )}
 
               {/* STM picked "closed" → the footer button becomes "Record Closure"
                   and on save jumps into the booking flow with this lead prefilled. */}
               {form.stm_status === 'closed' && (
-                <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: '12px 14px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#23874A' }}><Icon name="check-circle" /></span>
-                  <span style={{ fontSize: 12, color: '#23874A', fontWeight: 600 }}>
+                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', borderRadius: 16, padding: '12px 14px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: 'var(--success)' }}><Icon name="check-circle" /></span>
+                  <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>
                     Saving takes you to the booking flow — pick the plot(s) and record the booking for this lead.
                   </span>
                 </div>
@@ -1278,22 +1279,22 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               </>)}
 
               {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
-                <div style={{ background: '#F4F5F7', borderRadius: 14, padding: '12px 14px', marginBottom: 18 }}>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 14, padding: '12px 14px', marginBottom: 18 }}>
                   <div style={mSec}>Meta Ads Info</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {lead.meta_campaign_name && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', minWidth: 72 }}>CAMPAIGN</span><span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 600 }}>{lead.meta_campaign_name}</span></div>}
-                    {lead.meta_adset_name    && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', minWidth: 72 }}>AD SET</span><span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 600 }}>{lead.meta_adset_name}</span></div>}
-                    {lead.meta_ad_name       && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', minWidth: 72 }}>AD NAME</span><span style={{ fontSize: 12, color: '#1D1D1F', fontWeight: 600 }}>{lead.meta_ad_name}</span></div>}
+                    {lead.meta_campaign_name && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', minWidth: 72 }}>CAMPAIGN</span><span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{lead.meta_campaign_name}</span></div>}
+                    {lead.meta_adset_name    && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', minWidth: 72 }}>AD SET</span><span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{lead.meta_adset_name}</span></div>}
+                    {lead.meta_ad_name       && <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', minWidth: 72 }}>AD NAME</span><span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{lead.meta_ad_name}</span></div>}
                   </div>
                 </div>
               )}
 
               {/* ── FOLLOW-UPS (inline in Detail, above the Save bar) ── */}
-              <div style={{ borderTop: '1px solid #F4F5F7', margin: '4px 0 0', paddingTop: 18, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ borderTop: '1px solid var(--surface-2)', margin: '4px 0 0', paddingTop: 18, display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div style={mSec}>Follow-ups</div>
                 {/* Add new followup */}
-                <div style={{ background: '#F4F5F7', borderRadius: 16, padding: 16, border: '1px solid #ECEEF0' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9A9EA5', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 16, padding: 16, border: '1px solid var(--surface-3)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Schedule Follow-up</div>
                   <div style={{ display: 'grid', gridTemplateColumns: (canAssign && !cpOnly) ? '1fr 1fr' : '1fr', gap: '10px 14px', marginBottom: 10 }}>
                     {/* Role picker only for admins/managers — telecaller/STM portals auto-set
                         their own role, and a Channel Partner lead has no telecaller stage. */}
@@ -1318,50 +1319,50 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                       placeholder="Call notes, instructions…" rows={2}
                       style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
                   </div>
-                  <p style={{ fontSize: 11, color: '#6E7278', margin: 0, fontStyle: 'italic' }}>Pick a date &amp; time and it's added when you click Save Changes below.</p>
+                  <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0, fontStyle: 'italic' }}>Pick a date &amp; time and it's added when you click Save Changes below.</p>
                 </div>
 
                 {/* Existing followups */}
-                {!detail && <p style={{ fontSize: 13, color: '#6E7278' }}>Loading…</p>}
+                {!detail && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Loading…</p>}
                 {detail?.follow_ups?.length === 0 && (
-                  <p style={{ fontSize: 13, color: '#9A9EA5', textAlign: 'center' }}>No follow-ups scheduled yet.</p>
+                  <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center' }}>No follow-ups scheduled yet.</p>
                 )}
                 {detail?.follow_ups?.map((fu) => (
-                  <div key={fu.id} style={{ border: '1.5px solid #ECEEF0', borderRadius: 16, padding: '14px 16px' }}>
+                  <div key={fu.id} style={{ border: '1.5px solid var(--surface-3)', borderRadius: 16, padding: '14px 16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
-                          color: fu.role_context === 'stm' ? '#D98A1F' : '#23874A' }}>
+                          color: fu.role_context === 'stm' ? 'var(--warning-2)' : 'var(--success)' }}>
                           {fu.role_context?.toUpperCase()}
                         </span>
                         <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14,
-                          backgroundColor: (fuStatusColor[fu.status] || '#6E7278') + '18',
-                          color: fuStatusColor[fu.status] || '#6E7278' }}>
+                          backgroundColor: `color-mix(in srgb, ${(fuStatusColor[fu.status] || 'var(--muted-solid)')} 9%, transparent)`,
+                          color: fuStatusColor[fu.status] || 'var(--muted)' }}>
                           {fu.status}
                         </span>
                       </div>
                       {fu.status === 'pending' && (
                         <button onClick={() => markFollowupDone(fu.id)}
-                          style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 8, border: '1.5px solid #23874A', color: '#23874A', background: '#fff', cursor: 'pointer' }}>
+                          style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 8, border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
                           Mark Done
                         </button>
                       )}
                     </div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: '8px 0 2px' }}>{fmtDateTime(fu.scheduled_at)}</p>
-                    {fu.assigned_to_name && <p style={{ fontSize: 12, color: '#6E7278', margin: 0 }}>Assigned to: {fu.assigned_to_name}</p>}
-                    {fu.remarks && <p style={{ fontSize: 12, color: '#1D1D1F', margin: '6px 0 0' }}>{fu.remarks}</p>}
+                    <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '8px 0 2px' }}>{fmtDateTime(fu.scheduled_at)}</p>
+                    {fu.assigned_to_name && <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Assigned to: {fu.assigned_to_name}</p>}
+                    {fu.remarks && <p style={{ fontSize: 12, color: 'var(--text)', margin: '6px 0 0' }}>{fu.remarks}</p>}
                     {fu.status === 'completed' && fu.completed_at && (
-                      <p style={{ fontSize: 11, color: '#23874A', margin: '4px 0 0' }}><Icon name="check" /> Done {fmtDateTime(fu.completed_at)}</p>
+                      <p style={{ fontSize: 11, color: 'var(--success)', margin: '4px 0 0' }}><Icon name="check" /> Done {fmtDateTime(fu.completed_at)}</p>
                     )}
                   </div>
                 ))}
               </div>
 
               {/* Save bar — at the very bottom, below Follow-ups */}
-              {saveErr && <div style={{ background: '#FDECEC', border: '1px solid #F7C3C6', color: '#D9434B', borderRadius: 14, padding: '10px 14px', fontSize: 13, fontWeight: 600, margin: '18px 0 4px' }}>{saveErr}</div>}
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #F4F5F7', marginTop: 20, paddingTop: 16 }}>
-                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
+              {saveErr && <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', color: 'var(--danger)', borderRadius: 14, padding: '10px 14px', fontSize: 13, fontWeight: 600, margin: '18px 0 4px' }}>{saveErr}</div>}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid var(--surface-2)', marginTop: 20, paddingTop: 16 }}>
+                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
                   {saving ? 'Saving…' : (form.stm_status === 'closed' ? 'Record Closure →' : 'Save Changes')}
                 </button>
               </div>
@@ -1375,26 +1376,26 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#3D5AFE18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}><Icon name="download" /></div>
-                  <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />
+                  <div style={{ width: 2, flex: 1, backgroundColor: 'var(--surface-2)', marginTop: 4 }} />
                 </div>
                 <div style={{ paddingBottom: 18, flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: 0 }}>Lead Received</p>
-                  <p style={{ fontSize: 11, color: '#6E7278', margin: '3px 0 0' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Lead Received</p>
+                  <p style={{ fontSize: 11, color: 'var(--muted)', margin: '3px 0 0' }}>
                     Source: {lead.source_name || '—'} · Project: {lead.project_name || '—'}
                     {cpOnly && <> · Channel Partner: {lead.channel_partner_name || '—'}</>}
                   </p>
-                  <p style={{ fontSize: 11, color: '#9A9EA5', margin: '3px 0 0' }}>{fmtDateTime(lead.created_at)}</p>
+                  <p style={{ fontSize: 11, color: 'var(--faint)', margin: '3px 0 0' }}>{fmtDateTime(lead.created_at)}</p>
                 </div>
               </div>
 
               {/* History entries */}
-              {!detail && <p style={{ fontSize: 13, color: '#6E7278' }}>Loading…</p>}
+              {!detail && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Loading…</p>}
               {detail && detail.history?.length === 0 && (
-                <p style={{ fontSize: 13, color: '#9A9EA5', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
+                <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
               )}
               {(detail?.history || []).filter(h => h.field_changed !== 'created').map((h, idx, arr) => {
                 const isLast = idx === arr.length - 1;
-                const color  = HISTORY_COLOR[h.field_changed] || '#6E7278';
+                const color  = HISTORY_COLOR[h.field_changed] || 'var(--muted)';
                 const icon   = h.field_changed === 'created'       ? 'download'
                              : h.field_changed === 'warm_transfer' ? 'flame'
                              : h.field_changed === 'telecaller'    ? 'user'
@@ -1412,26 +1413,26 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 return (
                   <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: isLast ? 0 : 18 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color }}><Icon name={icon} size={15} /></div>
-                      {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />}
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color }}><Icon name={icon} size={15} /></div>
+                      {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: 'var(--surface-2)', marginTop: 4 }} />}
                     </div>
                     <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#1D1D1F', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
-                      <p style={{ fontSize: 12, color: '#1D1D1F', margin: '3px 0 0', whiteSpace: 'pre-wrap' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{HISTORY_LABEL[h.field_changed] || h.field_changed}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text)', margin: '3px 0 0', whiteSpace: 'pre-wrap' }}>
                         {singleValue ? (
                           // Remarks run past new_value's 100-char DB cap — the full text
                           // lives in `remarks` instead, fall back to new_value elsewhere.
                           <span style={{ color, fontWeight: 600 }}>{(h.field_changed.includes('remarks') ? h.remarks : null) || h.new_value || '—'}</span>
                         ) : (
                           <>
-                            <span style={{ color: '#6E7278' }}>{h.old_value || '—'}</span>
+                            <span style={{ color: 'var(--muted)' }}>{h.old_value || '—'}</span>
                             {' → '}
                             <span style={{ color, fontWeight: 600 }}>{h.new_value || '—'}</span>
                           </>
                         )}
                       </p>
-                      {byLabel && <p style={{ fontSize: 11, color: '#6E7278', margin: '2px 0 0' }}>by {byLabel}</p>}
-                      <p style={{ fontSize: 11, color: '#9A9EA5', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
+                      {byLabel && <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>by {byLabel}</p>}
+                      <p style={{ fontSize: 11, color: 'var(--faint)', margin: '2px 0 0' }}>{fmtDateTime(h.created_at)}</p>
                     </div>
                   </div>
                 );
@@ -1734,7 +1735,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   }
 
   async function deleteLead(id) {
-    if (!window.confirm('Delete this lead permanently?')) return;
+    if (!(await confirmDialog('Delete this lead permanently?'))) return;
     await fetch(SALES_ENDPOINTS.lead(id), { method: 'DELETE', headers: authHeaders() });
     bustLeadsCache();
     loadLeads();
@@ -1742,7 +1743,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
   async function bulkDelete() {
     if (!selectedIds.size) return;
-    if (!window.confirm(`Delete ${selectedIds.size} leads permanently?`)) return;
+    if (!(await confirmDialog(`Delete ${selectedIds.size} leads permanently?`))) return;
     setDeleting(true);
     await fetch(SALES_ENDPOINTS.bulkDelete, {
       method: 'DELETE', headers: authHeaders(),
@@ -1774,7 +1775,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
       {/* New leads notification banner */}
       {newLeadBanner > 0 && (
-        <div style={{ backgroundColor: '#1D1D1F', borderRadius: 14, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ backgroundColor: 'var(--strong)', borderRadius: 14, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16 }}><Icon name="bell" /></span>
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
@@ -1793,15 +1794,15 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>All Leads</h1>
-          <p style={{ fontSize: 13, color: '#6E7278' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>All Leads</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>
             {total.toLocaleString()} {isCaller ? (workTab === 'pending' ? 'to call' : 'called') : 'total leads'}
-            {selectedIds.size > 0 && <span style={{ marginLeft: 8, color: '#2F6DB5', fontWeight: 600 }}>· {selectedIds.size} selected</span>}
+            {selectedIds.size > 0 && <span style={{ marginLeft: 8, color: 'var(--accent)', fontWeight: 600 }}>· {selectedIds.size} selected</span>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {canDelete && selectedIds.size > 0 && (
-            <button onClick={bulkDelete} disabled={deleting} style={{ ...saveBtn, backgroundColor: '#D9434B' }}>
+            <button onClick={bulkDelete} disabled={deleting} style={{ ...saveBtn, backgroundColor: 'var(--danger-solid)' }}>
               {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
             </button>
           )}
@@ -1811,13 +1812,13 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
       {/* To Call / Called split — telecaller & STM portals only */}
       {isCaller && (
-        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #ECEEF0', marginBottom: 18 }}>
+        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--surface-3)', marginBottom: 18 }}>
           {[['pending', 'To Call'], ['called', 'Called']].map(([key, label]) => {
             const active = workTab === key;
             return (
               <button key={key} onClick={() => setWorkTab(key)}
                 style={{ padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none',
-                  color: active ? '#2F6DB5' : '#6E7278', borderBottom: active ? '2px solid #2F6DB5' : '2px solid transparent' }}>
+                  color: active ? 'var(--accent)' : 'var(--muted)', borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent' }}>
                 {label}
               </button>
             );
@@ -1840,37 +1841,37 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
-          border: '1.5px solid #ECEEF0', fontSize: 12, background: '#F4F5F7',
-          cursor: 'pointer', outline: 'none', color: '#1D1D1F', fontWeight: 500,
+          border: '1.5px solid var(--surface-3)', fontSize: 12, background: 'var(--surface-2)',
+          cursor: 'pointer', outline: 'none', color: 'var(--text)', fontWeight: 500,
         };
-        const activeSelStyle = (val) => val ? { ...fSel, borderColor: '#2F6DB5', background: '#F3F9FF', color: '#2F6DB5', fontWeight: 600 } : fSel;
+        const activeSelStyle = (val) => val ? { ...fSel, borderColor: 'var(--accent)', background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 } : fSel;
         const qBtn = (active) => ({
           height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700,
           cursor: 'pointer', border: 'none',
-          background: active ? '#1D1D1F' : '#F4F5F7',
-          color: active ? '#fff' : '#6E7278',
+          background: active ? 'var(--strong)' : 'var(--surface-2)',
+          color: active ? '#fff' : 'var(--muted)',
           transition: 'all 0.15s',
         });
-        const divider = { width: 1, height: 24, background: '#ECEEF0', flexShrink: 0 };
+        const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
         return (
-          <div style={{ backgroundColor: '#fff', borderRadius: 18, border: '1.5px solid #ECEEF0', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
             {/* Search bar */}
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F4F5F7' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
                 <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search name, phone, email…"
-                  style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid #ECEEF0', fontSize: 13, background: '#F4F5F7', outline: 'none', boxSizing: 'border-box', color: '#1D1D1F' }} />
+                  style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid var(--surface-3)', fontSize: 13, background: 'var(--surface-2)', outline: 'none', boxSizing: 'border-box', color: 'var(--text)' }} />
               </div>
             </div>
 
             {/* Row 1: Date range + quick buttons + project + tc/stm status */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #F4F5F7' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-2)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
               <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
-              <span style={{ fontSize: 12, color: '#C9CDD2' }}>→</span>
+              <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
               <input type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
               <div style={divider} />
               <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
@@ -1895,7 +1896,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               </select>
               )}
               {anyFilter && (
-                <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #EF9195', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
+                <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
                   <Icon name="x" /> Clear all
                 </button>
               )}
@@ -1933,13 +1934,13 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               )}
               <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"
-                style={{ ...fSel, width: 170, background: filters.campaign ? '#F3F9FF' : '#F4F5F7', borderColor: filters.campaign ? '#2F6DB5' : '#ECEEF0', color: filters.campaign ? '#2F6DB5' : '#1D1D1F' }} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? '#2F6DB5' : '#6E7278', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? '#2F6DB5' : '#ECEEF0'}`, background: filters.is_duplicate ? '#F3F9FF' : '#F4F5F7' }}>
-                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 14, height: 14, accentColor: '#2F6DB5' }} />
+                style={{ ...fSel, width: 170, background: filters.campaign ? 'var(--accent-softer)' : 'var(--surface-2)', borderColor: filters.campaign ? 'var(--accent)' : 'var(--surface-3)', color: filters.campaign ? 'var(--accent)' : 'var(--text)' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? 'var(--accent)' : 'var(--muted)', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? 'var(--accent)' : 'var(--surface-3)'}`, background: filters.is_duplicate ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
+                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 14, height: 14, accentColor: 'var(--accent)' }} />
                 Duplicates only
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.unassigned ? '#D98A1F' : '#6E7278', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.unassigned ? '#D98A1F' : '#ECEEF0'}`, background: filters.unassigned ? '#FFF3E0' : '#F4F5F7' }}>
-                <input type="checkbox" checked={filters.unassigned} onChange={(e) => sf('unassigned', e.target.checked)} style={{ width: 14, height: 14, accentColor: '#D98A1F' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.unassigned ? 'var(--warning-2)' : 'var(--muted)', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.unassigned ? 'var(--warning-2)' : 'var(--surface-3)'}`, background: filters.unassigned ? 'var(--warning-soft)' : 'var(--surface-2)' }}>
+                <input type="checkbox" checked={filters.unassigned} onChange={(e) => sf('unassigned', e.target.checked)} style={{ width: 14, height: 14, accentColor: 'var(--warning-2)' }} />
                 Unassigned only
               </label>
             </div>
@@ -1953,10 +1954,10 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       )}
 
       {/* Table */}
-      <div style={{ backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
         <div>
           <table style={tbl}>
-            <thead style={{ backgroundColor: '#F4F5F7' }}>
+            <thead style={{ backgroundColor: 'var(--surface-2)' }}>
               <tr>
                 <th style={th}>
                   {canDelete && <input type="checkbox" checked={selectedIds.size === leads.length && leads.length > 0} onChange={toggleAll} />}
@@ -1984,46 +1985,46 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                   </tr>
                 ))
               ) : leads.length === 0 ? (
-                <tr><td colSpan={cpOnly ? 12 : 11} style={{ textAlign: 'center', padding: '60px 0', color: '#6E7278' }}>No leads found</td></tr>
+                <tr><td colSpan={cpOnly ? 12 : 11} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>No leads found</td></tr>
               ) : leads.map((l) => (
                 <tr key={l.id}
-                  style={{ borderBottom: '1px solid #F4F5F7', cursor: 'pointer', backgroundColor: l.is_duplicate ? '#FDECEC' : '', borderLeft: l.is_duplicate ? '3px solid #D9434B' : '3px solid transparent' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FDECEC' : '#FAFAFB'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? '#FDECEC' : ''}>
+                  style={{ borderBottom: '1px solid var(--surface-2)', cursor: 'pointer', backgroundColor: l.is_duplicate ? 'var(--danger-soft)' : '', borderLeft: l.is_duplicate ? '3px solid var(--danger)' : '3px solid transparent' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? 'var(--danger-soft)' : 'var(--surface-2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = l.is_duplicate ? 'var(--danger-soft)' : ''}>
                   <td style={td} onClick={(e) => { e.stopPropagation(); if (canDelete) toggleSelect(l.id); }}>
                     {canDelete && <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => toggleSelect(l.id)} />}
                   </td>
                   <td style={td} onClick={() => loadDetail(l)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{l.name}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>{l.name}</span>
                       {l.is_duplicate && <DupBadge count={l.duplicate_count} />}
                     </div>
                     {(l.meta_campaign_name || l.meta_adset_name || l.meta_ad_name) && (
-                      <div style={{ fontSize: 10, color: '#6E7278', marginTop: 2, lineHeight: 1.4 }}>
+                      <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2, lineHeight: 1.4 }}>
                         {[l.meta_campaign_name, l.meta_adset_name, l.meta_ad_name].filter(Boolean).join(' · ')}
                       </div>
                     )}
                   </td>
-                  <td style={{ ...td, color: '#6E7278' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
-                  <td style={{ ...td, color: '#6E7278', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
-                  {cpOnly && <td style={{ ...td, color: '#6E7278' }} onClick={() => loadDetail(l)}>{l.channel_partner_name || '—'}</td>}
-                  {showTcStatus && <td style={{ ...td, color: '#1D1D1F', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: '#C9CDD2' }}>—</span>}</td>}
-                  {showStmStatus && <td style={{ ...td, color: '#1D1D1F', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: '#C9CDD2' }}>—</span>}</td>}
+                  <td style={{ ...td, color: 'var(--muted)' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
+                  <td style={{ ...td, color: 'var(--muted)', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
+                  {cpOnly && <td style={{ ...td, color: 'var(--muted)' }} onClick={() => loadDetail(l)}>{l.channel_partner_name || '—'}</td>}
+                  {showTcStatus && <td style={{ ...td, color: 'var(--text)', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: 'var(--border-strong)' }}>—</span>}</td>}
+                  {showStmStatus && <td style={{ ...td, color: 'var(--text)', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: 'var(--border-strong)' }}>—</span>}</td>}
                   {showTcStatus && <td style={td} onClick={() => loadDetail(l)}>
-                    {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: '#C9CDD2' }}>—</span>}
+                    {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: 'var(--border-strong)' }}>—</span>}
                   </td>}
                   {showStmStatus && <td style={td} onClick={() => loadDetail(l)}>
-                    {l.stm_status ? <StatusBadge status={l.stm_status} outcome={l.sv_outcome} /> : <span style={{ color: '#C9CDD2' }}>—</span>}
+                    {l.stm_status ? <StatusBadge status={l.stm_status} outcome={l.sv_outcome} /> : <span style={{ color: 'var(--border-strong)' }}>—</span>}
                   </td>}
                   <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} outcome={l.sv_outcome} /></td>
-                  <td style={{ ...td, color: '#6E7278', fontSize: 12 }} onClick={() => loadDetail(l)}>
+                  <td style={{ ...td, color: 'var(--muted)', fontSize: 12 }} onClick={() => loadDetail(l)}>
                     {/* An STM cares about when THEY received the lead, not when it first
                         entered the system — fall back to created_at for leads with no
                         stamped stm_assigned_at (e.g. self-sourced). */}
                     {(() => { const d = (isStm && l.stm_assigned_at) ? l.stm_assigned_at : l.created_at; return (
                       <>
                         <div>{new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>
-                        <div style={{ fontSize: 11, color: '#9A9EA5' }}>{new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                        <div style={{ fontSize: 11, color: 'var(--faint)' }}>{new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                       </>
                     ); })()}
                   </td>
@@ -2032,19 +2033,19 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                       {/* Hand the lead on without having to open it first. */}
                       {isStm && !!l.stm && (pendingXfers[l.id] ? (
                         <span title={`Awaiting approval — requested for ${pendingXfers[l.id].to_stm_name || 'another STM'}`}
-                          style={{ background: '#FFF3E0', border: '1.5px solid #FFD89D', color: '#A3671A', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
+                          style={{ background: 'var(--warning-soft)', border: '1.5px solid var(--peach)', color: 'var(--warning)', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
                           ⏳ Transfer pending
                         </span>
                       ) : (
                         <button title="Transfer to another STM"
                           onClick={(e) => { e.stopPropagation(); setXferLead(l); }}
-                          style={{ background: '#fff', border: '1.5px solid #CCE5FF', color: '#2F6DB5', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
+                          style={{ background: 'var(--surface)', border: '1.5px solid var(--blue-2)', color: 'var(--accent)', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
                           ⇄ Transfer
                         </button>
                       ))}
                       {canDelete && (
                       <button onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
-                        style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>
+                        style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>
                         <Icon name="x" />
                       </button>
                       )}
@@ -2058,8 +2059,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid #F4F5F7' }}>
-            <span style={{ fontSize: 13, color: '#6E7278' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--surface-2)' }}>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
               Showing {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} of {total}
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -2068,7 +2069,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 const pg = i + 1;
                 return (
                   <button key={pg} onClick={() => setPage(pg)}
-                    style={{ ...pgBtn, backgroundColor: page === pg ? '#1D1D1F' : '', color: page === pg ? '#fff' : '#1D1D1F' }}>
+                    style={{ ...pgBtn, backgroundColor: page === pg ? 'var(--strong)' : '', color: page === pg ? '#fff' : 'var(--text)' }}>
                     {pg}
                   </button>
                 );
@@ -2099,15 +2100,15 @@ export default function SalesLeadsPage() {
 }
 
 // Shared styles
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#6E7278', marginBottom: 5 };
+const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
+const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
 const tbl = { width: '100%', borderCollapse: 'collapse', minWidth: 960 };
-const th  = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '10px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
+const th  = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '10px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td  = { padding: '10px 14px', fontSize: 13 };
-const pgBtn = { padding: '5px 12px', borderRadius: 7, border: '1.5px solid #DFE2E6', backgroundColor: '#fff', fontSize: 12, color: '#1D1D1F', cursor: 'pointer' };
-const saveBtn   = { padding: '9px 20px', backgroundColor: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const cancelBtn = { padding: '9px 16px', backgroundColor: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-const overlay   = { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-const modal     = { backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 500, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
-const modalHeader = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' };
-const closeBtn  = { background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer', padding: '2px 6px' };
+const pgBtn = { padding: '5px 12px', borderRadius: 7, border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)', fontSize: 12, color: 'var(--text)', cursor: 'pointer' };
+const saveBtn   = { padding: '9px 20px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
+const cancelBtn = { padding: '9px 16px', backgroundColor: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const overlay   = { position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const modal     = { backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 500, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
+const modalHeader = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' };
+const closeBtn  = { background: 'none', border: 'none', fontSize: 16, color: 'var(--muted)', cursor: 'pointer', padding: '2px 6px' };

@@ -13,8 +13,10 @@ import ChangePasswordModal from '../../components/ChangePasswordModal';
 import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 import Icon from '../../components/Icon';
-const ORANGE = '#2F6DB5';
-const NAVY   = '#1D1D1F';
+import Loader from '../../components/Loader';
+import ThemeToggle from '../../components/ThemeToggle';
+const ORANGE = 'var(--accent)';
+const NAVY   = 'var(--text)';
 
 function SvgIcon({ children, size = 16 }) {
   return (
@@ -109,13 +111,13 @@ const ADMIN_SECTION_NAV = [
 
 const CSS = `
   .s-nav-link { transition: background 0.14s, color 0.14s; }
-  .s-nav-link:hover { background: rgba(29,29,31,0.05); color: #1D1D1F; }
+  .s-nav-link:hover { background: rgba(var(--ink-rgb),0.05); color: var(--text); }
   @keyframes s-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  .s-skel { animation: s-pulse 1.4s ease infinite; background:#ECEEF0; border-radius:8px; }
+  .s-skel { animation: s-pulse 1.4s ease infinite; background:var(--surface-3); border-radius:8px; }
   .s-logout:hover { background: rgba(217,67,75,0.18) !important; border-color: rgba(217,67,75,0.4) !important; }
   .s-profile-btn { background: none; border: none; cursor: pointer; width: 100%; }
-  .s-profile-btn:hover { background: rgba(29,29,31,0.05) !important; }
+  .s-profile-btn:hover { background: rgba(var(--ink-rgb),0.05) !important; }
   .s-scroll::-webkit-scrollbar { width: 0; }
   .s-scroll { scrollbar-width: none; }
   @media (max-width: 768px) {
@@ -250,7 +252,7 @@ export default function SalesLayout({ children }) {
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(162,210,255,0.3)', borderTopColor: '#2F6DB5', animation: 'spin 0.8s linear infinite' }} />
+        <Loader />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -296,7 +298,7 @@ export default function SalesLayout({ children }) {
             style={{ ...s.navItem, ...(onOwnPage ? s.navActive : {}), cursor: 'pointer' }}
             onClick={() => setCpOpen((o) => !o)}
           >
-            <span style={{ ...s.iconWrap, color: onOwnPage ? '#A2D2FF' : 'rgba(29,29,31,0.6)' }}>
+            <span style={{ ...s.iconWrap, color: onOwnPage ? 'var(--nav-active-fg)' : 'rgba(var(--ink-rgb),0.6)' }}>
               {item.icon}
             </span>
             <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
@@ -307,7 +309,7 @@ export default function SalesLayout({ children }) {
             return (
               <Link key={child.href} href={child.href} className="s-nav-link"
                 style={{ ...s.navItem, paddingLeft: 44, ...(childActive ? s.navChildActive : {}) }}>
-                <span style={{ fontSize: 12.5, fontWeight: childActive ? 600 : 500, color: childActive ? '#1D1D1F' : 'rgba(29,29,31,0.82)' }}>{child.label}</span>
+                <span style={{ fontSize: 12.5, fontWeight: childActive ? 600 : 500, color: childActive ? 'var(--text)' : 'rgba(var(--ink-rgb),0.82)' }}>{child.label}</span>
               </Link>
             );
           })}
@@ -318,7 +320,7 @@ export default function SalesLayout({ children }) {
     return (
       <Link key={item.href} href={item.href} className="s-nav-link"
         style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>
-        <span style={{ ...s.iconWrap, color: active ? '#A2D2FF' : 'rgba(29,29,31,0.6)' }}>
+        <span style={{ ...s.iconWrap, color: active ? 'var(--nav-active-fg)' : 'rgba(var(--ink-rgb),0.6)' }}>
           {item.icon}
         </span>
         <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{item.label}</span>
@@ -375,7 +377,7 @@ export default function SalesLayout({ children }) {
               <div style={s.logoSub}>Nexora</div>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn"><Icon name="x" /></button>
+          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(var(--ink-rgb),0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn"><Icon name="x" /></button>
         </div>
 
         {/* Nav */}
@@ -394,7 +396,7 @@ export default function SalesLayout({ children }) {
                   the launcher's tiles. Real admins never see this branch. */}
               <div style={s.sectionLabel}>ADMIN MENU</div>
               <Link href="/sales" className="s-nav-link" style={s.navItem}>
-                <span style={{ ...s.iconWrap, color: 'rgba(29,29,31,0.6)' }}><IconBack /></span>
+                <span style={{ ...s.iconWrap, color: 'rgba(var(--ink-rgb),0.6)' }}><IconBack /></span>
                 <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Sales</span>
               </Link>
               <div style={{ ...s.divider, marginTop: 10 }} />
@@ -411,7 +413,7 @@ export default function SalesLayout({ children }) {
 
               {isSalesModuleAdmin && (
                 <Link href="/sales/admin" className="s-nav-link" style={s.navItem}>
-                  <span style={{ ...s.iconWrap, color: 'rgba(29,29,31,0.6)' }}>
+                  <span style={{ ...s.iconWrap, color: 'rgba(var(--ink-rgb),0.6)' }}>
                     <IconAdmin />
                   </span>
                   <span style={{ fontSize: 13, fontWeight: 500 }}>Admin</span>
@@ -424,34 +426,34 @@ export default function SalesLayout({ children }) {
             <div style={{ marginTop: 18, marginBottom: 4 }}>
               <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
               <div style={{ position: 'relative' }}>
-                <select
+                <select data-plain
                   value={companyId ?? ''}
                   onChange={handleCompanyChange}
                   style={{
                     width: '100%', appearance: 'none', WebkitAppearance: 'none',
-                    backgroundColor: 'rgba(29,29,31,0.056)',
-                    border: '1px solid rgba(29,29,31,0.112)',
+                    backgroundColor: 'rgba(var(--ink-rgb),0.056)',
+                    border: '1px solid rgba(var(--ink-rgb),0.112)',
                     borderRadius: 9, padding: '8px 28px 8px 12px',
-                    color: companyId ? '#1D1D1F' : 'rgba(29,29,31,0.67)',
+                    color: companyId ? 'var(--text)' : 'rgba(var(--ink-rgb),0.67)',
                     fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     outline: 'none',
                   }}
                 >
-                  <option value="" style={{ backgroundColor: '#fff', color: 'rgba(29,29,31,0.72)' }}>All Companies</option>
+                  <option value="" style={{ backgroundColor: 'var(--surface)', color: 'rgba(var(--ink-rgb),0.72)' }}>All Companies</option>
                   {companies.map(c => (
-                    <option key={c.id} value={c.id} style={{ backgroundColor: '#fff', color: '#1D1D1F' }}>
+                    <option key={c.id} value={c.id} style={{ backgroundColor: 'var(--surface)', color: 'var(--text)' }}>
                       {c.name}
                     </option>
                   ))}
                 </select>
                 <svg style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                  width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(29,29,31,0.62)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(var(--ink-rgb),0.62)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </div>
               {companyId && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 6, backgroundColor: 'rgba(162,210,255,0.12)', border: '1px solid rgba(162,210,255,0.22)' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ORANGE, flexShrink: 0 }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)', flexShrink: 0 }} />
                   <span style={{ fontSize: 10, fontWeight: 700, color: ORANGE }}>
                     {companies.find(c => c.id === companyId)?.name || 'Filtered'}
                   </span>
@@ -464,7 +466,7 @@ export default function SalesLayout({ children }) {
             <>
               <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
               <Link href="/admin" className="s-nav-link" style={s.navItem}>
-                <span style={{ ...s.iconWrap, color: 'rgba(29,29,31,0.6)' }}><IconBack /></span>
+                <span style={{ ...s.iconWrap, color: 'rgba(var(--ink-rgb),0.6)' }}><IconBack /></span>
                 <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Admin</span>
               </Link>
             </>
@@ -476,10 +478,11 @@ export default function SalesLayout({ children }) {
           {/* Super admins get notifications in the admin dashboard sidebar instead. */}
           {!superAdmin && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(29,29,31,0.62)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(var(--ink-rgb),0.62)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Notifications</span>
               <NotificationBell up align="left" />
             </div>
           )}
+          <ThemeToggle style={{ marginBottom: 12 }} />
           <div style={s.divider} />
           <button onClick={openProfile} className="s-profile-btn" style={s.userRow}>
             <div style={s.avatar}>{(user?.name || 'A')[0].toUpperCase()}</div>
@@ -487,7 +490,7 @@ export default function SalesLayout({ children }) {
               <div style={s.userName}>{user?.name || 'User'}</div>
               <div style={s.userBadge}>{user?.designation || user?.role || 'Admin'}</div>
             </div>
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="rgba(29,29,31,0.52)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="rgba(var(--ink-rgb),0.52)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
             </svg>
           </button>
@@ -504,17 +507,17 @@ export default function SalesLayout({ children }) {
       {profileOpen && (
         <div onClick={() => setProfileOpen(false)} style={{
           position: 'fixed', inset: 0, zIndex: 1000,
-          backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             width: 300, marginLeft: 16, marginBottom: 20,
-            backgroundColor: '#fff', borderRadius: 18,
+            backgroundColor: 'var(--surface)', borderRadius: 18,
             boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
             overflow: 'hidden',
           }}>
             {/* Header */}
-            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' }}>
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: 13,
@@ -526,8 +529,8 @@ export default function SalesLayout({ children }) {
                   {(user?.name || 'A')[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F' }}>{user?.name}</div>
-                  <div style={{ fontSize: 11, color: '#6E7278', marginTop: 2 }}>{user?.designation || user?.role}</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{user?.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{user?.designation || user?.role}</div>
                 </div>
               </div>
             </div>
@@ -535,15 +538,15 @@ export default function SalesLayout({ children }) {
             {/* Fields */}
             <div style={{ padding: '6px 0' }}>
               {profileLoading ? (
-                <div style={{ padding: '28px 0', textAlign: 'center', color: '#6E7278', fontSize: 13 }}>Loading…</div>
+                <Loader label="Loading…" style={{ padding: '28px 0' }} />
               ) : PROFILE_FIELDS.map((f, i) => (
                 <div key={i} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '9px 20px',
-                  borderBottom: i < PROFILE_FIELDS.length - 1 ? '1px solid #F4F5F7' : 'none',
+                  borderBottom: i < PROFILE_FIELDS.length - 1 ? '1px solid var(--surface-2)' : 'none',
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', maxWidth: 160, textAlign: 'right', wordBreak: 'break-all' }}>{f.value || '—'}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', maxWidth: 160, textAlign: 'right', wordBreak: 'break-all' }}>{f.value || '—'}</span>
                 </div>
               ))}
             </div>
@@ -552,8 +555,8 @@ export default function SalesLayout({ children }) {
             <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{
                 width: '100%', padding: '10px 0', borderRadius: 14,
-                border: '1.5px solid #DFE2E6', backgroundColor: '#fff',
-                color: '#1D1D1F', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)',
+                color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               }}>
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -563,8 +566,8 @@ export default function SalesLayout({ children }) {
               </button>
               <button onClick={handleLogout} style={{
                 width: '100%', padding: '10px 0', borderRadius: 14,
-                border: '1.5px solid #F7C3C6', backgroundColor: '#FDECEC',
-                color: '#D9434B', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)',
+                color: 'var(--danger)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               }}>
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -588,7 +591,7 @@ export default function SalesLayout({ children }) {
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F' }}>{portalTitle}</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{portalTitle}</span>
         </div>
         <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
           {children}
@@ -601,52 +604,52 @@ export default function SalesLayout({ children }) {
 const s = {
   sidebar: {
     width: 230, minWidth: 230, height: '100vh',
-    backgroundColor: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: '0 1px 2px rgba(29,29,31,0.04), 0 8px 24px rgba(60,90,130,0.08)',
+    backgroundColor: 'var(--glass)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)',
     display: 'flex', flexDirection: 'column',
     flexShrink: 0, position: 'sticky', top: 0,
-    borderRight: '1px solid rgba(29,29,31,0.04)',
+    borderRight: '1px solid rgba(var(--ink-rgb),0.04)',
   },
   logoRow: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '20px 18px 18px',
-    borderBottom: '1px solid rgba(29,29,31,0.048)',
+    borderBottom: '1px solid rgba(var(--ink-rgb),0.048)',
     flexShrink: 0,
   },
   logoCircle: {
     width: 36, height: 36, borderRadius: 14,
     backgroundColor: '#fff', padding: 5,
     overflow: 'hidden', flexShrink: 0,
-    boxShadow: '0 2px 8px rgba(29,29,31,0.10)',
+    boxShadow: '0 2px 8px rgba(var(--ink-rgb),0.10)',
   },
-  logoName: { fontSize: 13, fontWeight: 800, color: '#1D1D1F', letterSpacing: 0.2 },
-  logoSub:  { fontSize: 10, color: 'rgba(29,29,31,0.58)', marginTop: 2 },
+  logoName: { fontSize: 13, fontWeight: 800, color: 'var(--text)', letterSpacing: 0.2 },
+  logoSub:  { fontSize: 10, color: 'rgba(var(--ink-rgb),0.58)', marginTop: 2 },
   scroll:   { flex: 1, overflowY: 'auto', padding: '16px 10px 0' },
   sectionLabel: {
-    fontSize: 11, fontWeight: 700, color: '#6E7278', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5,
+    fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5,
     textTransform: 'uppercase',
   },
   navItem: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 14px', borderRadius: 999,
-    color: 'rgba(29,29,31,0.74)', marginBottom: 1,
+    color: 'rgba(var(--ink-rgb),0.74)', marginBottom: 1,
     cursor: 'pointer', textDecoration: 'none', position: 'relative',
     overflow: 'hidden',
   },
-  navActive: { backgroundColor: '#1D1D1F', color: '#fff', boxShadow: '0 4px 12px rgba(29,29,31,0.18)' },
-  navChildActive: { backgroundColor: '#E6F2FF', color: '#1D1D1F' },
+  navActive: { backgroundColor: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: '0 6px 16px -6px rgba(47,109,181,0.45)' },
+  navChildActive: { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' },
   activeBar: {
     position: 'absolute', left: 0, top: '18%', bottom: '18%',
-    width: 3, backgroundColor: ORANGE, borderRadius: '0 3px 3px 0',
+    width: 3, backgroundColor: 'var(--primary)', borderRadius: '0 3px 3px 0',
   },
   iconWrap: { display: 'flex', alignItems: 'center', flexShrink: 0 },
   bottomArea: { padding: '0 10px 18px', flexShrink: 0 },
-  divider:   { height: 1, backgroundColor: 'rgba(29,29,31,0.056)', marginBottom: 14 },
+  divider:   { height: 1, backgroundColor: 'rgba(var(--ink-rgb),0.056)', marginBottom: 14 },
   userRow: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 10px', borderRadius: 14,
-    backgroundColor: 'rgba(29,29,31,0.032)',
-    border: '1px solid rgba(29,29,31,0.04)',
+    backgroundColor: 'rgba(var(--ink-rgb),0.032)',
+    border: '1px solid rgba(var(--ink-rgb),0.04)',
   },
   avatar: {
     width: 32, height: 32, borderRadius: 9, flexShrink: 0,
@@ -655,8 +658,8 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 14, fontWeight: 800, color: ORANGE,
   },
-  userName:  { fontSize: 12, fontWeight: 700, color: '#1D1D1F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  userBadge: { fontSize: 10, color: 'rgba(29,29,31,0.57)', marginTop: 2 },
+  userName:  { fontSize: 12, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  userBadge: { fontSize: 10, color: 'rgba(var(--ink-rgb),0.57)', marginTop: 2 },
   logoutBtn: {
     marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
     padding: '9px 0', borderRadius: 9, border: '1px solid rgba(217,67,75,0.3)',

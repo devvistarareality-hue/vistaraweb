@@ -4,8 +4,8 @@ import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
 import { moduleAccess } from '../../lib/moduleAccess';
 
-const NAVY   = '#1D1D1F';
-const ORANGE = '#D98A1F';
+const NAVY   = 'var(--text)';
+const ORANGE = 'var(--warning-2)';
 
 const CSS = `
   @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
@@ -35,15 +35,15 @@ function ModuleIcon({ type, size = 20 }) {
 }
 
 const MODULES = [
-  { name: 'User Management',    desc: 'Manage employees, roles and access',          icon: 'users',     accent: { bg: '#A2D2FF', icon: '#2F6DB5', gradient: 'rgba(162,210,255,0.5)'  }, href: '/admin/users',                    soon: false },
-  { name: 'Company Management', desc: 'Workspaces, settings and company data',        icon: 'building',  accent: { bg: '#A4F5A6', icon: '#23874A', gradient: 'rgba(164,245,166,0.45)'  }, href: '/admin/companies',                soon: false },
-  { name: 'Sales',              desc: 'Revenue tracking and deal management',         icon: 'trending',  accent: { bg: '#FFD89D', icon: '#A3671A', gradient: 'rgba(255,216,157,0.55)' }, href: '/sales',                          soon: false },
-  { name: 'HR',                 desc: 'People, org chart and team structure',         icon: 'people',    accent: { bg: '#A2D2FF', icon: '#2F6DB5', gradient: 'rgba(162,210,255,0.5)'  }, href: '/m/hr',                           soon: false },
-  { name: 'Accounts & Finance', desc: 'Accounting, payments and financials',          icon: 'wallet',    accent: { bg: '#A4F5A6', icon: '#23874A', gradient: 'rgba(164,245,166,0.45)' }, href: '/m/accounts',                     soon: false },
-  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: '#A4F5A6', icon: '#23874A', gradient: 'rgba(164,245,166,0.45)'  }, href: '/m/execution',                    soon: false },
-  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: '#FFD89D', icon: '#A3671A', gradient: 'rgba(255,216,157,0.55)'   }, href: '/m/purchase',                     soon: false },
-  { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: '#A2D2FF', icon: '#245A96', gradient: 'rgba(162,210,255,0.5)' }, href: '/m/land',                         soon: false },
-  { name: 'Club 1000',          desc: 'Investment portfolio and returns tracking',    icon: 'coins',     accent: { bg: '#A4F5A6', icon: '#23874A', gradient: 'rgba(164,245,166,0.45)'  }, href: '/club1000',                       soon: false },
+  { name: 'User Management',    desc: 'Manage employees, roles and access',          icon: 'users',     accent: { bg: 'var(--blue)', icon: 'var(--accent)', gradient: 'var(--band-blue)'  }, href: '/admin/users',                    soon: false },
+  { name: 'Company Management', desc: 'Workspaces, settings and company data',        icon: 'building',  accent: { bg: 'var(--green)', icon: 'var(--success)', gradient: 'var(--band-green)'  }, href: '/admin/companies',                soon: false },
+  { name: 'Sales',              desc: 'Revenue tracking and deal management',         icon: 'trending',  accent: { bg: 'var(--peach)', icon: 'var(--warning)', gradient: 'var(--band-peach)' }, href: '/sales',                          soon: false },
+  { name: 'HR',                 desc: 'People, org chart and team structure',         icon: 'people',    accent: { bg: 'var(--blue)', icon: 'var(--accent)', gradient: 'var(--band-blue)'  }, href: '/m/hr',                           soon: false },
+  { name: 'Accounts & Finance', desc: 'Accounting, payments and financials',          icon: 'wallet',    accent: { bg: 'var(--green)', icon: 'var(--success)', gradient: 'var(--band-green)' }, href: '/m/accounts',                     soon: false },
+  { name: 'Execution',          desc: 'Tasks, milestones and project delivery',       icon: 'checklist', accent: { bg: 'var(--green)', icon: 'var(--success)', gradient: 'var(--band-green)'  }, href: '/m/execution',                    soon: false },
+  { name: 'Purchase',           desc: 'Vendor management and order tracking',         icon: 'cart',      accent: { bg: 'var(--peach)', icon: 'var(--warning)', gradient: 'var(--band-peach)'   }, href: '/m/purchase',                     soon: false },
+  { name: 'Land',               desc: 'Property portfolio and site management',       icon: 'map',       accent: { bg: 'var(--blue)', icon: 'var(--accent-deep)', gradient: 'var(--band-blue)' }, href: '/m/land',                         soon: false },
+  { name: 'Club 1000',          desc: 'Investment portfolio and returns tracking',    icon: 'coins',     accent: { bg: 'var(--green)', icon: 'var(--success)', gradient: 'var(--band-green)'  }, href: '/club1000',                       soon: false },
 ];
 
 const openMods = MODULES.filter((m) => !m.soon);
@@ -100,14 +100,14 @@ export default function AdminDashboardPage() {
           {/* Right: stat chips */}
           <div style={s.heroChips}>
             <div style={s.chip}>
-              <div style={{ ...s.chipDot, backgroundColor: '#A2D2FF', boxShadow: `0 0 0 4px rgba(162,210,255,0.18)` }} />
+              <div style={{ ...s.chipDot, backgroundColor: 'var(--blue)', boxShadow: `0 0 0 4px rgba(162,210,255,0.18)` }} />
               <div>
                 <div style={s.chipNum}>{visibleOpen.length}</div>
                 <div style={s.chipLabel}>Active Modules</div>
               </div>
             </div>
             <div style={s.chip}>
-              <div style={{ ...s.chipDot, backgroundColor: '#A4F5A6', boxShadow: '0 0 0 4px rgba(164,245,166,0.2)' }} />
+              <div style={{ ...s.chipDot, backgroundColor: 'var(--green)', boxShadow: '0 0 0 4px rgba(164,245,166,0.2)' }} />
               <div>
                 <div style={{ ...s.chipLabel, color: '#A4F5A6', fontWeight: 700, fontSize: 12 }}>System Online</div>
                 <div style={{ ...s.chipLabel, fontSize: 10, marginTop: 1 }}>All services operational</div>
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
               style={{ ...s.openCard, textDecoration: 'none', animationDelay: `${i * 80}ms` }}
             >
               {/* Gradient header band */}
-              <div style={{ ...s.openBand, background: `linear-gradient(to bottom, ${mod.accent.gradient} 0%, rgba(255,255,255,0) 100%)` }}>
+              <div style={{ ...s.openBand, background: `linear-gradient(to bottom, ${mod.accent.gradient} 0%, transparent 100%)` }}>
                 <div style={{ ...s.openIcon, backgroundColor: mod.accent.bg, color: mod.accent.icon }}>
                   <ModuleIcon type={mod.icon} size={26} />
                 </div>
@@ -191,7 +191,7 @@ const s = {
 
   /* ── Hero ── */
   hero: {
-    background: `#1D1D1F`,
+    background: 'var(--hero)',
     margin: '24px 24px 0',
     borderRadius: 28,
     position: 'relative', overflow: 'hidden',
@@ -243,13 +243,13 @@ const s = {
   /* ── Sections ── */
   section: { padding: '28px 24px 0' },
   sectionHead:  { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 },
-  sectionLabel: { fontSize: 10, fontWeight: 800, color: '#6E7278', letterSpacing: 1.6 },
-  sectionSub:   { fontSize: 12, color: '#9A9EA5', fontWeight: 400 },
+  sectionLabel: { fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 1.6 },
+  sectionSub:   { fontSize: 12, color: 'var(--faint)', fontWeight: 400 },
 
   /* ── Open cards ── */
   openGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 },
   openCard: {
-    backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden',
+    backgroundColor: 'var(--surface)', borderRadius: 18, overflow: 'hidden',
     boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
     cursor: 'pointer', border: '1px solid rgba(0,0,0,0.04)',
   },
@@ -260,14 +260,14 @@ const s = {
     boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
   },
   openBody: { padding: '0 26px 26px' },
-  openName: { fontSize: 17, fontWeight: 800, color: '#1D1D1F', marginBottom: 6 },
-  openDesc: { fontSize: 13, color: '#6E7278', lineHeight: 1.6, marginBottom: 18 },
+  openName: { fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 6 },
+  openDesc: { fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 18 },
   openLink: { fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center' },
 
   /* ── Soon cards ── */
   soonGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12 },
   soonCard: {
-    backgroundColor: '#fff', borderRadius: 20,
+    backgroundColor: 'var(--surface)', borderRadius: 20,
     padding: '22px 20px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
     cursor: 'pointer', border: '1px solid rgba(0,0,0,0.04)',
@@ -277,11 +277,11 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
-  soonName:  { fontSize: 14, fontWeight: 700, color: '#1D1D1F', marginBottom: 6 },
-  soonDesc:  { fontSize: 12, color: '#9A9EA5', lineHeight: 1.55, marginBottom: 14 },
+  soonName:  { fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 6 },
+  soonDesc:  { fontSize: 12, color: 'var(--faint)', lineHeight: 1.55, marginBottom: 14 },
   soonBadge: {
     fontSize: 9, fontWeight: 800, letterSpacing: 0.9,
-    color: '#D98A1F', backgroundColor: '#FFF3E0',
+    color: 'var(--warning-2)', backgroundColor: 'var(--warning-soft)',
     borderRadius: 5, padding: '3px 8px', display: 'inline-block',
   },
 };

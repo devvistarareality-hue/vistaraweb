@@ -6,14 +6,15 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
 import Icon from '../../../components/Icon';
+import Loader from '../../../components/Loader';
 function RoleBadge({ role }) {
-  if (!role) return <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>;
+  if (!role) return <span style={{ color: 'var(--border-strong)', fontSize: 12 }}>—</span>;
   const colors = {
-    Admin:    { bg: '#FDECEC', color: '#D9434B' },
-    Manager:  { bg: '#E6F2FF', color: '#2F6DB5' },
-    Employee: { bg: '#E9FBEA', color: '#23874A' },
+    Admin:    { bg: 'var(--danger-soft)', color: 'var(--danger)' },
+    Manager:  { bg: 'var(--accent-soft)', color: 'var(--accent)' },
+    Employee: { bg: 'var(--success-soft)', color: 'var(--success)' },
   };
-  const c = colors[role] || { bg: '#F4F5F7', color: '#6E7278' };
+  const c = colors[role] || { bg: 'var(--surface-2)', color: 'var(--muted)' };
   return (
     <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {role}
@@ -22,9 +23,9 @@ function RoleBadge({ role }) {
 }
 
 function DesigBadge({ desig }) {
-  if (!desig) return <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>;
+  if (!desig) return <span style={{ color: 'var(--border-strong)', fontSize: 12 }}>—</span>;
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: '#F4F5F7', color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: 'var(--surface-2)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {desig}
     </span>
   );
@@ -42,7 +43,7 @@ const canHoldProjects = (m) =>
 
 function FilterChip({ label, active, onClick }) {
   return (
-    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? '#1D1D1F' : '#DFE2E6'}`, background: active ? '#1D1D1F' : '#ECEEF0', color: active ? '#fff' : '#6E7278', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--strong)' : 'var(--surface-3)', color: active ? '#fff' : 'var(--muted)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
   );
 }
 
@@ -73,11 +74,11 @@ function AssignProjectsModal({ member, projects, onClose }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-      <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}
-        <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Assign Projects</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{member.name} · {member.designation}</div>
@@ -88,21 +89,21 @@ function AssignProjectsModal({ member, projects, onClose }) {
         {/* Project list */}
         <div style={{ padding: '16px 22px', maxHeight: 380, overflowY: 'auto' }}>
           {loading ? (
-            <p style={{ textAlign: 'center', color: '#6E7278', padding: '30px 0' }}>Loading…</p>
+            <Loader label="Loading…" style={{ padding: '28px 0' }} />
           ) : projects.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#6E7278', padding: '30px 0' }}>No projects found.</p>
+            <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '30px 0' }}>No projects found.</p>
           ) : (
             projects.map(p => {
               const checked = selected.includes(p.id);
               return (
                 <div key={p.id} onClick={() => toggle(p.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 16, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#2F6DB5' : '#ECEEF0'}`, backgroundColor: checked ? '#F3F9FF' : '#F5F6F7', transition: 'all 0.15s' }}>
-                  <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#2F6DB5' : '#C9CDD2'}`, backgroundColor: checked ? '#2F6DB5' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 16, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? 'var(--accent)' : 'var(--surface-3)'}`, backgroundColor: checked ? 'var(--accent-softer)' : 'var(--surface-2)', transition: 'all 0.15s' }}>
+                  <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? 'var(--accent)' : 'var(--border-strong)'}`, backgroundColor: checked ? 'var(--primary)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
                     {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}><Icon name="check" /></span>}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{p.name}</div>
-                    {p.location && <div style={{ fontSize: 12, color: '#6E7278', marginTop: 1 }}>{p.location}</div>}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</div>
+                    {p.location && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{p.location}</div>}
                   </div>
                 </div>
               );
@@ -111,9 +112,9 @@ function AssignProjectsModal({ member, projects, onClose }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid #F4F5F7' }}>
-          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: '#1D1D1F', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid var(--surface-2)' }}>
+          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -207,10 +208,10 @@ export default function SalesUsersPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Sales Team</h1>
-            <p style={{ fontSize: 13, color: '#6E7278' }}>{members.length} team members</p>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Sales Team</h1>
+            <p style={{ fontSize: 13, color: 'var(--muted)' }}>{members.length} team members</p>
           </div>
-          <button onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid #DFE2E6', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: '#6E7278' }}>↺</button>
+          <button onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: 'var(--muted)' }}>↺</button>
         </div>
       </div>
 
@@ -220,39 +221,39 @@ export default function SalesUsersPage() {
           placeholder="Search by name, user code or designation…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ width: '100%', maxWidth: 360, height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box' }}
+          style={{ width: '100%', maxWidth: 360, height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' }}
         />
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, color: '#9A9EA5', marginRight: 4 }}>ROLE</span>
+        <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--faint)', marginRight: 4 }}>ROLE</span>
         <FilterChip label="All" active={!roleFilter} onClick={() => setRoleFilter(null)} />
         {roles.map((r) => <FilterChip key={r} label={r} active={roleFilter === r} onClick={() => setRoleFilter(roleFilter === r ? null : r)} />)}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, color: '#9A9EA5', marginRight: 4 }}>DESIG</span>
+        <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--faint)', marginRight: 4 }}>DESIG</span>
         <FilterChip label="All" active={!desigFilter} onClick={() => setDesigFilter(null)} />
         {desigs.map((d) => <FilterChip key={d} label={`${d} (${members.filter((m) => m.designation?.toUpperCase() === d).length})`} active={desigFilter === d} onClick={() => setDesigFilter(desigFilter === d ? null : d)} />)}
       </div>
 
       {apiError && (
-        <div style={{ backgroundColor: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 14, padding: '12px 16px', marginBottom: 16, color: '#D9434B', fontSize: 13 }}>
+        <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 14, padding: '12px 16px', marginBottom: 16, color: 'var(--danger)', fontSize: 13 }}>
           {apiError}
         </div>
       )}
 
       {loading ? (
-        <p style={{ color: '#6E7278', textAlign: 'center', marginTop: 60 }}>Loading…</p>
+        <Loader label="Loading…" style={{ padding: '28px 0' }} />
       ) : filtered.length === 0 ? (
-        <p style={{ color: '#6E7278', textAlign: 'center', marginTop: 60, fontSize: 14 }}>
+        <p style={{ color: 'var(--muted)', textAlign: 'center', marginTop: 60, fontSize: 14 }}>
           {search ? 'No users match your search.' : 'No team members found.'}
         </p>
       ) : (
-        <div style={{ backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
+        <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
           <div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
-              <thead style={{ backgroundColor: '#F4F5F7' }}>
+              <thead style={{ backgroundColor: 'var(--surface-2)' }}>
                 <tr>
                   {['Name', 'User Code', 'Designation', 'Role', 'Projects', 'Phone', 'Email'].map((h) => (
                     <th key={h} style={th}>{h}</th>
@@ -261,28 +262,28 @@ export default function SalesUsersPage() {
               </thead>
               <tbody>
                 {filtered.map((m) => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #F4F5F7' }}>
+                  <tr key={m.id} style={{ borderBottom: '1px solid var(--surface-2)' }}>
                     <td style={td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={avatarStyle}>{(m.name || 'U')[0].toUpperCase()}</div>
-                        <div style={{ fontWeight: 600, color: '#1D1D1F' }}>{m.name}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{m.name}</div>
                       </div>
                     </td>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#6E7278', fontSize: 12 }}>{m.user_code}</td>
+                    <td style={{ ...td, fontFamily: 'monospace', color: 'var(--muted)', fontSize: 12 }}>{m.user_code}</td>
                     <td style={td}><DesigBadge desig={m.designation} /></td>
                     <td style={td}><RoleBadge role={m.role} /></td>
                     <td style={td}>
                       {isAssignable(m) ? (
                         <button onClick={() => setAssignMember(m)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid #2F6DB5', backgroundColor: '#F3F9FF', color: '#2F6DB5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid var(--accent)', backgroundColor: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                           <Icon name="folder" /> {projectCounts[m.id] > 0 ? `${projectCounts[m.id]} assigned` : 'Assign'}
                         </button>
                       ) : (
-                        <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>
+                        <span style={{ color: 'var(--border-strong)', fontSize: 12 }}>—</span>
                       )}
                     </td>
-                    <td style={{ ...td, color: '#6E7278' }}>{m.phone || '—'}</td>
-                    <td style={{ ...td, color: '#6E7278', fontSize: 12 }}>{m.email || '—'}</td>
+                    <td style={{ ...td, color: 'var(--muted)' }}>{m.phone || '—'}</td>
+                    <td style={{ ...td, color: 'var(--muted)', fontSize: 12 }}>{m.email || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -302,6 +303,6 @@ export default function SalesUsersPage() {
   );
 }
 
-const th = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '10px 16px', textTransform: 'uppercase', letterSpacing: 0.5 };
+const th = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '10px 16px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', fontSize: 13 };
-const avatarStyle = { width: 34, height: 34, borderRadius: 9, backgroundColor: '#E6F2FF', color: '#2F6DB5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 };
+const avatarStyle = { width: 34, height: 34, borderRadius: 9, backgroundColor: 'var(--accent-soft)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 };

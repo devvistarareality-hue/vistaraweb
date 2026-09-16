@@ -11,6 +11,7 @@ import { SingleChart, fillDates } from './_TrendCharts';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 import Icon from '../../components/Icon';
+import Loader from '../../components/Loader';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 
 
@@ -51,8 +52,8 @@ function AvailabilityToggle() {
   if (state?.is_available) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#23874A', background: '#E9FBEA', padding: '7px 12px', borderRadius: 20 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#23874A' }} />
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '7px 12px', borderRadius: 20 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success-solid)' }} />
           Available today{resetsLabel() ? ` · ${resetsLabel()}` : ''}
         </span>
         {/* Signing in after the role's time forfeits a share of the day's backlog, so
@@ -60,12 +61,12 @@ function AvailabilityToggle() {
             distribution being broken. */}
         {state.signed_in_late && (
           <span title={`Leads that arrived before you signed in were shared out without you. From now on you receive an equal share of everything that comes in.`}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#A3671A', background: '#FFF3E0', padding: '7px 12px', borderRadius: 20 }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '7px 12px', borderRadius: 20 }}>
             ⏰ Signed in late{state.signin_time ? ` · after ${state.signin_time}` : ''}
           </span>
         )}
         <button onClick={() => toggle(false)} disabled={busy}
-          style={{ padding: '7px 14px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 14, fontSize: 12, fontWeight: 700, cursor: busy ? 'default' : 'pointer' }}>
+          style={{ padding: '7px 14px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 12, fontWeight: 700, cursor: busy ? 'default' : 'pointer' }}>
           {busy ? '…' : 'Mark Unavailable'}
         </button>
       </div>
@@ -73,7 +74,7 @@ function AvailabilityToggle() {
   }
   return (
     <button onClick={() => toggle(true)} disabled={busy}
-      style={{ marginLeft: 'auto', padding: '9px 18px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+      style={{ marginLeft: 'auto', padding: '9px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
       {busy ? 'Saving…' : <><Icon name="check" /> Mark Available Today</>}
     </button>
   );
@@ -131,62 +132,62 @@ function SearchLeadButton() {
     <>
       <button onClick={() => setOpen(true)} style={{
         marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
-        padding: '9px 16px', background: '#fff', color: '#2F6DB5', border: '1.5px solid #3D5AFE30',
+        padding: '9px 16px', background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid #3D5AFE30',
         borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
       }}>
         <SvgIcon size={15}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></SvgIcon>
         Search Lead
       </button>
       {open && (
-        <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(29,29,31,0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: 520, maxWidth: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(29,29,31,0.25)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #F4F5F7' }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F', marginBottom: 10 }}>Search Lead — whole company</div>
+        <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(var(--ink-rgb),0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 520, maxWidth: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRadius: 20, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.25)', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--surface-2)' }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>Search Lead — whole company</div>
               <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or phone number…"
-                style={{ width: '100%', height: 42, padding: '0 14px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
-              <p style={{ fontSize: 11, color: '#6E7278', marginTop: 8 }}>Checks every lead in the company, not just your own — use this before adding a new one to avoid creating a duplicate.</p>
+                style={{ width: '100%', height: 42, padding: '0 14px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
+              <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>Checks every lead in the company, not just your own — use this before adding a new one to avoid creating a duplicate.</p>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
-              {loading && <p style={{ padding: 20, textAlign: 'center', color: '#6E7278', fontSize: 13 }}>Searching…</p>}
+              {loading && <p style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Searching…</p>}
               {!loading && results === null && (
                 <p style={{ padding: 20, textAlign: 'center', color: '#A2D2FF', fontSize: 13 }}>Start typing a name or phone number.</p>
               )}
               {!loading && results && results.length === 0 && (
                 <div style={{ padding: 20, textAlign: 'center' }}>
-                  <p style={{ color: '#6E7278', fontSize: 13, marginBottom: 12 }}>No lead found for "{q}" — safe to add as a new lead.</p>
-                  <button onClick={addAsNewLead} style={{ padding: '9px 18px', background: '#2F6DB5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>No lead found for "{q}" — safe to add as a new lead.</p>
+                  <button onClick={addAsNewLead} style={{ padding: '9px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                     + Add Lead
                   </button>
                 </div>
               )}
               {!loading && results && results.map((l) => (
-                <div key={l.id} style={{ padding: '12px 20px', borderBottom: '1px solid #F4F5F7' }}>
+                <div key={l.id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--surface-2)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {l.name}
                       {l.is_cp && (
-                        <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 14, background: '#E6F2FF', color: '#2F6DB5', textTransform: 'uppercase' }}>
+                        <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 14, background: 'var(--accent-soft)', color: 'var(--accent)', textTransform: 'uppercase' }}>
                           Channel Partner
                         </span>
                       )}
                     </span>
                     <StatusBadge status={l.status} />
                   </div>
-                  <div style={{ fontSize: 12, color: '#55585E', marginTop: 2 }}>{l.phone}{l.project_name ? ` · ${l.project_name}` : ''}</div>
-                  <div style={{ fontSize: 12, color: '#2F6DB5', marginTop: 4, fontWeight: 600 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{l.phone}{l.project_name ? ` · ${l.project_name}` : ''}</div>
+                  <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 4, fontWeight: 600 }}>
                     {l.telecaller_name && `Telecaller: ${l.telecaller_name}`}
                     {l.telecaller_name && l.stm_name && '  ·  '}
                     {l.stm_name && `${l.is_cp ? 'CP' : 'STM'}: ${l.stm_name}`}
-                    {!l.telecaller_name && !l.stm_name && <span style={{ color: '#A3671A' }}>Unassigned</span>}
+                    {!l.telecaller_name && !l.stm_name && <span style={{ color: 'var(--warning)' }}>Unassigned</span>}
                   </div>
                   {l.is_cp && l.channel_partner_name && (
-                    <div style={{ fontSize: 11, color: '#2F6DB5', marginTop: 2 }}>via {l.channel_partner_name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 2 }}>via {l.channel_partner_name}</div>
                   )}
                 </div>
               ))}
             </div>
-            <div style={{ padding: '10px 20px', borderTop: '1px solid #F4F5F7', textAlign: 'right' }}>
-              <button onClick={close} style={{ padding: '8px 16px', background: '#F4F5F7', color: '#55585E', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Close</button>
+            <div style={{ padding: '10px 20px', borderTop: '1px solid var(--surface-2)', textAlign: 'right' }}>
+              <button onClick={close} style={{ padding: '8px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Close</button>
             </div>
           </div>
         </div>
@@ -215,21 +216,21 @@ function IconEye()        { return <SvgIcon><path d="M1 12s4-8 11-8 11 8 11 8-4 
 function IconSalesPerson(){ return <SvgIcon><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></SvgIcon>; }
 
 const STATUS_COLOR = {
-  new: '#2F6DB5', assigned: '#245A96', contacted: '#23874A',
-  not_reachable: '#6E7278', warm_transferred: '#D98A1F',
-  sv_scheduled: '#D98A1F', sv_done: '#23874A',
-  closed: '#23874A', lost: '#D9434B',
-  hot: '#D9434B', warm: '#D98A1F', cold: '#2F6DB5',
-  not_interested: '#6E7278', callback: '#2F6DB5',
+  new: 'var(--accent)', assigned: 'var(--accent-deep)', contacted: 'var(--success)',
+  not_reachable: 'var(--muted)', warm_transferred: 'var(--warning-2)',
+  sv_scheduled: 'var(--warning-2)', sv_done: 'var(--success)',
+  closed: 'var(--success)', lost: 'var(--danger)',
+  hot: 'var(--danger)', warm: 'var(--warning-2)', cold: 'var(--accent)',
+  not_interested: 'var(--muted)', callback: 'var(--accent)',
 };
 
 function StatusBadge({ status }) {
-  const color = STATUS_COLOR[status] || '#6E7278';
+  const color = STATUS_COLOR[status] || 'var(--muted)';
   return (
     <span style={{
       display: 'inline-block', padding: '2px 10px', borderRadius: 20,
       fontSize: 11, fontWeight: 700, letterSpacing: 0.3,
-      backgroundColor: color + '18', color,
+      backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, color,
     }}>
       {status?.replace(/_/g, ' ').toUpperCase()}
     </span>
@@ -245,10 +246,10 @@ function StatCard({ label, value, icon, color, textColor, href, loading, flat })
         {icon}
       </div>
       {loading
-        ? <div style={{ height: 24, width: 42, borderRadius: 6, background: '#ECEEF0', animation: 'pulse 1.4s ease infinite' }} />
-        : <div style={{ fontSize: flat ? 22 : 26, fontWeight: 800, color: '#1D1D1F', lineHeight: 1 }}>{(value ?? 0).toLocaleString()}</div>
+        ? <div style={{ height: 24, width: 42, borderRadius: 6, background: 'var(--surface-3)', animation: 'pulse 1.4s ease infinite' }} />
+        : <div style={{ fontSize: flat ? 22 : 26, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{(value ?? 0).toLocaleString()}</div>
       }
-      <div style={{ fontSize: 11.5, color: '#6E7278', marginTop: 4, lineHeight: 1.3, minHeight: flat ? 28 : 31 }}>{label}</div>
+      <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 4, lineHeight: 1.3, minHeight: flat ? 28 : 31 }}>{label}</div>
     </div>
   );
   return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
@@ -275,7 +276,7 @@ function SkeletonGrid({ count = 6, grid }) {
   return (
     <div style={grid || statsGrid}>
       {[...Array(count)].map((_, i) => (
-        <div key={i} style={{ ...card, height: 90, background: '#ECEEF0', animation: 'pulse 1.4s ease infinite' }} />
+        <div key={i} style={{ ...card, height: 90, background: 'var(--surface-3)', animation: 'pulse 1.4s ease infinite' }} />
       ))}
     </div>
   );
@@ -328,23 +329,23 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   const closuresHref   = isCp ? '/sales/channel-partners/closures'    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
   const projectsHref   = isCp ? '/sales/channel-partners/closure'     : '/sales/closure';
   const cards = stats ? [
-    { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#cce5ff', textColor: '#1D1D1F', href: leadsHref },
-    { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#cce5ff', textColor: '#1D1D1F', href: `${leadsHref}?date_from=today` },
+    { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#cce5ff', textColor: 'var(--text)', href: leadsHref },
+    { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#cce5ff', textColor: 'var(--text)', href: `${leadsHref}?date_from=today` },
     // `unassigned_leads`, not `new_leads`: status='new' is a pipeline stage, not an
     // ownership check — a lead already worked by a telecaller sits at 'new' until it
     // moves warm to an STM, so `new_leads` counted assigned leads as unassigned.
-    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.unassigned_leads, icon: <IconActivity />, color: '#fff3e0', textColor: '#D98A1F', href: `${leadsHref}?unassigned=true` }]),
-    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: '#fff3e0', textColor: '#D98A1F', href: svHref },
-    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#cce5ff', textColor: '#1D1D1F', href: closuresHref },
-    { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: '#fff3e0', textColor: '#D98A1F', href: projectsHref },
+    ...(isCp ? [] : [{ label: 'Unassigned', value: stats.unassigned_leads, icon: <IconActivity />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: `${leadsHref}?unassigned=true` }]),
+    { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: svHref },
+    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#cce5ff', textColor: 'var(--text)', href: closuresHref },
+    { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: projectsHref },
   ] : [];
 
   return (
     <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>{isCp ? 'Channel Partner Dashboard' : 'Sales Dashboard'}</h1>
-          <p style={{ fontSize: 13, color: '#6E7278' }}>{isCp ? 'Overview of Channel Partner activity' : 'Overview of all CRM activity'}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{isCp ? 'Channel Partner Dashboard' : 'Sales Dashboard'}</h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>{isCp ? 'Overview of Channel Partner activity' : 'Overview of all CRM activity'}</p>
         </div>
         {!isCp && <SearchLeadButton />}
       </div>
@@ -357,13 +358,13 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
 
       <div style={cardWrap}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F' }}>Recent Leads</h2>
-          <Link href={leadsHref} style={{ fontSize: 13, color: '#D98A1F', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Recent Leads</h2>
+          <Link href={leadsHref} style={{ fontSize: 13, color: 'var(--warning-2)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
         </div>
         {loading ? (
-          <p style={{ textAlign: 'center', color: '#6E7278', padding: '24px 0' }}>Loading…</p>
+          <Loader label="Loading…" style={{ padding: '28px 0' }} />
         ) : !stats?.recent_leads?.length ? (
-          <p style={{ textAlign: 'center', color: '#6E7278', padding: '40px 0' }}>No leads yet. Add your first lead.</p>
+          <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>No leads yet. Add your first lead.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={tbl}>
@@ -372,12 +373,12 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
               </thead>
               <tbody>
                 {stats.recent_leads.map((l) => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid #F4F5F7' }}>
-                    <td style={td}><span style={{ fontWeight: 600, color: '#1D1D1F' }}>{l.name}</span></td>
-                    <td style={{ ...td, color: '#6E7278' }}>{l.project_name || '—'}</td>
-                    <td style={{ ...td, color: '#6E7278', textTransform: 'capitalize' }}>{l.source_name || '—'}</td>
+                  <tr key={l.id} style={{ borderBottom: '1px solid var(--surface-2)' }}>
+                    <td style={td}><span style={{ fontWeight: 600, color: 'var(--text)' }}>{l.name}</span></td>
+                    <td style={{ ...td, color: 'var(--muted)' }}>{l.project_name || '—'}</td>
+                    <td style={{ ...td, color: 'var(--muted)', textTransform: 'capitalize' }}>{l.source_name || '—'}</td>
                     <td style={td}><StatusBadge status={l.status} /></td>
-                    <td style={{ ...td, color: '#6E7278', fontSize: 12 }}>
+                    <td style={{ ...td, color: 'var(--muted)', fontSize: 12 }}>
                       {new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </td>
                   </tr>
@@ -462,9 +463,9 @@ function TelecallerDashboard({ user }) {
     return { from: dateFrom, to: dateTo };
   })();
 
-  const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid #ECEEF0', fontSize: 12, background: '#F4F5F7', cursor: 'pointer', outline: 'none', color: '#1D1D1F', fontWeight: 500 };
-  const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#1D1D1F' : '#F4F5F7', color: active ? '#fff' : '#6E7278' });
-  const divider = { width: 1, height: 24, background: '#ECEEF0', flexShrink: 0 };
+  const fSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--surface-3)', fontSize: 12, background: 'var(--surface-2)', cursor: 'pointer', outline: 'none', color: 'var(--text)', fontWeight: 500 };
+  const qBtn = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? 'var(--strong)' : 'var(--surface-2)', color: active ? '#fff' : 'var(--muted)' });
+  const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
   // Fetch stats + trend together using effective date range
   useEffect(() => {
@@ -526,25 +527,25 @@ function TelecallerDashboard({ user }) {
   // how to read it.
   const sections = [
     { title: 'My Pipeline', cards: [
-      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#cce5ff', textColor: '#1D1D1F', href: withDate('/sales/leads') },
-      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: '#E9FBEA', textColor: '#23874A', href: withDate('/sales/leads') },
-      { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: '#FFF3E0', textColor: '#A3671A', href: withDate('/sales/leads') },
+      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#cce5ff', textColor: 'var(--text)', href: withDate('/sales/leads') },
+      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads') },
+      { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
     ] },
     { title: 'Calling Activity', cards: [
-      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: '#E9FBEA', textColor: '#23874A', href: withDate('/sales/leads?tab=called') },
-      { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: '#F3F9FF', textColor: '#2F6DB5', href: '/sales/follow-ups' },
-      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: '#E9FBEA', textColor: '#23874A', href: withDate('/sales/leads?tab=called') },
+      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
+      { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/follow-ups' },
+      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
     ] },
     { title: 'Follow-ups Due', cards: [
-      { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: '#F3F9FF', textColor: '#2F6DB5', href: withDate('/sales/leads?tab=called&telecaller_status=callback') },
-      { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: '#FFF3E0', textColor: '#A3671A', href: withDate('/sales/follow-ups?filter=pending') },
-      { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: '#FDECEC', textColor: '#D9434B', href: withDate('/sales/follow-ups?filter=overdue') },
+      { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/leads?tab=called&telecaller_status=callback') },
+      { label: 'Follow-ups Pending', value: fuPending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/follow-ups?filter=pending') },
+      { label: 'Follow-ups Overdue', value: fuOverdue, icon: <IconClock />, color: 'var(--danger-soft)', textColor: 'var(--danger)', href: withDate('/sales/follow-ups?filter=overdue') },
     ] },
     { title: 'Conversions', cards: [
-      { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: '#FFF3E0', textColor: '#D98A1F', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
-      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: '#E9FBEA', textColor: '#23874A', href: '/sales/my-conversions' },
-      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: '#E9FBEA', textColor: '#23874A', href: '/sales/my-conversions?tab=closures' },
-      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: '#F3F9FF', textColor: '#2F6DB5', href: '/sales/my-conversions' },
+      { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
+      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/my-conversions' },
+      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/my-conversions?tab=closures' },
+      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/my-conversions' },
     ] },
   ];
 
@@ -552,24 +553,24 @@ function TelecallerDashboard({ user }) {
     <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
-        <div style={{ width: 46, height: 46, borderRadius: 13, background: '#2F6DB5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+        <div style={{ width: 46, height: 46, borderRadius: 13, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
           <IconPhone />
         </div>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>
             Welcome, {user?.name?.split(' ')[0] || 'Telecaller'}
           </h1>
-          <p style={{ fontSize: 13, color: '#6E7278' }}>Telecaller · Your call queue & lead pipeline</p>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>Telecaller · Your call queue & lead pipeline</p>
         </div>
         <AvailabilityToggle />
         <SearchLeadButton />
       </div>
 
       {/* Date Filter */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: '#fff', borderRadius: 16, border: '1px solid #F4F5F7' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...fSel, width: 136 }} />
-        <span style={{ fontSize: 12, color: '#C9CDD2' }}>→</span>
+        <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
         <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
         <div style={divider} />
         <button onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
@@ -589,10 +590,10 @@ function TelecallerDashboard({ user }) {
           {showYearDrop && (
             <>
               <div onClick={() => setShowYearDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(29,29,31,0.14)', border: '1px solid #F4F5F7', minWidth: 170, padding: '8px 0' }}>
+              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 170, padding: '8px 0' }}>
                 {selectedFyYear !== null && (
                   <button onClick={() => { setSelectedFyYear(null); setShowYearDrop(false); }}
-                    style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#D9434B', cursor: 'pointer', borderBottom: '1px solid #F4F5F7', marginBottom: 4 }}>
+                    style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>
                     Clear
                   </button>
                 )}
@@ -600,11 +601,11 @@ function TelecallerDashboard({ user }) {
                   const sel = selectedFyYear === key;
                   return (
                     <button key={key} onClick={() => { setSelectedFyYear(sel ? null : key); setSelectedMonths([]); setSelectedQuarter([]); setDateFrom(''); setDateTo(''); setShowYearDrop(false); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#F3F9FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
-                      <div style={{ width: 17, height: 17, borderRadius: '50%', border: `2px solid ${sel ? '#1D1D1F' : '#C9CDD2'}`, background: sel ? '#1D1D1F' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {sel && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff' }} />}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? 'var(--accent-softer)' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                      <div style={{ width: 17, height: 17, borderRadius: '50%', border: `2px solid ${sel ? 'var(--text)' : 'var(--border-strong)'}`, background: sel ? 'var(--strong)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {sel && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--surface)' }} />}
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#1D1D1F' : '#3A3C40' }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? 'var(--text)' : 'var(--text-2)' }}>{label}</span>
                     </button>
                   );
                 })}
@@ -623,10 +624,10 @@ function TelecallerDashboard({ user }) {
           {showMonthDrop && (
             <>
               <div onClick={() => setShowMonthDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(29,29,31,0.14)', border: '1px solid #F4F5F7', minWidth: 210, maxHeight: 300, overflowY: 'auto', padding: '8px 0' }}>
+              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, maxHeight: 300, overflowY: 'auto', padding: '8px 0' }}>
                 {selectedMonths.length > 0 && (
                   <button onClick={() => setSelectedMonths([])}
-                    style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#D9434B', cursor: 'pointer', borderBottom: '1px solid #F4F5F7', marginBottom: 4 }}>
+                    style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>
                     Clear All
                   </button>
                 )}
@@ -634,11 +635,11 @@ function TelecallerDashboard({ user }) {
                   const sel = selectedMonths.includes(key);
                   return (
                     <button key={key} onClick={() => { setSelectedQuarter([]); setSelectedMonths(prev => sel ? prev.filter(m => m !== key) : [...prev, key]); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#F3F9FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
-                      <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? '#1D1D1F' : '#C9CDD2'}`, background: sel ? '#1D1D1F' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? 'var(--accent-softer)' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                      <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? 'var(--text)' : 'var(--border-strong)'}`, background: sel ? 'var(--strong)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#1D1D1F' : '#3A3C40' }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? 'var(--text)' : 'var(--text-2)' }}>{label}</span>
                     </button>
                   );
                 })}
@@ -658,10 +659,10 @@ function TelecallerDashboard({ user }) {
           {showQuarterDrop && (
             <>
               <div onClick={() => setShowQuarterDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(29,29,31,0.14)', border: '1px solid #F4F5F7', minWidth: 210, padding: '8px 0' }}>
+              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, padding: '8px 0' }}>
                 {selectedQuarter.length > 0 && (
                   <button onClick={() => setSelectedQuarter([])}
-                    style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#D9434B', cursor: 'pointer', borderBottom: '1px solid #F4F5F7', marginBottom: 4 }}>
+                    style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>
                     Clear All
                   </button>
                 )}
@@ -669,12 +670,12 @@ function TelecallerDashboard({ user }) {
                   const sel = selectedQuarter.includes(key);
                   return (
                     <button key={key} onClick={() => { setSelectedQuarter(prev => sel ? prev.filter(k => k !== key) : [...prev, key]); setSelectedMonths([]); setDateFrom(''); setDateTo(''); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? '#F3F9FF' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
-                      <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? '#1D1D1F' : '#C9CDD2'}`, background: sel ? '#1D1D1F' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: sel ? 'var(--accent-softer)' : 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                      <div style={{ width: 17, height: 17, borderRadius: 4, border: `2px solid ${sel ? 'var(--text)' : 'var(--border-strong)'}`, background: sel ? 'var(--strong)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {sel && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? '#1D1D1F' : '#3A3C40' }}>{label}</span>
-                      <span style={{ fontSize: 11, color: '#6E7278', marginLeft: 'auto' }}>{sub}</span>
+                      <span style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? 'var(--text)' : 'var(--text-2)' }}>{label}</span>
+                      <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 'auto' }}>{sub}</span>
                     </button>
                   );
                 })}
@@ -697,7 +698,7 @@ function TelecallerDashboard({ user }) {
             const label = new Date(y, mo - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
             return (
               <span key={m} onClick={() => setSelectedMonths(prev => prev.filter(x => x !== m))}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, background: '#F3F9FF', color: '#2F6DB5', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, background: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                 {label}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </span>
@@ -792,14 +793,14 @@ function STMDashboard({ user }) {
   return (
     <div style={{ padding: 'clamp(14px, 2.4vw, 28px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
-        <div style={{ width: 46, height: 46, borderRadius: 13, background: '#23874A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+        <div style={{ width: 46, height: 46, borderRadius: 13, background: 'var(--success-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
           <IconSalesPerson />
         </div>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>
             Welcome, {user?.name?.split(' ')[0] || 'STM'}
           </h1>
-          <p style={{ fontSize: 13, color: '#6E7278' }}>{isCp ? 'Channel Partner' : 'Sales Executive'} · Your pipeline & site visits</p>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>{isCp ? 'Channel Partner' : 'Sales Executive'} · Your pipeline & site visits</p>
         </div>
         {!isCp && <AvailabilityToggle />}
         {!isCp && <SearchLeadButton />}
@@ -810,41 +811,41 @@ function STMDashboard({ user }) {
       <div className="dash-sections">
       {[
         { title: 'My Pipeline', cards: [
-          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#cce5ff', textColor: '#1D1D1F', href: withDate('/sales/leads') },
-          { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: '#FFF3E0', textColor: '#A3671A', href: withDate('/sales/leads') },
+          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#cce5ff', textColor: 'var(--text)', href: withDate('/sales/leads') },
+          { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
         ] },
         { title: 'Lead Temperature', cards: [
-          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: '#FDECEC', textColor: '#D9434B', href: withDate('/sales/leads?stm_status=hot') },
-          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: '#FFF3E0', textColor: '#D98A1F', href: withDate('/sales/leads?stm_status=warm') },
-          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: '#F3F9FF', textColor: '#2F6DB5', href: withDate('/sales/leads?stm_status=cold') },
+          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: 'var(--danger-soft)', textColor: 'var(--danger)', href: withDate('/sales/leads?stm_status=hot') },
+          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?stm_status=warm') },
+          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/leads?stm_status=cold') },
         ] },
         { title: 'Follow-ups Due', cards: [
-          { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: '#FFF3E0', textColor: '#A3671A', href: withDate('/sales/follow-ups?filter=pending') },
-          { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: '#FDECEC', textColor: '#D9434B', href: withDate('/sales/follow-ups?filter=overdue') },
+          { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/follow-ups?filter=pending') },
+          { label: 'Follow-ups Overdue',  value: fuOverdue,    icon: <IconClock />,    color: 'var(--danger-soft)', textColor: 'var(--danger)', href: withDate('/sales/follow-ups?filter=overdue') },
         ] },
         { title: 'Site Visits & Closures', cards: [
           // Straight to the Site Visits screen's Scheduled tab — the visits themselves,
           // not the leads that happen to carry the status. No date range appended:
           // that page has its own date filter and ignores the params.
-          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: '#FFF3E0', textColor: '#A3671A', href: '/sales/site-visits?tab=scheduled' },
-          { label: 'SV Done', value: svDone, icon: <IconEye />, color: '#E9FBEA', textColor: '#23874A', href: '/sales/site-visits?tab=completed' },
-          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: '#E9FBEA', textColor: '#23874A', href: '/sales/closure?view=mybookings' },
+          { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: '/sales/site-visits?tab=scheduled' },
+          { label: 'SV Done', value: svDone, icon: <IconEye />, color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
+          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings' },
         ] },
         { title: 'Conversion Rates', cards: [
-          { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: '#F3F9FF', textColor: '#2F6DB5' },
-          { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: '#F3F9FF', textColor: '#2F6DB5' },
-          { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: '#FDECEC', textColor: '#D9434B' },
+          { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: 'var(--accent-softer)', textColor: 'var(--accent)' },
+          { label: 'SQL → Closure Ratio', value: sqlToClosure, icon: <IconCheck />,    color: 'var(--accent-softer)', textColor: 'var(--accent)' },
+          { label: 'Avg Closure Time',    value: avgCloseMo,   icon: <IconClock />,    color: 'var(--danger-soft)', textColor: 'var(--danger)' },
         ] },
       ].map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
       </div>
       {!loading && trend && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           {[
-            { key: 'stm_hot',  title: 'Hot Leads',   badge: 'Hot Trend',      color: '#D9434B', metric: 'Hot' },
-            { key: 'stm_warm', title: 'Warm Leads',  badge: 'Warm Trend',     color: '#D98A1F', metric: 'Warm' },
-            { key: 'stm_cold', title: 'Cold Leads',  badge: 'Cold Trend',     color: '#2F6DB5', metric: 'Cold' },
-            { key: 'sv',       title: 'Site Visits', badge: 'SV Trend',       color: '#23874A', metric: 'SV' },
-            { key: 'closures', title: 'Closures',    badge: 'Closures Trend', color: '#2F6DB5', metric: 'Closures', showAmount: true },
+            { key: 'stm_hot',  title: 'Hot Leads',   badge: 'Hot Trend',      color: 'var(--danger)', metric: 'Hot' },
+            { key: 'stm_warm', title: 'Warm Leads',  badge: 'Warm Trend',     color: 'var(--warning-2)', metric: 'Warm' },
+            { key: 'stm_cold', title: 'Cold Leads',  badge: 'Cold Trend',     color: 'var(--accent)', metric: 'Cold' },
+            { key: 'sv',       title: 'Site Visits', badge: 'SV Trend',       color: 'var(--success)', metric: 'SV' },
+            { key: 'closures', title: 'Closures',    badge: 'Closures Trend', color: 'var(--accent)', metric: 'Closures', showAmount: true },
           ].map((c) => (
             <div key={c.key} style={{ flex: '1 1 300px', minWidth: 0 }}>
               <SingleChart title={c.title} badge={c.badge}
@@ -858,15 +859,15 @@ function STMDashboard({ user }) {
       )}
 
       {!loading && svUpcoming.length > 0 && (
-        <div style={{ ...cardWrap, marginBottom: 20, borderLeft: '4px solid #D98A1F' }}>
+        <div style={{ ...cardWrap, marginBottom: 20, borderLeft: '4px solid var(--warning-2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F' }}>Site Visits Scheduled</h2>
-              <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: '#FFF3E0', color: '#A3671A', padding: '2px 8px', borderRadius: 20 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Site Visits Scheduled</h2>
+              <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: 'var(--warning-soft)', color: 'var(--warning)', padding: '2px 8px', borderRadius: 20 }}>
                 {svUpcoming.length} pending
               </span>
             </div>
-            <Link href="/sales/leads" style={{ fontSize: 13, color: '#2F6DB5', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+            <Link href="/sales/leads" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={tbl}>
@@ -875,11 +876,11 @@ function STMDashboard({ user }) {
               </thead>
               <tbody>
                 {svUpcoming.slice(0, 8).map((l) => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid #F4F5F7' }}>
-                    <td style={td}><span style={{ fontWeight: 600, color: '#1D1D1F' }}>{l.name}</span></td>
-                    <td style={{ ...td, color: '#6E7278' }}>{l.project_name || '—'}</td>
+                  <tr key={l.id} style={{ borderBottom: '1px solid var(--surface-2)' }}>
+                    <td style={td}><span style={{ fontWeight: 600, color: 'var(--text)' }}>{l.name}</span></td>
+                    <td style={{ ...td, color: 'var(--muted)' }}>{l.project_name || '—'}</td>
                     <td style={td}><StatusBadge status={l.stm_status} /></td>
-                    <td style={{ ...td, color: '#6E7278', fontSize: 12 }}>{l.stm_remarks || '—'}</td>
+                    <td style={{ ...td, color: 'var(--muted)', fontSize: 12 }}>{l.stm_remarks || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -923,14 +924,14 @@ export default function SalesDashboard() {
 // Shared styles
 // ─────────────────────────────────────────────
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: 10, marginBottom: 28 };
-const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 10px' };
+const sectionLabel = { fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.7, margin: '0 0 10px' };
 // Panel layout lives in globals.css as .dash-sections: 1 column, then 2, then 4,
 // so the row is always full and no group is stranded on a row of its own.
-const panel        = { backgroundColor: '#fff', borderRadius: 20, padding: '14px 16px 16px', border: '1px solid #ECEEF0', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', minWidth: 0 };
+const panel        = { backgroundColor: 'var(--surface)', borderRadius: 20, padding: '14px 16px 16px', border: '1px solid var(--surface-3)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', minWidth: 0 };
 const sectionGrid  = { display: 'grid', gap: 8 };
-const tile         = { backgroundColor: '#F4F5F7', border: '1px solid #ECEEF0', borderRadius: 16, padding: '11px 11px 9px', textDecoration: 'none', display: 'block' };
-const card      = { backgroundColor: '#fff', borderRadius: 18, padding: '14px 16px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
-const cardWrap  = { backgroundColor: '#fff', borderRadius: 18, padding: '20px 24px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', marginBottom: 20 };
+const tile         = { backgroundColor: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 16, padding: '11px 11px 9px', textDecoration: 'none', display: 'block' };
+const card      = { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '14px 16px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', display: 'block', transition: 'transform 0.15s, box-shadow 0.15s' };
+const cardWrap  = { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 24px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', marginBottom: 20 };
 const tbl       = { width: '100%', borderCollapse: 'collapse' };
-const th        = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6E7278', padding: '0 12px 10px', textTransform: 'uppercase', letterSpacing: 0.6 };
+const th        = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '0 12px 10px', textTransform: 'uppercase', letterSpacing: 0.6 };
 const td        = { padding: '10px 12px', fontSize: 13 };

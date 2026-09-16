@@ -89,8 +89,8 @@ const s = {
     display:         'flex',
     justifyContent:  'space-between',
     alignItems:      'center',
-    backgroundColor: '#1D1D1F',
-    borderRadius:    18,
+    background:      'var(--hero)',
+    borderRadius:    28,
     padding:         '28px 32px',
     marginBottom:    32,
   },
@@ -102,10 +102,10 @@ const s = {
     borderRadius: 18,
     padding:         '14px 22px',
   },
-  statNum:   { display: 'block', fontSize: 30, fontWeight: 800, color: '#D98A1F' },
+  statNum:   { display: 'block', fontSize: 30, fontWeight: 800, color: 'var(--warning-2)' },
   statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
   sectionTitle: {
-    fontSize: 11, fontWeight: 700, color: '#6E7278',
+    fontSize: 11, fontWeight: 700, color: 'var(--muted)',
     letterSpacing: 0.8, marginBottom: 16,
   },
   grid: {
@@ -114,7 +114,7 @@ const s = {
     gap:                 16,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--surface)',
     borderRadius: 20,
     padding:         '22px',
     boxShadow:       '0 4px 12px rgba(140,148,160,0.18)',
@@ -128,8 +128,8 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: 14,
   },
-  cardName:  { fontSize: 15, fontWeight: 700, color: '#1D1D1F', marginBottom: 4 },
-  cardSub:   { fontSize: 12, color: '#6E7278', marginBottom: 14, flex: 1 },
+  cardName:  { fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4 },
+  cardSub:   { fontSize: 12, color: 'var(--muted)', marginBottom: 14, flex: 1 },
   openArrow: { fontSize: 12, fontWeight: 700 },
   emptyState: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -137,10 +137,10 @@ const s = {
   },
   emptyIcon: {
     width: 80, height: 80, borderRadius: '50%',
-    backgroundColor: '#ECEEF0',
+    backgroundColor: 'var(--surface-3)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
-  emptyTitle: { fontSize: 16, fontWeight: 700, color: '#1D1D1F', marginBottom: 8 },
-  emptyDesc:  { fontSize: 14, color: '#6E7278', maxWidth: 300 },
+  emptyTitle: { fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 },
+  emptyDesc:  { fontSize: 14, color: 'var(--muted)', maxWidth: 300 },
 };
