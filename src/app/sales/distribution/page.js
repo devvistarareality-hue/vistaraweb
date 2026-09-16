@@ -163,6 +163,25 @@ export default function DistributionPage() {
   const [histFrom, setHistFrom]   = useState(daysAgoISO(29));
   const [histTo, setHistTo]       = useState(todayISO());
   const [history, setHistory]     = useState([]);
+  const [histDl,  setHistDl]      = useState(false);
+
+  // Download the sign-in history the card is currently showing. The server names the
+  // file after the range, so the browser is handed that name rather than a guess.
+  async function downloadHistory() {
+    setHistDl(true);
+    try {
+      const res = await fetch(`${SALES_ENDPOINTS.availabilityHistoryExport}?date_from=${histFrom}&date_to=${histTo}`,
+        { headers: authHeaders() });
+      if (!res.ok) { alert(res.status === 403 ? 'You do not have access to download this.' : 'Download failed. Try again.'); return; }
+      const name = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'Sign-in-History.xlsx';
+      const url = URL.createObjectURL(await res.blob());
+      const a = Object.assign(document.createElement('a'), { href: url, download: name });
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (_) {
+      alert('Download failed. Try again.');
+    } finally { setHistDl(false); }
+  }
   const [histLoading, setHistLoading] = useState(false);
 
   useEffect(() => {
@@ -451,6 +470,14 @@ export default function DistributionPage() {
                 <input type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...inp, width: 142 }} />
                 <span style={{ fontSize: 12, color: '#C0C8D8' }}>→</span>
                 <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...inp, width: 142 }} />
+                {/* The same records this card is showing, over the same range — a sheet
+                    is the form you sort and pivot them in. */}
+                <button onClick={downloadHistory} disabled={histDl}
+                  style={{ padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700,
+                           cursor: histDl ? 'default' : 'pointer', background: '#2E7D32', color: '#fff',
+                           opacity: histDl ? 0.7 : 1, marginLeft: 'auto' }}>
+                  {histDl ? 'Preparing…' : '⤓ Excel'}
+                </button>
               </div>
               {/* Fixed height with its own scroll: a 30-day range would otherwise stretch
                   the card far past the settings column beside it. */}
