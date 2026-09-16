@@ -5,6 +5,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { SalesLeadsContent } from '../../leads/page';
 
+import Icon from '../../../../components/Icon';
 const NAVY  = '#1D1D1F';
 const BLUE  = '#2F6DB5';
 const RED   = '#D9434B';
@@ -85,7 +86,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
       <div style={modal} onClick={(e) => e.stopPropagation()}>
         <div style={modalHeader}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>{isEdit ? 'Edit Channel Partner' : 'Add Channel Partner'}</div>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+          <button onClick={onClose} style={closeBtn}><Icon name="x" /></button>
         </div>
         <div style={{ padding: '18px 20px' }}>
           <label style={lbl}>CP Name *</label>
@@ -319,7 +320,7 @@ const td         = { padding: '10px 14px', fontSize: 13, color: '#1D1D1F' };
 const saveBtn    = { padding: '9px 16px', backgroundColor: NAVY, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 const cancelBtn  = { padding: '9px 16px', backgroundColor: '#F4F5F7', color: '#6E7278', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 const iconBtn    = { background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, padding: '4px 8px' };
-const overlay    = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const overlay    = { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal      = { backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader= { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' };
 const closeBtn   = { background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer', padding: '2px 6px' };

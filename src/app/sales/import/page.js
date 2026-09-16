@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { isManagerRole } from '../../../lib/moduleAccess';
 
 
+import Icon from '../../../components/Icon';
 const AUTO_PATTERNS = {
   name:      /^(full.?name|name|customer.?name|lead.?name|first.?name|fullname)$/i,
   name2:     /^(last.?name|surname|family.?name|lastname)$/i,
@@ -387,7 +388,7 @@ export default function ImportPage() {
           return (
             <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0, backgroundColor: step === s ? '#1D1D1F' : step > s ? '#23874A' : '#DFE2E6', color: step >= s ? '#fff' : '#6E7278' }}>
-                {step > s ? '✓' : s}
+                {step > s ? <Icon name="check" /> : s}
               </span>
               <span style={{ fontSize: 13, color: step === s ? '#1D1D1F' : '#6E7278', fontWeight: step === s ? 600 : 400 }}>{label}</span>
               {i < 2 && <span style={{ color: '#C9CDD2', margin: '0 4px' }}>›</span>}
@@ -411,7 +412,7 @@ export default function ImportPage() {
               <p style={{ color: '#6E7278' }}>Parsing file…</p>
             ) : rawRows.length ? (
               <>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#23874A', marginBottom: 4 }}>📊 {fileName}</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#23874A', marginBottom: 4 }}><Icon name="chart" /> {fileName}</p>
                 <p style={{ color: '#6E7278', fontSize: 13 }}>{rawRows.length.toLocaleString()} rows · {headers.length} columns · Click to change</p>
               </>
             ) : (
@@ -471,7 +472,7 @@ export default function ImportPage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                         <p style={{ fontSize: 12, fontWeight: 700, color: detected.length ? '#23874A' : '#6E7278', margin: 0 }}>
                           {detected.length
-                            ? `✓ ${detected.length} pipeline columns auto-detected (${kinds})`
+                            ? `${detected.length} pipeline columns auto-detected (${kinds})`
                             : `No pipeline columns auto-detected (${kinds})`}
                         </p>
                         <button type="button" onClick={() => setShowPipelineMap((v) => !v)}
@@ -536,7 +537,7 @@ export default function ImportPage() {
 
           {totalInvalid > 0 && (
             <div style={{ backgroundColor: '#FFF3E0', border: '1px solid #F5B453', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: '#A3671A' }}>
-              ⚠ Rows missing Name or a valid Phone will be skipped. Duplicate phone numbers will be flagged in leads.
+              <Icon name="alert" /> Rows missing Name or a valid Phone will be skipped. Duplicate phone numbers will be flagged in leads.
             </div>
           )}
 
@@ -554,7 +555,7 @@ export default function ImportPage() {
                     <td style={{ ...tdS, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign || '—'}</td>
                     <td style={tdS}>
                       {r.valid
-                        ? <span style={{ color: '#23874A', fontWeight: 700 }}>✓ OK</span>
+                        ? <span style={{ color: '#23874A', fontWeight: 700 }}><Icon name="check" /> OK</span>
                         : <span style={{ color: '#D9434B', fontWeight: 700 }}>{r.error}</span>}
                     </td>
                   </tr>
@@ -586,7 +587,7 @@ export default function ImportPage() {
             </div>
           ) : result && (
             <>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#23874A' }}>✓ Import complete</p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#23874A' }}><Icon name="check" /> Import complete</p>
               <div className="rg-3" style={{ gap: 12 }}>
                 {[
                   { label: 'New leads imported', value: result.imported, color: '#23874A' },
@@ -615,7 +616,7 @@ export default function ImportPage() {
               {result.warnings && result.warnings.length > 0 && (
                 <div style={{ ...card, borderColor: '#FFD89D', backgroundColor: '#FFF3E0' }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: '#A3671A', marginBottom: 8 }}>
-                    ⚠ {result.warnings.length} code{result.warnings.length > 1 ? 's' : ''} didn't match anyone — those leads still imported, just without that assignment
+                    <Icon name="alert" /> {result.warnings.length} code{result.warnings.length > 1 ? 's' : ''} didn't match anyone — those leads still imported, just without that assignment
                   </p>
                   <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                     <table style={{ ...tbl, fontSize: 12 }}>

@@ -7,6 +7,7 @@ import { stripPlotPrefix } from '../../../../lib/plotNumber';
 import { isManagerRole } from '../../../../lib/moduleAccess';
 
 
+import Icon from '../../../../components/Icon';
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
 const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?')[0]);
 
@@ -491,7 +492,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       </div>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>{project.name}</h1>
-        {project.location && <p style={{ fontSize: 13, color: '#6E7278' }}>📍 {project.location}</p>}
+        {project.location && <p style={{ fontSize: 13, color: '#6E7278' }}><Icon name="pin" /> {project.location}</p>}
         {sv && (
           <p style={{ fontSize: 13, color: '#2F6DB5', marginTop: 6, fontWeight: 600 }}>
             Recording closure for {sv.lead_name} · {sv.lead_phone} — tap an available unit.
@@ -553,7 +554,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                             <span style={{
                               width: 16, height: 16, borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                               border: `1.5px solid ${on ? '#2F6DB5' : '#C9CDD2'}`, background: on ? '#2F6DB5' : '#fff', color: '#fff', fontSize: 11, lineHeight: 1,
-                            }}>{on ? '✓' : ''}</span>
+                            }}>{on ? <Icon name="check" /> : ''}</span>
                             <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>
                               Block {b || '—'}{project?.block_industrial ? '' : ` · ${blockHeight(b)}`}
                             </span>
@@ -610,7 +611,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
       {notice && (
         <div style={{ padding: '10px 14px', borderRadius: 14, background: '#FFF3E0', border: '1px solid #d98a1f', color: '#6B420C', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
-          ⚠ {notice}
+          <Icon name="alert" /> {notice}
         </div>
       )}
 
@@ -622,7 +623,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       {mapEntries.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#a3671a', background: '#FFF3E0', border: '1px solid #FFD89D', padding: '5px 12px', borderRadius: 20 }}>
-            🏠 Showing {shownCount} of {total} units
+            <Icon name="home" /> Showing {shownCount} of {total} units
           </span>
         </div>
       )}
@@ -700,7 +701,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                       pointerEvents: 'none', zIndex: 3, background: isSel ? '#2F6DB5' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
                       fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
                       borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? '#1D1D1F' : cfg.dot + '66'}`, whiteSpace: 'nowrap',
-                    }}>{isSel ? `✓ ${labelText}` : labelText}</div>
+                    }}>{isSel ? `${labelText}` : labelText}</div>
                     {/* Drafted units name their drafter right on the map, not just on
                         hover — a tablet has no hover, and this is who everyone else
                         needs to know to ask about the unit. */}
@@ -836,7 +837,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                       color: isSel ? '#fff' : cfg.text, fontWeight: 800, fontSize: 13,
                       cursor: clickable ? 'pointer' : 'not-allowed', opacity: clickable ? 1 : 0.6,
                     }}>
-                    <span>{isSel ? `✓ ${plot.number}` : plot.number}</span>
+                    <span>{isSel ? `${plot.number}` : plot.number}</span>
                     {/* No plan drawn for this floor, so the chip is the only place these
                         price-affecting details can surface — a hover title is no use on a
                         tablet, which is what the sales team books on. Same reasoning for
@@ -901,7 +902,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 {canDiscard && (
                   <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
                     style={{ padding: '11px 16px', borderRadius: 14, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-                    ✕ Discard Draft
+                    <Icon name="x" /> Discard Draft
                   </button>
                 )}
                 {!canDiscard && (
@@ -936,7 +937,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
                   style={{ padding: '11px 16px', borderRadius: 14, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontWeight: 700, fontSize: 14, cursor: cancelBusy ? 'default' : 'pointer', opacity: cancelBusy ? 0.7 : 1 }}>
-                  {cancelBusy ? 'Cancelling…' : '✕ Cancel In Progress'}
+                  {cancelBusy ? 'Cancelling…' : <><Icon name="x" /> Cancel In Progress</>}
                 </button>
                 <button onClick={() => setHoldPanelPlot(null)} disabled={cancelBusy}
                   style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: '#F4F5F7', color: '#55585E', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
@@ -1029,7 +1030,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
             <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 20, background: '#fff', color: cfg.dot, border: `1px solid ${cfg.dot}55` }}>
               {cfg.label}{plot.held_by_name && plot.status === 'hold' ? ` · ${plot.held_by_name}` : ''}
             </span>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, color: '#3A3C40' }}>✕</button>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, color: '#3A3C40' }}><Icon name="x" /></button>
           </div>
         </div>
 
@@ -1050,7 +1051,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {typePlans.map((fp, i) => (
-                  <button key={i} onClick={() => setViewing(fp.url)} style={planBtn}>🔍 {fp.label}</button>
+                  <button key={i} onClick={() => setViewing(fp.url)} style={planBtn}><Icon name="search" /> {fp.label}</button>
                 ))}
               </div>
             </div>
@@ -1070,7 +1071,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
           {isPdfUrl(viewing)
             ? <embed src={viewing} type="application/pdf" style={{ width: '90vw', height: '88vh', borderRadius: 8 }} />
             : <img src={viewing} alt="Layout" style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, boxShadow: '0 10px 50px rgba(0,0,0,0.5)' }} />}
-          <button onClick={() => setViewing(null)} style={{ position: 'absolute', top: 20, right: 24, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '50%', width: 40, height: 40, fontSize: 18, cursor: 'pointer' }}>✕</button>
+          <button onClick={() => setViewing(null)} style={{ position: 'absolute', top: 20, right: 24, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '50%', width: 40, height: 40, fontSize: 18, cursor: 'pointer' }}><Icon name="x" /></button>
         </div>
       )}
     </div>

@@ -6,6 +6,7 @@ import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
 import AddInvestorModal from '../_AddInvestorModal';
 
+import Icon from '../../../components/Icon';
 const TEAL = '#23874A';
 const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', borderTop: '1px solid #F4F5F7', color: '#1D1D1F' };
@@ -83,7 +84,7 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <form onSubmit={submit} style={{ background: '#fff', borderRadius: 20, width: '90%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', marginBottom: 16 }}>Add Lead</h2>
         {error && <div style={{ background: '#FDECEC', border: '1px solid #F7C3C6', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#D9434B' }}>{error}</div>}
@@ -189,14 +190,14 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
   });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <div style={{ background: '#fff', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 24px 0', flexShrink: 0 }}>
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F' }}>{lead.name}</h2>
             <div style={{ fontSize: 13, color: '#6E7278', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer' }}><Icon name="x" /></button>
         </div>
 
         <div style={{ display: 'flex', borderBottom: '1px solid #F4F5F7', marginTop: 14, flexShrink: 0 }}>
@@ -282,13 +283,13 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
               {(detail?.history || []).map((h, idx, arr) => {
                 const isLast = idx === arr.length - 1;
                 const color = HISTORY_COLOR[h.field_changed] || '#6E7278';
-                const icon = h.field_changed === 'created' ? '📥' : h.field_changed === 'assigned_to' ? '👤' : '🔄';
+                const icon = h.field_changed === 'created' ? 'download' : h.field_changed === 'assigned_to' ? 'user' : 'refresh';
                 const singleValue = h.field_changed === 'created' || !h.old_value;
                 const byLabel = h.changed_by_name || (h.field_changed === 'created' ? 'System (auto)' : null);
                 return (
                   <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: isLast ? 0 : 18 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{icon}</div>
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color }}><Icon name={icon} size={15} /></div>
                       {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />}
                     </div>
                     <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>
@@ -499,7 +500,7 @@ export default function Club1000LeadsPage() {
         {/* Search bar */}
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #F4F5F7' }}>
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}>🔍</span>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
             <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search name, phone, email…"
               style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid #ECEEF0', fontSize: 13, background: '#F4F5F7', outline: 'none', boxSizing: 'border-box', color: '#1D1D1F' }} />
@@ -518,7 +519,7 @@ export default function Club1000LeadsPage() {
           <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
           {anyFilter && (
             <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid #EF9195', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
-              ✕ Clear all
+              <Icon name="x" /> Clear all
             </button>
           )}
         </div>

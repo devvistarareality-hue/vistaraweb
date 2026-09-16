@@ -39,7 +39,7 @@ export default function ChangePasswordModal({ open, onClose, onSuccess }) {
   const disabled = busy || !cur || !nw || !conf;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 380, maxWidth: '100%', background: '#fff', borderRadius: 20, padding: 22, boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
         <div style={{ fontSize: 17, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>Change Password</div>
         <div style={{ fontSize: 12, color: '#6E7278', marginBottom: 16 }}>Enter your current password and choose a new one.</div>

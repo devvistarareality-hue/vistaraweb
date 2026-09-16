@@ -8,6 +8,7 @@ import { MyBookingsList } from '../_MyBookings';
 import { ExportBookings } from '../bookings/page';
 
 
+import Icon from '../../../components/Icon';
 // Read-only project picker for the Record Closure flow. Looks like the admin
 // Projects grid (screenshot) but with no Add/Edit/Deactivate/Manage-Plots — the
 // STM only selects a project to drill into its unit map.
@@ -62,7 +63,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
       </div>
       {flash && (
         <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', color: '#23874A', borderRadius: 16, padding: '12px 16px', marginBottom: 14, fontSize: 14, fontWeight: 600 }}>
-          ✅ {flash}
+          <Icon name="check-circle" /> {flash}
         </div>
       )}
       {/* Toggle: Record Closure ↔ My Bookings */}
@@ -138,14 +139,14 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
 
                 <div style={{ padding: '14px 16px 16px' }}>
                   <p style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>{p.name}</p>
-                  {p.location && <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 6 }}>📍 {p.location}</p>}
+                  {p.location && <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 6 }}><Icon name="pin" /> {p.location}</p>}
                   {p.tagline && <p style={{ fontSize: 11, color: '#9A9EA5', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
 
                   {(p.total_area || p.price_range || p.possession) && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                       {p.total_area   && <span style={metaChip}>{p.total_area}</span>}
                       {p.price_range  && <span style={metaChip}>{p.price_range}</span>}
-                      {p.possession   && <span style={metaChip}>📅 {p.possession}</span>}
+                      {p.possession   && <span style={metaChip}><Icon name="calendar" /> {p.possession}</span>}
                     </div>
                   )}
 
@@ -154,9 +155,9 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6E7278', marginBottom: 5 }}>
                         <span style={{ fontWeight: 600 }}>{total} plots</span>
                         <span style={{ display: 'flex', gap: 10 }}>
-                          <span style={{ color: '#23874A', fontWeight: 600 }}>✓ {pc.available}</span>
+                          <span style={{ color: '#23874A', fontWeight: 600 }}><Icon name="check" /> {pc.available}</span>
                           <span style={{ color: '#D98A1F', fontWeight: 600 }}>⏸ {pc.hold}</span>
-                          <span style={{ color: '#D9434B', fontWeight: 600 }}>✕ {pc.sold}</span>
+                          <span style={{ color: '#D9434B', fontWeight: 600 }}><Icon name="x" /> {pc.sold}</span>
                         </span>
                       </div>
                       <div style={{ height: 4, borderRadius: 4, background: '#ECEEF0', overflow: 'hidden' }}>

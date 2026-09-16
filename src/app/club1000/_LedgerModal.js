@@ -5,6 +5,7 @@ import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { fmtMoney } from './_StatCard';
 
+import Icon from '../../components/Icon';
 const TEAL = '#23874A';
 
 const TYPE_COLOR = {
@@ -46,14 +47,14 @@ export default function LedgerModal({ investorId, onClose }) {
   const s = data?.summary;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Ledger{inv ? ` — ${inv.name}` : ''}</div>
             {inv && <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2 }}>{inv.phone} · {inv.scheme_name}</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}><Icon name="x" /></button>
         </div>
 
         <div style={{ padding: '18px 22px' }}>

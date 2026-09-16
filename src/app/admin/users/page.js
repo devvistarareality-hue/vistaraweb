@@ -10,6 +10,7 @@ import { isManagerRole } from '../../../lib/moduleAccess';
 import PasswordInput from '../../../components/PasswordInput';
 import { needsReportingManager } from '../../../lib/orgTree';
 
+import Icon from '../../../components/Icon';
 // Seniority order, most senior first. Everything down to Manager carries manager
 // authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
 // unattended self-booking account -- so it sits apart at the end.
@@ -26,7 +27,7 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConf
       <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{title}</div>
-          <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
         <div style={{ padding: '20px 24px', fontSize: 14, color: '#3A3C40', lineHeight: 1.6 }}>{message}</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '0 24px 20px' }}>
@@ -195,7 +196,7 @@ export default function UserManagementPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={handleRefresh} disabled={loading} title="Refresh" style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}>↻</button>
-          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #CCE5FF' }}>🗂 Org Chart</button>
+          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #CCE5FF' }}><Icon name="folder" /> Org Chart</button>
           <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>+ Create User</button>
         </div>
       </div>
@@ -265,7 +266,7 @@ export default function UserManagementPage() {
                 <span style={{ fontSize: 11, fontWeight: 700, color: editUser.is_active ? '#A4F5A6' : '#C9CDD2', backgroundColor: 'rgba(255,255,255,0.12)', padding: '3px 10px', borderRadius: 14 }}>
                   {editUser.is_active ? '● Active' : '○ Inactive'}
                 </span>
-                <button onClick={() => setEditUser(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                <button onClick={() => setEditUser(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
               </div>
             </div>
 
@@ -452,5 +453,5 @@ const s = {
   deactBtn:    { padding: '5px 10px', backgroundColor: '#FFF3E0', color: '#D98A1F', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   activateBtn: { padding: '5px 10px', backgroundColor: '#F4F5F7', color: '#23874A', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   deleteBtn:   { padding: '5px 10px', backgroundColor: '#FDECEC', color: '#D9434B', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
-  overlay:     { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 },
+  overlay:     { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 },
 };

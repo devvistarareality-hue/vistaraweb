@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
+import Icon from '../../../components/Icon';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -313,7 +314,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             {newStatus === 'sv_scheduled' && (
               <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: 14, marginTop: 12 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: '#23874A', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 10 }}>
-                  📍 Schedule Site Visit
+                  <Icon name="pin" /> Schedule Site Visit
                 </div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#23874A' }}>Date &amp; Time <span style={{ color: '#D9434B' }}>*</span></label>
                 <input type="datetime-local" value={svAt} onChange={(e) => setSvAt(e.target.value)}
@@ -326,7 +327,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             )}
             {newStatus === 'closed' && (
               <div style={{ background: '#F4F5F7', border: '1px solid #C9F8CA', borderRadius: 16, padding: '12px 14px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ color: '#23874A' }}>✅</span>
+                <span style={{ color: '#23874A' }}><Icon name="check-circle" /></span>
                 <span style={{ fontSize: 12, color: '#23874A', fontWeight: 600 }}>
                   Marking done takes you to the booking flow — pick the unit(s) and record the booking for this lead.
                 </span>

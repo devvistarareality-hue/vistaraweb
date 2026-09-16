@@ -8,6 +8,7 @@ import { fetchCompanies } from '../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../redux/reducers/adminFilterReducer';
 import NotificationBell from '../app/sales/_NotificationBell';
 
+import Icon from './Icon';
 const ORANGE = '#2F6DB5';
 
 function SvgIcon({ children, size = 16 }) {
@@ -141,7 +142,7 @@ export default function Sidebar({ user, onClose, className }) {
             <div style={s.logoSub}>{isVRLAdmin ? 'Super Admin' : 'Admin Portal'}</div>
           </div>
         </div>
-        <button onClick={onClose} className="sidebar-close-x" style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 4px', lineHeight: 1 }}>✕</button>
+        <button onClick={onClose} className="sidebar-close-x" style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 4px', lineHeight: 1 }}><Icon name="x" /></button>
       </div>
 
       {/* ── Navigation ── */}

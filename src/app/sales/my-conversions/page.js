@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
+import Icon from '../../../components/Icon';
 function fmtDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -55,7 +56,7 @@ function LeadHistoryModal({ lead, onClose }) {
   ];
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 480, maxWidth: '100%', maxHeight: '88vh', backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
         {/* Header */}
         <div style={{ background: '#1D1D1F', padding: '18px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -63,7 +64,7 @@ function LeadHistoryModal({ lead, onClose }) {
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff' }}>{lead.name || '—'}</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{d.phone || lead.phone || ''}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
 
         <div style={{ padding: 22, overflowY: 'auto' }}>
@@ -82,7 +83,7 @@ function LeadHistoryModal({ lead, onClose }) {
           {/* Lead received */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#3D5AFE18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>📥</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#3D5AFE18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}><Icon name="download" /></div>
               <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />
             </div>
             <div style={{ paddingBottom: 18, flex: 1 }}>
@@ -99,18 +100,18 @@ function LeadHistoryModal({ lead, onClose }) {
           {(detail?.history || []).filter(h => h.field_changed !== 'created').map((h, idx, arr) => {
             const isLast = idx === arr.length - 1;
             const color  = HISTORY_COLOR[h.field_changed] || '#6E7278';
-            const icon   = h.field_changed === 'warm_transfer' ? '🔥'
-                         : h.field_changed === 'telecaller'    ? '👤'
-                         : h.field_changed === 'stm'           ? '🏢'
-                         : h.field_changed === 'site_visit'    ? '🏠'
-                         : h.field_changed === 'closure'       ? '✅'
-                         : h.field_changed.includes('status')  ? '🔄' : '✏️';
+            const icon   = h.field_changed === 'warm_transfer' ? 'flame'
+                         : h.field_changed === 'telecaller'    ? 'user'
+                         : h.field_changed === 'stm'           ? 'building'
+                         : h.field_changed === 'site_visit'    ? 'home'
+                         : h.field_changed === 'closure'       ? 'check-circle'
+                         : h.field_changed.includes('status')  ? 'refresh' : 'pencil';
             const singleValue = ['created', 'warm_transfer', 'closure'].includes(h.field_changed) || !h.old_value;
             const byLabel = h.changed_by_name || (['created', 'telecaller', 'stm'].includes(h.field_changed) ? 'System (auto)' : null);
             return (
               <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: isLast ? 0 : 18 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{icon}</div>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color }}><Icon name={icon} size={15} /></div>
                   {!isLast && <div style={{ width: 2, flex: 1, backgroundColor: '#F4F5F7', marginTop: 4 }} />}
                 </div>
                 <div style={{ paddingBottom: isLast ? 0 : 18, flex: 1 }}>

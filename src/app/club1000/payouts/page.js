@@ -143,7 +143,7 @@ export default function PayoutsPage() {
       </div>
 
       {payingFor && (
-        <div onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: '100%', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
             <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7' }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Mark Payout Paid</div>

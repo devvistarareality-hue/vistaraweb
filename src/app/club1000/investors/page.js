@@ -11,6 +11,7 @@ import ReviseInvestorModal from '../_ReviseInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
 import LedgerModal from '../_LedgerModal';
 
+import Icon from '../../../components/Icon';
 const TEAL = '#23874A';
 const PURPLE = '#2F6DB5';
 const AMBER = '#A3671A';
@@ -121,12 +122,12 @@ export default function InvestorsPage() {
       </div>
 
       <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
-        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}>🔍</span>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
         <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search name, phone, email, investor no.…"
           style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
         {searchText && (
-          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#6E7278', cursor: 'pointer', fontSize: 14 }}>✕</button>
+          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#6E7278', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
         )}
       </div>
 
@@ -194,7 +195,7 @@ export default function InvestorsPage() {
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
                 <td style={td}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: '#E9FBEA', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📒 Ledger</button>
+                    <button onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: '#E9FBEA', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
                     <button onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: '#E6F2FF', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
                     {inv.is_matured ? (
                       <>

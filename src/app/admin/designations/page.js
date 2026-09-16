@@ -5,6 +5,7 @@ import { fetchDesignations, createDesignation, deleteDesignation } from '../../.
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 
+import Icon from '../../../components/Icon';
 const MODULE_COLOR = {
   Sales:      { bg: '#FFF3E0', text: '#D98A1F', dot: '#D98A1F' },
   HR:         { bg: '#E6F2FF', text: '#2F6DB5', dot: '#2F6DB5' },
@@ -108,7 +109,7 @@ export default function DesignationMasterPage() {
                         style={{ ...s.chipDel, color: c.text }}
                         title="Remove"
                       >
-                        ✕
+                        <Icon name="x" />
                       </button>
                     </div>
                   ))}

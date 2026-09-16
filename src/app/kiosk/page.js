@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../constants/api';
 import { stripPlotPrefix } from '../../lib/plotNumber';
 import { logout } from '../../redux/actions/authActions';
 
+import Icon from '../../components/Icon';
 // ── Client-facing Kiosk self-booking (full-screen, no ERP chrome) ─────────────
 // A Kiosk-role device is logged in; walk-in clients self-serve:
 //   project (kiosk-enabled) → plot (or EOI if no plots) → their details → submit.
@@ -186,7 +187,7 @@ export default function KioskPage() {
             <div className="k-steps">
               {STEPS.map((s, i) => (
                 <div key={s.key} className="k-step">
-                  <span className={`k-step-dot ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}`}>{i < stepIdx ? '✓' : i + 1}</span>
+                  <span className={`k-step-dot ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}`}>{i < stepIdx ? <Icon name="check" /> : i + 1}</span>
                   <span className={`k-step-label ${i === stepIdx ? 'active' : ''}`}>{s.label}</span>
                   {i < STEPS.length - 1 && <span className="k-step-bar" />}
                 </div>
@@ -217,7 +218,7 @@ export default function KioskPage() {
                       <div className="k-card-title">{p.name}</div>
                     </div>
                     <div className="k-card-body">
-                      {p.location && <div className="k-card-loc">📍 {p.location}</div>}
+                      {p.location && <div className="k-card-loc"><Icon name="pin" /> {p.location}</div>}
                       <div className="k-card-meta">
                         {p.price_range && <span className="k-tag">{p.price_range}</span>}
                         {p.total_area && <span className="k-tag ghost">{p.total_area}</span>}
@@ -349,7 +350,7 @@ export default function KioskPage() {
                     const label = stripPlotPrefix(zone.plotNumber);
                     return (
                       <div key={zone.id + '-l'} className="k-maplbl" style={{ left: `${cx}%`, top: `${cy}%`, background: isSel ? '#2F6DB5' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.dot, boxShadow: `0 1px 3px rgba(0,0,0,.18),0 0 0 1px ${isSel ? '#1D1D1F' : cfg.dot + '66'}` }}>
-                        {isSel ? `✓ ${label}` : label}
+                        {isSel ? `${label}` : label}
                       </div>
                     );
                   })}

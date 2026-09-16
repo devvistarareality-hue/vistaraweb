@@ -154,7 +154,7 @@ export default function CompanyScreen() {
               type="submit"
               disabled={!canSubmit}
               className="submit-btn"
-              style={{ ...s.btn, background: canSubmit ? `NAVY` : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+              style={{ ...s.btn, background: canSubmit ? NAVY : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
             >
               {companyLoading
                 ? <span style={s.spinner} />

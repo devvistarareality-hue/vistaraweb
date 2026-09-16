@@ -12,6 +12,7 @@ import DateFieldDMY from '../../../components/DateFieldDMY';
 import { useCurrentCompany } from '../../../lib/currentCompany';
 
 
+import Icon from '../../../components/Icon';
 const MAX_LOI_FILE_SIZE_MB = 100;
 const MAX_LOI_FILE_SIZE = MAX_LOI_FILE_SIZE_MB * 1024 * 1024;
 
@@ -1025,7 +1026,7 @@ function BookingPage() {
         <Section title="Pricing">
           <div style={{ border: '1.5px solid #EF9195', background: '#FDECEC', borderRadius: 14, padding: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: '#A52A31', marginBottom: 6 }}>
-              ⚠️ This unit has no price book
+              <Icon name="alert" /> This unit has no price book
             </div>
             <p style={{ fontSize: 12, color: '#A52A31', margin: 0 }}>{pratMissingMsg}</p>
             <p style={{ fontSize: 12, color: '#A52A31', margin: '8px 0 0' }}>
@@ -1243,12 +1244,12 @@ function BookingPage() {
         </Section>
       )}
 
-      <Section title="📝 Extra Terms & Conditions (optional — added below the default terms)">
+      <Section title="Extra Terms & Conditions (optional — added below the default terms)">
         {extraTerms.map((t, i) => (
           <div key={i} style={{ border: '1px solid #DFE2E6', borderRadius: 14, padding: 12, marginBottom: 10, background: '#FAFAFB' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#6E7278' }}>Term {i + 1}</span>
-              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕ Remove</button>
+              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Remove</button>
             </div>
             <input value={t.title} onChange={(e) => setTerm(i, 'title', e.target.value)} placeholder="Title (e.g. Possession)"
               style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid #DFE2E6', outline: 'none', marginBottom: 8 }} />
@@ -1261,24 +1262,24 @@ function BookingPage() {
 
       <Section title="LOI Document">
         <button onClick={doDownloadLOI} style={{ ...submitBtn, background: '#2f6db5', marginBottom: 12 }}>
-          📥 Download LOI PDF  (Print → Sign → Upload)
+          <Icon name="download" /> Download LOI PDF  (Print → Sign → Upload)
         </button>
-        {loiDone && <div style={{ fontSize: 12, color: '#a3671a', background: '#fff3e0', border: '1px solid #d98a1f', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>✅ LOI downloaded. Get it signed and upload below.</div>}
+        {loiDone && <div style={{ fontSize: 12, color: '#a3671a', background: '#fff3e0', border: '1px solid #d98a1f', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}><Icon name="check-circle" /> LOI downloaded. Get it signed and upload below.</div>}
         {savedLoiPath && !loiFile && (
           <div style={{ fontSize: 12, color: '#23874A', background: '#E9FBEA', border: '1px solid #A4F5A6', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <span>📎 Signed LOI already attached from your last save.</span>
+            <span><Icon name="clip" /> Signed LOI already attached from your last save.</span>
             <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: '#23874A', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
           </div>
         )}
         <label style={{ fontSize: 13, fontWeight: 600, color: '#3A3C40' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
         <input type="file" accept="image/*,.pdf" onChange={onFile} style={{ display: 'block', marginTop: 8, fontSize: 13 }} />
-        {loiFile && <div style={{ fontSize: 12, color: '#23874A', marginTop: 6 }}>📎 {loiFile.name}</div>}
+        {loiFile && <div style={{ fontSize: 12, color: '#23874A', marginTop: 6 }}><Icon name="clip" /> {loiFile.name}</div>}
       </Section>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E9FBEA' : '#FDECEC', color: msg[0] === '✅' ? '#23874A' : '#D9434B', fontSize: 13, marginBottom: 12 }}>{msg}</div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? '#E9FBEA' : '#FDECEC', color: msg[0] === '✅' ? '#23874A' : '#D9434B', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</div>}
       <div style={{ display: 'flex', gap: 10 }}>
         <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: '#fff', color: '#2F6DB5', border: '1.5px solid #2F6DB5', opacity: pratBookMissing ? 0.4 : 1 }}>
-          {saving ? '…' : '💾 Save Draft'}
+          {saving ? '…' : <><Icon name="save" /> Save Draft</>}
         </button>
         <button onClick={submit} disabled={saving || pratBookMissing} style={{ ...submitBtn, opacity: pratBookMissing ? 0.4 : 1 }}>{saving ? 'Saving…' : 'Submit Booking'}</button>
       </div>

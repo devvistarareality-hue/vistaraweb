@@ -7,6 +7,7 @@ import { unitLabel } from './../../lib/bookingUnit';
 import DateFilter from './_DateFilter';
 import BookingDetails from '../../components/BookingDetails';
 
+import Icon from '../../components/Icon';
 // Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
 // and a draft has not been. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
@@ -323,7 +324,7 @@ export function MyBookingsList({ cpOnly = false }) {
           ))}
         </div>
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}>🔍</span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group collapsed earlier would hide its own hits. */}
           <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
@@ -397,7 +398,7 @@ export function MyBookingsList({ cpOnly = false }) {
           <div onClick={() => toggle(pn)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid #CCE5FF' : '1.5px solid transparent' }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              🏢 {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
+              <Icon name="building" /> {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
             </div>
             <span style={{ color: '#6E7278', fontSize: 13, fontWeight: 800, transform: open[pn] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
           </div>
@@ -441,11 +442,11 @@ export function MyBookingsList({ cpOnly = false }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                  {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
+                  {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                   {b.status === 'draft' && (
                     <>
                       <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#2F6DB5' }}>▸ Resume</button>
-                      <button onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}>✕ Discard</button>
+                      <button onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}><Icon name="x" /> Discard</button>
                     </>
                   )}
                   {b.status === 'sold' && String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
@@ -508,7 +509,7 @@ export function MyBookingsList({ cpOnly = false }) {
                         {v.loi_document
                           ? <button onClick={() => openLoi(v.id)}
                               style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>
-                              📄 Signed LOI
+                              <Icon name="file" /> Signed LOI
                             </button>
                           : <span style={{ fontSize: 11, color: '#9A9EA5' }}>no LOI on file</span>}
                         {/* Details live here and only here. Per version, so two can

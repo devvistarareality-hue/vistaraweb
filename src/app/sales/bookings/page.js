@@ -9,6 +9,7 @@ import { unitLabel } from '../../../lib/bookingUnit';
 import BookingDetails from '../../../components/BookingDetails';
 
 
+import Icon from '../../../components/Icon';
 // Open the confidential LOI via a short-lived signed URL (never a public link).
 async function openLoi(id) {
   try {
@@ -220,7 +221,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       alert('Could not save this approver — please try again.');
       return;
     }
-    setSavedCfg('Saved ✓'); setTimeout(() => setSavedCfg(''), 1500);
+    setSavedCfg("Saved"); setTimeout(() => setSavedCfg(''), 1500);
   }
 
   // Pending lead transfers for the projects this user approves. Same authority as a
@@ -386,7 +387,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       {isAdmin && !cpMode && (
         <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#2F6DB5', padding: 0 }}>
-            ⚙ Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#23874A', fontWeight: 700 }}> {savedCfg}</span>}
+            <Icon name="settings" /> Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#23874A', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
             <div style={{ marginTop: 12 }}>
@@ -410,7 +411,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       {isAdmin && cpMode && (
         <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#2F6DB5', padding: 0 }}>
-            ⚙ Channel Partner Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#23874A', fontWeight: 700 }}> {savedCfg}</span>}
+            <Icon name="settings" /> Channel Partner Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: '#23874A', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
             <div style={{ marginTop: 12 }}>
@@ -439,7 +440,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         </div>
         {!cpMode && <ExportBookings projects={projects} companyId={companyId} />}
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}>🔍</span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group the user collapsed earlier would hide its own hits. */}
           <input value={q} onChange={(e) => { setQ(e.target.value); setOpenProj({}); }}
@@ -511,7 +512,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 16,
               padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: isOpen(pn) ? '1.5px solid #CCE5FF' : '1.5px solid transparent' }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: '#2F6DB5', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              🏢 {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
+              <Icon name="building" /> {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#245A96' }}>{rupee(projectTotal(pn))}</span>
@@ -562,7 +563,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                    {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}>📄 Signed LOI</button>}
+                    {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: '#fff', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                     {/* A revised deal gets its Details per version inside the history
                         instead — the current version is one of them, so a card-level
                         copy would be the same figures twice. */}
@@ -582,7 +583,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       <>
                         <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: '#2F6DB5' }}>▸ Resume</button>
                         <button onClick={() => discardDraft(b.id)} disabled={busy === b.id}
-                          style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}>✕ Discard</button>
+                          style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}><Icon name="x" /> Discard</button>
                       </>
                     )}
                     {/* The server decides per booking, not per person: routing sends a
@@ -592,8 +593,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                         buttons anyway made the click fail silently. */}
                     {b.status === 'pending' && isApprover && b.can_approve && (
                       <>
-                        <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#23874A' }}>✓ Approve</button>
-                        <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#D9434B' }}>✕ Reject</button>
+                        <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: '#23874A' }}><Icon name="check" /> Approve</button>
+                        <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: '#D9434B' }}><Icon name="x" /> Reject</button>
                       </>
                     )}
                     {b.status === 'sold' && (() => {
@@ -606,7 +607,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                               closure to cancel through. */}
                           {isApprover && b.closure && (
                             <button onClick={() => setToCancel(b)} disabled={busy === b.id}
-                              style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}>✕ Cancel Booking</button>
+                              style={{ ...actBtn, background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}><Icon name="x" /> Cancel Booking</button>
                           )}
                         </>
                       );
@@ -639,7 +640,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                           {v.loi_document
                             ? <button onClick={() => openLoi(v.id)}
                                 style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>
-                                📄 Signed LOI
+                                <Icon name="file" /> Signed LOI
                               </button>
                             : <span style={{ fontSize: 11, color: '#9A9EA5' }}>no LOI on file</span>}
                           <button onClick={() => setRevDetails((o) => ({ ...o, [v.id]: !o[v.id] }))}
@@ -738,7 +739,7 @@ function ApproverDropdown({ project, managers, onToggle, field = 'booking_approv
                 <div key={m.id} onClick={() => onToggle(project.id, m.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 7, cursor: 'pointer' }}
                   onMouseEnter={(e) => e.currentTarget.style.background = '#F4F5F7'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
                   <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 800, color: '#fff', background: on ? '#2F6DB5' : '#fff', border: `1.5px solid ${on ? '#2F6DB5' : '#C9CDD2'}` }}>{on ? '✓' : ''}</span>
+                    fontSize: 11, fontWeight: 800, color: '#fff', background: on ? '#2F6DB5' : '#fff', border: `1.5px solid ${on ? '#2F6DB5' : '#C9CDD2'}` }}>{on ? <Icon name="check" /> : ''}</span>
                   <span style={{ fontSize: 13, color: '#1D1D1F', fontWeight: 600 }}>{m.name}</span>
                   {m.designation && <span style={{ fontSize: 11, color: '#6E7278' }}>· {m.designation}</span>}
                 </div>

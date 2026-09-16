@@ -98,7 +98,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
           <p style={{ fontSize: 13, color: '#6E7278' }}>{subtitle}</p>
         </div>
         <div style={{ display: 'flex', gap: 4, background: '#ECEEF0', borderRadius: 14, padding: 4 }}>
-          {[['chart', '🗂 Org Chart'], ['table', '☰ List']].map(([k, label]) => (
+          {[['chart', "Org Chart"], ['table', "List"]].map(([k, label]) => (
             <button key={k} onClick={() => setView(k)}
               style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 background: view === k ? '#fff' : 'transparent', color: view === k ? '#2F6DB5' : '#6E7278',

@@ -6,6 +6,7 @@ import DateFilter from '../../../sales/_DateFilter';
 import { unitLabel } from '../../../../lib/bookingUnit';
 import BookingDetails, { fmtDateTime } from '../../../../components/BookingDetails';
 
+import Icon from '../../../../components/Icon';
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const isEoi = (b) => String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
 // Project / STM pickers — sized to sit under the date filter in this module's teal.
@@ -175,7 +176,7 @@ export default function ModuleBookingsPage() {
           ))}
         </div>
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}>🔍</span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6E7278', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group the user collapsed earlier would hide its own hits. */}
           <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
@@ -240,7 +241,7 @@ export default function ModuleBookingsPage() {
             <div onClick={() => toggle(pn)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: '#fff', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid #C9F8CA' : '1.5px solid transparent' }}>
               <div style={{ fontSize: 13, fontWeight: 800, color: '#23874A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                🏢 {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
+                <Icon name="building" /> {pn} <span style={{ color: '#6E7278', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <span style={{ fontSize: 14, fontWeight: 800, color: '#245A96' }}>{rupee(projectTotal(pn))}</span>
@@ -307,7 +308,7 @@ export default function ModuleBookingsPage() {
                         </button>
                       )}
                       {b.loi_document && <>
-                        <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #C9F8CA', background: '#fff', color: '#23874A', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>📄 View {isEoi(b) ? 'EOI' : 'LOI'}</button>
+                        <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #C9F8CA', background: '#fff', color: '#23874A', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View {isEoi(b) ? 'EOI' : 'LOI'}</button>
                         <button onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#23874A', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
                       </>}
                       {/* Only the latest version is listed here, at its current terms.
@@ -347,7 +348,7 @@ export default function ModuleBookingsPage() {
                               : <span style={{ fontSize: 10, fontWeight: 700, color: '#6E7278' }}>superseded</span>}
                             <span style={{ flex: 1 }} />
                             {v.loi_document ? <>
-                              <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #C9F8CA', background: '#fff', color: '#23874A', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📄 View</button>
+                              <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #C9F8CA', background: '#fff', color: '#23874A', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View</button>
                               <button onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: '#23874A', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
                             </> : <span style={{ fontSize: 11, color: '#9A9EA5' }}>no document on file</span>}
                             <button onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', background: '#fff', color: '#1D1D1F', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>

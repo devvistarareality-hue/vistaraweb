@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, RAILWAY_URL, authHeaders } from '../../../constants/ap
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 
+import Icon from '../../../components/Icon';
 const PRESET_SOURCES = ['meta', 'google', 'referral', 'walk-in', 'ivr', 'portal', 'other'];
 const NAVY = '#1D1D1F';
 const BLUE = '#2F6DB5';
@@ -27,7 +28,7 @@ function CopyBtn({ text }) {
   }
   return (
     <button onClick={copy} style={{ padding: '6px 12px', borderRadius: 7, border: '1.5px solid #DFE2E6', backgroundColor: copied ? '#E9FBEA' : '#fff', color: copied ? GREEN : '#55585E', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-      {copied ? '✓ Copied' : '⧉ Copy'}
+      {copied ? <><Icon name="check" /> Copied</> : '⧉ Copy'}
     </button>
   );
 }
@@ -240,7 +241,7 @@ export default function LeadSetupPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #ECEEF0', paddingBottom: 0 }}>
-        {[{ key: 'meta', label: '🔗 Meta Integration' }, { key: 'sources', label: '📋 Lead Sources' }].map(t => (
+        {[{ key: 'meta', label: "Meta Integration" }, { key: 'sources', label: "Lead Sources" }].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
             background: 'none', borderBottom: tab === t.key ? `2px solid ${NAVY}` : '2px solid transparent',
@@ -258,7 +259,7 @@ export default function LeadSetupPage() {
             {/* Status */}
             <div style={{ ...card, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: cfg?.is_active ? '#E9FBEA' : '#FDECEC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                {cfg?.is_active ? '✅' : '⚠️'}
+                {cfg?.is_active ? <Icon name="check-circle" /> : <Icon name="alert" />}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 800, color: cfg?.is_active ? GREEN : '#D9434B' }}>
@@ -336,7 +337,7 @@ export default function LeadSetupPage() {
                       />
                       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                         <button onClick={saveMetaConfig} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center' }}>
-                          {saving ? 'Saving…' : '💾 Save Configuration'}
+                          {saving ? 'Saving…' : <><Icon name="save" /> Save Configuration</>}
                         </button>
                         {hasToken && (
                           <button onClick={() => { setPat(cfg?.page_access_token || ''); setEditingToken(false); setMetaMsg(''); }}
@@ -347,7 +348,7 @@ export default function LeadSetupPage() {
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <code style={{ ...codeBox, flex: 1, fontFamily: 'monospace', letterSpacing: 0.5 }}>{masked}</code>
-                      <button onClick={() => { setEditingToken(true); setMetaMsg(''); setPagesDiag(''); }} style={outlineBtn}>✎ Edit</button>
+                      <button onClick={() => { setEditingToken(true); setMetaMsg(''); setPagesDiag(''); }} style={outlineBtn}><Icon name="pencil" /> Edit</button>
                     </div>
                   )}
 
@@ -378,7 +379,7 @@ export default function LeadSetupPage() {
                     {!editing && (
                       <button onClick={saveMetaConfig} disabled={saving || !appSecret.trim()}
                         style={{ ...saveBtn, marginTop: 10, opacity: appSecret.trim() ? 1 : 0.5 }}>
-                        {saving ? 'Saving…' : '💾 Save App Secret'}
+                        {saving ? 'Saving…' : <><Icon name="save" /> Save App Secret</>}
                       </button>
                     )}
                   </div>

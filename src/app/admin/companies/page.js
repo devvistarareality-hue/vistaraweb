@@ -8,6 +8,7 @@ import {
 import Toast from '../../../components/Toast';
 import { COLORS } from '../../../constants/theme';
 
+import Icon from '../../../components/Icon';
 const EMPTY_FORM = { code: '', name: '', email: '', phone: '' };
 
 const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid #DFE2E6', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: '#F5F6F7' };
@@ -20,7 +21,7 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConf
       <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ background: '#1D1D1F', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{title}</div>
-          <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
         <p style={{ padding: '20px 24px 0', fontSize: 14, color: '#3A3C40', lineHeight: 1.6, margin: 0 }}>{message}</p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 24px 20px' }}>
@@ -182,7 +183,7 @@ export default function CompanyManagementPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Create Company</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details to create a new company</div>
               </div>
-              <button onClick={() => setShowCreate(false)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <button onClick={() => setShowCreate(false)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
             </div>
 
             <form onSubmit={handleCreate} style={{ padding: '22px 24px 24px' }}>
@@ -250,5 +251,5 @@ const s = {
   deactBtn:   { padding: '5px 10px', backgroundColor: '#FFF3E0', color: '#D98A1F', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
   activateBtn:{ padding: '5px 10px', backgroundColor: '#F4F5F7', color: '#23874A', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
   deleteBtn:  { padding: '5px 10px', backgroundColor: '#FDECEC', color: '#D9434B', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
-  overlay:    { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  overlay:    { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
 };

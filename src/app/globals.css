@@ -35,13 +35,35 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-body {
+/* Page gradient lives on a fixed layer: `background-attachment: fixed` repaints the
+   whole page on every scroll and is heavy in Safari. */
+body { background: #E0ECEF; }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(1200px 700px at 8% 0%, #DDF3E2 0%, transparent 60%),
     radial-gradient(1000px 800px at 100% 100%, #D6E8FB 0%, transparent 60%),
     linear-gradient(135deg, #E4F1EA 0%, #DCE6F5 100%);
-  background-attachment: fixed;
 }
+
+/* ─── Modern component defaults ─────────────────────────────────── */
+::selection { background: rgba(162,210,255,0.6); }
+input[type="checkbox"], input[type="radio"], input[type="range"], progress { accent-color: var(--ink); }
+input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; cursor: pointer; }
+input::placeholder, textarea::placeholder { color: #9A9EA5; }
+:focus-visible { outline: 2px solid var(--blue-strong); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+button:not(:disabled):hover { filter: brightness(0.97); }
+a, button { -webkit-tap-highlight-color: transparent; }
+table { font-variant-numeric: tabular-nums; }
+tbody tr { transition: background-color .12s; }
+tbody tr:hover { background-color: rgba(162,210,255,0.14); }
+th { letter-spacing: 0.02em; }
+img { max-width: 100%; }
 
 button, input, select, textarea { font-family: inherit; }
 
@@ -66,7 +88,7 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0); }
 }
 

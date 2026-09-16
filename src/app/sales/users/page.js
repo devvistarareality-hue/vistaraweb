@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
+import Icon from '../../../components/Icon';
 function RoleBadge({ role }) {
   if (!role) return <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>;
   const colors = {
@@ -72,7 +73,7 @@ function AssignProjectsModal({ member, projects, onClose }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
       <div style={{ backgroundColor: '#fff', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(29,29,31,0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}
@@ -81,7 +82,7 @@ function AssignProjectsModal({ member, projects, onClose }) {
             <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Assign Projects</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{member.name} · {member.designation}</div>
           </div>
-          <button onClick={() => onClose(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={() => onClose(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
 
         {/* Project list */}
@@ -97,7 +98,7 @@ function AssignProjectsModal({ member, projects, onClose }) {
                 <div key={p.id} onClick={() => toggle(p.id)}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 16, marginBottom: 8, cursor: 'pointer', border: `1.5px solid ${checked ? '#2F6DB5' : '#ECEEF0'}`, backgroundColor: checked ? '#F3F9FF' : '#F5F6F7', transition: 'all 0.15s' }}>
                   <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#2F6DB5' : '#C9CDD2'}`, backgroundColor: checked ? '#2F6DB5' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                    {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</span>}
+                    {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}><Icon name="check" /></span>}
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#1D1D1F' }}>{p.name}</div>
@@ -274,7 +275,7 @@ export default function SalesUsersPage() {
                       {isAssignable(m) ? (
                         <button onClick={() => setAssignMember(m)}
                           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid #2F6DB5', backgroundColor: '#F3F9FF', color: '#2F6DB5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                          🗂 {projectCounts[m.id] > 0 ? `${projectCounts[m.id]} assigned` : 'Assign'}
+                          <Icon name="folder" /> {projectCounts[m.id] > 0 ? `${projectCounts[m.id]} assigned` : 'Assign'}
                         </button>
                       ) : (
                         <span style={{ color: '#C9CDD2', fontSize: 12 }}>—</span>

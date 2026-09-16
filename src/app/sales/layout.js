@@ -12,6 +12,7 @@ import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
+import Icon from '../../components/Icon';
 const ORANGE = '#2F6DB5';
 const NAVY   = '#1D1D1F';
 
@@ -374,7 +375,7 @@ export default function SalesLayout({ children }) {
               <div style={s.logoSub}>Nexora</div>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn">✕</button>
+          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn"><Icon name="x" /></button>
         </div>
 
         {/* Nav */}
@@ -503,7 +504,7 @@ export default function SalesLayout({ children }) {
       {profileOpen && (
         <div onClick={() => setProfileOpen(false)} style={{
           position: 'fixed', inset: 0, zIndex: 1000,
-          backgroundColor: 'rgba(0,0,0,0.45)',
+          backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
         }}>
           <div onClick={e => e.stopPropagation()} style={{

@@ -7,6 +7,7 @@ import DateFieldDMY from '../../components/DateFieldDMY';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 
+import Icon from '../../components/Icon';
 const TEAL = '#23874A';
 
 const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid #C9CDD2', fontSize: 13, boxSizing: 'border-box' };
@@ -321,7 +322,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(29,29,31,0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid #F4F5F7' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>Add Investor</div>
@@ -484,7 +485,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             <label style={lbl}>Investment Proposal Form (LOI)</label>
             <button type="button" onClick={doDownloadLoi} disabled={loiDownloading}
               style={{ width: '100%', padding: '9px 0', background: '#fff', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
-              {loiDownloading ? 'Generating…' : '📥 Download LOI PDF (Print → Sign → Upload)'}
+              {loiDownloading ? 'Generating…' : <><Icon name="download" /> Download LOI PDF (Print → Sign → Upload)</>}
             </button>
             {loiDone && <div style={{ fontSize: 11, color: '#23874A', marginTop: 6 }}>LOI downloaded — get it signed and upload below.</div>}
             <div style={{ marginTop: 10 }}>

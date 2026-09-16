@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
+import Icon from '../../../components/Icon';
 const RED = '#D9434B';
 
 // Trial-data reset (admin only). Wipes transactional CRM data and resets plots —
@@ -150,7 +151,7 @@ export default function DataResetPage() {
 
       {/* Danger zone */}
       <div style={{ background: '#FDECEC', border: `1.5px solid ${RED}`, borderRadius: 18, padding: 18 }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: RED, marginBottom: 6 }}>⚠️ Danger zone — this cannot be undone</div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: RED, marginBottom: 6 }}><Icon name="alert" /> Danger zone — this cannot be undone</div>
         <p style={{ fontSize: 13, color: '#A52A31', marginBottom: 12 }}>
           Take a Railway database backup first. Then type <b>DELETE</b> and enter the reset key.
         </p>
@@ -173,7 +174,7 @@ export default function DataResetPage() {
             );
           })()}
         </div>
-        {!!msg && <p style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#23874A' : RED }}>{msg}</p>}
+        {!!msg && <p style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#23874A' : RED, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { pdfToImageBlob } from '../../../../utils/pdfToImage';
 import { fieldFlags } from '../../../../lib/bookingFormulas';
 
 
+import Icon from '../../../../components/Icon';
 const STATUS_CFG = {
   available: { label: 'Available', color: '#23874A', bg: '#E9FBEA', border: '#23874A', zone: '#23874a' },
   // Covers both a soft pick (auto-expires in 10 min) and a hard hold backed by
@@ -330,13 +331,13 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
             {/* Polygon controls */}
             {drawMode === 'polygon' && polyPoints.length >= 3 && !pendingZone && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <button onClick={finishPolygon} style={doneBtn}>✓ Done ({polyPoints.length} pts)</button>
-                <button onClick={cancelPolygon} style={ghostBtn}>✕ Cancel</button>
+                <button onClick={finishPolygon} style={doneBtn}><Icon name="check" /> Done ({polyPoints.length} pts)</button>
+                <button onClick={cancelPolygon} style={ghostBtn}><Icon name="x" /> Cancel</button>
               </div>
             )}
             {drawMode === 'polygon' && polyPoints.length > 0 && polyPoints.length < 3 && !pendingZone && (
               <div style={{ marginBottom: 10 }}>
-                <button onClick={cancelPolygon} style={ghostBtn}>✕ Cancel ({polyPoints.length} pt{polyPoints.length > 1 ? 's' : ''})</button>
+                <button onClick={cancelPolygon} style={ghostBtn}><Icon name="x" /> Cancel ({polyPoints.length} pt{polyPoints.length > 1 ? 's' : ''})</button>
               </div>
             )}
 
@@ -442,8 +443,8 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                 ) : (
                   <span style={{ fontSize: 12, color: '#6E7278' }}>All plots already mapped.</span>
                 )}
-                <button onClick={confirmZone} disabled={!plotInput} style={{ ...doneBtn, opacity: plotInput ? 1 : 0.5, cursor: plotInput ? 'pointer' : 'not-allowed' }}>✓ Save Zone</button>
-                <button onClick={() => { setPendingZone(null); setPlotInput(''); }} style={ghostBtn}>✕ Discard</button>
+                <button onClick={confirmZone} disabled={!plotInput} style={{ ...doneBtn, opacity: plotInput ? 1 : 0.5, cursor: plotInput ? 'pointer' : 'not-allowed' }}><Icon name="check" /> Save Zone</button>
+                <button onClick={() => { setPendingZone(null); setPlotInput(''); }} style={ghostBtn}><Icon name="x" /> Discard</button>
               </div>
             )}
 
@@ -468,7 +469,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                           <span style={{ opacity: 0.6, fontSize: 9 }}>{shape}</span>
                           {zone.plotNumber}
                           <button onClick={() => deleteZone(zone.id)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color, fontSize: 10, lineHeight: 1, opacity: 0.7 }}>✕</button>
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color, fontSize: 10, lineHeight: 1, opacity: 0.7 }}><Icon name="x" /></button>
                         </div>
                       );
                     })}
@@ -635,7 +636,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
       <div style={{ borderTop: '1px solid #F4F5F7', padding: '10px 14px 12px' }}>
         <button onClick={() => editing ? setEditing(false) : openEdit()}
           style={{ width: '100%', padding: '11px', background: '#1D1D1F', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-          ✏ Edit Info
+          <Icon name="pencil" /> Edit Info
         </button>
       </div>
 
@@ -673,7 +674,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
                       <button key={val} type="button" onClick={() => setFacing(on ? '' : val)}
                         style={{ flex: 1, padding: '10px 8px', borderRadius: 16, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                           border: `1.5px solid ${on ? '#2F6DB5' : '#F5B453'}`, background: on ? '#F3F9FF' : '#fff', color: on ? '#2F6DB5' : '#6E7278' }}>
-                        {on ? '✓ ' : ''}{label}
+                        {on ? <Icon name="check" /> : ''}{label}
                       </button>
                     );
                   })}
@@ -832,7 +833,7 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
         {activeMapped > 0 && otherFloors.length > 0 && (
           <button onClick={() => setCopyOpen((v) => !v)}
             style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #2F6DB5', background: copyOpen ? '#2F6DB5' : '#F3F9FF', color: copyOpen ? '#fff' : '#2F6DB5', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
-            📋 Copy this mapping to other floors…
+            <Icon name="clipboard" /> Copy this mapping to other floors…
           </button>
         )}
       </div>
@@ -996,7 +997,7 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
               onKeyDown={e => { if (e.key === 'Enter') addType(); if (e.key === 'Escape') { setAddingType(false); setNewTypeName(''); } }}
               placeholder="Type name" style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid #2F6DB5', fontSize: 13, width: 150, outline: 'none' }} />
             <button onClick={addType} style={{ height: 38, padding: '0 14px', background: '#2F6DB5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add</button>
-            <button onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 38, padding: '0 12px', background: '#F4F5F7', color: '#6E7278', border: '1px solid #DFE2E6', borderRadius: 14, fontSize: 13, cursor: 'pointer' }}>✕</button>
+            <button onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 38, padding: '0 12px', background: '#F4F5F7', color: '#6E7278', border: '1px solid #DFE2E6', borderRadius: 14, fontSize: 13, cursor: 'pointer' }}><Icon name="x" /></button>
           </div>
         ) : (
           <button onClick={() => setAddingType(true)} style={{
@@ -1021,7 +1022,7 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
                 <div key={fi}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#6E7278', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{fp.label}</span>
-                    <button onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>✕</button>
+                    <button onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}><Icon name="x" /></button>
                   </div>
                   <img src={fp.url} alt={fp.label}
                     style={{ width: '100%', aspectRatio: '4/3', objectFit: 'contain', borderRadius: 14, background: '#F4F5F7', border: '1px solid #ECEEF0', display: 'block' }} />
@@ -1091,7 +1092,7 @@ function RateMasterEditor({ project, onProjectUpdate }) {
     });
     if (res.ok) {
       onProjectUpdate(await res.json());
-      setSaved('Saved ✓'); setTimeout(() => setSaved(''), 1500);
+      setSaved("Saved"); setTimeout(() => setSaved(''), 1500);
     }
     setSaving(false);
   }
@@ -1273,7 +1274,7 @@ export default function ManagePlotsPage() {
           </button>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>{project.name}</h1>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 13, color: '#6E7278' }}>
-            {project.location && <span>📍 {project.location}</span>}
+            {project.location && <span><Icon name="pin" /> {project.location}</span>}
             {project.total_area && <span>• {project.total_area}</span>}
             {project.price_range && <span>• {project.price_range}</span>}
             {project.possession && <span>• Ready {project.possession}</span>}
@@ -1334,7 +1335,7 @@ export default function ManagePlotsPage() {
             {project.master_plan_url.match(/\.(jpg|jpeg|png|webp|gif)$/i)
               ? <img src={project.master_plan_url} alt="Master Plan" style={{ width: '100%', maxHeight: 380, objectFit: 'contain', borderRadius: 8, border: '1px solid #DFE2E6', background: '#F3F9FF' }} />
               : <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px', background: '#F4F5F7', borderRadius: 8 }}>
-                  <span style={{ fontSize: 26 }}>📄</span>
+                  <span style={{ fontSize: 26 }}><Icon name="file" /></span>
                   <a href={project.master_plan_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#2F6DB5', fontWeight: 600 }}>Open PDF ↗</a>
                 </div>
             }
@@ -1356,7 +1357,7 @@ export default function ManagePlotsPage() {
       {project.floor_wise ? (
         <>
           <div style={{ backgroundColor: '#fff', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F' }}>{project.block_industrial ? '🏭 Block Setup' : '🏢 Floor-wise Setup'}</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F' }}>{project.block_industrial ? <><Icon name="factory" /> Block Setup</> : <><Icon name="building" /> Floor-wise Setup</>}</div>
           <div style={{ fontSize: 12, color: '#6E7278', marginTop: 2, marginBottom: 4 }}>
             {project.block_industrial
               ? "Define each block's unit numbering and plan once it's surveyed."
@@ -1418,7 +1419,7 @@ export default function ManagePlotsPage() {
         {(blockF || floorF) && (
           <button onClick={() => { setBlockF(''); setFloorF(''); }}
             style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#fff', color: '#6E7278', border: '1.5px solid #DFE2E6' }}>
-            ✕ Clear
+            <Icon name="x" /> Clear
           </button>
         )}
         {plots.length > 0 && (
@@ -1432,7 +1433,7 @@ export default function ManagePlotsPage() {
             else { const e = await res.json(); alert(e.detail || 'Failed to delete plots'); }
           }}
             style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#FDECEC', color: '#D9434B', border: '1.5px solid #F7C3C6' }}>
-            🗑 Delete All Plots
+            <Icon name="trash" /> Delete All Plots
           </button>
         )}
       </div>

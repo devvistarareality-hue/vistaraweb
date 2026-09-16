@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 
+import Icon from '../../../components/Icon';
 function fmt(iso) {
   return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
@@ -18,8 +19,8 @@ function currentIST() {
 // ── Check / cross icon ────────────────────────────────────────────────────────
 function CheckIcon({ on }) {
   return on
-    ? <span style={{ color: '#23874A', fontSize: 14, fontWeight: 800 }}>✓</span>
-    : <span style={{ color: '#C9CDD2', fontSize: 14, fontWeight: 800 }}>✗</span>;
+    ? <span style={{ color: '#23874A', fontSize: 14, fontWeight: 800 }}><Icon name="check" /></span>
+    : <span style={{ color: '#C9CDD2', fontSize: 14, fontWeight: 800 }}><Icon name="x" /></span>;
 }
 
 // Format an ISO timestamp to a local time like "5:04 PM".
@@ -354,7 +355,7 @@ export default function DistributionPage() {
       {blocked.length > 0 && (
         <div style={{ border: '1.5px solid #EF9195', background: '#FDECEC', borderRadius: 16, padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 15 }}>⚠️</span>
+            <span style={{ fontSize: 15 }}><Icon name="alert" /></span>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#A52A31' }}>
               {blocked.reduce((n, b) => n + b.count, 0)} lead{blocked.reduce((n, b) => n + b.count, 0) === 1 ? '' : 's'} can never be distributed
             </span>
@@ -384,7 +385,7 @@ export default function DistributionPage() {
         {/* Settings */}
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={cardTitle}>⚙ Distribution Settings</h2>
+            <h2 style={cardTitle}><Icon name="settings" /> Distribution Settings</h2>
             {settingsForm === null && (
               <button onClick={() => setSettingsForm({ ...settings })} style={outlineBtn}>Edit</button>
             )}
@@ -452,7 +453,7 @@ export default function DistributionPage() {
         {/* Today's Availability */}
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-            <h2 style={{ ...cardTitle, marginBottom: 0 }}>👥 Availability</h2>
+            <h2 style={{ ...cardTitle, marginBottom: 0 }}><Icon name="users" /> Availability</h2>
             <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
               {[['today', 'Today'], ['history', 'History']].map(([k, lbl]) => (
                 <button key={k} onClick={() => setAvailTab(k)}
@@ -579,7 +580,7 @@ export default function DistributionPage() {
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h2 style={cardTitle}>📊 Lead Distribution Ratio</h2>
+            <h2 style={cardTitle}><Icon name="chart" /> Lead Distribution Ratio</h2>
             <span style={{ fontSize: 12, color: '#6E7278' }}>Per project · share splits among assigned members</span>
           </div>
           <button onClick={saveWeights} disabled={savingWeights || !weightsChanged}
@@ -650,7 +651,7 @@ export default function DistributionPage() {
                   </p>
                 </div>
                 <span style={{ ...badge, fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
-                  🕐 {windowOpen ? 'Window open' : afterSignout ? 'Window closed' : `Opens ${signin}`}
+                  <Icon name="clock" /> {windowOpen ? 'Window open' : afterSignout ? 'Window closed' : `Opens ${signin}`}
                 </span>
               </div>
 
@@ -672,8 +673,8 @@ export default function DistributionPage() {
                   color: resultThis.ok ? '#23874A' : '#D9434B',
                 }}>
                   {resultThis.ok
-                    ? `✓ ${resultThis.distributed} leads distributed`
-                    : `✕ ${resultThis.detail || resultThis.message || 'Failed'}`}
+                    ? `${resultThis.distributed} leads distributed`
+                    : `${resultThis.detail || resultThis.message || 'Failed'}`}
                   {resultThis.assignments && resultThis.distributed > 0 && (
                     <p style={{ fontSize: 11, fontWeight: 400, marginTop: 3, color: '#55585E' }}>
                       {Object.entries(resultThis.assignments).map(([n, c]) => `${n}: ${c}`).join(' · ')}
@@ -687,7 +688,7 @@ export default function DistributionPage() {
 
               <button onClick={() => distribute(type)} disabled={disabled}
                 style={{ ...primaryBtn, width: '100%', opacity: disabled ? 0.45 : 1, justifyContent: 'center' }}>
-                {distributing === type ? 'Distributing…' : `⚡ Distribute to ${type === 'telecaller' ? 'Telecallers' : 'STMs'}`}
+                {distributing === type ? 'Distributing…' : `Distribute to ${type === 'telecaller' ? 'Telecallers' : 'STMs'}`}
               </button>
               {avail === 0 && !afterSignout && (
                 <p style={{ fontSize: 11, color: '#6E7278', textAlign: 'center', marginTop: 6 }}>
@@ -702,11 +703,11 @@ export default function DistributionPage() {
       {/* Row 4: Distribution History */}
       <div style={{ ...card, padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #F4F5F7' }}>
-          <h2 style={cardTitle}>🕐 Recent Distribution History</h2>
+          <h2 style={cardTitle}><Icon name="clock" /> Recent Distribution History</h2>
           {log.length > 0 && (
             <button onClick={clearHistory} disabled={clearingLog}
               style={{ ...outlineBtn, color: '#D9434B', borderColor: '#F7C3C6', fontSize: 12 }}>
-              {clearingLog ? 'Clearing…' : '🗑 Clear History'}
+              {clearingLog ? 'Clearing…' : <><Icon name="trash" /> Clear History</>}
             </button>
           )}
         </div>

@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { uploadToSupabase, deleteFromSupabase, extractStoragePath } from '../utils/supabaseStorage';
 
+import Icon from './Icon';
 const isImage = (url) => url && /\.(jpg|jpeg|png|webp|gif|svg)(\?|$)/i.test(url);
 const isPdf   = (url) => url && /\.pdf(\?|$)/i.test(url);
 // Keep in step with MEDIA_UPLOAD_MAX_MB in sales/views.py — this check only fails fast
@@ -47,13 +48,13 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
               <img src={value} alt="preview" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }} />
               <button onClick={handleRemove}
                 style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 20, width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                ✕
+                <Icon name="x" />
               </button>
             </div>
           ) : isPdf(value) ? (
             <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 24 }}>📄</span>
+                <span style={{ fontSize: 24 }}><Icon name="file" /></span>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#1D1D1F' }}>PDF Uploaded</div>
                   <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#2F6DB5' }}>View PDF ↗</a>
@@ -90,7 +91,7 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
             </>
           ) : (
             <>
-              <span style={{ fontSize: 22 }}>☁</span>
+              <Icon name="upload" size={24} />
               <span style={{ fontSize: 12, color: '#6E7278', fontWeight: 500 }}>{hint || 'Click to upload'}</span>
               {/* Describe what this picker will actually take — the file dialog is
                   filtered by `accept`, so promising PDF when it only allows images

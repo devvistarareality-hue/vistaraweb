@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AUTH_ENDPOINTS, authHeaders } from '../../constants/api';
 
+import Icon from '../../components/Icon';
 // Where each notification type deep-links. booking_approved/rejected → the
 // booker's My Bookings (Booking → My Bookings), not My Conversions.
 const URL_FOR_TYPE = {
@@ -29,10 +30,10 @@ function ago(iso) {
 }
 
 const ICON = {
-  new_lead: '👤', followup: '📞', sv: '📍', sv_done: '✅',
-  booking_approval: '📝', booking_approved: '🎉', booking_rejected: '⛔',
-  closure: '🏆', overdue: '⏰', mark_available: '🟢', test: '🔔',
-  followup_overdue: '⏰', sv_overdue: '⏰', availability_reminder: '🟢',
+  new_lead: 'user', followup: 'phone', sv: 'pin', sv_done: 'check-circle',
+  booking_approval: 'note', booking_approved: 'party', booking_rejected: 'ban',
+  closure: 'trophy', overdue: 'clock', mark_available: 'dot', test: 'bell',
+  followup_overdue: 'clock', sv_overdue: 'clock', availability_reminder: 'dot',
 };
 const TYPE_COLOR = {
   new_lead: '#23874A', followup: '#2F6DB5', sv: '#23874A', sv_done: '#23874A',
@@ -82,7 +83,7 @@ export default function NotificationBell({ up = false, align = 'right' }) {
       <button onClick={() => { setOpen((o) => !o); if (!open && unread) markAll(); }}
         aria-label="Notifications"
         style={{ position: 'relative', width: 38, height: 38, borderRadius: 14, border: '1.5px solid #ECEEF0', background: '#fff', cursor: 'pointer', fontSize: 18, lineHeight: '36px' }}>
-        🔔
+        <Icon name="bell" />
         {unread > 0 && (
           <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9, background: '#D9434B', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {unread > 99 ? '99+' : unread}
@@ -98,14 +99,14 @@ export default function NotificationBell({ up = false, align = 'right' }) {
           </div>
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             {rows.length === 0 ? (
-              <div style={{ padding: 30, textAlign: 'center', color: '#6E7278', fontSize: 13 }}>You're all caught up 🎉</div>
+              <div style={{ padding: 30, textAlign: 'center', color: '#6E7278', fontSize: 13 }}>You're all caught up <Icon name="party" /></div>
             ) : rows.map((n) => {
               const url = URL_FOR_TYPE[n.type];
               const color = TYPE_COLOR[n.type] || '#2F6DB5';
               return (
               <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}
                 style={{ display: 'flex', gap: 11, padding: '12px 14px', borderBottom: '1px solid #F4F5F7', borderLeft: `3px solid ${n.is_read ? 'transparent' : color}`, background: n.is_read ? '#fff' : '#F3F9FF', cursor: url ? 'pointer' : 'default' }}>
-                <span style={{ width: 34, height: 34, borderRadius: 17, background: color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{ICON[n.type] || '🔔'}</span>
+                <span style={{ width: 34, height: 34, borderRadius: 17, background: color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}><Icon name={ICON[n.type] || 'bell'} size={16} style={{ color }} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: '#1D1D1F' }}>{n.title}</div>
                   {n.body && <div style={{ fontSize: 12, color: '#55585E', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}

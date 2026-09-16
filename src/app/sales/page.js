@@ -10,6 +10,7 @@ import DateFilter from './_DateFilter';
 import { SingleChart, fillDates } from './_TrendCharts';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
+import Icon from '../../components/Icon';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 
 
@@ -73,7 +74,7 @@ function AvailabilityToggle() {
   return (
     <button onClick={() => toggle(true)} disabled={busy}
       style={{ marginLeft: 'auto', padding: '9px 18px', background: '#23874A', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
-      {busy ? 'Saving…' : '✓ Mark Available Today'}
+      {busy ? 'Saving…' : <><Icon name="check" /> Mark Available Today</>}
     </button>
   );
 }

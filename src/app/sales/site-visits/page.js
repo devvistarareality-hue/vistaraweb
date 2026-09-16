@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import DateFilter from '../_DateFilter';
 
 
+import Icon from '../../../components/Icon';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -312,7 +313,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
         {narrowed && (
           <button onClick={() => { setProj(''); setOutcomeFilter(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
             cursor: 'pointer', background: '#fff', color: '#6E7278', border: '1.5px solid #DFE2E6' }}>
-            ✕ Clear filters
+            <Icon name="x" /> Clear filters
           </button>
         )}
       </div>
@@ -356,7 +357,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, flexShrink: 0 }}>
                 {sv.status === 'scheduled' && (
                   <>
-                    <button onClick={() => openDone(sv)} style={smBtn('#fff', '#23874A', '#23874A')}>✓ Done</button>
+                    <button onClick={() => openDone(sv)} style={smBtn('#fff', '#23874A', '#23874A')}><Icon name="check" /> Done</button>
                     <button onClick={() => updateStatus(sv, 'no_show')} style={smBtn('#fff', '#A3671A', '#D98A1F')}>No Show</button>
                     <button onClick={() => updateStatus(sv, 'cancelled')} style={smBtn('#fff', '#9A9EA5', '#C9CDD2')}>Cancel</button>
                   </>
@@ -493,7 +494,7 @@ export default function SiteVisitsPage() {
 
 function Overlay({ children, onClose }) {
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       {children}
     </div>
   );
@@ -504,7 +505,7 @@ function ModalCard({ title, children, onClose }) {
     <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, width: '92%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(29,29,31,0.18)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F4F5F7' }}>
         <span style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F' }}>{title}</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}>✕</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: '#9A9EA5', cursor: 'pointer' }}><Icon name="x" /></button>
       </div>
       <div style={{ padding: 20 }}>{children}</div>
     </div>

@@ -7,6 +7,7 @@ import { moduleAccess } from '../../lib/moduleAccess';
 import { AUTH_ENDPOINTS } from '../../constants/api';
 import { LOGIN_SUCCESS } from '../../redux/types/authTypes';
 
+import Icon from '../../components/Icon';
 const ORANGE = '#A2D2FF';
 const NAVY   = '#1D1D1F';
 
@@ -155,7 +156,6 @@ export default function LoginScreen() {
   const handleBackToLogin = () => {
     setOtpStep(false);
     setOtpToken('');
-    setOtpPhone('');
     setOtpEmail('');
     setOtp('');
     setError('');
@@ -249,12 +249,12 @@ export default function LoginScreen() {
           {/* Step bar */}
           <div style={s.steps}>
             <div style={{ display:'flex', alignItems:'center', gap:8, opacity:0.55 }}>
-              <div style={{ ...s.stepNum, backgroundColor:'#23874A', color:'#fff' }}>✓</div>
+              <div style={{ ...s.stepNum, backgroundColor:'#23874A', color:'#fff' }}><Icon name="check" /></div>
               <span style={{ fontSize:13, fontWeight:600, color:NAVY }}>Workspace</span>
             </div>
             <div style={s.stepLine} />
             <div style={{ display:'flex', alignItems:'center', gap:8, opacity: otpStep ? 0.55 : 1 }}>
-              <div style={{ ...s.stepNum, backgroundColor: otpStep ? '#23874A' : NAVY, color:'#fff' }}>{otpStep ? '✓' : '2'}</div>
+              <div style={{ ...s.stepNum, backgroundColor: otpStep ? '#23874A' : NAVY, color:'#fff' }}>{otpStep ? <Icon name="check" /> : '2'}</div>
               <span style={{ fontSize:13, fontWeight: otpStep ? 600 : 700, color:NAVY }}>Sign In</span>
             </div>
             {otpStep && (
@@ -311,7 +311,7 @@ export default function LoginScreen() {
               )}
 
               <button type="submit" disabled={!canSubmit} className="signin-btn"
-                style={{ ...s.btn, background: canSubmit ? `NAVY` : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed', marginTop:22 }}
+                style={{ ...s.btn, background: canSubmit ? NAVY : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed', marginTop:22 }}
               >
                 {loading
                   ? <span style={s.spinner} />
@@ -382,7 +382,7 @@ export default function LoginScreen() {
               )}
 
               <button type="submit" disabled={!canSubmit} className="signin-btn"
-                style={{ ...s.btn, background: canSubmit ? `NAVY` : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+                style={{ ...s.btn, background: canSubmit ? NAVY : '#DFE2E6', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
               >
                 {loading
                   ? <span style={s.spinner} />

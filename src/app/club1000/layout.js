@@ -11,6 +11,7 @@ import { apiFetch } from '../../utils/apiFetch';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 import { moduleAccess, isSuperAdmin, canAccessModule, isClub1000Manager } from '../../lib/moduleAccess';
 
+import Icon from '../../components/Icon';
 const ORANGE = '#2F6DB5';
 const NAVY   = '#1D1D1F';
 const TEAL = '#2F6DB5';
@@ -198,7 +199,7 @@ export default function Club1000Layout({ children }) {
               <div style={s.logoSub}>{manager ? 'Manager' : 'Investment Desk'}</div>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn">✕</button>
+          <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(29,29,31,0.72)', cursor: 'pointer', fontSize: 20, padding: '2px 6px', lineHeight: 1, display: 'none' }} className="sidebar-close-btn"><Icon name="x" /></button>
         </div>
 
         <div className="c1k-scroll" style={s.scroll}>
@@ -320,7 +321,7 @@ export default function Club1000Layout({ children }) {
       {profileOpen && (
         <div onClick={() => setProfileOpen(false)} style={{
           position: 'fixed', inset: 0, zIndex: 1000,
-          backgroundColor: 'rgba(0,0,0,0.45)',
+          backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
         }}>
           <div onClick={e => e.stopPropagation()} style={{

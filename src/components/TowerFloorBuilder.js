@@ -3,6 +3,7 @@ import { useState } from 'react';
 import MediaUpload from './MediaUpload';
 import { toPlanImage } from '../utils/planImage';
 
+import Icon from './Icon';
 /* Shared by Add/Edit Project and the Manage Plots page so a tower is defined the same
    way in both — the modal is the only route in before any units exist. */
 /* ─── Tower Floor Builder ───
@@ -193,7 +194,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                     onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                 </div>
                 <button type="button" onClick={() => removeFloor(i)} title="Remove floor"
-                  style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕</button>
+                  style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /></button>
               </div>
 
               <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -218,7 +219,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                 ) : f.image_url ? (
                   <>
                     {/\.pdf(\?|$)/i.test(f.image_url)
-                      ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#2F6DB5', fontWeight: 600 }}>📄 View PDF ↗</a>
+                      ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#2F6DB5', fontWeight: 600 }}><Icon name="file" /> View PDF ↗</a>
                       : <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid #ECEEF0' }} />}
                     <button type="button" onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
                       style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #F7C3C6', background: '#FDECEC', color: '#D9434B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
@@ -263,7 +264,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
           )}
         </div>
       )}
-      {!!msg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#23874A' : '#D9434B' }}>{msg}</p>}
+      {!!msg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: msg[0] === '✅' ? '#23874A' : '#D9434B', display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
     </div>
   );
 }

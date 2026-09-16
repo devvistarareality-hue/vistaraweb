@@ -7,6 +7,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 import MediaUpload from '../../../components/MediaUpload';
 import TowerFloorBuilder, { unitsForFloor } from '../../../components/TowerFloorBuilder';
 
+import Icon from '../../../components/Icon';
 // A DRF error is JSON, but a 500 (or a proxy timeout) is an HTML page. res.json() on
 // that throws a bare SyntaxError, so read the text first and hand back either the
 // parsed body or a { _raw } snippet the caller can show.
@@ -63,7 +64,7 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
               <input type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)} style={inp} placeholder="10" />
               <button type="button" onClick={() => removeType(i)}
                 style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? '#D9434B' : '#C9CDD2', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
-                disabled={plotTypes.length === 1}>✕</button>
+                disabled={plotTypes.length === 1}><Icon name="x" /></button>
             </div>
           ))}
           <button type="button" onClick={addType}
@@ -292,7 +293,7 @@ function ProjectModal({ project, onClose, onSaved }) {
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>{isEdit ? 'Edit Project' : 'Add Project'}</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{isEdit ? 'Update project details' : 'Fill in details to create a new project'}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
 
         <form onSubmit={submit} style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', flex: 1 }}>
@@ -453,7 +454,7 @@ function ProjectModal({ project, onClose, onSaved }) {
                       ))}
                     </div>
                     {editableTypes.some(t => t.original !== t.current) && (
-                      <p style={{ fontSize: 11, color: '#D9434B', marginTop: 6 }}>⚠ Renaming will update all plots with that type name.</p>
+                      <p style={{ fontSize: 11, color: '#D9434B', marginTop: 6 }}><Icon name="alert" /> Renaming will update all plots with that type name.</p>
                     )}
                   </div>
                 )}
@@ -468,7 +469,7 @@ function ProjectModal({ project, onClose, onSaved }) {
                 </div>
                 <button type="button" onClick={() => setAddingMore(m => !m)}
                   style={{ fontSize: 12, fontWeight: 700, color: addingMore ? '#D9434B' : '#2F6DB5', background: 'none', border: `1.5px dashed ${addingMore ? '#D9434B' : '#2F6DB5'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer', width: 'fit-content' }}>
-                  {addingMore ? '✕ Cancel adding plots' : '+ Add More Plots'}
+                  {addingMore ? <><Icon name="x" /> Cancel adding plots</> : '+ Add More Plots'}
                 </button>
                 {addingMore && <PlotWizard hasTypes={hasTypes} setHasTypes={setHasTypes} noTypePlots={noTypePlots} setNoTypePlots={setNoTypePlots} plotTypes={plotTypes} setPlotTypes={setPlotTypes} addType={addType} removeType={removeType} updateType={updateType} validTypes={validTypes} totalTypePlots={totalTypePlots} inp={mInp} lbl={mLbl} startNo={existingMaxNo + 1} />}
               </div>
@@ -493,7 +494,7 @@ function ProjectModal({ project, onClose, onSaved }) {
                 <input value={t.type} onChange={e => updateEoiType(i, 'type', e.target.value)} style={mInp} placeholder="e.g. 2 BHK" />
                 <input value={t.plot_area} onChange={e => updateEoiType(i, 'plot_area', e.target.value)} style={mInp} placeholder="585" />
                 <input value={t.const_area} onChange={e => updateEoiType(i, 'const_area', e.target.value)} style={mInp} placeholder="167" />
-                <button type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                <button type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: '#D9434B', cursor: 'pointer', fontSize: 16, padding: 0 }}><Icon name="x" /></button>
               </div>
             ))}
             <button type="button" onClick={addEoiType}
@@ -626,7 +627,7 @@ export default function ProjectsPage() {
                 <div style={{ padding: '14px 16px 16px' }}>
                   {/* Name + location */}
                   <p style={{ fontSize: 16, fontWeight: 800, color: '#1D1D1F', marginBottom: 2 }}>{p.name}</p>
-                  {p.location && <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 6 }}>📍 {p.location}</p>}
+                  {p.location && <p style={{ fontSize: 12, color: '#6E7278', marginBottom: 6 }}><Icon name="pin" /> {p.location}</p>}
                   {p.tagline && <p style={{ fontSize: 11, color: '#9A9EA5', fontStyle: 'italic', marginBottom: 6 }}>{p.tagline}</p>}
 
                   {/* Meta chips */}
@@ -634,7 +635,7 @@ export default function ProjectsPage() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                       {p.total_area   && <span style={metaChip}>{p.total_area}</span>}
                       {p.price_range  && <span style={metaChip}>{p.price_range}</span>}
-                      {p.possession   && <span style={metaChip}>📅 {p.possession}</span>}
+                      {p.possession   && <span style={metaChip}><Icon name="calendar" /> {p.possession}</span>}
                     </div>
                   )}
 
@@ -644,9 +645,9 @@ export default function ProjectsPage() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6E7278', marginBottom: 5 }}>
                         <span style={{ fontWeight: 600 }}>{total} plots</span>
                         <span style={{ display: 'flex', gap: 10 }}>
-                          <span style={{ color: '#23874A', fontWeight: 600 }}>✓ {pc.available}</span>
+                          <span style={{ color: '#23874A', fontWeight: 600 }}><Icon name="check" /> {pc.available}</span>
                           <span style={{ color: '#D98A1F', fontWeight: 600 }}>⏸ {pc.hold}</span>
-                          <span style={{ color: '#D9434B', fontWeight: 600 }}>✕ {pc.sold}</span>
+                          <span style={{ color: '#D9434B', fontWeight: 600 }}><Icon name="x" /> {pc.sold}</span>
                         </span>
                       </div>
                       <div style={{ height: 4, borderRadius: 4, background: '#ECEEF0', overflow: 'hidden' }}>
@@ -672,7 +673,7 @@ export default function ProjectsPage() {
                     <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? '#D98A1F' : '#23874A', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
                       {p.is_active ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#D9434B', borderColor: '#EF444440', padding: '7px 10px' }}>✕</button>
+                    <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: '#D9434B', borderColor: '#EF444440', padding: '7px 10px' }}><Icon name="x" /></button>
                   </div>
                 </div>
               </div>
@@ -700,7 +701,7 @@ const outlineBtn     = { padding: '7px 12px', backgroundColor: '#fff', border: '
 const primaryOutlineBtn = { padding: '7px 12px', backgroundColor: '#F3F9FF', border: '1.5px solid #2F6DB5', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#2F6DB5', cursor: 'pointer' };
 const card           = { backgroundColor: '#fff', borderRadius: 18, boxShadow: '0 6px 28px rgba(47,109,181,0.16)', border: '1.5px solid #DFE2E6', overflow: 'hidden' };
 const metaChip       = { fontSize: 11, fontWeight: 600, color: '#55585E', backgroundColor: '#F4F5F7', padding: '3px 8px', borderRadius: 6 };
-const overlay        = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const overlay        = { position: 'fixed', inset: 0, backgroundColor: 'rgba(29,29,31,0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal          = { backgroundColor: '#fff', borderRadius: 20, width: '90%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader    = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #F4F5F7' };
 const closeBtn       = { background: 'none', border: 'none', fontSize: 16, color: '#6E7278', cursor: 'pointer', padding: '2px 6px' };

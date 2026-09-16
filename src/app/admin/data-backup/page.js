@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { isSuperAdmin } from '../../../lib/moduleAccess';
 
+import Icon from '../../../components/Icon';
 const GREEN = '#23874A';
 const RED   = '#D9434B';
 const AMBER = '#A3671A';
@@ -145,7 +146,7 @@ export default function DataBackupPage() {
             Last changed by {settings.updated_by_name} · {fmtDateTime(settings.updated_at)}
           </p>
         )}
-        {!!settingsMsg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: settingsMsg[0] === '✅' ? GREEN : RED }}>{settingsMsg}</p>}
+        {!!settingsMsg && <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: settingsMsg[0] === '✅' ? GREEN : RED, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={settingsMsg[0] === '✅' ? 'check-circle' : 'alert'} />{settingsMsg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
       </div>
 
       {/* Run now */}
@@ -160,7 +161,7 @@ export default function DataBackupPage() {
           {running ? 'Backing up…' : 'Run Backup Now'}
         </button>
       </div>
-      {!!runMsg && <p style={{ marginTop: -8, marginBottom: 18, fontSize: 13, fontWeight: 600, color: runMsg[0] === '✅' ? GREEN : RED }}>{runMsg}</p>}
+      {!!runMsg && <p style={{ marginTop: -8, marginBottom: 18, fontSize: 13, fontWeight: 600, color: runMsg[0] === '✅' ? GREEN : RED, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={runMsg[0] === '✅' ? 'check-circle' : 'alert'} />{runMsg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
 
       {/* History */}
       <div style={{ background: '#fff', border: '1px solid #ECEEF0', borderRadius: 18, overflow: 'hidden' }}>
@@ -201,7 +202,7 @@ export default function DataBackupPage() {
                         </button>
                       )}
                       {r.status === 'failed' && r.error_message && (
-                        <span title={r.error_message} style={{ fontSize: 11, color: RED }}>⚠ {r.error_message.slice(0, 40)}</span>
+                        <span title={r.error_message} style={{ fontSize: 11, color: RED }}><Icon name="alert" /> {r.error_message.slice(0, 40)}</span>
                       )}
                     </td>
                   </tr>
