@@ -228,12 +228,15 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const [xfers, setXfers] = useState([]);
   const [xferBusy, setXferBusy] = useState(null);
   function loadTransfers() {
-    fetch(`${SALES_ENDPOINTS.leadTransfers}?status=pending${companyId ? `&company_id=${companyId}` : ''}`, { headers: authHeaders() })
+    // cp_only in the Channel Partner module: a lead transfer is a Sales activity, so
+    // without it the CP approver was shown transfers for leads that never came through
+    // a partner.
+    fetch(`${SALES_ENDPOINTS.leadTransfers}?status=pending${companyId ? `&company_id=${companyId}` : ''}${cpOnly ? '&cp_only=true' : ''}`, { headers: authHeaders() })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setXfers(Array.isArray(d) ? d : []))
       .catch(() => setXfers([]));
   }
-  useEffect(() => { loadTransfers(); }, [companyId, adminView]);
+  useEffect(() => { loadTransfers(); }, [companyId, adminView, cpOnly]);
 
   async function actOnTransfer(id, action) {
     setXferBusy(id);
