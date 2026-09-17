@@ -139,7 +139,7 @@ function SearchLeadButton() {
         Search Lead
       </button>
       {open && (
-        <div className="nx-modal-backdrop" onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(var(--ink-rgb),0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
+        <div className="nx-modal-backdrop" onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
           <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 520, maxWidth: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRadius: 20, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.25)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>Search Lead — whole company</div>

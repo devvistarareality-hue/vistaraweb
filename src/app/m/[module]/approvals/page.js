@@ -100,7 +100,7 @@ function RejectModal({ b, busy, onClose, onConfirm }) {
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="nx-modal" onClick={(e) => e.stopPropagation()}
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Reject this booking?</div>
@@ -132,7 +132,7 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="nx-modal" onClick={(e) => e.stopPropagation()}
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>
@@ -466,8 +466,8 @@ export default function ModuleApprovalsPage() {
       )}
 
       {!loading && !err && projectNames.length > 0 && (
-        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'var(--success-solid)', borderRadius: 18, padding: '16px 20px', boxShadow: '0 2px 8px rgba(35,135,74,0.25)' }}>
-          <div style={{ color: 'var(--success-2)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'var(--success-grad)', borderRadius: 20, padding: '18px 22px', boxShadow: '0 18px 40px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14)' }}>
+          <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}

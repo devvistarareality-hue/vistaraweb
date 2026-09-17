@@ -10,6 +10,7 @@ import { isManagerRole } from '../../../../lib/moduleAccess';
 import Icon from '../../../../components/Icon';
 import { confirmDialog, notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
+import { mapHex, MAP_SELECTED, MAP_INK, MAP_TIP_BG } from '../../../../lib/mapColors';
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
 const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?')[0]);
 
@@ -660,10 +661,11 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   // just with different actions inside depending on who's looking.
                   const clickable = plot.status === 'available' || plot.status === 'resale' || isSel || !!plot.drafted_booking_id || !!plot.can_cancel_hold || (plot.status === 'sold' && isManager);
                   const pts = zone.points?.length ? zone.points.map(p => `${p.x},${p.y}`).join(' ') : null;
-                  const fillC   = isSel ? 'var(--accent)' : cfg.dot + (isHover ? 'cc' : '99');
-                  const strokeC = isSel ? 'var(--text)' : cfg.dot;
+                  const hex     = mapHex(cfg.dot);
+                  const fillC   = isSel ? MAP_SELECTED + 'D9' : hex + (isHover ? 'B3' : '80');
+                  const strokeC = isSel ? MAP_INK : hex;
                   const sw      = isSel ? 0.95 : (isHover ? 0.7 : 0.45);
-                  const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? 'var(--accent)' : cfg.dot})` : 'none' };
+                  const topStyle = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill 0.13s, opacity 0.13s', opacity: dim ? 0.08 : 1, filter: (isSel || isHover) ? `drop-shadow(0 0 1.5px ${isSel ? MAP_SELECTED : hex})` : 'none' };
                   const ev = {
                     onClick: () => pickPlot(plot),
                     onMouseEnter: () => setHovered(hoverPrefix + zone.id),
@@ -700,9 +702,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     <div style={{
                       position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
                       opacity: isHidden(plot) ? 0.08 : 1, transition: 'opacity 0.13s',
-                      pointerEvents: 'none', zIndex: 3, background: isSel ? 'var(--primary)' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.text,
+                      pointerEvents: 'none', zIndex: 3, background: isSel ? MAP_SELECTED : '#FFFFFF', color: isSel ? '#fff' : MAP_INK,
                       fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                      borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px ${isSel ? 'var(--text)' : `color-mix(in srgb, ${cfg.dot} 40%, transparent)`}`, whiteSpace: 'nowrap',
+                      borderRadius: 5, boxShadow: `0 1px 3px rgba(0,0,0,0.22), 0 0 0 1.5px ${isSel ? '#fff' : mapHex(cfg.dot)}`, whiteSpace: 'nowrap',
                     }}>{isSel ? `${labelText}` : labelText}</div>
                     {/* Drafted units name their drafter right on the map, not just on
                         hover — a tablet has no hover, and this is who everyone else
@@ -739,13 +741,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   <div style={{
                     position: 'absolute', left: `${tx}%`, top: `${anchorY}%`,
                     transform: below ? `translate(${shiftX}, 10px)` : `translate(${shiftX}, calc(-100% - 10px))`,
-                    background: 'rgba(var(--ink-rgb),0.96)', color: '#fff', padding: '10px 14px', borderRadius: 16,
+                    background: MAP_TIP_BG, color: '#fff', padding: '10px 14px', borderRadius: 16,
                     whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20, minWidth: 140,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
                   }}>
                     <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Plot {plot.number}</div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: plot.size ? 5 : 0 }}>
-                      <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: `color-mix(in srgb, ${cfg.dot} 19%, transparent)`, color: cfg.dot, border: `1px solid color-mix(in srgb, ${cfg.dot} 38%, transparent)` }}>{cfg.label}</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: mapHex(cfg.dot) + '33', color: '#fff', border: `1px solid ${mapHex(cfg.dot)}` }}>{cfg.label}</span>
                       {plot.cluster_type && tc && (
                         <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>{plot.cluster_type}</span>
                       )}
@@ -753,9 +755,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {/* A drafted unit is visible to everyone, but only its drafter can act
                         on it — surface who so the rest of the team knows who to ask. */}
                     {plot.drafted_booking_id && plot.held_by_name && (
-                      <div style={{ color: 'var(--border-strong)', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
                     )}
-                    {plot.size && <div style={{ color: 'var(--warning-2)', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
+                    {plot.size && <div style={{ color: '#FFCB80', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
                     {/* Facing and terrace both move the price, so surface them on hover
                         rather than making the user open the unit to find out. */}
                     {plot.facing && (
@@ -770,7 +772,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     )}
                     {/* Who is on a booked unit — so the team can see it without opening the plot. */}
                     {plot.agent_name && (
-                      <div style={{ color: 'var(--border)', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
                         {plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}
                       </div>
                     )}
@@ -835,7 +837,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                       minWidth: 84, padding: '10px 12px', borderRadius: 14,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                       border: `1.5px solid ${isSel ? 'var(--text)' : cfg.dot}`,
-                      background: isSel ? 'var(--primary)' : cfg.dot + (clickable ? '22' : '14'),
+                      background: isSel ? 'var(--primary)' : `color-mix(in srgb, ${cfg.dot} ${clickable ? 13 : 8}%, transparent)`,
                       color: isSel ? '#fff' : cfg.text, fontWeight: 800, fontSize: 13,
                       cursor: clickable ? 'pointer' : 'not-allowed', opacity: clickable ? 1 : 0.6,
                     }}>
@@ -1098,7 +1100,7 @@ function Field({ label, children }) {
   );
 }
 
-const overlay    = { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(var(--ink-rgb),0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
+const overlay    = { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
 const panel      = { background: 'var(--surface)', borderRadius: 18, width: '94%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' };
 const planBtn    = { padding: '11px', borderRadius: 16, fontSize: 12, fontWeight: 700, color: 'var(--warning)', background: 'rgba(163,103,26,0.08)', border: '1px solid rgba(163,103,26,0.22)', cursor: 'pointer' };
 const primaryBtn = { width: '100%', padding: '12px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 16, fontSize: 14, fontWeight: 800, cursor: 'pointer' };

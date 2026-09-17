@@ -490,8 +490,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
       {!loading && visible.length > 0 && (
         <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
-          background: 'linear-gradient(135deg,var(--primary),var(--primary-deep))', borderRadius: 18, padding: '16px 20px', boxShadow: '0 2px 8px rgba(47,109,181,0.25)' }}>
-          <div style={{ color: 'var(--accent-soft)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+          background: 'var(--banner-grad)', borderRadius: 20, padding: '18px 22px', boxShadow: '0 18px 40px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14)' }}>
+          <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
@@ -678,7 +678,7 @@ function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="nx-modal" onClick={(e) => e.stopPropagation()}
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>

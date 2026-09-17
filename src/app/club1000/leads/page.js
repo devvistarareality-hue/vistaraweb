@@ -86,7 +86,7 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
   }
 
   return (
-    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <form className="nx-modal" onSubmit={submit} style={{ background: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16 }}>Add Lead</h2>
         {error && <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
@@ -192,7 +192,7 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
   });
 
   return (
-    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <div className="nx-modal" style={{ background: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 24px 0', flexShrink: 0 }}>
           <div>

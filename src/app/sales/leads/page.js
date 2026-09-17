@@ -123,7 +123,7 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
 
   const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
   return (
-    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
       <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: 'min(100%, 460px)', boxShadow: '0 18px 50px rgba(var(--ink-rgb),0.28)', overflow: 'hidden' }}>
         <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '16px 20px' }}>
           <p style={{ color: '#fff', fontSize: 16, fontWeight: 800, margin: 0 }}>Transfer to another STM</p>
@@ -2109,7 +2109,7 @@ const td  = { padding: '10px 14px', fontSize: 13 };
 const pgBtn = { padding: '5px 12px', borderRadius: 7, border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)', fontSize: 12, color: 'var(--text)', cursor: 'pointer' };
 const saveBtn   = { padding: '9px 20px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 const cancelBtn = { padding: '9px 16px', backgroundColor: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-const overlay   = { position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const overlay   = { position: 'fixed', inset: 0, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal     = { backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 500, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' };
 const closeBtn  = { background: 'none', border: 'none', fontSize: 16, color: 'var(--muted)', cursor: 'pointer', padding: '2px 6px' };

@@ -178,7 +178,7 @@ export default function ModuleLayout({ children, params }) {
 
       {/* ── Profile Modal ── */}
       {profileOpen && (
-        <div className="nx-modal-backdrop" onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+        <div className="nx-modal-backdrop" onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
           <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 300, marginLeft: 16, marginBottom: 20, backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
             <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

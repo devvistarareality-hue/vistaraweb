@@ -7,6 +7,7 @@ import { stripPlotPrefix } from '../../lib/plotNumber';
 import { logout } from '../../redux/actions/authActions';
 
 import Icon from '../../components/Icon';
+import { mapHex, MAP_SELECTED, MAP_INK } from '../../lib/mapColors';
 // ── Client-facing Kiosk self-booking (full-screen, no ERP chrome) ─────────────
 // A Kiosk-role device is logged in; walk-in clients self-serve:
 //   project (kiosk-enabled) → plot (or EOI if no plots) → their details → submit.
@@ -324,8 +325,8 @@ export default function KioskPage() {
                       const isSel = isSelected(pl);
                       const isHov = hovered === zone.id;
                       const pts = zone.points?.length ? zone.points.map((p) => `${p.x},${p.y}`).join(' ') : null;
-                      const fill = isSel ? 'var(--accent)' : cfg.dot + (isHov ? 'cc' : '99');
-                      const stroke = isSel ? 'var(--text)' : cfg.dot;
+                      const fill = isSel ? MAP_SELECTED + 'D9' : mapHex(cfg.dot) + (isHov ? 'B3' : '80');
+                      const stroke = isSel ? MAP_INK : mapHex(cfg.dot);
                       const sw = isSel ? 0.95 : (isHov ? 0.7 : 0.45);
                       const st = { cursor: clickable ? 'pointer' : 'not-allowed', transition: 'fill .13s' };
                       const ev = { onClick: () => togglePlot(pl), onMouseEnter: () => setHovered(zone.id), onMouseLeave: () => setHovered(null) };
@@ -349,7 +350,7 @@ export default function KioskPage() {
                     const { cx, cy } = zoneCenter(zone);
                     const label = stripPlotPrefix(zone.plotNumber);
                     return (
-                      <div key={zone.id + '-l'} className="k-maplbl" style={{ left: `${cx}%`, top: `${cy}%`, background: isSel ? 'var(--primary)' : 'rgba(255,255,255,0.96)', color: isSel ? '#fff' : cfg.dot, boxShadow: `0 1px 3px rgba(0,0,0,.18),0 0 0 1px ${isSel ? 'var(--text)' : `color-mix(in srgb, ${cfg.dot} 40%, transparent)`}` }}>
+                      <div key={zone.id + '-l'} className="k-maplbl" style={{ left: `${cx}%`, top: `${cy}%`, background: isSel ? MAP_SELECTED : '#FFFFFF', color: isSel ? '#fff' : MAP_INK, boxShadow: `0 1px 3px rgba(0,0,0,.22),0 0 0 1.5px ${isSel ? '#fff' : mapHex(cfg.dot)}` }}>
                         {isSel ? `${label}` : label}
                       </div>
                     );
@@ -373,7 +374,7 @@ export default function KioskPage() {
                         transform: below ? `translate(${shiftX},8px)` : `translate(${shiftX},calc(-100% - 8px))` }}>
                         <div className="k-tip-t">Plot {pl.number}</div>
                         <div className="k-tip-badges">
-                          <span style={{ background: `color-mix(in srgb, ${cfg.dot} 19%, transparent)`, color: cfg.dot, border: `1px solid color-mix(in srgb, ${cfg.dot} 38%, transparent)` }}>{cfg.label}</span>
+                          <span style={{ background: mapHex(cfg.dot) + '33', color: '#fff', border: `1px solid ${mapHex(cfg.dot)}` }}>{cfg.label}</span>
                           {pl.cluster_type && <span className="k-tip-type">{pl.cluster_type}</span>}
                         </div>
                         {/* size already carries its own unit (e.g. "84 sqyrd") — don't append another */}
@@ -528,7 +529,7 @@ const Style = () => (
   .k-stat-n{font-size:22px;font-weight:800;color:var(--text)}
   .k-stat-l{font-size:12px;font-weight:600;color:var(--text-3)}
   .k-map{position:relative;width:100%;user-select:none;border-radius:14px;overflow:hidden;background:var(--surface-2);border:1px solid var(--surface-3)}
-  .k-tip{position:absolute;z-index:20;background:rgba(var(--ink-rgb),0.96);color:#fff;padding:10px 14px;border-radius:12px;
+  .k-tip{position:absolute;z-index:20;background:rgba(10,14,22,0.94);color:#fff;padding:10px 14px;border-radius:12px;
     white-space:nowrap;pointer-events:none;min-width:130px;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(8px)}
   .k-tip-t{font-weight:800;font-size:15px;margin-bottom:6px}
   .k-tip-badges{display:flex;gap:6px;flex-wrap:wrap}

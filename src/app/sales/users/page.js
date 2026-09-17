@@ -74,7 +74,7 @@ function AssignProjectsModal({ member, projects, onClose }) {
   }
 
   return (
-    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
       <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}

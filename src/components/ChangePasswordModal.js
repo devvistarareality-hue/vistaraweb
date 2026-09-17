@@ -39,7 +39,7 @@ export default function ChangePasswordModal({ open, onClose, onSuccess }) {
   const disabled = busy || !cur || !nw || !conf;
 
   return (
-    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 380, maxWidth: '100%', background: 'var(--surface)', borderRadius: 20, padding: 22, boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
         <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Change Password</div>
         <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Enter your current password and choose a new one.</div>

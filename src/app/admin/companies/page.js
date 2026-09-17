@@ -252,5 +252,5 @@ const s = {
   deactBtn:   { padding: '5px 10px', backgroundColor: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
   activateBtn:{ padding: '5px 10px', backgroundColor: 'var(--surface-2)', color: 'var(--success)', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
   deleteBtn:  { padding: '5px 10px', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
-  overlay:    { position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  overlay:    { position: 'fixed', inset: 0, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
 };

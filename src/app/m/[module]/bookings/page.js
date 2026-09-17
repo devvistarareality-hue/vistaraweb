@@ -220,8 +220,8 @@ export default function ModuleBookingsPage() {
       )}
 
       {!loading && !err && projectNames.length > 0 && (
-        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: tab === 'cancelled' ? 'var(--strong)' : 'var(--success-solid)', borderRadius: 18, padding: '16px 20px', boxShadow: tab === 'cancelled' ? '0 2px 8px rgba(58,60,64,0.25)' : '0 2px 8px rgba(35,135,74,0.25)' }}>
-          <div style={{ color: tab === 'cancelled' ? 'var(--border)' : 'var(--success-2)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: tab === 'cancelled' ? 'var(--hero)' : 'var(--success-grad)', borderRadius: 20, padding: '18px 22px', boxShadow: '0 18px 40px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14)' }}>
+          <div style={{ color: tab === 'cancelled' ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.82)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
             {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}

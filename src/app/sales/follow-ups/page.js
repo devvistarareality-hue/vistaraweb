@@ -289,7 +289,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
 
       {/* Complete follow-up: remarks + optional next follow-up */}
       {done && (
-        <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
+        <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
           onClick={() => !submitting && setDone(null)}>
           <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>

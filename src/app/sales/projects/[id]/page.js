@@ -15,6 +15,7 @@ import { fieldFlags } from '../../../../lib/bookingFormulas';
 import Icon from '../../../../components/Icon';
 import { confirmDialog, notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
+import { mapHex, MAP_INK } from '../../../../lib/mapColors';
 const STATUS_CFG = {
   available: { label: 'Available', color: 'var(--success)', bg: 'var(--success-soft)', border: 'var(--success)', zone: 'var(--success)' },
   // Covers both a soft pick (auto-expires in 10 min) and a hard hold backed by
@@ -368,7 +369,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                     text gets distorted by preserveAspectRatio="none") */}
                 {zones.map(zone => {
                   const color = getZoneColor(zone.plotNumber);
-                  const shapeProps = { fill: `color-mix(in srgb, ${color} 33%, transparent)`, stroke: color, strokeWidth: 0.6 };
+                  const shapeProps = { fill: mapHex(color) + '73', stroke: mapHex(color), strokeWidth: 0.6 };
                   return (
                     <g key={zone.id}>
                       {zone.points?.length
@@ -421,9 +422,9 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                 return (
                   <div key={zone.id + '-lbl'} style={{
                     position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)',
-                    pointerEvents: 'none', zIndex: 3, background: 'rgba(255,255,255,0.96)', color: 'var(--text)',
+                    pointerEvents: 'none', zIndex: 3, background: '#FFFFFF', color: MAP_INK,
                     fontWeight: 800, fontSize: 'clamp(6px,0.8vw,11px)', lineHeight: 1, padding: '1px 5px',
-                    borderRadius: 4, boxShadow: `0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, ${color} 53%, transparent)`, whiteSpace: 'nowrap',
+                    borderRadius: 5, boxShadow: `0 1px 3px rgba(0,0,0,0.22), 0 0 0 1.5px ${mapHex(color)}`, whiteSpace: 'nowrap',
                   }}>{labelText}</div>
                 );
               })}
