@@ -502,7 +502,7 @@ export default function Club1000LeadsPage() {
         {/* Search bar */}
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' }}>
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: 'var(--muted)' }}><Icon name="search" /></span>
             <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search name, phone, email…"
               style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid var(--surface-3)', fontSize: 13, background: 'var(--surface-2)', outline: 'none', boxSizing: 'border-box', color: 'var(--text)' }} />
@@ -511,7 +511,7 @@ export default function Club1000LeadsPage() {
 
         {/* Row 1: Date range + quick buttons */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-2)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
           <input className="nx-input" type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
           <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
           <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />

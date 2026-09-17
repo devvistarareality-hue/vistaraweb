@@ -150,7 +150,7 @@ function SearchLeadButton() {
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {loading && <p style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Searching…</p>}
               {!loading && results === null && (
-                <p style={{ padding: 20, textAlign: 'center', color: '#A2D2FF', fontSize: 13 }}>Start typing a name or phone number.</p>
+                <p style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Start typing a name or phone number.</p>
               )}
               {!loading && results && results.length === 0 && (
                 <div style={{ padding: 20, textAlign: 'center' }}>
@@ -241,13 +241,13 @@ function StatCard({ label, value, icon, color, textColor, href, loading, flat })
   // `flat` tiles live inside a section panel, so they drop the white card and its
   // shadow — the panel already provides both — and sit tighter.
   const inner = (
-    <div style={flat ? tile : { ...card, textDecoration: 'none', display: 'block' }}>
-      <div style={{ width: flat ? 32 : 40, height: flat ? 32 : 40, borderRadius: 9, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor, marginBottom: flat ? 8 : 12 }}>
+    <div className={flat ? 'nx-stat flat' : 'nx-card nx-stat'} style={flat ? tile : { ...card, textDecoration: 'none', display: 'block', cursor: href ? 'pointer' : 'default' }}>
+      <div className="nx-stat-icon" style={{ width: flat ? 34 : 42, height: flat ? 34 : 42, borderRadius: 12, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor, marginBottom: flat ? 10 : 14 }}>
         {icon}
       </div>
       {loading
         ? <div style={{ height: 24, width: 42, borderRadius: 6, background: 'var(--surface-3)', animation: 'pulse 1.4s ease infinite' }} />
-        : <div style={{ fontSize: flat ? 22 : 26, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{(value ?? 0).toLocaleString()}</div>
+        : <div className="nx-stat-value" style={{ fontSize: flat ? 22 : 28, fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '-0.02em' }}>{(value ?? 0).toLocaleString()}</div>
       }
       <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 4, lineHeight: 1.3, minHeight: flat ? 28 : 31 }}>{label}</div>
     </div>
@@ -329,14 +329,14 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   const closuresHref   = isCp ? '/sales/channel-partners/closures'    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
   const projectsHref   = isCp ? '/sales/channel-partners/closure'     : '/sales/closure';
   const cards = stats ? [
-    { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: '#cce5ff', textColor: 'var(--text)', href: leadsHref },
-    { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: '#cce5ff', textColor: 'var(--text)', href: `${leadsHref}?date_from=today` },
+    { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: leadsHref },
+    { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: `${leadsHref}?date_from=today` },
     // `unassigned_leads`, not `new_leads`: status='new' is a pipeline stage, not an
     // ownership check — a lead already worked by a telecaller sits at 'new' until it
     // moves warm to an STM, so `new_leads` counted assigned leads as unassigned.
     ...(isCp ? [] : [{ label: 'Unassigned', value: stats.unassigned_leads, icon: <IconActivity />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: `${leadsHref}?unassigned=true` }]),
     { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: svHref },
-    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: '#cce5ff', textColor: 'var(--text)', href: closuresHref },
+    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: closuresHref },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: projectsHref },
   ] : [];
 
@@ -527,7 +527,7 @@ function TelecallerDashboard({ user }) {
   // how to read it.
   const sections = [
     { title: 'My Pipeline', cards: [
-      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: '#cce5ff', textColor: 'var(--text)', href: withDate('/sales/leads') },
+      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads') },
       { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads') },
       { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
     ] },
@@ -568,7 +568,7 @@ function TelecallerDashboard({ user }) {
 
       {/* Date Filter */}
       <div className="nx-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
         <input className="nx-input" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...fSel, width: 136 }} />
         <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
         <input className="nx-input" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
@@ -811,7 +811,7 @@ function STMDashboard({ user }) {
       <div className="dash-sections">
       {[
         { title: 'My Pipeline', cards: [
-          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: '#cce5ff', textColor: 'var(--text)', href: withDate('/sales/leads') },
+          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads') },
           { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
         ] },
         { title: 'Lead Temperature', cards: [

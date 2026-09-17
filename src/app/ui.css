@@ -224,3 +224,34 @@ textarea.nx-input { line-height: 1.5; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   body::before { animation: none; }
 }
+
+
+/* ─── Premium surfaces: gradient hairline edge (padding-box / border-box) ─ */
+[data-theme="dark"] .nx-card, [data-theme="dark"] .nx-modal, [data-theme="dark"] .nx-popover {
+  border: 1px solid transparent !important;
+  background: var(--card-bg) padding-box, var(--card-edge) border-box !important;
+}
+[data-theme="dark"] .nx-modal { background: linear-gradient(180deg, rgba(120,150,255,0.08), rgba(13,19,36,0.96) 30%) padding-box, var(--card-edge) border-box !important; }
+[data-theme="dark"] .nx-popover { background: linear-gradient(180deg, #121A33, #0D1324) padding-box, var(--card-edge) border-box !important; }
+[data-theme="dark"] .nx-card[style*="cursor: pointer"]:hover {
+  background: linear-gradient(160deg, rgba(120,150,255,0.16) 0%, rgba(120,150,255,0.05) 45%, rgba(13,19,36,0.6) 100%) padding-box,
+              linear-gradient(145deg, rgba(170,200,255,0.6), rgba(124,92,255,0.35) 50%, rgba(90,162,255,0.4)) border-box !important;
+}
+
+/* ─── Stat tiles ─────────────────────────────────────────────────── */
+.nx-stat { position: relative; overflow: hidden; }
+.nx-stat-icon { box-shadow: inset 0 0 0 1px rgba(47,109,181,0.10); transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
+[data-theme="dark"] .nx-stat-icon { box-shadow: inset 0 0 0 1px rgba(160,190,255,0.16), 0 8px 20px -10px currentColor; }
+.nx-stat:hover .nx-stat-icon { transform: scale(1.08) rotate(-4deg); }
+.nx-card.nx-stat::before {
+  content: ''; position: absolute; right: -30px; top: -30px; width: 120px; height: 120px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(90,162,255,0.16), transparent 70%);
+  transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .3s; opacity: .7;
+}
+.nx-card.nx-stat:hover::before { transform: scale(1.4); opacity: 1; }
+[data-theme="dark"] .nx-stat-value { background: linear-gradient(180deg, #FFFFFF 0%, #B9C8F2 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+.nx-stat.flat { transition: border-color .2s, background-color .2s, transform .2s; }
+.nx-stat.flat:hover { transform: translateY(-2px); border-color: var(--border-strong) !important; }
+
+/* sidebar glass in dark */
+[data-theme="dark"] .nx-sidebar { backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); }

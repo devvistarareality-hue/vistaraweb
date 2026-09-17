@@ -501,7 +501,7 @@ export default function DistributionPage() {
                         <div key={lbl}>
                           <p style={{ ...sectionLabel, marginBottom: 6 }}>{lbl}</p>
                           {list.length === 0
-                            ? <p style={{ fontSize: 12, color: '#A2D2FF' }}>—</p>
+                            ? <p style={{ fontSize: 12, color: 'var(--faint)' }}>—</p>
                             : list.map(x => (
                               <div key={x.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
                                 <span style={{ fontSize: 12.5, color: x.is_available ? 'var(--text)' : 'var(--muted)' }}>{x.name}</span>

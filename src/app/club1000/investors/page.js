@@ -124,7 +124,7 @@ export default function InvestorsPage() {
       </div>
 
       <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
-        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: 'var(--muted)' }}><Icon name="search" /></span>
         <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search name, phone, email, investor no.…"
           style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />

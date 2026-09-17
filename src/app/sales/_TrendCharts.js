@@ -86,8 +86,8 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#F4F5F7" vertical={false} />
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: '#A2D2FF' }} tickLine={false} axisLine={false} interval={labelInterval} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#A2D2FF' }} tickLine={false} axisLine={false} width={32} />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: 'var(--muted)' }} tickLine={false} axisLine={false} interval={labelInterval} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--muted)' }} tickLine={false} axisLine={false} width={32} />
             <Tooltip content={<CustomTooltip color={color} metricLabel={metricLabel} showAmount={showAmount} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 2' }} />
             <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2.5} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
           </AreaChart>
