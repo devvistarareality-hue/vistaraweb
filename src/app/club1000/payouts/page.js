@@ -89,15 +89,15 @@ export default function PayoutsPage() {
       <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Interest, maturity, and premature-redemption ledger</p>
 
       <div style={{ marginTop: 18 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
+        <select className="nx-input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All</option>
           <option value="pending">Pending</option>
           <option value="paid">Paid</option>
         </select>
       </div>
 
-      <div style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
+        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Investor</th>
@@ -134,7 +134,7 @@ export default function PayoutsPage() {
                 </td>
                 <td style={td}>
                   {p.status === 'pending' && (
-                    <button onClick={() => openMarkPaid(p)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => openMarkPaid(p)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
                   )}
                 </td>
               </tr>
@@ -144,8 +144,8 @@ export default function PayoutsPage() {
       </div>
 
       {payingFor && (
-        <div onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: '100%', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+        <div className="nx-modal-backdrop" onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: '100%', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
             <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Mark Payout Paid</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
@@ -155,20 +155,20 @@ export default function PayoutsPage() {
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={lbl}>Amount Paid (₹)</label>
-                <input style={inp} type="number" min="0" step="0.01" value={payForm.amount}
+                <input className="nx-input" style={inp} type="number" min="0" step="0.01" value={payForm.amount}
                   onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
                 <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Scheduled: {fmtMoney(payingFor.amount_due)}</div>
               </div>
               <div>
                 <label style={lbl}>Remarks</label>
-                <textarea style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} rows={3}
+                <textarea className="nx-input" style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} rows={3}
                   value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
                   placeholder="e.g. paid via NEFT, rounded to nearest ₹10…" />
               </div>
               {err && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button onClick={() => setPayingFor(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={submitMarkPaid} disabled={saving} style={{ padding: '9px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setPayingFor(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button className="nx-btn nx-btn-md nx-btn-success" onClick={submitMarkPaid} disabled={saving} style={{ padding: '9px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? 'Saving…' : 'Mark Paid'}
                 </button>
               </div>

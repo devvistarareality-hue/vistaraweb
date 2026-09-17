@@ -320,7 +320,7 @@ export function MyBookingsList({ cpOnly = false }) {
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
-            <button key={k} onClick={() => { setTab(k); setOpen({}); }}
+            <button className="nx-btn nx-btn-md nx-btn-primary" key={k} onClick={() => { setTab(k); setOpen({}); }}
               style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
@@ -329,24 +329,24 @@ export function MyBookingsList({ cpOnly = false }) {
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group collapsed earlier would hide its own hits. */}
-          <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
+          <input className="nx-input" value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
             placeholder="Search name, phone or LOI / unit no…"
             style={{ width: '100%', height: 36, padding: '0 32px', borderRadius: 8, border: '1.5px solid var(--border)',
               background: 'var(--surface)', fontSize: 13, color: 'var(--text)', boxSizing: 'border-box' }} />
           {!!q && (
-            <button onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
+            <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
               style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
                 color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
         {projOptions.length > 1 && (
-          <select value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }} style={selectStyle}>
+          <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }} style={selectStyle}>
             <option value="">All Projects</option>
             {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         )}
         {(peopleOptions.length > 0 || others.length > 0 || showSource) && (
-          <select value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
+          <select className="nx-input" value={who} onChange={(e) => { setWho(e.target.value); setOpen({}); }} style={selectStyle}
             title="Filter by who booked it — a manager includes their own reports">
             <option value="">{`All People (${preWho.length})`}</option>
             {/* Two complete ways to slice the same list, each adding up to it on its
@@ -389,7 +389,7 @@ export function MyBookingsList({ cpOnly = false }) {
       </div>
 
       {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} /> : projectNames.length === 0 ? (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           {/* Distinguish "nothing matched" from "nothing exists" — telling someone
               they have never booked a unit while a filter hides 121 of them is worse
               than saying nothing at all. */}
@@ -397,7 +397,7 @@ export function MyBookingsList({ cpOnly = false }) {
         </div>
       ) : projectNames.map((pn) => (
         <div key={pn} style={{ marginBottom: 12 }}>
-          <div onClick={() => toggle(pn)}
+          <div className="nx-card" onClick={() => toggle(pn)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid var(--blue-2)' : '1.5px solid transparent' }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
               <Icon name="building" /> {pn} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {groups[pn].length} unit{groups[pn].length === 1 ? '' : 's'}</span>
@@ -407,13 +407,13 @@ export function MyBookingsList({ cpOnly = false }) {
           {open[pn] && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
             {groups[pn].map((b) => (
-              <div key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+              <div className="nx-card" key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
                       {unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {b.client_name || '—'}</span>
-                      {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
-                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-deep)', background: 'var(--accent-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
+                      {b.revision_no > 0 && <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
+                      {b.is_resale && <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-deep)', background: 'var(--accent-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
                     </div>
                     {/* STM alongside the unit, as Bookings & Approvals shows it. Usually
                         the viewer, since this list is their own submissions — but a kiosk
@@ -444,21 +444,21 @@ export function MyBookingsList({ cpOnly = false }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                  {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
+                  {b.loi_document && <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                   {b.status === 'draft' && (
                     <>
-                      <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
-                      <button onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
+                      <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
+                      <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
                     </>
                   )}
                   {b.status === 'sold' && String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
                     <>
-                      <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>
-                      <button onClick={() => router.push(`/sales/booking?revise=${b.id}&eoi=1`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise EOI</button>
+                      <button className="nx-btn nx-btn-md nx-btn-warning" onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>
+                      <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?revise=${b.id}&eoi=1`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise EOI</button>
                     </>
                   )}
                   {b.status === 'sold' && !String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
-                    <button onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise LOI</button>
+                    <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise LOI</button>
                   )}
                   {b.status === 'pending' && <span style={{ fontSize: 12, color: 'var(--warning)', alignSelf: 'center' }}>Awaiting approval</span>}
                   {/* Every figure of the deal, beside its signed LOI. A revised deal
@@ -466,7 +466,7 @@ export function MyBookingsList({ cpOnly = false }) {
                       current version is one of them, so a card-level copy would be
                       the same figures twice, and the two share a booking id. */}
                   {!b.revision_no && (
-                    <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
+                    <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
                       style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer', borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                       {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
                     </button>
@@ -476,7 +476,7 @@ export function MyBookingsList({ cpOnly = false }) {
                       are what was signed at the time, and there was no way to reach
                       them from the product at all. */}
                   {b.revision_no > 0 && (
-                    <button onClick={() => toggleRevisions(b.id)}
+                    <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => toggleRevisions(b.id)}
                       style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}>
                       ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
                     </button>
@@ -488,12 +488,12 @@ export function MyBookingsList({ cpOnly = false }) {
                     <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginBottom: 8 }}>
                       REVISION HISTORY
                     </div>
-                    {!revs[b.id] ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Loading…</p>
+                    {!revs[b.id] ? <Loader variant="inline" size="sm" label="Loading…" />
                      : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Couldn&apos;t load the history.</p>
                      : revs[b.id].map((v) => (
                       <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
                         padding: '7px 0', borderBottom: '1px solid var(--surface-2)' }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
+                        <span className="nx-badge" style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
                           background: v.id === b.id ? 'var(--success-soft)' : 'var(--surface-2)', padding: '3px 8px', borderRadius: 20 }}>
                           R{v.revision_no || 0}
                         </span>
@@ -509,7 +509,7 @@ export function MyBookingsList({ cpOnly = false }) {
                           : <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>superseded</span>}
                         <span style={{ flex: 1 }} />
                         {v.loi_document
-                          ? <button onClick={() => openLoi(v.id)}
+                          ? <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(v.id)}
                               style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer' }}>
                               <Icon name="file" /> Signed LOI
                             </button>
@@ -519,7 +519,7 @@ export function MyBookingsList({ cpOnly = false }) {
                             question the history is opened to answer, and the figures
                             are where the answer is. The same block Accounts & Finance
                             reads, rather than a second rendering of the same deal. */}
-                        <button onClick={() => toggleRevDetails(v.id)}
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => toggleRevDetails(v.id)}
                           style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer',
                             borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                           {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}

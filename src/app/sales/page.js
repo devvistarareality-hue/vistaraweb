@@ -65,7 +65,7 @@ function AvailabilityToggle() {
             ⏰ Signed in late{state.signin_time ? ` · after ${state.signin_time}` : ''}
           </span>
         )}
-        <button onClick={() => toggle(false)} disabled={busy}
+        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => toggle(false)} disabled={busy}
           style={{ padding: '7px 14px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 12, fontWeight: 700, cursor: busy ? 'default' : 'pointer' }}>
           {busy ? '…' : 'Mark Unavailable'}
         </button>
@@ -73,7 +73,7 @@ function AvailabilityToggle() {
     );
   }
   return (
-    <button onClick={() => toggle(true)} disabled={busy}
+    <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => toggle(true)} disabled={busy}
       style={{ marginLeft: 'auto', padding: '9px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
       {busy ? 'Saving…' : <><Icon name="check" /> Mark Available Today</>}
     </button>
@@ -130,7 +130,7 @@ function SearchLeadButton() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{
+      <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setOpen(true)} style={{
         marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
         padding: '9px 16px', background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid #3D5AFE30',
         borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
@@ -139,11 +139,11 @@ function SearchLeadButton() {
         Search Lead
       </button>
       {open && (
-        <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(var(--ink-rgb),0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: 520, maxWidth: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRadius: 20, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.25)', overflow: 'hidden' }}>
+        <div className="nx-modal-backdrop" onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(var(--ink-rgb),0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px' }}>
+          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 520, maxWidth: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRadius: 20, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.25)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>Search Lead — whole company</div>
-              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or phone number…"
+              <input className="nx-input" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or phone number…"
                 style={{ width: '100%', height: 42, padding: '0 14px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
               <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>Checks every lead in the company, not just your own — use this before adding a new one to avoid creating a duplicate.</p>
             </div>
@@ -155,7 +155,7 @@ function SearchLeadButton() {
               {!loading && results && results.length === 0 && (
                 <div style={{ padding: 20, textAlign: 'center' }}>
                   <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>No lead found for "{q}" — safe to add as a new lead.</p>
-                  <button onClick={addAsNewLead} style={{ padding: '9px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  <button className="nx-btn nx-btn-md nx-btn-primary" onClick={addAsNewLead} style={{ padding: '9px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                     + Add Lead
                   </button>
                 </div>
@@ -187,7 +187,7 @@ function SearchLeadButton() {
               ))}
             </div>
             <div style={{ padding: '10px 20px', borderTop: '1px solid var(--surface-2)', textAlign: 'right' }}>
-              <button onClick={close} style={{ padding: '8px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Close</button>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={close} style={{ padding: '8px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Close</button>
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@ const STATUS_COLOR = {
 function StatusBadge({ status }) {
   const color = STATUS_COLOR[status] || 'var(--muted)';
   return (
-    <span style={{
+    <span className="nx-badge" style={{
       display: 'inline-block', padding: '2px 10px', borderRadius: 20,
       fontSize: 11, fontWeight: 700, letterSpacing: 0.3,
       backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, color,
@@ -263,7 +263,7 @@ function StatSection({ title, cards, loading }) {
   // Panels come from a uniform column track, so every panel is the same width at
   // any screen size and the tiles line up across them.
   return (
-    <section style={panel}>
+    <section className="nx-card" style={panel}>
       <h3 style={sectionLabel}>{title}</h3>
       <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))` }}>
         {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
@@ -356,7 +356,7 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
         </div>
       )}
 
-      <div style={cardWrap}>
+      <div className="nx-card" style={cardWrap}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Recent Leads</h2>
           <Link href={leadsHref} style={{ fontSize: 13, color: 'var(--warning-2)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
@@ -367,7 +367,7 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
           <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>No leads yet. Add your first lead.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={tbl}>
+            <table className="nx-table" style={tbl}>
               <thead>
                 <tr>{['Name','Project','Source','Status','Received'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
               </thead>
@@ -567,21 +567,21 @@ function TelecallerDashboard({ user }) {
       </div>
 
       {/* Date Filter */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
+      <div className="nx-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
-        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...fSel, width: 136 }} />
+        <input className="nx-input" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...fSel, width: 136 }} />
         <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
-        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
+        <input className="nx-input" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
         <div style={divider} />
-        <button onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
-        <button onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
-        <button onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
+        <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === today && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
+        <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === daysAgo(6) && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
+        <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === daysAgo(29) && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
         <div style={divider} />
-        <button onClick={() => { setDateFrom(''); setDateTo(''); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear)}>All</button>
+        <button className={`nx-btn nx-btn-sm nx-toggle${(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear) ? ' is-on' : ''}`} onClick={() => { setDateFrom(''); setDateTo(''); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear)}>All</button>
         <div style={divider} />
         {/* Year Dropdown */}
         <div style={{ position: 'relative' }}>
-          <button onClick={() => { setShowYearDrop(v => !v); setShowMonthDrop(false); setShowQuarterDrop(false); }}
+          <button className={`nx-btn nx-btn-sm nx-toggle${(selectedFyYear !== null) ? ' is-on' : ''}`} onClick={() => { setShowYearDrop(v => !v); setShowMonthDrop(false); setShowQuarterDrop(false); }}
             style={{ ...qBtn(selectedFyYear !== null), display: 'flex', alignItems: 'center', gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             {selectedFyYear !== null ? `FY ${selectedFyYear}-${String(selectedFyYear + 1).slice(2)}` : 'Year'}
@@ -590,7 +590,7 @@ function TelecallerDashboard({ user }) {
           {showYearDrop && (
             <>
               <div onClick={() => setShowYearDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 170, padding: '8px 0' }}>
+              <div className="nx-popover" style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 170, padding: '8px 0' }}>
                 {selectedFyYear !== null && (
                   <button onClick={() => { setSelectedFyYear(null); setShowYearDrop(false); }}
                     style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>
@@ -615,7 +615,7 @@ function TelecallerDashboard({ user }) {
         </div>
         <div style={divider} />
         <div style={{ position: 'relative' }}>
-          <button onClick={() => { setShowMonthDrop(v => !v); setShowQuarterDrop(false); setShowYearDrop(false); }}
+          <button className={`nx-btn nx-btn-sm nx-toggle${(selectedMonths.length > 0) ? ' is-on' : ''}`} onClick={() => { setShowMonthDrop(v => !v); setShowQuarterDrop(false); setShowYearDrop(false); }}
             style={{ ...qBtn(selectedMonths.length > 0), display: 'flex', alignItems: 'center', gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             {selectedMonths.length > 0 ? `${selectedMonths.length} Month${selectedMonths.length > 1 ? 's' : ''}` : 'Month Filter'}
@@ -624,7 +624,7 @@ function TelecallerDashboard({ user }) {
           {showMonthDrop && (
             <>
               <div onClick={() => setShowMonthDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, maxHeight: 300, overflowY: 'auto', padding: '8px 0' }}>
+              <div className="nx-popover" style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, maxHeight: 300, overflowY: 'auto', padding: '8px 0' }}>
                 {selectedMonths.length > 0 && (
                   <button onClick={() => setSelectedMonths([])}
                     style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>
@@ -650,7 +650,7 @@ function TelecallerDashboard({ user }) {
         <div style={divider} />
         {/* Quarter Dropdown */}
         <div style={{ position: 'relative' }}>
-          <button onClick={() => { setShowQuarterDrop(v => !v); setShowMonthDrop(false); }}
+          <button className={`nx-btn nx-btn-sm nx-toggle${(selectedQuarter.length > 0) ? ' is-on' : ''}`} onClick={() => { setShowQuarterDrop(v => !v); setShowMonthDrop(false); }}
             style={{ ...qBtn(selectedQuarter.length > 0), display: 'flex', alignItems: 'center', gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             {selectedQuarter.length > 0 ? `${selectedQuarter.length} Quarter${selectedQuarter.length > 1 ? 's' : ''}` : 'Quarter'}
@@ -659,7 +659,7 @@ function TelecallerDashboard({ user }) {
           {showQuarterDrop && (
             <>
               <div onClick={() => setShowQuarterDrop(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-              <div style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, padding: '8px 0' }}>
+              <div className="nx-popover" style={{ position: 'absolute', left: 0, top: '110%', zIndex: 20, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 32px rgba(var(--ink-rgb),0.14)', border: '1px solid var(--surface-2)', minWidth: 210, padding: '8px 0' }}>
                 {selectedQuarter.length > 0 && (
                   <button onClick={() => setSelectedQuarter([])}
                     style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--danger)', cursor: 'pointer', borderBottom: '1px solid var(--surface-2)', marginBottom: 4 }}>
@@ -697,7 +697,7 @@ function TelecallerDashboard({ user }) {
             const [y, mo] = m.split('-').map(Number);
             const label = new Date(y, mo - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
             return (
-              <span key={m} onClick={() => setSelectedMonths(prev => prev.filter(x => x !== m))}
+              <span className="nx-badge" key={m} onClick={() => setSelectedMonths(prev => prev.filter(x => x !== m))}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, background: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                 {label}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -859,18 +859,18 @@ function STMDashboard({ user }) {
       )}
 
       {!loading && svUpcoming.length > 0 && (
-        <div style={{ ...cardWrap, marginBottom: 20, borderLeft: '4px solid var(--warning-2)' }}>
+        <div className="nx-card" style={{ ...cardWrap, marginBottom: 20, borderLeft: '4px solid var(--warning-2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Site Visits Scheduled</h2>
-              <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: 'var(--warning-soft)', color: 'var(--warning)', padding: '2px 8px', borderRadius: 20 }}>
+              <span className="nx-badge" style={{ fontSize: 11, fontWeight: 700, backgroundColor: 'var(--warning-soft)', color: 'var(--warning)', padding: '2px 8px', borderRadius: 20 }}>
                 {svUpcoming.length} pending
               </span>
             </div>
             <Link href="/sales/leads" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
           </div>
           <div style={{ overflowX: 'auto' }}>
-            <table style={tbl}>
+            <table className="nx-table" style={tbl}>
               <thead>
                 <tr>{['Name','Project','STM Status','Remarks'].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
               </thead>

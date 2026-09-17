@@ -129,7 +129,7 @@ export default function Sidebar({ user, onClose, className }) {
   };
 
   return (
-    <div style={s.sidebar} className={className || ''}>
+    <div style={s.sidebar} className={`nx-sidebar ${className || ''}`}>
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ── Logo + close button (mobile) ── */}
@@ -173,7 +173,7 @@ export default function Sidebar({ user, onClose, className }) {
           <div style={{ marginTop: 18, marginBottom: 4 }}>
             <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
             <div style={{ position: 'relative' }}>
-              <select data-plain
+              <select className="nx-input" data-plain
                 value={companyId ?? ''}
                 onChange={handleCompanyChange}
                 style={{
@@ -246,7 +246,7 @@ export default function Sidebar({ user, onClose, className }) {
 const s = {
   sidebar: {
     width: 240, minWidth: 240, height: '100vh',
-    backgroundColor: 'var(--glass)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    backgroundColor: 'var(--sidebar)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
     boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)',
     display: 'flex', flexDirection: 'column',
     flexShrink: 0, position: 'sticky', top: 0,
@@ -280,7 +280,7 @@ const s = {
     cursor: 'pointer', textDecoration: 'none', position: 'relative',
     overflow: 'hidden',
   },
-  navActive: { backgroundColor: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: '0 6px 16px -6px rgba(47,109,181,0.45)' },
+  navActive: { background: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: 'var(--nav-active-shadow)' },
   navChildActive: { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' },
   activeBar: {
     position: 'absolute', left: 0, top: '18%', bottom: '18%',

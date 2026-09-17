@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ═══ HERO ═══ */}
-      <div style={s.hero} className="admin-hero">
+      <div style={s.hero} className="admin-hero nx-hero">
         <div style={s.heroDots} />
         <div style={s.heroGlowTR} />
         <div style={s.heroGlowBL} />

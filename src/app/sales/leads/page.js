@@ -7,6 +7,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 import Icon from '../../../components/Icon';
 import { confirmDialog } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -59,7 +60,7 @@ const OUTCOME_COLOR = { hot: 'var(--danger)', warm: 'var(--warning-2)', cold: 'v
 function StatusBadge({ status, outcome }) {
   const color = STATUS_COLOR[status] || 'var(--muted)';
   return (
-    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, color }}>
+    <span className="nx-badge" style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, color }}>
       {status?.replace(/_/g, ' ').toUpperCase()}
       {status === 'sv_done' && outcome && (
         <span style={{ color: OUTCOME_COLOR[outcome] || color }}> · {outcome.replace(/_/g, ' ').toUpperCase()}</span>
@@ -83,14 +84,14 @@ function DupToast({ toasts, onDismiss }) {
   return (
     <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360 }}>
       {toasts.map((t) => (
-        <div key={t.id} style={{ backgroundColor: 'var(--surface)', border: '1.5px solid var(--danger-2)', borderLeft: '4px solid var(--danger)', borderRadius: 16, padding: '12px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'slideIn 0.25s ease' }}>
+        <div className="nx-card" key={t.id} style={{ backgroundColor: 'var(--surface)', border: '1.5px solid var(--danger-2)', borderLeft: '4px solid var(--danger)', borderRadius: 16, padding: '12px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'slideIn 0.25s ease' }}>
           <span style={{ fontSize: 20, flexShrink: 0 }}><Icon name="alert" /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--danger)', marginBottom: 2 }}>Duplicate Lead</div>
             <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{t.phone} · already in system</div>
           </div>
-          <button onClick={() => onDismiss(t.id)} style={{ background: 'none', border: 'none', color: 'var(--faint)', cursor: 'pointer', fontSize: 16, flexShrink: 0, padding: 0 }}><Icon name="x" /></button>
+          <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" onClick={() => onDismiss(t.id)} style={{ background: 'none', border: 'none', color: 'var(--faint)', cursor: 'pointer', fontSize: 16, flexShrink: 0, padding: 0 }}><Icon name="x" /></button>
         </div>
       ))}
     </div>
@@ -122,9 +123,9 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
 
   const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: 'min(100%, 460px)', boxShadow: '0 18px 50px rgba(var(--ink-rgb),0.28)', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--hero)', padding: '16px 20px' }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
+      <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: 'min(100%, 460px)', boxShadow: '0 18px 50px rgba(var(--ink-rgb),0.28)', overflow: 'hidden' }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '16px 20px' }}>
           <p style={{ color: '#fff', fontSize: 16, fontWeight: 800, margin: 0 }}>Transfer to another STM</p>
           <p style={{ color: '#CCE5FF', fontSize: 12, margin: '3px 0 0' }}>{lead.name}{lead.project_name ? ` · ${lead.project_name}` : ''}</p>
         </div>
@@ -132,19 +133,19 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
           <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>
             Needs approval from this project&rsquo;s booking approvers. The lead stays with you until then.
           </p>
-          <select value={to} onChange={(e) => setTo(e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+          <select className="nx-input" value={to} onChange={(e) => setTo(e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
             <option value="">Select the STM to transfer to…</option>
             {options.map((u) => <option key={u.id} value={u.id}>{u.name}{u.user_code ? ` · ${u.user_code}` : ''}</option>)}
           </select>
           {options.length === 0 && (
             <p style={{ fontSize: 12, color: 'var(--warning)', margin: 0 }}>No other STM in your company to transfer to.</p>
           )}
-          <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why is it moving? (optional)"
+          <textarea className="nx-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why is it moving? (optional)"
             style={{ ...inp, height: 64, padding: '8px 12px', resize: 'vertical' }} />
           {!!err && <p style={{ fontSize: 12.5, color: 'var(--danger)', fontWeight: 600, margin: 0 }}>{err}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-            <button onClick={onClose} style={{ padding: '10px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-            <button onClick={submit} disabled={!to || busy}
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} style={{ padding: '10px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button className="nx-btn nx-btn-md nx-btn-primary" onClick={submit} disabled={!to || busy}
               style={{ padding: '10px 20px', background: (!to || busy) ? 'var(--blue-2)' : 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: (!to || busy) ? 'default' : 'pointer' }}>
               {busy ? 'Sending…' : 'Request transfer'}
             </button>
@@ -181,7 +182,7 @@ function ChannelPartnerPicker({ value, onChange, options, inputStyle, placeholde
         autoComplete="off"
       />
       {open && (
-        <div style={{
+        <div className="nx-popover" style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, marginTop: 4,
           background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8,
           boxShadow: '0 8px 24px rgba(var(--ink-rgb),0.14)', maxHeight: 220, overflowY: 'auto',
@@ -359,10 +360,10 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   }
 
   return (
-    <div style={overlay}>
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="nx-modal-backdrop" style={overlay}>
+      <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 520, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <div style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Add Manual Lead</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details to create a new lead</div>
@@ -384,7 +385,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>
                   {label}{required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}
                 </label>
-                <input type={type} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                <input className="nx-input" type={type} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                   placeholder={placeholder}
                   style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)', transition: 'border-color 0.2s' }}
                   onFocus={e => e.target.style.borderColor = 'var(--accent)'}
@@ -395,7 +396,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           </div>
           <div style={{ marginBottom: 18 }}>
             <label style={addLbl}>Lead Received Date</label>
-            <input type="date" value={form.lead_date} max={new Date().toISOString().slice(0, 10)}
+            <input className="nx-input" type="date" value={form.lead_date} max={new Date().toISOString().slice(0, 10)}
               onChange={(e) => {
                 setForm({ ...form, lead_date: e.target.value });
                 // A walk-in's visit happened the day they walked in.
@@ -410,7 +411,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
             <div>
               <label style={addLbl}>City</label>
-              <select value={cityOther ? 'Other' : (form.city || '')}
+              <select className="nx-input" value={cityOther ? 'Other' : (form.city || '')}
                 onChange={(e) => { const v = e.target.value; if (v === 'Other') { setCityOther(true); setForm({ ...form, city: '' }); } else { setCityOther(false); setForm({ ...form, city: v }); } }}
                 style={addSel}>
                 <option value="">— Select —</option>
@@ -418,12 +419,12 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 <option value="Other">Other</option>
               </select>
               {cityOther && (
-                <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Enter city" style={{ ...addInp, marginTop: 8 }} />
+                <input className="nx-input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Enter city" style={{ ...addInp, marginTop: 8 }} />
               )}
             </div>
             <div>
               <label style={addLbl}>Budget</label>
-              <select value={form.budget_bucket || ''} onChange={(e) => setForm({ ...form, budget_bucket: e.target.value })} style={addSel}>
+              <select className="nx-input" value={form.budget_bucket || ''} onChange={(e) => setForm({ ...form, budget_bucket: e.target.value })} style={addSel}>
                 <option value="">— Select —</option>
                 {BUDGET_OPTIONS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
               </select>
@@ -431,7 +432,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           </div>
           <div style={{ marginBottom: 12 }}>
             <label style={addLbl}>Address</label>
-            <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address"
+            <textarea className="nx-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address"
               style={{ ...addInp, height: 56, padding: '8px 12px', resize: 'vertical' }} />
           </div>
           <div style={{ marginBottom: 18 }}>
@@ -440,7 +441,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               {PURPOSE_OPTIONS.map((p) => {
                 const on = (form.purpose || []).includes(p.value);
                 return (
-                  <button key={p.value} type="button"
+                  <button className={`nx-btn nx-btn-md nx-toggle${on ? ' is-on' : ''}`} key={p.value} type="button"
                     onClick={() => setForm((f) => { const cur = Array.isArray(f.purpose) ? f.purpose : []; return { ...f, purpose: on ? cur.filter((x) => x !== p.value) : [...cur, p.value] }; })}
                     style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid var(--accent)' : '1px solid var(--border)', background: on ? 'var(--accent-softer)' : 'var(--surface)', color: on ? 'var(--accent)' : 'var(--text)' }}>
                     {on ? <Icon name="check" /> : ''}{p.label}
@@ -456,7 +457,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Project<span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span></label>
               <div style={{ position: 'relative' }}>
-                <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })}
+                <select className="nx-input" value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })}
                   style={{ width: '100%', height: 40, padding: '0 32px 0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)', appearance: 'none', cursor: 'pointer', color: form.project ? 'var(--text)' : 'var(--faint)' }}>
                   <option value="">Select project</option>
                   {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -470,7 +471,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 <div style={{ ...addInp, display: 'flex', alignItems: 'center', color: 'var(--text)', fontWeight: 600 }}>Channel Partner</div>
               ) : (
                 <div style={{ position: 'relative' }}>
-                  <select value={form.source} onChange={(e) => {
+                  <select className="nx-input" value={form.source} onChange={(e) => {
                       const v = e.target.value;
                       const walkIn = /walk\s*-?\s*in/.test(srcName(v));
                       setForm((f) => ({ ...f, source: v, ...(walkIn && showStm ? { stm_status: 'sv_done' } : {}) }));
@@ -505,7 +506,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               {_isAdminMgr && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign Telecaller</label>
-                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={addSel}>
+                  <select className="nx-input" value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={addSel}>
                     <option value="">— None —</option>
                     {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -513,14 +514,14 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               )}
               <div style={{ marginBottom: 12 }}>
                 <label style={addLbl}>TC Status{_isTelecaller &&  <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={addSel}>
+                <select className="nx-input" value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
                 <label style={addLbl}>TC Remarks{_isTelecaller &&  <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder={_isTelecaller ? 'What was discussed' : 'Optional'} style={addTa} />
+                <textarea className="nx-input" value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder={_isTelecaller ? 'What was discussed' : 'Optional'} style={addTa} />
               </div>
             </>
           )}
@@ -537,7 +538,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               {_isAdminMgr && !cpOnly && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign STM</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
+                  <select className="nx-input" value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
                     <option value="">— None —</option>
                     {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -546,7 +547,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               {cpOnly && (_isCpHead || _isAdminMgr) && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign CP</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
+                  <select className="nx-input" value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
                     <option value="">— None —</option>
                     {cps.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -555,7 +556,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               {cpOnly && (_isCpHead || _isAdminMgr) && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={addLbl}>Assign STM</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
+                  <select className="nx-input" value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={addSel}>
                     <option value="">— None —</option>
                     {salesCpUsers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -564,14 +565,14 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               )}
               <div style={{ marginBottom: 12 }}>
                 <label style={addLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'}{_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
+                <select className="nx-input" value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={addSel}>
                   <option value="">— None —</option>
                   {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 18 }}>
                 <label style={addLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'}{_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder={_isStm ? 'What was discussed' : 'Optional'} style={addTa} />
+                <textarea className="nx-input" value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder={_isStm ? 'What was discussed' : 'Optional'} style={addTa} />
               </div>
 
               {/* A lead added directly at sv_done needs its visit outcome recorded too —
@@ -586,7 +587,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                     {[['hot', 'Hot', 'var(--danger)'], ['warm', 'Warm', 'var(--warning-2)'], ['cold', 'Cold', 'var(--accent)'], ['not_interested', 'Not Interested', 'var(--text-3)']].map(([val, label, color]) => {
                       const active = svOutcome === val;
                       return (
-                        <button key={val} type="button" onClick={() => setSvOutcome(val)}
+                        <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={val} type="button" onClick={() => setSvOutcome(val)}
                           style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                             border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                           {label}
@@ -596,7 +597,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                   </div>
                   <div style={{ marginTop: 10 }}>
                     <label style={{ ...addLbl, color: 'var(--success)' }}>Visit Date *</label>
-                    <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
+                    <input className="nx-input" type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
                       onChange={(e) => setSvVisitedDate(e.target.value)} style={addInp} />
                   </div>
                   {!svOutcome && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>
@@ -620,7 +621,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               {_isAdminMgr && !cpOnly && (
                 <div>
                   <label style={addLbl}>Role</label>
-                  <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={addSel}>
+                  <select className="nx-input" value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={addSel}>
                     <option value="telecaller">Telecaller</option>
                     <option value="stm">STM</option>
                   </select>
@@ -628,13 +629,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               )}
               <div>
                 <label style={addLbl}>Date &amp; Time</label>
-                <input type="datetime-local" value={fuForm.scheduled_at}
+                <input className="nx-input" type="datetime-local" value={fuForm.scheduled_at}
                   onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={addInp} />
               </div>
             </div>
             <div style={{ marginBottom: 10 }}>
               <label style={addLbl}>Remarks</label>
-              <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
+              <textarea className="nx-input" value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
                 placeholder="Call notes, instructions…" rows={2} style={addTa} />
             </div>
             <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0, fontStyle: 'italic' }}>Optional — pick a date &amp; time and it's scheduled when you click Add Lead below.</p>
@@ -647,11 +648,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           )}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose}
+            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose}
               style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
-            <button type="submit" disabled={saving}
+            <button className="nx-btn nx-btn-md nx-btn-primary" type="submit" disabled={saving}
               style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
               {saving ? 'Adding…' : '+ Add Lead'}
             </button>
@@ -977,10 +978,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
   const mSec = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 };
 
   return (
-    <div style={overlay}>
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '92%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
+    <div className="nx-modal-backdrop" style={overlay}>
+      <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '92%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
         {/* Gradient Header */}
-        <div style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3, display: 'flex', alignItems: 'center', gap: 8 }}>
               {lead.name}
@@ -1010,17 +1011,17 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
                   <label style={mLbl}>Name</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={mInp}
+                  <input className="nx-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={mInp}
                     onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 </div>
                 <div>
                   <label style={mLbl}>Alternate Phone</label>
-                  <input value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
+                  <input className="nx-input" value={form.alt_phone} onChange={(e) => setForm({ ...form, alt_phone: e.target.value })} style={mInp} placeholder="Alt. number"
                     onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 </div>
                 <div>
                   <label style={mLbl}>Email</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={mInp} placeholder="Optional"
+                  <input className="nx-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={mInp} placeholder="Optional"
                     onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                 </div>
               </div>
@@ -1030,7 +1031,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 12 }}>
                 <div>
                   <label style={mLbl}>City</label>
-                  <select
+                  <select className="nx-input"
                     value={cityOther ? 'Other' : (form.city || '')}
                     onChange={(e) => {
                       const v = e.target.value;
@@ -1043,14 +1044,14 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     <option value="Other">Other</option>
                   </select>
                   {cityOther && (
-                    <input value={form.city || ''} onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    <input className="nx-input" value={form.city || ''} onChange={(e) => setForm({ ...form, city: e.target.value })}
                       style={{ ...mInp, marginTop: 8 }} placeholder="Enter city"
                       onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                   )}
                 </div>
                 <div>
                   <label style={mLbl}>Budget</label>
-                  <select value={form.budget_bucket || ''} onChange={(e) => setForm({ ...form, budget_bucket: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.budget_bucket || ''} onChange={(e) => setForm({ ...form, budget_bucket: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— Select —</option>
                     {BUDGET_OPTIONS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
                   </select>
@@ -1058,7 +1059,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               </div>
               <div style={{ marginBottom: 12 }}>
                 <label style={mLbl}>Address</label>
-                <textarea value={form.address || ''} onChange={(e) => setForm({ ...form, address: e.target.value })}
+                <textarea className="nx-input" value={form.address || ''} onChange={(e) => setForm({ ...form, address: e.target.value })}
                   style={{ ...mInp, minHeight: 56, resize: 'vertical' }} placeholder="Address"
                   onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
@@ -1068,7 +1069,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   {PURPOSE_OPTIONS.map((p) => {
                     const on = (form.purpose || []).includes(p.value);
                     return (
-                      <button key={p.value} type="button"
+                      <button className={`nx-btn nx-btn-md nx-toggle${on ? ' is-on' : ''}`} key={p.value} type="button"
                         onClick={() => setForm((f) => {
                           const cur = Array.isArray(f.purpose) ? f.purpose : [];
                           return { ...f, purpose: on ? cur.filter((x) => x !== p.value) : [...cur, p.value] };
@@ -1091,7 +1092,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 <div>
                   <label style={mLbl}>Overall Status</label>
                   {canAssign ? (
-                    <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                    <select className="nx-input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                       {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                     </select>
                   ) : (
@@ -1103,7 +1104,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
                 <div>
                   <label style={mLbl}>Project</label>
-                  <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">—</option>
                     {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
@@ -1150,7 +1151,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 {canAssign && (
                 <div>
                   <label style={mLbl}>Assign Telecaller</label>
-                  <select value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.telecaller} onChange={(e) => setForm({ ...form, telecaller: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -1158,7 +1159,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 )}
                 <div>
                   <label style={mLbl}>TC Status {_isTelecaller && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                  <select value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.telecaller_status} onChange={(e) => setForm({ ...form, telecaller_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
@@ -1166,7 +1167,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               </div>
               <div style={{ marginBottom: 18 }}>
                 <label style={mLbl}>TC Remarks {_isTelecaller && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                <textarea value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
+                <textarea className="nx-input" value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
               </>)}
@@ -1182,7 +1183,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               {cpOnly && (_isCpHead || canAssign) && (
                 <div style={{ marginBottom: 12 }}>
                   <label style={mLbl}>Assign STM</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {salesCpUsers.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -1193,7 +1194,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 {canAssign && !cpOnly && (
                 <div>
                   <label style={mLbl}>Assign STM</label>
-                  <select value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.stm} onChange={(e) => setForm({ ...form, stm: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {stms.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.user_code}</option>)}
                   </select>
@@ -1201,7 +1202,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 )}
                 <div>
                   <label style={mLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                  <select value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                  <select className="nx-input" value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
                     {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
@@ -1209,7 +1210,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               </div>
               <div style={{ marginBottom: 18 }}>
                 <label style={mLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
-                <textarea value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
+                <textarea className="nx-input" value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
                   rows={2} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
               </div>
 
@@ -1223,11 +1224,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
                     <div>
                       <label style={{ ...mLbl, color: 'var(--success)' }}>Date &amp; Time <span style={{ color: 'var(--danger)' }}>*</span></label>
-                      <input type="datetime-local" value={svScheduledAt} onChange={(e) => setSvScheduledAt(e.target.value)} style={mInp} />
+                      <input className="nx-input" type="datetime-local" value={svScheduledAt} onChange={(e) => setSvScheduledAt(e.target.value)} style={mInp} />
                     </div>
                     <div>
                       <label style={{ ...mLbl, color: 'var(--success)' }}>Visit Remarks</label>
-                      <input value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…" style={mInp} />
+                      <input className="nx-input" value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…" style={mInp} />
                     </div>
                   </div>
                   {!svScheduledAt && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Set a date &amp; time to create a site visit entry automatically on save.</p>}
@@ -1249,7 +1250,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     {[['hot', 'Hot', 'var(--danger)'], ['warm', 'Warm', 'var(--warning-2)'], ['cold', 'Cold', 'var(--accent)'], ['not_interested', 'Not Interested', 'var(--text-3)']].map(([val, label, color]) => {
                       const active = svOutcome === val;
                       return (
-                        <button key={val} type="button" onClick={() => setSvOutcome(val)}
+                        <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={val} type="button" onClick={() => setSvOutcome(val)}
                           style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                             border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                           {label}
@@ -1259,7 +1260,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   </div>
                   <div style={{ marginTop: 10 }}>
                     <label style={{ ...mLbl, color: 'var(--success)' }}>Visit Date *</label>
-                    <input type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
+                    <input className="nx-input" type="date" value={svVisitedDate} max={new Date().toLocaleDateString('en-CA')}
                       onChange={(e) => setSvVisitedDate(e.target.value)} style={mInp} />
                   </div>
                   {!svOutcome && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Pick how the visit went — recorded on the site visit.</p>}
@@ -1301,7 +1302,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     {canAssign && !cpOnly && (
                       <div>
                         <label style={mLbl}>Role</label>
-                        <select value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
+                        <select className="nx-input" value={fuForm.role_context} onChange={(e) => setFuForm({ ...fuForm, role_context: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                           <option value="telecaller">Telecaller</option>
                           <option value="stm">STM</option>
                         </select>
@@ -1309,13 +1310,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                     )}
                     <div>
                       <label style={mLbl}>Date & Time</label>
-                      <input type="datetime-local" value={fuForm.scheduled_at}
+                      <input className="nx-input" type="datetime-local" value={fuForm.scheduled_at}
                         onChange={(e) => setFuForm({ ...fuForm, scheduled_at: e.target.value })} style={mInp} />
                     </div>
                   </div>
                   <div style={{ marginBottom: 10 }}>
                     <label style={mLbl}>Remarks</label>
-                    <textarea value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
+                    <textarea className="nx-input" value={fuForm.remarks} onChange={(e) => setFuForm({ ...fuForm, remarks: e.target.value })}
                       placeholder="Call notes, instructions…" rows={2}
                       style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
                   </div>
@@ -1323,7 +1324,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
 
                 {/* Existing followups */}
-                {!detail && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Loading…</p>}
+                {!detail && <Loader variant="inline" size="sm" label="Loading…" />}
                 {detail?.follow_ups?.length === 0 && (
                   <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center' }}>No follow-ups scheduled yet.</p>
                 )}
@@ -1342,7 +1343,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                         </span>
                       </div>
                       {fu.status === 'pending' && (
-                        <button onClick={() => markFollowupDone(fu.id)}
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => markFollowupDone(fu.id)}
                           style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 8, border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
                           Mark Done
                         </button>
@@ -1361,8 +1362,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               {/* Save bar — at the very bottom, below Follow-ups */}
               {saveErr && <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', color: 'var(--danger)', borderRadius: 14, padding: '10px 14px', fontSize: 13, fontWeight: 600, margin: '18px 0 4px' }}>{saveErr}</div>}
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid var(--surface-2)', marginTop: 20, paddingTop: 16 }}>
-                <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
+                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
                   {saving ? 'Saving…' : (form.stm_status === 'closed' ? 'Record Closure →' : 'Save Changes')}
                 </button>
               </div>
@@ -1389,7 +1390,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               </div>
 
               {/* History entries */}
-              {!detail && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Loading…</p>}
+              {!detail && <Loader variant="inline" size="sm" label="Loading…" />}
               {detail && detail.history?.length === 0 && (
                 <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
               )}
@@ -1802,11 +1803,11 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {canDelete && selectedIds.size > 0 && (
-            <button onClick={bulkDelete} disabled={deleting} style={{ ...saveBtn, backgroundColor: 'var(--danger-solid)' }}>
+            <button className="nx-btn nx-btn-md nx-btn-danger" onClick={bulkDelete} disabled={deleting} style={{ ...saveBtn, backgroundColor: 'var(--danger-solid)' }}>
               {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
             </button>
           )}
-          <button onClick={() => setAddModal(true)} style={saveBtn}>+ Add Lead</button>
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setAddModal(true)} style={saveBtn}>+ Add Lead</button>
         </div>
       </div>
 
@@ -1855,13 +1856,13 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
         return (
-          <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
             {/* Search bar */}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
-                <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search name, phone, email…"
                   style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid var(--surface-3)', fontSize: 13, background: 'var(--surface-2)', outline: 'none', boxSizing: 'border-box', color: 'var(--text)' }} />
               </div>
@@ -1870,13 +1871,13 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
             {/* Row 1: Date range + quick buttons + project + tc/stm status */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-2)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
-              <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
+              <input className="nx-input" type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
               <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
-              <input type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
+              <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
               <div style={divider} />
-              <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
-              <button onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
-              <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
+              <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === today && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
+              <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(6) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
+              <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(29) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
               <div style={divider} />
               <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
                 <option value="">All Projects</option>
@@ -1896,7 +1897,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               </select>
               )}
               {anyFilter && (
-                <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
+                <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
                   <Icon name="x" /> Clear all
                 </button>
               )}
@@ -1932,7 +1933,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
               )}
-              <input value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
+              <input className="nx-input" value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"
                 style={{ ...fSel, width: 170, background: filters.campaign ? 'var(--accent-softer)' : 'var(--surface-2)', borderColor: filters.campaign ? 'var(--accent)' : 'var(--surface-3)', color: filters.campaign ? 'var(--accent)' : 'var(--text)' }} />
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? 'var(--accent)' : 'var(--muted)', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? 'var(--accent)' : 'var(--surface-3)'}`, background: filters.is_duplicate ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
@@ -1954,9 +1955,9 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       )}
 
       {/* Table */}
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
+      <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
         <div>
-          <table style={tbl}>
+          <table className="nx-table" style={tbl}>
             <thead style={{ backgroundColor: 'var(--surface-2)' }}>
               <tr>
                 <th style={th}>
@@ -2037,14 +2038,14 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                           ⏳ Transfer pending
                         </span>
                       ) : (
-                        <button title="Transfer to another STM"
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" title="Transfer to another STM"
                           onClick={(e) => { e.stopPropagation(); setXferLead(l); }}
                           style={{ background: 'var(--surface)', border: '1.5px solid var(--blue-2)', color: 'var(--accent)', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 7, whiteSpace: 'nowrap' }}>
                           ⇄ Transfer
                         </button>
                       ))}
                       {canDelete && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
+                      <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" onClick={(e) => { e.stopPropagation(); deleteLead(l.id); }}
                         style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>
                         <Icon name="x" />
                       </button>
@@ -2064,17 +2065,17 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               Showing {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} of {total}
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={pgBtn}>← Prev</button>
+              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={pgBtn}>← Prev</button>
               {[...Array(Math.min(totalPages, 7))].map((_, i) => {
                 const pg = i + 1;
                 return (
-                  <button key={pg} onClick={() => setPage(pg)}
+                  <button className={`nx-btn nx-btn-sm nx-toggle${page === pg ? ' is-on' : ''}`} key={pg} onClick={() => setPage(pg)}
                     style={{ ...pgBtn, backgroundColor: page === pg ? 'var(--strong)' : '', color: page === pg ? '#fff' : 'var(--text)' }}>
                     {pg}
                   </button>
                 );
               })}
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={pgBtn}>Next →</button>
+              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={pgBtn}>Next →</button>
             </div>
           </div>
         )}

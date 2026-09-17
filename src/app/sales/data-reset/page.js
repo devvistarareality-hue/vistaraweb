@@ -5,6 +5,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 import Icon from '../../../components/Icon';
 import { confirmDialog } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 const RED = 'var(--danger)';
 
 // Trial-data reset (admin only). Wipes transactional CRM data and resets plots —
@@ -94,19 +95,19 @@ export default function DataResetPage() {
       </p>
 
       {/* Select what to clear */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18 }}>
+      <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: 'var(--faint)', textTransform: 'uppercase' }}>
             Select what to clear {loading ? '…' : ''}
           </div>
           {!loading && (
-            <button onClick={toggleAll}
+            <button className="nx-btn nx-btn-sm nx-btn-link" onClick={toggleAll}
               style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               {allOn ? 'Clear all' : 'Select all'}
             </button>
           )}
         </div>
-        {loading ? <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading counts…</p> : (
+        {loading ? <Loader label="Loading counts…" /> : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 18px' }}>
             {ITEMS.map(([k, label]) => {
               const isImplied = implied(k) && !selected.has(k);
@@ -139,7 +140,7 @@ export default function DataResetPage() {
       </div>
 
       {/* Options */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>
           <input type="checkbox" checked={withLoi} onChange={(e) => setWithLoi(e.target.checked)} />
           Also delete signed LOI PDFs from storage

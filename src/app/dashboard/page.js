@@ -41,7 +41,7 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Welcome header */}
-      <div style={s.header}>
+      <div className="nx-hero" style={s.header}>
         <div>
           <p style={s.welcomeLabel}>Welcome back</p>
           <h1 style={s.userName}>{user?.name}</h1>

@@ -7,6 +7,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 function fmt(iso) {
   return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
@@ -41,7 +42,7 @@ function ProjectTags({ projects }) {
   return (
     <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {projects.map((p, i) => (
-        <span key={i} style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-softer)', padding: '1px 7px', borderRadius: 20 }}>
+        <span className="nx-badge" key={i} style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-softer)', padding: '1px 7px', borderRadius: 20 }}>
           {p}
         </span>
       ))}
@@ -68,12 +69,12 @@ function WeightStepper({ value, onChange, color, border }) {
   };
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <button type="button" aria-label="Decrease weight" onClick={() => onChange(clamp(value - 1))}
+      <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" aria-label="Decrease weight" onClick={() => onChange(clamp(value - 1))}
         disabled={value <= 1} style={{ ...btn, opacity: value <= 1 ? 0.4 : 1, cursor: value <= 1 ? 'not-allowed' : 'pointer' }}>−</button>
-      <input type="number" min={1} max={20} value={value}
+      <input className="nx-input" type="number" min={1} max={20} value={value}
         onChange={e => onChange(clamp(parseInt(e.target.value) || 1))}
         style={{ width: 42, padding: '3px 6px', borderRadius: 6, border: `1.5px solid ${border}`, fontSize: 12, textAlign: 'center' }} />
-      <button type="button" aria-label="Increase weight" onClick={() => onChange(clamp(value + 1))}
+      <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" aria-label="Increase weight" onClick={() => onChange(clamp(value + 1))}
         disabled={value >= 20} style={{ ...btn, opacity: value >= 20 ? 0.4 : 1, cursor: value >= 20 ? 'not-allowed' : 'pointer' }}>+</button>
     </div>
   );
@@ -111,7 +112,7 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
                 <div key={pn} style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
                     <span style={{ fontSize: 12, fontWeight: 800, color: headColor }}>{pn}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: headColor, backgroundColor: borderColor, padding: '1px 7px', borderRadius: 20 }}>{grp.length}</span>
+                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, color: headColor, backgroundColor: borderColor, padding: '1px 7px', borderRadius: 20 }}>{grp.length}</span>
                   </div>
                   {grp.map(m => {
                     const w   = weights[m.user_id] ?? 1;
@@ -384,11 +385,11 @@ export default function DistributionPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
 
         {/* Settings */}
-        <div style={card}>
+        <div className="nx-card" style={card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h2 style={cardTitle}><Icon name="settings" /> Distribution Settings</h2>
             {settingsForm === null && (
-              <button onClick={() => setSettingsForm({ ...settings })} style={outlineBtn}>Edit</button>
+              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setSettingsForm({ ...settings })} style={outlineBtn}>Edit</button>
             )}
           </div>
 
@@ -399,11 +400,11 @@ export default function DistributionPage() {
                 <div>
                   <p style={sectionLabel}>Telecaller</p>
                   <label style={lbl}>Sign-in Time</label>
-                  <input type="time" value={settingsForm.tc_signin_time}
+                  <input className="nx-input" type="time" value={settingsForm.tc_signin_time}
                     onChange={e => setSettingsForm({ ...settingsForm, tc_signin_time: e.target.value })} style={inp} />
                   <p style={hint}>Distribute TC leads at or after this time</p>
                   <label style={{ ...lbl, marginTop: 10 }}>Sign-out Time</label>
-                  <input type="time" value={settingsForm.tc_signout_time}
+                  <input className="nx-input" type="time" value={settingsForm.tc_signout_time}
                     onChange={e => setSettingsForm({ ...settingsForm, tc_signout_time: e.target.value })} style={inp} />
                   <p style={hint}>After this time leads remain unassigned</p>
                 </div>
@@ -411,20 +412,20 @@ export default function DistributionPage() {
                 <div>
                   <p style={sectionLabel}>STM</p>
                   <label style={lbl}>Sign-in Time</label>
-                  <input type="time" value={settingsForm.stm_signin_time}
+                  <input className="nx-input" type="time" value={settingsForm.stm_signin_time}
                     onChange={e => setSettingsForm({ ...settingsForm, stm_signin_time: e.target.value })} style={inp} />
                   <p style={hint}>Distribute STM leads at or after this time</p>
                   <label style={{ ...lbl, marginTop: 10 }}>Sign-out Time</label>
-                  <input type="time" value={settingsForm.stm_signout_time}
+                  <input className="nx-input" type="time" value={settingsForm.stm_signout_time}
                     onChange={e => setSettingsForm({ ...settingsForm, stm_signout_time: e.target.value })} style={inp} />
                   <p style={hint}>After this time leads remain unassigned</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                <button onClick={saveSettings} disabled={savingSettings} style={{ ...primaryBtn, opacity: savingSettings ? 0.6 : 1 }}>
+                <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveSettings} disabled={savingSettings} style={{ ...primaryBtn, opacity: savingSettings ? 0.6 : 1 }}>
                   {savingSettings ? 'Saving…' : 'Save Settings'}
                 </button>
-                <button onClick={() => setSettingsForm(null)} style={outlineBtn}>Cancel</button>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setSettingsForm(null)} style={outlineBtn}>Cancel</button>
               </div>
             </>
           ) : (
@@ -452,12 +453,12 @@ export default function DistributionPage() {
         </div>
 
         {/* Today's Availability */}
-        <div style={card}>
+        <div className="nx-card" style={card}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
             <h2 style={{ ...cardTitle, marginBottom: 0 }}><Icon name="users" /> Availability</h2>
             <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
               {[['today', 'Today'], ['history', 'History']].map(([k, lbl]) => (
-                <button key={k} onClick={() => setAvailTab(k)}
+                <button className={`nx-btn nx-btn-sm nx-toggle${availTab === k ? ' is-on' : ''}`} key={k} onClick={() => setAvailTab(k)}
                   style={{ padding: '4px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                     border: `1.5px solid ${availTab === k ? 'var(--accent)' : 'var(--border)'}`,
                     background: availTab === k ? 'var(--primary)' : 'var(--surface)',
@@ -469,12 +470,12 @@ export default function DistributionPage() {
           {availTab === 'history' ? (
             <div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
-                <input type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...inp, width: 142 }} />
+                <input className="nx-input" type="date" value={histFrom} max={histTo} onChange={e => setHistFrom(e.target.value)} style={{ ...inp, width: 142 }} />
                 <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
-                <input type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...inp, width: 142 }} />
+                <input className="nx-input" type="date" value={histTo} min={histFrom} max={todayISO()} onChange={e => setHistTo(e.target.value)} style={{ ...inp, width: 142 }} />
                 {/* The same records this card is showing, over the same range — a sheet
                     is the form you sort and pivot them in. */}
-                <button onClick={downloadHistory} disabled={histDl}
+                <button className="nx-btn nx-btn-sm nx-btn-success" onClick={downloadHistory} disabled={histDl}
                   style={{ padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700,
                            cursor: histDl ? 'default' : 'pointer', background: 'var(--success-solid)', color: '#fff',
                            opacity: histDl ? 0.7 : 1, marginLeft: 'auto' }}>
@@ -484,14 +485,14 @@ export default function DistributionPage() {
               {/* Fixed height with its own scroll: a 30-day range would otherwise stretch
                   the card far past the settings column beside it. */}
               <div className="availScroll" style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: 'var(--border) transparent' }}>
-              {histLoading ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>Loading…</p>
+              {histLoading ? <Loader variant="inline" size="sm" label="Loading…" />
                 : history.length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>Nobody marked available in this range.</p>
                 : history.map(day => (
                   <div key={day.date} style={{ borderTop: '1px solid var(--surface-2)', padding: '12px 0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap',
                       position: 'sticky', top: 0, background: 'var(--surface)', paddingBottom: 4, zIndex: 1 }}>
                       <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{fmtDay(day.date)}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 8px', borderRadius: 20 }}>
+                      <span className="nx-badge" style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 8px', borderRadius: 20 }}>
                         {day.telecaller_count} TC · {day.stm_count} STM
                       </span>
                     </div>
@@ -505,7 +506,7 @@ export default function DistributionPage() {
                               <div key={x.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
                                 <span style={{ fontSize: 12.5, color: x.is_available ? 'var(--text)' : 'var(--muted)' }}>{x.name}</span>
                                 {x.checked_in_at && (
-                                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
+                                  <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
                                     ⏱ {fmtTime(x.checked_in_at)}
                                   </span>
                                 )}
@@ -535,7 +536,7 @@ export default function DistributionPage() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 13, color: a.is_available ? 'var(--text)' : 'var(--muted)' }}>{a.name}</span>
                         {a.is_available && a.checked_in_at && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
+                          <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
                             ⏱ {fmtTime(a.checked_in_at)}
                           </span>
                         )}
@@ -561,7 +562,7 @@ export default function DistributionPage() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 13, color: a.is_available ? 'var(--text)' : 'var(--muted)' }}>{a.name}</span>
                         {a.is_available && a.checked_in_at && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
+                          <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '1px 7px', borderRadius: 20 }}>
                             ⏱ {fmtTime(a.checked_in_at)}
                           </span>
                         )}
@@ -578,13 +579,13 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 2: Lead Distribution Ratio */}
-      <div style={card}>
+      <div className="nx-card" style={card}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h2 style={cardTitle}><Icon name="chart" /> Lead Distribution Ratio</h2>
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>Per project · share splits among assigned members</span>
           </div>
-          <button onClick={saveWeights} disabled={savingWeights || !weightsChanged}
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveWeights} disabled={savingWeights || !weightsChanged}
             style={{ ...primaryBtn, opacity: (!weightsChanged || savingWeights) ? 0.4 : 1 }}>
             {savingWeights ? 'Saving…' : 'Save Weights'}
           </button>
@@ -651,7 +652,7 @@ export default function DistributionPage() {
                     {unassigned} unassigned lead{unassigned !== 1 ? 's' : ''} · {avail} {type === 'telecaller' ? 'TC' : 'STM'}{avail !== 1 ? 's' : ''} signed in
                   </p>
                 </div>
-                <span style={{ ...badge, fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                <span className="nx-badge" style={{ ...badge, fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
                   <Icon name="clock" /> {windowOpen ? 'Window open' : afterSignout ? 'Window closed' : `Opens ${signin}`}
                 </span>
               </div>
@@ -687,7 +688,7 @@ export default function DistributionPage() {
                 </div>
               )}
 
-              <button onClick={() => distribute(type)} disabled={disabled}
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => distribute(type)} disabled={disabled}
                 style={{ ...primaryBtn, width: '100%', opacity: disabled ? 0.45 : 1, justifyContent: 'center' }}>
                 {distributing === type ? 'Distributing…' : `Distribute to ${type === 'telecaller' ? 'Telecallers' : 'STMs'}`}
               </button>
@@ -702,11 +703,11 @@ export default function DistributionPage() {
       </div>
 
       {/* Row 4: Distribution History */}
-      <div style={{ ...card, padding: 0 }}>
+      <div className="nx-card" style={{ ...card, padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--surface-2)' }}>
           <h2 style={cardTitle}><Icon name="clock" /> Recent Distribution History</h2>
           {log.length > 0 && (
-            <button onClick={clearHistory} disabled={clearingLog}
+            <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={clearHistory} disabled={clearingLog}
               style={{ ...outlineBtn, color: 'var(--danger)', borderColor: 'var(--danger-2)', fontSize: 12 }}>
               {clearingLog ? 'Clearing…' : <><Icon name="trash" /> Clear History</>}
             </button>
@@ -717,7 +718,7 @@ export default function DistributionPage() {
           : (
             <div className="availScroll" style={{ overflowX: 'auto', maxHeight: 420, overflowY: 'auto',
               scrollbarWidth: 'thin', scrollbarColor: 'var(--border) transparent' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
+              <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--surface-2)' }}>
                     {['Type', 'Leads', 'Triggered By', 'When', 'Details'].map(h => (
@@ -736,7 +737,7 @@ export default function DistributionPage() {
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--surface-2)'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                         <td style={{ padding: '10px 16px' }}>
-                          <span style={{
+                          <span className="nx-badge" style={{
                             fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 20,
                             backgroundColor: row.dist_type === 'telecaller' ? 'var(--warning-soft)' : 'var(--accent-softer)',
                             color:           row.dist_type === 'telecaller' ? 'var(--warning-2)'  : 'var(--accent)',

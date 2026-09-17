@@ -194,13 +194,13 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       {/* Date range filter + status-wise counts */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Date</span>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+        <input className="nx-input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
           style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid var(--surface-3)', fontSize: 12.5, color: 'var(--text)', outline: 'none' }} />
         <span style={{ color: 'var(--faint)' }}>→</span>
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+        <input className="nx-input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
           style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid var(--surface-3)', fontSize: 12.5, color: 'var(--text)', outline: 'none' }} />
         {(dateFrom || dateTo) && (
-          <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setDateFrom(''); setDateTo(''); }}
             style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid var(--surface-3)', background: 'var(--surface)', color: 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
         )}
       </div>
@@ -275,7 +275,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                   {fu.outcome && <p style={{ fontSize: 12, color: 'var(--success)', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
                 {fu.status === 'pending' && (
-                  <button onClick={() => openDone(fu)}
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openDone(fu)}
                     style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
                       border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
                     Mark Done
@@ -289,9 +289,9 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
 
       {/* Complete follow-up: remarks + optional next follow-up */}
       {done && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
+        <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
           onClick={() => !submitting && setDone(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 16 }}>{done.lead_name}{!!done.lead_phone && ` · ${done.lead_phone}`} · {fmtDateTime(done.scheduled_at)}</div>
 
@@ -299,7 +299,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>
               {done.role_context === 'stm' ? 'Update STM Status' : 'Update TC Status'}
             </label>
-            <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}
+            <select className="nx-input" value={newStatus} onChange={(e) => setNewStatus(e.target.value)}
               style={{ width: '100%', marginTop: 6, marginBottom: 4, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', cursor: 'pointer', background: 'var(--surface)' }}>
               <option value="">— No change —</option>
               {(done.role_context === 'stm' ? STM_STATUS_OPTS : TC_STATUS_OPTS).map(([v, l]) => (
@@ -318,10 +318,10 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                   <Icon name="pin" /> Schedule Site Visit
                 </div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>Date &amp; Time <span style={{ color: 'var(--danger)' }}>*</span></label>
-                <input type="datetime-local" value={svAt} onChange={(e) => setSvAt(e.target.value)}
+                <input className="nx-input" type="datetime-local" value={svAt} onChange={(e) => setSvAt(e.target.value)}
                   style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)', display: 'block', marginTop: 10 }}>Visit Remarks</label>
-                <input value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…"
+                <input className="nx-input" value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…"
                   style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                 {!svAt && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Set a date &amp; time to create the site visit automatically.</p>}
               </div>
@@ -336,7 +336,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             )}
 
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', display: 'block', marginTop: 14 }}>Remarks</label>
-            <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
+            <textarea className="nx-input" value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
               style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
 
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' }}>
@@ -346,17 +346,17 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             {schedNext && (
               <div style={{ marginTop: 12, paddingLeft: 4 }}>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>Next follow-up date &amp; time</label>
-                <input type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
+                <input className="nx-input" type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
                   style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', display: 'block', marginTop: 10 }}>Next follow-up note</label>
-                <textarea value={nextRemarks} onChange={(e) => setNextRemarks(e.target.value)} rows={2} placeholder="What to discuss next…"
+                <textarea className="nx-input" value={nextRemarks} onChange={(e) => setNextRemarks(e.target.value)} rows={2} placeholder="What to discuss next…"
                   style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={completeFollowUp} disabled={submitting || (schedNext && !nextAt)}
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button className="nx-btn nx-btn-md nx-btn-success" onClick={completeFollowUp} disabled={submitting || (schedNext && !nextAt)}
                 style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !nextAt)) ? 0.6 : 1 }}>
                 {submitting ? 'Saving…' : newStatus === 'closed' ? 'Record Closure →' : 'Mark Done'}
               </button>

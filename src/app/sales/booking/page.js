@@ -847,13 +847,13 @@ function BookingPage() {
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
       {saving && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+        <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
           <Loader />
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Submitting booking…</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
-      <button onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
+      <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => kioskMode ? router.push('/kiosk') : router.back()} style={back}>← Back</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '8px 0 2px' }}>
         {/* A tower sells flats and shops, not plots — name what's actually being booked. */}
         {reviseId ? (eoiMode ? 'Revise EOI' : 'Revise Booking') : eoiMode ? 'Create EOI'
@@ -964,7 +964,7 @@ function BookingPage() {
                     <Row><L>Total Unit Price</L>
                       <div style={{ display: 'flex', flex: 1, gap: 8 }}>
                         {[['pct', '%'], ['amount', '₹']].map(([m, lbl]) => (
-                          <button key={m} type="button" onClick={() => setShopEdit(pb, { mode: m })}
+                          <button className={`nx-btn nx-btn-md nx-toggle${e.mode === m ? ' is-on' : ''}`} key={m} type="button" onClick={() => setShopEdit(pb, { mode: m })}
                             style={{ width: 44, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                               border: `1.5px solid ${e.mode === m ? 'var(--accent)' : 'var(--border)'}`,
                               background: e.mode === m ? 'var(--primary)' : 'var(--surface)', color: e.mode === m ? '#fff' : 'var(--muted)' }}>{lbl}</button>
@@ -1042,7 +1042,7 @@ function BookingPage() {
         <Row><L>Area Unit</L>
           <div style={{ display: 'flex', flex: 1, gap: 8 }}>
             {['sq.yd', 'sq.ft', 'sq.m'].map((u) => (
-              <button key={u} type="button" onClick={() => set('area_unit', u)}
+              <button className={`nx-btn nx-btn-md nx-toggle${unit === u ? ' is-on' : ''}`} key={u} type="button" onClick={() => set('area_unit', u)}
                 style={{ flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   transition: 'all 0.12s',
                   border: `1.5px solid ${unit === u ? 'var(--accent)' : 'var(--border)'}`,
@@ -1162,15 +1162,15 @@ function BookingPage() {
             <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>{rupee(nsdBase)}</div>
             <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
             {nsdInsts.length > 0 && (
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+              <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
                 <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {nsdInsts.map((r, i) => (
                     <tr key={i}>
                       <td style={td}>{i + 1}</td>
                       <td style={td}><DateFieldDMY value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
-                      <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
-                      <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} style={inp} /></td>
+                      <td style={td}><input className="nx-input" type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                      <td style={td}><input className="nx-input" type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} style={inp} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1187,15 +1187,15 @@ function BookingPage() {
         )}
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+          <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
             <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
             <tbody>
               {insts.map((r, i) => (
                 <tr key={i}>
                   <td style={td}>{i + 1}</td>
                   <td style={td}><DateFieldDMY value={safeDate(r.date)} onChange={(e) => setInst(i, 'date', e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
-                  <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
-                  <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
+                  <td style={td}><input className="nx-input" type="text" inputMode="decimal" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                  <td style={td}><input className="nx-input" type="text" inputMode="decimal" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} style={inp} /></td>
                 </tr>
               ))}
               {/* Pratishtha's three charge lines all fall due on the sale deed or
@@ -1205,14 +1205,14 @@ function BookingPage() {
                   <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Extra</td>
                   <td style={{ ...td, fontSize: 10, fontStyle: 'italic', color: 'var(--text-3)' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
                   <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>{x.label}</td>
-                  <td style={td}><input value={rupee(x.amt)} readOnly style={{ ...inp, background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
+                  <td style={td}><input className="nx-input" value={rupee(x.amt)} readOnly style={{ ...inp, background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
                 </tr>
               )) : v.totalExtra > 0 && (
                 <tr style={{ background: 'var(--warning-soft)' }}>
                   <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Extra</td>
                   <td style={td}><DateFieldDMY value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
                   <td style={{ ...td, fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Legal & Other Charges</td>
-                  <td style={td}><input value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
+                  <td style={td}><input className="nx-input" value={rupee(v.totalExtra)} readOnly style={{ ...inp, background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
                 </tr>
               )}
             </tbody>
@@ -1228,15 +1228,15 @@ function BookingPage() {
           <Row><L>Total Amount (₹)</L><In type="number" value={ew.amt} onChange={(e) => setEw((s) => ({ ...s, amt: e.target.value }))} /></Row>
           <Row><L>No. of Installments</L><In type="number" value={ewInsts.length || ''} onChange={(e) => buildEw(e.target.value)} /></Row>
           {ewInsts.length > 0 && (
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+            <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
               <thead><tr>{['#', 'Due Date', '%', 'Amount'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
               <tbody>
                 {ewInsts.map((r, i) => (
                   <tr key={i}>
                     <td style={td}>{i + 1}</td>
                     <td style={td}><DateFieldDMY value={safeDate(r.date)} onChange={(e) => setEwInst(i, 'date', e.target.value)} style={inp} wrapperStyle={{ flex: 'none' }} /></td>
-                    <td style={td}><input type="text" inputMode="decimal" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
-                    <td style={td}><input type="text" inputMode="decimal" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
+                    <td style={td}><input className="nx-input" type="text" inputMode="decimal" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ ...inp, width: 70 }} /></td>
+                    <td style={td}><input className="nx-input" type="text" inputMode="decimal" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} style={inp} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1251,26 +1251,26 @@ function BookingPage() {
           <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 14, padding: 12, marginBottom: 10, background: 'var(--surface-2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Term {i + 1}</span>
-              <button onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Remove</button>
+              <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => removeTerm(i)} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Remove</button>
             </div>
-            <input value={t.title} onChange={(e) => setTerm(i, 'title', e.target.value)} placeholder="Title (e.g. Possession)"
+            <input className="nx-input" value={t.title} onChange={(e) => setTerm(i, 'title', e.target.value)} placeholder="Title (e.g. Possession)"
               style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid var(--border)', outline: 'none', marginBottom: 8 }} />
-            <textarea value={t.desc} onChange={(e) => setTerm(i, 'desc', e.target.value)} placeholder="Description / clause text" rows={2}
+            <textarea className="nx-input" value={t.desc} onChange={(e) => setTerm(i, 'desc', e.target.value)} placeholder="Description / clause text" rows={2}
               style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', fontSize: 13, borderRadius: 8, border: '1.5px solid var(--border)', outline: 'none', resize: 'vertical' }} />
           </div>
         ))}
-        <button onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 14, border: '1.5px dashed var(--accent)', background: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
+        <button className="nx-btn nx-btn-lg nx-btn-soft" onClick={addTerm} style={{ width: '100%', padding: '12px', borderRadius: 14, border: '1.5px dashed var(--accent)', background: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Extra Term</button>
       </Section>
 
       <Section title="LOI Document">
-        <button onClick={doDownloadLOI} style={{ ...submitBtn, background: 'var(--primary)', marginBottom: 12 }}>
+        <button className="nx-btn nx-btn-lg nx-btn-primary" onClick={doDownloadLOI} style={{ ...submitBtn, background: 'var(--primary)', marginBottom: 12 }}>
           <Icon name="download" /> Download LOI PDF  (Print → Sign → Upload)
         </button>
         {loiDone && <div style={{ fontSize: 12, color: 'var(--warning)', background: 'var(--warning-soft)', border: '1px solid var(--warning-2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}><Icon name="check-circle" /> LOI downloaded. Get it signed and upload below.</div>}
         {savedLoiPath && !loiFile && (
           <div style={{ fontSize: 12, color: 'var(--success)', background: 'var(--success-soft)', border: '1px solid var(--success-2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <span><Icon name="clip" /> Signed LOI already attached from your last save.</span>
-            <button type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: 'var(--success)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
+            <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={() => openLoi(draftId || savedDraftId)} style={{ background: 'none', border: 'none', color: 'var(--success)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>View</button>
           </div>
         )}
         <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{savedLoiPath ? 'Replace Signed LOI' : 'Upload Signed LOI *'}</label>
@@ -1280,17 +1280,17 @@ function BookingPage() {
 
       {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: msg[0] === '✅' ? 'var(--success-soft)' : 'var(--danger-soft)', color: msg[0] === '✅' ? 'var(--success)' : 'var(--danger)', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</div>}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid var(--accent)', opacity: pratBookMissing ? 0.4 : 1 }}>
+        <button className="nx-btn nx-btn-lg nx-btn-secondary" onClick={saveDraft} disabled={saving || !projectId || pratBookMissing} style={{ ...submitBtn, background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid var(--accent)', opacity: pratBookMissing ? 0.4 : 1 }}>
           {saving ? '…' : <><Icon name="save" /> Save Draft</>}
         </button>
-        <button onClick={submit} disabled={saving || pratBookMissing} style={{ ...submitBtn, opacity: pratBookMissing ? 0.4 : 1 }}>{saving ? 'Saving…' : 'Submit Booking'}</button>
+        <button className="nx-btn nx-btn-lg nx-btn-primary" onClick={submit} disabled={saving || pratBookMissing} style={{ ...submitBtn, opacity: pratBookMissing ? 0.4 : 1 }}>{saving ? 'Saving…' : 'Submit Booking'}</button>
       </div>
     </div>
   );
 }
 
 const Section = ({ title, children }) => (
-  <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', marginBottom: 14, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+  <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', marginBottom: 14, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
     <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>{title}</div>
     {children}
   </div>
@@ -1299,10 +1299,10 @@ const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center
 const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{children}</label>;
 const In = ({ type, invalid, ...p }) => (
   // number → plain text + numeric keypad, so scrolling never changes the value (no spinner)
-  <input {...p} type={type === 'number' ? 'text' : (type || 'text')} inputMode={type === 'number' ? 'decimal' : undefined}
+  <input className="nx-input" {...p} type={type === 'number' ? 'text' : (type || 'text')} inputMode={type === 'number' ? 'decimal' : undefined}
     style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? 'var(--danger)' : 'var(--border)'}`, outline: 'none', background: p.disabled ? 'var(--surface-2)' : (invalid ? 'var(--danger-soft)' : 'var(--surface)') }} />
 );
-const Sel = ({ opts, invalid, ...p }) => <select {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? 'var(--danger)' : 'var(--border)'}`, outline: 'none', cursor: 'pointer', background: invalid ? 'var(--danger-soft)' : 'var(--surface)' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
+const Sel = ({ opts, invalid, ...p }) => <select className="nx-input" {...p} style={{ flex: 1, padding: '9px 11px', fontSize: 13, borderRadius: 8, border: `1.5px solid ${invalid ? 'var(--danger)' : 'var(--border)'}`, outline: 'none', cursor: 'pointer', background: invalid ? 'var(--danger-soft)' : 'var(--surface)' }}>{opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}</select>;
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>

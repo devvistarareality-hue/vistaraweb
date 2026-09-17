@@ -1,0 +1,154 @@
+/* ════════════════════════════════════════════════════════════════════
+   Nexora UI components — one shared look for every page.
+   Pages render these through className (see components/ui). The visual
+   properties are !important so they win over the older inline styles
+   that pages still carry for layout; spacing/size/position stay per page.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ─── Buttons ─────────────────────────────────────────────────────── */
+.nx-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 12px !important;
+  font-weight: 700 !important; letter-spacing: 0.005em; line-height: 1.15;
+  white-space: nowrap; cursor: pointer; user-select: none;
+  border: 1px solid transparent !important;
+  transition: background-color .18s, border-color .18s, color .18s, box-shadow .2s, transform .12s, filter .18s !important;
+  -webkit-font-smoothing: antialiased;
+}
+.nx-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none !important; transform: none !important; filter: saturate(.7); }
+.nx-btn:not(:disabled):active { transform: translateY(0) scale(0.97) !important; }
+.nx-btn-sm { font-size: 12.5px !important; border-radius: 10px !important; min-height: 30px; }
+.nx-btn-md { font-size: 13.5px !important; min-height: 36px; }
+.nx-btn-lg { font-size: 14.5px !important; border-radius: 14px !important; min-height: 44px; }
+
+.nx-btn-primary {
+  background: var(--primary-grad) !important; color: #fff !important;
+  border-color: rgba(0,0,0,0.04) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(12,24,43,0.12), 0 8px 18px -8px var(--primary-glow) !important;
+}
+.nx-btn-primary:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 14px 28px -10px var(--primary-glow) !important; }
+
+.nx-btn-success { background: linear-gradient(180deg, #34A65F 0%, #23874A 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 18px -8px rgba(35,135,74,0.45) !important; }
+.nx-btn-danger { background: linear-gradient(180deg, #E4575F 0%, #C9363F 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 18px -8px rgba(217,67,75,0.45) !important; }
+.nx-btn-warning { background: linear-gradient(180deg, #D18B2E 0%, #A8691A 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 18px -8px rgba(184,116,30,0.45) !important; }
+.nx-btn-success:not(:disabled):hover, .nx-btn-danger:not(:disabled):hover, .nx-btn-warning:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.07); }
+
+.nx-btn-secondary {
+  background: var(--surface) !important; color: var(--text) !important;
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 1px 2px rgba(12,24,43,0.05) !important;
+}
+[data-theme="dark"] .nx-btn-secondary { background: rgba(255,255,255,0.04) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important; }
+.nx-btn-secondary:not(:disabled):hover { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-softer) !important; }
+
+.nx-btn-soft { background: var(--accent-soft) !important; color: var(--accent) !important; border-color: var(--blue-2) !important; }
+.nx-btn-soft:not(:disabled):hover { background: var(--blue-2) !important; }
+.nx-btn-danger-soft { background: var(--danger-soft) !important; color: var(--danger) !important; border-color: var(--danger-2) !important; }
+.nx-btn-danger-soft:not(:disabled):hover { background: var(--danger-2) !important; }
+.nx-btn-success-soft { background: var(--success-soft) !important; color: var(--success) !important; border-color: var(--success-2) !important; }
+.nx-btn-success-soft:not(:disabled):hover { background: var(--success-2) !important; }
+
+.nx-btn-ghost { background: transparent !important; color: var(--muted) !important; box-shadow: none !important; }
+.nx-btn-ghost:not(:disabled):hover { background: var(--surface-3) !important; color: var(--text) !important; }
+.nx-btn-link { background: transparent !important; color: var(--accent) !important; box-shadow: none !important; min-height: 0; }
+.nx-btn-link:not(:disabled):hover { text-decoration: underline; text-underline-offset: 3px; filter: none; }
+
+/* segmented / filter toggles */
+.nx-toggle { border-radius: 999px !important; background: var(--surface) !important; color: var(--text-3) !important; border-color: var(--border) !important; box-shadow: none !important; }
+[data-theme="dark"] .nx-toggle { background: rgba(255,255,255,0.03) !important; }
+.nx-toggle:not(:disabled):hover { border-color: var(--border-strong) !important; color: var(--text) !important; }
+.nx-toggle.is-on {
+  background: var(--primary-grad) !important; color: #fff !important; border-color: transparent !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 14px -6px var(--primary-glow) !important;
+}
+[data-theme="dark"] .nx-toggle.is-on { background: rgba(162,210,255,0.14) !important; color: #CFE7FF !important; box-shadow: inset 0 0 0 1px rgba(162,210,255,0.35), 0 0 18px -6px rgba(92,155,234,0.5) !important; }
+
+.nx-icon-btn { min-width: 34px; min-height: 34px; padding: 0 !important; border-radius: 11px !important; }
+.nx-icon-btn.nx-btn-sm { min-width: 28px; min-height: 28px; border-radius: 9px !important; }
+
+/* ─── Cards & popovers ────────────────────────────────────────────── */
+.nx-card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s, border-color .22s;
+}
+.nx-card[style*="cursor: pointer"]:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover) !important; }
+.nx-popover {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-strong) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-radius: 16px !important;
+  animation: nx-pop .16s ease;
+}
+
+/* ─── Tables ──────────────────────────────────────────────────────── */
+.nx-table { border-collapse: separate !important; border-spacing: 0 !important; width: 100%; }
+.nx-table thead th, .nx-table > tr:first-child > th {
+  background: var(--table-head) !important;
+  color: var(--muted) !important;
+  font-size: 11px !important; font-weight: 700 !important;
+  text-transform: uppercase; letter-spacing: 0.06em !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-top: 0 !important;
+  white-space: nowrap;
+}
+.nx-table tbody td { border-bottom: 1px solid var(--hairline) !important; border-top: 0 !important; }
+.nx-table tbody tr:last-child td { border-bottom: 0 !important; }
+.nx-table tbody tr { transition: background-color .14s; }
+.nx-table tbody tr:hover td { background-color: var(--accent-softer); }
+
+/* ─── Form fields ─────────────────────────────────────────────────── */
+.nx-input {
+  background-color: var(--input-bg) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+  color: var(--text) !important;
+  font-size: 13.5px;
+  box-shadow: inset 0 1px 1px rgba(12,24,43,0.03);
+  transition: border-color .18s, box-shadow .18s, background-color .18s !important;
+}
+[data-theme="dark"] .nx-input { box-shadow: inset 0 1px 2px rgba(0,0,0,0.4); }
+.nx-input:hover:not(:disabled):not(:focus) { border-color: var(--border-strong) !important; }
+.nx-input:focus { border-color: var(--accent) !important; box-shadow: var(--ring) !important; background-color: var(--surface) !important; outline: none; }
+.nx-input:disabled, .nx-input[readonly] { opacity: .7; cursor: not-allowed; }
+textarea.nx-input { line-height: 1.5; }
+
+/* ─── Modals ──────────────────────────────────────────────────────── */
+.nx-modal-backdrop {
+  background: rgba(var(--ink-rgb), 0.30) !important;
+  backdrop-filter: blur(8px) saturate(120%) !important; -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  animation: nx-fade .18s ease;
+}
+[data-theme="dark"] .nx-modal-backdrop { background: rgba(0,0,0,0.66) !important; }
+.nx-modal {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--shadow-lg) !important;
+  animation: nx-pop .24s cubic-bezier(.2,.9,.3,1.15);
+}
+[data-theme="dark"] .nx-modal { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0) 40%), #0D0F13 !important; }
+.nx-modal-head { background: var(--hero) !important; }
+
+/* ─── Badges ──────────────────────────────────────────────────────── */
+.nx-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 999px !important;
+  font-weight: 700 !important; letter-spacing: 0.02em;
+  line-height: 1.35; white-space: nowrap;
+}
+[data-theme="dark"] .nx-badge { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+
+/* ─── Page chrome ─────────────────────────────────────────────────── */
+.nx-sidebar { box-shadow: 1px 0 0 var(--border), 12px 0 40px -30px rgba(12,24,43,0.25); }
+[data-theme="dark"] .nx-sidebar { box-shadow: 1px 0 0 rgba(255,255,255,0.06), 20px 0 60px -40px rgba(0,0,0,0.9); }
+.nx-hero { border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 60px -30px rgba(24,60,110,0.55), inset 0 1px 0 rgba(255,255,255,0.12) !important; }
+[data-theme="dark"] .nx-hero { border-color: rgba(162,210,255,0.10); box-shadow: 0 30px 70px -30px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05) !important; }
+
+/* ─── Loader placement ────────────────────────────────────────────── */
+.nx-loader-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%; text-align: center; }
+.nx-loader-wrap.section { min-height: 220px; }
+.nx-loader-wrap.page { min-height: 60vh; }
+.nx-loader-wrap.screen { min-height: 100vh; }
+.nx-loader-wrap .nx-loader-label { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }

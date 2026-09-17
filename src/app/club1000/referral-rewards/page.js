@@ -69,7 +69,7 @@ export default function ReferralRewardsPage() {
       {referrers.length > 0 && (
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
           {referrers.map((g) => (
-            <div key={g.reference_phone || g.reference_name} style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--surface-3)', padding: '14px 16px' }}>
+            <div className="nx-card" key={g.reference_phone || g.reference_name} style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--surface-3)', padding: '14px 16px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{g.reference_name || '—'}</div>
               {g.reference_phone && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{g.reference_phone}</div>}
               <div style={{ fontSize: 18, fontWeight: 800, color: TEAL, marginTop: 8 }}>{fmtMoney(g.total)}</div>
@@ -82,15 +82,15 @@ export default function ReferralRewardsPage() {
       )}
 
       <div style={{ marginTop: 24 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
+        <select className="nx-input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All</option>
           <option value="pending">Pending</option>
           <option value="paid">Paid</option>
         </select>
       </div>
 
-      <div style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
+        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Reference</th>
@@ -120,7 +120,7 @@ export default function ReferralRewardsPage() {
                 {manager && (
                   <td style={td}>
                     {r.status === 'pending' && (
-                      <button onClick={() => markPaid(r.id)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => markPaid(r.id)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
                     )}
                   </td>
                 )}

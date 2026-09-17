@@ -178,7 +178,7 @@ export default function LoginScreen() {
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ═══ LEFT ═══ */}
-      <div className="left-panel" style={s.left}>
+      <div className="left-panel nx-hero" style={s.left}>
         <div style={s.dotBg} />
         <div style={{ ...s.glow, top:'8%',  left:'55%', width:340, height:340, background:'radial-gradient(circle,rgba(162,210,255,0.38) 0%,transparent 70%)' }} />
         <div style={{ ...s.glow, bottom:'8%', left:'-8%', width:260, height:260, background:'radial-gradient(circle,rgba(164,245,166,0.22) 0%,transparent 70%)' }} />
@@ -242,7 +242,7 @@ export default function LoginScreen() {
       {/* ═══ RIGHT ═══ */}
       <div className="right-panel" style={{ ...s.right, position: 'relative' }}>
         <div style={{ position: 'absolute', top: 20, right: 24 }}><ThemeToggle compact /></div>
-        <div style={s.formCard}>
+        <div className="nx-card" style={s.formCard}>
 
           <div style={s.mobileTop}>
             <img src="/nexora-mark.svg" alt="Nexora" style={s.mobileLogo} />
@@ -325,7 +325,7 @@ export default function LoginScreen() {
                 {resendSecs > 0 ? (
                   <span style={{ fontSize:13, color:'var(--muted)' }}>Resend OTP in {resendSecs}s</span>
                 ) : (
-                  <button type="button" onClick={handleResendOtp} disabled={loading} className="resend-link"
+                  <button type="button" onClick={handleResendOtp} disabled={loading} className="resend-link nx-btn nx-btn-md nx-btn-ghost"
                     style={{ fontSize:13, fontWeight:700, color:NAVY, background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}
                   >
                     Resend OTP
@@ -368,7 +368,7 @@ export default function LoginScreen() {
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Enter your password" style={{ ...s.input, flex:1 }} disabled={loading}
                 />
-                <button type="button" onClick={() => setShowPass((v) => !v)} style={s.eyeBtn}>
+                <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={() => setShowPass((v) => !v)} style={s.eyeBtn}>
                   {showPass
                     ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F6DB5" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                     : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F6DB5" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>

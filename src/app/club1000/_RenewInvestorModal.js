@@ -215,12 +215,12 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
             Renew Investment
-            <span style={{ fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 8px', borderRadius: 20 }}>R{nextRevisionNo}</span>
+            <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 8px', borderRadius: 20 }}>R{nextRevisionNo}</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{investor.name} · {investor.phone} · {scheme?.name}</div>
         </div>
@@ -230,16 +230,16 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
           </div>
           <div>
             <label style={lbl}>Renewal Date</label>
-            <input style={inp} type="date" value={form.investment_date} onChange={(e) => set('investment_date', e.target.value)} required />
+            <input className="nx-input" style={inp} type="date" value={form.investment_date} onChange={(e) => set('investment_date', e.target.value)} required />
           </div>
           <div>
             <label style={lbl}>Amount Invested (₹)</label>
-            <input style={inp} type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
+            <input className="nx-input" style={inp} type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Interest Payout</label>
-              <select style={inp} value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
+              <select className="nx-input" style={inp} value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
                 {(scheme?.interest_payout_options?.length ? scheme.interest_payout_options : ['maturity']).map((key) => (
                   <option key={key} value={key}>{INTEREST_PAYOUT_LABELS[key] || key}</option>
                 ))}
@@ -247,14 +247,14 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Return %</label>
-              <input style={inp} type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
+              <input className="nx-input" style={inp} type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
             </div>
           </div>
           {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <label style={{ ...lbl, marginBottom: 0 }}>Payout Schedule (confirm or edit)</label>
-                <button type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: AMBER, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
+                <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: AMBER, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
               </div>
               <div style={{ border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
                 {schedule.map((row, idx) => (
@@ -263,7 +263,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
                       {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
                     </span>
                     <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{formatDMY(row.due_date)}</span>
-                    <input
+                    <input className="nx-input"
                       type="number" step="0.01" value={row.amount_due}
                       onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)}
                       style={{ ...inp, height: 32, flex: 1 }}
@@ -275,16 +275,16 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
           )}
           <div>
             <label style={lbl}>Security (for LOI — optional)</label>
-            <input style={inp} value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
+            <input className="nx-input" style={inp} value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
           </div>
           <div>
             <label style={lbl}>Notes</label>
-            <input style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+            <input className="nx-input" style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
           </div>
 
           <div style={{ background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 14, padding: 12 }}>
             <label style={lbl}>Renewed Investment Proposal Form (LOI)</label>
-            <button type="button" onClick={doDownloadLoi} disabled={loiDownloading}
+            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={doDownloadLoi} disabled={loiDownloading}
               style={{ width: '100%', padding: '9px 0', background: 'var(--surface)', color: AMBER, border: `1.5px solid ${AMBER}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
               {loiDownloading ? 'Generating…' : `Download Renewed LOI (R${nextRevisionNo})`}
             </button>
@@ -299,8 +299,8 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
           {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--warning-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-warning" type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--warning-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
             {busy ? 'Submitting…' : 'Submit Renewal for Approval'}
           </button>
         </div>

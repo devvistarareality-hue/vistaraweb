@@ -45,7 +45,7 @@ const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => {
 
   return (
     <div style={{ position: 'relative', flex: 1, ...wrapperStyle }}>
-      <input {...p} type="text" inputMode="numeric" placeholder="dd/mm/yyyy"
+      <input className="nx-input" {...p} type="text" inputMode="numeric" placeholder="dd/mm/yyyy"
         value={shown} onChange={type}
         // Drop the draft on the way out so a half-typed date reverts to the
         // committed one rather than sitting there looking saved.
@@ -58,7 +58,7 @@ const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => {
         style={{ position: 'absolute', right: 8, top: '50%', width: 1, height: 1,
           opacity: 0, border: 'none', padding: 0, pointerEvents: 'none' }} />
       {!p.disabled && (
-        <button type="button" onClick={openPicker} tabIndex={-1} aria-label="Open date picker"
+        <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={openPicker} tabIndex={-1} aria-label="Open date picker"
           style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
             width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
             border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>

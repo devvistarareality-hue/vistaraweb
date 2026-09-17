@@ -48,7 +48,7 @@ export default function EmployeeDashboard() {
           <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Your investors and personal totals</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
           {!loading && !schemes.length && (
             <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>No schemes yet — ask your manager to create one.</div>
           )}
@@ -76,8 +76,8 @@ export default function EmployeeDashboard() {
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>My Recent Investors</div>
             <Link href="/club1000/investors" style={{ fontSize: 12, fontWeight: 700, color: TEAL, textDecoration: 'none' }}>View all →</Link>
           </div>
-          <div style={{ marginTop: 12, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="nx-card" style={{ marginTop: 12, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
+            <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                   <th style={th}>Name</th>

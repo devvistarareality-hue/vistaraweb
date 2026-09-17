@@ -102,7 +102,7 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
       {insts.length > 0 && (
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 10, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>Payment Schedule</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Type'].map((h) => <th key={h} style={{ textAlign: 'left', color: 'var(--muted)', fontWeight: 700, fontSize: 10, padding: '4px 6px', borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
             <tbody>
               {insts.map((i, idx) => (

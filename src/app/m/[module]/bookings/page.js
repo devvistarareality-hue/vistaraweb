@@ -173,7 +173,7 @@ export default function ModuleBookingsPage() {
       <div style={{ display: 'flex', gap: 10, marginTop: 18, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
-            <button key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            <button className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               background: tab === k ? 'var(--success-solid)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
@@ -181,12 +181,12 @@ export default function ModuleBookingsPage() {
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group the user collapsed earlier would hide its own hits. */}
-          <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
+          <input className="nx-input" value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
             placeholder="Search name, phone or LOI / unit no…"
             style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid var(--border)',
               background: 'var(--surface)', fontSize: 13, color: 'var(--text)', boxSizing: 'border-box' }} />
           {!!q && (
-            <button onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
+            <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
               style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
                 color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
@@ -201,14 +201,14 @@ export default function ModuleBookingsPage() {
           {(projOptions.length > 1 || stmOptions.length > 1) && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -8, marginBottom: 4 }}>
               {projOptions.length > 1 && (
-                <select value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
+                <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
                   style={{ ...modSel, borderColor: proj ? 'var(--success)' : 'var(--border)', fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)' }}>
                   <option value="">All Projects</option>
                   {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               )}
               {stmOptions.length > 1 && (
-                <select value={stm} onChange={(e) => { setStm(e.target.value); setOpen({}); }}
+                <select className="nx-input" value={stm} onChange={(e) => { setStm(e.target.value); setOpen({}); }}
                   style={{ ...modSel, borderColor: stm ? 'var(--success)' : 'var(--border)', fontWeight: stm ? 700 : 500, color: stm ? 'var(--text)' : 'var(--muted)' }}>
                   <option value="">All STMs</option>
                   {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -235,12 +235,12 @@ export default function ModuleBookingsPage() {
         {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} />
         : err ? <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', color: 'var(--danger)', borderRadius: 16, padding: '14px 18px', fontSize: 13 }}>{err}</div>
         : projectNames.length === 0 ? (
-          <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
             {narrowed ? `No ${tabLabel.toLowerCase()} bookings match these filters.` : `No ${tabLabel.toLowerCase()} bookings.`}
           </div>
         ) : projectNames.map((pn) => (
           <div key={pn} style={{ marginBottom: 12 }}>
-            <div onClick={() => toggle(pn)}
+            <div className="nx-card" onClick={() => toggle(pn)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid var(--success-2)' : '1.5px solid transparent' }}>
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <Icon name="building" /> {pn} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
@@ -253,7 +253,7 @@ export default function ModuleBookingsPage() {
             {open[pn] && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
                 {groups[pn].map((b) => (
-                  <div key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+                  <div className="nx-card" key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
@@ -261,8 +261,8 @@ export default function ModuleBookingsPage() {
                             ? <span style={{ color: 'var(--warning-2)' }}>{b.plot_numbers}</span>
                             : <>{unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text}</>}
                           <span style={{ color: 'var(--muted)', fontWeight: 600 }}> · {b.client_name || '—'}</span>
-                          <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)', background: 'var(--success-2)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
-                          {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
+                          <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)', background: 'var(--success-2)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
+                          {b.revision_no > 0 && <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{b.phone} · STM {b.stm_name || '—'}</div>
                         <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Booked {fmtDateTime(b.created_at)}</div>
@@ -305,20 +305,20 @@ export default function ModuleBookingsPage() {
                           card-level copy is the same figures twice. It also shares an
                           id with that row, which rendered the block twice at once. */}
                       {!b.revision_no && (
-                        <button onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           {detailsOpen[b.id] ? '▲ Hide Details' : '▾ Details'}
                         </button>
                       )}
                       {b.loi_document && <>
-                        <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View {isEoi(b) ? 'EOI' : 'LOI'}</button>
-                        <button onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
+                        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View {isEoi(b) ? 'EOI' : 'LOI'}</button>
+                        <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
                       </>}
                       {/* Only the latest version is listed here, at its current terms.
                           The earlier ones are what was signed at the time — which for
                           a team reconciling payments against documents is the whole
                           question when a deal carries an R1. */}
                       {b.revision_no > 0 && (
-                        <button onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           ⟲ Revisions {revOpen[b.id] ? '▲' : '▾'}
                         </button>
                       )}
@@ -329,12 +329,12 @@ export default function ModuleBookingsPage() {
                         <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)', letterSpacing: 0.6, marginBottom: 8 }}>
                           REVISION HISTORY
                         </div>
-                        {!revs[b.id] ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Loading…</p>
+                        {!revs[b.id] ? <Loader variant="inline" size="sm" label="Loading…" />
                          : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Couldn&apos;t load the history.</p>
                          : revs[b.id].map((v) => (
                           <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
                             padding: '7px 0', borderBottom: '1px solid var(--surface-2)' }}>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
+                            <span className="nx-badge" style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
                               background: v.id === b.id ? 'var(--success-2)' : 'var(--surface-2)', padding: '3px 8px', borderRadius: 20 }}>
                               R{v.revision_no || 0}
                             </span>
@@ -350,10 +350,10 @@ export default function ModuleBookingsPage() {
                               : <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>superseded</span>}
                             <span style={{ flex: 1 }} />
                             {v.loi_document ? <>
-                              <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View</button>
-                              <button onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
+                              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View</button>
+                              <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
                             </> : <span style={{ fontSize: 11, color: 'var(--faint)' }}>no document on file</span>}
-                            <button onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                            <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                               {revDetails[v.id] ? '▲ Details' : '▾ Details'}
                             </button>
                             {revDetails[v.id] && <div style={{ width: '100%' }}><BookingDetails b={v} /></div>}

@@ -48,14 +48,14 @@ export default function LedgerModal({ investorId, onClose }) {
   const s = data?.summary;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Ledger{inv ? ` — ${inv.name}` : ''}</div>
             {inv && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{inv.phone} · {inv.scheme_name}</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--faint)', cursor: 'pointer' }}><Icon name="x" /></button>
+          <button className="nx-btn nx-btn-lg nx-icon-btn nx-btn-ghost" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--faint)', cursor: 'pointer' }}><Icon name="x" /></button>
         </div>
 
         <div style={{ padding: '18px 22px' }}>
@@ -80,7 +80,7 @@ export default function LedgerModal({ investorId, onClose }) {
               </div>
 
               <div style={{ border: '1px solid var(--surface-3)', borderRadius: 16, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                       {['Date', 'Type', 'Amount', 'Status', 'Paid On'].map((h) => (

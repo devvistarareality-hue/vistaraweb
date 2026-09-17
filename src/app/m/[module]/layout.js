@@ -112,7 +112,7 @@ export default function ModuleLayout({ children, params }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <div style={s.sidebar}>
+      <div className="nx-sidebar" style={s.sidebar}>
         <div style={s.logoRow}>
           <div style={s.logoCircle}><img src="/nexora-mark.svg" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
           <div>
@@ -135,7 +135,7 @@ export default function ModuleLayout({ children, params }) {
             <div style={{ marginTop: 18 }}>
               <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
               <div style={{ position: 'relative' }}>
-                <select data-plain value={companyId ?? ''} onChange={handleCompanyChange}
+                <select className="nx-input" data-plain value={companyId ?? ''} onChange={handleCompanyChange}
                   style={{ width: '100%', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(var(--ink-rgb),0.056)', border: '1px solid rgba(var(--ink-rgb),0.112)', borderRadius: 9, padding: '8px 28px 8px 12px', color: companyId ? 'var(--text)' : 'rgba(var(--ink-rgb),0.67)', fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
                   <option value="" style={{ backgroundColor: 'var(--surface)', color: 'rgba(var(--ink-rgb),0.72)' }}>All Companies</option>
                   {companies.map((c) => (
@@ -178,8 +178,8 @@ export default function ModuleLayout({ children, params }) {
 
       {/* ── Profile Modal ── */}
       {profileOpen && (
-        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: 300, marginLeft: 16, marginBottom: 20, backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
+        <div className="nx-modal-backdrop" onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 300, marginLeft: 16, marginBottom: 20, backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
             <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: 'rgba(162,210,255,0.12)', border: '1.5px solid rgba(162,210,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: ORANGE, flexShrink: 0 }}>{(user?.name || 'A')[0].toUpperCase()}</div>
@@ -200,8 +200,8 @@ export default function ModuleLayout({ children, params }) {
               ))}
             </div>
             <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Change Password</button>
-              <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Change Password</button>
+              <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
             </div>
           </div>
         </div>
@@ -213,14 +213,14 @@ export default function ModuleLayout({ children, params }) {
 }
 
 const s = {
-  sidebar: { width: 230, minWidth: 230, height: '100vh', backgroundColor: 'var(--glass)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 },
+  sidebar: { width: 230, minWidth: 230, height: '100vh', backgroundColor: 'var(--sidebar)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 },
   logoRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '20px 18px 18px', borderBottom: '1px solid rgba(var(--ink-rgb),0.048)' },
   logoCircle: { width: 36, height: 36, borderRadius: 14, backgroundColor: '#fff', padding: 5, overflow: 'hidden', flexShrink: 0 },
   logoName: { fontSize: 13, fontWeight: 800, color: 'var(--text)' },
   logoSub: { fontSize: 10, color: 'rgba(var(--ink-rgb),0.58)', marginTop: 2 },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5 },
   navItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 999, color: 'rgba(var(--ink-rgb),0.74)', marginBottom: 1, textDecoration: 'none', position: 'relative', overflow: 'hidden' },
-  navActive: { backgroundColor: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: '0 6px 16px -6px rgba(47,109,181,0.45)' },
+  navActive: { background: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: 'var(--nav-active-shadow)' },
   navChildActive: { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' },
   activeBar: { position: 'absolute', left: 0, top: '18%', bottom: '18%', width: 3, backgroundColor: 'var(--primary)', borderRadius: '0 3px 3px 0' },
   iconWrap: { display: 'flex', alignItems: 'center', flexShrink: 0 },

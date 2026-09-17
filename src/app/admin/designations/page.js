@@ -58,28 +58,28 @@ export default function DesignationMasterPage() {
       </div>
 
       {/* Create form */}
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--hero)', padding: '18px 24px 16px' }}>
+      <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, marginBottom: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '18px 24px 16px' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>Add New Designation</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Define designations per module for user profiles</div>
         </div>
         <form onSubmit={handleCreate} style={{ padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 140 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Module</label>
-            <select value={form.module} onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
+            <select className="nx-input" value={form.module} onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
               style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, backgroundColor: 'var(--surface-2)', outline: 'none', cursor: 'pointer' }}>
               {ALL_MODULES.map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
           <div style={{ flex: 2, minWidth: 200 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Designation Name</label>
-            <input required type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            <input className="nx-input" required type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Site Team Manager, HR Executive"
               style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' }}
               onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
           </div>
           <div>
-            <button type="submit" style={{ height: 40, padding: '0 22px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
+            <button className="nx-btn nx-btn-sm nx-btn-primary" type="submit" style={{ height: 40, padding: '0 22px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add</button>
           </div>
         </form>
         {error && <div style={{ margin: '0 24px 16px', backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
@@ -91,7 +91,7 @@ export default function DesignationMasterPage() {
           const c    = MODULE_COLOR[mod] || { bg: 'var(--surface-2)', text: 'var(--text-3)', dot: 'var(--faint)' };
           const list = grouped[mod] || [];
           return (
-            <div key={mod} style={s.moduleCard}>
+            <div className="nx-card" key={mod} style={s.moduleCard}>
               <div style={s.moduleHeader}>
                 <span style={{ ...s.moduleDot, backgroundColor: c.dot }} />
                 <span style={{ ...s.moduleName, color: c.text }}>{mod}</span>
@@ -104,7 +104,7 @@ export default function DesignationMasterPage() {
                   {list.map((d) => (
                     <div key={d.id} style={{ ...s.chip, backgroundColor: c.bg }}>
                       <span style={{ ...s.chipText, color: c.text }}>{d.name}</span>
-                      <button
+                      <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost"
                         onClick={() => handleDelete(d)}
                         style={{ ...s.chipDel, color: c.text }}
                         title="Remove"

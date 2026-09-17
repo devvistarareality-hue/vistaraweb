@@ -57,10 +57,10 @@ function LeadHistoryModal({ lead, onClose }) {
   ];
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 480, maxWidth: '100%', maxHeight: '88vh', backgroundColor: 'var(--surface)', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="nx-modal" onClick={e => e.stopPropagation()} style={{ width: 480, maxWidth: '100%', maxHeight: '88vh', backgroundColor: 'var(--surface)', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 70px rgba(0,0,0,0.25)' }}>
         {/* Header */}
-        <div style={{ background: 'var(--hero)', padding: '18px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '18px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff' }}>{lead.name || '—'}</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{d.phone || lead.phone || ''}</div>
@@ -94,7 +94,7 @@ function LeadHistoryModal({ lead, onClose }) {
             </div>
           </div>
 
-          {!detail && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Loading…</p>}
+          {!detail && <Loader variant="inline" size="sm" label="Loading…" />}
           {detail && (detail.history || []).filter(h => h.field_changed !== 'created').length === 0 && (
             <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', marginTop: 8 }}>No changes recorded yet.</p>
           )}
@@ -156,7 +156,7 @@ const CLOSURE_STATUS_COLOR = {
 function StatusBadge({ status, colors }) {
   const c = colors[status] || { bg: 'var(--surface-2)', text: 'var(--text-3)' };
   return (
-    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.text }}>
+    <span className="nx-badge" style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.text }}>
       {(status || '').replace(/_/g, ' ').toUpperCase()}
     </span>
   );
@@ -263,14 +263,14 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
       {loading ? (
         <Loader label="Loading…" style={{ padding: '28px 0' }} />
       ) : tab === 'sv' ? (
-        <div style={card}>
+        <div className="nx-card" style={card}>
           {svCompleted.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 60, color: 'var(--faint)', fontSize: 14 }}>
               {isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.'}
             </div>
           ) : (
             <div style={scroller} className="convScroll">
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+            <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr>
                   <th style={th}>Lead Name</th>
@@ -300,14 +300,14 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
           )}
         </div>
       ) : (
-        <div style={card}>
+        <div className="nx-card" style={card}>
           {allClosures.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 60, color: 'var(--faint)', fontSize: 14 }}>
               {isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
           ) : (
             <div style={scroller} className="convScroll">
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+            <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr>
                   <th style={th}>Lead Name</th>

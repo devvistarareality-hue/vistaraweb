@@ -131,12 +131,12 @@ export default function CreateUserPage() {
       <Toast {...toast} onHide={() => setToast((t) => ({ ...t, visible: false }))} />
 
       <div style={s.pageHeader}>
-        <button onClick={() => router.back()} style={s.backBtn}>← Back</button>
+        <button className="nx-btn nx-btn-md nx-btn-ghost" onClick={() => router.back()} style={s.backBtn}>← Back</button>
         <h1 style={s.pageTitle}>Create New User</h1>
       </div>
 
-      <div style={{ ...s.card, padding: 0, overflow: 'hidden' }}>
-        <div style={{ background: 'var(--hero)', padding: '22px 28px 20px' }}>
+      <div className="nx-card" style={{ ...s.card, padding: 0, overflow: 'hidden' }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '22px 28px 20px' }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>New User</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Fill in the details below to create a new user account</div>
         </div>
@@ -148,7 +148,7 @@ export default function CreateUserPage() {
               <label style={s.label}>
                 Company <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
-              <select
+              <select className="nx-input"
                 required
                 value={selectedCompanyId}
                 onChange={(e) => setSelectedCompanyId(e.target.value)}
@@ -173,7 +173,7 @@ export default function CreateUserPage() {
           <div style={s.grid2}>
             <div>
               <label style={s.label}>Full Name</label>
-              <input
+              <input className="nx-input"
                 required
                 type="text"
                 value={form.name}
@@ -184,7 +184,7 @@ export default function CreateUserPage() {
             </div>
             <div>
               <label style={s.label}>Email</label>
-              <input
+              <input className="nx-input"
                 required
                 type="email"
                 value={form.email}
@@ -195,7 +195,7 @@ export default function CreateUserPage() {
             </div>
             <div>
               <label style={s.label}>Phone Number</label>
-              <input
+              <input className="nx-input"
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
@@ -218,7 +218,7 @@ export default function CreateUserPage() {
             </div>
             <div>
               <label style={s.label}>Role</label>
-              <select
+              <select className="nx-input"
                 value={form.role}
                 onChange={(e) => {
                   const role = e.target.value;
@@ -264,7 +264,7 @@ export default function CreateUserPage() {
                 <span style={s.hintInline}> — select modules first</span>
               )}
             </label>
-            <select
+            <select className="nx-input"
               value={form.designation}
               onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
               style={{ ...s.input, maxWidth: 360, color: form.designation ? 'var(--text)' : 'var(--muted)' }}
@@ -292,14 +292,14 @@ export default function CreateUserPage() {
               <p style={s.hint}>Select a company first to see available managers</p>
             ) : (
               <>
-                <input
+                <input className="nx-input"
                   type="text"
                   placeholder="Search by name or user code…"
                   value={managerSearch}
                   onChange={(e) => setManagerSearch(e.target.value)}
                   style={{ ...s.input, marginBottom: 6 }}
                 />
-                <select
+                <select className="nx-input"
                   value={form.reporting_manager_id || ''}
                   onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value || null }))}
                   style={{ ...s.input, maxWidth: 420 }}
@@ -383,8 +383,8 @@ export default function CreateUserPage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-            <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" disabled={creating} style={{ padding: '10px 28px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: creating ? 0.7 : 1, minWidth: 130 }}>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button className="nx-btn nx-btn-md nx-btn-primary" type="submit" disabled={creating} style={{ padding: '10px 28px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: creating ? 0.7 : 1, minWidth: 130 }}>
               {creating ? 'Creating…' : 'Create User'}
             </button>
           </div>

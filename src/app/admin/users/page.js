@@ -23,16 +23,16 @@ const mSec = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpaci
 function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {
   if (!open) return null;
   return (
-    <div style={s.overlay} onClick={onCancel}>
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="nx-modal-backdrop" style={s.overlay} onClick={onCancel}>
+      <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 420, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{title}</div>
           <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
         <div style={{ padding: '20px 24px', fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6 }}>{message}</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '0 24px 20px' }}>
-          <button onClick={onCancel} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onConfirm} style={{ padding: '10px 24px', backgroundColor: confirmColor || 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onCancel} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={onConfirm} style={{ padding: '10px 24px', backgroundColor: confirmColor || 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -182,12 +182,12 @@ export default function UserManagementPage() {
         <div>
           <h1 style={s.pageTitle}>User Management</h1>
           <div style={s.statRow}>
-            <span style={s.statChip}>
+            <span className="nx-badge" style={s.statChip}>
               <span style={{ ...s.statDot, backgroundColor: 'var(--success-solid)' }} />
               {activeCount} active
             </span>
             {inactiveCount > 0 && (
-              <span style={s.statChip}>
+              <span className="nx-badge" style={s.statChip}>
                 <span style={{ ...s.statDot, backgroundColor: 'var(--faint-solid)' }} />
                 {inactiveCount} inactive
               </span>
@@ -195,22 +195,22 @@ export default function UserManagementPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={handleRefresh} disabled={loading} title="Refresh" style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}>↻</button>
-          <button onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid var(--blue-2)' }}><Icon name="folder" /> Org Chart</button>
-          <button onClick={() => router.push('/admin/users/create')} style={s.createBtn}>+ Create User</button>
+          <button className="nx-btn nx-btn-lg nx-btn-secondary" onClick={handleRefresh} disabled={loading} title="Refresh" style={{ ...s.refreshBtn, opacity: loading ? 0.5 : 1 }}>↻</button>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => router.push('/admin/org-chart')} style={{ ...s.createBtn, background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid var(--blue-2)' }}><Icon name="folder" /> Org Chart</button>
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push('/admin/users/create')} style={s.createBtn}>+ Create User</button>
         </div>
       </div>
 
       {/* ── Search ── */}
-      <input type="text" placeholder="Search by name, code, or email…" value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
+      <input className="nx-input" type="text" placeholder="Search by name, code, or email…" value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
 
       {loading && users.length === 0 && <p style={s.info}>Loading users…</p>}
       {error   && <p style={s.errorTxt}>{error}</p>}
 
       {/* ── Table ── */}
       {(users.length > 0 || !loading) && (
-        <div style={s.tableWrap}>
-          <table style={s.table}>
+        <div className="nx-card" style={s.tableWrap}>
+          <table className="nx-table" style={s.table}>
             <thead>
               <tr>
                 {['Code', 'Name', 'Email', 'Role', 'Modules', 'Status', 'Actions'].map((h) => (
@@ -224,21 +224,21 @@ export default function UserManagementPage() {
                   <td style={s.td}><code style={{ ...s.codePill, opacity: u.is_active ? 1 : 0.55 }}>{u.user_code}</code></td>
                   <td style={s.td}><span style={{ ...s.nameText, color: u.is_active ? 'var(--text)' : 'var(--faint)' }}>{u.name}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.email}</span></td>
-                  <td style={s.td}><span style={s.rolePill}>{u.role}</span></td>
+                  <td style={s.td}><span className="nx-badge" style={s.rolePill}>{u.role}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.modules?.length || 0}</span></td>
                   <td style={s.td}>
-                    <span style={{ ...s.statusPill, backgroundColor: u.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: u.is_active ? 'var(--success)' : 'var(--text-3)', border: `1px solid ${u.is_active ? 'var(--success-2)' : 'var(--border-strong)'}` }}>
+                    <span className="nx-badge" style={{ ...s.statusPill, backgroundColor: u.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: u.is_active ? 'var(--success)' : 'var(--text-3)', border: `1px solid ${u.is_active ? 'var(--success-2)' : 'var(--border-strong)'}` }}>
                       {u.is_active ? '● Active' : '○ Inactive'}
                     </span>
                   </td>
                   <td style={s.td}>
                     <div style={s.rowActions}>
-                      <button onClick={() => openEdit(u)} style={s.editBtn}>Edit</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => openEdit(u)} style={s.editBtn}>Edit</button>
                       {u.is_active
                         ? <button onClick={() => handleDeactivate(u)} style={s.deactBtn}>Deactivate</button>
-                        : <button onClick={() => handleActivate(u)}   style={s.activateBtn}>Activate</button>
+                        : <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => handleActivate(u)}   style={s.activateBtn}>Activate</button>
                       }
-                      <button onClick={() => handleDelete(u)} style={s.deleteBtn}>Delete</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => handleDelete(u)} style={s.deleteBtn}>Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -253,11 +253,11 @@ export default function UserManagementPage() {
 
       {/* ── Edit Modal ── */}
       {editUser && (
-        <div style={s.overlay} onClick={() => setEditUser(null)}>
-          <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+        <div className="nx-modal-backdrop" style={s.overlay} onClick={() => setEditUser(null)}>
+          <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
 
             {/* Gradient Header */}
-            <div style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>Edit User</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{editUser.name} · {editUser.user_code}</div>
@@ -302,7 +302,7 @@ export default function UserManagementPage() {
                         </p>
                       </>
                     ) : (
-                      <input type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
+                      <input className="nx-input" type={type} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} style={mInp}
                         onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
                     )}
                   </div>
@@ -313,7 +313,7 @@ export default function UserManagementPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 18 }}>
                 <div>
                   <label style={mLbl}>Role</label>
-                  <select value={form.role || 'Employee'} onChange={(e) => {
+                  <select className="nx-input" value={form.role || 'Employee'} onChange={(e) => {
                     const role = e.target.value;
                     setForm((f) => ({ ...f, role, manager_modules: isManagerRole({ role }) ? (f.modules || []) : f.manager_modules }));
                   }} style={{ ...mInp, cursor: 'pointer' }}>
@@ -325,7 +325,7 @@ export default function UserManagementPage() {
                   {(() => {
                     const avail = designations.filter((d) => (form.modules || []).includes(d.module));
                     return (
-                      <select value={form.designation || ''} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} style={{ ...mInp, cursor: 'pointer' }} disabled={avail.length === 0}>
+                      <select className="nx-input" value={form.designation || ''} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} style={{ ...mInp, cursor: 'pointer' }} disabled={avail.length === 0}>
                         <option value="">{avail.length === 0 ? 'Select modules first' : '— Select —'}</option>
                         {avail.map((d) => <option key={d.id} value={d.name}>{d.name} ({d.module})</option>)}
                       </select>
@@ -336,9 +336,9 @@ export default function UserManagementPage() {
 
               <div style={mSec}>Reporting Manager{needsReportingManager(form.role) ? ' *' : ''}</div>
               <div style={{ marginBottom: 18 }}>
-                <input type="text" placeholder="Search by name or user code…" value={editManagerSearch} onChange={(e) => setEditManagerSearch(e.target.value)}
+                <input className="nx-input" type="text" placeholder="Search by name or user code…" value={editManagerSearch} onChange={(e) => setEditManagerSearch(e.target.value)}
                   style={{ ...mInp, marginBottom: 8 }} onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
-                <select value={form.reporting_manager_id || ''} onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value ? Number(e.target.value) : null }))} style={{ ...mInp, cursor: 'pointer' }}>
+                <select className="nx-input" value={form.reporting_manager_id || ''} onChange={(e) => setForm((f) => ({ ...f, reporting_manager_id: e.target.value ? Number(e.target.value) : null }))} style={{ ...mInp, cursor: 'pointer' }}>
                   <option value="">— None —</option>
                   {users.filter((u) => {
                     if (u.id === editUser?.id) return false;
@@ -414,8 +414,8 @@ export default function UserManagementPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 24px', borderTop: '1px solid var(--surface-2)' }}>
-              <button onClick={() => setEditUser(null)} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleSave} disabled={updating} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: updating ? 0.7 : 1, minWidth: 120 }}>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setEditUser(null)} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={handleSave} disabled={updating} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: updating ? 0.7 : 1, minWidth: 120 }}>
                 {updating ? 'Saving…' : 'Save Changes'}
               </button>
             </div>

@@ -60,14 +60,14 @@ export default function MediaUpload({ label, value, onChange, folder = 'erp/medi
                   <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--accent)' }}>View PDF ↗</a>
                 </div>
               </div>
-              <button onClick={handleRemove} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Remove</button>
+              <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={handleRemove} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Remove</button>
             </div>
           ) : (
             <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
               <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', wordBreak: 'break-all' }}>
                 {value.split('/').pop()?.split('?')[0] || 'View file ↗'}
               </a>
-              <button onClick={handleRemove} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>Remove</button>
+              <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={handleRemove} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>Remove</button>
             </div>
           )}
         </div>

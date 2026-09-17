@@ -16,7 +16,7 @@ function RoleBadge({ role }) {
   };
   const c = colors[role] || { bg: 'var(--surface-2)', color: 'var(--muted)' };
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+    <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {role}
     </span>
   );
@@ -25,7 +25,7 @@ function RoleBadge({ role }) {
 function DesigBadge({ desig }) {
   if (!desig) return <span style={{ color: 'var(--border-strong)', fontSize: 12 }}>—</span>;
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: 'var(--surface-2)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+    <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: 'var(--surface-2)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
       {desig}
     </span>
   );
@@ -43,7 +43,7 @@ const canHoldProjects = (m) =>
 
 function FilterChip({ label, active, onClick }) {
   return (
-    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--strong)' : 'var(--surface-3)', color: active ? '#fff' : 'var(--muted)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+    <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--strong)' : 'var(--surface-3)', color: active ? '#fff' : 'var(--muted)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
   );
 }
 
@@ -74,11 +74,11 @@ function AssignProjectsModal({ member, projects, onClose }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
+    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+      <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: 440, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}
-        <div style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '20px 24px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Assign Projects</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{member.name} · {member.designation}</div>
@@ -113,8 +113,8 @@ function AssignProjectsModal({ member, projects, onClose }) {
 
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 22px 20px', borderTop: '1px solid var(--surface-2)' }}>
-          <button onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => onClose(null)} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 100 }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -211,13 +211,13 @@ export default function SalesUsersPage() {
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Sales Team</h1>
             <p style={{ fontSize: 13, color: 'var(--muted)' }}>{members.length} team members</p>
           </div>
-          <button onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: 'var(--muted)' }}>↺</button>
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: 'var(--muted)' }}>↺</button>
         </div>
       </div>
 
       {/* Search */}
       <div style={{ marginBottom: 12 }}>
-        <input
+        <input className="nx-input"
           placeholder="Search by name, user code or designation…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -250,9 +250,9 @@ export default function SalesUsersPage() {
           {search ? 'No users match your search.' : 'No team members found.'}
         </p>
       ) : (
-        <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
+        <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflowX: 'auto' }}>
           <div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+            <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
               <thead style={{ backgroundColor: 'var(--surface-2)' }}>
                 <tr>
                   {['Name', 'User Code', 'Designation', 'Role', 'Projects', 'Phone', 'Email'].map((h) => (
@@ -274,7 +274,7 @@ export default function SalesUsersPage() {
                     <td style={td}><RoleBadge role={m.role} /></td>
                     <td style={td}>
                       {isAssignable(m) ? (
-                        <button onClick={() => setAssignMember(m)}
+                        <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setAssignMember(m)}
                           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, border: '1.5px solid var(--accent)', backgroundColor: 'var(--accent-softer)', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                           <Icon name="folder" /> {projectCounts[m.id] > 0 ? `${projectCounts[m.id]} assigned` : 'Assign'}
                         </button>

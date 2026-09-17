@@ -86,56 +86,56 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <form onSubmit={submit} style={{ background: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
+    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <form className="nx-modal" onSubmit={submit} style={{ background: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16 }}>Add Lead</h2>
         {error && <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
 
         <div style={{ marginBottom: 12 }}>
           <label style={lbl}>Name *</label>
-          <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} style={inp} required />
+          <input className="nx-input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} style={inp} required />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-          <div><label style={lbl}>Phone</label><input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} style={inp} /></div>
-          <div><label style={lbl}>Alt Phone</label><input value={form.alt_phone} onChange={(e) => setForm((f) => ({ ...f, alt_phone: e.target.value }))} style={inp} /></div>
+          <div><label style={lbl}>Phone</label><input className="nx-input" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} style={inp} /></div>
+          <div><label style={lbl}>Alt Phone</label><input className="nx-input" value={form.alt_phone} onChange={(e) => setForm((f) => ({ ...f, alt_phone: e.target.value }))} style={inp} /></div>
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={lbl}>Email</label>
-          <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} style={inp} />
+          <input className="nx-input" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} style={inp} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <div>
             <label style={lbl}>Source</label>
-            <select value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} style={inp}>
+            <select className="nx-input" value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} style={inp}>
               {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
           <div>
             <label style={lbl}>Date</label>
-            <input type="date" value={form.lead_date} onChange={(e) => setForm((f) => ({ ...f, lead_date: e.target.value }))} style={inp} />
+            <input className="nx-input" type="date" value={form.lead_date} onChange={(e) => setForm((f) => ({ ...f, lead_date: e.target.value }))} style={inp} />
           </div>
         </div>
         {form.source === 'referral' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div><label style={lbl}>Reference Name</label><input value={form.reference_name} onChange={(e) => setForm((f) => ({ ...f, reference_name: e.target.value }))} style={inp} /></div>
-            <div><label style={lbl}>Reference Phone</label><input value={form.reference_phone} onChange={(e) => setForm((f) => ({ ...f, reference_phone: e.target.value }))} style={inp} /></div>
+            <div><label style={lbl}>Reference Name</label><input className="nx-input" value={form.reference_name} onChange={(e) => setForm((f) => ({ ...f, reference_name: e.target.value }))} style={inp} /></div>
+            <div><label style={lbl}>Reference Phone</label><input className="nx-input" value={form.reference_phone} onChange={(e) => setForm((f) => ({ ...f, reference_phone: e.target.value }))} style={inp} /></div>
           </div>
         )}
         <div style={{ marginBottom: 12 }}>
           <label style={lbl}>Scheme Interest</label>
-          <select value={form.scheme_interest} onChange={(e) => setForm((f) => ({ ...f, scheme_interest: e.target.value }))} style={inp}>
+          <select className="nx-input" value={form.scheme_interest} onChange={(e) => setForm((f) => ({ ...f, scheme_interest: e.target.value }))} style={inp}>
             <option value="">— None —</option>
             {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={lbl}>Amount Interested (₹)</label>
-          <input type="number" value={form.amount_interested} onChange={(e) => setForm((f) => ({ ...f, amount_interested: e.target.value }))} style={inp} />
+          <input className="nx-input" type="number" value={form.amount_interested} onChange={(e) => setForm((f) => ({ ...f, amount_interested: e.target.value }))} style={inp} />
         </div>
         {manager && (
           <div style={{ marginBottom: 12 }}>
             <label style={lbl}>Assigned To</label>
-            <select value={form.assigned_to} onChange={(e) => setForm((f) => ({ ...f, assigned_to: e.target.value }))} style={inp}>
+            <select className="nx-input" value={form.assigned_to} onChange={(e) => setForm((f) => ({ ...f, assigned_to: e.target.value }))} style={inp}>
               <option value="">— Myself —</option>
               {assignees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
@@ -143,12 +143,12 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
         )}
         <div style={{ marginBottom: 18 }}>
           <label style={lbl}>Remarks</label>
-          <textarea value={form.remarks} onChange={(e) => setForm((f) => ({ ...f, remarks: e.target.value }))} style={{ ...inp, height: 70, padding: 10 }} />
+          <textarea className="nx-input" value={form.remarks} onChange={(e) => setForm((f) => ({ ...f, remarks: e.target.value }))} style={{ ...inp, height: 70, padding: 10 }} />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: busy ? 0.7 : 1 }}>{busy ? 'Saving…' : 'Add Lead'}</button>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" type="submit" disabled={busy} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: busy ? 0.7 : 1 }}>{busy ? 'Saving…' : 'Add Lead'}</button>
         </div>
       </form>
     </div>
@@ -192,14 +192,14 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
   });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div className="nx-modal" style={{ background: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 24px 0', flexShrink: 0 }}>
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{lead.name}</h2>
             <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: 'var(--muted)', cursor: 'pointer' }}><Icon name="x" /></button>
+          <button className="nx-btn nx-btn-lg nx-icon-btn nx-btn-ghost" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 16, color: 'var(--muted)', cursor: 'pointer' }}><Icon name="x" /></button>
         </div>
 
         <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-2)', marginTop: 14, flexShrink: 0 }}>
@@ -219,7 +219,7 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
                 <div>
                   <div style={lbl}>Assigned To</div>
                   {manager ? (
-                    <select value={lead.assigned_to || ''} onChange={(e) => onAssigneeChange(lead.id, e.target.value)} style={{ ...inp, height: 32 }}>
+                    <select className="nx-input" value={lead.assigned_to || ''} onChange={(e) => onAssigneeChange(lead.id, e.target.value)} style={{ ...inp, height: 32 }}>
                       {assignees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                     </select>
                   ) : (
@@ -233,7 +233,7 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
 
               <div style={{ marginBottom: 16 }}>
                 <label style={lbl}>Change Status</label>
-                <select value={lead.status} onChange={(e) => onStatusChange(lead.id, e.target.value)} style={inp}>
+                <select className="nx-input" value={lead.status} onChange={(e) => onStatusChange(lead.id, e.target.value)} style={inp}>
                   {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
@@ -249,17 +249,17 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
                         {lead.next_follow_up_date ? fmtDateTime(lead.next_follow_up_date) : 'Not scheduled'}
                       </div>
                     </div>
-                    <button onClick={() => setSchedOpen((v) => !v)} style={{ padding: '6px 12px', background: 'var(--surface)', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setSchedOpen((v) => !v)} style={{ padding: '6px 12px', background: 'var(--surface)', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                       {lead.next_follow_up_date ? 'Reschedule' : 'Schedule'}
                     </button>
                   </div>
                   {schedOpen && (
                     <div style={{ marginTop: 12 }}>
                       <label style={lbl}>Date &amp; Time</label>
-                      <input type="datetime-local" value={schedAt} onChange={(e) => setSchedAt(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
+                      <input className="nx-input" type="datetime-local" value={schedAt} onChange={(e) => setSchedAt(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
                       <label style={lbl}>Remarks</label>
-                      <input value={schedRemarks} onChange={(e) => setSchedRemarks(e.target.value)} style={{ ...inp, marginBottom: 10 }} placeholder="Optional" />
-                      <button onClick={submitSchedule} disabled={schedBusy} style={{ width: '100%', padding: '9px 0', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: schedBusy ? 0.7 : 1 }}>
+                      <input className="nx-input" value={schedRemarks} onChange={(e) => setSchedRemarks(e.target.value)} style={{ ...inp, marginBottom: 10 }} placeholder="Optional" />
+                      <button className="nx-btn nx-btn-md nx-btn-success" onClick={submitSchedule} disabled={schedBusy} style={{ width: '100%', padding: '9px 0', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: schedBusy ? 0.7 : 1 }}>
                         {schedBusy ? 'Saving…' : 'Save Follow-up'}
                       </button>
                     </div>
@@ -268,9 +268,9 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button onClick={onClose} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
                 {lead.status !== 'converted' && (
-                  <button onClick={() => onConvert(lead)} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Convert to Investor</button>
+                  <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => onConvert(lead)} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Convert to Investor</button>
                 )}
               </div>
             </>
@@ -278,7 +278,7 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
 
           {activeTab === 'history' && (
             <div>
-              {!detail && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Loading…</p>}
+              {!detail && <Loader variant="inline" size="sm" label="Loading…" />}
               {detail && detail.history?.length === 0 && (
                 <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', marginTop: 24 }}>No changes recorded yet.</p>
               )}
@@ -488,22 +488,22 @@ export default function Club1000LeadsPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {manager && selectedIds.size > 0 && (
-            <button onClick={bulkDelete} disabled={deleting} style={{ padding: '10px 18px', background: 'var(--danger-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.7 : 1 }}>
+            <button className="nx-btn nx-btn-md nx-btn-danger" onClick={bulkDelete} disabled={deleting} style={{ padding: '10px 18px', background: 'var(--danger-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.7 : 1 }}>
               {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
             </button>
           )}
-          <button onClick={() => setShowAdd(true)} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add Lead</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add Lead</button>
         </div>
       </div>
 
       {/* Filters */}
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
         {/* Search bar */}
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' }}>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
-            <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
+            <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search name, phone, email…"
               style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid var(--surface-3)', fontSize: 13, background: 'var(--surface-2)', outline: 'none', boxSizing: 'border-box', color: 'var(--text)' }} />
           </div>
@@ -512,15 +512,15 @@ export default function Club1000LeadsPage() {
         {/* Row 1: Date range + quick buttons */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-2)' }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#A2D2FF', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
-          <input type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
+          <input className="nx-input" type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
           <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
-          <input type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
+          <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
           <div style={divider} />
-          <button onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
-          <button onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
-          <button onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
+          <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === today && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
+          <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(6) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
+          <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(29) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
           {anyFilter && (
-            <button onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
+            <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
               <Icon name="x" /> Clear all
             </button>
           )}
@@ -549,8 +549,8 @@ export default function Club1000LeadsPage() {
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
+        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               {manager && (

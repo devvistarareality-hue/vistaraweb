@@ -116,7 +116,7 @@ export default function InvestorsPage() {
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
           {!loading && !schemes.length && (
             <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
           )}
@@ -125,20 +125,20 @@ export default function InvestorsPage() {
 
       <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
-        <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
+        <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search name, phone, email, investor no.…"
           style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
         {searchText && (
-          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
+          <button className="nx-btn nx-btn-md nx-icon-btn nx-btn-ghost" onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
         )}
       </div>
 
       <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
-        <select value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
+        <select className="nx-input" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Schemes</option>
           {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
+        <select className="nx-input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Statuses</option>
           <option value="active">Active</option>
           <option value="matured">Matured</option>
@@ -147,8 +147,8 @@ export default function InvestorsPage() {
         </select>
       </div>
 
-      <div style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
+        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Name</th>
@@ -176,8 +176,8 @@ export default function InvestorsPage() {
               <tr key={inv.id}>
                 <td style={td}>
                   {inv.name}
-                  {inv.revision_no > 0 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
-                  {inv.is_matured && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
+                  {inv.revision_no > 0 && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
+                  {inv.is_matured && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
                 </td>
                 <td style={td}>{inv.phone || '—'}</td>
                 <td style={td}>{inv.scheme_name}</td>
@@ -191,14 +191,14 @@ export default function InvestorsPage() {
                   {inv.document_url ? <a href={inv.document_url} target="_blank" rel="noreferrer" style={{ color: TEAL, fontWeight: 700, textDecoration: 'none' }}>View</a> : '—'}
                 </td>
                 <td style={td}>
-                  {inv.loi_document_url ? <button onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>View LOI</button> : '—'}
+                  {inv.loi_document_url ? <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>View LOI</button> : '—'}
                 </td>
                 <td style={td}><StatusBadge status={inv.status} /></td>
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
                 <td style={td}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
-                    <button onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: 'var(--accent-soft)', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: 'var(--accent-soft)', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
                     {inv.is_matured ? (
                       <>
                         <button onClick={() => setRenewing(inv)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: AMBER, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Renew</button>

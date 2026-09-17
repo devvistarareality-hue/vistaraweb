@@ -357,7 +357,7 @@ export default function ImportPage() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <span style={{ fontSize: 13, color: 'var(--muted)', width: 160, flexShrink: 0 }}>{label}</span>
-        <select value={mapping[field] || ''} onChange={(e) => setMapping((m) => ({ ...m, [field]: e.target.value }))} style={{ ...inp, flex: 1 }}>
+        <select className="nx-input" value={mapping[field] || ''} onChange={(e) => setMapping((m) => ({ ...m, [field]: e.target.value }))} style={{ ...inp, flex: 1 }}>
           <option value="">— skip —</option>
           {headers.map((h) => <option key={h} value={h}>{h}</option>)}
         </select>
@@ -375,9 +375,9 @@ export default function ImportPage() {
         <div>
           <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 6 }}>Download template</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => downloadTemplate('full')} style={{ ...outlineBtn, borderColor: 'var(--accent)', color: 'var(--accent)', fontWeight: 700 }}>↓ Full Pipeline</button>
-            <button onClick={() => downloadTemplate('meta')} style={outlineBtn}>↓ Meta Ads</button>
-            <button onClick={() => downloadTemplate('general')} style={outlineBtn}>↓ General</button>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => downloadTemplate('full')} style={{ ...outlineBtn, borderColor: 'var(--accent)', color: 'var(--accent)', fontWeight: 700 }}>↓ Full Pipeline</button>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => downloadTemplate('meta')} style={outlineBtn}>↓ Meta Ads</button>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => downloadTemplate('general')} style={outlineBtn}>↓ General</button>
           </div>
         </div>
       </div>
@@ -427,7 +427,7 @@ export default function ImportPage() {
           {rawRows.length > 0 && (
             <>
               {/* Project + Source */}
-              <div style={card}>
+              <div className="nx-card" style={card}>
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Default project / source (optional)</h3>
                 <p style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 12 }}>
                   If a row's Project or Source column in the file is blank or doesn't match an existing name, it'll fall back to whatever you pick here. Rows with a valid Project/Source in the file always use that instead.
@@ -435,14 +435,14 @@ export default function ImportPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={lbl}>Project</label>
-                    <select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={inp}>
+                    <select className="nx-input" value={projectId} onChange={(e) => setProjectId(e.target.value)} style={inp}>
                       <option value="">No default</option>
                       {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label style={lbl}>Lead Source</label>
-                    <select value={sourceId} onChange={(e) => setSourceId(e.target.value)} style={inp}>
+                    <select className="nx-input" value={sourceId} onChange={(e) => setSourceId(e.target.value)} style={inp}>
                       <option value="">No default</option>
                       {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
                     </select>
@@ -451,7 +451,7 @@ export default function ImportPage() {
               </div>
 
               {/* Column mapping */}
-              <div style={card}>
+              <div className="nx-card" style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Map columns</h3>
                   <span style={{ fontSize: 11, color: 'var(--muted)', backgroundColor: 'var(--surface-2)', padding: '3px 8px', borderRadius: 6 }}>Auto-detected</span>
@@ -476,7 +476,7 @@ export default function ImportPage() {
                             ? `${detected.length} pipeline columns auto-detected (${kinds})`
                             : `No pipeline columns auto-detected (${kinds})`}
                         </p>
-                        <button type="button" onClick={() => setShowPipelineMap((v) => !v)}
+                        <button className="nx-btn nx-btn-sm nx-btn-link" type="button" onClick={() => setShowPipelineMap((v) => !v)}
                           style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                           {showPipelineMap ? 'Hide manual mapping' : 'Map manually / fix a mismatch →'}
                         </button>
@@ -500,9 +500,9 @@ export default function ImportPage() {
               </div>
 
               {/* Raw preview */}
-              <div style={{ ...card, overflowX: 'auto' }}>
+              <div className="nx-card" style={{ ...card, overflowX: 'auto' }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>File preview — first 5 rows</p>
-                <table style={{ ...tbl, fontSize: 12 }}>
+                <table className="nx-table" style={{ ...tbl, fontSize: 12 }}>
                   <thead><tr style={{ backgroundColor: 'var(--surface-2)' }}>{headers.map((h) => <th key={h} style={{ ...th, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
                   <tbody>
                     {rawRows.slice(0, 5).map((r, i) => (
@@ -513,7 +513,7 @@ export default function ImportPage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button onClick={buildPreview} style={saveBtn}>Preview Import →</button>
+                <button className="nx-btn nx-btn-md nx-btn-primary" onClick={buildPreview} style={saveBtn}>Preview Import →</button>
               </div>
             </>
           )}
@@ -529,7 +529,7 @@ export default function ImportPage() {
               { label: 'Ready to import', value: totalValid, color: 'var(--success)' },
               { label: 'Will be skipped', value: totalInvalid, color: 'var(--danger)' },
             ].map((s) => (
-              <div key={s.label} style={{ ...card, textAlign: 'center' }}>
+              <div className="nx-card" key={s.label} style={{ ...card, textAlign: 'center' }}>
                 <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value.toLocaleString()}</p>
                 <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{s.label}</p>
               </div>
@@ -542,9 +542,9 @@ export default function ImportPage() {
             </div>
           )}
 
-          <div style={{ ...card, overflowX: 'auto' }}>
+          <div className="nx-card" style={{ ...card, overflowX: 'auto' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Mapped preview — first 20 rows</p>
-            <table style={tbl}>
+            <table className="nx-table" style={tbl}>
               <thead style={{ backgroundColor: 'var(--surface-2)' }}><tr>{['#','Name','Phone','Email','Campaign','Valid?'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
               <tbody>
                 {preview.slice(0, 20).map((r) => (
@@ -566,8 +566,8 @@ export default function ImportPage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button onClick={() => setStep(1)} style={outlineBtn}>← Back</button>
-            <button onClick={runImport} disabled={totalValid === 0} style={{ ...saveBtn, opacity: totalValid === 0 ? 0.5 : 1 }}>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setStep(1)} style={outlineBtn}>← Back</button>
+            <button className="nx-btn nx-btn-md nx-btn-primary" onClick={runImport} disabled={totalValid === 0} style={{ ...saveBtn, opacity: totalValid === 0 ? 0.5 : 1 }}>
               Import {totalValid.toLocaleString()} leads →
             </button>
           </div>
@@ -578,7 +578,7 @@ export default function ImportPage() {
       {step === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {importing ? (
-            <div style={{ ...card, textAlign: 'center', padding: '60px 24px' }}>
+            <div className="nx-card" style={{ ...card, textAlign: 'center', padding: '60px 24px' }}>
               <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Importing leads…</p>
               <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>Please don't close this tab</p>
               <div style={{ height: 8, backgroundColor: 'var(--border)', borderRadius: 4, overflow: 'hidden', maxWidth: 320, margin: '0 auto' }}>
@@ -595,7 +595,7 @@ export default function ImportPage() {
                   { label: 'Duplicates flagged', value: result.duplicates, color: 'var(--warning-2)' },
                   { label: 'Errors / failed', value: result.errors, color: 'var(--danger)' },
                 ].map((s) => (
-                  <div key={s.label} style={{ ...card, textAlign: 'center' }}>
+                  <div className="nx-card" key={s.label} style={{ ...card, textAlign: 'center' }}>
                     <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value.toLocaleString()}</p>
                     <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{s.label}</p>
                   </div>
@@ -607,7 +607,7 @@ export default function ImportPage() {
                     { label: 'Site visits created', value: result.siteVisits, color: 'var(--accent-deep)' },
                     { label: 'Closures created', value: result.closures, color: 'var(--accent)' },
                   ].map((s) => (
-                    <div key={s.label} style={{ ...card, textAlign: 'center' }}>
+                    <div className="nx-card" key={s.label} style={{ ...card, textAlign: 'center' }}>
                       <p style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{(s.value || 0).toLocaleString()}</p>
                       <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{s.label}</p>
                     </div>
@@ -620,7 +620,7 @@ export default function ImportPage() {
                     <Icon name="alert" /> {result.warnings.length} code{result.warnings.length > 1 ? 's' : ''} didn't match anyone — those leads still imported, just without that assignment
                   </p>
                   <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-                    <table style={{ ...tbl, fontSize: 12 }}>
+                    <table className="nx-table" style={{ ...tbl, fontSize: 12 }}>
                       <thead style={{ backgroundColor: 'var(--warning-soft)' }}><tr>{['Row', 'Name', 'Field', 'Value you entered'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
                       <tbody>
                         {result.warnings.map((w, i) => (
@@ -641,7 +641,7 @@ export default function ImportPage() {
                 <strong>What happens next?</strong><br />
                 Rows that carried a <strong>{isStm ? 'STM Code' : 'Telecaller Code / STM Code'}</strong> are linked to those people with their statuses, site visits and closures — visible everywhere (Leads, My Conversions, Reports) on web and app. Rows with no owner come in as <strong>new</strong> and are auto-sent to <strong>Distribution</strong>.
               </div>
-              <button onClick={reset} style={outlineBtn}>Import another file</button>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={reset} style={outlineBtn}>Import another file</button>
             </>
           )}
         </div>

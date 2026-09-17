@@ -322,15 +322,15 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Add Investor</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label style={lbl}>Scheme</label>
-            <select style={inp} value={form.scheme} onChange={(e) => selectScheme(e.target.value)} required>
+            <select className="nx-input" style={inp} value={form.scheme} onChange={(e) => selectScheme(e.target.value)} required>
               {schemes.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -349,17 +349,17 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Date of Maturity</label>
-              <input style={{ ...inp, backgroundColor: 'var(--surface-2)', color: 'var(--muted)' }} value={maturityPreview ? formatDMY(maturityPreview) : '—'} disabled />
+              <input className="nx-input" style={{ ...inp, backgroundColor: 'var(--surface-2)', color: 'var(--muted)' }} value={maturityPreview ? formatDMY(maturityPreview) : '—'} disabled />
             </div>
           </div>
           <div>
             <label style={lbl}>Amount Invested (₹)</label>
-            <input style={inp} type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
+            <input className="nx-input" style={inp} type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Interest Payout</label>
-              <select style={inp} value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
+              <select className="nx-input" style={inp} value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
                 {(scheme?.interest_payout_options?.length ? scheme.interest_payout_options : ['maturity']).map((key) => (
                   <option key={key} value={key}>{INTEREST_PAYOUT_LABELS[key] || key}</option>
                 ))}
@@ -367,7 +367,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Return %</label>
-              <input style={inp} type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
+              <input className="nx-input" style={inp} type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
             </div>
           </div>
           {Number(form.amount_invested) > 0 && Number(form.total_return_pct) > 0 && (
@@ -380,7 +380,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <label style={{ ...lbl, marginBottom: 0 }}>Payout Schedule (confirm or edit)</label>
-                <button type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
+                <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
               </div>
               <div style={{ border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
                 {schedule.map((row, idx) => (
@@ -394,7 +394,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
                       style={{ height: 32 }}
                       wrapperStyle={{ flex: 1 }}
                     />
-                    <input
+                    <input className="nx-input"
                       type="number"
                       step="0.01"
                       value={row.amount_due}
@@ -408,7 +408,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
           )}
           <div>
             <label style={lbl}>Source</label>
-            <select value={form.source} onChange={(e) => set('source', e.target.value)} style={inp}>
+            <select className="nx-input" value={form.source} onChange={(e) => set('source', e.target.value)} style={inp}>
               {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
@@ -416,7 +416,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1, position: 'relative' }}>
                 <label style={lbl}>Reference Name</label>
-                <input
+                <input className="nx-input"
                   style={inp}
                   value={form.reference_name}
                   onChange={(e) => { set('reference_name', e.target.value); setRefDropdownOpen(true); }}
@@ -425,7 +425,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
                   autoComplete="off"
                 />
                 {refDropdownOpen && filteredRefSuggestions.length > 0 && (
-                  <div style={{
+                  <div className="nx-popover" style={{
                     position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, marginTop: 4,
                     background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8,
                     boxShadow: '0 8px 24px rgba(var(--ink-rgb),0.14)', maxHeight: 160, overflowY: 'auto',
@@ -445,27 +445,27 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
               </div>
               <div style={{ flex: 1 }}>
                 <label style={lbl}>Reference Number</label>
-                <input style={inp} value={form.reference_phone} onChange={(e) => set('reference_phone', e.target.value)} />
+                <input className="nx-input" style={inp} value={form.reference_phone} onChange={(e) => set('reference_phone', e.target.value)} />
               </div>
             </div>
           )}
           <div>
             <label style={lbl}>Investor Name</label>
-            <input style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} required />
+            <input className="nx-input" style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} required />
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Mobile Number</label>
-              <input style={inp} value={form.phone} onChange={(e) => set('phone', e.target.value)} required />
+              <input className="nx-input" style={inp} value={form.phone} onChange={(e) => set('phone', e.target.value)} required />
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Email</label>
-              <input style={inp} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+              <input className="nx-input" style={inp} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
             </div>
           </div>
           <div>
             <label style={lbl}>PAN</label>
-            <input style={inp} value={form.pan} onChange={(e) => set('pan', e.target.value.toUpperCase())} />
+            <input className="nx-input" style={inp} value={form.pan} onChange={(e) => set('pan', e.target.value.toUpperCase())} />
           </div>
           <div>
             <label style={lbl}>Scan Document (KYC / ID proof)</label>
@@ -474,16 +474,16 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
           </div>
           <div>
             <label style={lbl}>Security (for LOI — optional)</label>
-            <input style={inp} value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
+            <input className="nx-input" style={inp} value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
           </div>
           <div>
             <label style={lbl}>Notes</label>
-            <input style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+            <input className="nx-input" style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
           </div>
 
           <div style={{ background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 14, padding: 12 }}>
             <label style={lbl}>Investment Proposal Form (LOI)</label>
-            <button type="button" onClick={doDownloadLoi} disabled={loiDownloading}
+            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={doDownloadLoi} disabled={loiDownloading}
               style={{ width: '100%', padding: '9px 0', background: 'var(--surface)', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
               {loiDownloading ? 'Generating…' : <><Icon name="download" /> Download LOI PDF (Print → Sign → Upload)</>}
             </button>
@@ -498,8 +498,8 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
           {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
             {busy ? 'Submitting…' : 'Submit for Approval'}
           </button>
         </div>

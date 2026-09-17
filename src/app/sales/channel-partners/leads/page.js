@@ -46,7 +46,7 @@ function CategoryBadge({ category }) {
   const c = CATEGORY_COLOR[category] || { bg: 'var(--surface-2)', color: 'var(--muted)' };
   const label = CATEGORY_OPTIONS.find((o) => o.value === category)?.label || category || '—';
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color }}>
+    <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color }}>
       {label}
     </span>
   );
@@ -84,39 +84,39 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
   }
 
   return (
-    <div style={overlay} onClick={onClose}>
-      <div style={modal} onClick={(e) => e.stopPropagation()}>
+    <div className="nx-modal-backdrop" style={overlay} onClick={onClose}>
+      <div className="nx-modal" style={modal} onClick={(e) => e.stopPropagation()}>
         <div style={modalHeader}>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isEdit ? 'Edit Channel Partner' : 'Add Channel Partner'}</div>
-          <button onClick={onClose} style={closeBtn}><Icon name="x" /></button>
+          <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" onClick={onClose} style={closeBtn}><Icon name="x" /></button>
         </div>
         <div style={{ padding: '18px 20px' }}>
           <label style={lbl}>CP Name *</label>
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+          <input className="nx-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="e.g. Ramesh Shah" style={{ ...inp, width: '100%', marginBottom: 14 }} />
 
           <label style={lbl}>Contact No *</label>
-          <input value={form.contact_no} onChange={(e) => setForm({ ...form, contact_no: e.target.value })}
+          <input className="nx-input" value={form.contact_no} onChange={(e) => setForm({ ...form, contact_no: e.target.value })}
             placeholder="e.g. 98765 43210" style={{ ...inp, width: '100%', marginBottom: 14 }} />
 
           <label style={lbl}>Firm Name</label>
-          <input value={form.firm_name} onChange={(e) => setForm({ ...form, firm_name: e.target.value })}
+          <input className="nx-input" value={form.firm_name} onChange={(e) => setForm({ ...form, firm_name: e.target.value })}
             placeholder="e.g. Shah Realty" style={{ ...inp, width: '100%', marginBottom: 14 }} />
 
           <label style={lbl}>Category</label>
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+          <select className="nx-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
             style={{ ...inp, width: '100%', marginBottom: 14, cursor: 'pointer' }}>
             {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
           <label style={lbl}>Segment</label>
-          <select value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value })}
+          <select className="nx-input" value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value })}
             style={{ ...inp, width: '100%', marginBottom: 14, cursor: 'pointer' }}>
             {SEGMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
           <label style={lbl}>City</label>
-          <select value={cityOther ? 'Other' : (form.city || '')}
+          <select className="nx-input" value={cityOther ? 'Other' : (form.city || '')}
             onChange={(e) => {
               const v = e.target.value;
               if (v === 'Other') { setCityOther(true); setForm({ ...form, city: '' }); }
@@ -128,18 +128,18 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
             <option value="Other">Other</option>
           </select>
           {cityOther && (
-            <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+            <input className="nx-input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
               placeholder="Enter city" style={{ ...inp, width: '100%', marginBottom: 14 }} />
           )}
 
           <label style={lbl}>Area</label>
-          <input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}
+          <input className="nx-input" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}
             placeholder="e.g. Vastrapur, Ahmedabad" style={{ ...inp, width: '100%', marginBottom: 14 }} />
 
           {!isEdit && (
             <>
               <label style={lbl}>Date Added</label>
-              <input type="date" value={form.date_added} max={new Date().toISOString().slice(0, 10)}
+              <input className="nx-input" type="date" value={form.date_added} max={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => setForm({ ...form, date_added: e.target.value })}
                 style={{ ...inp, maxWidth: 220, marginBottom: 4 }} />
               <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 14 }}>Leave blank to use today. Set this if the partnership actually started earlier.</p>
@@ -152,7 +152,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
               const active = form.is_active === val;
               const color = val ? 'var(--success)' : 'var(--muted)';
               return (
-                <button key={label} type="button" onClick={() => setForm({ ...form, is_active: val })}
+                <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={label} type="button" onClick={() => setForm({ ...form, is_active: val })}
                   style={{ flex: 1, padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     border: `1.5px solid ${active ? color : 'var(--border)'}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                   {label}
@@ -164,10 +164,10 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
           {err && <p style={{ color: RED, fontSize: 12, marginTop: 10 }}>{err}</p>}
 
           <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-            <button onClick={save} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center', opacity: saving ? 0.6 : 1 }}>
+            <button className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Channel Partner'}
             </button>
-            <button onClick={onClose} style={cancelBtn}>Cancel</button>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} style={cancelBtn}>Cancel</button>
           </div>
         </div>
       </div>
@@ -203,12 +203,12 @@ function CpDetailsTab({ companyId }) {
     [cp.name, cp.contact_no, cp.firm_name].some((v) => (v || '').toLowerCase().includes(needle)));
 
   return (
-    <div style={card}>
+    <div className="nx-card" style={card}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Channel Partners {loading ? '' : `(${filteredCps.length})`}</div>
-        <button onClick={() => setModalCp(null)} style={saveBtn}>+ Add Channel Partner</button>
+        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setModalCp(null)} style={saveBtn}>+ Add Channel Partner</button>
       </div>
-      <input value={search} onChange={(e) => setSearch(e.target.value)}
+      <input className="nx-input" value={search} onChange={(e) => setSearch(e.target.value)}
         placeholder="Search name, contact no or firm name…" style={{ ...inp, width: '100%', marginBottom: 16 }} />
       {loading ? (
         <Loader label="Loading…" style={{ padding: '28px 0' }} />
@@ -218,7 +218,7 @@ function CpDetailsTab({ companyId }) {
         <p style={{ color: 'var(--muted)', fontSize: 13 }}>No channel partners match "{search}".</p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          <table style={tbl}>
+          <table className="nx-table" style={tbl}>
             <thead>
               <tr>
                 <th style={th}>Name</th>
@@ -244,14 +244,14 @@ function CpDetailsTab({ companyId }) {
                   <td style={td}>{cp.city || '—'}</td>
                   <td style={td}>{cp.area || '—'}</td>
                   <td style={td}>
-                    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: cp.is_active ? 'var(--success)' : 'var(--muted)' }}>
+                    <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: cp.is_active ? 'var(--success)' : 'var(--muted)' }}>
                       {cp.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td style={td}>{cp.lead_count ?? 0}</td>
                   <td style={{ ...td, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <button onClick={() => setModalCp(cp)} style={{ ...iconBtn, color: BLUE }}>Edit</button>
-                    <button onClick={() => del(cp)} style={{ ...iconBtn, color: RED }}>Delete</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setModalCp(cp)} style={{ ...iconBtn, color: BLUE }}>Edit</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => del(cp)} style={{ ...iconBtn, color: RED }}>Delete</button>
                   </td>
                 </tr>
               ))}

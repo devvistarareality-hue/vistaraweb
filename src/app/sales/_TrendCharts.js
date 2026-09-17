@@ -58,7 +58,7 @@ export function SingleChart({ title, badge, data, color, gradientId, metricLabel
   const labelInterval = data.length > 14 ? Math.ceil(data.length / 6) : 0;
 
   return (
-    <div style={cardStyle}>
+    <div className="nx-card" style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{title}</div>
@@ -112,7 +112,7 @@ export function TrendCharts({ trend, dateFrom, dateTo, loading }) {
     return (
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
         {[1, 2, 3].map(i => (
-          <div key={i} style={{ ...cardStyle, height: 196 }}>
+          <div className="nx-card" key={i} style={{ ...cardStyle, height: 196 }}>
             <div style={{ height: 16, width: 120, background: 'var(--surface-2)', borderRadius: 6, marginBottom: 10 }} />
             <div style={{ height: 28, width: 60, background: 'var(--surface-2)', borderRadius: 6, marginBottom: 20 }} />
             <div style={{ height: 120, background: 'var(--surface-2)', borderRadius: 8 }} />

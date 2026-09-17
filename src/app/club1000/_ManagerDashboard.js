@@ -47,9 +47,9 @@ export default function ManagerDashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
           <div style={{ display: 'flex', gap: 10 }}>
             <Link href="/club1000/schemes" style={{ textDecoration: 'none' }}>
-              <button style={{ padding: '10px 18px', background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Manage Schemes</button>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" style={{ padding: '10px 18px', background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Manage Schemes</button>
             </Link>
-            <button onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
+            <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
           </div>
           {!loading && !schemes.length && (
             <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>Create a scheme first — the button unlocks once one exists.</div>
@@ -77,8 +77,8 @@ export default function ManagerDashboard() {
 
           <div style={{ marginTop: 28 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>By Scheme</div>
-            <div style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
+              <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                     <th style={th}>Scheme</th>

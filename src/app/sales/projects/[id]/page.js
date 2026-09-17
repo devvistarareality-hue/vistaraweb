@@ -234,7 +234,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, overflow: 'hidden', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+    <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 16, overflow: 'hidden', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
       {/* Header */}
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--surface-2)', background: 'var(--accent-softer)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -242,7 +242,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
             {heading || 'Interactive Site Map'}
           </div>
           {siteMapImage && (
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+            <span className="nx-badge" style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
               background: zones.length === totalPlots ? 'var(--success-soft)' : 'var(--accent-softer)',
               color: zones.length === totalPlots ? 'var(--success)' : 'var(--accent)' }}>
               {zones.length}/{totalPlots} mapped
@@ -306,7 +306,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                 { id: 'rect',    icon: '▭', label: 'Rectangle', hint: 'Drag to draw' },
                 { id: 'polygon', icon: '⬡', label: 'Polygon',   hint: 'Click vertices' },
               ].map(m => (
-                <button key={m.id} onClick={() => switchMode(m.id)}
+                <button className={`nx-btn nx-btn-sm nx-toggle${drawMode === m.id ? ' is-on' : ''}`} key={m.id} onClick={() => switchMode(m.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                     background: drawMode === m.id ? 'var(--accent-softer)' : 'var(--surface)',
@@ -333,13 +333,13 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
             {/* Polygon controls */}
             {drawMode === 'polygon' && polyPoints.length >= 3 && !pendingZone && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <button onClick={finishPolygon} style={doneBtn}><Icon name="check" /> Done ({polyPoints.length} pts)</button>
-                <button onClick={cancelPolygon} style={ghostBtn}><Icon name="x" /> Cancel</button>
+                <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={finishPolygon} style={doneBtn}><Icon name="check" /> Done ({polyPoints.length} pts)</button>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={cancelPolygon} style={ghostBtn}><Icon name="x" /> Cancel</button>
               </div>
             )}
             {drawMode === 'polygon' && polyPoints.length > 0 && polyPoints.length < 3 && !pendingZone && (
               <div style={{ marginBottom: 10 }}>
-                <button onClick={cancelPolygon} style={ghostBtn}><Icon name="x" /> Cancel ({polyPoints.length} pt{polyPoints.length > 1 ? 's' : ''})</button>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={cancelPolygon} style={ghostBtn}><Icon name="x" /> Cancel ({polyPoints.length} pt{polyPoints.length > 1 ? 's' : ''})</button>
               </div>
             )}
 
@@ -434,7 +434,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 10, padding: '12px 14px', borderRadius: 14, background: 'var(--accent-softer)', border: '1.5px solid #3D5AFE40' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>Plot number for this zone:</span>
                 {unmapped.length > 0 ? (
-                  <select ref={plotNumRef} value={plotInput}
+                  <select className="nx-input" ref={plotNumRef} value={plotInput}
                     onChange={e => setPlotInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && confirmZone()}
                     autoFocus
@@ -445,8 +445,8 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                 ) : (
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>All plots already mapped.</span>
                 )}
-                <button onClick={confirmZone} disabled={!plotInput} style={{ ...doneBtn, opacity: plotInput ? 1 : 0.5, cursor: plotInput ? 'pointer' : 'not-allowed' }}><Icon name="check" /> Save Zone</button>
-                <button onClick={() => { setPendingZone(null); setPlotInput(''); }} style={ghostBtn}><Icon name="x" /> Discard</button>
+                <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={confirmZone} disabled={!plotInput} style={{ ...doneBtn, opacity: plotInput ? 1 : 0.5, cursor: plotInput ? 'pointer' : 'not-allowed' }}><Icon name="check" /> Save Zone</button>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setPendingZone(null); setPlotInput(''); }} style={ghostBtn}><Icon name="x" /> Discard</button>
               </div>
             )}
 
@@ -470,7 +470,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: `color-mix(in srgb, ${color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 33%, transparent)`, color }}>
                           <span style={{ opacity: 0.6, fontSize: 9 }}>{shape}</span>
                           {zone.plotNumber}
-                          <button onClick={() => deleteZone(zone.id)}
+                          <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" onClick={() => deleteZone(zone.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color, fontSize: 10, lineHeight: 1, opacity: 0.7 }}><Icon name="x" /></button>
                         </div>
                       );
@@ -565,7 +565,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
   const lblStyle = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, display: 'block' };
 
   return (
-    <div style={{
+    <div className="nx-card" style={{
       backgroundColor: 'var(--surface)', borderRadius: 18, overflow: 'hidden',
       boxShadow: '0 2px 10px rgba(140,148,160,0.18)',
       border: '1.5px solid var(--surface-3)',
@@ -575,11 +575,11 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 6px' }}>
         <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>#{displayNum}</span>
         {plot.cluster_type && (
-          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'var(--accent-soft)', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
+          <span className="nx-badge" style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'var(--accent-soft)', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
             {plot.cluster_type}
           </span>
         )}
-        <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
+        <span className="nx-badge" style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
           {cfg.label}
         </span>
       </div>
@@ -602,7 +602,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
         {['available', 'hold', 'sold'].map((s) => {
           const c = STATUS_CFG[s];
           return (
-            <button key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
+            <button className={`nx-btn nx-btn-sm nx-toggle${plot.status === s ? ' is-on' : ''}`} key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
               style={{
                 padding: '8px 4px', borderRadius: 14, fontSize: 12, fontWeight: 700,
                 cursor: plot.status === s ? 'default' : 'pointer',
@@ -620,7 +620,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
           again, shown purple instead of green so it reads as "resold", not new. */}
       {(plot.status === 'sold' || plot.status === 'resale') && (
         <div style={{ padding: '0 14px 12px' }}>
-          <button onClick={() => setStatus(plot.status === 'resale' ? 'sold' : 'resale')} disabled={saving}
+          <button className={`nx-btn nx-btn-sm nx-toggle${plot.status === 'resale' ? ' is-on' : ''}`} onClick={() => setStatus(plot.status === 'resale' ? 'sold' : 'resale')} disabled={saving}
             style={{
               width: '100%', padding: '8px 4px', borderRadius: 14, fontSize: 12, fontWeight: 700,
               cursor: 'pointer',
@@ -636,7 +636,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
 
       {/* Edit Info button */}
       <div style={{ borderTop: '1px solid var(--surface-2)', padding: '10px 14px 12px' }}>
-        <button onClick={() => editing ? setEditing(false) : openEdit()}
+        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => editing ? setEditing(false) : openEdit()}
           style={{ width: '100%', padding: '11px', background: 'var(--strong)', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
           <Icon name="pencil" /> Edit Info
         </button>
@@ -649,10 +649,10 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
           <div>
             <label style={lblStyle}>Label / Size</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input value={sizeVal} onChange={e => setSizeVal(e.target.value)}
+              <input className="nx-input" value={sizeVal} onChange={e => setSizeVal(e.target.value)}
                 placeholder="e.g. 5000" type="text" inputMode="decimal"
                 style={{ ...inpStyle, flex: 1 }} />
-              <select value={sizeUnit} onChange={e => setSizeUnit(e.target.value)}
+              <select className="nx-input" value={sizeUnit} onChange={e => setSizeUnit(e.target.value)}
                 style={{ ...inpStyle, width: 90, flex: 'none', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238492A6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', paddingRight: 28 }}>
                 {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -661,7 +661,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
           {/* Construction Area — auto-maps into the booking form */}
           <div>
             <label style={lblStyle}>Construction Area (sq.ft)</label>
-            <input value={constArea} onChange={e => setConstArea(e.target.value)}
+            <input className="nx-input" value={constArea} onChange={e => setConstArea(e.target.value)}
               placeholder="e.g. 1200" type="text" inputMode="decimal" style={inpStyle} />
           </div>
           {/* Tower units: facing drives a price premium, terrace is charged separately. */}
@@ -673,7 +673,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
                   {[['road', 'Road Facing'], ['garden', 'Garden Facing']].map(([val, label]) => {
                     const on = facing === val;
                     return (
-                      <button key={val} type="button" onClick={() => setFacing(on ? '' : val)}
+                      <button className={`nx-btn nx-btn-md nx-toggle${on ? ' is-on' : ''}`} key={val} type="button" onClick={() => setFacing(on ? '' : val)}
                         style={{ flex: 1, padding: '10px 8px', borderRadius: 16, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                           border: `1.5px solid ${on ? 'var(--accent)' : 'var(--peach-2)'}`, background: on ? 'var(--accent-softer)' : 'var(--surface)', color: on ? 'var(--accent)' : 'var(--muted)' }}>
                         {on ? <Icon name="check" /> : ''}{label}
@@ -688,7 +688,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
                   Has Terrace
                 </label>
                 {hasTerrace && (
-                  <input value={terraceArea} onChange={(e) => setTerraceArea(e.target.value)}
+                  <input className="nx-input" value={terraceArea} onChange={(e) => setTerraceArea(e.target.value)}
                     placeholder="Terrace area (sq.yd) — e.g. 21" type="text" inputMode="decimal" style={inpStyle} />
                 )}
               </div>
@@ -700,29 +700,29 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
             <div>
               <label style={{ ...lblStyle, whiteSpace: 'nowrap' }}>Cluster / Type</label>
               {clusterTypes.length > 0 ? (
-                <select value={editType} onChange={e => setEditType(e.target.value)}
+                <select className="nx-input" value={editType} onChange={e => setEditType(e.target.value)}
                   style={{ ...inpStyle, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238492A6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 }}>
                   <option value="">— None —</option>
                   {clusterTypes.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               ) : (
-                <input value={editType} onChange={e => setEditType(e.target.value)}
+                <input className="nx-input" value={editType} onChange={e => setEditType(e.target.value)}
                   placeholder="e.g. Ananda" style={inpStyle} />
               )}
             </div>
             <div>
               <label style={lblStyle}>Number</label>
-              <input value={editNum} onChange={e => setEditNum(e.target.value)}
+              <input className="nx-input" value={editNum} onChange={e => setEditNum(e.target.value)}
                 placeholder="1" style={inpStyle} />
             </div>
           </div>
           {/* Save + Cancel */}
           <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
-            <button onClick={saveEdit} disabled={saving}
+            <button className="nx-btn nx-btn-lg nx-btn-warning" onClick={saveEdit} disabled={saving}
               style={{ flex: 1, padding: '12px', background: 'var(--warning-solid)', color: '#fff', border: 'none', borderRadius: 16, fontSize: 14, fontWeight: 800, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Saving…' : 'Save'}
             </button>
-            <button onClick={() => setEditing(false)}
+            <button className="nx-btn nx-btn-lg nx-btn-secondary" onClick={() => setEditing(false)}
               style={{ padding: '12px 20px', background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 16, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
@@ -765,7 +765,7 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
   if (!floors.length) return null;
   if (!withPlan.length) {
     return (
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '18px 20px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+      <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '18px 20px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Floor Plan Mapping</div>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
           Upload a plan for at least one floor above to start mapping its units.
@@ -823,7 +823,7 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Floor</label>
-        <select value={sel} onChange={(e) => { setSel(Number(e.target.value)); setCopyOpen(false); }}
+        <select className="nx-input" value={sel} onChange={(e) => { setSel(Number(e.target.value)); setCopyOpen(false); }}
           style={{ height: 34, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', cursor: 'pointer' }}>
           {withPlan.map((f, i) => {
             const mapped = (f.zones || []).length;
@@ -833,7 +833,7 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
           })}
         </select>
         {activeMapped > 0 && otherFloors.length > 0 && (
-          <button onClick={() => setCopyOpen((v) => !v)}
+          <button className={`nx-btn nx-btn-sm nx-toggle${copyOpen ? ' is-on' : ''}`} onClick={() => setCopyOpen((v) => !v)}
             style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid var(--accent)', background: copyOpen ? 'var(--primary)' : 'var(--accent-softer)', color: copyOpen ? '#fff' : 'var(--accent)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
             <Icon name="clipboard" /> Copy this mapping to other floors…
           </button>
@@ -860,11 +860,11 @@ function FloorMapEditor({ project, plots, floors, onFloorsChange }) {
             })}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={applyCopy} disabled={!copyTargets.size}
+            <button className={`nx-btn nx-btn-md nx-toggle${copyTargets.size ? ' is-on' : ''}`} onClick={applyCopy} disabled={!copyTargets.size}
               style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: copyTargets.size ? 'var(--primary)' : 'var(--border-strong)', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: copyTargets.size ? 'pointer' : 'not-allowed' }}>
               Copy to {copyTargets.size || ''} floor{copyTargets.size === 1 ? '' : 's'}
             </button>
-            <button onClick={() => { setCopyOpen(false); setCopyTargets(new Set()); }}
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { setCopyOpen(false); setCopyTargets(new Set()); }}
               style={{ padding: '8px 16px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--muted)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
@@ -963,7 +963,7 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
   const current = plans[activeType];
 
   return (
-    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+    <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Plot Type Floor Plans</span>
@@ -995,14 +995,14 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
         {/* Add Type */}
         {addingType ? (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input autoFocus value={newTypeName} onChange={e => setNewTypeName(e.target.value)}
+            <input className="nx-input" autoFocus value={newTypeName} onChange={e => setNewTypeName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') addType(); if (e.key === 'Escape') { setAddingType(false); setNewTypeName(''); } }}
               placeholder="Type name" style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--accent)', fontSize: 13, width: 150, outline: 'none' }} />
-            <button onClick={addType} style={{ height: 38, padding: '0 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add</button>
-            <button onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 38, padding: '0 12px', background: 'var(--surface-2)', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 14, fontSize: 13, cursor: 'pointer' }}><Icon name="x" /></button>
+            <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={addType} style={{ height: 38, padding: '0 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add</button>
+            <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-secondary" onClick={() => { setAddingType(false); setNewTypeName(''); }} style={{ height: 38, padding: '0 12px', background: 'var(--surface-2)', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 14, fontSize: 13, cursor: 'pointer' }}><Icon name="x" /></button>
           </div>
         ) : (
-          <button onClick={() => setAddingType(true)} style={{
+          <button className="nx-btn nx-btn-lg nx-btn-soft" onClick={() => setAddingType(true)} style={{
             padding: '14px 28px', borderRadius: 18, border: '2px dashed var(--blue-2)', background: 'var(--accent-softer)',
             color: 'var(--accent)', fontSize: 14, fontWeight: 700, cursor: 'pointer', minWidth: 130,
           }}>+ Add Type</button>
@@ -1024,7 +1024,7 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
                 <div key={fi}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{fp.label}</span>
-                    <button onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}><Icon name="x" /></button>
+                    <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" onClick={() => removeFloor(activeType, fi)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}><Icon name="x" /></button>
                   </div>
                   <img src={fp.url} alt={fp.label}
                     style={{ width: '100%', aspectRatio: '4/3', objectFit: 'contain', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)', display: 'block' }} />
@@ -1038,7 +1038,7 @@ function PlotTypePlansEditor({ project, onProjectUpdate, plots = [] }) {
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
               Add Floor Plan to "{current.name}"
             </div>
-            <input value={newFloorLabel} onChange={e => setNewFloorLabel(e.target.value)}
+            <input className="nx-input" value={newFloorLabel} onChange={e => setNewFloorLabel(e.target.value)}
               placeholder="Floor label (e.g. Ground Floor, 1st Floor…)"
               style={{ width: '100%', height: 38, padding: '0 12px', borderRadius: 9, border: '1.5px solid var(--blue-2)', fontSize: 13, marginBottom: 10, boxSizing: 'border-box', outline: 'none' }} />
             <MediaUpload value="" label=""
@@ -1100,7 +1100,7 @@ function RateMasterEditor({ project, onProjectUpdate }) {
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+    <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Rate Master</div>
         {saved && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>{saved}</span>}
@@ -1112,12 +1112,12 @@ function RateMasterEditor({ project, onProjectUpdate }) {
         {fields.map((f) => (
           <div key={f.key}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 4 }}>{f.label} (₹/{f.unit})</label>
-            <input type="number" value={form[f.key] ?? ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+            <input className="nx-input" type="number" value={form[f.key] ?? ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
               placeholder="Not set" style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' }} />
           </div>
         ))}
       </div>
-      <button onClick={save} disabled={saving}
+      <button className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving}
         style={{ padding: '9px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
         {saving ? 'Saving…' : 'Save Rates'}
       </button>
@@ -1262,7 +1262,7 @@ export default function ManagePlotsPage() {
   if (!project?.name) return (
     <div style={{ padding: '24px 28px', color: 'var(--muted)' }}>
       Project not found.{' '}
-      <button onClick={() => router.back()} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>Go back</button>
+      <button className="nx-btn nx-btn-md nx-btn-link" onClick={() => router.back()} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>Go back</button>
     </div>
   );
 
@@ -1271,7 +1271,7 @@ export default function ManagePlotsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, marginBottom: 6 }}>
+          <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, marginBottom: 6 }}>
             ← Back to Projects
           </button>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>{project.name}</h1>
@@ -1283,7 +1283,7 @@ export default function ManagePlotsPage() {
             {project.rera && <span>• {project.rera}</span>}
           </div>
         </div>
-        <span style={{
+        <span className="nx-badge" style={{
           fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, alignSelf: 'flex-start',
           backgroundColor: project.is_active ? 'var(--success-soft)' : 'var(--danger-soft)',
           color: project.is_active ? 'var(--success)' : 'var(--danger)',
@@ -1300,7 +1300,7 @@ export default function ManagePlotsPage() {
           { label: 'In Progress', value: counts.hold,      color: 'var(--text-2)' },
           { label: 'Sold',        value: counts.sold,      color: 'var(--danger)' },
         ].map(s => (
-          <div key={s.label} style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.12)', textAlign: 'center' }}>
+          <div className="nx-card" key={s.label} style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.12)', textAlign: 'center' }}>
             <div style={{ fontSize: 26, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{s.label}</div>
           </div>
@@ -1309,7 +1309,7 @@ export default function ManagePlotsPage() {
 
       {/* Progress */}
       {plots.length > 0 && (
-        <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+        <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
             <span style={{ fontWeight: 600, color: 'var(--text)' }}>Sales Progress</span>
             <span>{soldPct}% sold</span>
@@ -1324,7 +1324,7 @@ export default function ManagePlotsPage() {
 
       {/* Master Plan — plotted schemes only; a tower is described by its per-floor plans. */}
       {!project.floor_wise && (
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+      <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '16px 18px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Master Plan</div>
           {project.master_plan_url && (
@@ -1358,7 +1358,7 @@ export default function ManagePlotsPage() {
           a plotted scheme is positioned on a site map. Set it in Edit Project. */}
       {project.floor_wise ? (
         <>
-          <div style={{ backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
+          <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px 22px', marginBottom: 20, boxShadow: '0 2px 8px rgba(140,148,160,0.12)' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{project.block_industrial ? <><Icon name="factory" /> Block Setup</> : <><Icon name="building" /> Floor-wise Setup</>}</div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 4 }}>
             {project.block_industrial
@@ -1394,7 +1394,7 @@ export default function ManagePlotsPage() {
           { key: 'hold',      label: 'In Progress', color: 'var(--text-2)', bg: 'var(--surface-2)', border: 'var(--text-2)' },
           { key: 'sold',      label: 'Sold',      color: 'var(--danger)', bg: 'var(--danger-soft)', border: 'var(--danger)' },
         ].map(({ key, label, color, bg, border }) => (
-          <button key={key} onClick={() => setFilter(key)}
+          <button className={`nx-btn nx-btn-sm nx-toggle${filter === key ? ' is-on' : ''}`} key={key} onClick={() => setFilter(key)}
             style={{
               padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
               background: filter === key ? bg : 'var(--surface)',
@@ -1407,25 +1407,25 @@ export default function ManagePlotsPage() {
         ))}
         {/* A single-block tower has nothing to choose between, so only its floors show. */}
         {towerBlocks.length > 1 && (
-          <select value={blockF} onChange={e => { setBlockF(e.target.value); setFloorF(''); }} style={gridSel}>
+          <select className="nx-input" value={blockF} onChange={e => { setBlockF(e.target.value); setFloorF(''); }} style={gridSel}>
             <option value="">All Blocks</option>
             {towerBlocks.map(b => <option key={b} value={b}>Block {b}</option>)}
           </select>
         )}
         {towerFloors.length > 1 && (
-          <select value={floorF} onChange={e => setFloorF(e.target.value)} style={gridSel}>
+          <select className="nx-input" value={floorF} onChange={e => setFloorF(e.target.value)} style={gridSel}>
             <option value="">All Floors</option>
             {towerFloors.map(([n, label]) => <option key={n} value={n}>{label}</option>)}
           </select>
         )}
         {(blockF || floorF) && (
-          <button onClick={() => { setBlockF(''); setFloorF(''); }}
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setBlockF(''); setFloorF(''); }}
             style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'var(--surface)', color: 'var(--muted)', border: '1.5px solid var(--border)' }}>
             <Icon name="x" /> Clear
           </button>
         )}
         {plots.length > 0 && (
-          <button onClick={async () => {
+          <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={async () => {
             if (!(await confirmDialog(`Delete all ${plots.length} plots for this project? This cannot be undone.`))) return;
             const res = await fetch(SALES_ENDPOINTS.plotsBulkDelete, {
               method: 'DELETE', headers: authHeaders(),

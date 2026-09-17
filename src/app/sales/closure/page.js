@@ -59,7 +59,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
   return (
     <div style={{ padding: '24px 28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-        <button onClick={() => router.push(backHref)} style={backBtn}>← Back</button>
+        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => router.push(backHref)} style={backBtn}>← Back</button>
       </div>
       {flash && (
         <div style={{ background: 'var(--surface-2)', border: '1px solid var(--success-2)', color: 'var(--success)', borderRadius: 16, padding: '12px 16px', marginBottom: 14, fontSize: 14, fontWeight: 600 }}>
@@ -69,7 +69,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
       {/* Toggle: Record Closure ↔ My Bookings */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
         {[['closures', 'Record Closure'], ['mybookings', 'My Bookings']].map(([k, label]) => (
-          <button key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? 'var(--primary)' : 'var(--surface-3)', color: view === k ? '#fff' : 'var(--muted)' }}>{label}</button>
+          <button className="nx-btn nx-btn-md nx-btn-primary" key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? 'var(--primary)' : 'var(--surface-3)', color: view === k ? '#fff' : 'var(--muted)' }}>{label}</button>
         ))}
       </div>
 
@@ -113,7 +113,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
               ? router.push(`/sales/booking?project=${p.id}&eoi=1${eoiQuery}`)
               : router.push(cpOnly ? `/sales/channel-partners/closure/${p.id}` : `/sales/closure/${p.id}`);
             return (
-              <div key={p.id} onClick={goTo}
+              <div className="nx-card" key={p.id} onClick={goTo}
                 style={{ ...card, cursor: 'pointer' }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 36px rgba(47,109,181,0.24)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = card.boxShadow; }}>
@@ -128,10 +128,10 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
                     </div>
                   )}
                   <div style={{ position: 'absolute', top: 10, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: 'var(--muted)', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
+                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: 'var(--muted)', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
                       {p.project_type}
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: 'var(--success-soft)', color: 'var(--success)', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
+                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: 'var(--success-soft)', color: 'var(--success)', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
                       ACTIVE
                     </span>
                   </div>

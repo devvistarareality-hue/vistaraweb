@@ -129,12 +129,12 @@ export function ExportBookings({ projects, companyId }) {
 
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-      <select value={project} onChange={(e) => setProject(e.target.value)}
+      <select className="nx-input" value={project} onChange={(e) => setProject(e.target.value)}
         style={{ padding: '7px 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)' }}>
         <option value="">All projects</option>
         {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
-      <button onClick={download} disabled={busy} title="Approved bookings, Sales and CP together"
+      <button className="nx-btn nx-btn-md nx-btn-success" onClick={download} disabled={busy} title="Approved bookings, Sales and CP together"
         style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
                  cursor: busy ? 'default' : 'pointer', background: 'var(--success-solid)', color: '#fff', opacity: busy ? 0.7 : 1 }}>
         {busy ? 'Preparing…' : '⤓ Excel'}
@@ -352,7 +352,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       </p>
 
       {xfers.length > 0 && (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', borderLeft: '4px solid var(--warning)' }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', borderLeft: '4px solid var(--warning)' }}>
           <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--warning)', margin: '0 0 2px' }}>
             ⇄ Lead Transfers awaiting your approval · {xfers.length}
           </p>
@@ -373,9 +373,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => actOnTransfer(x.id, 'reject')} disabled={xferBusy === x.id}
+                  <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => actOnTransfer(x.id, 'reject')} disabled={xferBusy === x.id}
                     style={{ padding: '8px 14px', background: 'var(--surface)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Reject</button>
-                  <button onClick={() => actOnTransfer(x.id, 'approve')} disabled={xferBusy === x.id}
+                  <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => actOnTransfer(x.id, 'approve')} disabled={xferBusy === x.id}
                     style={{ padding: '8px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     {xferBusy === x.id ? '…' : 'Approve'}
                   </button>
@@ -387,8 +387,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       )}
 
       {isAdmin && !cpMode && (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
             <Icon name="settings" /> Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: 'var(--success)', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
@@ -411,8 +411,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           Shown only in the Channel Partner module — the main Sales Approvals
           page keeps just the regular selector above. */}
       {isAdmin && cpMode && (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
             <Icon name="settings" /> Channel Partner Booking Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: 'var(--success)', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
@@ -436,7 +436,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
-            <button key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            <button className="nx-btn nx-btn-md nx-btn-primary" key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
@@ -445,12 +445,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group the user collapsed earlier would hide its own hits. */}
-          <input value={q} onChange={(e) => { setQ(e.target.value); setOpenProj({}); }}
+          <input className="nx-input" value={q} onChange={(e) => { setQ(e.target.value); setOpenProj({}); }}
             placeholder="Search name, phone or LOI / unit no…"
             style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid var(--border)',
               background: 'var(--surface)', fontSize: 13, color: 'var(--text)', boxSizing: 'border-box' }} />
           {!!q && (
-            <button onClick={() => { setQ(''); setOpenProj({}); }} title="Clear search"
+            <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => { setQ(''); setOpenProj({}); }} title="Clear search"
               style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
                 color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
@@ -458,7 +458,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         {/* Which project, and whose bookings — one value at a time. Options come from
             the loaded tab, so a tab holding a single project or STM shows no control. */}
         {projOptions.length > 1 && (
-          <select value={proj} onChange={(e) => { setProj(e.target.value); setOpenProj({}); }}
+          <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpenProj({}); }}
             style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? 'var(--accent)' : 'var(--border)'}`,
               background: 'var(--surface)', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)',
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
@@ -467,7 +467,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           </select>
         )}
         {stmOptions.length > 1 && (
-          <select value={stm} onChange={(e) => { setStm(e.target.value); setOpenProj({}); }}
+          <select className="nx-input" value={stm} onChange={(e) => { setStm(e.target.value); setOpenProj({}); }}
             style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${stm ? 'var(--accent)' : 'var(--border)'}`,
               background: 'var(--surface)', fontSize: 13, fontWeight: stm ? 700 : 500, color: stm ? 'var(--text)' : 'var(--muted)',
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
@@ -478,7 +478,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         {/* Only offered when this tab actually holds one — a filter that can only
             ever return nothing is a way to waste a click. */}
         {resaleCount > 0 && (
-          <button onClick={() => setResale(resale ? '' : 'yes')}
+          <button className={`nx-btn nx-btn-sm nx-toggle${resale ? ' is-on' : ''}`} onClick={() => setResale(resale ? '' : 'yes')}
             title="Units sold once, put back on the market and sold again"
             style={{ height: 36, padding: '0 14px', borderRadius: 8, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', border: `1.5px solid ${resale ? 'var(--accent-deep)' : 'var(--border)'}`,
@@ -502,7 +502,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       )}
 
       {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} /> : visible.length === 0 ? (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           {ql ? <>No bookings match “{q.trim()}”.</>
             : stm || proj ? <>No bookings for {[stm, proj].filter(Boolean).join(' · ')}{dated ? ' in this date range' : ''}.</>
             : dated ? 'No bookings were booked in this date range.'
@@ -510,7 +510,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         </div>
       ) : projectNames.map((pn) => (
         <div key={pn} style={{ marginBottom: 12 }}>
-          <div onClick={() => toggleProj(pn)}
+          <div className="nx-card" onClick={() => toggleProj(pn)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--surface)', borderRadius: 16,
               padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: isOpen(pn) ? '1.5px solid var(--blue-2)' : '1.5px solid transparent' }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -524,12 +524,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           {isOpen(pn) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
               {groups[pn].map((b) => (
-                <div key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+                <div className="nx-card" key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
-                        {b.client_name || '—'} {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
-                      {b.is_resale && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-deep)', background: 'var(--accent-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
+                        {b.client_name || '—'} {b.revision_no > 0 && <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20 }}>R{b.revision_no}</span>}
+                      {b.is_resale && <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-deep)', background: 'var(--accent-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>RESALE</span>}
                       </div>
                       {/* Project lives in the group header now — don't repeat it on every card. */}
                       <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{b.phone} · {unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text}</div>
@@ -565,26 +565,26 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                    {b.loi_document && <button onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
+                    {b.loi_document && <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                     {/* A revised deal gets its Details per version inside the history
                         instead — the current version is one of them, so a card-level
                         copy would be the same figures twice. */}
                     {!b.revision_no && (
-                      <button onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
+                      <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setCardDetails((o) => ({ ...o, [b.id]: !o[b.id] }))}
                         style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer', borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                         {cardDetails[b.id] ? '▴ Hide Details' : '▾ Details'}
                       </button>
                     )}
                     {b.revision_no > 0 && (
-                      <button onClick={() => toggleRevisions(b.id)}
+                      <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => toggleRevisions(b.id)}
                         style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}>
                         ⟲ Revisions {revOpen[b.id] ? '▴' : '▾'}
                       </button>
                     )}
                     {b.status === 'draft' && (
                       <>
-                        <button onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
-                        <button onClick={() => discardDraft(b.id)} disabled={busy === b.id}
+                        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
+                        <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => discardDraft(b.id)} disabled={busy === b.id}
                           style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
                       </>
                     )}
@@ -595,20 +595,20 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                         buttons anyway made the click fail silently. */}
                     {b.status === 'pending' && isApprover && b.can_approve && (
                       <>
-                        <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
-                        <button onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
+                        <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
+                        <button className="nx-btn nx-btn-md nx-btn-danger" onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
                       </>
                     )}
                     {b.status === 'sold' && (() => {
                       const isEoi = String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
                       return (
                         <>
-                          {isEoi && <button onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>}
-                          <button onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
+                          {isEoi && <button className="nx-btn nx-btn-md nx-btn-warning" onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>}
+                          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
                           {/* Only an approver can cancel, and only once the booking has a
                               closure to cancel through. */}
                           {isApprover && b.closure && (
-                            <button onClick={() => setToCancel(b)} disabled={busy === b.id}
+                            <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => setToCancel(b)} disabled={busy === b.id}
                               style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Cancel Booking</button>
                           )}
                         </>
@@ -621,12 +621,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginBottom: 8 }}>
                         REVISION HISTORY
                       </div>
-                      {!revs[b.id] ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Loading…</p>
+                      {!revs[b.id] ? <Loader variant="inline" size="sm" label="Loading…" />
                        : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Couldn&apos;t load the history.</p>
                        : revs[b.id].map((v) => (
                         <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
                           padding: '7px 0', borderBottom: '1px solid var(--surface-2)' }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
+                          <span className="nx-badge" style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
                             background: v.id === b.id ? 'var(--success-soft)' : 'var(--surface-2)', padding: '3px 8px', borderRadius: 20 }}>
                             R{v.revision_no || 0}
                           </span>
@@ -640,12 +640,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                             : <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>superseded</span>}
                           <span style={{ flex: 1 }} />
                           {v.loi_document
-                            ? <button onClick={() => openLoi(v.id)}
+                            ? <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(v.id)}
                                 style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer' }}>
                                 <Icon name="file" /> Signed LOI
                               </button>
                             : <span style={{ fontSize: 11, color: 'var(--faint)' }}>no LOI on file</span>}
-                          <button onClick={() => setRevDetails((o) => ({ ...o, [v.id]: !o[v.id] }))}
+                          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setRevDetails((o) => ({ ...o, [v.id]: !o[v.id] }))}
                             style={{ ...linkBtn, padding: '5px 10px', fontSize: 12, background: 'var(--surface)', cursor: 'pointer',
                               borderColor: 'var(--border-strong)', color: 'var(--text)' }}>
                             {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}
@@ -677,9 +677,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
-    <div onClick={busy ? undefined : onClose}
+    <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()}
+      <div className="nx-modal" onClick={(e) => e.stopPropagation()}
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
@@ -696,7 +696,7 @@ function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
           ))}
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} disabled={busy}
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} disabled={busy}
             style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
             Keep Booking
           </button>
@@ -733,7 +733,7 @@ function ApproverDropdown({ project, managers, onToggle, field = 'booking_approv
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
+          <div className="nx-popover" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
             border: '1px solid var(--surface-3)', borderRadius: 14, boxShadow: '0 10px 30px rgba(110,114,120,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
             {managers.map((m) => {
               const on = sel.includes(m.id);

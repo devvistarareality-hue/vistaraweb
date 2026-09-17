@@ -194,7 +194,7 @@ export default function KioskPage() {
               ))}
             </div>
           )}
-          <button className="k-signout" onClick={() => { dispatch(logout()); router.replace('/company'); }}>⎋ Sign out</button>
+          <button className="k-signout nx-btn nx-btn-md nx-btn-ghost" onClick={() => { dispatch(logout()); router.replace('/company'); }}>⎋ Sign out</button>
         </div>
       </header>
 
@@ -209,7 +209,7 @@ export default function KioskPage() {
             ) : (
               <div className="k-grid">
                 {projects.map((p) => (
-                  <button key={p.id} className="k-card" onClick={() => pickProject(p)}>
+                  <button key={p.id} className="k-card nx-btn nx-btn-md nx-btn-ghost" onClick={() => pickProject(p)}>
                     <div className="k-card-media">
                       {p.cover_image_url
                         ? <img src={p.cover_image_url} alt={p.name} />
@@ -235,7 +235,7 @@ export default function KioskPage() {
         {/* STEP: select */}
         {step === 'select' && project && (
           <section className="k-fade k-panel">
-            <button className="k-back" onClick={restart}>← Projects</button>
+            <button className="k-back nx-btn nx-btn-md nx-btn-ghost" onClick={restart}>← Projects</button>
             <h1 className="k-h1">{project.name}</h1>
             {/* Master plan (only when there's no interactive map to avoid showing it twice) */}
             {!hasMap && project.master_plan_url && (
@@ -250,7 +250,7 @@ export default function KioskPage() {
                     <label className="k-label">Choose a unit type</label>
                     <div className="k-chips">
                       {unitTypes.map((t) => (
-                        <button key={t.type} className={`k-chip ${eoiType === t.type ? 'on' : ''}`} onClick={() => setEoiType(t.type)}>
+                        <button key={t.type} className={`${`k-chip ${eoiType === t.type ? 'on' : ''}`} nx-btn nx-btn-md nx-btn-ghost`} onClick={() => setEoiType(t.type)}>
                           <span className="k-chip-t">{t.type}</span>
                           <span className="k-chip-s">{t.plot_area} sq.yd</span>
                         </button>
@@ -258,9 +258,9 @@ export default function KioskPage() {
                     </div>
                     <label className="k-label">Number of units</label>
                     <div className="k-stepper">
-                      <button onClick={() => setEoiUnits(String(Math.max(1, nUnits - 1)))}>−</button>
+                      <button className="nx-btn nx-btn-md nx-btn-ghost" onClick={() => setEoiUnits(String(Math.max(1, nUnits - 1)))}>−</button>
                       <input type="number" min="1" value={eoiUnits} onChange={(e) => setEoiUnits(e.target.value)} />
-                      <button onClick={() => setEoiUnits(String(nUnits + 1))}>+</button>
+                      <button className="nx-btn nx-btn-md nx-btn-ghost" onClick={() => setEoiUnits(String(nUnits + 1))}>+</button>
                     </div>
                     {selType && <div className="k-summary">Total area <b>{eoiArea} sq.yd</b>{eoiConst ? <> · Construction <b>{eoiConst} sq.yd</b></> : null}</div>}
                   </>
@@ -273,7 +273,7 @@ export default function KioskPage() {
                 {blocks.filter(Boolean).length > 1 && (<>
                   <span className="k-floors-l">Block</span>
                   {blocks.map((b, i) => (
-                    <button key={`b${i}`} className={`k-floor ${i === Math.min(blockIdx, blocks.length - 1) ? 'on' : ''}`}
+                    <button key={`b${i}`} className={`${`k-floor ${i === Math.min(blockIdx, blocks.length - 1) ? 'on' : ''}`} nx-btn nx-btn-md nx-btn-ghost`}
                       onClick={() => { setBlockIdx(i); setFloorIdx(0); setHovered(null); }}>
                       {b || '—'}
                     </button>
@@ -284,7 +284,7 @@ export default function KioskPage() {
                   const on = i === Math.min(floorIdx, floors.length - 1);
                   const n = plots.filter((p) => onFloor(p, f)).length;
                   return (
-                    <button key={i} className={`k-floor ${on ? 'on' : ''}`}
+                    <button key={i} className={`${`k-floor ${on ? 'on' : ''}`} nx-btn nx-btn-md nx-btn-ghost`}
                       onClick={() => { setFloorIdx(i); setHovered(null); }}>
                       {f.label || `Floor ${f.floor}`} · {n}
                     </button>
@@ -396,7 +396,7 @@ export default function KioskPage() {
                 {blocks.filter(Boolean).length > 1 && (<>
                   <span className="k-floors-l">Block</span>
                   {blocks.map((b, i) => (
-                    <button key={`b${i}`} className={`k-floor ${i === Math.min(blockIdx, blocks.length - 1) ? 'on' : ''}`}
+                    <button key={`b${i}`} className={`${`k-floor ${i === Math.min(blockIdx, blocks.length - 1) ? 'on' : ''}`} nx-btn nx-btn-md nx-btn-ghost`}
                       onClick={() => { setBlockIdx(i); setFloorIdx(0); setHovered(null); }}>
                       {b || '—'}
                     </button>
@@ -407,7 +407,7 @@ export default function KioskPage() {
                   const on = i === Math.min(floorIdx, floors.length - 1);
                   const n = plots.filter((p) => onFloor(p, f)).length;
                   return (
-                    <button key={i} className={`k-floor ${on ? 'on' : ''}`}
+                    <button key={i} className={`${`k-floor ${on ? 'on' : ''}`} nx-btn nx-btn-md nx-btn-ghost`}
                       onClick={() => { setFloorIdx(i); setHovered(null); }}>
                       {f.label || `Floor ${f.floor}`} · {n}
                     </button>
@@ -418,7 +418,7 @@ export default function KioskPage() {
                 <label className="k-label">Choose available plots — pick one or several</label>
                 <div className="k-plots">
                   {availablePlots.map((pl) => (
-                    <button key={pl.id} className={`k-plot ${isSelected(pl) ? 'on' : ''}`} onClick={() => togglePlot(pl)}>
+                    <button key={pl.id} className={`${`k-plot ${isSelected(pl) ? 'on' : ''}`} nx-btn nx-btn-md nx-btn-ghost`} onClick={() => togglePlot(pl)}>
                       <span className="k-plot-no">{pl.number}</span>
                       {pl.size ? <span className="k-plot-sz">{pl.size}</span> : null}
                       {/* Facing and terrace move the price — show them on the chip too,
@@ -439,14 +439,14 @@ export default function KioskPage() {
                 Selected <b>{selIds.length}</b> unit{selIds.length > 1 ? 's' : ''} · {selSummary}
               </div>
             )}
-            <button className="k-primary k-block" disabled={!canContinueSelect}
+            <button className="k-primary k-block nx-btn nx-btn-md nx-btn-ghost" disabled={!canContinueSelect}
               onClick={() => router.push(`/kiosk/book?project=${project.id}${isEoi ? '&eoi=1' : `&plots=${selIds.join(',')}`}`)}>Continue →</button>
           </section>
         )}
 
       </main>
 
-      <button className="k-exit" onClick={() => { dispatch(logout()); router.replace('/company'); }} title="Staff exit">Exit kiosk</button>
+      <button className="k-exit nx-btn nx-btn-md nx-btn-ghost" onClick={() => { dispatch(logout()); router.replace('/company'); }} title="Staff exit">Exit kiosk</button>
     </div>
   );
 }

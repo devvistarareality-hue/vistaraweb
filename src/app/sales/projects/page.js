@@ -27,7 +27,7 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
         <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>Does this project have plot types?</span>
         <div style={{ display: 'flex', gap: 6 }}>
           {[['No', false], ['Yes', true]].map(([label, val]) => (
-            <button key={label} type="button" onClick={() => setHasTypes(val)}
+            <button className={`nx-btn nx-btn-sm nx-toggle${hasTypes === val ? ' is-on' : ''}`} key={label} type="button" onClick={() => setHasTypes(val)}
               style={{ padding: '5px 16px', borderRadius: 7, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 borderColor: hasTypes === val ? (val ? 'var(--accent)' : 'var(--text)') : 'var(--border)',
                 backgroundColor: hasTypes === val ? (val ? 'var(--primary)' : 'var(--strong)') : 'var(--surface)',
@@ -41,7 +41,7 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
       {!hasTypes ? (
         <div>
           <label style={lbl}>Number of Plots</label>
-          <input type="number" min="0" max="9999" value={noTypePlots}
+          <input className="nx-input" type="number" min="0" max="9999" value={noTypePlots}
             onChange={e => setNoTypePlots(e.target.value)}
             style={{ ...inp, maxWidth: 160 }} placeholder="e.g. 20" />
           {Number(noTypePlots) > 0 && (
@@ -60,15 +60,15 @@ function PlotWizard({ hasTypes, setHasTypes, noTypePlots, setNoTypePlots, plotTy
           </div>
           {plotTypes.map((pt, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-              <input value={pt.name} onChange={e => updateType(i, 'name', e.target.value)} style={inp} placeholder="e.g. A" />
-              <input type="number" min="1" value={pt.from} onChange={e => updateType(i, 'from', e.target.value)} style={inp} placeholder="1" />
-              <input type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)} style={inp} placeholder="10" />
-              <button type="button" onClick={() => removeType(i)}
+              <input className="nx-input" value={pt.name} onChange={e => updateType(i, 'name', e.target.value)} style={inp} placeholder="e.g. A" />
+              <input className="nx-input" type="number" min="1" value={pt.from} onChange={e => updateType(i, 'from', e.target.value)} style={inp} placeholder="1" />
+              <input className="nx-input" type="number" min="1" value={pt.to} onChange={e => updateType(i, 'to', e.target.value)} style={inp} placeholder="10" />
+              <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" type="button" onClick={() => removeType(i)}
                 style={{ background: 'none', border: 'none', color: plotTypes.length > 1 ? 'var(--danger)' : 'var(--border-strong)', cursor: plotTypes.length > 1 ? 'pointer' : 'default', fontSize: 16, padding: 0 }}
                 disabled={plotTypes.length === 1}><Icon name="x" /></button>
             </div>
           ))}
-          <button type="button" onClick={addType}
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={addType}
             style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'none', border: '1.5px dashed var(--accent)', borderRadius: 8, padding: '6px 16px', cursor: 'pointer', marginBottom: 10 }}>
             + Add Type
           </button>
@@ -285,11 +285,11 @@ function ProjectModal({ project, onClose, onSaved }) {
   const mSec = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 4 };
 
   return (
-    <div style={overlay}>
-      <div style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 580, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
+    <div className="nx-modal-backdrop" style={overlay}>
+      <div className="nx-modal" style={{ backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 580, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)', overflow: 'hidden' }}>
 
         {/* Gradient Header */}
-        <div style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div className="nx-modal-head" style={{ background: 'var(--hero)', padding: '22px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.3 }}>{isEdit ? 'Edit Project' : 'Add Project'}</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{isEdit ? 'Update project details' : 'Fill in details to create a new project'}</div>
@@ -304,23 +304,23 @@ function ProjectModal({ project, onClose, onSaved }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
             <div>
               <label style={mLbl}>Project Name <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <input value={form.name} onChange={e => set('name', e.target.value)} style={mInp} placeholder="e.g. Vistara Heights Phase 1"
+              <input className="nx-input" value={form.name} onChange={e => set('name', e.target.value)} style={mInp} placeholder="e.g. Vistara Heights Phase 1"
                 onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
             </div>
             <div>
               <label style={mLbl}>Tagline</label>
-              <input value={form.tagline} onChange={e => set('tagline', e.target.value)} style={mInp} placeholder="Where Nature Meets Luxury"
+              <input className="nx-input" value={form.tagline} onChange={e => set('tagline', e.target.value)} style={mInp} placeholder="Where Nature Meets Luxury"
                 onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={mLbl}>Location</label>
-                <input value={form.location} onChange={e => set('location', e.target.value)} style={mInp} placeholder="Pune, Maharashtra"
+                <input className="nx-input" value={form.location} onChange={e => set('location', e.target.value)} style={mInp} placeholder="Pune, Maharashtra"
                   onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
               <div>
                 <label style={mLbl}>Type</label>
-                <select value={form.project_type} onChange={e => {
+                <select className="nx-input" value={form.project_type} onChange={e => {
                   const t = e.target.value;
                   // Industrial type → industrial pricing by default (still editable below).
                   setForm(f => ({ ...f, project_type: t, ...(t === 'industrial' ? { formula_set: 'industrial' } : {}) }));
@@ -333,7 +333,7 @@ function ProjectModal({ project, onClose, onSaved }) {
             </div>
             <div>
               <label style={mLbl}>Pricing Model <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <select value={form.formula_set} onChange={e => set('formula_set', e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
+              <select className="nx-input" value={form.formula_set} onChange={e => set('formula_set', e.target.value)} style={{ ...mInp, cursor: 'pointer' }}>
                 <option value="kalrav">Kalrav (villa / plots)</option>
                 <option value="ankhol">Ankhol (bunglow · sale-deed %)</option>
                 <option value="industrial">Industrial</option>
@@ -343,7 +343,7 @@ function ProjectModal({ project, onClose, onSaved }) {
             </div>
             <div>
               <label style={mLbl}>Layout <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <select
+              <select className="nx-input"
                 value={form.block_industrial ? 'block' : form.floor_wise ? 'floor' : 'plot'}
                 onChange={e => {
                   const v = e.target.value;
@@ -365,30 +365,30 @@ function ProjectModal({ project, onClose, onSaved }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={mLbl}>RERA Number</label>
-                <input value={form.rera} onChange={e => set('rera', e.target.value)} style={mInp} placeholder="RERA/PNE/2024/001"
+                <input className="nx-input" value={form.rera} onChange={e => set('rera', e.target.value)} style={mInp} placeholder="RERA/PNE/2024/001"
                   onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
               <div>
                 <label style={mLbl}>Total Area</label>
-                <input value={form.total_area} onChange={e => set('total_area', e.target.value)} style={mInp} placeholder="25 Acres"
+                <input className="nx-input" value={form.total_area} onChange={e => set('total_area', e.target.value)} style={mInp} placeholder="25 Acres"
                   onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={mLbl}>Price Range</label>
-                <input value={form.price_range} onChange={e => set('price_range', e.target.value)} style={mInp} placeholder="₹45L – ₹1.2Cr"
+                <input className="nx-input" value={form.price_range} onChange={e => set('price_range', e.target.value)} style={mInp} placeholder="₹45L – ₹1.2Cr"
                   onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
               <div>
                 <label style={mLbl}>Possession Date</label>
-                <input value={form.possession} onChange={e => set('possession', e.target.value)} style={mInp} placeholder="Dec 2026"
+                <input className="nx-input" value={form.possession} onChange={e => set('possession', e.target.value)} style={mInp} placeholder="Dec 2026"
                   onFocus={e => e.target.style.borderColor='var(--accent)'} onBlur={e => e.target.style.borderColor='var(--border)'} />
               </div>
             </div>
             <div>
               <label style={mLbl}>Description</label>
-              <textarea value={form.description} onChange={e => set('description', e.target.value)}
+              <textarea className="nx-input" value={form.description} onChange={e => set('description', e.target.value)}
                 rows={3} style={{ ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? 'var(--success-2)' : 'var(--border)'}`, backgroundColor: form.is_active ? 'var(--success-soft)' : 'var(--surface-2)' }}>
@@ -445,7 +445,7 @@ function ProjectModal({ project, onClose, onSaved }) {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
                       {editableTypes.map((t, i) => (
                         <div key={i} style={{ position: 'relative' }}>
-                          <input value={t.current}
+                          <input className="nx-input" value={t.current}
                             onChange={e => setEditableTypes(prev => prev.map((x, xi) => xi === i ? { ...x, current: e.target.value } : x))}
                             style={{ fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20, background: t.original !== t.current ? 'var(--warning-soft)' : 'var(--accent-soft)', color: t.original !== t.current ? 'var(--danger)' : 'var(--accent)', border: `1.5px solid ${t.original !== t.current ? 'var(--peach)' : '#A2D2FF'}`, outline: 'none', minWidth: 70, textAlign: 'center' }} />
                           {t.original !== t.current && (
@@ -461,14 +461,14 @@ function ProjectModal({ project, onClose, onSaved }) {
                 )}
                 <div style={{ maxWidth: 200 }}>
                   <label style={mLbl}>Total Plots / Units</label>
-                  <input type="number" min="0" value={form.total_plots}
+                  <input className="nx-input" type="number" min="0" value={form.total_plots}
                     onChange={e => set('total_plots', e.target.value)}
                     disabled={isEdit} readOnly={isEdit}
                     style={{ ...mInp, ...(isEdit ? { background: 'var(--surface-2)', color: 'var(--text-3)', cursor: 'not-allowed' } : {}) }}
                     placeholder="e.g. 36" />
                   {isEdit && <p style={{ fontSize: 11, color: 'var(--faint)', marginTop: 4 }}>Reflects actual plots — use “Add More Plots” or Manage Plots to change.</p>}
                 </div>
-                <button type="button" onClick={() => setAddingMore(m => !m)}
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={() => setAddingMore(m => !m)}
                   style={{ fontSize: 12, fontWeight: 700, color: addingMore ? 'var(--danger)' : 'var(--accent)', background: 'none', border: `1.5px dashed ${addingMore ? 'var(--danger)' : 'var(--accent)'}`, borderRadius: 8, padding: '6px 16px', cursor: 'pointer', width: 'fit-content' }}>
                   {addingMore ? <><Icon name="x" /> Cancel adding plots</> : '+ Add More Plots'}
                 </button>
@@ -492,13 +492,13 @@ function ProjectModal({ project, onClose, onSaved }) {
             )}
             {(form.eoi_unit_types || []).map((t, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                <input value={t.type} onChange={e => updateEoiType(i, 'type', e.target.value)} style={mInp} placeholder="e.g. 2 BHK" />
-                <input value={t.plot_area} onChange={e => updateEoiType(i, 'plot_area', e.target.value)} style={mInp} placeholder="585" />
-                <input value={t.const_area} onChange={e => updateEoiType(i, 'const_area', e.target.value)} style={mInp} placeholder="167" />
-                <button type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 16, padding: 0 }}><Icon name="x" /></button>
+                <input className="nx-input" value={t.type} onChange={e => updateEoiType(i, 'type', e.target.value)} style={mInp} placeholder="e.g. 2 BHK" />
+                <input className="nx-input" value={t.plot_area} onChange={e => updateEoiType(i, 'plot_area', e.target.value)} style={mInp} placeholder="585" />
+                <input className="nx-input" value={t.const_area} onChange={e => updateEoiType(i, 'const_area', e.target.value)} style={mInp} placeholder="167" />
+                <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 16, padding: 0 }}><Icon name="x" /></button>
               </div>
             ))}
-            <button type="button" onClick={addEoiType}
+            <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={addEoiType}
               style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning-2)', background: 'none', border: '1.5px dashed var(--warning-2)', borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
               + Add Unit Type
             </button>
@@ -507,8 +507,8 @@ function ProjectModal({ project, onClose, onSaved }) {
           {err && <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button className="nx-btn nx-btn-md nx-btn-primary" type="submit" disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
               {saving ? 'Saving…' : isEdit ? 'Save Changes' : '+ Add Project'}
             </button>
           </div>
@@ -581,7 +581,7 @@ export default function ProjectsPage() {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Projects</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>{projects.length} projects</p>
         </div>
-        <button onClick={() => setShowModal('add')} style={saveBtn}>+ Add Project</button>
+        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setShowModal('add')} style={saveBtn}>+ Add Project</button>
       </div>
 
       {loading ? (
@@ -601,7 +601,7 @@ export default function ProjectsPage() {
             const sold = pc.sold || 0;
             const pct = total ? Math.round(sold / total * 100) : 0;
             return (
-              <div key={p.id} style={card}>
+              <div className="nx-card" key={p.id} style={card}>
                 {/* Image area — contain so nothing is cropped */}
                 <div style={{ position: 'relative', background: 'var(--surface-2)', height: 180, overflow: 'hidden' }}>
                   {p.cover_image_url ? (
@@ -615,10 +615,10 @@ export default function ProjectsPage() {
                   )}
                   {/* Status badge + type chip overlaid */}
                   <div style={{ position: 'absolute', top: 10, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: 'var(--muted)', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
+                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: 'var(--muted)', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
                       {p.project_type}
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: p.is_active ? 'var(--success-soft)' : 'var(--danger-soft)', color: p.is_active ? 'var(--success)' : 'var(--danger)', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
+                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: p.is_active ? 'var(--success-soft)' : 'var(--danger-soft)', color: p.is_active ? 'var(--success)' : 'var(--danger)', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
                       {p.is_active ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                   </div>
@@ -667,14 +667,14 @@ export default function ProjectsPage() {
                     {/* Always available, even with zero plots — it's also where a fresh
                         project's floor plans, master plan, and Rate Master get set up
                         in the first place, all before any unit exists. */}
-                    <button onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
+                    <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => router.push(`/sales/projects/${p.id}`)} style={{ ...primaryOutlineBtn, flex: 1 }}>
                       Manage Plots
                     </button>
-                    <button onClick={() => openEdit(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
-                    <button onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? 'var(--warning-2)' : 'var(--success)', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
+                    <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openEdit(p)} style={{ ...outlineBtn, flex: 1 }}>Edit</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => toggleActive(p)} style={{ ...outlineBtn, flex: 1, color: p.is_active ? 'var(--warning-2)' : 'var(--success)', borderColor: p.is_active ? '#E6510030' : '#2E7D3230' }}>
                       {p.is_active ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: 'var(--danger)', borderColor: '#EF444440', padding: '7px 10px' }}><Icon name="x" /></button>
+                    <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-secondary" onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: 'var(--danger)', borderColor: '#EF444440', padding: '7px 10px' }}><Icon name="x" /></button>
                   </div>
                 </div>
               </div>

@@ -9,7 +9,7 @@ function PlaceholderContent() {
 
   return (
     <div style={s.page}>
-      <button onClick={() => router.back()} style={s.back}>← Back</button>
+      <button className="nx-btn nx-btn-md nx-btn-ghost" onClick={() => router.back()} style={s.back}>← Back</button>
       <div style={s.body}>
         <div style={s.iconCircle}>
           <div style={s.gear} />

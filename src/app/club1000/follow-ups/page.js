@@ -176,7 +176,7 @@ export default function Club1000FollowUpsPage() {
                   {fu.outcome && <p style={{ fontSize: 12, color: 'var(--success)', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
                 {fu.status === 'pending' && (
-                  <button onClick={() => openDone(fu)}
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openDone(fu)}
                     style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
                       border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
                     Mark Done
@@ -190,20 +190,20 @@ export default function Club1000FollowUpsPage() {
 
       {/* Complete follow-up: lead status + remarks + optional next follow-up */}
       {done && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
+        <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
           onClick={() => !submitting && setDone(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
 
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>Lead Status</label>
-            <select value={leadStatus} onChange={(e) => setLeadStatus(e.target.value)}
+            <select className="nx-input" value={leadStatus} onChange={(e) => setLeadStatus(e.target.value)}
               style={{ width: '100%', height: 38, marginTop: 6, borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', padding: '0 10px' }}>
               {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
             </select>
 
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', display: 'block', marginTop: 14 }}>Remarks</label>
-            <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
+            <textarea className="nx-input" value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
               style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
 
             {!isTerminal && (
@@ -215,7 +215,7 @@ export default function Club1000FollowUpsPage() {
                 {schedNext && (
                   <div style={{ marginTop: 12, paddingLeft: 4 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>Next follow-up date &amp; time</label>
-                    <input type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
+                    <input className="nx-input" type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
                       style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                   </div>
                 )}
@@ -223,8 +223,8 @@ export default function Club1000FollowUpsPage() {
             )}
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={completeFollowUp} disabled={submitting || (schedNext && !isTerminal && !nextAt)}
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button className="nx-btn nx-btn-md nx-btn-success" onClick={completeFollowUp} disabled={submitting || (schedNext && !isTerminal && !nextAt)}
                 style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !isTerminal && !nextAt)) ? 0.6 : 1 }}>
                 {submitting ? 'Saving…' : 'Mark Done'}
               </button>

@@ -1,4 +1,5 @@
 import './globals.css';
+import './ui.css';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import ReduxProvider from '../components/ReduxProvider';

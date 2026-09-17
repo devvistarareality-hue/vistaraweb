@@ -29,7 +29,7 @@ function CopyBtn({ text }) {
     setTimeout(() => setCopied(false), 2000);
   }
   return (
-    <button onClick={copy} style={{ padding: '6px 12px', borderRadius: 7, border: '1.5px solid var(--border)', backgroundColor: copied ? 'var(--success-soft)' : 'var(--surface)', color: copied ? GREEN : 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+    <button className={`nx-btn nx-btn-sm nx-toggle${copied ? ' is-on' : ''}`} onClick={copy} style={{ padding: '6px 12px', borderRadius: 7, border: '1.5px solid var(--border)', backgroundColor: copied ? 'var(--success-soft)' : 'var(--surface)', color: copied ? GREEN : 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
       {copied ? <><Icon name="check" /> Copied</> : '⧉ Copy'}
     </button>
   );
@@ -259,7 +259,7 @@ export default function LeadSetupPage() {
           {/* Left: Config */}
           <div>
             {/* Status */}
-            <div style={{ ...card, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div className="nx-card" style={{ ...card, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: cfg?.is_active ? 'var(--success-soft)' : 'var(--danger-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                 {cfg?.is_active ? <Icon name="check-circle" /> : <Icon name="alert" />}
               </div>
@@ -279,7 +279,7 @@ export default function LeadSetupPage() {
             </div>
 
             {/* Webhook URL */}
-            <div style={card}>
+            <div className="nx-card" style={card}>
               <div style={fieldLabel}>WEBHOOK URL</div>
               <p style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 10 }}>Paste this URL in Meta for Developers → Webhooks → Callback URL</p>
               <div style={copyRow}>
@@ -289,16 +289,16 @@ export default function LeadSetupPage() {
             </div>
 
             {/* Verify Token */}
-            <div style={{ ...card, marginTop: 12 }}>
+            <div className="nx-card" style={{ ...card, marginTop: 12 }}>
               <div style={fieldLabel}>VERIFY TOKEN</div>
               <p style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 10 }}>Paste this in Meta for Developers → Webhooks → Verify Token</p>
-              {loadingCfg ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Loading…</div> : (
+              {loadingCfg ? <Loader variant="inline" size="sm" label="Loading…" /> : (
                 <>
                   <div style={copyRow}>
                     <code style={codeBox}>{cfg?.verify_token || '—'}</code>
                     {cfg?.verify_token && <CopyBtn text={cfg.verify_token} />}
                   </div>
-                  <button onClick={regenerateToken} disabled={regen} style={{ ...outlineBtn, marginTop: 10 }}>
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={regenerateToken} disabled={regen} style={{ ...outlineBtn, marginTop: 10 }}>
                     {regen ? 'Regenerating…' : '↻ Regenerate Token'}
                   </button>
                 </>
@@ -314,11 +314,11 @@ export default function LeadSetupPage() {
                 ? `${savedTok.slice(0, 8)}${'•'.repeat(18)}${savedTok.slice(-4)}`
                 : '••••••••';
               return (
-                <div style={{ ...card, marginTop: 12 }}>
+                <div className="nx-card" style={{ ...card, marginTop: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={fieldLabel}>ACCESS TOKEN (USER / SYSTEM USER)</div>
                     {hasToken && !editing && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: GREEN, background: 'var(--success-soft)', padding: '3px 9px', borderRadius: 20 }}>
+                      <span className="nx-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: GREEN, background: 'var(--success-soft)', padding: '3px 9px', borderRadius: 20 }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success-solid)' }} /> Connected
                       </span>
                     )}
@@ -329,7 +329,7 @@ export default function LeadSetupPage() {
 
                   {editing ? (
                     <>
-                      <textarea
+                      <textarea className="nx-input"
                         value={pat}
                         onChange={e => setPat(e.target.value)}
                         placeholder="EAA…your token here…"
@@ -338,11 +338,11 @@ export default function LeadSetupPage() {
                         style={{ ...inp, width: '100%', resize: 'vertical', fontFamily: 'monospace', fontSize: 11, padding: '8px 10px' }}
                       />
                       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                        <button onClick={saveMetaConfig} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center' }}>
+                        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveMetaConfig} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center' }}>
                           {saving ? 'Saving…' : <><Icon name="save" /> Save Configuration</>}
                         </button>
                         {hasToken && (
-                          <button onClick={() => { setPat(cfg?.page_access_token || ''); setEditingToken(false); setMetaMsg(''); }}
+                          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { setPat(cfg?.page_access_token || ''); setEditingToken(false); setMetaMsg(''); }}
                             style={cancelBtn}>Cancel</button>
                         )}
                       </div>
@@ -350,7 +350,7 @@ export default function LeadSetupPage() {
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <code style={{ ...codeBox, flex: 1, fontFamily: 'monospace', letterSpacing: 0.5 }}>{masked}</code>
-                      <button onClick={() => { setEditingToken(true); setMetaMsg(''); setPagesDiag(''); }} style={outlineBtn}><Icon name="pencil" /> Edit</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setEditingToken(true); setMetaMsg(''); setPagesDiag(''); }} style={outlineBtn}><Icon name="pencil" /> Edit</button>
                     </div>
                   )}
 
@@ -358,7 +358,7 @@ export default function LeadSetupPage() {
                   <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--surface-3)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={fieldLabel}>APP SECRET</div>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
+                      <span className="nx-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
                         color: cfg?.app_secret_set ? GREEN : 'var(--warning)',
                         background: cfg?.app_secret_set ? 'var(--success-soft)' : 'var(--warning-soft)', padding: '3px 9px', borderRadius: 20 }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg?.app_secret_set ? 'var(--success-solid)' : 'var(--warning)' }} />
@@ -370,7 +370,7 @@ export default function LeadSetupPage() {
                       Meta signs every lead delivery with it; without it we cannot tell a genuine delivery from
                       anyone else&rsquo;s. {cfg?.app_secret_set ? 'Leave blank to keep the stored secret.' : ''}
                     </p>
-                    <input
+                    <input className="nx-input"
                       type="password"
                       value={appSecret}
                       onChange={e => setAppSecret(e.target.value)}
@@ -379,7 +379,7 @@ export default function LeadSetupPage() {
                       style={{ ...inp, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
                     />
                     {!editing && (
-                      <button onClick={saveMetaConfig} disabled={saving || !appSecret.trim()}
+                      <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveMetaConfig} disabled={saving || !appSecret.trim()}
                         style={{ ...saveBtn, marginTop: 10, opacity: appSecret.trim() ? 1 : 0.5 }}>
                         {saving ? 'Saving…' : <><Icon name="save" /> Save App Secret</>}
                       </button>
@@ -398,7 +398,7 @@ export default function LeadSetupPage() {
             })()}
 
             {/* Form → Project Mapping */}
-            <div style={{ ...card, marginTop: 12 }}>
+            <div className="nx-card" style={{ ...card, marginTop: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Form → Project Routing</div>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16, lineHeight: 1.6 }}>
                 Map each Meta Lead Ads form to a project so leads are auto-classified on arrival.
@@ -416,16 +416,16 @@ export default function LeadSetupPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>→</span>
-                        <span style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: 'var(--accent-soft)', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
+                        <span className="nx-badge" style={{ padding: '3px 10px', borderRadius: 20, backgroundColor: 'var(--accent-soft)', color: BLUE, fontSize: 12, fontWeight: 700 }}>{m.project_name}</span>
                         <span style={{ fontSize: 11, color: 'var(--muted)' }}>{m.total_leads} leads</span>
                       </div>
-                      <button onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
+                      <button className="nx-btn nx-btn-lg nx-btn-ghost" onClick={() => deleteMapping(m.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
                     </div>
                   ))}
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                <input value={mapFormId} onChange={e => {
+                <input className="nx-input" value={mapFormId} onChange={e => {
                   const id = e.target.value; setMapFormId(id);
                   // Auto-fill the label from the matching connected form's name.
                   const t = id.trim();
@@ -433,14 +433,14 @@ export default function LeadSetupPage() {
                   for (const pg of (pagesData || [])) { const f = (pg.forms || []).find(x => String(x.id) === t); if (f) { nm = f.name || ''; break; } }
                   if (nm) setMapFormName(nm);
                 }} placeholder="Form ID (e.g. 1234567890)" style={{ ...inp, width: '100%' }} />
-                <input value={mapFormName} onChange={e => setMapFormName(e.target.value)} placeholder="Form label (e.g. Kalrav Form)" style={{ ...inp, width: '100%' }} />
+                <input className="nx-input" value={mapFormName} onChange={e => setMapFormName(e.target.value)} placeholder="Form label (e.g. Kalrav Form)" style={{ ...inp, width: '100%' }} />
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <select value={mapProject} onChange={e => setMapProject(e.target.value)} style={{ ...inp, flex: 1 }}>
+                <select className="nx-input" value={mapProject} onChange={e => setMapProject(e.target.value)} style={{ ...inp, flex: 1 }}>
                   <option value="">— Select Project —</option>
                   {(cfg?.projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
-                <button onClick={addMapping} disabled={mapSaving || !mapFormId || !mapProject} style={{ ...saveBtn, opacity: (!mapFormId || !mapProject) ? 0.5 : 1 }}>
+                <button className="nx-btn nx-btn-md nx-btn-primary" onClick={addMapping} disabled={mapSaving || !mapFormId || !mapProject} style={{ ...saveBtn, opacity: (!mapFormId || !mapProject) ? 0.5 : 1 }}>
                   {mapSaving ? '…' : '+ Add'}
                 </button>
               </div>
@@ -452,10 +452,10 @@ export default function LeadSetupPage() {
 
             {/* Connected Pages Cards — always shown so the feature stays discoverable
                 even when Meta hasn't returned pages yet (empty state + refresh). */}
-            <div style={{ ...card, marginTop: 12 }}>
+            <div className="nx-card" style={{ ...card, marginTop: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>Connected Pages & Forms</div>
-                <button onClick={refreshPages} disabled={refreshingPages}
+                <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={refreshPages} disabled={refreshingPages}
                   style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-softer)', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: refreshingPages ? 'default' : 'pointer', opacity: refreshingPages ? 0.6 : 1 }}>
                   {refreshingPages ? 'Refreshing…' : '↻ Refresh'}
                 </button>
@@ -517,7 +517,7 @@ export default function LeadSetupPage() {
           </div>
 
           {/* Right: Guide */}
-          <div style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="nx-card" style={{ ...card, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>Setup Guide</div>
             <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 0 }}>Follow these steps to connect Meta Lead Ads</p>
 
@@ -544,7 +544,7 @@ export default function LeadSetupPage() {
       {/* ─── SOURCES TAB ─── */}
       {tab === 'sources' && (
         <div className="rg-2" style={{ gap: 20 }}>
-          <div style={card}>
+          <div className="nx-card" style={card}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 14 }}>Active Sources</div>
             {loadingSrc ? (
               <Loader label="Loading…" style={{ padding: '28px 0' }} />
@@ -553,9 +553,9 @@ export default function LeadSetupPage() {
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {sources.map(s => (
-                  <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, backgroundColor: 'var(--surface-2)', color: 'var(--text)', textTransform: 'capitalize' }}>
+                  <span className="nx-badge" key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, backgroundColor: 'var(--surface-2)', color: 'var(--text)', textTransform: 'capitalize' }}>
                     {s.name}
-                    <button onClick={() => deleteSource(s.id)}
+                    <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => deleteSource(s.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, lineHeight: 1, padding: '0 2px', display: 'flex', alignItems: 'center' }}
                       title="Delete source">
                       ×
@@ -565,12 +565,12 @@ export default function LeadSetupPage() {
               </div>
             )}
           </div>
-          <div style={card}>
+          <div className="nx-card" style={card}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 14 }}>Add Source</div>
             <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 8 }}>QUICK ADD</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
               {PRESET_SOURCES.filter(n => !existingNames.has(n)).map(name => (
-                <button key={name} onClick={() => addSource(name)} disabled={adding}
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" key={name} onClick={() => addSource(name)} disabled={adding}
                   style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px dashed var(--border)', backgroundColor: 'var(--surface)', fontSize: 12, color: 'var(--muted)', cursor: 'pointer', textTransform: 'capitalize' }}>
                   + {name}
                 </button>
@@ -579,9 +579,9 @@ export default function LeadSetupPage() {
             </div>
             <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 8 }}>CUSTOM</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addSource(newName)}
+              <input className="nx-input" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addSource(newName)}
                 placeholder="e.g. instagram, naukri…" style={{ ...inp, flex: 1 }} />
-              <button onClick={() => addSource(newName)} disabled={adding || !newName}
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => addSource(newName)} disabled={adding || !newName}
                 style={{ ...saveBtn, opacity: (adding || !newName) ? 0.5 : 1 }}>
                 {adding ? '…' : 'Add'}
               </button>

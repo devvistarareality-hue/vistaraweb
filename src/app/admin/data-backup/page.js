@@ -6,6 +6,7 @@ import { isSuperAdmin } from '../../../lib/moduleAccess';
 
 import Icon from '../../../components/Icon';
 import { notify } from '../../../lib/notify';
+import Loader from '../../../components/Loader';
 const GREEN = 'var(--success)';
 const RED   = 'var(--danger)';
 const AMBER = 'var(--warning)';
@@ -118,14 +119,14 @@ export default function DataBackupPage() {
       </p>
 
       {/* Schedule */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18 }}>
+      <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: 14 }}>
           Backup Schedule
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Frequency</label>
-            <select value={frequency} onChange={(e) => setFrequency(e.target.value)}
+            <select className="nx-input" value={frequency} onChange={(e) => setFrequency(e.target.value)}
               style={{ height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, fontWeight: 600, cursor: 'pointer', minWidth: 160 }}>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -136,7 +137,7 @@ export default function DataBackupPage() {
             <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
             Automatic backups enabled
           </label>
-          <button onClick={saveSettings} disabled={!dirty || savingSettings}
+          <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={saveSettings} disabled={!dirty || savingSettings}
             style={{ height: 40, padding: '0 20px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 700,
               background: dirty ? 'var(--strong)' : 'var(--blue-2)', color: '#fff', cursor: dirty && !savingSettings ? 'pointer' : 'not-allowed' }}>
             {savingSettings ? 'Saving…' : 'Save'}
@@ -151,12 +152,12 @@ export default function DataBackupPage() {
       </div>
 
       {/* Run now */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Run a backup right now</div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Doesn't affect the schedule above — useful before a risky change.</div>
         </div>
-        <button onClick={runNow} disabled={running}
+        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={runNow} disabled={running}
           style={{ padding: '11px 22px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800,
             background: running ? 'var(--blue)' : 'var(--primary)', color: '#fff', cursor: running ? 'not-allowed' : 'pointer' }}>
           {running ? 'Backing up…' : 'Run Backup Now'}
@@ -165,16 +166,16 @@ export default function DataBackupPage() {
       {!!runMsg && <p style={{ marginTop: -8, marginBottom: 18, fontSize: 13, fontWeight: 600, color: runMsg[0] === '✅' ? GREEN : RED, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={runMsg[0] === '✅' ? 'check-circle' : 'alert'} />{runMsg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
 
       {/* History */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, overflow: 'hidden' }}>
+      <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: 'var(--faint)', textTransform: 'uppercase', borderBottom: '1px solid var(--surface-2)' }}>
           Backup History
         </div>
         {loading ? (
-          <p style={{ padding: 18, color: 'var(--muted)', fontSize: 13 }}>Loading…</p>
+          <Loader label="Loading backups…" />
         ) : records.length === 0 ? (
           <p style={{ padding: 18, color: 'var(--muted)', fontSize: 13 }}>No backups yet.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                 <th style={th}>Date</th>
@@ -191,13 +192,13 @@ export default function DataBackupPage() {
                   <tr key={r.id}>
                     <td style={td}>{fmtDateTime(r.started_at)}</td>
                     <td style={td}>
-                      <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
+                      <span className="nx-badge" style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
                     </td>
                     <td style={td}>{fmtSize(r.file_size_bytes)}</td>
                     <td style={{ ...td, color: 'var(--muted)' }}>{r.triggered_by_name || 'Automatic'}</td>
                     <td style={{ ...td, textAlign: 'right' }}>
                       {r.status === 'success' && (
-                        <button onClick={() => download(r.id)} disabled={downloadingId === r.id}
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => download(r.id)} disabled={downloadingId === r.id}
                           style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'none', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>
                           {downloadingId === r.id ? '…' : '⬇ Download'}
                         </button>

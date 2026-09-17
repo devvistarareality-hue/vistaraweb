@@ -80,7 +80,7 @@ export default function NotificationBell({ up = false, align = 'right' }) {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => { setOpen((o) => !o); if (!open && unread) markAll(); }}
+      <button className="nx-btn nx-btn-lg nx-btn-secondary" onClick={() => { setOpen((o) => !o); if (!open && unread) markAll(); }}
         aria-label="Notifications"
         style={{ position: 'relative', width: 38, height: 38, borderRadius: 14, border: '1.5px solid var(--surface-3)', background: 'var(--surface)', cursor: 'pointer', fontSize: 18, lineHeight: '36px' }}>
         <Icon name="bell" />
@@ -92,10 +92,10 @@ export default function NotificationBell({ up = false, align = 'right' }) {
       </button>
 
       {open && (
-        <div style={{ position: 'absolute', ...(up ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), ...(align === 'left' ? { left: 0 } : { right: 0 }), width: 340, maxWidth: 'min(340px, calc(100vw - 24px))', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-3)', boxShadow: '0 12px 40px rgba(36,90,150,0.22)', zIndex: 1000, overflow: 'hidden' }}>
+        <div className="nx-popover" style={{ position: 'absolute', ...(up ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), ...(align === 'left' ? { left: 0 } : { right: 0 }), width: 340, maxWidth: 'min(340px, calc(100vw - 24px))', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-3)', boxShadow: '0 12px 40px rgba(36,90,150,0.22)', zIndex: 1000, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--surface-2)' }}>
             <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>Notifications</span>
-            <button onClick={markAll} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
+            <button className="nx-btn nx-btn-sm nx-btn-link" onClick={markAll} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
           </div>
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             {rows.length === 0 ? (

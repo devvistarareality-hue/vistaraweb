@@ -72,7 +72,7 @@ function ApproverDropdown({ project, users, sel, onToggle }) {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
+          <div className="nx-popover" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
             border: '1px solid var(--surface-3)', borderRadius: 14, boxShadow: '0 10px 30px rgba(110,114,120,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
             {users.map((m) => {
               const on = sel.includes(m.id);
@@ -99,19 +99,19 @@ function RejectModal({ b, busy, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
-    <div onClick={busy ? undefined : onClose}
+    <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()}
+      <div className="nx-modal" onClick={(e) => e.stopPropagation()}
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Reject this booking?</div>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.6 }}>
           {b.client_name || '—'} · {b.project_name || '—'} · {unit}. This frees the unit back to <b>available</b>
           {' '}and marks the booking rejected. The STM and the Sales/CP approver(s) for this project will be notified with your remarks below.
         </p>
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Remarks (required) — why is this being rejected?"
+        <textarea className="nx-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Remarks (required) — why is this being rejected?"
           rows={4} style={{ width: '100%', boxSizing: 'border-box', borderRadius: 14, border: '1.5px solid var(--border)', padding: 10, fontSize: 13, resize: 'vertical', marginBottom: 16 }} />
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} disabled={busy}
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} disabled={busy}
             style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
             Cancel
           </button>
@@ -131,9 +131,9 @@ function RejectModal({ b, busy, onClose, onConfirm }) {
 function CancelBookingModal({ b, busy, onClose, onConfirm }) {
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
-    <div onClick={busy ? undefined : onClose}
+    <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(var(--ink-rgb),0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()}
+      <div className="nx-modal" onClick={(e) => e.stopPropagation()}
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
@@ -150,7 +150,7 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
           ))}
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} disabled={busy}
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} disabled={busy}
             style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
             Keep Booking
           </button>
@@ -377,8 +377,8 @@ export default function ModuleApprovalsPage() {
       <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>LOI &amp; EOI bookings, project-wise — approve, reject, or cancel each one's Accounts-stage sign-off</p>
 
       {isAccountsAdmin && (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--success)', padding: 0 }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--success)', padding: 0 }}>
             <Icon name="settings" /> Accounts Approvers — by project {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: 'var(--success)', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cfgOpen && (
@@ -397,8 +397,8 @@ export default function ModuleApprovalsPage() {
       )}
 
       {isAccountsAdmin && (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 12, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
-          <button onClick={() => setCpCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--success)', padding: 0 }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 12, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setCpCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--success)', padding: 0 }}>
             <Icon name="settings" /> Channel Partner Accounts Approvers — by project {cpCfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: 'var(--success)', fontWeight: 700 }}> {savedCfg}</span>}
           </button>
           {cpCfgOpen && (
@@ -419,7 +419,7 @@ export default function ModuleApprovalsPage() {
       <div style={{ display: 'flex', gap: 10, marginTop: 18, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
-            <button key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            <button className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} key={k} onClick={() => { setTab(k); setOpen({}); }} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               background: tab === k ? 'var(--success-solid)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
@@ -427,12 +427,12 @@ export default function ModuleApprovalsPage() {
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
               otherwise a group the user collapsed earlier would hide its own hits. */}
-          <input value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
+          <input className="nx-input" value={q} onChange={(e) => { setQ(e.target.value); setOpen({}); }}
             placeholder="Search name, phone or LOI / unit no…"
             style={{ width: '100%', height: 36, padding: '0 32px 0 32px', borderRadius: 8, border: '1.5px solid var(--border)',
               background: 'var(--surface)', fontSize: 13, color: 'var(--text)', boxSizing: 'border-box' }} />
           {!!q && (
-            <button onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
+            <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => { setQ(''); setOpen({}); }} title="Clear search"
               style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none',
                 color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
@@ -447,14 +447,14 @@ export default function ModuleApprovalsPage() {
           {(projOptions.length > 1 || stmOptions.length > 1) && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -8, marginBottom: 4 }}>
               {projOptions.length > 1 && (
-                <select value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
+                <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
                   style={{ ...modSel, borderColor: proj ? 'var(--success)' : 'var(--border)', fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)' }}>
                   <option value="">All Projects</option>
                   {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               )}
               {stmOptions.length > 1 && (
-                <select value={stm} onChange={(e) => { setStm(e.target.value); setOpen({}); }}
+                <select className="nx-input" value={stm} onChange={(e) => { setStm(e.target.value); setOpen({}); }}
                   style={{ ...modSel, borderColor: stm ? 'var(--success)' : 'var(--border)', fontWeight: stm ? 700 : 500, color: stm ? 'var(--text)' : 'var(--muted)' }}>
                   <option value="">All STMs</option>
                   {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -481,12 +481,12 @@ export default function ModuleApprovalsPage() {
         {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} />
         : err ? <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', color: 'var(--danger)', borderRadius: 16, padding: '14px 18px', fontSize: 13 }}>{err}</div>
         : projectNames.length === 0 ? (
-          <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+          <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
             {narrowed ? `No ${tabLabel.toLowerCase()} bookings match these filters.` : `No ${tabLabel.toLowerCase()} bookings.`}
           </div>
         ) : projectNames.map((pn) => (
           <div key={pn} style={{ marginBottom: 12 }}>
-            <div onClick={() => toggle(pn)}
+            <div className="nx-card" onClick={() => toggle(pn)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)', border: open[pn] ? '1.5px solid var(--success-2)' : '1.5px solid transparent' }}>
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <Icon name="building" /> {pn} <span style={{ color: 'var(--muted)', fontWeight: 600 }}>· {groups[pn].length} booking{groups[pn].length === 1 ? '' : 's'}</span>
@@ -499,7 +499,7 @@ export default function ModuleApprovalsPage() {
             {open[pn] && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
                 {groups[pn].map((b) => (
-                  <div key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+                  <div className="nx-card" key={b.id} style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
@@ -507,8 +507,8 @@ export default function ModuleApprovalsPage() {
                             ? <span style={{ color: 'var(--warning-2)' }}>{b.plot_numbers}</span>
                             : <>{unitLabel(b).isUnit ? `Plot ${unitLabel(b).text}` : unitLabel(b).text}</>}
                           <span style={{ color: 'var(--muted)', fontWeight: 600 }}> · {b.client_name || '—'}</span>
-                          <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)', background: 'var(--success-2)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
-                          {b.revision_no > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
+                          <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)', background: 'var(--success-2)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>{isEoi(b) ? 'EOI' : 'LOI'}</span>
+                          {b.revision_no > 0 && <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: 'var(--warning)', background: 'var(--warning-soft)', padding: '2px 6px', borderRadius: 20, marginLeft: 6 }}>R{b.revision_no}</span>}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{b.phone} · STM {b.stm_name || '—'}</div>
                         <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Booked {fmtDateTime(b.created_at)}</div>
@@ -535,20 +535,20 @@ export default function ModuleApprovalsPage() {
                           card-level copy is the same figures twice. It also shares an
                           id with that row, which rendered the block twice at once. */}
                       {!b.revision_no && (
-                        <button onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => toggleDetails(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           {detailsOpen[b.id] ? '▲ Hide Details' : '▾ Details'}
                         </button>
                       )}
                       {b.loi_document && <>
-                        <button onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View {isEoi(b) ? 'EOI' : 'LOI'}</button>
-                        <button onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
+                        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View {isEoi(b) ? 'EOI' : 'LOI'}</button>
+                        <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => downloadLoi(b)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⬇ Download {isEoi(b) ? 'EOI' : 'LOI'}</button>
                       </>}
                       {/* Only the latest version is listed here, at its current terms.
                           The earlier ones are what was signed at the time — which for
                           a team reconciling payments against documents is the whole
                           question when a deal carries an R1. */}
                       {b.revision_no > 0 && (
-                        <button onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => toggleRevisions(b.id)} style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           ⟲ Revisions {revOpen[b.id] ? '▲' : '▾'}
                         </button>
                       )}
@@ -557,15 +557,15 @@ export default function ModuleApprovalsPage() {
                           is never the only gate — AccountsBookingActionView re-checks). */}
                       {tab === 'pending' && b.can_accounts_approve && (
                         <>
-                          <button onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
-                          <button onClick={() => setToReject(b)} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
+                          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
+                          <button className="nx-btn nx-btn-md nx-btn-danger" onClick={() => setToReject(b)} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
                         </>
                       )}
                       {/* Undoing an Accounts approval — same authority, same server-computed
                           gate pattern (can_accounts_cancel), only once it has a closure to
                           cancel through (it always will if it's status='sold'). */}
                       {tab === 'approved' && b.can_accounts_cancel && (
-                        <button onClick={() => setToCancel(b)} disabled={busy === b.id}
+                        <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => setToCancel(b)} disabled={busy === b.id}
                           style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Cancel Booking</button>
                       )}
                     </div>
@@ -575,12 +575,12 @@ export default function ModuleApprovalsPage() {
                         <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--success)', letterSpacing: 0.6, marginBottom: 8 }}>
                           REVISION HISTORY
                         </div>
-                        {!revs[b.id] ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Loading…</p>
+                        {!revs[b.id] ? <Loader variant="inline" size="sm" label="Loading…" />
                          : revs[b.id].length === 0 ? <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Couldn&apos;t load the history.</p>
                          : revs[b.id].map((v) => (
                           <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
                             padding: '7px 0', borderBottom: '1px solid var(--surface-2)' }}>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
+                            <span className="nx-badge" style={{ fontSize: 11, fontWeight: 800, color: v.id === b.id ? 'var(--success)' : 'var(--text-3)',
                               background: v.id === b.id ? 'var(--success-2)' : 'var(--surface-2)', padding: '3px 8px', borderRadius: 20 }}>
                               R{v.revision_no || 0}
                             </span>
@@ -596,10 +596,10 @@ export default function ModuleApprovalsPage() {
                               : <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>superseded</span>}
                             <span style={{ flex: 1 }} />
                             {v.loi_document ? <>
-                              <button onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View</button>
-                              <button onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
+                              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--success-2)', background: 'var(--surface)', color: 'var(--success)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="file" /> View</button>
+                              <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => downloadLoi(v)} style={{ padding: '5px 10px', borderRadius: 8, border: 'none', background: 'var(--success-solid)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>⬇ Download</button>
                             </> : <span style={{ fontSize: 11, color: 'var(--faint)' }}>no document on file</span>}
-                            <button onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                            <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => toggleRevDetails(v.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                               {revDetails[v.id] ? '▲ Details' : '▾ Details'}
                             </button>
                             {revDetails[v.id] && <div style={{ width: '100%' }}><BookingDetails b={v} /></div>}

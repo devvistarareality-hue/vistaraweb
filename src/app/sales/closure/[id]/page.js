@@ -9,6 +9,7 @@ import { isManagerRole } from '../../../../lib/moduleAccess';
 
 import Icon from '../../../../components/Icon';
 import { confirmDialog, notify } from '../../../../lib/notify';
+import Loader from '../../../../components/Loader';
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
 const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?')[0]);
 
@@ -280,7 +281,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7 }}>{title}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
-          <div style={card}>
+          <div className="nx-card" style={card}>
             <span style={{ width: 36, height: 36, borderRadius: 14, background: 'var(--accent-softer)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: 17, fontWeight: 900 }}>▦</span>
             <div>
               <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>{t}</div>
@@ -290,7 +291,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           {[['available', c.available], ['hold', c.hold], ['pending', c.pending], ['sold', c.sold]].map(([key, n]) => {
             const cfg = STATUS[key];
             return (
-              <div key={key} style={card}>
+              <div className="nx-card" key={key} style={card}>
                 <span style={{ width: 36, height: 36, borderRadius: 14, background: cfg.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: cfg.dot, fontSize: 18, fontWeight: 900 }}>•</span>
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>{n}</div>
@@ -479,7 +480,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   }
 
   if (loading) {
-    return <div style={{ padding: '60px 28px', textAlign: 'center', color: 'var(--muted)' }}>Loading project…</div>;
+    return <Loader variant="page" label="Loading project…" />;
   }
   if (!project) {
     return <div style={{ padding: '60px 28px', textAlign: 'center', color: 'var(--muted)' }}>Project not found.</div>;
@@ -489,7 +490,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     <div style={{ padding: '24px 28px', maxWidth: 1100 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <button onClick={() => router.push(backHref)} style={backBtn}>← All projects</button>
+        <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => router.push(backHref)} style={backBtn}>← All projects</button>
       </div>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{project.name}</h1>
@@ -507,7 +508,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           const active = filter === key;
           const dot = STATUS[key]?.dot;
           return (
-            <button key={key} onClick={() => setFilter(key)} style={{
+            <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={key} onClick={() => setFilter(key)} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer',
               border: `1.5px solid ${active ? 'var(--warning-2)' : 'var(--surface-3)'}`, background: active ? 'var(--warning-soft)' : 'var(--surface)', color: active ? 'var(--warning)' : 'var(--text-3)',
             }}>
@@ -527,7 +528,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
             <>
               <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
               <div style={{ position: 'relative' }}>
-                <button type="button" onClick={() => setBlockDropdownOpen((o) => !o)} style={{
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={() => setBlockDropdownOpen((o) => !o)} style={{
                   height: 38, padding: '0 14px', borderRadius: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
                   border: '1.5px solid var(--surface-3)', background: 'var(--surface)', fontSize: 13, fontWeight: 700, color: 'var(--text)', minWidth: 190,
                 }}>
@@ -541,7 +542,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 {blockDropdownOpen && (
                   <>
                     <div onClick={() => setBlockDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-                    <div style={{
+                    <div className="nx-popover" style={{
                       position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 41, minWidth: 220,
                       background: 'var(--surface)', border: '1.5px solid var(--surface-3)', borderRadius: 14, boxShadow: '0 8px 24px rgba(47,109,181,0.18)', padding: 6,
                     }}>
@@ -573,7 +574,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           {!project?.block_industrial && (
             <>
               <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
-              <select value={selectedFloorNum} onChange={(e) => setSelectedFloorNum(Number(e.target.value))}
+              <select className="nx-input" value={selectedFloorNum} onChange={(e) => setSelectedFloorNum(Number(e.target.value))}
                 style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--surface-3)', background: 'var(--surface)',
                   fontSize: 13, fontWeight: 700, color: 'var(--text)', cursor: 'pointer', minWidth: 190 }}>
                 {floorOptions.map((f) => {
@@ -599,7 +600,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           {['all', ...types].map((t) => {
             const active = typeFilter === t;
             return (
-              <button key={t} onClick={() => setTypeFilter(t)} style={{
+              <button className={`nx-btn nx-btn-sm nx-toggle${active ? ' is-on' : ''}`} key={t} onClick={() => setTypeFilter(t)} style={{
                 padding: '6px 13px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 border: `1.5px solid ${active ? 'var(--warning-2)' : 'var(--surface-3)'}`, background: active ? 'var(--warning-soft)' : 'var(--surface)', color: active ? 'var(--warning)' : 'var(--text-3)',
               }}>
@@ -623,7 +624,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
 
       {mapEntries.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning)', background: 'var(--warning-soft)', border: '1px solid var(--peach)', padding: '5px 12px', borderRadius: 20 }}>
+          <span className="nx-badge" style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning)', background: 'var(--warning-soft)', border: '1px solid var(--peach)', padding: '5px 12px', borderRadius: 20 }}>
             <Icon name="home" /> Showing {shownCount} of {total} units
           </span>
         </div>
@@ -635,7 +636,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         const entryZones = entry.zones || [];
         const hoverPrefix = `${idx}:`;
         return (
-          <div key={`${entry.block}-${entry.floor}-${idx}`} style={{ background: 'var(--surface)', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--surface-3)', boxShadow: '0 4px 20px rgba(47,109,181,0.12)', marginBottom: 18 }}>
+          <div className="nx-card" key={`${entry.block}-${entry.floor}-${idx}`} style={{ background: 'var(--surface)', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--surface-3)', boxShadow: '0 4px 20px rgba(47,109,181,0.12)', marginBottom: 18 }}>
             <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
               <div>
                 <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>
@@ -794,7 +795,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
           (or, for a plotted scheme, the whole project when it has none). Never
           duplicates a plot already shown on a map card above. */}
       {(floorWise ? (noMapEntries.length > 0 || activeEntries.length === 0) : mapEntries.length === 0) && (
-        <div style={{ background: 'var(--surface)', borderRadius: 20, padding: '18px', border: '1px solid var(--surface-3)', boxShadow: '0 4px 20px rgba(47,109,181,0.12)' }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 20, padding: '18px', border: '1px solid var(--surface-3)', boxShadow: '0 4px 20px rgba(47,109,181,0.12)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Units</h2>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>No site map drawn for this project. Tap an available unit below.</p>
           {!noMapPlots.length && project?.block_industrial ? (
@@ -808,7 +809,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               <p style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 16 }}>
                 No units are defined here yet — raise an EOI to hold interest until it's surveyed.
               </p>
-              <button
+              <button className="nx-btn nx-btn-md nx-btn-primary"
                 onClick={() => router.push(`/sales/booking?project=${id}&eoi=1&block=${encodeURIComponent([...selectedBlocks][0] || '')}`)}
                 style={{ padding: '10px 22px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
                   background: 'var(--strong)', cursor: 'pointer' }}>
@@ -828,7 +829,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                   ? (isMineDraft || isManager ? `${cfg.label} · by ${plot.held_by_name || 'someone'} — tap for options` : `${cfg.label} · by ${plot.held_by_name || 'someone'}`)
                   : (plot.held_by_name && !isSel ? `${cfg.label} · selected by ${plot.held_by_name}` : cfg.label);
                 return (
-                  <button key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
+                  <button className={`nx-btn nx-btn-md nx-toggle${isSel ? ' is-on' : ''}`} key={plot.id} onClick={() => pickPlot(plot)} disabled={!clickable}
                     title={title}
                     style={{
                       minWidth: 84, padding: '10px 12px', borderRadius: 14,
@@ -868,8 +869,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               {sv ? `${sv.lead_name} · ` : ''}{selSummary}
             </div>
           </div>
-          <button onClick={() => { const ids = [...selectedIds]; setSelectedIds([]); releasePlots(ids); }} style={cancelBtn}>Clear</button>
-          <button onClick={bookSelected} style={primaryBtn2}>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { const ids = [...selectedIds]; setSelectedIds([]); releasePlots(ids); }} style={cancelBtn}>Clear</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" onClick={bookSelected} style={primaryBtn2}>
             {sv ? 'Record Closure' : 'Book'} · {selPlots.length} plot{selPlots.length > 1 ? 's' : ''} →
           </button>
         </div>
@@ -883,8 +884,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         // an admin, or one of the project's booking approvers.
         const canDiscard = !!p.can_cancel_hold;
         return (
-          <div onClick={() => setDraftPanelPlot(null)} style={overlay}>
-            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+          <div className="nx-modal-backdrop" onClick={() => setDraftPanelPlot(null)} style={overlay}>
+            <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Drafted</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', margin: '4px 0 18px' }}>
                 {p.held_by_name ? `Drafted by ${p.held_by_name}` : 'Drafted'}
@@ -895,13 +896,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     "is it mine" left an admin looking at a draft they could discard
                     but not open, which is the wrong way round. */}
                 {canDiscard && (
-                  <button onClick={() => router.push(`/sales/booking?draft=${p.drafted_booking_id}`)}
+                  <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?draft=${p.drafted_booking_id}`)}
                     style={{ padding: '11px 16px', borderRadius: 14, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                     ▸ {mine ? 'Resume' : 'Open Draft'}
                   </button>
                 )}
                 {canDiscard && (
-                  <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
+                  <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => cancelHold(p.id)} disabled={cancelBusy}
                     style={{ padding: '11px 16px', borderRadius: 14, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                     <Icon name="x" /> Discard Draft
                   </button>
@@ -909,7 +910,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 {!canDiscard && (
                   <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Only {p.held_by_name || 'the drafter'} or one of this project&rsquo;s booking approvers can resume or discard this.</p>
                 )}
-                <button onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: 'var(--surface-2)', color: 'var(--text-3)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setDraftPanelPlot(null)} style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: 'var(--surface-2)', color: 'var(--text-3)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
               </div>
@@ -926,8 +927,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         const p = holdPanelPlot;
         const mine = !!p.held_by_name && p.held_by_name === user?.name;
         return (
-          <div onClick={() => !cancelBusy && setHoldPanelPlot(null)} style={overlay}>
-            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+          <div className="nx-modal-backdrop" onClick={() => !cancelBusy && setHoldPanelPlot(null)} style={overlay}>
+            <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · In Progress</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', margin: '4px 0 6px' }}>
                 {mine ? 'Selected by you' : (p.held_by_name ? `Selected by ${p.held_by_name}` : 'Selected')}
@@ -936,11 +937,11 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 Nothing has been submitted for this unit yet. Cancelling puts it back on the market straight away.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button onClick={() => cancelHold(p.id)} disabled={cancelBusy}
+                <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => cancelHold(p.id)} disabled={cancelBusy}
                   style={{ padding: '11px 16px', borderRadius: 14, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontWeight: 700, fontSize: 14, cursor: cancelBusy ? 'default' : 'pointer', opacity: cancelBusy ? 0.7 : 1 }}>
                   {cancelBusy ? 'Cancelling…' : <><Icon name="x" /> Cancel In Progress</>}
                 </button>
-                <button onClick={() => setHoldPanelPlot(null)} disabled={cancelBusy}
+                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setHoldPanelPlot(null)} disabled={cancelBusy}
                   style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: 'var(--surface-2)', color: 'var(--text-3)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
@@ -955,18 +956,18 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       {soldPanelPlot && (() => {
         const p = soldPanelPlot;
         return (
-          <div onClick={() => !resaleBusy && setSoldPanelPlot(null)} style={overlay}>
-            <div onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
+          <div className="nx-modal-backdrop" onClick={() => !resaleBusy && setSoldPanelPlot(null)} style={overlay}>
+            <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ ...panel, maxWidth: 360, padding: 22 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unit {p.number} · Sold</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', margin: '4px 0 18px' }}>
                 {p.agent_name ? `Sold by ${p.agent_name}` : 'Sold'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button onClick={() => moveToResaleFromPanel(p.id)} disabled={resaleBusy}
+                <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => moveToResaleFromPanel(p.id)} disabled={resaleBusy}
                   style={{ padding: '11px 16px', borderRadius: 14, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: resaleBusy ? 'default' : 'pointer', opacity: resaleBusy ? 0.7 : 1 }}>
                   {resaleBusy ? 'Moving…' : '↻ Move to Resale'}
                 </button>
-                <button onClick={() => setSoldPanelPlot(null)} disabled={resaleBusy}
+                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setSoldPanelPlot(null)} disabled={resaleBusy}
                   style={{ padding: '9px 16px', borderRadius: 14, border: 'none', background: 'var(--surface-2)', color: 'var(--text-3)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Close
                 </button>
@@ -1014,8 +1015,8 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
   const [viewing, setViewing] = useState(null); // url in lightbox
 
   return (
-    <div onClick={onClose} style={overlay}>
-      <div onClick={(e) => e.stopPropagation()} style={panel}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={overlay}>
+      <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={panel}>
         {/* Header */}
         <div style={{ padding: '18px 20px', background: cfg.bg, borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
@@ -1028,7 +1029,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
                 {plot.cluster_type}
               </span>
             )}
-            <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 20, background: 'var(--surface)', color: cfg.dot, border: `1px solid color-mix(in srgb, ${cfg.dot} 33%, transparent)` }}>
+            <span className="nx-badge" style={{ fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 20, background: 'var(--surface)', color: cfg.dot, border: `1px solid color-mix(in srgb, ${cfg.dot} 33%, transparent)` }}>
               {cfg.label}{plot.held_by_name && plot.status === 'hold' ? ` · ${plot.held_by_name}` : ''}
             </span>
             <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, color: 'var(--text-2)' }}><Icon name="x" /></button>
@@ -1060,7 +1061,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
 
           {/* Booking & closure are both handled by the booking web app (own login,
               auto-LOI, Google Sheet). The button opens it in the same window. */}
-          <button onClick={openBookingScript} style={primaryBtn}>
+          <button className="nx-btn nx-btn-lg nx-btn-success" onClick={openBookingScript} style={primaryBtn}>
             {sv ? `Record Closure for Unit ${plot.number}` : `Book Unit ${plot.number}`}
           </button>
         </div>
@@ -1068,7 +1069,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
 
       {/* Lightbox */}
       {viewing && (
-        <div onClick={() => setViewing(null)} style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div className="nx-modal-backdrop" onClick={() => setViewing(null)} style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           {isPdfUrl(viewing)
             ? <embed src={viewing} type="application/pdf" style={{ width: '90vw', height: '88vh', borderRadius: 8 }} />
             : <img src={viewing} alt="Layout" style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, boxShadow: '0 10px 50px rgba(0,0,0,0.5)' }} />}

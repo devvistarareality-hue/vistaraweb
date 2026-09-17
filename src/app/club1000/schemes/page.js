@@ -91,24 +91,24 @@ function SchemeModal({ scheme, onClose, onSaved }) {
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isEdit ? 'Edit Scheme' : 'New Scheme'}</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label style={lbl}>Scheme Name</label>
-            <input style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. RISE" required />
+            <input className="nx-input" style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. RISE" required />
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Tenure (months)</label>
-              <input style={inp} type="number" min="1" value={form.tenure_months} onChange={(e) => set('tenure_months', e.target.value)} required />
+              <input className="nx-input" style={inp} type="number" min="1" value={form.tenure_months} onChange={(e) => set('tenure_months', e.target.value)} required />
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Min Ticket Size (₹)</label>
-              <input style={inp} type="number" min="0" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
+              <input className="nx-input" style={inp} type="number" min="0" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
             </div>
           </div>
           <div>
@@ -126,7 +126,7 @@ function SchemeModal({ scheme, onClose, onSaved }) {
                       />
                       {label}
                     </label>
-                    <input
+                    <input className="nx-input"
                       style={{ ...inp, flex: 1, opacity: checked ? 1 : 0.4 }}
                       type="number" step="0.01" min="0" placeholder="Return %"
                       disabled={!checked}
@@ -148,19 +148,19 @@ function SchemeModal({ scheme, onClose, onSaved }) {
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1 }}>
                 <label style={lbl}>Lock-in (months)</label>
-                <input style={inp} type="number" min="0" value={form.premature_redemption_lock_months} onChange={(e) => set('premature_redemption_lock_months', e.target.value)} />
+                <input className="nx-input" style={inp} type="number" min="0" value={form.premature_redemption_lock_months} onChange={(e) => set('premature_redemption_lock_months', e.target.value)} />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={lbl}>Redemption rate %/month</label>
-                <input style={inp} type="number" step="0.01" min="0" value={form.premature_redemption_rate_pct_per_month} onChange={(e) => set('premature_redemption_rate_pct_per_month', e.target.value)} />
+                <input className="nx-input" style={inp} type="number" step="0.01" min="0" value={form.premature_redemption_rate_pct_per_month} onChange={(e) => set('premature_redemption_rate_pct_per_month', e.target.value)} />
               </div>
             </div>
           )}
           {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={busy} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" type="submit" disabled={busy} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
             {busy ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Scheme'}
           </button>
         </div>
@@ -205,12 +205,12 @@ export default function SchemesPage() {
           </p>
         </div>
         {manager && (
-          <button onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
         )}
       </div>
 
-      <div style={{ marginTop: 24, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="nx-card" style={{ marginTop: 24, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
+        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
               <th style={th}>Name</th>
@@ -244,8 +244,8 @@ export default function SchemesPage() {
                 {manager && (
                   <td style={td}>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
-                      <button onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: 'var(--danger-soft)', color: 'var(--danger)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: 'var(--danger-soft)', color: 'var(--danger)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
                     </div>
                   </td>
                 )}

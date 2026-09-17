@@ -113,7 +113,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
       {loading ? (
         <Loader label="Loading…" style={{ padding: '28px 0' }} />
       ) : team.length === 0 ? (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>No org chart yet.</p>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Assign people to this {label ? 'department' : 'team'} and set their <strong>Reporting Manager</strong>, and they’ll appear here.</p>
         </div>
@@ -123,11 +123,11 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
         </div>
       ) : (
         <>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, code or designation…"
+          <input className="nx-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, code or designation…"
             style={{ width: '100%', maxWidth: 420, height: 40, padding: '0 14px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 14, outline: 'none', marginBottom: 18, boxSizing: 'border-box' }} />
-          <div style={{ background: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflow: 'hidden' }}>
+          <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+              <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
                 <thead style={{ backgroundColor: 'var(--surface-2)' }}>
                   <tr>{['Name', 'User Code', 'Designation', 'Role', 'Reports To', ...(showStats ? ['Leads', 'Closures'] : [])].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
                 </thead>
@@ -141,7 +141,7 @@ export default function OrgChartView({ module = '', scope = '', title = 'My Team
                             <div style={{ fontWeight: 600, color: 'var(--text)' }}>{m.name}</div>
                             {m.email && <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.email}</div>}
                           </div>
-                          {m._isMe && <span style={directBadge}>YOU</span>}
+                          {m._isMe && <span className="nx-badge" style={directBadge}>YOU</span>}
                         </div>
                       </td>
                       <td style={{ ...td, color: 'var(--muted)', fontFamily: 'monospace' }}>{m.user_code || '—'}</td>
@@ -222,7 +222,7 @@ function OrgNode({ node, showStats }) {
           <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.name || '—'}</div>
-              {node._isMe && !root && <span style={{ fontSize: 8, fontWeight: 800, color: '#fff', background: 'var(--primary)', padding: '1px 5px', borderRadius: 20 }}>YOU</span>}
+              {node._isMe && !root && <span className="nx-badge" style={{ fontSize: 8, fontWeight: 800, color: '#fff', background: 'var(--primary)', padding: '1px 5px', borderRadius: 20 }}>YOU</span>}
             </div>
             <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: c, lineHeight: 1.25 }}>
               {node.designation || node.role || '—'}
@@ -235,8 +235,8 @@ function OrgNode({ node, showStats }) {
               <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)' }}>You · {node.role || ''}</span>
             ) : (
               <>
-                <span style={pill}>{node.leads} leads</span>
-                <span style={{ ...pill, color: 'var(--success)', background: 'var(--success-soft)' }}>{node.closures} closed</span>
+                <span className="nx-badge" style={pill}>{node.leads} leads</span>
+                <span className="nx-badge" style={{ ...pill, color: 'var(--success)', background: 'var(--success-soft)' }}>{node.closures} closed</span>
               </>
             )}
           </div>

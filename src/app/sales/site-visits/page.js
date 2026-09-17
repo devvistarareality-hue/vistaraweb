@@ -268,7 +268,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Site Visits</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 0' }}>{visible.length} visit{visible.length === 1 ? '' : 's'}</p>
         </div>
-        <button onClick={openSchedule} style={btnPrimary}>+ Schedule Visit</button>
+        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openSchedule} style={btnPrimary}>+ Schedule Visit</button>
       </div>
 
       {/* Tabs */}
@@ -290,7 +290,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       <DateFilter onChange={setRange} />
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -10, marginBottom: 16 }}>
         {projOptions.length > 1 && (
-          <select value={proj} onChange={(e) => setProj(e.target.value)}
+          <select className="nx-input" value={proj} onChange={(e) => setProj(e.target.value)}
             style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? 'var(--accent)' : 'var(--border)'}`,
               background: 'var(--surface)', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)',
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
@@ -304,7 +304,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           const color = val ? OUTCOME_COLOR[val] : 'var(--text-3)';
           const label = val ? OUTCOME_LABEL[val] : 'All';
           return (
-            <button key={val || 'all'} onClick={() => setOutcomeFilter(val)}
+            <button className={`nx-btn nx-btn-sm nx-toggle${active ? ' is-on' : ''}`} key={val || 'all'} onClick={() => setOutcomeFilter(val)}
               style={{ padding: '6px 12px', borderRadius: 18, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
               {label}
@@ -312,7 +312,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           );
         })}
         {narrowed && (
-          <button onClick={() => { setProj(''); setOutcomeFilter(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setProj(''); setOutcomeFilter(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
             cursor: 'pointer', background: 'var(--surface)', color: 'var(--muted)', border: '1.5px solid var(--border)' }}>
             <Icon name="x" /> Clear filters
           </button>
@@ -329,7 +329,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {visible.map((sv) => (
-            <div key={sv.id} style={{ border: '1.5px solid var(--surface-3)', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px',
+            <div className="nx-card" key={sv.id} style={{ border: '1.5px solid var(--surface-3)', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px',
               display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -364,7 +364,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
                   </>
                 )}
                 {sv.status === 'completed' && (
-                  <button onClick={() => startClosure(sv)} style={btnPrimary}>Record Closure</button>
+                  <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => startClosure(sv)} style={btnPrimary}>Record Closure</button>
                 )}
               </div>
             </div>
@@ -378,26 +378,26 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           <ModalCard title="Schedule Site Visit" onClose={() => setSchedOpen(false)}>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Lead *</label>
-              <select value={form.lead} onChange={(e) => setForm({ ...form, lead: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
+              <select className="nx-input" value={form.lead} onChange={(e) => setForm({ ...form, lead: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
                 <option value="">Select lead</option>
                 {leads.map((l) => <option key={l.id} value={l.id}>{l.name} — {l.phone}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Project</label>
-              <select value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
+              <select className="nx-input" value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
                 <option value="">Select project</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Date &amp; Time *</label>
-              <input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} style={inp} />
+              <input className="nx-input" type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} style={inp} />
             </div>
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <button onClick={() => setSchedOpen(false)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={scheduleVisit} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Schedule'}</button>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setSchedOpen(false)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={scheduleVisit} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Schedule'}</button>
             </div>
           </ModalCard>
         </Overlay>
@@ -414,7 +414,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
                 {[['hot', 'Hot', 'var(--danger)'], ['warm', 'Warm', 'var(--warning-2)'], ['cold', 'Cold', 'var(--accent)'], ['not_interested', 'Not Interested', 'var(--text-3)']].map(([val, label, color]) => {
                   const active = doneForm.outcome === val;
                   return (
-                    <button key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
+                    <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
                       style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                         border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
                       {label}
@@ -425,18 +425,18 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Visit Date *</label>
-              <input type="date" value={doneForm.visitedDate} max={new Date().toLocaleDateString('en-CA')}
+              <input className="nx-input" type="date" value={doneForm.visitedDate} max={new Date().toLocaleDateString('en-CA')}
                 onChange={(e) => setDoneForm({ ...doneForm, visitedDate: e.target.value })} style={inp} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Remarks *</label>
-              <textarea value={doneForm.remarks} onChange={(e) => setDoneForm({ ...doneForm, remarks: e.target.value })} rows={3}
+              <textarea className="nx-input" value={doneForm.remarks} onChange={(e) => setDoneForm({ ...doneForm, remarks: e.target.value })} rows={3}
                 style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} placeholder="What happened on the visit…" />
             </div>
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <button onClick={() => setDoneSv(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={submitDone} disabled={saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate}
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setDoneSv(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={submitDone} disabled={saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate}
                 style={{ ...btnPrimary, opacity: (saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate) ? 0.5 : 1 }}>
                 {saving ? 'Saving…' : 'Save'}
               </button>
@@ -453,34 +453,34 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 12 }}>
               <div>
                 <label style={lbl}>Closure Date *</label>
-                <input type="date" value={closure.closure_date} onChange={(e) => setClosure({ ...closure, closure_date: e.target.value })} style={inp} />
+                <input className="nx-input" type="date" value={closure.closure_date} onChange={(e) => setClosure({ ...closure, closure_date: e.target.value })} style={inp} />
               </div>
               <div>
                 <label style={lbl}>Unit No.</label>
-                <input value={closure.unit_no} onChange={(e) => setClosure({ ...closure, unit_no: e.target.value })} style={inp} placeholder="A-101" />
+                <input className="nx-input" value={closure.unit_no} onChange={(e) => setClosure({ ...closure, unit_no: e.target.value })} style={inp} placeholder="A-101" />
               </div>
               <div>
                 <label style={lbl}>Unit Type</label>
-                <input value={closure.unit_type} onChange={(e) => setClosure({ ...closure, unit_type: e.target.value })} style={inp} placeholder="2BHK" />
+                <input className="nx-input" value={closure.unit_type} onChange={(e) => setClosure({ ...closure, unit_type: e.target.value })} style={inp} placeholder="2BHK" />
               </div>
               <div>
                 <label style={lbl}>Booking Amount *</label>
-                <input type="number" value={closure.booking_amount} onChange={(e) => setClosure({ ...closure, booking_amount: e.target.value })} style={inp} placeholder="₹" />
+                <input className="nx-input" type="number" value={closure.booking_amount} onChange={(e) => setClosure({ ...closure, booking_amount: e.target.value })} style={inp} placeholder="₹" />
               </div>
               <div>
                 <label style={lbl}>Total Amount</label>
-                <input type="number" value={closure.total_amount} onChange={(e) => setClosure({ ...closure, total_amount: e.target.value })} style={inp} placeholder="₹" />
+                <input className="nx-input" type="number" value={closure.total_amount} onChange={(e) => setClosure({ ...closure, total_amount: e.target.value })} style={inp} placeholder="₹" />
               </div>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Remarks</label>
-              <textarea value={closure.remarks} onChange={(e) => setClosure({ ...closure, remarks: e.target.value })} rows={2}
+              <textarea className="nx-input" value={closure.remarks} onChange={(e) => setClosure({ ...closure, remarks: e.target.value })} rows={2}
                 style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} placeholder="Notes…" />
             </div>
             {err && <ErrBox>{err}</ErrBox>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <button onClick={() => setClosureSv(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={recordClosure} disabled={saving} style={{ padding: '9px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Record Closure'}</button>
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setClosureSv(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button className="nx-btn nx-btn-md nx-btn-success" onClick={recordClosure} disabled={saving} style={{ padding: '9px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Record Closure'}</button>
             </div>
           </ModalCard>
         </Overlay>
@@ -495,7 +495,7 @@ export default function SiteVisitsPage() {
 
 function Overlay({ children, onClose }) {
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       {children}
     </div>
   );
@@ -503,10 +503,10 @@ function Overlay({ children, onClose }) {
 
 function ModalCard({ title, children, onClose }) {
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 18, width: '92%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)' }}>
+    <div className="nx-card" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 18, width: '92%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.18)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--surface-2)' }}>
         <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{title}</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--faint)', cursor: 'pointer' }}><Icon name="x" /></button>
+        <button className="nx-btn nx-btn-lg nx-icon-btn nx-btn-ghost" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--faint)', cursor: 'pointer' }}><Icon name="x" /></button>
       </div>
       <div style={{ padding: 20 }}>{children}</div>
     </div>

@@ -25,7 +25,7 @@ const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Re
 
 function ApprovalBadge({ approvalStatus }) {
   const c = APPROVAL_COLORS[approvalStatus] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' };
-  return <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: c.bg, color: c.fg, textTransform: 'uppercase' }}>{approvalStatus}</span>;
+  return <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: c.bg, color: c.fg, textTransform: 'uppercase' }}>{approvalStatus}</span>;
 }
 
 function ApproverDropdown({ scheme, managers, onToggle }) {
@@ -47,7 +47,7 @@ function ApproverDropdown({ scheme, managers, onToggle }) {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
+          <div className="nx-popover" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
             border: '1px solid var(--surface-3)', borderRadius: 14, boxShadow: '0 10px 30px rgba(110,114,120,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
             {managers.map((m) => {
               const on = sel.includes(m.id);
@@ -223,8 +223,8 @@ export default function InvestorApprovalsPage() {
       <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{investors.length} {tab === 'all' ? 'total' : tab} investor{investors.length === 1 ? '' : 's'}</p>
 
       {canConfigureApprovers && (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 18, border: '1px solid var(--surface-3)' }}>
-          <button onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: TEAL, padding: 0 }}>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 18, border: '1px solid var(--surface-3)' }}>
+          <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: TEAL, padding: 0 }}>
             <Icon name="settings" /> Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: savedCfg.startsWith('⚠') ? 'var(--danger)' : 'var(--success)', fontWeight: 700 }}> <Icon name={savedCfg.startsWith('⚠') ? 'alert' : 'check-circle'} /> {savedCfg.replace(/^[^\p{L}\p{N}]+/u, '')}</span>}
           </button>
           {cfgOpen && (
@@ -243,26 +243,26 @@ export default function InvestorApprovalsPage() {
 
       <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#A2D2FF' }}><Icon name="search" /></span>
-        <input value={searchText} onChange={(e) => setSearchText(e.target.value)}
+        <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search name, phone, email, investor no.…"
           style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
         {searchText && (
-          <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
+          <button className="nx-btn nx-btn-md nx-icon-btn nx-btn-ghost" onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
         )}
       </div>
 
       <div style={{ marginTop: 14, display: 'flex', gap: 6 }}>
         {TABS.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          <button className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             background: tab === k ? 'var(--success-solid)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
         ))}
       </div>
 
       {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} /> : investors.length === 0 ? (
-        <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', marginTop: 18, border: '1px solid var(--surface-3)' }}>{search ? 'No investors match your search.' : 'No investors here.'}</div>
+        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', marginTop: 18, border: '1px solid var(--surface-3)' }}>{search ? 'No investors match your search.' : 'No investors here.'}</div>
       ) : (
-        <div style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
+          <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
                 <th style={th}>Name</th>
@@ -285,7 +285,7 @@ export default function InvestorApprovalsPage() {
                 <tr key={inv.id}>
                   <td style={{ ...td, fontWeight: 600 }}>
                     {inv.name}
-                    {inv.revision_no > 0 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: accent, background: isRenewal ? 'var(--warning-soft)' : 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>{isRenewal ? 'RENEW' : 'R'}{isRenewal ? '' : inv.revision_no}</span>}
+                    {inv.revision_no > 0 && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: accent, background: isRenewal ? 'var(--warning-soft)' : 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>{isRenewal ? 'RENEW' : 'R'}{isRenewal ? '' : inv.revision_no}</span>}
                     {isRevision && <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', marginTop: 3 }}>Proposed: {revisionSummary(inv)}</div>}
                   </td>
                   <td style={td}>{inv.phone || '—'}</td>
@@ -295,16 +295,16 @@ export default function InvestorApprovalsPage() {
                   <td style={td}>{new Date(inv.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                   <td style={td}>
                     {isRevision
-                      ? (inv.pending_loi_document_url ? <button onClick={() => openLoi(inv.id, true)} style={{ background: 'none', border: 'none', color: accent, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}><Icon name="file" /> {isRenewal ? 'Renewed' : 'Revised'} LOI</button> : '—')
-                      : (inv.loi_document_url ? <button onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}><Icon name="file" /> Signed LOI</button> : '—')}
+                      ? (inv.pending_loi_document_url ? <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => openLoi(inv.id, true)} style={{ background: 'none', border: 'none', color: accent, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}><Icon name="file" /> {isRenewal ? 'Renewed' : 'Revised'} LOI</button> : '—')
+                      : (inv.loi_document_url ? <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}><Icon name="file" /> Signed LOI</button> : '—')}
                   </td>
                   <td style={td}><ApprovalBadge approvalStatus={inv.approval_status} /></td>
                   <td style={td}>
                     {inv.approval_status === 'pending' && (
                       canApprove(inv) ? (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="check" /> Approve</button>
-                          <button onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: 'var(--danger-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Reject</button>
+                          <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="check" /> Approve</button>
+                          <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: 'var(--danger-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Reject</button>
                         </div>
                       ) : <span style={{ fontSize: 11, color: 'var(--faint)' }}>Not an approver</span>
                     )}

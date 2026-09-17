@@ -124,12 +124,12 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
         <div />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           
-          <button type="button" onClick={addBlock} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid var(--blue-2)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={addBlock} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid var(--blue-2)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             + Add Block
           </button>
           {/* Industrial blocks are single-level — no floor concept, so no way to add one. */}
           {!industrial && (
-            <button type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid var(--blue-2)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={() => addFloor(blocksOf(floors)[0] || '')} style={{ padding: '8px 14px', borderRadius: 9, border: '1.5px solid var(--blue-2)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
               + Add Floor
             </button>
           )}
@@ -149,14 +149,14 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
           {(blocksOf(floors).length > 1 || blk) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Block</span>
-              <input value={blk} onChange={(e) => renameBlock(blk, e.target.value.trim().toUpperCase())}
+              <input className="nx-input" value={blk} onChange={(e) => renameBlock(blk, e.target.value.trim().toUpperCase())}
                 placeholder="A" style={{ ...inp, width: 64, fontWeight: 800, textAlign: 'center' }} />
               <span style={{ fontSize: 12, color: 'var(--muted)' }}>{industrial ? `${blkUnits} units` : `${rows.length} floor${rows.length === 1 ? '' : 's'} · ${blkUnits} units`}</span>
               {!industrial && (
-                <button type="button" onClick={() => addFloor(blk)}
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={() => addFloor(blk)}
                   style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ Floor</button>
               )}
-              <button type="button" onClick={() => removeBlock(blk)}
+              <button className="nx-btn nx-btn-sm nx-btn-danger-soft" type="button" onClick={() => removeBlock(blk)}
                 style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove block</button>
             </div>
           )}
@@ -170,31 +170,31 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                 {!industrial && (
                   <div style={{ width: 62 }}>
                     <label style={lblSm}>Floor</label>
-                    <input type="number" value={f.floor} onChange={(e) => setFloors(update(i, { floor: e.target.value }))}
+                    <input className="nx-input" type="number" value={f.floor} onChange={(e) => setFloors(update(i, { floor: e.target.value }))}
                       onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                   </div>
                 )}
                 <div style={{ width: 130 }}>
                   <label style={lblSm}>Label</label>
-                  <input value={f.label || ''} onChange={(e) => setFloors(update(i, { label: e.target.value }))}
+                  <input className="nx-input" value={f.label || ''} onChange={(e) => setFloors(update(i, { label: e.target.value }))}
                     onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                 </div>
                 <div style={{ width: 96 }}>
                   <label style={lblSm}>Prefix</label>
-                  <input value={f.prefix || ''} placeholder="e.g. Shop" onChange={(e) => setFloors(update(i, { prefix: e.target.value }))}
+                  <input className="nx-input" value={f.prefix || ''} placeholder="e.g. Shop" onChange={(e) => setFloors(update(i, { prefix: e.target.value }))}
                     onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                 </div>
                 <div style={{ width: 78 }}>
                   <label style={lblSm}>From</label>
-                  <input type="number" value={f.from} onChange={(e) => setFloors(update(i, { from: e.target.value }))}
+                  <input className="nx-input" type="number" value={f.from} onChange={(e) => setFloors(update(i, { from: e.target.value }))}
                     onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                 </div>
                 <div style={{ width: 78 }}>
                   <label style={lblSm}>To</label>
-                  <input type="number" value={f.to} onChange={(e) => setFloors(update(i, { to: e.target.value }))}
+                  <input className="nx-input" type="number" value={f.to} onChange={(e) => setFloors(update(i, { to: e.target.value }))}
                     onBlur={() => persist(floors)} style={{ ...inp, width: '100%' }} />
                 </div>
-                <button type="button" onClick={() => removeFloor(i)} title="Remove floor"
+                <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-danger-soft" type="button" onClick={() => removeFloor(i)} title="Remove floor"
                   style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /></button>
               </div>
 
@@ -207,7 +207,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                     : 'Set From / To to generate unit numbers.'}
                 </span>
                 {!industrial && (
-                  <button type="button" onClick={async () => { const top = Number((await promptDialog('Repeat this floor\'s layout up to which floor?', '13'))); if (top) repeatUpTo(i, top); }}
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={async () => { const top = Number((await promptDialog('Repeat this floor\'s layout up to which floor?', '13'))); if (top) repeatUpTo(i, top); }}
                     style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                     ↓ Repeat up to…
                   </button>
@@ -222,7 +222,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
                     {/\.pdf(\?|$)/i.test(f.image_url)
                       ? <a href={f.image_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}><Icon name="file" /> View PDF ↗</a>
                       : <img src={f.image_url} alt={f.label} style={{ width: 78, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--surface-3)' }} />}
-                    <button type="button" onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
+                    <button className="nx-btn nx-btn-sm nx-btn-danger-soft" type="button" onClick={() => commit(floors.map((x, ix) => ix === i ? { ...x, image_url: '' } : x))}
                       style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid var(--danger-2)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Remove plan</button>
                   </>
                 ) : (
@@ -257,7 +257,7 @@ export default function TowerFloorBuilder({ floors, setFloors, folder, existing 
             {note && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{note}</div>}
           </div>
           {onGenerate && (
-            <button type="button" onClick={() => onGenerate(toCreate)} disabled={generating || !toCreate.length}
+            <button className="nx-btn nx-btn-md nx-btn-primary" type="button" onClick={() => onGenerate(toCreate)} disabled={generating || !toCreate.length}
               style={{ padding: '10px 20px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
                 background: toCreate.length && !generating ? 'var(--strong)' : 'var(--blue-2)', cursor: toCreate.length && !generating ? 'pointer' : 'not-allowed' }}>
               {generating ? 'Generating…' : `Generate ${toCreate.length} Units`}

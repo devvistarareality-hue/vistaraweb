@@ -426,7 +426,7 @@ export default function SalesLayout({ children }) {
             <div style={{ marginTop: 18, marginBottom: 4 }}>
               <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>
               <div style={{ position: 'relative' }}>
-                <select data-plain
+                <select className="nx-input" data-plain
                   value={companyId ?? ''}
                   onChange={handleCompanyChange}
                   style={{
@@ -505,12 +505,12 @@ export default function SalesLayout({ children }) {
 
       {/* ── Profile Modal ── */}
       {profileOpen && (
-        <div onClick={() => setProfileOpen(false)} style={{
+        <div className="nx-modal-backdrop" onClick={() => setProfileOpen(false)} style={{
           position: 'fixed', inset: 0, zIndex: 1000,
           backgroundColor: 'rgba(var(--ink-rgb),0.38)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
         }}>
-          <div onClick={e => e.stopPropagation()} style={{
+          <div className="nx-modal" onClick={e => e.stopPropagation()} style={{
             width: 300, marginLeft: 16, marginBottom: 20,
             backgroundColor: 'var(--surface)', borderRadius: 18,
             boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
@@ -553,7 +553,7 @@ export default function SalesLayout({ children }) {
 
             {/* Change Password + Sign Out */}
             <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{
                 width: '100%', padding: '10px 0', borderRadius: 14,
                 border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)',
                 color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
@@ -564,7 +564,7 @@ export default function SalesLayout({ children }) {
                 </svg>
                 Change Password
               </button>
-              <button onClick={handleLogout} style={{
+              <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={handleLogout} style={{
                 width: '100%', padding: '10px 0', borderRadius: 14,
                 border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)',
                 color: 'var(--danger)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
@@ -604,7 +604,7 @@ export default function SalesLayout({ children }) {
 const s = {
   sidebar: {
     width: 230, minWidth: 230, height: '100vh',
-    backgroundColor: 'var(--glass)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    backgroundColor: 'var(--sidebar)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
     boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)',
     display: 'flex', flexDirection: 'column',
     flexShrink: 0, position: 'sticky', top: 0,
@@ -636,7 +636,7 @@ const s = {
     cursor: 'pointer', textDecoration: 'none', position: 'relative',
     overflow: 'hidden',
   },
-  navActive: { backgroundColor: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: '0 6px 16px -6px rgba(47,109,181,0.45)' },
+  navActive: { background: 'var(--nav-active-bg)', color: 'var(--nav-active-fg)', fontWeight: 700, boxShadow: 'var(--nav-active-shadow)' },
   navChildActive: { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' },
   activeBar: {
     position: 'absolute', left: 0, top: '18%', bottom: '18%',

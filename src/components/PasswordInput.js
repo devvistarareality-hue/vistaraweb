@@ -14,7 +14,7 @@ export default function PasswordInput({ style, ...props }) {
   const [shown, setShown] = useState(false);
   return (
     <div style={{ position: 'relative' }}>
-      <input
+      <input className="nx-input"
         {...props}
         type={shown ? 'text' : 'password'}
         style={{ ...style, paddingRight: 58 }}
@@ -22,7 +22,7 @@ export default function PasswordInput({ style, ...props }) {
         onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
       />
       {/* type="button" so it never submits the form it sits in. */}
-      <button
+      <button className="nx-btn nx-btn-sm nx-btn-link"
         type="button"
         onClick={() => setShown((v) => !v)}
         title={shown ? 'Hide password' : 'Show password'}

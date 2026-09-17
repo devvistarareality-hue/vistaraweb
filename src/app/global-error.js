@@ -19,7 +19,7 @@ export default function GlobalError({ error, reset }) {
           <div style={{ fontSize: 14, color: 'var(--text-3)', marginBottom: 20, maxWidth: 420 }}>
             An unexpected error occurred. Please try again — if it keeps happening, contact your administrator.
           </div>
-          <button
+          <button className="nx-btn nx-btn-md nx-btn-primary"
             onClick={() => reset()}
             style={{ padding: '10px 22px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >

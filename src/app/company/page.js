@@ -45,7 +45,7 @@ export default function CompanyScreen() {
       <style suppressHydrationWarning>{CSS}</style>
 
       {/* ═══ LEFT — branding ═══ */}
-      <div className="left-panel" style={s.left}>
+      <div className="left-panel nx-hero" style={s.left}>
         <div style={s.dotBg} />
         <div style={{ ...s.glow, top:'8%', left:'55%', width:340, height:340, background:'radial-gradient(circle,rgba(162,210,255,0.38) 0%,transparent 70%)' }} />
         <div style={{ ...s.glow, bottom:'8%', left:'-8%', width:260, height:260, background:'radial-gradient(circle,rgba(164,245,166,0.22) 0%,transparent 70%)' }} />
@@ -104,7 +104,7 @@ export default function CompanyScreen() {
       {/* ═══ RIGHT — form ═══ */}
       <div className="right-panel" style={{ ...s.right, position: 'relative' }}>
         <div style={{ position: 'absolute', top: 20, right: 24 }}><ThemeToggle compact /></div>
-        <div style={s.formCard}>
+        <div className="nx-card" style={s.formCard}>
 
           {/* Mobile logo */}
           <div style={s.mobileTop}>
@@ -155,7 +155,7 @@ export default function CompanyScreen() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="submit-btn"
+              className="submit-btn nx-btn nx-btn-lg nx-btn-primary"
               style={{ ...s.btn, background: canSubmit ? 'var(--strong)' : 'var(--border)', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
             >
               {companyLoading
