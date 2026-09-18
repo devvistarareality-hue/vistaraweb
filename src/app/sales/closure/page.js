@@ -69,7 +69,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
       {/* Toggle: Record Closure ↔ My Bookings */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
         {[['closures', 'Record Closure'], ['mybookings', 'My Bookings']].map(([k, label]) => (
-          <button className="nx-btn nx-btn-md nx-btn-primary" key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? 'var(--primary)' : 'var(--surface-3)', color: view === k ? '#fff' : 'var(--muted)' }}>{label}</button>
+          <button className={`nx-btn nx-btn-md nx-toggle${view === k ? ' is-on' : ''}`} key={k} onClick={() => setView(k)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: view === k ? 'var(--primary)' : 'var(--surface-3)', color: view === k ? '#fff' : 'var(--muted)' }}>{label}</button>
         ))}
       </div>
 

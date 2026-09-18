@@ -436,7 +436,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
-            <button className="nx-btn nx-btn-md nx-btn-primary" key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            <button className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>

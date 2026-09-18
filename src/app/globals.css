@@ -150,8 +150,8 @@
   --loader-step: #2A2422;
   --card-texture: radial-gradient(circle at 100% 0%, rgba(255,122,61,0.13) 0%, transparent 34%);
   --loader-ball: #FF7A3D;
-  --success-grad: linear-gradient(135deg, #0D5436 0%, #157A4E 55%, #1E9159 100%);
-  --banner-grad: linear-gradient(135deg, #3A1206 0%, #8A2E0C 55%, #E8541C 100%);
+  --success-grad: linear-gradient(135deg, rgba(111,223,160,0.17) 0%, rgba(111,223,160,0.05) 70%, rgba(255,255,255,0.02) 100%), #0A0C0B;
+  --banner-grad: linear-gradient(135deg, rgba(255,122,61,0.20) 0%, rgba(255,122,61,0.06) 62%, rgba(255,255,255,0.02) 100%), #0C0A09;
 }
 
 *, *::before, *::after {

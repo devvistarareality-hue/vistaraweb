@@ -43,7 +43,7 @@ const canHoldProjects = (m) =>
 
 function FilterChip({ label, active, onClick }) {
   return (
-    <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--strong)' : 'var(--surface-3)', color: active ? '#fff' : 'var(--muted)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+    <button className={`nx-btn nx-btn-sm nx-toggle${active ? ' is-on' : ''}`} onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--strong)' : 'var(--surface-3)', color: active ? '#fff' : 'var(--muted)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
   );
 }
 
