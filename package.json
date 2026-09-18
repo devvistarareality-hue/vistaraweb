@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "check:styles": "node scripts/check-inline-styles.js"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.62.0",

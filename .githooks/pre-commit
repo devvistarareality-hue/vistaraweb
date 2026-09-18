@@ -1,0 +1,3 @@
+#!/bin/sh
+# Enabled automatically by `npm install` (package.json "prepare").
+node scripts/check-inline-styles.js || exit 1
