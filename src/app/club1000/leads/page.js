@@ -516,9 +516,21 @@ export default function Club1000LeadsPage() {
           <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
           <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
           <div style={divider} />
-          <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === today && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
-          <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(6) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
-          <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(29) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
+          {/* One dropdown instead of a row of quick-range pills */}
+          <select className="nx-input nx-input-sm nx-filter-sel"
+            value={(filters.date_from === today && filters.date_to === today) ? 'today'
+                 : (filters.date_from === daysAgo(6) && filters.date_to === today) ? 'week'
+                 : (filters.date_from === daysAgo(29) && filters.date_to === today) ? 'month' : ''}
+            onChange={(e) => {
+              const k = e.target.value;
+              sf('date_from', k === 'today' ? today : k === 'week' ? daysAgo(6) : k === 'month' ? daysAgo(29) : '');
+              sf('date_to', k ? today : '');
+            }}>
+            <option value="">Any date</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">Last 30 days</option>
+          </select>
           {anyFilter && (
             <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
               <Icon name="x" /> Clear all

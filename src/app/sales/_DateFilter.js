@@ -59,6 +59,18 @@ export default function DateFilter({ onChange }) {
 
   useEffect(() => { onChange && onChange(effectiveDates); }, [effectiveDates.from, effectiveDates.to]);
 
+  // Quick ranges live in the same dateFrom/dateTo the pickers write to, so the
+  // dropdown only has to recognise which one is currently in effect.
+  const quickRange = (dateFrom === today && dateTo === today) ? 'today'
+    : (dateFrom === daysAgo(6) && dateTo === today) ? 'week'
+    : (dateFrom === daysAgo(29) && dateTo === today) ? 'month'
+    : '';
+  const applyQuickRange = (key) => {
+    const from = key === 'today' ? today : key === 'week' ? daysAgo(6) : key === 'month' ? daysAgo(29) : '';
+    setDateFrom(from); setDateTo(key ? today : '');
+    setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null);
+  };
+
   const fSel    = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--surface-3)', fontSize: 12, background: 'var(--surface-2)', cursor: 'pointer', outline: 'none', color: 'var(--text)', fontWeight: 500 };
   const qBtn    = (active) => ({ height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? 'var(--strong)' : 'var(--surface-2)', color: active ? '#fff' : 'var(--muted)' });
   const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
@@ -70,11 +82,13 @@ export default function DateFilter({ onChange }) {
       <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
       <input className="nx-input" type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={{ ...fSel, width: 136 }} />
       <div style={divider} />
-      <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === today && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
-      <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === daysAgo(6) && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
-      <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === daysAgo(29) && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
-      <div style={divider} />
-      <button className={`nx-btn nx-btn-sm nx-toggle${(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear) ? ' is-on' : ''}`} onClick={() => { setDateFrom(''); setDateTo(''); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear)}>All</button>
+      {/* One dropdown instead of a row of quick-range pills */}
+      <select className="nx-input nx-input-sm nx-filter-sel" value={quickRange} onChange={(e) => applyQuickRange(e.target.value)}>
+        <option value="">Any date</option>
+        <option value="today">Today</option>
+        <option value="week">Last 7 days</option>
+        <option value="month">Last 30 days</option>
+      </select>
       <div style={divider} />
       {/* Year */}
       <div style={{ position: 'relative' }}>

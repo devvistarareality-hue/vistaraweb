@@ -17,7 +17,6 @@ function fmtDateTime(iso) {
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
-const fuStatusColor = { pending: 'var(--warning-2)', completed: 'var(--success)', missed: 'var(--danger)', rescheduled: 'var(--success)' };
 
 // Lead-status options a follow-up can set when completed, by the follow-up's role.
 // Telecaller updates TC Status; STM updates STM Status (a manager completing either
@@ -244,40 +243,28 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
           <p style={{ fontSize: 13, color: 'var(--faint)', margin: '4px 0 0' }}>Schedule follow-ups from lead details</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="nx-fu-list">
           {visible.map((fu) => {
             const overdue = fu.status === 'pending' && new Date(fu.scheduled_at) < now;
             return (
-              <div key={fu.id} style={{
-                border: `1.5px solid ${overdue ? 'var(--danger-2)' : 'var(--surface-3)'}`,
-                background: overdue ? 'var(--danger-soft)' : 'var(--surface)',
-                borderRadius: 16, padding: '14px 16px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
-              }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{fu.lead_name || 'Lead'}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
-                      color: fu.role_context === 'stm' ? 'var(--warning-2)' : 'var(--success)' }}>
+              <div key={fu.id} className={`nx-card nx-fu-card${overdue ? ' is-overdue' : ''}`}>
+                <div className="nx-fu-main">
+                  <div className="nx-fu-head">
+                    <span className="nx-fu-name">{fu.lead_name || 'Lead'}</span>
+                    <span className={`nx-fu-role ${fu.role_context === 'stm' ? 'stm' : 'tc'}`}>
                       {fu.role_context?.toUpperCase()}
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14,
-                      backgroundColor: `color-mix(in srgb, ${(fuStatusColor[fu.status] || 'var(--muted-solid)')} 9%, transparent)`,
-                      color: fuStatusColor[fu.status] || 'var(--muted)' }}>
+                    <span className={`nx-status ${fu.status === 'done' ? 'ok' : fu.status === 'pending' ? 'warn' : 'off'}`}>
                       {fu.status}
                     </span>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: overdue ? 'var(--danger)' : 'var(--text)', margin: '6px 0 0' }}>
-                    {fmtDateTime(fu.scheduled_at)}
-                  </p>
-                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
-                  {fu.remarks && <p style={{ fontSize: 12, color: 'var(--text)', margin: '6px 0 0', fontStyle: 'italic' }}>“{fu.remarks}”</p>}
-                  {fu.outcome && <p style={{ fontSize: 12, color: 'var(--success)', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
+                  <p className="nx-fu-when">{fmtDateTime(fu.scheduled_at)}</p>
+                  {fu.assigned_to_name && <p className="nx-fu-meta">Assigned to: {fu.assigned_to_name}</p>}
+                  {fu.remarks && <p className="nx-fu-note">“{fu.remarks}”</p>}
+                  {fu.outcome && <p className="nx-fu-outcome"><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
                 {fu.status === 'pending' && (
-                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openDone(fu)}
-                    style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
-                      border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
+                  <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => openDone(fu)}>
                     Mark Done
                   </button>
                 )}
