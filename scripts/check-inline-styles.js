@@ -23,7 +23,12 @@ for (const l of diff.split('\n')) {
   const hunk = l.match(/^@@ -\d+(?:,\d+)? \+(\d+)/);
   if (hunk) { line = Number(hunk[1]); continue; }
   if (!l.startsWith('+') || l.startsWith('+++')) continue;
-  if (/style=\{\s*[{[]/.test(l) && !/inline-ok/.test(l)) bad.push(`  ${file}:${line}  ${l.slice(1).trim().slice(0, 110)}`);
+  const code = l.slice(1);
+  const trimmed = code.trim();
+  const isComment = trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('{/*');
+  // style={{ ... }} is always inline; style={[a, b]} is fine unless the array holds an object literal.
+  const inlineObject = /style=\{\s*\{/.test(code) || /style=\{\s*\[[^\]]*\{/.test(code);
+  if (!isComment && inlineObject && !/inline-ok/.test(code)) bad.push(`  ${file}:${line}  ${trimmed.slice(0, 110)}`);
   line += 1;
 }
 
