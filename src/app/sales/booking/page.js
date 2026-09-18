@@ -99,7 +99,7 @@ function BookingPage() {
     client_name: qp.get('client') || '', gender: '', phone: qp.get('phone') || '', address: '', source: '',
     manual_stm_name: '',   // kiosk: the salesperson assisting, typed in
     area: '', area_unit: 'sq.yd', const_area: '', villa_type: '',
-    land_rate: '', dev_rate: '', const_rate: '', sale_deed_rate: '', dev_agreement_rate: '',
+    land_rate: '', dev_rate: '', const_rate: '', plc_rate: '', sale_deed_rate: '', dev_agreement_rate: '',
     sale_deed_pct: '60', sale_deed_amount: '',
     land_sale_deed: '', const_agreement: '', premium_location: '',
     discount: '0', legal_charges: '', maint_rate: '', maint_months: '',
@@ -147,7 +147,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
@@ -194,7 +194,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
@@ -227,7 +227,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area_unit: b.area_unit || s.area_unit, const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
@@ -282,10 +282,17 @@ function BookingPage() {
           // the area and construction area reverted, and villa_type was blanked
           // outright — which is what made a resumed draft look like it had not loaded.
           const fromPlot = !(reviseId || draftId || convertEoiId);
+          // Plot Area is the one exception: an EOI has no plot of its own yet, so there
+          // is no saved area to protect — converting it is exactly the moment a real
+          // plot gets picked for the first time, as the effect above this one already
+          // says ("Plot & Plot Area come from the newly-picked plot"). Excluding
+          // convertEoiId here (same as fromPlot) left Plot Area blank on every
+          // EOI→LOI conversion; Construction Area and Villa Type are different — on a
+          // conversion those still come from the EOI itself, so they keep `fromPlot`.
+          const fromPlotArea = !(reviseId || draftId);
           setF((s) => ({
             ...s,
-            area: (fromPlot && sumArea) ? String(+sumArea.toFixed(2)) : s.area,
-            // When converting an EOI, Construction Area comes from the EOI, not the plot.
+            area: (fromPlotArea && sumArea) ? String(+sumArea.toFixed(2)) : s.area,
             const_area: (fromPlot && sumConst) ? String(+sumConst.toFixed(2)) : s.const_area,
             villa_type: fromPlot ? '' : s.villa_type,
           }));
@@ -503,7 +510,7 @@ function BookingPage() {
     area: f.area, landRate: f.land_rate, devRate: f.dev_rate, constArea: f.const_area, constRate: f.const_rate,
     discount: f.discount, legalCharges: f.legal_charges, maintRate: f.maint_rate, maintMonths: f.maint_months,
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
-    premiumLocation: f.premium_location, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
+    premiumLocation: f.premium_location, plcRate: f.plc_rate, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
     saleDeedPct: f.sale_deed_pct, saleDeedAmount: f.sale_deed_amount,
     applyRegFee: f.apply_reg_fee, applyPageFee: f.apply_page_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
@@ -515,7 +522,7 @@ function BookingPage() {
 
   // Warn before leaving the booking form once meaningful data has been entered
   // (covers accidental back-button / gesture / refresh / tab-close).
-  const isDirty = !!(f.land_rate || f.dev_rate || f.const_rate || f.premium_location || f.sale_deed_amount
+  const isDirty = !!(f.land_rate || f.dev_rate || f.const_rate || f.plc_rate || f.premium_location || f.sale_deed_amount
     || f.legal_charges || f.maint_rate || insts.length || nsdInsts.length || deedAmtStr || loiFile);
   useEffect(() => {
     const beforeUnload = (e) => { if (isDirty) { e.preventDefault(); e.returnValue = ''; } };
@@ -758,7 +765,7 @@ function BookingPage() {
       manual_stm_name: f.manual_stm_name.trim(),
       formula_set: formulaSet, area: f.area, area_unit: f.area_unit, const_area: f.const_area || '0',
       villa_type: flags.bunglowTypeIsDropdown ? f.villa_type : '', bunglow_type: flags.bunglowTypeFixed || '',
-      land_rate: f.land_rate || 0, dev_rate: f.dev_rate || 0, const_rate: f.const_rate || 0,
+      land_rate: f.land_rate || 0, dev_rate: f.dev_rate || 0, const_rate: f.const_rate || 0, plc_rate: f.plc_rate || 0,
       sale_deed_rate: f.sale_deed_rate || 0, dev_agreement_rate: f.dev_agreement_rate || 0,
       sale_deed_pct: f.sale_deed_pct === '' || f.sale_deed_pct == null ? 60 : f.sale_deed_pct,
       sale_deed_amount: f.sale_deed_amount || 0,
@@ -768,7 +775,7 @@ function BookingPage() {
       land_sale_deed: f.land_sale_deed || 0, const_agreement: f.const_agreement || 0,
       stamp_duty: Math.round(v.stampDuty), reg_fees: Math.round(v.regFees), gst: Math.round(v.gst),
       maintenance: Math.round(v.maint), maint_deposit: Math.round(v.maintDeposit), maint_advance: Math.round(v.maintAdvance),
-      legal_charges: f.legal_charges || 0, premium_location: f.premium_location || 0,
+      legal_charges: f.legal_charges || 0, premium_location: Math.round(flags.hasPlcRate ? v.premiumLocation : (f.premium_location || 0)),
       total_extra: Math.round(prat ? pratExtraTotal : v.totalExtra), discount: f.discount || 0,
       final_amount: Math.round(prat ? pratTotal : v.finalAmt),
       apply_reg_fee: f.apply_reg_fee, apply_page_fee: f.apply_page_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
@@ -1075,6 +1082,7 @@ function BookingPage() {
         <Row><L>Land Rate (₹/{unit}) *</L><In type="number" value={f.land_rate} invalid={errs.land_rate} onChange={(e) => set('land_rate', e.target.value)} /></Row>
         {flags.hasConstructionFields && <Row><L>Development Rate (₹/{unit})</L><In type="number" value={f.dev_rate} onChange={(e) => set('dev_rate', e.target.value)} /></Row>}
         {flags.hasConstructionFields && <Row><L>Construction Rate (₹/{unit})</L><In type="number" value={f.const_rate} onChange={(e) => set('const_rate', e.target.value)} /></Row>}
+        {flags.hasPlcRate && <Row><L>PLC Rate (₹/{unit})</L><In type="number" value={f.plc_rate} onChange={(e) => set('plc_rate', e.target.value)} /></Row>}
         {flags.hasSaleDeedRate && <Row><L>Sale Deed Rate (₹/sq.ft)</L><In type="number" value={f.sale_deed_rate} onChange={(e) => set('sale_deed_rate', e.target.value)} /></Row>}
         {flags.hasDevAgreement && <Row><L>Dev Agreement Rate (₹/sq.ft)</L><In type="number" value={f.dev_agreement_rate} onChange={(e) => set('dev_agreement_rate', e.target.value)} /></Row>}
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
@@ -1130,10 +1138,11 @@ function BookingPage() {
         {flags.hasConstructionFields && <T label="Plot Development Amount" sub={`${formulaSet === 'ankhol' ? 'Construction' : 'Plot'} Area × Dev Rate`} sub2={`${inr(formulaSet === 'ankhol' ? v.constArea : v.area)} × ${inr(v.devRate)}`} val={v.plotDev} />}
         {flags.hasConstructionFields && <T label="Construction Amount" sub="Construction Area × Construction Rate" sub2={`${inr(v.constArea)} × ${inr(v.constRate)}`} val={v.constAmt} />}
         {flags.hasConstructionFields && formulaSet === 'ankhol' && v.premiumLocation > 0 && <T label="Premium Location Charge" val={v.premiumLocation} />}
+        {flags.hasPlcRate && v.premiumLocation > 0 && <T label="Premium Location Amount" sub="Plot Area × PLC Rate" sub2={`${inr(v.area)} × ${inr(v.plcRate)}`} val={v.premiumLocation} />}
         {flags.hasConstructionFields && <T
           label="Total Basic Amount"
-          sub={formulaSet === 'ankhol' ? 'Plot Basic + Plot Dev + Construction + Premium' : 'Plot Basic + Plot Dev + Construction'}
-          val={formulaSet === 'ankhol' ? v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation : v.plotBasic + v.plotDev + v.constAmt}
+          sub={(formulaSet === 'ankhol' || flags.hasPlcRate) ? 'Plot Basic + Plot Dev + Construction + Premium' : 'Plot Basic + Plot Dev + Construction'}
+          val={(formulaSet === 'ankhol' || flags.hasPlcRate) ? v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation : v.plotBasic + v.plotDev + v.constAmt}
           subtotal />}
         {flags.hasSaleDeed && formulaSet !== 'ankhol' && !hasSaleDeedSplit && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
         {hasSaleDeedSplit && <>
