@@ -289,9 +289,14 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-page-title { font-size: 24px; font-weight: 800; color: var(--text); margin: 8px 0 2px; letter-spacing: -0.022em; }
 .nx-page-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
 
-/* sections flow in responsive columns so a form fills the page width */
-.nx-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 16px; align-items: start; }
+/* single-column form, centred on the page */
+.nx-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.nx-page-form > * { max-width: 1040px; margin-left: auto; margin-right: auto; }
+.nx-page-form > .nx-page-title, .nx-page-form > .nx-page-sub { width: 100%; }
 .nx-form-grid > .nx-span-all { grid-column: 1 / -1; }
+/* inside a section, pair fields two-up on wide screens */
+.nx-section.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 26px; }
+.nx-section.cols > .nx-section-title { grid-column: 1 / -1; }
 .nx-section { border-radius: 20px; padding: 18px 20px; }
 .nx-section-title { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
 

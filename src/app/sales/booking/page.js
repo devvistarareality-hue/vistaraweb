@@ -852,7 +852,7 @@ function BookingPage() {
   // chosen unit); defaults to the project's native unit.
   const unit = f.area_unit || flags.areaUnit;
   return (
-    <div className="nx-page">
+    <div className="nx-page nx-page-form">
       {saving && (
         <div className="nx-modal-backdrop nx-busy">
           <Loader />
