@@ -16,6 +16,11 @@
   --bg-glow-2: rgba(47,109,181,0.10);
   --bg-glow-3: transparent;
   --bg-grid: rgba(47,109,181,0.055);
+  --bg-scene:
+    radial-gradient(1100px 560px at 60% -12%, rgba(55,119,196,0.22) 0%, rgba(55,119,196,0.06) 40%, transparent 68%),
+    radial-gradient(760px 720px at 104% 42%, rgba(150,180,220,0.30) 0%, transparent 62%),
+    radial-gradient(700px 520px at -6% 104%, rgba(55,119,196,0.08) 0%, transparent 62%),
+    linear-gradient(180deg, #F8FBFF 0%, #EDF3FA 55%, #E6EEF8 100%);
 
   --surface: #FFFFFF;
   --surface-2: #F6F9FE;
@@ -90,7 +95,12 @@
   --bg-glow-1: rgba(255,110,45,0.12);
   --bg-glow-2: rgba(255,70,20,0.08);
   --bg-glow-3: transparent;
-  --bg-grid: rgba(255,255,255,0.035);
+  --bg-grid: rgba(255,255,255,0.03);
+  --bg-scene:
+    radial-gradient(1100px 560px at 60% -12%, rgba(255,96,32,0.30) 0%, rgba(255,80,20,0.08) 40%, transparent 68%),
+    radial-gradient(760px 720px at 104% 42%, rgba(190,200,215,0.10) 0%, transparent 62%),
+    radial-gradient(700px 520px at -6% 104%, rgba(255,110,45,0.05) 0%, transparent 62%),
+    linear-gradient(180deg, #0B0908 0%, #060505 55%, #030303 100%);
 
   --surface: #0A0A0A;
   --surface-2: #0F0E0E;
@@ -171,7 +181,7 @@ html, body {
 
 /* Page gradient lives on a fixed layer: `background-attachment: fixed` repaints the
    whole page on every scroll and is heavy in Safari. */
-body { background: var(--bg-base, var(--bg)); background-color: var(--bg); min-height: 100vh; }
+body { background: var(--bg); min-height: 100vh; }
 body::after {
   content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background-image: radial-gradient(var(--bg-grid) 1px, transparent 1px);
@@ -180,22 +190,15 @@ body::after {
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
 }
 body::before {
+  /* Fixed backdrop, like the dashboard hero: one warm glow from the top, a cool
+     haze on the right, a faint warm lift bottom-left. Fixed + inset 0 means it
+     never repeats down a long page. */
   content: '';
   position: fixed;
-  inset: -20%;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(900px 600px at 12% 8%, var(--bg-glow-1) 0%, transparent 60%),
-    radial-gradient(800px 700px at 92% 18%, var(--bg-glow-2) 0%, transparent 60%),
-    radial-gradient(900px 700px at 60% 105%, var(--bg-glow-3, transparent) 0%, transparent 60%);
-  animation: nx-aurora 28s ease-in-out infinite alternate;
-  will-change: transform;
-}
-@keyframes nx-aurora {
-  0%   { transform: translate3d(0,0,0) scale(1); }
-  50%  { transform: translate3d(2%, -2%, 0) scale(1.05); }
-  100% { transform: translate3d(-2%, 2%, 0) scale(1.02); }
+  background: var(--bg-scene);
 }
 
 button, input, select, textarea { font-family: inherit; color: inherit; }

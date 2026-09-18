@@ -12,6 +12,7 @@ import { AUTH_ENDPOINTS } from '../../../constants/api';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
 import Loader from '../../../components/Loader';
 import ThemeToggle from '../../../components/ThemeToggle';
+import NexoraLogo from '../../../components/NexoraLogo';
 
 const ORANGE = 'var(--accent)';
 const NAVY = 'var(--text)';
@@ -114,7 +115,7 @@ export default function ModuleLayout({ children, params }) {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <div className="nx-sidebar" style={s.sidebar}>
         <div style={s.logoRow}>
-          <div style={s.logoCircle}><img src="/nexora-mark.svg" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
+          <div style={s.logoCircle}><NexoraLogo alt="" /></div>
           <div>
             <div style={s.logoName}>{meta.name}</div>
             <div style={s.logoSub}>Nexora</div>
@@ -215,7 +216,7 @@ export default function ModuleLayout({ children, params }) {
 const s = {
   sidebar: { width: 230, minWidth: 230, height: '100vh', backgroundColor: 'var(--sidebar)', borderRight: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', boxShadow: '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba(60,90,130,0.08)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 },
   logoRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '20px 18px 18px', borderBottom: '1px solid rgba(var(--ink-rgb),0.048)' },
-  logoCircle: { width: 36, height: 36, borderRadius: 14, backgroundColor: '#fff', padding: 5, overflow: 'hidden', flexShrink: 0 },
+  logoCircle: { width: 36, height: 36, borderRadius: 14, backgroundColor: 'var(--surface)', padding: 5, overflow: 'hidden', flexShrink: 0 },
   logoName: { fontSize: 13, fontWeight: 800, color: 'var(--text)' },
   logoSub: { fontSize: 10, color: 'rgba(var(--ink-rgb),0.58)', marginTop: 2 },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.6, padding: '0 8px', marginBottom: 5 },

@@ -15,6 +15,7 @@ import NotificationBell from './_NotificationBell';
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
+import NexoraLogo from '../../components/NexoraLogo';
 const ORANGE = 'var(--accent)';
 const NAVY   = 'var(--text)';
 
@@ -370,7 +371,7 @@ export default function SalesLayout({ children }) {
         <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={s.logoCircle}>
-              <img src="/nexora-mark.svg" alt="Nexora" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <NexoraLogo />
             </div>
             <div>
               <div style={s.logoName}>{portalTitle}</div>
@@ -618,7 +619,7 @@ const s = {
   },
   logoCircle: {
     width: 36, height: 36, borderRadius: 14,
-    backgroundColor: '#fff', padding: 5,
+    backgroundColor: 'var(--surface)', padding: 5,
     overflow: 'hidden', flexShrink: 0,
     boxShadow: '0 2px 8px rgba(var(--ink-rgb),0.10)',
   },

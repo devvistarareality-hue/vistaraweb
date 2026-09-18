@@ -9,6 +9,7 @@ import { LOGIN_SUCCESS } from '../../redux/types/authTypes';
 
 import Icon from '../../components/Icon';
 import ThemeToggle from '../../components/ThemeToggle';
+import NexoraLogo from '../../components/NexoraLogo';
 const ORANGE = '#A2D2FF';
 const NAVY   = 'var(--text)';
 
@@ -189,7 +190,7 @@ export default function LoginScreen() {
               <div style={s.ring2}>
                 <div style={s.ring1}>
                   <div style={s.logoBox}>
-                    <img src="/nexora-mark.svg" alt="Nexora" style={s.logoImg} />
+                    <NexoraLogo style={s.logoImg} />
                   </div>
                 </div>
               </div>
@@ -245,7 +246,7 @@ export default function LoginScreen() {
         <div className="nx-card" style={s.formCard}>
 
           <div style={s.mobileTop}>
-            <img src="/nexora-mark.svg" alt="Nexora" style={s.mobileLogo} />
+            <NexoraLogo style={s.mobileLogo} />
           </div>
 
           {/* Step bar */}
@@ -454,7 +455,7 @@ const s = {
   },
   logoBox: {
     width:90, height:90, borderRadius:'50%',
-    backgroundColor:'#fff',
+    backgroundColor: 'var(--surface)',
     display:'flex', alignItems:'center', justifyContent:'center',
     boxShadow:'0 4px 20px rgba(162,210,255,0.4)',
     overflow:'hidden', padding:8,

@@ -1,5 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Nexora">
-  <polygon points="15.083,19.179 42.083,50.679 48.917,44.821 21.917,13.321" fill="#B9915E"/>
-  <rect x="9.5" y="11" width="9" height="42" fill="#EEF1F7"/>
-  <rect x="45.5" y="11" width="9" height="42" fill="#EEF1F7"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs>
+  <linearGradient id="spark-light" x1="348" y1="72" x2="460" y2="184" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7DB4F2"/><stop offset=".55" stop-color="#3777C4"/><stop offset="1" stop-color="#1F5490"/></linearGradient>
+  <linearGradient id="pill-light" x1="0" y1="112" x2="0" y2="430" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#17457E"/><stop offset="1" stop-color="#0B2447"/></linearGradient>
+  <linearGradient id="diag-light" x1="172" y1="136" x2="340" y2="376" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#7DB4F2"/><stop offset=".55" stop-color="#3777C4"/><stop offset="1" stop-color="#1F5490"/></linearGradient>
+  <radialGradient id="glow-light" cx="0.5" cy="-0.05" r="0.75"><stop offset="0" stop-color="rgba(55,119,196,0.35)"/><stop offset="1" stop-color="rgba(55,119,196,0)"/></radialGradient>
+  <linearGradient id="bg-light" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E3EDF8"/></linearGradient>
+  <linearGradient id="corner-light" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3777C4" stop-opacity=".95"/><stop offset=".22" stop-color="#3777C4" stop-opacity=".25"/><stop offset=".45" stop-color="#3777C4" stop-opacity="0"/></linearGradient></defs>
+  <g transform="translate(256 256) scale(1.0) translate(-256 -256)">
+    <path d="M140 400 V142 L322 400 V142" fill="none" stroke="url(#pill-light)" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M404 72 C410 112 420 122 460 128 C420 134 410 144 404 184 C398 144 388 134 348 128 C388 122 398 112 404 72 Z" fill="url(#spark-light)"/>
+  </g></svg>

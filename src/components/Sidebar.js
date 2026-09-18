@@ -10,6 +10,7 @@ import NotificationBell from '../app/sales/_NotificationBell';
 
 import Icon from './Icon';
 import ThemeToggle from './ThemeToggle';
+import NexoraLogo from './NexoraLogo';
 const ORANGE = 'var(--accent)';
 
 function SvgIcon({ children, size = 16 }) {
@@ -136,7 +137,7 @@ export default function Sidebar({ user, onClose, className }) {
       <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={s.logoCircle}>
-            <img src="/nexora-mark.svg" alt="Nexora" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <NexoraLogo />
           </div>
           <div>
             <div style={s.logoName}>Nexora</div>
@@ -261,7 +262,7 @@ const s = {
   },
   logoCircle: {
     width: 36, height: 36, borderRadius: 14,
-    backgroundColor: '#fff', padding: 5,
+    backgroundColor: 'var(--surface)', padding: 5,
     overflow: 'hidden', flexShrink: 0,
     boxShadow: '0 2px 8px rgba(var(--ink-rgb),0.10)',
   },

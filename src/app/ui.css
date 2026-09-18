@@ -371,3 +371,7 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .nx-field-inline { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .nx-map-img { width: 100%; display: block; }
+
+/* theme-aware logo */
+[data-theme="dark"] .nx-logo-light { display: none !important; }
+:root:not([data-theme="dark"]) .nx-logo-dark { display: none !important; }
