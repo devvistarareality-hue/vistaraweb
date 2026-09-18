@@ -401,3 +401,4 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
   100% { transform: translate3d(30px, -30px, 0) scale(1.05); }
 }
 @media (prefers-reduced-motion: reduce) { .nx-bubbles span { animation: none !important; } }
+.nx-empty-card { padding: 28px 22px; text-align: center; color: var(--muted); font-size: 13.5px; border-radius: 20px; margin-bottom: 16px; }

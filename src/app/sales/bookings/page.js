@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
@@ -344,14 +344,42 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const isOpen = (pn) => (openProj[pn] === undefined ? autoOpen : openProj[pn]);
   const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
 
+  // Two jobs live on this page, so they get their own sections rather than one
+  // long scroll: lead transfers waiting on this manager, and booking approvals.
+  // It opens on whichever has work — transfers only when some are pending.
+  const [section, setSection] = useState('bookings');
+  const sectionPicked = useRef(false);
+  useEffect(() => {
+    if (sectionPicked.current) return;
+    if (xfers.length > 0) setSection('transfers');
+  }, [xfers.length]);
+  const pickSection = (next) => { sectionPicked.current = true; setSection(next); };
+
   return (
     <div style={{ padding: '24px 28px' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Bookings &amp; Approvals</h1>
-      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
-        {narrowed ? `${visible.length} of ${rows.length}` : rows.length} {tab || 'total'} bookings
+      <h1 className="nx-page-title">Approvals</h1>
+      <p className="nx-page-sub">
+        {section === 'transfers'
+          ? `${xfers.length} lead transfer${xfers.length === 1 ? '' : 's'} waiting on you`
+          : `${narrowed ? `${visible.length} of ${rows.length}` : rows.length} ${tab || 'total'} bookings`}
       </p>
 
-      {xfers.length > 0 && (
+      <div className="nx-filters">
+        <button type="button" onClick={() => pickSection('transfers')}
+          className={`nx-btn nx-btn-md nx-toggle${section === 'transfers' ? ' is-on' : ''}`}>
+          Lead Transfer Approvals{xfers.length > 0 ? ` · ${xfers.length}` : ''}
+        </button>
+        <button type="button" onClick={() => pickSection('bookings')}
+          className={`nx-btn nx-btn-md nx-toggle${section === 'bookings' ? ' is-on' : ''}`}>
+          Booking Approvals
+        </button>
+      </div>
+
+      {section === 'transfers' && xfers.length === 0 && (
+        <div className="nx-card nx-empty-card">No lead transfers are waiting for your approval.</div>
+      )}
+
+      {section === 'transfers' && xfers.length > 0 && (
         <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', borderLeft: '4px solid var(--warning)' }}>
           <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--warning)', margin: '0 0 2px' }}>
             ⇄ Lead Transfers awaiting your approval · {xfers.length}
@@ -386,6 +414,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         </div>
       )}
 
+      {section === 'bookings' && (<>
       {isAdmin && !cpMode && (
         <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)' }}>
           <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>
@@ -663,6 +692,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           )}
         </div>
       ))}
+
+      </>)}
 
       {toCancel && (
         <CancelBookingModal b={toCancel} rupee={rupee} busy={busy === toCancel.id}
