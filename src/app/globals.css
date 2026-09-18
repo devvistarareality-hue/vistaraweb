@@ -36,15 +36,15 @@
   --strong-2: #245A96;
   --nav-active-bg: linear-gradient(90deg, rgba(47,109,181,0.14) 0%, rgba(47,109,181,0.02) 100%);
   --nav-active-fg: #0B3E76;
-  --nav-active-shadow: inset 1px 0 0 #2F6DB5, inset 0 0 0 1px rgba(47,109,181,0.12);
-  --hero: radial-gradient(780px 320px at 78% -40%, rgba(120,170,255,0.55) 0%, transparent 62%), linear-gradient(180deg, #2A63A8 0%, #1C4A85 100%);
+  --nav-active-shadow: inset 1px 0 0 #1F5490, inset 0 0 0 1px rgba(47,109,181,0.12);
+  --hero: radial-gradient(760px 320px at 80% -45%, rgba(86,148,224,0.42) 0%, transparent 60%), linear-gradient(135deg, #0F2E57 0%, #14406F 52%, #1B5290 100%);
 
-  --primary: #2F6DB5;
-  --primary-deep: #245A96;
-  --primary-grad: linear-gradient(180deg, #4E90E0 0%, #2666B0 100%);
-  --primary-glow: rgba(47,109,181,0.40);
-  --accent: #1F5FA8;
-  --accent-deep: #17497F;
+  --primary: #1F5490;
+  --primary-deep: #163F6E;
+  --primary-grad: linear-gradient(180deg, #2F6DB5 0%, #1B4E87 100%);
+  --primary-glow: rgba(23,73,127,0.40);
+  --accent: #17497F;
+  --accent-deep: #0F3862;
   --blue: rgba(47,109,181,0.10);
   --blue-2: rgba(47,109,181,0.18);
   --accent-soft: rgba(47,109,181,0.09);
@@ -60,7 +60,7 @@
 
   --card-bg: linear-gradient(180deg, rgba(47,109,181,0.035) 0%, rgba(47,109,181,0.008) 45%, rgba(255,255,255,0) 100%), #FFFFFF;
   --card-edge: rgba(12,24,43,0.09);
-  --card-corner: linear-gradient(135deg, rgba(47,109,181,0.75) 0%, rgba(47,109,181,0.22) 12%, transparent 34%);
+  --card-corner: linear-gradient(135deg, rgba(31,84,144,0.75) 0%, rgba(47,109,181,0.22) 12%, transparent 34%);
   --card-texture: radial-gradient(circle at 100% 0%, rgba(47,109,181,0.10) 0%, transparent 34%);
   --card-shadow: 0 1px 2px rgba(12,24,43,0.05), 0 14px 32px -22px rgba(31,95,168,0.45);
   --card-shadow-hover: 0 2px 6px rgba(12,24,43,0.07), 0 26px 56px -24px rgba(31,95,168,0.55);
@@ -76,7 +76,7 @@
   --loader-step: #BFD2E8;
   --loader-ball: #2F6DB5;
   --success-grad: linear-gradient(135deg, #17693F 0%, #23874A 55%, #35A464 100%);
-  --banner-grad: linear-gradient(135deg, #1B3F6E 0%, #2560A3 55%, #3C86D6 100%);
+  --banner-grad: linear-gradient(135deg, #102E55 0%, #1A4A83 55%, #2A68AE 100%);
 }
 
 [data-theme="dark"] {
