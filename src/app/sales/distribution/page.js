@@ -51,31 +51,22 @@ function ProjectTags({ projects }) {
 }
 
 // ── Mini progress bar ─────────────────────────────────────────────────────────
-function WeightBar({ pct, color }) {
+function WeightBar({ pct }) {
   return (
-    <div style={{ width: 56, height: 5, backgroundColor: `color-mix(in srgb, ${color} 19%, transparent)`, borderRadius: 4, overflow: 'hidden' }}>
-      <div style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 4, transition: 'width 0.3s' }} />
-    </div>
+    <div className="nx-ratio-bar"><i style={{ width: `${pct}%` }} /></div>  // inline-ok: bar length is the computed share %
   );
 }
 
-function WeightStepper({ value, onChange, color, border }) {
+function WeightStepper({ value, onChange }) {
   const clamp = (n) => Math.min(20, Math.max(1, n));
-  const btn = {
-    width: 24, height: 26, borderRadius: 6, border: `1.5px solid ${border}`,
-    backgroundColor: 'var(--surface)', color, fontSize: 16, fontWeight: 700, lineHeight: '1',
-    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    userSelect: 'none', padding: 0,
-  };
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+    <div className="nx-stepper">
       <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" aria-label="Decrease weight" onClick={() => onChange(clamp(value - 1))}
-        disabled={value <= 1} style={{ ...btn, opacity: value <= 1 ? 0.4 : 1, cursor: value <= 1 ? 'not-allowed' : 'pointer' }}>−</button>
+        disabled={value <= 1}>−</button>
       <input className="nx-input" type="number" min={1} max={20} value={value}
-        onChange={e => onChange(clamp(parseInt(e.target.value) || 1))}
-        style={{ width: 42, padding: '3px 6px', borderRadius: 6, border: `1.5px solid ${border}`, fontSize: 12, textAlign: 'center' }} />
+        onChange={e => onChange(clamp(parseInt(e.target.value) || 1))} />
       <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" aria-label="Increase weight" onClick={() => onChange(clamp(value + 1))}
-        disabled={value >= 20} style={{ ...btn, opacity: value >= 20 ? 0.4 : 1, cursor: value >= 20 ? 'not-allowed' : 'pointer' }}>+</button>
+        disabled={value >= 20}>+</button>
     </div>
   );
 }
@@ -84,7 +75,7 @@ function WeightStepper({ value, onChange, color, border }) {
 // telecallers/STMs assigned to that project, so the share % is computed within
 // each project group. Weight is a single value per person, shared across every
 // project they belong to (editing it in one group updates it everywhere).
-function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barColor, members, weights, setWeights }) {
+function ProjectRatioPanel({ title, variant, members, weights, setWeights }) {
   const byProject = {};
   const noProject = [];
   members.forEach(m => {
@@ -93,41 +84,41 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
   });
   const projectNames = Object.keys(byProject).sort();
   return (
-    <div style={{ border: `1.5px solid ${borderColor}`, borderRadius: 16, padding: '14px 16px', backgroundColor: bg, alignSelf: 'start' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: dotColor, display: 'inline-block' }} />
-        <p style={{ fontSize: 11, fontWeight: 700, color: headColor, textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</p>
+    <div className={`nx-ratio ${variant}`}>
+      <div className="nx-ratio-head">
+        <span className="nx-ratio-dot" />
+        <p className="nx-ratio-head-title">{title}</p>
       </div>
       {/* Fixed height with its own scroll: the two panels sit side by side, so a long
           project list otherwise stretched both and left the shorter one mostly blank. */}
-      <div className="availScroll" style={{ maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginRight: -8, scrollbarWidth: 'thin', scrollbarColor: 'var(--border) transparent' }}>
+      <div className="availScroll nx-ratio-scroll">
       {members.length === 0
-        ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>No active {title.toLowerCase()}</p>
+        ? <p className="nx-ratio-empty">No active {title.toLowerCase()}</p>
         : projectNames.length === 0
-          ? <p style={{ fontSize: 12, color: 'var(--muted)' }}>No projects assigned yet — assign projects above so leads can route.</p>
+          ? <p className="nx-ratio-empty">No projects assigned yet — assign projects above so leads can route.</p>
           : projectNames.map(pn => {
               const grp   = byProject[pn];
               const total = grp.reduce((s, m) => s + (weights[m.user_id] ?? 1), 0);
               return (
-                <div key={pn} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: headColor }}>{pn}</span>
-                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, color: headColor, backgroundColor: borderColor, padding: '1px 7px', borderRadius: 20 }}>{grp.length}</span>
+                <div key={pn} className="nx-ratio-group">
+                  <div className="nx-ratio-group-head">
+                    <span className="nx-ratio-project">{pn}</span>
+                    <span className="nx-badge nx-ratio-count">{grp.length}</span>
                   </div>
                   {grp.map(m => {
                     const w   = weights[m.user_id] ?? 1;
                     const pct = total > 0 ? Math.round((w / total) * 100) : 0;
                     return (
-                      <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: 'var(--surface)', borderRadius: 8, padding: '7px 10px', border: `1px solid ${borderColor}`, marginBottom: 6 }}>
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
-                        <WeightBar pct={pct} color={barColor} />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: headColor, width: 30, textAlign: 'right' }}>{pct}%</span>
-                        <WeightStepper value={w} color={headColor} border={borderColor}
+                      <div key={m.user_id} className="nx-ratio-row">
+                        <span className="nx-ratio-name">{m.name}</span>
+                        <WeightBar pct={pct} />
+                        <span className="nx-ratio-pct">{pct}%</span>
+                        <WeightStepper value={w}
                           onChange={val => setWeights(prev => ({ ...prev, [m.user_id]: val }))} />
                       </div>
                     );
                   })}
-                  <p style={{ fontSize: 11, color: headColor, fontWeight: 600, marginTop: 2 }}>
+                  <p className="nx-ratio-note">
                     Ratio: {grp.map(m => weights[m.user_id] ?? 1).join(' : ')}
                   </p>
                 </div>
@@ -135,9 +126,9 @@ function ProjectRatioPanel({ title, dotColor, headColor, borderColor, bg, barCol
             })
       }
       {noProject.length > 0 && (
-        <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)' }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger)', marginBottom: 3 }}>Not assigned to any project — won&apos;t receive leads:</p>
-          <p style={{ fontSize: 12, color: 'var(--danger-deep)' }}>{noProject.map(m => m.name).join(', ')}</p>
+        <div className="nx-ratio-warn">
+          <p className="nx-ratio-warn-title">Not assigned to any project — won&apos;t receive leads:</p>
+          <p className="nx-ratio-warn-names">{noProject.map(m => m.name).join(', ')}</p>
         </div>
       )}
       </div>
@@ -590,12 +581,10 @@ export default function DistributionPage() {
             {savingWeights ? 'Saving…' : 'Save Weights'}
           </button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-          <ProjectRatioPanel title="Telecallers" dotColor="#23874A" headColor="#23874A"
-            borderColor="#C9F8CA" bg="#F4F5F7" barColor="#23874A"
+        <div className="nx-ratio-grid">
+          <ProjectRatioPanel title="Telecallers" variant="tc"
             members={tcMembers} weights={weights} setWeights={setWeights} />
-          <ProjectRatioPanel title="STMs" dotColor="#2F6DB5" headColor="#2F6DB5"
-            borderColor="#CCE5FF" bg="#F3F9FF" barColor="#2F6DB5"
+          <ProjectRatioPanel title="STMs" variant="stm"
             members={stmMembers} weights={weights} setWeights={setWeights} />
         </div>
       </div>
@@ -629,7 +618,7 @@ export default function DistributionPage() {
             afterSignout: stmAfterSignout,
             signin: settings.stm_signin_time,
             signout: settings.stm_signout_time,
-            accentOpen: '#CCE5FF',
+            accentOpen: 'var(--blue-2)',
             bgOpen: 'var(--accent-softer)',
             accentClose: 'var(--danger-2)',
             bgClose: 'var(--danger-soft)',
@@ -640,7 +629,7 @@ export default function DistributionPage() {
         ].map(({ type, label, unassigned, avail, windowOpen, afterSignout, signin, signout, accentOpen, bgOpen, accentClose, bgClose, badgeOpen, badgeClose, badgeWait }) => {
           const badge   = windowOpen ? badgeOpen : afterSignout ? badgeClose : badgeWait;
           const bdrClr  = windowOpen ? accentOpen : afterSignout ? accentClose : 'var(--border)';
-          const bgClr   = windowOpen ? bgOpen : afterSignout ? bgClose : '#fff';
+          const bgClr   = windowOpen ? bgOpen : afterSignout ? bgClose : 'var(--surface)';
           const disabled = !!distributing || afterSignout || avail === 0;
           const resultThis = result?.type === type ? result : null;
           return (

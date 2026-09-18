@@ -132,7 +132,7 @@ function SearchLeadButton() {
     <>
       <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setOpen(true)} style={{
         marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
-        padding: '9px 16px', background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid #3D5AFE30',
+        padding: '9px 16px', background: 'var(--surface)', color: 'var(--accent)', border: '1.5px solid color-mix(in srgb, var(--primary) 19%, transparent)',
         borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
       }}>
         <SvgIcon size={15}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></SvgIcon>

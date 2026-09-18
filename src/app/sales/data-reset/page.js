@@ -87,7 +87,7 @@ export default function DataResetPage() {
   }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 680 }}>
+    <div className="nx-page nx-page-center nx-w-sm">
       <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Data Reset</h1>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>
         Clear trial CRM data before go-live. This <b>keeps</b> your company, users, projects, plot

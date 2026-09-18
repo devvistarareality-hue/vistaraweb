@@ -78,7 +78,7 @@ function ApproverDropdown({ project, users, sel, onToggle }) {
               const on = sel.includes(m.id);
               return (
                 <div key={m.id} onClick={() => onToggle(project.id, m.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 7, cursor: 'pointer' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, fontWeight: 800, color: '#fff', background: on ? 'var(--success-solid)' : 'var(--surface)', border: `1.5px solid ${on ? 'var(--success)' : 'var(--border-strong)'}` }}>{on ? <Icon name="check" /> : ''}</span>
                   <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>{m.name}</span>

@@ -168,7 +168,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
 
                   <div style={{ marginTop: 4, padding: '8px 12px', borderRadius: 14,
                     background: noPlots ? 'var(--warning-soft)' : 'var(--accent-softer)',
-                    border: `1.5px solid ${noPlots ? '#FF6B2B40' : '#3D5AFE30'}`,
+                    border: `1.5px solid ${noPlots ? '#FF6B2B40' : 'color-mix(in srgb, var(--primary) 19%, transparent)'}`,
                     fontSize: 12, fontWeight: 700, color: noPlots ? 'var(--warning-2)' : 'var(--accent)', textAlign: 'center' }}>
                     {noPlots ? 'Create EOI →' : 'View units →'}
                   </div>

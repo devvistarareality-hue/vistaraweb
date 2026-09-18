@@ -455,8 +455,7 @@ export default function LeadSetupPage() {
             <div className="nx-card" style={{ ...card, marginTop: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>Connected Pages & Forms</div>
-                <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={refreshPages} disabled={refreshingPages}
-                  style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-softer)', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: refreshingPages ? 'default' : 'pointer', opacity: refreshingPages ? 0.6 : 1 }}>
+                <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={refreshPages} disabled={refreshingPages}>
                   {refreshingPages ? 'Refreshing…' : '↻ Refresh'}
                 </button>
               </div>

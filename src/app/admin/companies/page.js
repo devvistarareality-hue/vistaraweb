@@ -6,7 +6,6 @@ import {
   createCompany, resetCreateCompany, deleteCompany,
 } from '../../../redux/actions/companiesActions';
 import Toast from '../../../components/Toast';
-import { COLORS } from '../../../constants/theme';
 
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
@@ -136,7 +135,7 @@ export default function CompanyManagementPage() {
                       <td style={s.td}><input className="nx-input" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} style={s.inlineInput} /></td>
                       <td style={s.td}><span style={s.muted}>{c.email}</span></td>
                       <td style={s.td}><span style={s.muted}>{c.phone}</span></td>
-                      <td style={s.td}><span className="nx-badge" style={{ ...s.statusPill, backgroundColor: c.is_active ? COLORS.success : COLORS.error }}>{c.is_active ? 'Active' : 'Inactive'}</span></td>
+                      <td style={s.td}><span className={`nx-status ${c.is_active ? 'ok' : 'bad'}`}>{c.is_active ? 'Active' : 'Inactive'}</span></td>
                       <td style={s.td}>
                         <div style={s.rowActions}>
                           <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={handleSave} disabled={updating} style={{ ...s.saveBtn, opacity: updating ? 0.6 : 1 }}>{updating ? 'Saving…' : 'Save'}</button>
@@ -150,7 +149,7 @@ export default function CompanyManagementPage() {
                       <td style={s.td}><span style={s.nameText}>{c.name}</span></td>
                       <td style={s.td}><span style={s.muted}>{c.email || '—'}</span></td>
                       <td style={s.td}><span style={s.muted}>{c.phone || '—'}</span></td>
-                      <td style={s.td}><span className="nx-badge" style={{ ...s.statusPill, backgroundColor: c.is_active ? COLORS.success : COLORS.error }}>{c.is_active ? 'Active' : 'Inactive'}</span></td>
+                      <td style={s.td}><span className={`nx-status ${c.is_active ? 'ok' : 'bad'}`}>{c.is_active ? 'Active' : 'Inactive'}</span></td>
                       <td style={s.td}>
                         <div style={s.rowActions}>
                           <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => openEdit(c)} style={s.editBtn}>Edit</button>
@@ -243,7 +242,6 @@ const s = {
   codePill:   { fontFamily: 'monospace', backgroundColor: 'var(--surface-2)', padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)' },
   nameText:   { fontWeight: 600, color: 'var(--text)' },
   muted:      { color: 'var(--muted)' },
-  statusPill: { padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, color: '#fff' },
   rowActions: { display: 'flex', gap: 6 },
   editBtn:    { padding: '5px 12px', backgroundColor: 'var(--accent-soft)', color: 'var(--accent)', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' },
   inlineInput:{ padding: '6px 10px', border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 13, width: '100%' },

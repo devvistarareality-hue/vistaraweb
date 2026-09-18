@@ -118,7 +118,7 @@ export default function Club1000FollowUpsPage() {
   });
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 900 }}>
+    <div className="nx-page nx-page-center nx-w-md">
       <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Follow-Ups</h1>
       <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 18px' }}>
         {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}

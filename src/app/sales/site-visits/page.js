@@ -262,7 +262,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   });
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 920 }}>
+    <div className="nx-page nx-page-center nx-w-md">
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Site Visits</h1>
@@ -306,7 +306,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           return (
             <button className={`nx-btn nx-btn-sm nx-toggle${active ? ' is-on' : ''}`} key={val || 'all'} onClick={() => setOutcomeFilter(val)}
               style={{ padding: '6px 12px', borderRadius: 18, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                border: `1.5px solid ${color}`, background: active ? color : 'var(--surface)', color: active ? '#fff' : color }}>
               {label}
             </button>
           );
@@ -416,7 +416,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
                   return (
                     <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={val} type="button" onClick={() => setDoneForm({ ...doneForm, outcome: val })}
                       style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                        border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                        border: `1.5px solid ${color}`, background: active ? color : 'var(--surface)', color: active ? '#fff' : color }}>
                       {label}
                     </button>
                   );

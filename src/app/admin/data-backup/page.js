@@ -110,7 +110,7 @@ export default function DataBackupPage() {
   const dirty = settings && (frequency !== settings.frequency || enabled !== settings.is_enabled);
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 780 }}>
+    <div className="nx-page nx-page-center nx-w-sm">
       <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Data Backup</h1>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>
         A full backup of every business record (leads, bookings, projects, Club 1000, users) is taken
@@ -198,8 +198,7 @@ export default function DataBackupPage() {
                     <td style={{ ...td, color: 'var(--muted)' }}>{r.triggered_by_name || 'Automatic'}</td>
                     <td style={{ ...td, textAlign: 'right' }}>
                       {r.status === 'success' && (
-                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => download(r.id)} disabled={downloadingId === r.id}
-                          style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'none', border: '1.5px solid #3D5AFE40', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => download(r.id)} disabled={downloadingId === r.id}>
                           {downloadingId === r.id ? '…' : '⬇ Download'}
                         </button>
                       )}

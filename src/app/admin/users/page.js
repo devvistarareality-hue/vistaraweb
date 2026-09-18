@@ -227,8 +227,8 @@ export default function UserManagementPage() {
                   <td style={s.td}><span className="nx-badge" style={s.rolePill}>{u.role}</span></td>
                   <td style={s.td}><span style={s.muted}>{u.modules?.length || 0}</span></td>
                   <td style={s.td}>
-                    <span className="nx-badge" style={{ ...s.statusPill, backgroundColor: u.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: u.is_active ? 'var(--success)' : 'var(--text-3)', border: `1px solid ${u.is_active ? 'var(--success-2)' : 'var(--border-strong)'}` }}>
-                      {u.is_active ? '● Active' : '○ Inactive'}
+                    <span className={`nx-status ${u.is_active ? 'ok' : 'off'}`}>
+                      {u.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td style={s.td}>
@@ -447,7 +447,6 @@ const s = {
   nameText:  { fontWeight: 600 },
   muted:     { color: 'var(--muted)' },
   rolePill:  { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
-  statusPill:{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
   rowActions:{ display: 'flex', gap: 6, flexWrap: 'nowrap' },
   editBtn:     { padding: '5px 10px', backgroundColor: 'var(--accent-softer)', color: 'var(--accent)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   deactBtn:    { padding: '5px 10px', backgroundColor: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },

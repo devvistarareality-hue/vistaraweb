@@ -402,3 +402,73 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 }
 @media (prefers-reduced-motion: reduce) { .nx-bubbles span { animation: none !important; } }
 .nx-empty-card { padding: 28px 22px; text-align: center; color: var(--muted); font-size: 13.5px; border-radius: 20px; margin-bottom: 16px; }
+
+/* ─── Page width: a capped page centres itself instead of hugging the left ─── */
+.nx-page-center { margin-left: auto; margin-right: auto; }
+.nx-w-sm { max-width: 780px; }
+.nx-w-md { max-width: 960px; }
+.nx-w-lg { max-width: 1240px; }
+
+/* ─── Status pill (tables): tinted, so it reads in both themes ───────────── */
+.nx-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.01em; white-space: nowrap;
+}
+.nx-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.nx-status.ok  { background: var(--success-soft) !important; color: var(--success) !important; border: 1px solid var(--success-2) !important; }
+.nx-status.bad { background: var(--danger-soft) !important; color: var(--danger) !important; border: 1px solid var(--danger-2) !important; }
+.nx-status.off { background: var(--surface-2) !important; color: var(--text-3) !important; border: 1px solid var(--border-strong) !important; }
+
+/* ─── Module tiles: equal-height cards that fill the row ─────────────────── */
+.nx-tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; align-items: stretch; margin-top: 24px; }
+.nx-tile-link { text-decoration: none; display: block; height: 100%; }
+.nx-tile {
+  display: flex; flex-direction: column; height: 100%;
+  border-radius: 20px; padding: 20px; cursor: pointer;
+}
+.nx-tile-icon {
+  width: 46px; height: 46px; border-radius: 13px; margin-bottom: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--tile-accent, var(--accent)) 12%, transparent);
+  color: var(--tile-accent, var(--accent));
+}
+.nx-tile-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.nx-tile-desc { font-size: 12px; color: var(--muted); line-height: 1.5; flex: 1; margin-bottom: 12px; }
+.nx-tile-open { font-size: 12px; font-weight: 700; color: var(--tile-accent, var(--accent)); margin-top: auto; }
+
+/* ─── Lead-distribution ratio panels ────────────────────────────────────── */
+.nx-ratio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.nx-ratio {
+  --rp: var(--accent); --rp-soft: var(--accent-soft); --rp-line: var(--border);
+  border: 1.5px solid var(--rp-line); border-radius: 16px; padding: 14px 16px;
+  background: var(--surface-2); align-self: start;
+}
+.nx-ratio.tc  { --rp: var(--success); --rp-soft: var(--success-soft); --rp-line: var(--success-2); }
+.nx-ratio.stm { --rp: var(--accent);  --rp-soft: var(--accent-soft);  --rp-line: var(--blue-2); }
+.nx-ratio-head { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.nx-ratio-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rp); display: inline-block; }
+.nx-ratio-head-title { font-size: 11px; font-weight: 700; color: var(--rp); text-transform: uppercase; letter-spacing: 0.6px; }
+.nx-ratio-scroll { max-height: 420px; overflow-y: auto; padding-right: 8px; margin-right: -8px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.nx-ratio-empty { font-size: 12px; color: var(--muted); }
+.nx-ratio-group { margin-bottom: 14px; }
+.nx-ratio-group-head { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+.nx-ratio-project { font-size: 12px; font-weight: 800; color: var(--rp); }
+.nx-ratio-count { font-size: 10px; font-weight: 700; color: var(--rp) !important; background: var(--rp-soft) !important; padding: 1px 7px; border-radius: 20px; }
+.nx-ratio-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--rp-line); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; }
+.nx-ratio-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nx-ratio-pct { font-size: 11px; font-weight: 700; color: var(--rp); width: 32px; text-align: right; }
+.nx-ratio-note { font-size: 11px; color: var(--rp); font-weight: 600; margin-top: 2px; }
+.nx-ratio-bar { width: 56px; height: 5px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--rp) 22%, transparent); }
+.nx-ratio-bar > i { display: block; height: 100%; border-radius: 4px; background: var(--rp); transition: width .3s; }
+.nx-ratio-warn { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--danger-soft); border: 1px solid var(--danger-2); }
+.nx-ratio-warn-title { font-size: 10.5px; font-weight: 700; color: var(--danger); margin-bottom: 3px; }
+.nx-ratio-warn-names { font-size: 12px; color: var(--danger-deep); }
+.nx-stepper { display: flex; align-items: center; gap: 4px; }
+.nx-stepper .nx-btn { width: 24px; min-width: 24px; height: 26px; min-height: 26px; padding: 0 !important; border-radius: 6px !important; font-size: 16px !important; color: var(--rp) !important; }
+.nx-stepper .nx-input { width: 42px; padding: 3px 6px !important; border-radius: 6px !important; font-size: 12px !important; text-align: center; min-height: 26px; }
+.nx-dot-icon {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent);
+}

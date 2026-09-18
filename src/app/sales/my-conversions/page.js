@@ -84,7 +84,7 @@ function LeadHistoryModal({ lead, onClose }) {
           {/* Lead received */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#3D5AFE18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}><Icon name="download" /></div>
+              <div className="nx-dot-icon"><Icon name="download" /></div>
               <div style={{ width: 2, flex: 1, backgroundColor: 'var(--surface-2)', marginTop: 4 }} />
             </div>
             <div style={{ paddingBottom: 18, flex: 1 }}>
@@ -216,7 +216,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const td = { padding: '10px 14px', fontSize: 13, color: 'var(--text)', borderBottom: '1px solid var(--surface-2)' };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+    <div className="nx-page nx-page-center nx-w-lg">
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>My Conversions</h1>
         <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '4px 0 0' }}>

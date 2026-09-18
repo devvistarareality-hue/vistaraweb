@@ -589,7 +589,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                       return (
                         <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={val} type="button" onClick={() => setSvOutcome(val)}
                           style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                            border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                            border: `1.5px solid ${color}`, background: active ? color : 'var(--surface)', color: active ? '#fff' : color }}>
                           {label}
                         </button>
                       );
@@ -1252,7 +1252,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                       return (
                         <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={val} type="button" onClick={() => setSvOutcome(val)}
                           style={{ flex: '1 1 100px', padding: '10px 8px', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                            border: `1.5px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                            border: `1.5px solid ${color}`, background: active ? color : 'var(--surface)', color: active ? '#fff' : color }}>
                           {label}
                         </button>
                       );
@@ -1376,7 +1376,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
               {/* Lead received event */}
               <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#3D5AFE18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}><Icon name="download" /></div>
+                  <div className="nx-dot-icon"><Icon name="download" /></div>
                   <div style={{ width: 2, flex: 1, backgroundColor: 'var(--surface-2)', marginTop: 4 }} />
                 </div>
                 <div style={{ paddingBottom: 18, flex: 1 }}>

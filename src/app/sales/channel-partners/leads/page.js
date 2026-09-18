@@ -154,7 +154,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
               return (
                 <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={label} type="button" onClick={() => setForm({ ...form, is_active: val })}
                   style={{ flex: 1, padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    border: `1.5px solid ${active ? color : 'var(--border)'}`, background: active ? color : '#fff', color: active ? '#fff' : color }}>
+                    border: `1.5px solid ${active ? color : 'var(--border)'}`, background: active ? color : 'var(--surface)', color: active ? '#fff' : color }}>
                   {label}
                 </button>
               );
