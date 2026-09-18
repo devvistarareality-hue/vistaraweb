@@ -3,6 +3,7 @@ import './ui.css';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import ReduxProvider from '../components/ReduxProvider';
+import BackgroundBubbles from '../components/BackgroundBubbles';
 
 export const metadata = {
   title:       'Nexora',
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
       <body>
+        <BackgroundBubbles />
         <ReduxProvider>
           {children}
         </ReduxProvider>
