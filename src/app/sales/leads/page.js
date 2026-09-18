@@ -1776,17 +1776,15 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
       {/* New leads notification banner */}
       {newLeadBanner > 0 && (
-        <div style={{ backgroundColor: 'var(--strong)', borderRadius: 14, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 16 }}><Icon name="bell" /></span>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
+        <div className="nx-notice">
+          <div className="nx-notice-main">
+            <span className="nx-notice-dot"><Icon name="bell" /></span>
+            <span className="nx-notice-text">
               {newLeadBanner} new lead{newLeadBanner > 1 ? 's' : ''} arrived
             </span>
           </div>
-          <button
-            onClick={() => { bustLeadsCache(); setPage(1); loadLeads(); setNewLeadBanner(0); }}
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '5px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-          >
+          <button className="nx-btn nx-btn-sm nx-btn-soft"
+            onClick={() => { bustLeadsCache(); setPage(1); loadLeads(); setNewLeadBanner(0); }}>
             Refresh
           </button>
         </div>
@@ -1875,9 +1873,20 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
               <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
               <div style={divider} />
-              <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === today && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', today); sf('date_to', today); }} style={qBtn(filters.date_from === today && filters.date_to === today)}>Today</button>
-              <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(6) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(6)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(6) && filters.date_to === today)}>Week</button>
-              <button className={`nx-btn nx-btn-sm nx-toggle${(filters.date_from === daysAgo(29) && filters.date_to === today) ? ' is-on' : ''}`} onClick={() => { sf('date_from', daysAgo(29)); sf('date_to', today); }} style={qBtn(filters.date_from === daysAgo(29) && filters.date_to === today)}>Month</button>
+              <select className="nx-input nx-input-sm nx-filter-sel"
+                value={(filters.date_from === today && filters.date_to === today) ? 'today'
+                     : (filters.date_from === daysAgo(6) && filters.date_to === today) ? 'week'
+                     : (filters.date_from === daysAgo(29) && filters.date_to === today) ? 'month' : ''}
+                onChange={(e) => {
+                  const k = e.target.value;
+                  sf('date_from', k === 'today' ? today : k === 'week' ? daysAgo(6) : k === 'month' ? daysAgo(29) : '');
+                  sf('date_to', k ? today : '');
+                }}>
+                <option value="">Any date</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 days</option>
+                <option value="month">Last 30 days</option>
+              </select>
               <div style={divider} />
               <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
                 <option value="">All Projects</option>
@@ -1936,12 +1945,12 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               <input className="nx-input" value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"
                 style={{ ...fSel, width: 170, background: filters.campaign ? 'var(--accent-softer)' : 'var(--surface-2)', borderColor: filters.campaign ? 'var(--accent)' : 'var(--surface-3)', color: filters.campaign ? 'var(--accent)' : 'var(--text)' }} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.is_duplicate ? 'var(--accent)' : 'var(--muted)', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.is_duplicate ? 'var(--accent)' : 'var(--surface-3)'}`, background: filters.is_duplicate ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
-                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} style={{ width: 14, height: 14, accentColor: 'var(--accent)' }} />
+              <label className={`nx-check${filters.is_duplicate ? ' is-on' : ''}`}>
+                <input type="checkbox" checked={filters.is_duplicate} onChange={(e) => sf('is_duplicate', e.target.checked)} />
                 Duplicates only
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: filters.unassigned ? 'var(--warning-2)' : 'var(--muted)', cursor: 'pointer', userSelect: 'none', padding: '0 10px', height: 36, borderRadius: 8, border: `1.5px solid ${filters.unassigned ? 'var(--warning-2)' : 'var(--surface-3)'}`, background: filters.unassigned ? 'var(--warning-soft)' : 'var(--surface-2)' }}>
-                <input type="checkbox" checked={filters.unassigned} onChange={(e) => sf('unassigned', e.target.checked)} style={{ width: 14, height: 14, accentColor: 'var(--warning-2)' }} />
+              <label className={`nx-check${filters.unassigned ? ' is-on' : ''}`}>
+                <input type="checkbox" checked={filters.unassigned} onChange={(e) => sf('unassigned', e.target.checked)} />
                 Unassigned only
               </label>
             </div>

@@ -378,8 +378,8 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 
 /* ─── Background bubbles: blurred gradient orbs drifting slowly ───── */
 :root, [data-theme="light"] {
-  --bub-1: rgba(55,119,196,0.26);  --bub-2: rgba(120,180,240,0.30);
-  --bub-3: rgba(110,200,190,0.18); --bub-4: rgba(31,84,144,0.18);
+  --bub-1: rgba(38,104,186,0.42);  --bub-2: rgba(96,150,214,0.44);
+  --bub-3: rgba(76,170,190,0.26);  --bub-4: rgba(31,84,144,0.30);
 }
 [data-theme="dark"] {
   --bub-1: rgba(255,96,32,0.26);   --bub-2: rgba(255,160,90,0.15);
@@ -496,3 +496,32 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-fu-outcome { font-size: 12px; color: var(--success); margin: 6px 0 0; }
 .nx-status.warn { background: var(--warning-soft) !important; color: var(--warning) !important; border: 1px solid color-mix(in srgb, var(--warning-solid) 32%, transparent) !important; }
 .nx-filter-sel { height: 36px; min-height: 36px; width: auto; min-width: 140px; padding: 0 30px 0 12px !important; font-weight: 600; }
+
+/* ─── Live notice bar (new leads arrived, …): tinted glass, not a solid slab ── */
+.nx-notice {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 14px; margin-bottom: 14px; border-radius: 14px;
+  background: var(--accent-soft); border: 1px solid var(--blue-2);
+  backdrop-filter: blur(8px);
+  animation: nx-notice-in .4s cubic-bezier(.2,.8,.2,1) both;
+}
+.nx-notice-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.nx-notice-dot {
+  position: relative; width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.nx-notice-dot::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  border: 1.5px solid var(--accent); opacity: .5; animation: nx-pulse 2s ease-out infinite;
+}
+.nx-notice-text { font-size: 13.5px; font-weight: 700; color: var(--text); }
+@keyframes nx-notice-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes nx-pulse { 0% { transform: scale(1); opacity: .5; } 70% { transform: scale(1.5); opacity: 0; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .nx-notice, .nx-notice-dot::after { animation: none !important; } }
+.nx-check {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 4px;
+  font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer; user-select: none;
+}
+.nx-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+.nx-check.is-on { color: var(--accent); }

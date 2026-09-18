@@ -11,16 +11,18 @@
   --ink-rgb: 12, 24, 43;
 
   --bg: #EEF3FA;
-  --bg-base: radial-gradient(1200px 560px at 50% -14%, rgba(47,109,181,0.22) 0%, rgba(47,109,181,0.07) 34%, transparent 64%), linear-gradient(180deg, #F8FBFF 0%, #EFF4FB 50%, #E9F0F9 100%);
-  --bg-glow-1: rgba(120,170,255,0.20);
-  --bg-glow-2: rgba(47,109,181,0.10);
+  --bg-base: radial-gradient(1200px 560px at 50% -14%, rgba(38,104,186,0.40) 0%, rgba(47,109,181,0.14) 34%, transparent 64%), linear-gradient(180deg, #EAF2FC 0%, #E2ECF9 50%, #D9E6F6 100%);
+  --bg-glow-1: rgba(96,150,214,0.34);
+  --bg-glow-2: rgba(47,109,181,0.18);
   --bg-glow-3: transparent;
   --bg-grid: rgba(47,109,181,0.055);
+  /* The blue has to carry as much of the page as the ember does in dark, so the
+     top glow is deeper and the whole sheet sits on a tinted base, not near-white. */
   --bg-scene:
-    radial-gradient(1100px 560px at 60% -12%, rgba(55,119,196,0.22) 0%, rgba(55,119,196,0.06) 40%, transparent 68%),
-    radial-gradient(760px 720px at 104% 42%, rgba(150,180,220,0.30) 0%, transparent 62%),
-    radial-gradient(700px 520px at -6% 104%, rgba(55,119,196,0.08) 0%, transparent 62%),
-    linear-gradient(180deg, #F8FBFF 0%, #EDF3FA 55%, #E6EEF8 100%);
+    radial-gradient(1200px 620px at 60% -12%, rgba(38,104,186,0.42) 0%, rgba(47,109,181,0.16) 40%, transparent 72%),
+    radial-gradient(820px 760px at 104% 42%, rgba(96,150,214,0.30) 0%, transparent 64%),
+    radial-gradient(760px 560px at -6% 104%, rgba(47,109,181,0.20) 0%, transparent 64%),
+    linear-gradient(180deg, #EAF2FC 0%, #DFEAF8 55%, #D6E4F5 100%);
 
   --surface: #FFFFFF;
   --surface-2: #F6F9FE;

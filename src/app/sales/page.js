@@ -573,11 +573,21 @@ function TelecallerDashboard({ user }) {
         <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
         <input className="nx-input" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...fSel, width: 136 }} />
         <div style={divider} />
-        <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === today && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(today); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === today && dateTo === today)}>Today</button>
-        <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === daysAgo(6) && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(daysAgo(6)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(6) && dateTo === today)}>Week</button>
-        <button className={`nx-btn nx-btn-sm nx-toggle${(dateFrom === daysAgo(29) && dateTo === today) ? ' is-on' : ''}`} onClick={() => { setDateFrom(daysAgo(29)); setDateTo(today); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(dateFrom === daysAgo(29) && dateTo === today)}>Month</button>
-        <div style={divider} />
-        <button className={`nx-btn nx-btn-sm nx-toggle${(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear) ? ' is-on' : ''}`} onClick={() => { setDateFrom(''); setDateTo(''); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={qBtn(!dateFrom && !dateTo && !selectedMonths.length && !selectedQuarter.length && !selectedFyYear)}>All</button>
+        <select className="nx-input nx-input-sm nx-filter-sel"
+          value={(dateFrom === today && dateTo === today) ? 'today'
+               : (dateFrom === daysAgo(6) && dateTo === today) ? 'week'
+               : (dateFrom === daysAgo(29) && dateTo === today) ? 'month' : ''}
+          onChange={(e) => {
+            const k = e.target.value;
+            setDateFrom(k === 'today' ? today : k === 'week' ? daysAgo(6) : k === 'month' ? daysAgo(29) : '');
+            setDateTo(k ? today : '');
+            setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null);
+          }}>
+          <option value="">Any date</option>
+          <option value="today">Today</option>
+          <option value="week">Last 7 days</option>
+          <option value="month">Last 30 days</option>
+        </select>
         <div style={divider} />
         {/* Year Dropdown */}
         <div style={{ position: 'relative' }}>
