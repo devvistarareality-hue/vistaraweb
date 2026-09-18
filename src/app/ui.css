@@ -21,17 +21,28 @@
 .nx-btn-md { font-size: 13.5px !important; min-height: 36px; }
 .nx-btn-lg { font-size: 14.5px !important; border-radius: 14px !important; min-height: 44px; }
 
-.nx-btn-primary {
-  background: var(--primary-grad) !important; color: #fff !important;
-  border-color: rgba(0,0,0,0.04) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(12,24,43,0.12), 0 8px 18px -8px var(--primary-glow) !important;
+/* Accent buttons: tinted glass with a glowing edge (same design in both themes) */
+.nx-btn-accent, .nx-btn-primary, .nx-btn-success, .nx-btn-danger, .nx-btn-warning {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--btn-c) 18%, transparent) 0%,
+                            color-mix(in srgb, var(--btn-c) 6%, transparent) 100%) !important;
+  border-color: color-mix(in srgb, var(--btn-c) 40%, transparent) !important;
+  color: var(--btn-fg, var(--btn-c)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 10px 26px -14px color-mix(in srgb, var(--btn-c) 70%, transparent) !important;
 }
-.nx-btn-primary:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 14px 28px -10px var(--primary-glow) !important; }
-
-.nx-btn-success { background: linear-gradient(180deg, #34A65F 0%, #23874A 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 18px -8px rgba(35,135,74,0.45) !important; }
-.nx-btn-danger { background: linear-gradient(180deg, #E4575F 0%, #C9363F 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 18px -8px rgba(217,67,75,0.45) !important; }
-.nx-btn-warning { background: linear-gradient(180deg, #D18B2E 0%, #A8691A 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 18px -8px rgba(184,116,30,0.45) !important; }
-.nx-btn-success:not(:disabled):hover, .nx-btn-danger:not(:disabled):hover, .nx-btn-warning:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.07); }
+.nx-btn-primary { --btn-c: var(--primary); --btn-fg: var(--accent); }
+.nx-btn-success { --btn-c: var(--success-solid); --btn-fg: var(--success); }
+.nx-btn-danger  { --btn-c: var(--danger-solid);  --btn-fg: var(--danger); }
+.nx-btn-warning { --btn-c: var(--warning-solid); --btn-fg: var(--warning); }
+.nx-btn-primary:not(:disabled):hover, .nx-btn-success:not(:disabled):hover,
+.nx-btn-danger:not(:disabled):hover, .nx-btn-warning:not(:disabled):hover {
+  transform: translateY(-1px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--btn-c) 28%, transparent) 0%,
+                            color-mix(in srgb, var(--btn-c) 11%, transparent) 100%) !important;
+  border-color: color-mix(in srgb, var(--btn-c) 62%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 16px 34px -14px color-mix(in srgb, var(--btn-c) 85%, transparent) !important;
+}
 
 .nx-btn-secondary {
   background: var(--surface) !important; color: var(--text) !important;
@@ -58,8 +69,10 @@
 [data-theme="dark"] .nx-toggle { background: #0D0E11 !important; border-color: rgba(255,255,255,0.07) !important; }
 .nx-toggle:not(:disabled):hover { border-color: var(--border-strong) !important; color: var(--text) !important; }
 .nx-toggle.is-on {
-  background: var(--primary-grad) !important; color: #fff !important; border-color: transparent !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 14px -6px var(--primary-glow) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 20%, transparent), color-mix(in srgb, var(--primary) 7%, transparent)) !important;
+  color: var(--accent) !important;
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 8px 20px -12px color-mix(in srgb, var(--primary) 80%, transparent) !important;
 }
 [data-theme="dark"] .nx-toggle.is-on { background: linear-gradient(180deg, rgba(255,122,61,0.22), rgba(255,122,61,0.08)) !important; color: #FFD8C6 !important; box-shadow: inset 0 0 0 1px rgba(255,150,100,0.45), 0 0 24px -8px rgba(255,100,40,0.85) !important; }
 
@@ -181,13 +194,6 @@ textarea.nx-input { line-height: 1.5; }
 .nx-table tbody tr:nth-child(n+6) { animation-delay: .15s; }
 
 /* primary buttons: light sweep on hover */
-.nx-btn-primary, .nx-btn-success, .nx-btn-danger, .nx-toggle.is-on { position: relative; overflow: hidden; isolation: isolate; }
-.nx-btn-primary::after, .nx-btn-success::after, .nx-btn-danger::after {
-  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; z-index: -1; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
-  transform: translateX(-120%) skewX(-20deg);
-}
-.nx-btn-primary:not(:disabled):hover::after, .nx-btn-success:not(:disabled):hover::after, .nx-btn-danger:not(:disabled):hover::after { animation: nx-shine .8s ease; }
 
 /* hero: breathing glow */
 .nx-hero { position: relative; overflow: hidden; }
@@ -274,32 +280,3 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 [data-theme="dark"] .nx-sidebar { backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); }
 
 
-/* ─── Dark: refined accent buttons (reference style — tinted glass + glow) ── */
-[data-theme="dark"] .nx-btn-primary {
-  background: linear-gradient(180deg, rgba(255,122,61,0.22) 0%, rgba(255,122,61,0.07) 100%) !important;
-  border-color: rgba(255,150,100,0.42) !important;
-  color: #FFD8C6 !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -14px rgba(255,92,26,0.75) !important;
-}
-[data-theme="dark"] .nx-btn-primary:not(:disabled):hover {
-  background: linear-gradient(180deg, rgba(255,122,61,0.32) 0%, rgba(255,122,61,0.12) 100%) !important;
-  border-color: rgba(255,170,120,0.62) !important; color: #FFE8DC !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 16px 34px -14px rgba(255,92,26,0.9) !important;
-}
-[data-theme="dark"] .nx-btn-success {
-  background: linear-gradient(180deg, rgba(111,223,160,0.20) 0%, rgba(111,223,160,0.06) 100%) !important;
-  border-color: rgba(111,223,160,0.38) !important; color: #BFF3D6 !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px -14px rgba(30,145,89,0.7) !important;
-}
-[data-theme="dark"] .nx-btn-danger {
-  background: linear-gradient(180deg, rgba(255,123,123,0.20) 0%, rgba(255,123,123,0.06) 100%) !important;
-  border-color: rgba(255,123,123,0.38) !important; color: #FFC9C9 !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px -14px rgba(217,58,58,0.7) !important;
-}
-[data-theme="dark"] .nx-btn-warning {
-  background: linear-gradient(180deg, rgba(255,201,126,0.20) 0%, rgba(255,201,126,0.06) 100%) !important;
-  border-color: rgba(255,201,126,0.38) !important; color: #FFE3BC !important;
-}
-/* the shine sweep suits solid fills, not glass */
-[data-theme="dark"] .nx-btn-primary::after, [data-theme="dark"] .nx-btn-success::after, [data-theme="dark"] .nx-btn-danger::after { display: none; }
-[data-theme="dark"] .nx-toggle.is-on { border-color: rgba(255,150,100,0.30) !important; }
