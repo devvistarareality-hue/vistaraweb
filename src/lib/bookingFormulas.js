@@ -8,18 +8,24 @@ export function fieldFlags(formulaSet) {
     hasPremiumLocation: true, hasConstructionAgreement: false, hasLandSaleDeed: false,
     hasSaleDeed: true, hasSaleDeedRate: false, hasDevAgreement: false,
     hasConstructionFields: true, hasMaintDeposit: true, hasMaintAdvance: true, hasAreaSqMtr: false,
+    hasPlcRate: false,
   };
   if (formulaSet === 'industrial') return {
     areaUnit: 'sq.ft', bunglowTypeFixed: null, bunglowTypeIsDropdown: false,
     hasPremiumLocation: false, hasConstructionAgreement: false, hasLandSaleDeed: false,
     hasSaleDeed: true, hasSaleDeedRate: true, hasDevAgreement: true,
     hasConstructionFields: false, hasMaintDeposit: true, hasMaintAdvance: true, hasAreaSqMtr: true,
+    hasPlcRate: false,
   };
   return { // kalrav (default)
     areaUnit: 'sq.yd', bunglowTypeFixed: null, bunglowTypeIsDropdown: true,
     hasPremiumLocation: false, hasConstructionAgreement: true, hasLandSaleDeed: true,
     hasSaleDeed: false, hasSaleDeedRate: false, hasDevAgreement: false,
     hasConstructionFields: true, hasMaintDeposit: false, hasMaintAdvance: false, hasAreaSqMtr: false,
+    // PLC (Premium Location Charge): a rate × Plot Area field, same shape as Dev Rate —
+    // distinct from Ankhol's hasPremiumLocation above, which is a flat, manually-typed
+    // amount rather than something computed from a rate.
+    hasPlcRate: true,
   };
 }
 
@@ -54,7 +60,11 @@ export function computeFormulas(inp = {}) {
   const gender     = inp.gender || '';
   const lsd        = num(inp.landSaleDeed);
   const constAgr   = num(inp.constAgreement);
-  const premiumLocation = num(inp.premiumLocation);
+  const plcRate    = num(inp.plcRate);
+  // Kalrav: PLC Amount is computed here (Plot Area × plc_rate), same shape as Plot
+  // Development Amount. Other sets keep premiumLocation as whatever flat amount the
+  // caller passed in (Ankhol's own manually-typed field) — plcRate is unused there.
+  const premiumLocation = isKalrav ? (area * plcRate) : num(inp.premiumLocation);
   const saleDeedRate    = num(inp.saleDeedRate);
   const devAgreementRate = num(inp.devAgreementRate);
   // Ankhol sale-deed percentage — editable per booking, defaults to 60%.
@@ -141,11 +151,12 @@ export function computeFormulas(inp = {}) {
   else                   totalExtra = stampDuty + regFees + gst + maint + legal;
 
   // Non-sale deed portion (all sets): the remaining % shown at ÷100 in the LOI.
-  // Ankhol's basic total includes premium location; Kalrav uses plot+dev+const;
-  // Industrial splits Plot Basic.
+  // Ankhol's basic total includes premium location; Kalrav uses plot+dev+const+PLC
+  // (PLC Amount folds in exactly like Plot Development Amount does); Industrial
+  // splits Plot Basic.
   const hasSaleDeedSplit = isAnkhol || isKalrav || isIndustrial;
   const saleDeedBase = isAnkhol ? (plotBasic + constAmt + plotDev + premiumLocation)
-    : isKalrav ? (plotBasic + plotDev + constAmt)
+    : isKalrav ? (plotBasic + plotDev + constAmt + premiumLocation)
     : isIndustrial ? plotBasic : 0;
   const nonSaleDeed = hasSaleDeedSplit ? (saleDeedBase - saleDeed) : 0;
   const nonSaleDeedDoc = hasSaleDeedSplit ? nonSaleDeed / 100 : 0;
@@ -158,11 +169,11 @@ export function computeFormulas(inp = {}) {
     ? (plotBasic + totalExtra + extraWorkAmt - discount)
     : isAnkhol
     ? (saleDeed + nonSaleDeed - discount + totalExtra + extraWorkAmt)
-    : (plotBasic + plotDev + constAmt + totalExtra + extraWorkAmt - discount);
+    : (plotBasic + plotDev + constAmt + premiumLocation + totalExtra + extraWorkAmt - discount);
 
   return {
     formulaSet, isTundav, isKalrav3, area, landRate, devRate, constArea, constRate, discount,
-    lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
+    plcRate, lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
     saleDeedRate, saleDeedPct: effSaleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
     maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
     applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
