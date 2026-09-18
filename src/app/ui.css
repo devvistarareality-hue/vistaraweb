@@ -61,7 +61,7 @@
   background: var(--primary-grad) !important; color: #fff !important; border-color: transparent !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 14px -6px var(--primary-glow) !important;
 }
-[data-theme="dark"] .nx-toggle.is-on { background: linear-gradient(180deg, rgba(120,170,255,0.20), rgba(120,170,255,0.08)) !important; color: #EAF1FF !important; box-shadow: inset 0 0 0 1px rgba(175,210,255,0.40), 0 0 24px -8px rgba(120,170,255,0.8) !important; }
+[data-theme="dark"] .nx-toggle.is-on { background: linear-gradient(180deg, rgba(255,122,61,0.22), rgba(255,122,61,0.08)) !important; color: #FFD8C6 !important; box-shadow: inset 0 0 0 1px rgba(255,150,100,0.45), 0 0 24px -8px rgba(255,100,40,0.85) !important; }
 
 .nx-icon-btn { min-width: 34px; min-height: 34px; padding: 0 !important; border-radius: 11px !important; }
 .nx-icon-btn.nx-btn-sm { min-width: 28px; min-height: 28px; border-radius: 9px !important; }
@@ -196,7 +196,7 @@ textarea.nx-input { line-height: 1.5; }
   background: radial-gradient(closest-side, rgba(162,210,255,0.28), transparent 70%);
   animation: nx-glow 6s ease-in-out infinite;
 }
-[data-theme="dark"] .nx-hero::after { background: radial-gradient(closest-side, rgba(110,107,255,0.35), transparent 70%); }
+[data-theme="dark"] .nx-hero::after { background: radial-gradient(closest-side, rgba(255,110,45,0.40), transparent 70%); }
 
 /* modals & popovers */
 .nx-modal { animation: nx-pop .32s cubic-bezier(.16,1,.3,1) both; }
@@ -240,20 +240,20 @@ textarea.nx-input { line-height: 1.5; }
 [data-theme="dark"] .nx-card { background: var(--card-bg) !important; border: 1px solid var(--card-edge) !important; }
 [data-theme="dark"] .nx-modal { background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 40%), #0A0A0C !important; border: 1px solid var(--card-edge) !important; }
 [data-theme="dark"] .nx-popover { background: #0C0C0F !important; border: 1px solid var(--card-edge) !important; }
-[data-theme="dark"] .nx-card[style*="cursor: pointer"]:hover { border-color: rgba(175,210,255,0.22) !important; }
+[data-theme="dark"] .nx-card[style*="cursor: pointer"]:hover { border-color: rgba(255,140,80,0.26) !important; }
 
 /* ─── Stat tiles ─────────────────────────────────────────────────── */
 .nx-stat { position: relative; overflow: hidden; }
 .nx-stat-icon { box-shadow: inset 0 0 0 1px rgba(47,109,181,0.10); transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
-[data-theme="dark"] .nx-stat-icon { box-shadow: inset 0 0 0 1px rgba(175,210,255,0.18), 0 10px 26px -12px currentColor; }
+[data-theme="dark"] .nx-stat-icon { box-shadow: inset 0 0 0 1px rgba(255,150,100,0.20), 0 10px 26px -12px currentColor; }
 .nx-stat:hover .nx-stat-icon { transform: scale(1.08) rotate(-4deg); }
 .nx-card.nx-stat::after {
   content: ''; position: absolute; right: -30px; top: -30px; width: 130px; height: 130px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(120,170,255,0.16), transparent 70%);
+  background: radial-gradient(closest-side, rgba(255,120,60,0.16), transparent 70%);
   transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .3s; opacity: .75;
 }
 .nx-card.nx-stat:hover::after { transform: scale(1.35); opacity: 1; }
-[data-theme="dark"] .nx-stat-value { background: linear-gradient(180deg, #FFFFFF 0%, #AFC4E8 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+[data-theme="dark"] .nx-stat-value { background: linear-gradient(180deg, #FFFFFF 0%, #E8C3AE 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
 .nx-stat.flat { transition: border-color .2s, background-color .2s, transform .2s; }
 .nx-stat.flat:hover { transform: translateY(-2px); border-color: var(--border-strong) !important; }
 
