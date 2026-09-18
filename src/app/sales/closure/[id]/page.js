@@ -277,26 +277,26 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     list.forEach(p => { const k = plotState(p); if (c[k] != null) c[k]++; });
     const t = list.length;
     const share = (n) => (t ? Math.round(n / t * 100) : 0);
-    const card = { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--surface-3)', boxShadow: '0 2px 8px rgba(140,148,160,0.12)' };
+
     return (
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7 }}>{title}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
-          <div className="nx-card" style={card}>
+        <div className="nx-eyebrow">{title}</div>
+        <div className="nx-stat-row">
+          <div className="nx-card nx-stat-tile">
             <span style={{ width: 36, height: 36, borderRadius: 14, background: 'var(--accent-softer)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: 17, fontWeight: 900 }}>▦</span>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>{t}</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>Total Units</div>
+              <div className="nx-stat-n">{t}</div>
+              <div className="nx-stat-l">Total Units</div>
             </div>
           </div>
           {[['available', c.available], ['hold', c.hold], ['pending', c.pending], ['sold', c.sold]].map(([key, n]) => {
             const cfg = STATUS[key];
             return (
-              <div className="nx-card" key={key} style={card}>
+              <div className="nx-card nx-stat-tile" key={key}>
                 <span style={{ width: 36, height: 36, borderRadius: 14, background: cfg.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: cfg.dot, fontSize: 18, fontWeight: 900 }}>•</span>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>{n}</div>
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{cfg.label} · {share(n)}%</div>
+                  <div className="nx-stat-n">{n}</div>
+                  <div className="nx-stat-l">{cfg.label} · {share(n)}%</div>
                 </div>
               </div>
             );
@@ -488,13 +488,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1100 }}>
+    <div className="nx-page">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => router.push(backHref)} style={backBtn}>← All projects</button>
       </div>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{project.name}</h1>
+        <h1 className="nx-page-title">{project.name}</h1>
         {project.location && <p style={{ fontSize: 13, color: 'var(--muted)' }}><Icon name="pin" /> {project.location}</p>}
         {sv && (
           <p style={{ fontSize: 13, color: 'var(--accent)', marginTop: 6, fontWeight: 600 }}>
@@ -504,7 +504,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       </div>
 
       {/* Filters — status + type (dim non-matching units) */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+      <div className="nx-filters">
         {[['all', 'All'], ['available', 'Available'], ['sold', 'Sold'], ['hold', 'In Progress'], ['pending', 'Hold']].map(([key, label]) => {
           const active = filter === key;
           const dot = STATUS[key]?.dot;
@@ -521,13 +521,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       </div>
       {/* Tower: choose the floor first — its plan(s) and its units are what's shown below. */}
       {floorWise && allFloors.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+        <div className="nx-filters">
           {/* Block — a dropdown with checkboxes, only shown when the tower actually
               has more than one block. Checking several shows all of their maps for
               the same floor together, so an STM can pick a unit from any of them. */}
           {blocks.filter(Boolean).length > 1 && (
             <>
-              <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Block</label>
+              <label className="nx-field-inline">Block</label>
               <div style={{ position: 'relative' }}>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={() => setBlockDropdownOpen((o) => !o)} style={{
                   height: 38, padding: '0 14px', borderRadius: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
@@ -574,7 +574,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               floor concept, so picking one is redundant clutter, unlike an actual tower. */}
           {!project?.block_industrial && (
             <>
-              <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Floor</label>
+              <label className="nx-field-inline">Floor</label>
               <select className="nx-input" value={selectedFloorNum} onChange={(e) => setSelectedFloorNum(Number(e.target.value))}
                 style={{ height: 38, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--surface-3)', background: 'var(--surface)',
                   fontSize: 13, fontWeight: 700, color: 'var(--text)', cursor: 'pointer', minWidth: 190 }}>
@@ -597,7 +597,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       )}
 
       {types.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+        <div className="nx-filters">
           {['all', ...types].map((t) => {
             const active = typeFilter === t;
             return (
@@ -638,16 +638,16 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         const hoverPrefix = `${idx}:`;
         return (
           <div className="nx-card" key={`${entry.block}-${entry.floor}-${idx}`} style={{ background: 'var(--surface)', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--surface-3)', boxShadow: '0 4px 20px rgba(47,109,181,0.12)', marginBottom: 18 }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <div className="nx-map-head">
               <div>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>
+                <h2 className="nx-map-title">
                   Interactive Unit Map{entry.block ? ` · Block ${entry.block}` : ''}
                 </h2>
-                <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Tap available (green) units to select — pick one or several to book together.</p>
+                <p className="nx-map-sub">Tap available (green) units to select — pick one or several to book together.</p>
               </div>
             </div>
-            <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
-              <img src={entry.image_url} alt="Site Map" draggable={false} style={{ width: '100%', display: 'block' }} />
+            <div className="nx-map-canvas">
+              <img className="nx-map-img" src={entry.image_url} alt="Site Map" draggable={false} />
               <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 100" preserveAspectRatio="none">
                 {entryZones.map(zone => {
                   const plot = plotByNumber[String(zone.plotNumber)];

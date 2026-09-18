@@ -11,7 +11,7 @@ import { formatDMY } from '../lib/dateFormat';
 // So: a plain text box that takes DD/MM/YYYY (slashes inserted as you go), plus a
 // button opening the native picker for anyone who prefers to click. `value` in and
 // out is still ISO yyyy-mm-dd, so every caller is unchanged.
-const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => {
+const DateFieldDMY = ({ value, onChange, className = '', style, wrapperStyle, ...p }) => {
   const pickerRef = useRef(null);
   // While typing, what is on screen is the draft — a half-finished "02/09" is not a
   // date and must not be committed. `null` means "show whatever the value holds".
@@ -44,19 +44,15 @@ const DateFieldDMY = ({ value, onChange, style, wrapperStyle, ...p }) => {
   };
 
   return (
-    <div style={{ position: 'relative', flex: 1, ...wrapperStyle }}>
-      <input className="nx-input" {...p} type="text" inputMode="numeric" placeholder="dd/mm/yyyy"
+    <div className="nx-date-wrap" style={wrapperStyle}>
+      <input {...p} className={`nx-input nx-date-input ${className}`} type="text" inputMode="numeric" placeholder="dd/mm/yyyy"
         value={shown} onChange={type}
         // Drop the draft on the way out so a half-typed date reverts to the
         // committed one rather than sitting there looking saved.
         onBlur={() => setDraft(null)}
-        style={{ width: '100%', padding: '9px 32px 9px 11px', fontSize: 13, borderRadius: 8,
-          border: '1.5px solid var(--border)', outline: 'none', boxSizing: 'border-box',
-          background: p.disabled ? 'var(--surface-2)' : 'var(--surface)', ...style }} />
-      <input ref={pickerRef} type="date" value={value || ''} tabIndex={-1} aria-hidden="true"
-        onChange={(e) => { setDraft(null); emit(e.target.value); }}
-        style={{ position: 'absolute', right: 8, top: '50%', width: 1, height: 1,
-          opacity: 0, border: 'none', padding: 0, pointerEvents: 'none' }} />
+        style={style} />
+      <input ref={pickerRef} className="nx-date-picker" type="date" value={value || ''} tabIndex={-1} aria-hidden="true"
+        onChange={(e) => { setDraft(null); emit(e.target.value); }} />
       {!p.disabled && (
         <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={openPicker} tabIndex={-1} aria-label="Open date picker"
           style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
