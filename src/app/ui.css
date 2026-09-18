@@ -300,11 +300,19 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-section { border-radius: 20px; padding: 18px 20px; }
 .nx-section-title { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
 
-.nx-field { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); align-items: center; gap: 14px; margin-bottom: 10px; }
+.nx-field { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); align-items: center; gap: 16px; margin-bottom: 12px; }
 .nx-field.stack { grid-template-columns: 1fr; align-items: stretch; }
 .nx-field-label { font-size: 13px; font-weight: 600; color: var(--text-2); }
 .nx-field-label .nx-hint { display: block; font-size: 11px; font-weight: 400; font-style: italic; color: var(--faint); }
-.nx-field .nx-input { width: 100%; padding: 10px 12px; }
+.nx-field .nx-input, .nx-section .nx-input, .nx-form-grid .nx-input,
+.nx-field input, .nx-field select, .nx-field textarea {
+  width: 100%; box-sizing: border-box; min-height: 44px; padding: 11px 13px; font-size: 14px;
+}
+.nx-field .nx-input-sm, .nx-section .nx-input-sm { min-height: 36px; }
+.nx-field .nx-seg { width: 100%; }
+.nx-field .nx-seg .nx-btn { flex: 1 1 auto; }
+.nx-field .nx-date-wrap { width: 100%; }
+.nx-field .nx-calc { min-height: 44px; display: flex; align-items: center; }
 .nx-input.is-invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent) !important; }
 .nx-calc { padding: 10px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;
   border: 1.5px solid color-mix(in srgb, var(--primary) 30%, transparent); background: var(--accent-softer); color: var(--accent); }
