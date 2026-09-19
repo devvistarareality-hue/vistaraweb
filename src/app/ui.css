@@ -544,3 +544,10 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-type-input { font-size: 12px !important; font-weight: 700; padding: 5px 12px !important; border-radius: 20px !important; min-width: 70px; text-align: center; outline: none; }
 .nx-type-input.dirty { background: var(--warning-soft) !important; color: var(--danger) !important; border-color: var(--peach) !important; }
 .nx-type-input.clean { background: var(--accent-soft) !important; color: var(--accent) !important; border-color: var(--accent) !important; }
+
+/* ─── Route-level error boundary ─────────────────────────────────────────── */
+.nx-error-card { padding: 28px 26px; text-align: center; }
+.nx-error-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.nx-error-text { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin: 0 auto; max-width: 420px; }
+.nx-error-ref { font-size: 11.5px; color: var(--faint); margin-top: 10px; font-family: ui-monospace, monospace; }
+.nx-error-card .nx-actions { justify-content: center; }
