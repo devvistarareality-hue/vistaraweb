@@ -111,7 +111,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const [typeFilter, setTypeFilter] = useState('all'); // all | <cluster_type>
   const [sources,    setSources]    = useState([]);
   const [notice,     setNotice]     = useState(''); // transient banner (unit taken / hold expired)
-  const [busyIds,    setBusyIds]    = useState(() => new Set()); // plot ids with an in-flight hold/release call
+  const [holdingSelection, setHoldingSelection] = useState(false); // Book Selected: holding the units before opening the form
   const [blockDropdownOpen, setBlockDropdownOpen] = useState(false);
 
   function flash(text) {
@@ -337,7 +337,11 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     try {
       await fetch(SALES_ENDPOINTS.plotsRelease, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: ids }) });
     } catch (_) {}
-    setPlots((ps) => ps.map((p) => (ids.includes(p.id) ? { ...p, status: 'available', held_by_name: null } : p)));
+    // The backend already restores a resale unit to 'resale' (not 'available') on
+    // release — mirror that here using the pre-hold status stashed when it was
+    // picked, instead of hardcoding 'available' and showing the wrong colour until
+    // the next full refetch quietly corrected it.
+    setPlots((ps) => ps.map((p) => (ids.includes(p.id) ? { ...p, status: p._preHoldStatus === 'resale' ? 'resale' : 'available', held_by_name: null, _preHoldStatus: undefined } : p)));
   }
 
   // Put a sold unit back on the market from the map's panel — Manager/Director/
@@ -398,8 +402,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     } finally { setCancelBusy(false); }
   }
 
-  async function pickPlot(plot) {
-    if (!plot || busyIds.has(plot.id)) return;
+  function pickPlot(plot) {
+    if (!plot || holdingSelection) return;
     // A drafted unit is out of the normal select/hold flow entirely — it's not
     // something to select for a new booking. Clicking it opens a small panel: the
     // drafter can resume or discard it, a manager/admin can discard it, anyone else
@@ -409,8 +413,10 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       return;
     }
     if (selectedSet.has(plot.id)) {
+      // Nothing is held server-side yet at this stage (see bookSelected) — a plain
+      // local deselect, so a resale unit just stays 'resale' the whole time instead
+      // of round-tripping through 'available'.
       setSelectedIds((ids) => ids.filter((x) => x !== plot.id));
-      releasePlots([plot.id]);
       return;
     }
     // A sold unit isn't for booking, but a Manager/Director/Admin can open it to
@@ -429,24 +435,11 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       return;
     }
     if (plot.status !== 'available' && plot.status !== 'resale') return; // Available or Resale selectable
-    setBusyIds((s) => new Set(s).add(plot.id));
-    try {
-      const res = await fetch(SALES_ENDPOINTS.plotsHold, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plot.id] }) });
-      const data = await res.json().catch(() => ({}));
-      if (data.held?.includes(plot.id)) {
-        setPlots((ps) => ps.map((p) => (p.id === plot.id ? { ...p, status: 'hold', held_by_name: user?.name || p.held_by_name } : p)));
-        setSelectedIds((ids) => (ids.includes(plot.id) ? ids : [...ids, plot.id]));
-      } else {
-        const f = (data.failed || [])[0];
-        flash(f?.reason === 'sold'
-          ? `Plot ${f.number || plot.number} was just sold — pick a different unit.`
-          : `Plot ${f?.number || plot.number} was just selected by another salesperson — pick a different one.`);
-        fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() })
-          .then((r) => r.json()).then((pl) => setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []))).catch(() => {});
-      }
-    } finally {
-      setBusyIds((s) => { const n = new Set(s); n.delete(plot.id); return n; });
-    }
+    // Selecting here is local only — the unit stays green/purple for every other
+    // rep until Book Selected actually opens the booking form, which is the moment
+    // it gets soft-held server-side (see bookSelected). Two reps can both select the
+    // same unit up to that point; the hold call there is what settles who gets it.
+    setSelectedIds((ids) => (ids.includes(plot.id) ? ids : [...ids, plot.id]));
   }
 
   const selPlots = useMemo(
@@ -466,18 +459,42 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
     [selPlots],
   );
 
-  function bookSelected() {
-    if (!selectedIds.length) return;
-    const q = new URLSearchParams({ project: String(project?.id || ''), plots: selectedIds.join(',') });
-    if (sv) {
-      if (sv.lead)       q.set('lead', String(sv.lead));
-      if (sv.lead_name)  q.set('client', sv.lead_name);
-      if (sv.lead_phone) q.set('phone', sv.lead_phone);
+  // Selecting units on the map is local-only (see pickPlot) — this is the moment
+  // they actually get soft-held server-side, right before the booking form opens.
+  // If another rep grabbed one of them first, nothing is held and the map refreshes
+  // instead of navigating, so a stale selection never opens a form for a unit
+  // that's no longer free.
+  async function bookSelected() {
+    if (!selectedIds.length || holdingSelection) return;
+    setHoldingSelection(true);
+    try {
+      const res = await fetch(SALES_ENDPOINTS.plotsHold, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: selectedIds }) });
+      const data = await res.json().catch(() => ({}));
+      const held = data.held || [];
+      if (held.length !== selectedIds.length) {
+        if (held.length) await releasePlots(held); // don't leave a partial hold behind
+        const f = (data.failed || [])[0];
+        flash(f?.reason === 'sold'
+          ? `Plot ${f.number || f.id} was just sold — pick a different unit.`
+          : `Plot ${f?.number || f?.id || ''} was just selected by another salesperson — pick a different one.`);
+        setSelectedIds([]);
+        fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() })
+          .then((r) => r.json()).then((pl) => setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []))).catch(() => {});
+        return;
+      }
+      const q = new URLSearchParams({ project: String(project?.id || ''), plots: selectedIds.join(',') });
+      if (sv) {
+        if (sv.lead)       q.set('lead', String(sv.lead));
+        if (sv.lead_name)  q.set('client', sv.lead_name);
+        if (sv.lead_phone) q.set('phone', sv.lead_phone);
+      }
+      // Converting an EOI into a plot booking — carry the source EOI id through.
+      const convertEoi = new URLSearchParams(window.location.search).get('convertEoi');
+      if (convertEoi) q.set('convertEoi', convertEoi);
+      router.push(`/sales/booking?${q.toString()}`);
+    } finally {
+      setHoldingSelection(false);
     }
-    // Converting an EOI into a plot booking — carry the source EOI id through.
-    const convertEoi = new URLSearchParams(window.location.search).get('convertEoi');
-    if (convertEoi) q.set('convertEoi', convertEoi);
-    router.push(`/sales/booking?${q.toString()}`);
   }
 
   if (loading) {
@@ -871,9 +888,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
               {sv ? `${sv.lead_name} · ` : ''}{selSummary}
             </div>
           </div>
-          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { const ids = [...selectedIds]; setSelectedIds([]); releasePlots(ids); }} style={cancelBtn}>Clear</button>
-          <button className="nx-btn nx-btn-md nx-btn-success" onClick={bookSelected} style={primaryBtn2}>
-            {sv ? 'Record Closure' : 'Book'} · {selPlots.length} plot{selPlots.length > 1 ? 's' : ''} →
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setSelectedIds([])} disabled={holdingSelection} style={cancelBtn}>Clear</button>
+          <button className="nx-btn nx-btn-md nx-btn-success" onClick={bookSelected} disabled={holdingSelection} style={primaryBtn2}>
+            {holdingSelection ? 'Holding…' : `${sv ? 'Record Closure' : 'Book'} · ${selPlots.length} plot${selPlots.length > 1 ? 's' : ''} →`}
           </button>
         </div>
       )}
