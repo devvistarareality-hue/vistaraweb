@@ -538,8 +538,17 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
     setEditing(true);
   }
 
+  // The status buttons sit right under the unit number, so one stray click used
+  // to mark a unit sold with no way back except setting it again. Confirm first.
   async function setStatus(newStatus) {
     if (plot.status === newStatus || saving) return;
+    const from = STATUS_CFG[plot.status]?.label || plot.status;
+    const to = STATUS_CFG[newStatus]?.label || newStatus;
+    const ok = await confirmDialog(
+      `Unit ${plot.number} is currently ${from}. Change it to ${to}? Everyone on the project sees this.`,
+      { title: `Change ${plot.number} to ${to}?`, confirmText: `Mark ${to}`, tone: newStatus === 'sold' ? 'danger' : 'info' },
+    );
+    if (!ok) return;
     setSaving(true);
     await onStatusChange(plot.id, newStatus);
     setSaving(false);
