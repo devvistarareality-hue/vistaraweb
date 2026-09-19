@@ -65,11 +65,11 @@ export default function EmployeeDashboard() {
         <>
           <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
             <StatCard label="My Leads" value={stats?.leads_count ?? 0} href="/club1000/leads" />
-            <StatCard label="Converted" value={stats?.converted_count ?? 0} href="/club1000/leads?status=converted" accent="#23874A" />
+            <StatCard label="Converted" value={stats?.converted_count ?? 0} href="/club1000/leads?status=converted" accent="var(--success)" />
             <StatCard label="My Investors" value={stats?.investor_count ?? 0} href="/club1000/investors" />
             <StatCard label="Total Invested" value={fmtMoney(stats?.total_invested)} href="/club1000/investors" />
-            <StatCard label="Pending Payouts" value={`${stats?.pending_payout_count ?? 0} · ${fmtMoney(stats?.pending_payout_amount)}`} accent="#D98A1F" />
-            <StatCard label="Paid Payouts" value={`${stats?.paid_payout_count ?? 0} · ${fmtMoney(stats?.paid_payout_amount)}`} accent="#23874A" />
+            <StatCard label="Pending Payouts" value={`${stats?.pending_payout_count ?? 0} · ${fmtMoney(stats?.pending_payout_amount)}`} accent="var(--warning)" />
+            <StatCard label="Paid Payouts" value={`${stats?.paid_payout_count ?? 0} · ${fmtMoney(stats?.paid_payout_amount)}`} accent="var(--success)" />
           </div>
 
           <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>

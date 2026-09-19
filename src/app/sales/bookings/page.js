@@ -644,7 +644,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       );
                     })()}
                   </div>
-                  {!b.revision_no && cardDetails[b.id] && <BookingDetails b={b} accent="#2F6DB5" />}
+                  {!b.revision_no && cardDetails[b.id] && <BookingDetails b={b} accent="var(--accent)" />}
                   {revOpen[b.id] && (
                     <div style={{ marginTop: 12, borderTop: '1.5px solid var(--surface-3)', paddingTop: 10 }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginBottom: 8 }}>
@@ -680,7 +680,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                             {revDetails[v.id] ? '▴ Hide Details' : '▾ Details'}
                           </button>
                           {revDetails[v.id] && (
-                            <div style={{ width: '100%' }}><BookingDetails b={v} accent="#2F6DB5" /></div>
+                            <div className="nx-detail-wrap"><BookingDetails b={v} accent="var(--accent)" /></div>
                           )}
                         </div>
                       ))}

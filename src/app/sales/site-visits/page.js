@@ -18,6 +18,7 @@ function fmtDateTime(iso) {
 const SV_COLOR = { scheduled: 'var(--warning-2)', completed: 'var(--success)', no_show: 'var(--danger)', cancelled: 'var(--muted)' };
 const OUTCOME_COLOR = { hot: 'var(--danger)', warm: 'var(--warning-2)', cold: 'var(--accent)', not_interested: 'var(--text-3)' };
 const OUTCOME_LABEL = { hot: 'Hot', warm: 'Warm', cold: 'Cold', not_interested: 'Not Interested' };
+const PAGE_STEP = 50;
 const TABS = [
   { key: 'today',     label: "Today's" },
   { key: 'scheduled', label: 'Scheduled' },
@@ -249,6 +250,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const projOptions = [...new Set(visits.map(projName))].sort((a, b) => a.localeCompare(b));
   const narrowed = dated || !!proj || !!outcomeFilter;
 
+  const [shown, setShown] = useState(PAGE_STEP);
   const visible = visits.filter((v) => {
     if (!inRange(v)) return false;
     if (proj && projName(v) !== proj) return false;
@@ -328,7 +330,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {visible.map((sv) => (
+          {visible.slice(0, shown).map((sv) => (
             <div className="nx-card" key={sv.id} style={{ border: '1.5px solid var(--surface-3)', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px',
               display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ minWidth: 0, flex: 1 }}>
@@ -369,6 +371,12 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
               </div>
             </div>
           ))}
+          {visible.length > shown && (
+            <div className="nx-more">
+              <span className="nx-more-count">Showing {shown} of {visible.length}</span>
+              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
+            </div>
+          )}
         </div>
       )}
 

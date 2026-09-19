@@ -445,9 +445,9 @@ function ProjectModal({ project, onClose, onSaved }) {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
                       {editableTypes.map((t, i) => (
                         <div key={i} style={{ position: 'relative' }}>
-                          <input className="nx-input" value={t.current}
+                          <input value={t.current}
                             onChange={e => setEditableTypes(prev => prev.map((x, xi) => xi === i ? { ...x, current: e.target.value } : x))}
-                            style={{ fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 20, background: t.original !== t.current ? 'var(--warning-soft)' : 'var(--accent-soft)', color: t.original !== t.current ? 'var(--danger)' : 'var(--accent)', border: `1.5px solid ${t.original !== t.current ? 'var(--peach)' : '#A2D2FF'}`, outline: 'none', minWidth: 70, textAlign: 'center' }} />
+                            className={`nx-input nx-type-input ${t.original !== t.current ? 'dirty' : 'clean'}`} />
                           {t.original !== t.current && (
                             <span style={{ position: 'absolute', top: -6, right: -4, fontSize: 9, background: 'var(--danger-solid)', color: '#fff', borderRadius: 14, padding: '1px 5px', fontWeight: 700 }}>renamed</span>
                           )}

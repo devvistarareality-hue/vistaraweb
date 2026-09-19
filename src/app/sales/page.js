@@ -7,12 +7,13 @@ import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import DateFilter from './_DateFilter';
-import { SingleChart, fillDates } from './_TrendCharts';
+import { fillDates } from './_fillDates';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
+const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
 
 
 // ─────────────────────────────────────────────

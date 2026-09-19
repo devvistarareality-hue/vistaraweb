@@ -10,7 +10,18 @@ const REFRESH_URL = () => {
   return `${base}/api/auth/token/refresh/`;
 };
 
-async function refreshAccessToken() {
+// Exactly one refresh at a time: several requests 401ing together used to fire
+// several refreshes, and because the server rotates the refresh token every
+// loser of that race held a dead token and the tab was logged out at random.
+let refreshInFlight = null;
+
+function refreshAccessToken() {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = doRefresh().finally(() => { setTimeout(() => { refreshInFlight = null; }, 0); });
+  return refreshInFlight;
+}
+
+async function doRefresh() {
   try {
     const refresh = localStorage.getItem('refresh_token');
     if (!refresh) return null;

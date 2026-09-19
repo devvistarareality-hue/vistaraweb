@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
             <div style={s.chip}>
               <div style={{ ...s.chipDot, backgroundColor: 'var(--green)', boxShadow: '0 0 0 4px rgba(164,245,166,0.2)' }} />
               <div>
-                <div style={{ ...s.chipLabel, color: '#A4F5A6', fontWeight: 700, fontSize: 12 }}>System Online</div>
+                <div className="nx-chip-ok" style={s.chipLabel}>System Online</div>
                 <div style={{ ...s.chipLabel, fontSize: 10, marginTop: 1 }}>All services operational</div>
               </div>
             </div>

@@ -84,10 +84,10 @@ function zoneTopCenter(zone) {
 
 // Type badge colours (mirrors the CP portal hover tooltip).
 const TYPE_COLORS = {
-  Ananda:  { bg: 'rgba(47,109,181,0.18)', color: '#a2d2ff', border: 'rgba(47,109,181,0.5)' },
-  Maitri:  { bg: 'rgba(47,109,181,0.18)',  color: '#a2d2ff', border: 'rgba(47,109,181,0.5)'  },
-  Karuna:  { bg: 'rgba(163,103,26,0.18)',  color: '#f5b453', border: 'rgba(163,103,26,0.5)'  },
-  Hridaya: { bg: 'rgba(35,135,74,0.18)',  color: '#a4f5a6', border: 'rgba(35,135,74,0.5)'  },
+  Ananda:  { bg: 'rgba(47,109,181,0.18)', color: 'var(--accent)', border: 'rgba(47,109,181,0.5)' },
+  Maitri:  { bg: 'rgba(47,109,181,0.18)',  color: 'var(--accent)', border: 'rgba(47,109,181,0.5)'  },
+  Karuna:  { bg: 'rgba(163,103,26,0.18)',  color: 'var(--warning)', border: 'rgba(163,103,26,0.5)'  },
+  Hridaya: { bg: 'rgba(35,135,74,0.18)',  color: 'var(--success)', border: 'rgba(35,135,74,0.5)'  },
 };
 
 export function ClosureViewerContent({ backHref = '/sales/closure' }) {
@@ -757,16 +757,16 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {plot.drafted_booking_id && plot.held_by_name && (
                       <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 600, marginTop: 3 }}>Drafted by {plot.held_by_name}</div>
                     )}
-                    {plot.size && <div style={{ color: '#FFCB80', fontSize: 11, fontWeight: 600 }}>{plot.size}</div>}
+                    {plot.size && <div className="nx-unit-meta size">{plot.size}</div>}
                     {/* Facing and terrace both move the price, so surface them on hover
                         rather than making the user open the unit to find out. */}
                     {plot.facing && (
-                      <div style={{ color: '#A2D2FF', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      <div className="nx-unit-meta blue">
                         {FACING_LABEL[plot.facing] || plot.facing}
                       </div>
                     )}
                     {(plot.terrace_area || '').trim() && (
-                      <div style={{ color: '#A4F5A6', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
+                      <div className="nx-unit-meta green">
                         Terrace {plot.terrace_area} sq.yd
                       </div>
                     )}

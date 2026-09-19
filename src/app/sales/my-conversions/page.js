@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
@@ -186,6 +187,9 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const openLead = (row) => {
     if (row?.lead) setHistoryLead({ id: row.lead, name: row.lead_name, phone: row.lead_phone, project_name: row.project_name });
   };
+  // Only a window of rows reaches the DOM; a thousand table rows is what made
+  // this page crawl.
+  const [shown, setShown] = useState(PAGE_STEP);
   const [visits, setVisits] = useState([]);
   const [closures, setClosures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -268,7 +272,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             <div style={{ textAlign: 'center', padding: 60, color: 'var(--faint)', fontSize: 14 }}>
               {isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.'}
             </div>
-          ) : (
+          ) : (<>
             <div style={scroller} className="convScroll">
             <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
@@ -283,7 +287,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
                 </tr>
               </thead>
               <tbody>
-                {visits.map(v => (
+                {visits.slice(0, shown).map(v => (
                   <tr key={v.id} onClick={() => openLead(v)} style={{ transition: 'background 0.1s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = 'var(--surface-2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{v.lead_name || '—'}</span></td>
                     <td style={{ ...td, color: 'var(--text-3)' }}>{v.lead_phone || '—'}</td>
@@ -297,7 +301,13 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
               </tbody>
             </table>
             </div>
-          )}
+            {visits.length > shown && (
+              <div className="nx-more">
+                <span className="nx-more-count">Showing {shown} of {visits.length}</span>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
+              </div>
+            )}
+          </>)}
         </div>
       ) : (
         <div className="nx-card" style={card}>
@@ -305,7 +315,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             <div style={{ textAlign: 'center', padding: 60, color: 'var(--faint)', fontSize: 14 }}>
               {isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
-          ) : (
+          ) : (<>
             <div style={scroller} className="convScroll">
             <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
@@ -323,7 +333,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
               </thead>
               <tbody>
                 {/* A closure outlives its lead (trial reset) — no lead, no history to open. */}
-                {allClosures.map(c => (
+                {allClosures.slice(0, shown).map(c => (
                   <tr key={c.id} onClick={() => openLead(c)} style={{ transition: 'background 0.1s', cursor: c.lead ? 'pointer' : 'default' }} onMouseOver={e => e.currentTarget.style.background = 'var(--surface-2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
                     <td style={td}><span style={{ fontWeight: 600 }}>{c.lead_name || '—'}</span></td>
                     <td style={{ ...td, color: 'var(--text-3)' }}>{c.lead_phone || '—'}</td>
@@ -339,7 +349,13 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
               </tbody>
             </table>
             </div>
-          )}
+            {allClosures.length > shown && (
+              <div className="nx-more">
+                <span className="nx-more-count">Showing {shown} of {allClosures.length}</span>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
+              </div>
+            )}
+          </>)}
         </div>
       )}
 
@@ -357,6 +373,8 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
     </div>
   );
 }
+
+const PAGE_STEP = 50;
 
 export default function MyConversionsPage() {
   return <MyConversionsContent />;

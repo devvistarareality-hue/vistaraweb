@@ -263,7 +263,7 @@ export default function UserManagementPage() {
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{editUser.name} · {editUser.user_code}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: editUser.is_active ? '#A4F5A6' : 'var(--border-strong)', backgroundColor: 'rgba(255,255,255,0.12)', padding: '3px 10px', borderRadius: 14 }}>
+                <span className={`nx-hero-chip ${editUser.is_active ? 'on' : 'off'}`}>
                   {editUser.is_active ? '● Active' : '○ Inactive'}
                 </span>
                 <button onClick={() => setEditUser(null)} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>

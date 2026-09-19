@@ -1,22 +1,9 @@
 'use client';
+export { fillDates } from './_fillDates';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, defs, linearGradient, stop
 } from 'recharts';
 
-export function fillDates(rows, dateFrom, dateTo) {
-  const map = {}, amtMap = {};
-  rows.forEach(r => { map[r.date] = r.count; if (r.amount != null) amtMap[r.date] = r.amount; });
-
-  const result = [];
-  const cur = new Date(dateFrom);
-  const end = new Date(dateTo);
-  while (cur <= end) {
-    const key = cur.toISOString().slice(0, 10);
-    result.push({ date: key, count: map[key] ?? 0, amount: amtMap[key] ?? 0 });
-    cur.setDate(cur.getDate() + 1);
-  }
-  return result;
-}
 
 function fmtAmount(n) {
   if (!n) return '₹0';

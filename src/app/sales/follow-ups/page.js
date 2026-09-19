@@ -24,6 +24,7 @@ const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); 
 const TC_STATUS_OPTS  = [['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested'], ['not_reachable', 'Not Reachable'], ['callback', 'Callback']];
 const STM_STATUS_OPTS = [['hot', 'Hot'], ['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested'], ['sv_scheduled', 'SV Scheduled'], ['sv_done', 'SV Done'], ['closed', 'Closed']];
 
+const PAGE_STEP = 50;
 const TABS = [
   { key: 'today',   label: "Today's" },
   { key: 'overdue', label: 'Overdue' },
@@ -173,6 +174,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
     overdue:   dateItems.filter((f) => f.status === 'pending' && new Date(f.scheduled_at) < now).length,
   };
 
+  const [shown, setShown] = useState(PAGE_STEP);
   const visible = dateItems.filter((fu) => {
     const at = new Date(fu.scheduled_at);
     if (filter === 'all')     return true;
@@ -244,7 +246,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         </div>
       ) : (
         <div className="nx-fu-list">
-          {visible.map((fu) => {
+          {visible.slice(0, shown).map((fu) => {
             const overdue = fu.status === 'pending' && new Date(fu.scheduled_at) < now;
             return (
               <div key={fu.id} className={`nx-card nx-fu-card${overdue ? ' is-overdue' : ''}`}>
@@ -271,6 +273,12 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
               </div>
             );
           })}
+        </div>
+      )}
+      {visible.length > shown && (
+        <div className="nx-more">
+          <span className="nx-more-count">Showing {shown} of {visible.length}</span>
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
         </div>
       )}
 
