@@ -1,5 +1,8 @@
 'use client';
-export { fillDates } from './_fillDates';
+// A re-export does NOT bind the name locally — TrendCharts below calls
+// fillDates directly, so it has to be imported as well as re-exported.
+import { fillDates } from './_fillDates';
+export { fillDates };
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, defs, linearGradient, stop
 } from 'recharts';
