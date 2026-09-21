@@ -213,12 +213,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const _isAdminMgr = !(_isTelecaller || _isStm || _isCp);
   const showTC  = _isAdminMgr || _isTelecaller;
   const showStm = _isAdminMgr || _isStm || _isCp;
-  const TC_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback'];
-  const STM_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed'];
+  const TC_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback', 'not_qualified'];
+  const STM_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed', 'not_qualified'];
   // In the Channel Partner section, Source is fixed to the "Channel Partner"
   // LeadSource (created on demand by the parent) rather than freely chosen.
   const cpSource = cpOnly ? sources.find((s) => (s.name || '').toLowerCase() === 'channel partner') : null;
-  const [form, setForm] = useState({ name: prefill?.name || '', phone: prefill?.phone || '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', lead_date: '' });
+  const [form, setForm] = useState({ name: prefill?.name || '', phone: prefill?.phone || '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', disqualify_reason: '', disqualify_note: '', lead_date: '' });
+  const isNotQualified = form.telecaller_status === 'not_qualified' || form.stm_status === 'not_qualified';
   useEffect(() => {
     if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
   }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -275,6 +276,8 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
       setErr('Pick an STM status and add remarks.'); return;
     }
     if (cpOnly && !form.channel_partner) { setErr('Channel Partner is required.'); return; }
+    if (isNotQualified && !form.disqualify_reason) { setErr('Pick a reason for Not Qualified.'); return; }
+    if (form.disqualify_reason === 'other' && !(form.disqualify_note || '').trim()) { setErr('Add a note for the Other reason.'); return; }
     if (showStm && form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
       setErr(isWalkIn
         ? 'A walk-in is a completed visit — pick how it went (Hot / Warm / Cold / Not Interested) and the visit date.'
@@ -307,6 +310,10 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
     if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
     if (showStm && form.stm_remarks)        body.stm_remarks        = form.stm_remarks;
+    if (isNotQualified && form.disqualify_reason) {
+      body.disqualify_reason = form.disqualify_reason;
+      if (form.disqualify_reason === 'other') body.disqualify_note = form.disqualify_note;
+    }
 
     const res = await fetch(SALES_ENDPOINTS.leads, {
       method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
@@ -610,6 +617,31 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             </>
           )}
 
+          {/* Not Qualified reason — one shared field regardless of whether TC or
+              STM/CP status is the one set to it, since a lead has one
+              disqualification, not one per stage. */}
+          {isNotQualified && (
+            <div className="nx-callout-danger">
+              <div className="nx-callout-danger-title">Not Qualified</div>
+              <div style={{ marginBottom: form.disqualify_reason === 'other' ? 12 : 0 }}> {/* inline-ok: spacing toggles only when the Note field below appears */}
+                <label style={addLbl}>Reason<span className="nx-required">*</span></label>
+                <select className="nx-input" value={form.disqualify_reason} onChange={(e) => setForm({ ...form, disqualify_reason: e.target.value })} style={addSel}>
+                  <option value="">— Select reason —</option>
+                  <option value="religion">Religion</option>
+                  <option value="caste">Caste</option>
+                  <option value="budget">Budget</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              {form.disqualify_reason === 'other' && (
+                <div>
+                  <label style={addLbl}>Note<span className="nx-required">*</span></label>
+                  <textarea className="nx-input" value={form.disqualify_note} onChange={(e) => setForm({ ...form, disqualify_note: e.target.value })} placeholder="Reason details" style={addTa} />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── FOLLOW-UPS ── mirrors the Lead Detail modal's inline scheduler */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Follow-ups</div>
           <div style={{ background: 'var(--surface-2)', borderRadius: 16, padding: 16, border: '1px solid var(--surface-3)', marginBottom: 18 }}>
@@ -756,6 +788,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
       telecaller: lead.telecaller || '', telecaller_status: lead.telecaller_status || '',
       telecaller_remarks: lead.telecaller_remarks || '',
       stm: lead.stm || '', stm_status: lead.stm_status || '', stm_remarks: lead.stm_remarks || '',
+      disqualify_reason: lead.disqualify_reason || '', disqualify_note: lead.disqualify_note || '',
       project: lead.project || '', source: lead.source || '', channel_partner: lead.channel_partner || '',
       // City/Address/Purpose/Budget now ship in the list payload → prefill instantly,
       // no waiting on the detail fetch.
@@ -808,6 +841,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     loadDetail();
   }, [lead?.id]);
 
+  const isNotQualified = form.telecaller_status === 'not_qualified' || form.stm_status === 'not_qualified';
+
   async function save() {
     // Telecaller / STM portals must record their status + remarks before saving.
     if (_isTelecaller && (!form.telecaller_status || !(form.telecaller_remarks || '').trim())) {
@@ -815,6 +850,12 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     }
     if (_isStm && (!form.stm_status || !(form.stm_remarks || '').trim())) {
       setSaveErr('Please set STM Status and add STM Remarks before saving.'); return;
+    }
+    if (isNotQualified && !form.disqualify_reason) {
+      setSaveErr('Pick a reason for Not Qualified.'); return;
+    }
+    if (form.disqualify_reason === 'other' && !(form.disqualify_note || '').trim()) {
+      setSaveErr('Add a note for the Other reason.'); return;
     }
     if (form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
       setSaveErr('Please pick a visit outcome and visit date.'); return;
@@ -841,6 +882,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     // its booking is approved (the backend sets stm_status='closed' on approval).
     // Picking "closed" here just routes the STM into the booking flow below.
     if (form.stm_status && form.stm_status !== 'closed') body.stm_status = form.stm_status;
+    if (isNotQualified && form.disqualify_reason) {
+      body.disqualify_reason = form.disqualify_reason;
+      body.disqualify_note = form.disqualify_reason === 'other' ? (form.disqualify_note || '') : '';
+    }
     if (form.project)          body.project          = form.project;
     if (form.source)           body.source           = form.source;
     if (cpOnly)                body.channel_partner  = form.channel_partner;
@@ -962,8 +1007,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     }
   }
 
-  const TC_STATUSES  = ['warm','cold','not_interested','not_reachable','callback'];
-  const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed'];
+  const TC_STATUSES  = ['warm','cold','not_interested','not_reachable','callback','not_qualified'];
+  const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed','not_qualified'];
 
   const tabStyle = (key) => ({
     padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
@@ -974,6 +1019,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
   const fuStatusColor = { pending: 'var(--warning-2)', completed: 'var(--success)', missed: 'var(--danger)', rescheduled: 'var(--success)' };
 
   const mInp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--surface-2)' };
+  const mSel = { ...mInp, cursor: 'pointer' };
+  const mTa  = { ...mInp, height: 'auto', padding: '10px 12px', resize: 'vertical' };
   const mLbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 };
   const mSec = { fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 };
 
@@ -1278,6 +1325,31 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
               )}
               </>)}
+
+              {/* Not Qualified reason — one shared field regardless of whether TC or
+                  STM/CP status is the one set to it. */}
+              {isNotQualified && (
+                <div className="nx-callout-danger">
+                  <div className="nx-callout-danger-title">Not Qualified</div>
+                  <div style={{ marginBottom: form.disqualify_reason === 'other' ? 12 : 0 }}> {/* inline-ok: spacing toggles only when the Note field below appears */}
+                    <label style={mLbl}>Reason<span className="nx-required">*</span></label>
+                    <select className="nx-input" value={form.disqualify_reason || ''} onChange={(e) => setForm({ ...form, disqualify_reason: e.target.value })} style={mSel}>
+                      <option value="">— Select reason —</option>
+                      <option value="religion">Religion</option>
+                      <option value="caste">Caste</option>
+                      <option value="budget">Budget</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  {form.disqualify_reason === 'other' && (
+                    <div>
+                      <label style={mLbl}>Note<span className="nx-required">*</span></label>
+                      <textarea className="nx-input" value={form.disqualify_note || ''} onChange={(e) => setForm({ ...form, disqualify_note: e.target.value })}
+                        placeholder="Reason details" rows={2} style={mTa} />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
                 <div style={{ background: 'var(--surface-2)', borderRadius: 14, padding: '12px 14px', marginBottom: 18 }}>
@@ -1831,8 +1903,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const today = localDate(new Date());
         const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
-        const TC_STATUSES  = ['warm','cold','not_interested','not_reachable','callback'];
-        const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed'];
+        const TC_STATUSES  = ['warm','cold','not_interested','not_reachable','callback','not_qualified'];
+        const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed','not_qualified'];
         const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
           filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
