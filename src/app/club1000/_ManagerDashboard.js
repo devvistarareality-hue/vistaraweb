@@ -46,7 +46,7 @@ export default function ManagerDashboard() {
   const hasAttentionItems = dueForRenewal + upcomingMaturities + pendingApprovals + overdueFollowUps > 0;
 
   return (
-    <div style={{ padding: '28px 32px' }}>
+    <div className="nx-c1k-page">
       <div className="nx-hero nx-c1k-hero">
         <div>
           <div className="nx-c1k-hero-eyebrow">Club 1000 · Manager View</div>
@@ -55,7 +55,7 @@ export default function ManagerDashboard() {
         </div>
         <div className="nx-c1k-hero-actions">
           <div className="nx-c1k-hero-btns">
-            <Link href="/club1000/schemes" style={{ textDecoration: 'none' }}> {/* inline-ok: single fixed override on a Link, not worth a class */}
+            <Link href="/club1000/schemes" className="nx-plain-link">
               <button className="nx-btn nx-btn-md nx-btn-secondary">Manage Schemes</button>
             </Link>
             <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add Investor</button>
@@ -73,16 +73,16 @@ export default function ManagerDashboard() {
       <DateFilter onChange={setDateRange} />
 
       {loading ? (
-        <Loader label="Loading…" style={{ padding: '28px 0' }} />
+        <Loader label="Loading…" />
       ) : (
         <>
           <div className="nx-kpi-row nx-mt-20">
-            <KpiCard icon="phone" label="Leads" value={stats?.leads_count ?? 0} href="/club1000/leads" accent="var(--accent)" />
-            <KpiCard icon="party" label="Converted" value={stats?.converted_count ?? 0} href="/club1000/leads?status=converted" accent="var(--success)" />
-            <KpiCard icon="users" label="Investors" value={stats?.investor_count ?? 0} href="/club1000/investors" accent="var(--accent-deep)" />
-            <KpiCard icon="building" label="Active Schemes" value={stats?.active_scheme_count ?? 0} href="/club1000/schemes" accent="var(--success)" />
-            <KpiCard icon="clock" label="Pending Payouts" value={stats?.pending_payout_count ?? 0} sub={fmtMoney(stats?.pending_payout_amount)} href="/club1000/payouts?status=pending" accent="var(--warning-2)" />
-            <KpiCard icon="check-circle" label="Paid Payouts" value={stats?.paid_payout_count ?? 0} sub={fmtMoney(stats?.paid_payout_amount)} href="/club1000/payouts?status=paid" accent="var(--success)" />
+            <KpiCard icon="phone" label="Leads" value={stats?.leads_count ?? 0} href="/club1000/leads" accent="blue" />
+            <KpiCard icon="party" label="Converted" value={stats?.converted_count ?? 0} href="/club1000/leads?status=converted" accent="green" />
+            <KpiCard icon="users" label="Investors" value={stats?.investor_count ?? 0} href="/club1000/investors" accent="purple" />
+            <KpiCard icon="building" label="Active Schemes" value={stats?.active_scheme_count ?? 0} href="/club1000/schemes" accent="green" />
+            <KpiCard icon="clock" label="Pending Payouts" value={stats?.pending_payout_count ?? 0} sub={fmtMoney(stats?.pending_payout_amount)} href="/club1000/payouts?status=pending" accent="orange" />
+            <KpiCard icon="check-circle" label="Paid Payouts" value={stats?.paid_payout_count ?? 0} sub={fmtMoney(stats?.paid_payout_amount)} href="/club1000/payouts?status=paid" accent="green" />
           </div>
 
           {hasAttentionItems && (
@@ -90,16 +90,16 @@ export default function ManagerDashboard() {
               <div className="nx-c1k-section-title">Needs Attention</div>
               <div className="nx-kpi-row">
                 {dueForRenewal > 0 && (
-                  <KpiCard icon="alert" label="Due for Renewal" value={dueForRenewal} sub="Past maturity, awaiting a decision" href="/club1000/investors" accent="var(--warning-2)" />
+                  <KpiCard icon="alert" label="Due for Renewal" value={dueForRenewal} sub="Past maturity, awaiting a decision" href="/club1000/investors" accent="orange" />
                 )}
                 {upcomingMaturities > 0 && (
-                  <KpiCard icon="calendar" label="Maturing in 30 Days" value={upcomingMaturities} sub={fmtMoney(stats?.upcoming_maturities_amount)} href="/club1000/investors" accent="var(--accent)" />
+                  <KpiCard icon="calendar" label="Maturing in 30 Days" value={upcomingMaturities} sub={fmtMoney(stats?.upcoming_maturities_amount)} href="/club1000/investors" accent="blue" />
                 )}
                 {pendingApprovals > 0 && (
-                  <KpiCard icon="clipboard" label="Pending Approvals" value={pendingApprovals} href="/club1000/approvals" accent="var(--danger)" />
+                  <KpiCard icon="clipboard" label="Pending Approvals" value={pendingApprovals} href="/club1000/approvals" accent="red" />
                 )}
                 {overdueFollowUps > 0 && (
-                  <KpiCard icon="clock" label="Overdue Follow-Ups" value={overdueFollowUps} href="/club1000/follow-ups" accent="var(--danger)" />
+                  <KpiCard icon="clock" label="Overdue Follow-Ups" value={overdueFollowUps} href="/club1000/follow-ups" accent="red" />
                 )}
               </div>
             </div>
@@ -125,12 +125,12 @@ export default function ManagerDashboard() {
 
           <div className="nx-c1k-grid-2 nx-mt-18">
             <SectionCard title="By Scheme">
-              <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table className="nx-table nx-c1k-table">
                 <thead>
-                  <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-                    <th style={th}>Scheme</th>
-                    <th style={th}>Investors</th>
-                    <th style={th}>Amount</th>
+                  <tr className="nx-c1k-thead-row">
+                    <th className="nx-c1k-th">Scheme</th>
+                    <th className="nx-c1k-th">Investors</th>
+                    <th className="nx-c1k-th">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -138,9 +138,9 @@ export default function ManagerDashboard() {
                     <tr><td colSpan={3} className="nx-c1k-empty">No investors yet.</td></tr>
                   ) : stats.by_scheme.map((row) => (
                     <tr key={row.scheme}>
-                      <td style={td}>{row.scheme}</td>
-                      <td style={td}>{row.investors}</td>
-                      <td style={td}>{fmtMoney(row.amount)}</td>
+                      <td className="nx-c1k-td">{row.scheme}</td>
+                      <td className="nx-c1k-td">{row.investors}</td>
+                      <td className="nx-c1k-td">{fmtMoney(row.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -175,6 +175,3 @@ export default function ManagerDashboard() {
     </div>
   );
 }
-
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
