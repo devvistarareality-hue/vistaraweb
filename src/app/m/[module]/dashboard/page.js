@@ -17,6 +17,7 @@ const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
   plan_mismatch: "LOI schedule doesn't add up to the deal",
   suspect_amount: 'Deal amount looks mistyped (under ₹1 lakh)',
+  revision_pending: 'A revision awaits approval — shown here on the last approved version, not on the Bookings page',
 };
 
 // AR Dashboard — the receivables book at a glance: what is owed, how late, what
