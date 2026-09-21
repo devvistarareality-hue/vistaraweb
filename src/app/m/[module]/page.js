@@ -1,5 +1,7 @@
 'use client';
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { MODULE_META } from './moduleMeta';
 import { isManagerRole } from '../../../lib/moduleAccess';
@@ -9,7 +11,6 @@ import { isManagerRole } from '../../../lib/moduleAccess';
 const ICONS = {
   team: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /></>,
   check: <><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></>,
-  chart: <><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>,
   book: <><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></>,
 };
 
@@ -32,15 +33,15 @@ function Tile({ href, icon, title, desc }) {
 
 export default function ModuleOverview({ params }) {
   const slug = params.module;
+  const router = useRouter();
+  // AR opens straight on its Dashboard; /m/ar (old links, bookmarks) forwards there.
+  useEffect(() => { if (slug === 'ar') router.replace('/m/ar/dashboard'); }, [slug, router]);
   const meta = MODULE_META[slug] || { name: slug, accent: 'var(--accent)', desc: '' };
   const user = useSelector((s) => s.auth.user);
   const canSeeTeam = isManagerRole(user) || user?.role === 'Admin' || user?.is_staff;
 
-  const tiles = slug === 'ar' ? [
-    { href: '/m/ar/dashboard', icon: 'chart', title: 'Dashboard', desc: 'Total dues, overdue ageing, month-wise collections and the accounts that need attention' },
-    { href: '/m/ar/register', icon: 'book', title: 'Register', desc: 'Every approved booking with collectable, received, overdue, ageing and interest' },
-    { href: '/m/ar/import', icon: 'check', title: 'Import receipts', desc: 'Download the project template, fill in payments and upload it' },
-  ] : [
+  if (slug === 'ar') return null;
+  const tiles = [
     canSeeTeam && { href: `/m/${slug}/team`, icon: 'team', title: 'My Team', desc: `View the ${meta.name} department org chart` },
     slug === 'accounts' && { href: `/m/${slug}/approvals`, icon: 'check', title: 'Approvals', desc: "Review pending LOI & EOI bookings and approve/reject each one's Accounts-stage sign-off" },
     slug === 'accounts' && { href: `/m/${slug}/bookings`, icon: 'book', title: 'Bookings', desc: 'Approved bookings and cancellations, project-wise' },

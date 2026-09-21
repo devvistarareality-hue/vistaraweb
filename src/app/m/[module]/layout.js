@@ -86,7 +86,8 @@ export default function ModuleLayout({ children, params }) {
   const isManager = isManagerRole(user);
   const base = `/m/${slug}`;
   const NAV = [
-    { label: 'Overview', href: base, icon: <IconGrid /> },
+    // AR has no overview page — the module opens straight on its Dashboard.
+    ...(slug !== 'ar' ? [{ label: 'Overview', href: base, icon: <IconGrid /> }] : []),
     // My Team is a management view — only managers/admins see it.
     ...((isManager || isAdmin) && slug !== 'ar' ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
     // Accounts & Finance: Approvals is the Pending/Approved/Rejected review queue

@@ -13,7 +13,7 @@ export const MODULE_ROUTES = {
   'Sales':              '/sales',
   'HR':                 '/m/hr',
   'Accounts & Finance': '/m/accounts',
-  'AR':                 '/m/ar',
+  'AR':                 '/m/ar/dashboard',
   'Execution':          '/m/execution',
   'Purchase':           '/m/purchase',
   'Land':               '/m/land',
