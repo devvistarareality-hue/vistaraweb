@@ -251,6 +251,28 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   useEffect(() => {
     if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
   }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Live duplicate check: as the phone number (and project) settle, look up
+  // whether this contact already has a lead. Same project → submitting here
+  // will update that lead in place, not create a new one (see backend
+  // LeadListView.post's merge path). Different project → informational only,
+  // a separate lead gets created as usual.
+  const [dupMatch, setDupMatch] = useState(null);
+  useEffect(() => {
+    const digits = (form.phone || '').replace(/\D/g, '');
+    if (digits.length < 10) { setDupMatch(null); return undefined; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`${SALES_ENDPOINTS.leadSearch}?search=${digits.slice(-10)}`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows) || !rows.length) { setDupMatch(null); return; }
+        const sameProject = form.project ? rows.find((r) => String(r.project_id) === String(form.project)) : null;
+        setDupMatch({ ...(sameProject || rows[0]), sameProject: !!sameProject });
+      } catch { /* ignore */ }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [form.phone, form.project]);
   // "Assign STM" list is scoped to the project picked above — an STM assigned
   // to specific projects (Team Users → Assign) only shows for those; refetch
   // whenever the project selection changes.
@@ -364,6 +386,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             lead: data.id, project: form.project || null,
             scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
             stm: form.stm || user?.id,
+            // data.telecaller (not form.telecaller) — when this Add Lead call merged
+            // into an existing telecaller-held lead (same phone+project), the returned
+            // record carries that telecaller, and their work should be credited with
+            // this visit even though this form never showed a Telecaller field.
+            referred_by_telecaller: data.telecaller || null,
             outcome: svOutcome, remarks: form.stm_remarks || '',
           }),
         });
@@ -429,6 +456,17 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               </div>
             ))}
           </div>
+
+          {dupMatch && (
+            <div className="nx-callout-info">
+              {dupMatch.sameProject ? (
+                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
+              ) : (
+                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for the project selected below.</>
+              )}
+            </div>
+          )}
+
           <div style={{ marginBottom: 18 }}>
             <label style={addLbl}>Lead Received Date</label>
             <input className="nx-input" type="date" value={form.lead_date} max={new Date().toISOString().slice(0, 10)}

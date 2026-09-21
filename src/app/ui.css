@@ -352,6 +352,8 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-total-box { background: linear-gradient(135deg, var(--accent-softer), var(--accent-soft)); border: 1.5px solid color-mix(in srgb, var(--primary) 28%, transparent); border-radius: 18px; padding: 12px 20px; margin-bottom: 14px; }
 .nx-callout-danger { background: var(--surface-2); border: 1px solid var(--danger-2); border-radius: 16px; padding: 14px; margin-bottom: 18px; }
 .nx-callout-danger-title { font-size: 12px; font-weight: 800; color: var(--danger); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
+.nx-callout-info { background: var(--warning-soft); border: 1px solid var(--warning-2); border-radius: 14px; padding: 12px 14px; margin-bottom: 18px; font-size: 12.5px; color: var(--text); line-height: 1.5; }
+.nx-callout-info b { color: var(--warning-2); }
 .nx-required { color: var(--danger); }
 .nx-total .nx-total-main { flex: 1; padding-right: 12px; font-size: 13px; font-weight: 500; color: var(--text-2); }
 .nx-total .nx-total-main small { display: block; font-size: 11px; font-weight: 400; color: var(--faint); }
