@@ -123,6 +123,11 @@ export default function ARLedgerPage({ params }) {
       </div>
 
       {frozen && <div className="nx-note warn">This booking was cancelled, so its account is frozen. Receipts and history are kept; no new payments can be recorded.</div>}
+      {data.no_schedule && (
+        <div className="nx-note warn">
+          No installment schedule was entered for this booking{String(data.plots).toUpperCase().startsWith('EOI') ? ' (an EOI)' : ''}, so AR cannot tell what is due when. Enter the installments on the booking in Sales and they appear here.
+        </div>
+      )}
       {data.plan_mismatch !== 0 && (
         <div className="nx-note warn">
           The LOI schedule adds up to {rupee(data.collectable)}, which is {rupee(Math.abs(data.plan_mismatch))} {data.plan_mismatch > 0 ? 'more' : 'less'} than Total Deal − Stamp Duty − Registration. Check the booking&apos;s installments.

@@ -19,6 +19,7 @@ export default function ARRegisterPage({ params }) {
   const [q, setQ] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [showAgeing, setShowAgeing] = useState(false);
+  const [noSchedOnly, setNoSchedOnly] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -45,9 +46,10 @@ export default function ARRegisterPage({ params }) {
     return (rows || []).filter((r) =>
       (!project || String(r.project_id) === project)
       && (!overdueOnly || r.overdue > 0)
+      && (!noSchedOnly || r.no_schedule)
       && (!needle || r.client_name.toLowerCase().includes(needle) || (r.phone || '').includes(needle)
         || String(r.plots).toLowerCase().includes(needle)));
-  }, [rows, project, q, overdueOnly]);
+  }, [rows, project, q, overdueOnly, noSchedOnly]);
 
   const totals = useMemo(() => shown.reduce((t, r) => ({
     collectable: t.collectable + r.collectable, received: t.received + r.received,
@@ -85,6 +87,9 @@ export default function ARRegisterPage({ params }) {
             <label className={`nx-check${overdueOnly ? ' is-on' : ''}`}>
               <input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} /> Overdue only
             </label>
+            <label className={`nx-check${noSchedOnly ? ' is-on' : ''}`}>
+              <input type="checkbox" checked={noSchedOnly} onChange={(e) => setNoSchedOnly(e.target.checked)} /> No schedule only
+            </label>
             <label className={`nx-check${showAgeing ? ' is-on' : ''}`}>
               <input type="checkbox" checked={showAgeing} onChange={(e) => setShowAgeing(e.target.checked)} /> Show ageing
             </label>
@@ -119,6 +124,7 @@ export default function ARRegisterPage({ params }) {
                           <div className="ar-client-sub">
                             {r.phone}{r.status === 'frozen' ? ' · Cancelled' : ''}{r.plan_mismatch ? ' · plan mismatch' : ''}
                           </div>
+                          {r.no_schedule && <span className="nx-status warn">No schedule</span>}
                         </td>
                         <td className="num">{rupee(r.total_deal)}</td>
                         <td className="num">{rupee(r.collectable)}</td>
