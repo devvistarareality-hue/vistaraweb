@@ -5,10 +5,10 @@ import { useRouter, notFound } from 'next/navigation';
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
-import { rupee, AGE_LABELS, worstBucket } from '../_ar';
+import { rupee, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
 
 // AR Register — the old workbook's "Plot Master": one row per approved booking.
-export default function ARRegisterPage({ params }) {
+export default function ARRegisterPage({ params, searchParams }) {
   if (params.module !== 'ar') notFound();
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -19,7 +19,8 @@ export default function ARRegisterPage({ params }) {
   const [q, setQ] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [showAgeing, setShowAgeing] = useState(false);
-  const [noSchedOnly, setNoSchedOnly] = useState(false);
+  // '' | 'any' | one of ISSUES — the dashboard links here with ?issue=…
+  const [issue, setIssue] = useState(searchParams?.issue || '');
 
   useEffect(() => {
     let alive = true;
@@ -46,10 +47,10 @@ export default function ARRegisterPage({ params }) {
     return (rows || []).filter((r) =>
       (!project || String(r.project_id) === project)
       && (!overdueOnly || r.overdue > 0)
-      && (!noSchedOnly || r.no_schedule)
+      && (!issue || (issue === 'any' ? hasIssue(r) : ISSUES.find((i) => i.value === issue)?.test(r)))
       && (!needle || r.client_name.toLowerCase().includes(needle) || (r.phone || '').includes(needle)
         || String(r.plots).toLowerCase().includes(needle)));
-  }, [rows, project, q, overdueOnly, noSchedOnly]);
+  }, [rows, project, q, overdueOnly, issue]);
 
   const totals = useMemo(() => shown.reduce((t, r) => ({
     collectable: t.collectable + r.collectable, received: t.received + r.received,
@@ -87,9 +88,11 @@ export default function ARRegisterPage({ params }) {
             <label className={`nx-check${overdueOnly ? ' is-on' : ''}`}>
               <input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} /> Overdue only
             </label>
-            <label className={`nx-check${noSchedOnly ? ' is-on' : ''}`}>
-              <input type="checkbox" checked={noSchedOnly} onChange={(e) => setNoSchedOnly(e.target.checked)} /> No schedule only
-            </label>
+            <select className="nx-input nx-input-sm nx-filter-sel" value={issue} onChange={(e) => setIssue(e.target.value)}>
+              <option value="">All accounts</option>
+              <option value="any">Needs attention</option>
+              {ISSUES.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
+            </select>
             <label className={`nx-check${showAgeing ? ' is-on' : ''}`}>
               <input type="checkbox" checked={showAgeing} onChange={(e) => setShowAgeing(e.target.checked)} /> Show ageing
             </label>
@@ -122,9 +125,14 @@ export default function ARRegisterPage({ params }) {
                         <td>
                           <div className="ar-client">{r.client_name || '—'}</div>
                           <div className="ar-client-sub">
-                            {r.phone}{r.status === 'frozen' ? ' · Cancelled' : ''}{r.plan_mismatch ? ' · plan mismatch' : ''}
+                            {r.phone}{r.status === 'frozen' ? ' · Cancelled' : ''}
                           </div>
-                          {r.no_schedule && <span className="nx-status warn">No schedule</span>}
+                          {(hasIssue(r) || r.ar_schedule) && (
+                            <div className="ar-badges">
+                              {ISSUES.filter((i) => i.test(r)).map((i) => <span key={i.value} className={`nx-status ${i.tone}`}>{i.label}</span>)}
+                              {r.ar_schedule && <span className="nx-status ok">Schedule set in AR</span>}
+                            </div>
+                          )}
                         </td>
                         <td className="num">{rupee(r.total_deal)}</td>
                         <td className="num">{rupee(r.collectable)}</td>

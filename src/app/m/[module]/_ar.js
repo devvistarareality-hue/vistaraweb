@@ -32,3 +32,32 @@ export function worstBucket(ageing) {
   }
   return '';
 }
+
+// Account-health flags, one list for the register filter, the dashboard's
+// "Needs attention" card and the badges.
+export const ISSUES = [
+  { value: 'no_schedule', label: 'No schedule', tone: 'warn', test: (r) => r.no_schedule },
+  { value: 'plan_mismatch', label: 'Plan mismatch', tone: 'warn', test: (r) => !!r.plan_mismatch },
+  { value: 'suspect_amount', label: 'Check deal amount', tone: 'bad', test: (r) => r.suspect_amount },
+];
+export const hasIssue = (r) => ISSUES.some((i) => i.test(r));
+
+// The statement is print-ready HTML from the server; the browser's print dialog
+// saves it as a PDF. The window opens before the fetch so pop-up blockers allow it.
+export async function printStatement(url, apiFetch) {
+  const w = window.open('', '_blank');
+  if (!w) return 'Allow pop-ups for this site to print the statement.';
+  w.document.write('<p>Preparing statement…</p>');
+  try {
+    const r = await apiFetch(url);
+    if (!r.ok) { w.close(); return 'Could not prepare the statement.'; }
+    const html = await r.text();
+    w.document.open(); w.document.write(html); w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 350);
+    return '';
+  } catch {
+    w.close();
+    return 'Could not prepare the statement. Check your connection.';
+  }
+}

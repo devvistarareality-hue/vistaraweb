@@ -8,7 +8,7 @@ import { apiFetch } from '../../../../../utils/apiFetch';
 import { confirmDialog, notify } from '../../../../../lib/notify';
 import { formatDMY } from '../../../../../lib/dateFormat';
 import Loader from '../../../../../components/Loader';
-import { rupee, MODES, AGE_LABELS, STATUS, today } from '../../_ar';
+import { rupee, MODES, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 
@@ -27,6 +27,8 @@ export default function ARLedgerPage({ params }) {
   const [saving, setSaving] = useState(false);
   const [legalDate, setLegalDate] = useState('');
   const [audit, setAudit] = useState(null);       // null | { receipt, rows }
+  const [sched, setSched] = useState(null);       // null | [{ date, amount }] while the schedule editor is open
+  const [schedErr, setSchedErr] = useState('');
 
   const qs = useCallback(() => {
     const p = [`as_of=${asOf}`];
@@ -98,6 +100,36 @@ export default function ARLedgerPage({ params }) {
     if (r.ok) { notify('Due date saved', 'success'); setData(await r.json()); } else notify('Could not save the date', 'error');
   }
 
+  async function statement() {
+    const e = await printStatement(AR_ENDPOINTS.statement(id) + qs(), apiFetch);
+    if (e) notify(e, 'error');
+  }
+
+  const openSched = () => {
+    setSchedErr('');
+    setSched(data.schedule_rows.length ? data.schedule_rows.map((r) => ({ date: r.date, amount: String(Number(r.amount)) }))
+      : [{ date: '', amount: String(data.schedule_target) }]);
+  };
+
+  async function saveSched(rows) {
+    const clearing = rows.length === 0;
+    const ok = await confirmDialog(
+      clearing ? 'Remove the schedule entered in AR? The account goes back to "No schedule" and stops accruing interest.'
+        : `Save this ${rows.length}-installment schedule? Interest and overdue amounts will be calculated from these dates.`,
+      { title: clearing ? 'Remove schedule?' : 'Save schedule?', confirmText: clearing ? 'Remove' : 'Save', tone: clearing ? 'danger' : undefined },
+    );
+    if (!ok) return;
+    setSaving(true); setSchedErr('');
+    try {
+      const r = await apiFetch(AR_ENDPOINTS.account(id) + qs(), { method: 'PATCH', body: JSON.stringify({ schedule: rows }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setSchedErr(d.detail || 'Could not save the schedule.'); setSaving(false); return; }
+      setData(d); setSched(null);
+      notify(clearing ? 'Schedule removed' : 'Schedule saved', 'success');
+    } catch { setSchedErr('Could not save. Check your connection.'); }
+    setSaving(false);
+  }
+
   if (err && !data) return <div className="nx-page nx-page-center nx-w-md"><div className="nx-note bad">{err}</div></div>;
   if (!data) return <Loader label="Calculating ledger…" />;
 
@@ -118,6 +150,7 @@ export default function ARLedgerPage({ params }) {
         <div className="ar-head-actions">
           <label className="nx-field-inline" htmlFor="ar-asof">Ledger date</label>
           <input id="ar-asof" type="date" className="nx-input nx-input-sm" value={asOf} onChange={(e) => setAsOf(e.target.value || today())} />
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
           {!frozen && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Record payment</button>}
         </div>
       </div>
@@ -125,7 +158,13 @@ export default function ARLedgerPage({ params }) {
       {frozen && <div className="nx-note warn">This booking was cancelled, so its account is frozen. Receipts and history are kept; no new payments can be recorded.</div>}
       {data.no_schedule && (
         <div className="nx-note warn">
-          No installment schedule was entered for this booking{String(data.plots).toUpperCase().startsWith('EOI') ? ' (an EOI)' : ''}, so AR cannot tell what is due when. Enter the installments on the booking in Sales and they appear here.
+          The booking has no installment schedule{String(data.plots).toUpperCase().startsWith('EOI') ? ' (an EOI)' : ''}, so AR cannot tell what is due when: the unscheduled amount shows as one undated Balance line with no interest.
+          {data.schedule_editable ? ' Use “Set schedule” below to enter the installments here.' : ''}
+        </div>
+      )}
+      {data.suspect_amount && (
+        <div className="nx-note bad">
+          The deal amount on this booking is only {rupee(data.total_deal)}, which looks like a typing mistake. Correct the booking in Sales before relying on these figures.
         </div>
       )}
       {data.plan_mismatch !== 0 && (
@@ -173,7 +212,13 @@ export default function ARLedgerPage({ params }) {
 
       <div className="nx-card ar-card">
         <div className="ar-card-head">
-          <div><div className="ar-card-title">Payment plan</div><div className="ar-card-sub">From the approved LOI</div></div>
+          <div><div className="ar-card-title">Payment plan</div>
+            <div className="ar-card-sub">{data.ar_schedule
+              ? `Installments set in AR${data.schedule_by ? ` by ${data.schedule_by}` : ''}${data.schedule_at ? ` on ${formatDMY(data.schedule_at.slice(0, 10))}` : ''} · Legal & Other Charges from the LOI`
+              : 'From the approved LOI'}</div></div>
+          {data.schedule_editable && (
+            <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={openSched}>{data.ar_schedule ? 'Edit schedule' : 'Set schedule'}</button>
+          )}
         </div>
         <div className="ar-scroll">
           <table className="ar-table">
@@ -189,7 +234,7 @@ export default function ARLedgerPage({ params }) {
                         <input type="date" className="nx-input" value={legalDate} onChange={(e) => setLegalDate(e.target.value)} />
                         <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={saveLegalDate} disabled={(legalDate || null) === (data.legal_due_date || null)}>Save</button>
                       </span>
-                    ) : (p.due ? formatDMY(p.due) : <span className="muted">No date</span>)}
+                    ) : (p.due ? formatDMY(p.due) : <span className="muted">{p.kind === 'balance' ? 'No schedule' : 'No date'}</span>)}
                   </td>
                   <td className="num">{rupee(p.amount)}</td>
                   <td className="num">{rupee(p.paid)}</td>
@@ -236,7 +281,7 @@ export default function ARLedgerPage({ params }) {
       <div className="nx-card ar-card">
         <div className="ar-card-head">
           <div><div className="ar-card-title">Interest summary</div>
-            <div className="ar-card-sub">2% a month when paid more than 10 days late (every day counts) · 1% a month credit when paid early</div></div>
+            <div className="ar-card-sub">2% a month when paid more than 10 days late (every day counts) · 1% a month credit when paid early (not on Legal &amp; Other Charges)</div></div>
         </div>
         {data.interest_rows.length === 0 ? <div className="ar-empty">Nothing allocated yet.</div> : (
           <div className="ar-scroll">
@@ -300,6 +345,12 @@ export default function ARLedgerPage({ params }) {
         </div>
       )}
 
+      {sched && (
+        <ScheduleEditor rows={sched} setRows={setSched} target={data.schedule_target} err={schedErr} saving={saving}
+          canClear={data.ar_schedule} onClose={() => !saving && setSched(null)} onSave={saveSched}
+          sub={`${data.client_name} · ${data.project} · Plot ${data.plots}`} />
+      )}
+
       {audit && (
         <div className="ar-backdrop" onClick={() => setAudit(null)}>
           <div className="nx-card nx-modal ar-modal" onClick={(e) => e.stopPropagation()}>
@@ -322,6 +373,48 @@ export default function ARLedgerPage({ params }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Installments for a booking that has none (Pratishtha flats and the like). They
+// must add up to the collectable amount less Legal & Other Charges, which keeps
+// its own line and date.
+function ScheduleEditor({ rows, setRows, target, err, saving, canClear, onClose, onSave, sub }) {
+  const total = rows.reduce((t, r) => t + (Number(r.amount) || 0), 0);
+  const diff = Math.round(target - total);
+  const valid = rows.length > 0 && rows.every((r) => r.date && Number(r.amount) > 0) && Math.abs(diff) <= 10;
+  const set = (i, k, v) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const add = () => setRows([...rows, { date: '', amount: diff > 0 ? String(diff) : '' }]);
+  return (
+    <div className="ar-backdrop" onClick={onClose}>
+      <div className="nx-card nx-modal ar-modal wide" onClick={(e) => e.stopPropagation()}>
+        <div className="ar-modal-title">Payment schedule</div>
+        <div className="ar-modal-sub">{sub} · must add up to {rupee(target)}</div>
+        {err && <div className="nx-note bad">{err}</div>}
+        <div className="ar-sched-list">
+          {rows.map((r, i) => (
+            <div key={i} className="ar-sched-row">
+              <div className="ar-sched-n">{i + 1}</div>
+              <input type="date" aria-label={`Installment ${i + 1} due date`} className="nx-input" value={r.date} onChange={(e) => set(i, 'date', e.target.value)} />
+              <input type="number" min="1" inputMode="decimal" aria-label={`Installment ${i + 1} amount`} placeholder="Amount ₹" className="nx-input" value={r.amount} onChange={(e) => set(i, 'amount', e.target.value)} />
+              <button className="nx-btn nx-btn-sm nx-btn-ghost" aria-label="Remove installment" onClick={() => setRows(rows.filter((_, j) => j !== i))} disabled={rows.length === 1}>✕</button>
+            </div>
+          ))}
+        </div>
+        <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={add}>+ Add installment</button>
+        <div className={`ar-sched-total ${Math.abs(diff) <= 10 ? 'ok' : 'bad'}`}>
+          <span>Total {rupee(total)}</span>
+          <b>{Math.abs(diff) <= 10 ? 'Adds up' : diff > 0 ? `${rupee(diff)} still to schedule` : `${rupee(-diff)} too much`}</b>
+        </div>
+        <div className="ar-modal-foot">
+          {canClear && <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => onSave([])} disabled={saving}>Remove schedule</button>}
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => onSave(rows.map((r) => ({ date: r.date, amount: r.amount })))} disabled={saving || !valid}>
+            {saving ? 'Saving…' : 'Save schedule'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
