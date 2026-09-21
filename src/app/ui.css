@@ -877,3 +877,67 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
   .ep-hero-stat-icon { margin: 0; }
   .ep-hero-stat b { font-size: 24px; }
 }
+
+/* ─── Club 1000 dashboard ─────────────────────────────────────────────────── */
+.nx-c1k-hero { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 26px 30px; border-radius: 26px; margin-bottom: 22px; background: var(--hero); }
+.nx-c1k-hero-eyebrow { font-size: 11.5px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.nx-c1k-hero-title { font-size: 26px; font-weight: 800; color: #fff; }
+.nx-c1k-hero-sub { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+.nx-c1k-hero-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.nx-c1k-hero-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.nx-c1k-hero-stat { text-align: right; background: rgba(255,255,255,0.1); border-radius: 18px; padding: 12px 20px; }
+.nx-c1k-hero-stat-num { display: block; font-size: 24px; font-weight: 800; color: #fff; }
+.nx-c1k-hero-stat-label { font-size: 10.5px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.4px; }
+.nx-c1k-hero-warn { font-size: 11px; color: var(--warning-2); }
+
+.nx-kpi-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+.nx-kpi-card { flex: 1 1 190px; min-width: 170px; background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.06); border: 1px solid var(--surface-3); display: flex; flex-direction: column; gap: 10px; transition: transform 0.15s, box-shadow 0.15s; text-decoration: none; }
+a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(var(--ink-rgb),0.1); }
+.nx-kpi-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.nx-kpi-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.nx-kpi-value { font-size: 22px; font-weight: 800; line-height: 1.2; }
+.nx-kpi-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+.nx-c1k-section-title { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 16px; }
+.nx-c1k-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.nx-c1k-section-link { font-size: 12px; font-weight: 700; color: var(--success); text-decoration: none; }
+.nx-c1k-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+.nx-c1k-card-full { background: var(--surface); border-radius: 20px; border: 1px solid var(--surface-3); padding: 20px; height: 100%; box-sizing: border-box; }
+
+.nx-donut-wrap { display: flex; align-items: center; gap: 20px; }
+.nx-donut-circle { width: 130px; height: 130px; flex-shrink: 0; position: relative; }
+.nx-donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.nx-donut-center-num { font-size: 20px; font-weight: 800; color: var(--text); }
+.nx-donut-center-label { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.nx-donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.nx-donut-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.nx-donut-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.nx-donut-name { color: var(--text); flex: 1; }
+.nx-donut-count { font-weight: 700; color: var(--text); }
+.nx-donut-empty { padding: 32px 0; text-align: center; color: var(--border-strong); font-size: 13px; }
+
+.nx-c1k-list-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--surface-2); }
+.nx-c1k-list-row:first-child { border-top: none; }
+.nx-c1k-list-rank { width: 22px; height: 22px; border-radius: 8px; background: var(--success-soft); color: var(--success); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nx-c1k-list-main { flex: 1; min-width: 0; }
+.nx-c1k-list-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nx-c1k-list-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.nx-c1k-list-amount { font-size: 13px; font-weight: 800; color: var(--success); flex-shrink: 0; }
+
+.nx-c1k-money-row { display: flex; gap: 14px; }
+.nx-c1k-money-tile { flex: 1; border-radius: 16px; padding: 14px 16px; }
+.nx-c1k-money-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.nx-c1k-money-value { font-size: 18px; font-weight: 800; }
+.nx-c1k-money-tile.pending { background: var(--warning-soft); }
+.nx-c1k-money-tile.pending .nx-c1k-money-label, .nx-c1k-money-tile.pending .nx-c1k-money-value { color: var(--warning-2); }
+.nx-c1k-money-tile.paid { background: var(--success-soft); }
+.nx-c1k-money-tile.paid .nx-c1k-money-label, .nx-c1k-money-tile.paid .nx-c1k-money-value { color: var(--success); }
+.nx-c1k-empty { padding: 20px 0; text-align: center; color: var(--muted); font-size: 13px; }
+.nx-c1k-section-head-title { font-size: 13px; font-weight: 800; color: var(--text); }
+.nx-mt-18 { margin-top: 18px; }
+.nx-mt-20 { margin-top: 20px; }
+.nx-mt-28 { margin-top: 28px; }
+
+@media (max-width: 860px) {
+  .nx-c1k-grid-2 { grid-template-columns: 1fr; }
+}
