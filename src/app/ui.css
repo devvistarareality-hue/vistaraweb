@@ -707,8 +707,6 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .ard-issue:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .ard-issue.warn { background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning-solid) 28%, transparent); color: var(--warning); }
 .ard-issue.bad { background: var(--danger-soft); border-color: var(--danger-2); color: var(--danger); }
-.ard-issue.info { background: var(--accent-soft); border-color: var(--blue-2); color: var(--accent); }
-.ard-issue.info .ard-issue-n small { color: var(--accent); }
 .ard-issue-icon { width: 34px; height: 34px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); flex-shrink: 0; }
 .ard-issue-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ard-issue-n { font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.1; }

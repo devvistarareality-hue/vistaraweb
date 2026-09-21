@@ -135,11 +135,6 @@ export default function ARLedgerPage({ params }) {
           {' '}Ask Sales to add the installments to the booking and they appear here.
         </div>
       )}
-      {data.revision_pending && (
-        <div className="nx-note info">
-          A revision of this booking is waiting for approval. Until it is approved, AR uses the last approved version — which is why this deal is not on the Accounts &amp; Finance Bookings page right now.
-        </div>
-      )}
       {data.suspect_amount && (
         <div className="nx-note bad">
           The deal amount on this booking is only {rupee(data.total_deal)}, which looks like a typing mistake. Correct the booking in Sales before relying on these figures.
