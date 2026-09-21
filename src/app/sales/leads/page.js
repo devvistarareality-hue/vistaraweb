@@ -202,6 +202,34 @@ function ChannelPartnerPicker({ value, onChange, options, inputStyle, placeholde
   );
 }
 
+// Shown right under whichever status field was actually set to Not Qualified
+// (TC Status or STM/CP Status) — the reason applies to the lead as a whole,
+// but it belongs next to the decision that produced it, not tacked onto the
+// end of the form.
+function NotQualifiedFields({ reason, note, onReason, onNote, lblStyle, selStyle, taStyle }) {
+  return (
+    <div className="nx-callout-danger">
+      <div className="nx-callout-danger-title">Not Qualified</div>
+      <div style={{ marginBottom: reason === 'other' ? 12 : 0 }}> {/* inline-ok: spacing toggles only when the Note field below appears */}
+        <label style={lblStyle}>Reason<span className="nx-required">*</span></label>
+        <select className="nx-input" value={reason || ''} onChange={(e) => onReason(e.target.value)} style={selStyle}>
+          <option value="">— Select reason —</option>
+          <option value="religion">Religion</option>
+          <option value="caste">Caste</option>
+          <option value="budget">Budget</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      {reason === 'other' && (
+        <div>
+          <label style={lblStyle}>Note<span className="nx-required">*</span></label>
+          <textarea className="nx-input" value={note || ''} onChange={(e) => onNote(e.target.value)} placeholder="Reason details" rows={2} style={taStyle} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = [], cpOnly = false, channelPartners = [], prefill = null, onClose, onAdded }) {
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -526,6 +554,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                   {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
+              {form.telecaller_status === 'not_qualified' && (
+                <NotQualifiedFields reason={form.disqualify_reason} note={form.disqualify_note}
+                  onReason={(v) => setForm({ ...form, disqualify_reason: v })} onNote={(v) => setForm({ ...form, disqualify_note: v })}
+                  lblStyle={addLbl} selStyle={addSel} taStyle={addTa} />
+              )}
               <div style={{ marginBottom: 18 }}>
                 <label style={addLbl}>TC Remarks{_isTelecaller &&  <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea className="nx-input" value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })} placeholder={_isTelecaller ? 'What was discussed' : 'Optional'} style={addTa} />
@@ -577,6 +610,11 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                   {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
+              {form.stm_status === 'not_qualified' && (
+                <NotQualifiedFields reason={form.disqualify_reason} note={form.disqualify_note}
+                  onReason={(v) => setForm({ ...form, disqualify_reason: v })} onNote={(v) => setForm({ ...form, disqualify_note: v })}
+                  lblStyle={addLbl} selStyle={addSel} taStyle={addTa} />
+              )}
               <div style={{ marginBottom: 18 }}>
                 <label style={addLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'}{_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea className="nx-input" value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })} placeholder={_isStm ? 'What was discussed' : 'Optional'} style={addTa} />
@@ -615,31 +653,6 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 </div>
               )}
             </>
-          )}
-
-          {/* Not Qualified reason — one shared field regardless of whether TC or
-              STM/CP status is the one set to it, since a lead has one
-              disqualification, not one per stage. */}
-          {isNotQualified && (
-            <div className="nx-callout-danger">
-              <div className="nx-callout-danger-title">Not Qualified</div>
-              <div style={{ marginBottom: form.disqualify_reason === 'other' ? 12 : 0 }}> {/* inline-ok: spacing toggles only when the Note field below appears */}
-                <label style={addLbl}>Reason<span className="nx-required">*</span></label>
-                <select className="nx-input" value={form.disqualify_reason} onChange={(e) => setForm({ ...form, disqualify_reason: e.target.value })} style={addSel}>
-                  <option value="">— Select reason —</option>
-                  <option value="religion">Religion</option>
-                  <option value="caste">Caste</option>
-                  <option value="budget">Budget</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              {form.disqualify_reason === 'other' && (
-                <div>
-                  <label style={addLbl}>Note<span className="nx-required">*</span></label>
-                  <textarea className="nx-input" value={form.disqualify_note} onChange={(e) => setForm({ ...form, disqualify_note: e.target.value })} placeholder="Reason details" style={addTa} />
-                </div>
-              )}
-            </div>
           )}
 
           {/* ── FOLLOW-UPS ── mirrors the Lead Detail modal's inline scheduler */}
@@ -1212,6 +1225,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   </select>
                 </div>
               </div>
+              {form.telecaller_status === 'not_qualified' && (
+                <NotQualifiedFields reason={form.disqualify_reason} note={form.disqualify_note}
+                  onReason={(v) => setForm({ ...form, disqualify_reason: v })} onNote={(v) => setForm({ ...form, disqualify_note: v })}
+                  lblStyle={mLbl} selStyle={mSel} taStyle={mTa} />
+              )}
               <div style={{ marginBottom: 18 }}>
                 <label style={mLbl}>TC Remarks {_isTelecaller && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea className="nx-input" value={form.telecaller_remarks} onChange={(e) => setForm({ ...form, telecaller_remarks: e.target.value })}
@@ -1255,6 +1273,11 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   </select>
                 </div>
               </div>
+              {form.stm_status === 'not_qualified' && (
+                <NotQualifiedFields reason={form.disqualify_reason} note={form.disqualify_note}
+                  onReason={(v) => setForm({ ...form, disqualify_reason: v })} onNote={(v) => setForm({ ...form, disqualify_note: v })}
+                  lblStyle={mLbl} selStyle={mSel} taStyle={mTa} />
+              )}
               <div style={{ marginBottom: 18 }}>
                 <label style={mLbl}>{cpOnly ? 'Lead Remarks' : _isCp ? 'CP Remarks' : 'STM Remarks'} {_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                 <textarea className="nx-input" value={form.stm_remarks} onChange={(e) => setForm({ ...form, stm_remarks: e.target.value })}
@@ -1325,31 +1348,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                 </div>
               )}
               </>)}
-
-              {/* Not Qualified reason — one shared field regardless of whether TC or
-                  STM/CP status is the one set to it. */}
-              {isNotQualified && (
-                <div className="nx-callout-danger">
-                  <div className="nx-callout-danger-title">Not Qualified</div>
-                  <div style={{ marginBottom: form.disqualify_reason === 'other' ? 12 : 0 }}> {/* inline-ok: spacing toggles only when the Note field below appears */}
-                    <label style={mLbl}>Reason<span className="nx-required">*</span></label>
-                    <select className="nx-input" value={form.disqualify_reason || ''} onChange={(e) => setForm({ ...form, disqualify_reason: e.target.value })} style={mSel}>
-                      <option value="">— Select reason —</option>
-                      <option value="religion">Religion</option>
-                      <option value="caste">Caste</option>
-                      <option value="budget">Budget</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  {form.disqualify_reason === 'other' && (
-                    <div>
-                      <label style={mLbl}>Note<span className="nx-required">*</span></label>
-                      <textarea className="nx-input" value={form.disqualify_note || ''} onChange={(e) => setForm({ ...form, disqualify_note: e.target.value })}
-                        placeholder="Reason details" rows={2} style={mTa} />
-                    </div>
-                  )}
-                </div>
-              )}
 
               {(lead.meta_campaign_name || lead.meta_adset_name || lead.meta_ad_name) && (
                 <div style={{ background: 'var(--surface-2)', borderRadius: 14, padding: '12px 14px', marginBottom: 18 }}>
