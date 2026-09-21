@@ -148,7 +148,6 @@ export const AR_ENDPOINTS = {
   receiptAudit: (id) => `${BASE_URL}/api/ar/receipts/${id}/audit/`,
   get dashboard()  { return `${BASE_URL}/api/ar/dashboard/`; },
   get import()     { return `${BASE_URL}/api/ar/import/`; },
-  get importEntries() { return `${BASE_URL}/api/ar/import/entries/`; },
   get importTemplate() { return `${BASE_URL}/api/ar/import/template/`; },
 };
 
