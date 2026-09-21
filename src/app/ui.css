@@ -625,14 +625,6 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .ar-link { text-decoration: none; }
 .ar-link:hover { color: var(--accent); }
 .ar-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
-.ar-sched-row { display: grid; grid-template-columns: 28px 1fr 1fr 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
-.ar-sched-row .nx-input { min-height: 38px; }
-.ar-sched-n { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; }
-.ar-sched-total { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); margin-top: 6px; }
-.ar-sched-total b { font-variant-numeric: tabular-nums; }
-.ar-sched-total.ok b { color: var(--success); }
-.ar-sched-total.bad b { color: var(--danger); }
-.ar-sched-list { max-height: 46vh; overflow-y: auto; padding-right: 2px; }
 .ar-modal.wide { max-width: 560px; }
 @media (max-width: 600px) { .ar-bar-row { grid-template-columns: 84px 1fr 96px; } }
 .ar-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 8, 16, 0.55); }
