@@ -457,16 +457,6 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             ))}
           </div>
 
-          {dupMatch && (
-            <div className="nx-callout-info">
-              {dupMatch.sameProject ? (
-                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
-              ) : (
-                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for the project selected below.</>
-              )}
-            </div>
-          )}
-
           <div style={{ marginBottom: 18 }}>
             <label style={addLbl}>Lead Received Date</label>
             <input className="nx-input" type="date" value={form.lead_date} max={new Date().toISOString().slice(0, 10)}
@@ -570,6 +560,16 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
               </div>
             )}
           </div>
+
+          {dupMatch && (
+            <div className="nx-callout-info">
+              {dupMatch.sameProject ? (
+                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
+              ) : (
+                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for this project instead.</>
+              )}
+            </div>
+          )}
 
           {/* Telecaller (Pre-Sales) — a Channel Partner lead skips telecaller calling
               entirely: it goes straight into the STM pipeline. */}
