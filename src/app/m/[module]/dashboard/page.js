@@ -14,7 +14,7 @@ import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
 
 const ISSUE_TEXT = {
-  no_schedule: 'Booking has no installment schedule — set one in the ledger',
+  no_schedule: 'Booking has no installment schedule — Sales needs to add one',
   plan_mismatch: "LOI schedule doesn't add up to the deal",
   suspect_amount: 'Deal amount looks mistyped (under ₹1 lakh)',
 };

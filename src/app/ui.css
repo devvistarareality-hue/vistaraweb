@@ -630,14 +630,6 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .ar-link { text-decoration: none; }
 .ar-link:hover { color: var(--accent); }
 .ar-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
-.ar-sched-row { display: grid; grid-template-columns: 28px 1fr 1fr 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
-.ar-sched-row .nx-input { min-height: 38px; }
-.ar-sched-n { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; }
-.ar-sched-total { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); margin-top: 6px; }
-.ar-sched-total b { font-variant-numeric: tabular-nums; }
-.ar-sched-total.ok b { color: var(--success); }
-.ar-sched-total.bad b { color: var(--danger); }
-.ar-sched-list { max-height: 46vh; overflow-y: auto; padding-right: 2px; }
 .ar-modal.wide { max-width: 560px; }
 @media (max-width: 600px) { .ar-bar-row { grid-template-columns: 84px 1fr 96px; } }
 .ar-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 8, 16, 0.55); }
@@ -805,3 +797,79 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .imp-file.has-file { border-style: solid; border-color: var(--success-2); background: var(--success-soft); color: var(--success); }
 .imp-file.is-off { pointer-events: none; }
 .imp-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* ── Employee portal (/dashboard: people with several modules) ─────────── */
+.ep-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.ep-shell { min-height: 100vh; overflow-x: clip; }
+.ep-nav { position: sticky; top: 16px; z-index: 100; margin: 16px 16px 0; height: 68px; padding: 0 16px 0 18px; border-radius: 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--glass); border: 1px solid var(--border);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: var(--shadow-sm), 0 8px 24px rgba(var(--ink-rgb), .06); }
+.ep-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.ep-logo { width: 38px; height: 38px; border-radius: 12px; padding: 6px; background: var(--surface); border: 1px solid var(--border); display: inline-flex; flex-shrink: 0; }
+.ep-brand-name { font-size: 14.5px; font-weight: 800; color: var(--text); }
+.ep-brand-sub { font-size: 11.5px; color: var(--muted); }
+.ep-nav-right { display: flex; align-items: center; gap: 14px; }
+.ep-user { display: flex; align-items: center; gap: 10px; }
+.ep-avatar { width: 34px; height: 34px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 14px; }
+.ep-user-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.ep-user-role { font-size: 11px; color: var(--muted); }
+.ep-logout { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  background: var(--danger-soft); border: 1px solid var(--danger-2); color: var(--danger); font: inherit; font-size: 13px; font-weight: 700; transition: background .15s; }
+.ep-logout:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.ep-main { padding: 28px 36px 48px; max-width: 1280px; margin: 0 auto; }
+
+.ep-hero { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 34px 36px; border-radius: 28px; background: var(--hero); color: #fff; box-shadow: var(--shadow-lg); margin-bottom: 30px; animation: nx-rise .5s cubic-bezier(.2,.8,.2,1) backwards; }
+.ep-hero:after { content: ''; position: absolute; right: -90px; top: -120px; width: 340px; height: 340px; border-radius: 50%; background: rgba(255,255,255,.05); pointer-events: none; }
+.ep-hero-main { position: relative; z-index: 1; min-width: 0; }
+.ep-hello { font-size: 15px; font-weight: 600; opacity: .75; }
+.ep-name { font-size: clamp(28px, 3.6vw, 40px); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; margin: 4px 0 14px; color: #fff; }
+.ep-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; opacity: .85; }
+.ep-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.ep-role { padding: 3px 11px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); font-weight: 700; font-size: 12px; }
+.ep-hero-stat { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 16px 22px; min-width: 150px;
+  border-radius: 20px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(6px); }
+.ep-hero-stat-icon { opacity: .75; margin-bottom: 6px; }
+.ep-hero-stat b { font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.ep-hero-stat span:last-child { font-size: 12px; opacity: .75; }
+
+.ep-section { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.ep-section h2 { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.ep-section span { font-size: 13px; color: var(--muted); }
+
+.ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 16px; }
+.ep-card { --tone: var(--accent); --tone-bg: var(--accent-soft); position: relative; overflow: hidden; display: flex; flex-direction: column;
+  padding: 22px; border-radius: 24px; text-decoration: none; min-height: 196px; animation: nx-rise .5s cubic-bezier(.2,.8,.2,1) backwards; }
+.ep-card.tone-green { --tone: var(--success); --tone-bg: var(--success-soft); }
+.ep-card.tone-peach { --tone: var(--warning); --tone-bg: var(--warning-soft); }
+.ep-card:before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--tone); opacity: 0; transition: opacity .2s; }
+.ep-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--tone) 35%, transparent) !important; box-shadow: var(--card-shadow-hover) !important; }
+.ep-card:hover:before { opacity: 1; }
+.ep-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.ep-icon { width: 54px; height: 54px; border-radius: 17px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--tone-bg); color: var(--tone); border: 1px solid color-mix(in srgb, var(--tone) 18%, transparent); }
+.ep-go { width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted); background: var(--surface-2); transition: background .2s, color .2s, transform .2s; }
+.ep-card:hover .ep-go { background: var(--tone); color: #fff; transform: rotate(45deg); }
+.ep-card-title { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.ep-card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 5px; flex: 1; }
+.ep-card-open { font-size: 12.5px; font-weight: 700; color: var(--tone); margin-top: 16px; }
+
+.ep-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 56px 20px; border-radius: 24px; }
+.ep-empty-icon { width: 68px; height: 68px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--muted); margin-bottom: 10px; }
+.ep-empty b { font-size: 16px; color: var(--text); }
+.ep-empty p { font-size: 13.5px; color: var(--muted); max-width: 320px; }
+
+@media (max-width: 720px) {
+  .ep-nav { margin: 10px 10px 0; top: 10px; padding: 0 10px 0 12px; height: 60px; }
+  .ep-user, .ep-logout span, .ep-brand-sub { display: none; }
+  .ep-nav-right { gap: 8px; }
+  .ep-hero, .ep-card { min-width: 0; }
+  .ep-logout { padding: 0 10px; }
+  .ep-main { padding: 18px 14px 36px; }
+  .ep-hero { flex-direction: column; align-items: flex-start; padding: 24px 22px; border-radius: 24px; }
+  .ep-hero-stat { flex-direction: row; align-items: center; gap: 10px; padding: 12px 16px; }
+  .ep-hero-stat-icon { margin: 0; }
+  .ep-hero-stat b { font-size: 24px; }
+}

@@ -1,26 +1,38 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { MODULE_ACCENT } from '../../constants/theme';
+import {
+  TrendingUp, Users, Wallet, ReceiptIndianRupee, ListChecks, ShoppingCart, MapPin, Coins, Handshake,
+  ArrowUpRight, CalendarDays, LayoutGrid, Package,
+} from 'lucide-react';
 import { canAccessChannelPartner } from '../../lib/moduleAccess';
 
+// Each module's card: where it goes, what it's for, its icon and accent tone.
 const MODULE_CONFIG = {
-  'Sales':              { accent: MODULE_ACCENT.Sales,                 href: '/sales',       sub: 'Leads & Pipeline' },
-  'HR':                 { accent: MODULE_ACCENT.HR,                    href: '/m/hr',        sub: 'People & Attendance' },
-  'Accounts & Finance': { accent: MODULE_ACCENT['Accounts & Finance'], href: '/m/accounts',  sub: 'Accounting & Finance' },
-  'AR':                 { accent: MODULE_ACCENT.AR,                    href: '/m/ar/dashboard', sub: 'Collections & Dues' },
-  'Execution':          { accent: MODULE_ACCENT.Execution,             href: '/m/execution', sub: 'Tasks & Progress' },
-  'Purchase':           { accent: MODULE_ACCENT.Purchase,              href: '/m/purchase',  sub: 'Vendors & Orders' },
-  'Land':               { accent: MODULE_ACCENT.Land,                  href: '/m/land',      sub: 'Properties & Sites' },
-  'Club 1000':          { accent: MODULE_ACCENT['Club 1000'],          href: '/club1000',    sub: 'Investment Schemes' },
-  'Channel Partner':    { accent: MODULE_ACCENT['Channel Partner'],    href: '/sales/channel-partners', sub: 'Referral Partners' },
+  'Sales':              { title: 'Sales',               href: '/sales',                  desc: 'Leads, follow-ups, site visits and bookings', Icon: TrendingUp,         tone: 'peach' },
+  'HR':                 { title: 'HR',                  href: '/m/hr',                   desc: 'People, attendance and team structure',       Icon: Users,              tone: 'blue' },
+  'Accounts & Finance': { title: 'Accounts & Finance',  href: '/m/accounts',             desc: 'Booking approvals and the bookings ledger',   Icon: Wallet,             tone: 'green' },
+  'AR':                 { title: 'Accounts Receivable', href: '/m/ar/dashboard',         desc: 'Collections, dues, ageing and interest',      Icon: ReceiptIndianRupee, tone: 'blue' },
+  'Execution':          { title: 'Execution',           href: '/m/execution',            desc: 'Tasks, milestones and project delivery',      Icon: ListChecks,         tone: 'green' },
+  'Purchase':           { title: 'Purchase',            href: '/m/purchase',             desc: 'Vendors and purchase orders',                 Icon: ShoppingCart,       tone: 'peach' },
+  'Land':               { title: 'Land',                href: '/m/land',                 desc: 'Land parcels and site portfolio',             Icon: MapPin,             tone: 'blue' },
+  'Club 1000':          { title: 'Club 1000',           href: '/club1000',               desc: 'Investors, schemes and payouts',              Icon: Coins,              tone: 'green' },
+  'Channel Partner':    { title: 'Channel Partners',    href: '/sales/channel-partners', desc: 'Referral partners and their leads',           Icon: Handshake,          tone: 'peach' },
 };
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
 
 export default function DashboardPage() {
   const user = useSelector((s) => s.auth.user);
   const router = useRouter();
+  const [hello, setHello] = useState('Welcome back');
+  const [today, setToday] = useState('');
+
   const baseModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m] && m !== 'Channel Partner');
   // A standalone tile only for someone who'd otherwise have no way in — anyone
   // with the Sales module (or a true admin) already sees Channel Partner nested
@@ -32,50 +44,60 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user?.role === 'Kiosk') { router.replace('/kiosk'); return; }
-    if (userModules.length === 1) {
-      router.replace(MODULE_CONFIG[userModules[0]].href);
-    }
+    if (userModules.length === 1) router.replace(MODULE_CONFIG[userModules[0]].href);
   }, [userModules.length, user?.role]);
 
+  // Time-of-day greeting and date are set after mount so server and client HTML match.
+  useEffect(() => {
+    setHello(greeting());
+    setToday(new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+  }, []);
+
   if (userModules.length === 1) return null;
+  const firstName = String(user?.name || '').split(' ')[0];
 
   return (
-    <div>
-      {/* Welcome header */}
-      <div className="nx-hero" style={s.header}>
-        <div>
-          <p style={s.welcomeLabel}>Welcome back</p>
-          <h1 style={s.userName}>{user?.name}</h1>
+    <div className="ep">
+      <section className="ep-hero">
+        <div className="ep-hero-main">
+          <div className="ep-hello">{hello},</div>
+          <h1 className="ep-name">{user?.name || firstName}</h1>
+          <div className="ep-meta">
+            {today && <span><CalendarDays size={14} /> {today}</span>}
+            {user?.role && <span className="ep-role">{user.role}</span>}
+          </div>
         </div>
-        <div style={s.statBlock}>
-          <span style={s.statNum}>{userModules.length}</span>
-          <span style={s.statLabel}>Assigned Modules</span>
+        <div className="ep-hero-stat">
+          <span className="ep-hero-stat-icon"><LayoutGrid size={18} /></span>
+          <b>{userModules.length}</b>
+          <span>module{userModules.length === 1 ? '' : 's'} assigned</span>
         </div>
+      </section>
+
+      <div className="ep-section">
+        <h2>Your modules</h2>
+        <span>Pick where you want to work</span>
       </div>
 
-      {/* Modules */}
-      <p style={s.sectionTitle}>MY MODULES</p>
-
       {userModules.length === 0 ? (
-        <div style={s.emptyState}>
-          <div style={s.emptyIcon}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9A9EA5" strokeWidth="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-          </div>
-          <p style={s.emptyTitle}>No modules assigned yet</p>
-          <p style={s.emptyDesc}>Contact your administrator to get access to modules.</p>
+        <div className="nx-card ep-empty">
+          <span className="ep-empty-icon"><Package size={30} /></span>
+          <b>No modules assigned yet</b>
+          <p>Ask your administrator to give you access to a module.</p>
         </div>
       ) : (
-        <div style={s.grid}>
-          {userModules.map((modName) => {
-            const mod = MODULE_CONFIG[modName];
+        <div className="ep-grid">
+          {userModules.map((name, i) => {
+            const m = MODULE_CONFIG[name];
             return (
-              <Link key={modName} href={mod.href} style={s.card}>
-                <div style={{ ...s.iconBg, backgroundColor: mod.accent.bg }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: mod.accent.icon, opacity: 0.85 }} />
+              <Link key={name} href={m.href} className={`nx-card ep-card tone-${m.tone}`} style={{ animationDelay: `${i * 50}ms` }}>{/* inline-ok: staggered entrance */}
+                <div className="ep-card-top">
+                  <span className="ep-icon"><m.Icon size={24} strokeWidth={1.8} /></span>
+                  <span className="ep-go"><ArrowUpRight size={18} /></span>
                 </div>
-                <p style={s.cardName}>{modName}</p>
-                <p style={s.cardSub}>{mod.sub}</p>
-                <span style={{ ...s.openArrow, color: mod.accent.icon }}>Open →</span>
+                <div className="ep-card-title">{m.title}</div>
+                <div className="ep-card-desc">{m.desc}</div>
+                <div className="ep-card-open">Open module</div>
               </Link>
             );
           })}
@@ -84,64 +106,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-const s = {
-  header: {
-    display:         'flex',
-    justifyContent:  'space-between',
-    alignItems:      'center',
-    background:      'var(--hero)',
-    borderRadius:    28,
-    padding:         '28px 32px',
-    marginBottom:    32,
-  },
-  welcomeLabel: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 },
-  userName:     { fontSize: 26, fontWeight: 800, color: '#fff' },
-  statBlock: {
-    textAlign:       'right',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 18,
-    padding:         '14px 22px',
-  },
-  statNum:   { display: 'block', fontSize: 30, fontWeight: 800, color: 'var(--warning-2)' },
-  statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
-  sectionTitle: {
-    fontSize: 11, fontWeight: 700, color: 'var(--muted)',
-    letterSpacing: 0.8, marginBottom: 16,
-  },
-  grid: {
-    display:             'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap:                 16,
-  },
-  card: {
-    backgroundColor: 'var(--surface)',
-    borderRadius: 20,
-    padding:         '22px',
-    boxShadow:       '0 4px 12px rgba(140,148,160,0.18)',
-    display:         'flex',
-    flexDirection:   'column',
-    cursor:          'pointer',
-    textDecoration:  'none',
-  },
-  iconBg: {
-    width: 52, height: 52, borderRadius: 18,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    marginBottom: 14,
-  },
-  cardName:  { fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4 },
-  cardSub:   { fontSize: 12, color: 'var(--muted)', marginBottom: 14, flex: 1 },
-  openArrow: { fontSize: 12, fontWeight: 700 },
-  emptyState: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', padding: '80px 20px', textAlign: 'center',
-  },
-  emptyIcon: {
-    width: 80, height: 80, borderRadius: '50%',
-    backgroundColor: 'var(--surface-3)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    marginBottom: 20,
-  },
-  emptyTitle: { fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 },
-  emptyDesc:  { fontSize: 14, color: 'var(--muted)', maxWidth: 300 },
-};

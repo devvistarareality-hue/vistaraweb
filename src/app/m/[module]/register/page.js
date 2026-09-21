@@ -125,10 +125,9 @@ export default function ARRegisterPage({ params, searchParams }) {
                           <div className="ar-client-sub">
                             {r.phone}{r.status === 'frozen' ? ' · Cancelled' : ''}
                           </div>
-                          {(hasIssue(r) || r.ar_schedule) && (
+                          {hasIssue(r) && (
                             <div className="ar-badges">
                               {ISSUES.filter((i) => i.test(r)).map((i) => <span key={i.value} className={`nx-status ${i.tone}`}>{i.label}</span>)}
-                              {r.ar_schedule && <span className="nx-status ok">Schedule set in AR</span>}
                             </div>
                           )}
                         </td>
