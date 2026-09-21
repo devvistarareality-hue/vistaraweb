@@ -897,6 +897,18 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-kpi-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 .nx-kpi-value { font-size: 22px; font-weight: 800; line-height: 1.2; }
 .nx-kpi-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+/* Accent variants — a fixed palette (blue/green/purple/orange/red) selected by
+   name via a modifier class, so KpiCard never needs an inline colour. */
+.nx-kpi-accent-blue .nx-kpi-icon   { background: var(--accent-soft); color: var(--accent); }
+.nx-kpi-accent-blue .nx-kpi-value  { color: var(--accent); }
+.nx-kpi-accent-green .nx-kpi-icon  { background: var(--success-soft); color: var(--success); }
+.nx-kpi-accent-green .nx-kpi-value { color: var(--success); }
+.nx-kpi-accent-purple .nx-kpi-icon  { background: var(--accent-soft); color: var(--accent-deep); }
+.nx-kpi-accent-purple .nx-kpi-value { color: var(--accent-deep); }
+.nx-kpi-accent-orange .nx-kpi-icon  { background: var(--warning-soft); color: var(--warning-2); }
+.nx-kpi-accent-orange .nx-kpi-value { color: var(--warning-2); }
+.nx-kpi-accent-red .nx-kpi-icon    { background: var(--danger-soft); color: var(--danger); }
+.nx-kpi-accent-red .nx-kpi-value   { color: var(--danger); }
 
 .nx-c1k-section-title { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 16px; }
 .nx-c1k-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -912,9 +924,14 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
 .nx-donut-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
 .nx-donut-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.nx-donut-dot.active { background: var(--success); }
+.nx-donut-dot.due_for_renewal { background: var(--warning-2); }
+.nx-donut-dot.redeemed { background: var(--accent); }
+.nx-donut-dot.premature_redeemed { background: var(--danger); }
 .nx-donut-name { color: var(--text); flex: 1; }
 .nx-donut-count { font-weight: 700; color: var(--text); }
 .nx-donut-empty { padding: 32px 0; text-align: center; color: var(--border-strong); font-size: 13px; }
+.nx-donut-tooltip { background: var(--strong); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
 
 .nx-c1k-list-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--surface-2); }
 .nx-c1k-list-row:first-child { border-top: none; }
@@ -937,6 +954,13 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-mt-18 { margin-top: 18px; }
 .nx-mt-20 { margin-top: 20px; }
 .nx-mt-28 { margin-top: 28px; }
+.nx-c1k-page { padding: 28px 32px; }
+.nx-c1k-card-full.flush { padding: 0; overflow: hidden; }
+.nx-c1k-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.nx-c1k-thead-row { background: var(--surface-2); text-align: left; }
+.nx-c1k-th { padding: 10px 16px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.nx-c1k-td { padding: 12px 16px; border-top: 1px solid var(--surface-2); color: var(--text); }
+.nx-plain-link { text-decoration: none; }
 
 @media (max-width: 860px) {
   .nx-c1k-grid-2 { grid-template-columns: 1fr; }
