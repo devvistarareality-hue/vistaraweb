@@ -62,6 +62,9 @@ function IconCoins() {
 function IconDesignation() {
   return <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIcon>;
 }
+function IconReceivable() {
+  return <SvgIcon><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></SvgIcon>;
+}
 function IconBackup() {
   return <SvgIcon><path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/><polyline points="12 12 12 21"/><polyline points="9 18 12 21 15 18"/></SvgIcon>;
 }
@@ -78,6 +81,7 @@ const PARKED_ITEMS = [
   { label: 'Sales',              href: '/sales',       icon: <IconTrending />,  live: true },
   { label: 'HR',                 href: '/m/hr',        icon: <IconPeople />,    live: true },
   { label: 'Accounts & Finance', href: '/m/accounts',  icon: <IconWallet />,    live: true },
+  { label: 'Accounts Receivable', href: '/m/ar/dashboard', icon: <IconReceivable />, live: true },
   { label: 'Execution',          href: '/m/execution', icon: <IconChecklist />, live: true },
   { label: 'Purchase',           href: '/m/purchase',  icon: <IconCart />,      live: true },
   { label: 'Land',               href: '/m/land',      icon: <IconPin />,       live: true },

@@ -10,7 +10,7 @@ const MODULE_CONFIG = {
   'Sales':              { accent: MODULE_ACCENT.Sales,                 href: '/sales',       sub: 'Leads & Pipeline' },
   'HR':                 { accent: MODULE_ACCENT.HR,                    href: '/m/hr',        sub: 'People & Attendance' },
   'Accounts & Finance': { accent: MODULE_ACCENT['Accounts & Finance'], href: '/m/accounts',  sub: 'Accounting & Finance' },
-  'AR':                 { accent: MODULE_ACCENT.AR,                    href: '/m/ar',        sub: 'Collections & Dues' },
+  'AR':                 { accent: MODULE_ACCENT.AR,                    href: '/m/ar/dashboard', sub: 'Collections & Dues' },
   'Execution':          { accent: MODULE_ACCENT.Execution,             href: '/m/execution', sub: 'Tasks & Progress' },
   'Purchase':           { accent: MODULE_ACCENT.Purchase,              href: '/m/purchase',  sub: 'Vendors & Orders' },
   'Land':               { accent: MODULE_ACCENT.Land,                  href: '/m/land',      sub: 'Properties & Sites' },
