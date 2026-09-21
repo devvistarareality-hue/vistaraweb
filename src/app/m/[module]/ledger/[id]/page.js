@@ -168,9 +168,9 @@ export default function ARLedgerPage({ params }) {
             <table className="ar-table">
               <thead><tr><th>Month</th><th className="num">Amount</th></tr></thead>
               <tbody>
-                {data.month_forecast.map((m) => <tr key={m.label}><td>{m.label}</td><td className="num">{m.amount ? rupee(m.amount) : '—'}</td></tr>)}
+                {data.os_summary.map((m) => <tr key={m.label}><td>{m.label}</td><td className="num">{m.amount ? rupee(m.amount) : '—'}</td></tr>)}
               </tbody>
-              <tfoot><tr><td>Not due</td><td className="num">{rupee(data.not_due)}</td></tr></tfoot>
+              <tfoot><tr><td>Total</td><td className="num">{rupee(data.os_summary.reduce((t, m) => t + m.amount, 0))}</td></tr></tfoot>
             </table>
             <table className="ar-table">
               <thead><tr><th>Days</th><th className="num">Overdue</th></tr></thead>
