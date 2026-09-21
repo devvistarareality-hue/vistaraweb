@@ -3,14 +3,24 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import {
+  Building2, CalendarDays, Wallet, CircleCheckBig, AlarmClock, Hourglass, Percent,
+  CalendarClock, TriangleAlert, ArrowRight, ChevronRight,
+} from 'lucide-react';
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
-import { rupee, AGE_LABELS, ISSUES, today } from '../_ar';
+import Dropdown from '../../../../components/Dropdown';
+import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
 
-// AR Dashboard — the whole receivables book at a glance: what is owed, how late,
-// what falls due month by month, who owes the most, and which accounts cannot be
-// trusted until their booking data is fixed.
+const ISSUE_TEXT = {
+  no_schedule: 'Booking has no installment schedule — set one in the ledger',
+  plan_mismatch: "LOI schedule doesn't add up to the deal",
+  suspect_amount: 'Deal amount looks mistyped (under ₹1 lakh)',
+};
+
+// AR Dashboard — the receivables book at a glance: what is owed, how late, what
+// falls due month by month, who owes the most, and what data needs fixing.
 export default function ARDashboardPage({ params }) {
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -36,87 +46,79 @@ export default function ARDashboardPage({ params }) {
     return () => { alive = false; };
   }, [asOf, project, companyId]);
 
+  const [projects, setProjects] = useState([]);
+  useEffect(() => { if (data?.projects) setProjects(data.projects); }, [data]);
+
   const t = data?.totals;
-  const ageMax = Math.max(1, ...AGE_LABELS.map((a) => data?.ageing?.[a] || 0));
-  const fcMax = Math.max(1, ...(data?.month_forecast || []).map((m) => m.amount));
-  const issueCount = data?.issues ? ISSUES.reduce((n, i) => n + (data.issues[i.value] || 0), 0) : 0;
+  const regQ = project ? `&project=${project}` : '';
 
   return (
-    <div className="nx-page">
-      <div className="ar-head">
+    <div className="nx-page ard">
+      <div className="ard-head">
         <div>
-          <h1 className="nx-page-title">AR Dashboard</h1>
-          <p className="nx-page-sub">{data?.accounts != null ? `${data.accounts} active accounts` : 'Accounts receivable'} · as of {asOf.split('-').reverse().join('/')}</p>
+          <h1 className="nx-page-title">Receivables</h1>
+          <p className="nx-page-sub">
+            {data?.accounts != null ? `${data.accounts} active accounts` : 'Accounts receivable'} · as of {asOf.split('-').reverse().join('/')}
+          </p>
         </div>
-        <div className="ar-head-actions">
-          <select className="nx-input nx-input-sm nx-filter-sel" value={project} onChange={(e) => setProject(e.target.value)}>
-            <option value="">All projects</option>
-            {(data?.projects || []).map((p) => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
-          </select>
-          <input type="date" aria-label="As of" className="nx-input nx-input-sm" value={asOf} onChange={(e) => setAsOf(e.target.value || today())} />
+        <div className="ard-filters">
+          <Dropdown value={project} onChange={setProject} searchable ariaLabel="Project"
+            icon={<Building2 size={15} />}
+            options={[{ value: '', label: 'All projects' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]} />
+          <label className="ard-date">
+            <CalendarDays size={15} />
+            <input type="date" aria-label="As of" value={asOf} max={today()} onChange={(e) => setAsOf(e.target.value || today())} />
+          </label>
         </div>
       </div>
 
       {data === null ? <Loader label="Calculating the receivables book…" /> : err ? <div className="nx-note bad">{err}</div> : (
         <>
-          <div className="ar-stats">
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Collectable</div><div className="ar-stat-value">{rupee(t.collectable)}</div></div>
-            <div className="nx-card ar-stat good"><div className="ar-stat-label">Received</div><div className="ar-stat-value">{rupee(t.received)}</div><div className="ar-stat-sub">{data.pct_realised}% realised</div></div>
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Outstanding</div><div className="ar-stat-value">{rupee(t.outstanding)}</div><div className="ar-stat-sub">{rupee(t.not_due)} not yet due</div></div>
-            <div className="nx-card ar-stat warn"><div className="ar-stat-label">Overdue</div><div className="ar-stat-value">{rupee(t.overdue)}</div><div className="ar-stat-sub">{data.overdue_accounts} account{data.overdue_accounts === 1 ? '' : 's'}</div></div>
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Net interest</div><div className="ar-stat-value">{rupee(t.net_interest)}</div></div>
-            <div className="nx-card ar-stat warn"><div className="ar-stat-label">O/s with interest</div><div className="ar-stat-value">{rupee(t.os_with_interest)}</div></div>
+          <div className="ard-top">
+            <div className="ard-hero">
+              <div className="ard-hero-main">
+                <div className="ard-hero-label">Total receivable</div>
+                <div className="ard-hero-value" title={rupee(t.os_with_interest)}>{inrShort(t.os_with_interest)}</div>
+                <div className="ard-hero-split">
+                  <div><span>Principal outstanding</span><b title={rupee(t.outstanding)}>{inrShort(t.outstanding)}</b></div>
+                  <div><span>Interest</span><b title={rupee(t.net_interest)}>{inrShort(t.net_interest)}</b></div>
+                </div>
+              </div>
+              <Ring pct={data.pct_realised} received={t.received} collectable={t.collectable} />
+            </div>
+
+            <div className="ard-kpis">
+              <Kpi icon={<Wallet size={18} />} tone="info" label="Collectable" value={t.collectable} sub="Deal less stamp & registration" />
+              <Kpi icon={<CircleCheckBig size={18} />} tone="good" label="Received" value={t.received} sub={`${data.pct_realised}% realised`} />
+              <Kpi icon={<AlarmClock size={18} />} tone="bad" label="Overdue" value={t.overdue}
+                sub={`${data.overdue_accounts} account${data.overdue_accounts === 1 ? '' : 's'}`} href={`/m/ar/register?overdue=1${regQ}`} />
+              <Kpi icon={<Hourglass size={18} />} tone="warn" label="Not yet due" value={t.not_due} sub="Scheduled for later" />
+            </div>
           </div>
 
-          {issueCount > 0 && (
-            <div className="nx-card ar-card">
-              <div className="ar-card-head">
-                <div><div className="ar-card-title">Needs attention</div>
-                  <div className="ar-card-sub">These accounts can&apos;t show correct dues until their data is fixed</div></div>
-              </div>
-              <div className="ar-issues">
-                {ISSUES.filter((i) => data.issues[i.value]).map((i) => (
-                  <Link key={i.value} href={`/m/ar/register?issue=${i.value}`} className="ar-issue">
-                    <span className={`nx-status ${i.tone}`}>{i.label}</span>
-                    <span className="ar-issue-n">{data.issues[i.value]}</span>
-                    <span className="ar-issue-go">View →</span>
-                  </Link>
-                ))}
-              </div>
+          {ISSUES.some((i) => data.issues[i.value]) && (
+            <div className="ard-issues">
+              {ISSUES.filter((i) => data.issues[i.value]).map((i) => (
+                <Link key={i.value} href={`/m/ar/register?issue=${i.value}${regQ}`} className={`ard-issue ${i.tone}`}>
+                  <span className="ard-issue-icon"><TriangleAlert size={17} /></span>
+                  <span className="ard-issue-body">
+                    <span className="ard-issue-n">{data.issues[i.value]} <small>{i.label}</small></span>
+                    <span className="ard-issue-text">{ISSUE_TEXT[i.value]}</span>
+                  </span>
+                  <ArrowRight size={16} className="ard-issue-go" />
+                </Link>
+              ))}
             </div>
           )}
 
-          <div className="ar-grid-2">
-            <div className="nx-card ar-card">
-              <div className="ar-card-head"><div><div className="ar-card-title">Overdue by age</div><div className="ar-card-sub">Days past the due date</div></div></div>
-              <div className="ar-card-body ar-bars">
-                {AGE_LABELS.map((a) => (
-                  <div key={a} className="ar-bar-row">
-                    <div className="ar-bar-label">{a}</div>
-                    <div className="ar-bar-track">{data.ageing[a] > 0 && <div className={`ar-bar${a === '>180' || a === '121-180' ? ' bad' : ''}`} style={{ width: `${(data.ageing[a] / ageMax) * 100}%` }} />}</div>{/* inline-ok: bar length from data */}
-                    <div className="ar-bar-value">{data.ageing[a] ? rupee(data.ageing[a]) : '—'}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="nx-card ar-card">
-              <div className="ar-card-head"><div><div className="ar-card-title">Falling due</div><div className="ar-card-sub">Installments not yet due, by month</div></div></div>
-              <div className="ar-card-body ar-bars">
-                {data.month_forecast.map((m) => (
-                  <div key={m.label} className="ar-bar-row">
-                    <div className="ar-bar-label">{m.label}</div>
-                    <div className="ar-bar-track">{m.amount > 0 && <div className="ar-bar good" style={{ width: `${(m.amount / fcMax) * 100}%` }} />}</div>{/* inline-ok: bar length from data */}
-                    <div className="ar-bar-value">{m.amount ? rupee(m.amount) : '—'}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="ard-grid">
+            <Ageing ageing={data.ageing} overdue={t.overdue} />
+            <Forecast rows={data.month_forecast} total={t.not_due} />
           </div>
 
-          <div className="ar-grid-2">
-            <TopList title="Most overdue" sub="Largest overdue amounts" rows={data.top_overdue} empty="Nothing is overdue." />
-            <TopList title="Overdue over 180 days" sub="Oldest money still unpaid" rows={data.top_over_180} empty="Nothing is more than 180 days overdue." />
+          <div className="ard-grid">
+            <TopList title="Most overdue" icon={<Percent size={16} />} rows={data.top_overdue} empty="Nothing is overdue." />
+            <TopList title="Overdue over 180 days" icon={<CalendarClock size={16} />} rows={data.top_over_180} empty="Nothing is more than 180 days overdue." />
           </div>
         </>
       )}
@@ -124,25 +126,116 @@ export default function ARDashboardPage({ params }) {
   );
 }
 
-function TopList({ title, sub, rows, empty }) {
+function Ring({ pct, received, collectable }) {
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  const r = 52;
+  const c = 2 * Math.PI * r;
   return (
-    <div className="nx-card ar-card">
-      <div className="ar-card-head"><div><div className="ar-card-title">{title}</div><div className="ar-card-sub">{sub}</div></div></div>
+    <div className="ard-ring">
+      <svg viewBox="0 0 128 128" width="128" height="128" aria-hidden="true">
+        <circle cx="64" cy="64" r={r} className="ard-ring-track" />
+        <circle cx="64" cy="64" r={r} className="ard-ring-fill" strokeDasharray={`${(p / 100) * c} ${c}`} transform="rotate(-90 64 64)" />
+      </svg>
+      <div className="ard-ring-center"><b>{p}%</b><span>collected</span></div>
+      <div className="ard-ring-cap" title={`${rupee(received)} of ${rupee(collectable)}`}>{inrShort(received)} of {inrShort(collectable)}</div>
+    </div>
+  );
+}
+
+function Kpi({ icon, tone, label, value, sub, href }) {
+  const body = (
+    <>
+      <div className="ard-kpi-top"><span className={`ard-kpi-icon ${tone}`}>{icon}</span>{href && <ChevronRight size={16} className="ard-kpi-go" />}</div>
+      <div className="ard-kpi-label">{label}</div>
+      <div className={`ard-kpi-value ${tone}`} title={rupee(value)}>{inrShort(value)}</div>
+      <div className="ard-kpi-sub">{sub}</div>
+    </>
+  );
+  return href
+    ? <Link href={href} className="nx-card ard-kpi is-link">{body}</Link>
+    : <div className="nx-card ard-kpi">{body}</div>;
+}
+
+// Overdue by age: one stacked bar (share of each bucket) above a tile per bucket.
+function Ageing({ ageing, overdue }) {
+  const total = Math.max(1, overdue);
+  return (
+    <div className="nx-card ard-card">
+      <div className="ard-card-head">
+        <div><div className="ard-card-title">Overdue by age</div><div className="ard-card-sub">Days past the due date</div></div>
+        <div className="ard-card-total" title={rupee(overdue)}>{inrShort(overdue)}</div>
+      </div>
+      <div className="ard-stack">
+        {AGE_LABELS.map((a, i) => ageing[a] > 0 && <span key={a} className={`ard-seg a${i}`} title={`${a} days · ${rupee(ageing[a])}`} style={{ width: `${(ageing[a] / total) * 100}%` }} />)}{/* inline-ok: segment width from data */}
+      </div>
+      <div className="ard-ages">
+        {AGE_LABELS.map((a, i) => (
+          <div key={a} className={`ard-age${ageing[a] ? '' : ' is-zero'}`}>
+            <span className={`ard-dot a${i}`} />
+            <span className="ard-age-label">{a} days</span>
+            <span className="ard-age-track"><span className={`a${i}`} style={{ width: `${(ageing[a] / total) * 100}%` }} /></span>{/* inline-ok: bar length from data */}
+            <b title={rupee(ageing[a])}>{ageing[a] ? inrShort(ageing[a]) : '—'}</b>
+            <span className="ard-age-pct">{ageing[a] ? `${Math.round((ageing[a] / total) * 100)}%` : ''}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// What falls due, month by month: vertical columns scaled to the largest month.
+function Forecast({ rows, total }) {
+  const max = Math.max(1, ...rows.map((m) => m.amount));
+  return (
+    <div className="nx-card ard-card">
+      <div className="ard-card-head">
+        <div><div className="ard-card-title">Falling due</div><div className="ard-card-sub">Installments not yet due, by month</div></div>
+        <div className="ard-card-total" title={rupee(total)}>{inrShort(total)}</div>
+      </div>
+      <div className="ard-cols">
+        {rows.map((m) => (
+          <div key={m.label} className="ard-col" title={`${m.label} · ${rupee(m.amount)}`}>
+            <span className="ard-col-value">{m.amount ? inrShort(m.amount) : '—'}</span>
+            <span className="ard-col-track">
+              <span className={`ard-col-bar${m.label === 'No date' ? ' muted' : ''}`} style={{ height: `${Math.max(m.amount ? 4 : 0, (m.amount / max) * 100)}%` }} />{/* inline-ok: column height from data */}
+            </span>
+            <span className="ard-col-label">{m.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TopList({ title, icon, rows, empty }) {
+  const max = Math.max(1, ...rows.map((r) => r.amount));
+  return (
+    <div className="nx-card ard-card">
+      <div className="ard-card-head">
+        <div className="ard-card-title ard-with-icon">{icon}{title}</div>
+        {rows.length > 0 && <span className="ard-card-sub">Top {rows.length}</span>}
+      </div>
       {rows.length === 0 ? <div className="ar-empty">{empty}</div> : (
-        <table className="ar-table">
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>
-                  <Link href={`/m/ar/ledger/${r.id}`} className="ar-client ar-link">{r.client}</Link>
-                  <div className="ar-client-sub">{r.project} · Plot {r.plots}</div>
-                </td>
-                <td className="num ar-pos-bad">{rupee(r.amount)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="ard-top-list">
+          {rows.map((r, i) => (
+            <Link key={r.id} href={`/m/ar/ledger/${r.id}`} className="ard-row">
+              <span className="ard-rank">{i + 1}</span>
+              <span className="ard-avatar">{initials(r.client)}</span>
+              <span className="ard-row-body">
+                <span className="ard-row-name">{r.client}</span>
+                <span className="ard-row-sub">{r.project} · Plot {r.plots}</span>
+                <span className="ard-row-bar"><span style={{ width: `${(r.amount / max) * 100}%` }} /></span>{/* inline-ok: bar length from data */}
+              </span>
+              <span className="ard-row-amt" title={rupee(r.amount)}>{inrShort(r.amount)}</span>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );
+}
+
+function initials(name) {
+  const parts = String(name || '').replace(/^(mr|mrs|ms|dr)\.?\s+/i, '').split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() || '—';
 }

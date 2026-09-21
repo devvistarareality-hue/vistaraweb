@@ -103,7 +103,7 @@ export default function ModuleLayout({ children, params }) {
     ...(slug === 'ar' ? [
       { label: 'Dashboard', href: `${base}/dashboard`, icon: <IconChart /> },
       { label: 'Register', href: `${base}/register`, icon: <IconBook /> },
-      { label: 'Import',   href: `${base}/import`,   icon: <IconCheck /> },
+      { label: 'Enter receipts', href: `${base}/import`, icon: <IconCheck /> },
     ] : []),
   ];
   // "Back to Modules" only makes sense when the user actually has more than one module

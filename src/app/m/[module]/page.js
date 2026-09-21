@@ -39,7 +39,7 @@ export default function ModuleOverview({ params }) {
   const tiles = slug === 'ar' ? [
     { href: '/m/ar/dashboard', icon: 'chart', title: 'Dashboard', desc: 'Total dues, overdue ageing, month-wise collections and the accounts that need attention' },
     { href: '/m/ar/register', icon: 'book', title: 'Register', desc: 'Every approved booking with collectable, received, overdue, ageing and interest' },
-    { href: '/m/ar/import', icon: 'check', title: 'Import receipts', desc: 'Bring past payments in from the old AR Excel workbooks' },
+    { href: '/m/ar/import', icon: 'check', title: 'Enter receipts', desc: 'Record payments plot-wise for a project — type, paste from Excel or upload' },
   ] : [
     canSeeTeam && { href: `/m/${slug}/team`, icon: 'team', title: 'My Team', desc: `View the ${meta.name} department org chart` },
     slug === 'accounts' && { href: `/m/${slug}/approvals`, icon: 'check', title: 'Approvals', desc: "Review pending LOI & EOI bookings and approve/reject each one's Accounts-stage sign-off" },

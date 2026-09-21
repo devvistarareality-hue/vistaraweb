@@ -5,7 +5,9 @@ import { useRouter, notFound } from 'next/navigation';
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
-import { rupee, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
+import { Building2, Filter } from 'lucide-react';
+import Dropdown from '../../../../components/Dropdown';
+import { rupee, inrShort, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
 
 // AR Register — the old workbook's "Plot Master": one row per approved booking.
 export default function ARRegisterPage({ params, searchParams }) {
@@ -15,9 +17,9 @@ export default function ARRegisterPage({ params, searchParams }) {
   const [rows, setRows] = useState(null);
   const [asOf, setAsOf] = useState('');
   const [err, setErr] = useState('');
-  const [project, setProject] = useState('');
+  const [project, setProject] = useState(searchParams?.project || '');
   const [q, setQ] = useState('');
-  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [overdueOnly, setOverdueOnly] = useState(searchParams?.overdue === '1');
   const [showAgeing, setShowAgeing] = useState(false);
   // '' | 'any' | one of ISSUES — the dashboard links here with ?issue=…
   const [issue, setIssue] = useState(searchParams?.issue || '');
@@ -71,28 +73,24 @@ export default function ARRegisterPage({ params, searchParams }) {
         <>
           {err && <div className="nx-note bad">{err}</div>}
           <div className="ar-stats">
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Collectable</div><div className="ar-stat-value">{rupee(totals.collectable)}</div></div>
-            <div className="nx-card ar-stat good"><div className="ar-stat-label">Received</div><div className="ar-stat-value">{rupee(totals.received)}</div></div>
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Outstanding</div><div className="ar-stat-value">{rupee(totals.outstanding)}</div></div>
-            <div className="nx-card ar-stat warn"><div className="ar-stat-label">Overdue</div><div className="ar-stat-value">{rupee(totals.overdue)}</div></div>
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Net interest</div><div className="ar-stat-value">{rupee(totals.net_interest)}</div></div>
-            <div className="nx-card ar-stat warn"><div className="ar-stat-label">O/s with interest</div><div className="ar-stat-value">{rupee(totals.os_with_interest)}</div></div>
+            <div className="nx-card ar-stat"><div className="ar-stat-label">Collectable</div><div className="ar-stat-value" title={rupee(totals.collectable)}>{inrShort(totals.collectable)}</div></div>
+            <div className="nx-card ar-stat good"><div className="ar-stat-label">Received</div><div className="ar-stat-value" title={rupee(totals.received)}>{inrShort(totals.received)}</div></div>
+            <div className="nx-card ar-stat"><div className="ar-stat-label">Outstanding</div><div className="ar-stat-value" title={rupee(totals.outstanding)}>{inrShort(totals.outstanding)}</div></div>
+            <div className="nx-card ar-stat warn"><div className="ar-stat-label">Overdue</div><div className="ar-stat-value" title={rupee(totals.overdue)}>{inrShort(totals.overdue)}</div></div>
+            <div className="nx-card ar-stat"><div className="ar-stat-label">Net interest</div><div className="ar-stat-value" title={rupee(totals.net_interest)}>{inrShort(totals.net_interest)}</div></div>
+            <div className="nx-card ar-stat warn"><div className="ar-stat-label">O/s with interest</div><div className="ar-stat-value" title={rupee(totals.os_with_interest)}>{inrShort(totals.os_with_interest)}</div></div>
           </div>
 
           <div className="ar-filters">
-            <select className="nx-input nx-input-sm nx-filter-sel" value={project} onChange={(e) => setProject(e.target.value)}>
-              <option value="">All projects</option>
-              {projects.map(([id, name]) => <option key={id} value={String(id)}>{name}</option>)}
-            </select>
+            <Dropdown value={project} onChange={setProject} searchable ariaLabel="Project" icon={<Building2 size={15} />}
+              options={[{ value: '', label: 'All projects' }, ...projects.map(([id, name]) => ({ value: String(id), label: name }))]} />
             <input className="nx-input nx-input-sm ar-search" placeholder="Search client, phone or plot…" value={q} onChange={(e) => setQ(e.target.value)} />
             <label className={`nx-check${overdueOnly ? ' is-on' : ''}`}>
               <input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} /> Overdue only
             </label>
-            <select className="nx-input nx-input-sm nx-filter-sel" value={issue} onChange={(e) => setIssue(e.target.value)}>
-              <option value="">All accounts</option>
-              <option value="any">Needs attention</option>
-              {ISSUES.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
-            </select>
+            <Dropdown value={issue} onChange={setIssue} ariaLabel="Account health" icon={<Filter size={15} />}
+              options={[{ value: '', label: 'All accounts' }, { value: 'any', label: 'Needs attention', hint: (rows || []).filter(hasIssue).length },
+                ...ISSUES.map((i) => ({ value: i.value, label: i.label, hint: (rows || []).filter(i.test).length }))]} />
             <label className={`nx-check${showAgeing ? ' is-on' : ''}`}>
               <input type="checkbox" checked={showAgeing} onChange={(e) => setShowAgeing(e.target.checked)} /> Show ageing
             </label>
