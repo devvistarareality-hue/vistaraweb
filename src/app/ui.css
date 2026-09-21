@@ -551,3 +551,61 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-error-text { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin: 0 auto; max-width: 420px; }
 .nx-error-ref { font-size: 11.5px; color: var(--faint); margin-top: 10px; font-family: ui-monospace, monospace; }
 .nx-error-card .nx-actions { justify-content: center; }
+
+/* ═══ Accounts Receivable ═══════════════════════════════════════════════════ */
+.ar-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.ar-head .nx-page-sub { margin-bottom: 0; }
+.ar-head-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ar-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.ar-stat { padding: 14px 16px; border-radius: 16px; }
+.ar-stat-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ar-stat-value { font-size: 20px; font-weight: 800; color: var(--text); margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.ar-stat.warn .ar-stat-value { color: var(--danger); }
+.ar-stat.good .ar-stat-value { color: var(--success); }
+.ar-card { border-radius: 18px; padding: 0; overflow: hidden; margin-bottom: 16px; }
+.ar-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
+.ar-card-title { font-size: 14px; font-weight: 800; color: var(--text); }
+.ar-card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ar-card-body { padding: 14px 18px; }
+.ar-scroll { overflow-x: auto; }
+.ar-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.ar-table th { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  text-align: left; padding: 10px 12px; white-space: nowrap; background: var(--table-head); border-bottom: 1px solid var(--hairline); }
+.ar-table td { padding: 10px 12px; color: var(--text); border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+.ar-table tr:last-child td { border-bottom: 0; }
+.ar-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.ar-table .muted { color: var(--muted); }
+.ar-table .wrap { white-space: normal; min-width: 180px; }
+.ar-table tfoot td { font-weight: 800; background: var(--table-head); border-top: 1px solid var(--hairline); }
+.ar-row-link { cursor: pointer; transition: background-color .14s; }
+.ar-row-link:hover td { background: var(--accent-softer); }
+.ar-client { font-weight: 700; color: var(--text); }
+.ar-client-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+/* td-qualified: `.ar-table td` sets the text colour and would otherwise win */
+.ar-neg, .ar-table td.ar-neg { color: var(--success); }
+.ar-pos-bad, .ar-table td.ar-pos-bad { color: var(--danger); font-weight: 700; }
+.ar-kv { display: grid; grid-template-columns: 1fr auto auto; gap: 0; font-size: 13.5px; }
+.ar-kv > div { padding: 9px 0; border-bottom: 1px solid var(--hairline); }
+.ar-kv .k { color: var(--text-2); font-weight: 600; }
+.ar-kv .f { color: var(--faint); font-size: 12px; padding-right: 18px; text-align: right; }
+.ar-kv .v { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.ar-kv .total { font-weight: 800; color: var(--accent); border-bottom: 0; }
+.ar-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.ar-inline-date { display: inline-flex; gap: 6px; align-items: center; }
+.ar-inline-date .nx-input { width: 150px; min-height: 30px; padding: 4px 8px !important; font-size: 12.5px !important; }
+.ar-actions { display: inline-flex; gap: 6px; }
+.ar-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.ar-filters .nx-input { min-height: 38px; }
+.ar-filters .ar-search { flex: 1 1 240px; }
+.ar-modal { width: 100%; max-width: 460px; border-radius: 22px; padding: 22px 24px; }
+.ar-modal-title { font-size: 17px; font-weight: 800; color: var(--text); }
+.ar-modal-sub { font-size: 12.5px; color: var(--muted); margin: 3px 0 16px; }
+.ar-modal .nx-field { grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px; }
+.ar-modal-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.ar-audit { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; }
+.ar-audit-item { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; }
+.ar-audit-meta { color: var(--muted); font-size: 11.5px; margin-bottom: 4px; }
+.ar-empty { padding: 34px 18px; text-align: center; color: var(--muted); font-size: 13.5px; }
+.ar-file { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ar-file input[type="file"] { font-size: 13px; color: var(--text-2); }
+.ar-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 8, 16, 0.55); }

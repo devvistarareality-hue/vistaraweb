@@ -35,7 +35,10 @@ export default function ModuleOverview({ params }) {
   const user = useSelector((s) => s.auth.user);
   const canSeeTeam = isManagerRole(user) || user?.role === 'Admin' || user?.is_staff;
 
-  const tiles = [
+  const tiles = slug === 'ar' ? [
+    { href: '/m/ar/register', icon: 'book', title: 'Register', desc: 'Every approved booking with collectable, received, overdue, ageing and interest' },
+    { href: '/m/ar/import', icon: 'check', title: 'Import receipts', desc: 'Bring past payments in from the old AR Excel workbooks' },
+  ] : [
     canSeeTeam && { href: `/m/${slug}/team`, icon: 'team', title: 'My Team', desc: `View the ${meta.name} department org chart` },
     slug === 'accounts' && { href: `/m/${slug}/approvals`, icon: 'check', title: 'Approvals', desc: "Review pending LOI & EOI bookings and approve/reject each one's Accounts-stage sign-off" },
     slug === 'accounts' && { href: `/m/${slug}/bookings`, icon: 'book', title: 'Bookings', desc: 'Approved bookings and cancellations, project-wise' },

@@ -139,6 +139,16 @@ export const SALES_ENDPOINTS = {
   channelPartner: (id)   => `${BASE_URL}/api/sales/channel-partners/${id}/`,
 };
 
+export const AR_ENDPOINTS = {
+  get accounts()   { return `${BASE_URL}/api/ar/accounts/`; },
+  account: (id)    => `${BASE_URL}/api/ar/accounts/${id}/`,
+  receipts: (id)   => `${BASE_URL}/api/ar/accounts/${id}/receipts/`,
+  receipt: (id)    => `${BASE_URL}/api/ar/receipts/${id}/`,
+  receiptAudit: (id) => `${BASE_URL}/api/ar/receipts/${id}/audit/`,
+  get dashboard()  { return `${BASE_URL}/api/ar/dashboard/`; },
+  get import()     { return `${BASE_URL}/api/ar/import/`; },
+};
+
 export const CLUB1000_ENDPOINTS = {
   get stats()      { return `${BASE_URL}/api/club1000/stats/`; },
   get users()      { return `${BASE_URL}/api/club1000/users/`; },

@@ -7,12 +7,13 @@
 // are unaffected and keep full ERP access. Regular employees are also unaffected;
 // the guards only redirect restricted module admins.
 
-export const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'Execution', 'Purchase', 'Land', 'Club 1000'];
+export const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'AR', 'Execution', 'Purchase', 'Land', 'Club 1000'];
 
 export const MODULE_ROUTES = {
   'Sales':              '/sales',
   'HR':                 '/m/hr',
   'Accounts & Finance': '/m/accounts',
+  'AR':                 '/m/ar',
   'Execution':          '/m/execution',
   'Purchase':           '/m/purchase',
   'Land':               '/m/land',
@@ -21,7 +22,7 @@ export const MODULE_ROUTES = {
 
 // /m/[module] slug → module display name
 export const SLUG_TO_MODULE = {
-  hr: 'HR', accounts: 'Accounts & Finance', execution: 'Execution', purchase: 'Purchase', land: 'Land',
+  hr: 'HR', accounts: 'Accounts & Finance', ar: 'AR', execution: 'Execution', purchase: 'Purchase', land: 'Land',
 };
 
 // A departmental / module admin = role='Admin' restricted to exactly ONE module

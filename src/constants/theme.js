@@ -51,6 +51,7 @@ export const MODULE_ACCENT = {
   Purchase:    { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
   Land:        { bg: 'var(--accent-soft)', icon: 'var(--accent-deep)' },
   'Accounts & Finance': { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  AR:          { bg: 'var(--accent-soft)', icon: 'var(--accent)' },
   'Club 1000': { bg: 'var(--green)', icon: 'var(--success)' },
   Reports:     { bg: 'var(--success-soft)', icon: 'var(--success)' },
   Settings:    { bg: 'var(--accent-soft)', icon: 'var(--accent-deep)' },

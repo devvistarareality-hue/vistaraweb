@@ -87,7 +87,7 @@ export default function ModuleLayout({ children, params }) {
   const NAV = [
     { label: 'Overview', href: base, icon: <IconGrid /> },
     // My Team is a management view — only managers/admins see it.
-    ...((isManager || isAdmin) ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
+    ...((isManager || isAdmin) && slug !== 'ar' ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
     // Accounts & Finance: Approvals is the Pending/Approved/Rejected review queue
     // (approve, reject with remarks) — same split Sales uses (its own "Approvals"
     // nav item is the Drafts/Pending/Approved/Rejected list, separate from the
@@ -96,6 +96,12 @@ export default function ModuleLayout({ children, params }) {
     ...(slug === 'accounts' ? [
       { label: 'Approvals', href: `${base}/approvals`, icon: <IconCheck /> },
       { label: 'Bookings',  href: `${base}/bookings`,  icon: <IconBook /> },
+    ] : []),
+    // Accounts Receivable: the register of approved bookings (each opening its
+    // ledger) and the one-off import of receipts from the old workbooks.
+    ...(slug === 'ar' ? [
+      { label: 'Register', href: `${base}/register`, icon: <IconBook /> },
+      { label: 'Import',   href: `${base}/import`,   icon: <IconCheck /> },
     ] : []),
   ];
   // "Back to Modules" only makes sense when the user actually has more than one module
