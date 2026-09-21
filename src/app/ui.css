@@ -598,6 +598,9 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .ar-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
 .ar-filters .nx-input { min-height: 38px; }
 .ar-filters .ar-search { flex: 1 1 240px; }
+.ar-filters .ar-plot-search { flex: 0 0 130px; width: 130px; }
+.ar-modal.ar-modal-xl { max-width: 880px; }
+.ar-booking { max-height: 62vh; overflow-y: auto; margin-top: -8px; padding-right: 4px; }
 .ar-modal { width: 100%; max-width: 460px; border-radius: 22px; padding: 22px 24px; }
 .ar-modal-title { font-size: 17px; font-weight: 800; color: var(--text); }
 .ar-modal-sub { font-size: 12.5px; color: var(--muted); margin: 3px 0 16px; }
