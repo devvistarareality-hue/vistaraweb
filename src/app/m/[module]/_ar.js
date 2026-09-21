@@ -9,7 +9,8 @@ export const inrShort = (n) => {
   const v = Number(n) || 0;
   const a = Math.abs(v);
   const sign = v < 0 ? '−' : '';
-  const trim = (x, d) => x.toFixed(d).replace(/\.?0+$/, '');
+  // Drop trailing zeros after the decimal point only — never from a whole number (400 stays 400).
+  const trim = (x, d) => (d ? x.toFixed(d).replace(/\.?0+$/, '') : x.toFixed(0));
   if (a >= 1e7) return `${sign}₹${trim(a / 1e7, a >= 1e9 ? 0 : 2)} Cr`;
   if (a >= 1e5) return `${sign}₹${trim(a / 1e5, 2)} L`;
   return `${sign}₹${Math.round(a).toLocaleString('en-IN')}`;

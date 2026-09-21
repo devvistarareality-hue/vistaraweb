@@ -8,6 +8,7 @@ import { apiFetch } from '../../../../../utils/apiFetch';
 import { confirmDialog, notify } from '../../../../../lib/notify';
 import { formatDMY } from '../../../../../lib/dateFormat';
 import Loader from '../../../../../components/Loader';
+import BookingDetails from '../../../../../components/BookingDetails';
 import { rupee, MODES, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
@@ -27,6 +28,7 @@ export default function ARLedgerPage({ params }) {
   const [saving, setSaving] = useState(false);
   const [legalDate, setLegalDate] = useState('');
   const [audit, setAudit] = useState(null);       // null | { receipt, rows }
+  const [booking, setBooking] = useState(null);   // null | 'loading' | booking — the details panel
 
   const qs = useCallback(() => {
     const p = [`as_of=${asOf}`];
@@ -98,6 +100,26 @@ export default function ARLedgerPage({ params }) {
     if (r.ok) { notify('Due date saved', 'success'); setData(await r.json()); } else notify('Could not save the date', 'error');
   }
 
+  async function showBooking() {
+    setBooking('loading');
+    const r = await apiFetch(AR_ENDPOINTS.booking(id) + qs()).catch(() => null);
+    if (r?.ok) setBooking(await r.json());
+    else { setBooking(null); notify('Could not load the booking details', 'error'); }
+  }
+
+  // The LOI / EOI is private: open it through a short-lived signed link. The tab is
+  // opened first (synchronously) so pop-up blockers allow it.
+  async function openLoi() {
+    const w = window.open('', '_blank');
+    try {
+      const r = await apiFetch(AR_ENDPOINTS.loiUrl(id) + qs());
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.url) { if (w) w.location.href = d.url; else window.open(d.url, '_blank', 'noopener'); return; }
+      if (w) w.close();
+      notify(d.detail || 'Could not open the document.', 'error');
+    } catch { if (w) w.close(); notify('Could not open the document.', 'error'); }
+  }
+
   async function statement() {
     const e = await printStatement(AR_ENDPOINTS.statement(id) + qs(), apiFetch);
     if (e) notify(e, 'error');
@@ -123,6 +145,8 @@ export default function ARLedgerPage({ params }) {
         <div className="ar-head-actions">
           <label className="nx-field-inline" htmlFor="ar-asof">Ledger date</label>
           <input id="ar-asof" type="date" className="nx-input nx-input-sm" value={asOf} onChange={(e) => setAsOf(e.target.value || today())} />
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={showBooking}>Booking details</button>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={openLoi}>View {String(data.plots).toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'}</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
           {!frozen && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Record payment</button>}
         </div>
@@ -308,6 +332,20 @@ export default function ARLedgerPage({ params }) {
               <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveReceipt} disabled={saving || !form.paid_on || !(Number(form.amount) > 0)}>
                 {saving ? 'Saving…' : form.id ? 'Update' : 'Record'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {booking && (
+        <div className="ar-backdrop" onClick={() => setBooking(null)}>
+          <div className="nx-card nx-modal ar-modal ar-modal-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="ar-modal-title">Booking details</div>
+            <div className="ar-modal-sub">{data.client_name} · {data.project} · Plot {data.plots}</div>
+            {booking === 'loading' ? <Loader label="Loading…" /> : <div className="ar-booking"><BookingDetails b={booking} /></div>}
+            <div className="ar-modal-foot">
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={openLoi}>View {String(data.plots).toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'}</button>
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setBooking(null)}>Close</button>
             </div>
           </div>
         </div>

@@ -9,6 +9,15 @@ import { Building2, Filter } from 'lucide-react';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
 
+// Plot number search: "25" finds plot 25 (not 125 or 250), "Ananda" finds Ananda1…,
+// and "EOI-1" finds EOI-1 — any plot of a multi-plot booking counts.
+function plotMatches(plots, query) {
+  const want = query.trim().toUpperCase();
+  if (!want) return true;
+  return String(plots || '').split(',').map((p) => p.trim().toUpperCase()).some((p) =>
+    (/^\d+$/.test(want) ? (p === want || p.replace(/^[A-Z-]*/, '') === want) : p.startsWith(want)));
+}
+
 // AR Register — the old workbook's "Plot Master": one row per approved booking.
 export default function ARRegisterPage({ params, searchParams }) {
   if (params.module !== 'ar') notFound();
@@ -19,6 +28,7 @@ export default function ARRegisterPage({ params, searchParams }) {
   const [err, setErr] = useState('');
   const [project, setProject] = useState(searchParams?.project || '');
   const [q, setQ] = useState('');
+  const [plotQ, setPlotQ] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(searchParams?.overdue === '1');
   const [showAgeing, setShowAgeing] = useState(false);
   // '' | 'any' | one of ISSUES — the dashboard links here with ?issue=…
@@ -51,8 +61,9 @@ export default function ARRegisterPage({ params, searchParams }) {
       && (!overdueOnly || r.overdue > 0)
       && (!issue || (issue === 'any' ? hasIssue(r) : ISSUES.find((i) => i.value === issue)?.test(r)))
       && (!needle || r.client_name.toLowerCase().includes(needle) || (r.phone || '').includes(needle)
-        || String(r.plots).toLowerCase().includes(needle)));
-  }, [rows, project, q, overdueOnly, issue]);
+        || String(r.plots).toLowerCase().includes(needle))
+      && plotMatches(r.plots, plotQ));
+  }, [rows, project, q, plotQ, overdueOnly, issue]);
 
   const totals = useMemo(() => shown.reduce((t, r) => ({
     collectable: t.collectable + r.collectable, received: t.received + r.received,
@@ -84,7 +95,8 @@ export default function ARRegisterPage({ params, searchParams }) {
           <div className="ar-filters">
             <Dropdown value={project} onChange={setProject} searchable ariaLabel="Project" icon={<Building2 size={15} />}
               options={[{ value: '', label: 'All projects' }, ...projects.map(([id, name]) => ({ value: String(id), label: name }))]} />
-            <input className="nx-input nx-input-sm ar-search" placeholder="Search client, phone or plot…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input className="nx-input nx-input-sm ar-plot-search" placeholder="Plot no." aria-label="Plot number" value={plotQ} onChange={(e) => setPlotQ(e.target.value)} />
+            <input className="nx-input nx-input-sm ar-search" placeholder="Search client or phone…" value={q} onChange={(e) => setQ(e.target.value)} />
             <label className={`nx-check${overdueOnly ? ' is-on' : ''}`}>
               <input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} /> Overdue only
             </label>

@@ -144,6 +144,8 @@ export const AR_ENDPOINTS = {
   account: (id)    => `${BASE_URL}/api/ar/accounts/${id}/`,
   receipts: (id)   => `${BASE_URL}/api/ar/accounts/${id}/receipts/`,
   statement: (id)  => `${BASE_URL}/api/ar/accounts/${id}/statement/`,
+  booking: (id)    => `${BASE_URL}/api/ar/accounts/${id}/booking/`,
+  loiUrl: (id)     => `${BASE_URL}/api/ar/accounts/${id}/loi-url/`,
   receipt: (id)    => `${BASE_URL}/api/ar/receipts/${id}/`,
   receiptAudit: (id) => `${BASE_URL}/api/ar/receipts/${id}/audit/`,
   get dashboard()  { return `${BASE_URL}/api/ar/dashboard/`; },
