@@ -151,6 +151,15 @@ export const AR_ENDPOINTS = {
   get dashboard()  { return `${BASE_URL}/api/ar/dashboard/`; },
   get import()     { return `${BASE_URL}/api/ar/import/`; },
   get importTemplate() { return `${BASE_URL}/api/ar/import/template/`; },
+  get collections() { return `${BASE_URL}/api/ar/collections/`; },
+  followUps: (id)  => `${BASE_URL}/api/ar/accounts/${id}/followups/`,
+  get myFollowUps() { return `${BASE_URL}/api/ar/followups/`; },
+  followUp: (id)   => `${BASE_URL}/api/ar/followups/${id}/`,
+  get assignees()  { return `${BASE_URL}/api/ar/assignees/`; },
+};
+
+export const ACTIVITY_ENDPOINTS = {
+  get log()        { return `${BASE_URL}/api/activity/`; },
 };
 
 export const CLUB1000_ENDPOINTS = {

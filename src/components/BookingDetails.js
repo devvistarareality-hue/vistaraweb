@@ -5,6 +5,7 @@
 // not be three different renderings of it, least of all three sets of rounding.
 //
 // `accent` colours the group headings so the block sits in whichever module shows it.
+import ActivityHistory from './ActivityHistory';
 
 const money0 = (n) => (n === '' || n == null) ? '—' : '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const val = (v) => (v === '' || v == null) ? '—' : String(v);
@@ -118,6 +119,7 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
           </table>
         </div>
       )}
+      {b.id ? <ActivityHistory targetType="booking" targetId={b.id} title="History — who did what" /> : null}
     </div>
   );
 }

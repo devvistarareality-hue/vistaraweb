@@ -68,6 +68,9 @@ function IconReceivable() {
 function IconBackup() {
   return <SvgIcon><path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/><polyline points="12 12 12 21"/><polyline points="9 18 12 21 15 18"/></SvgIcon>;
 }
+function IconActivity() {
+  return <SvgIcon><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 11.5 4"/><polyline points="3 16 3 11 8 11"/></SvgIcon>;
+}
 
 const NAV_ITEMS = [
   { label: 'Dashboard',          href: '/admin',                icon: <IconDashboard /> },
@@ -75,6 +78,7 @@ const NAV_ITEMS = [
   { label: 'Company Management', href: '/admin/companies',      icon: <IconBuilding /> },
   { label: 'Designation Master', href: '/admin/designations',   icon: <IconDesignation /> },
   { label: 'Data Backup',        href: '/admin/data-backup',    icon: <IconBackup /> },
+  { label: 'Activity Log',       href: '/admin/activity',       icon: <IconActivity /> },
 ];
 
 const PARKED_ITEMS = [

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
@@ -337,14 +337,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
   // Two jobs live on this page, so they get their own sections rather than one
   // long scroll: lead transfers waiting on this manager, and booking approvals.
-  // It opens on whichever has work — transfers only when some are pending.
+  // It always opens on booking approvals; transfers show their pending count on the tab.
   const [section, setSection] = useState('bookings');
-  const sectionPicked = useRef(false);
-  useEffect(() => {
-    if (sectionPicked.current) return;
-    if (xfers.length > 0) setSection('transfers');
-  }, [xfers.length]);
-  const pickSection = (next) => { sectionPicked.current = true; setSection(next); };
+  const pickSection = setSection;
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -356,13 +351,13 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       </p>
 
       <div className="nx-filters">
-        <button type="button" onClick={() => pickSection('transfers')}
-          className={`nx-btn nx-btn-md nx-toggle${section === 'transfers' ? ' is-on' : ''}`}>
-          Lead Transfer Approvals{xfers.length > 0 ? ` · ${xfers.length}` : ''}
-        </button>
         <button type="button" onClick={() => pickSection('bookings')}
           className={`nx-btn nx-btn-md nx-toggle${section === 'bookings' ? ' is-on' : ''}`}>
           Booking Approvals
+        </button>
+        <button type="button" onClick={() => pickSection('transfers')}
+          className={`nx-btn nx-btn-md nx-toggle${section === 'transfers' ? ' is-on' : ''}`}>
+          Lead Transfer Approvals{xfers.length > 0 ? ` · ${xfers.length}` : ''}
         </button>
       </div>
 
