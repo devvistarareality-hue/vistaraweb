@@ -50,6 +50,8 @@ const NAV = [
   { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true },
   { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift /> },
   { label: 'My Team',    href: '/club1000/my-team',     icon: <IconTeam />,   managerOnly: true },
+  // Who changed what, and when — real admins only.
+  { label: 'Log',        href: '/club1000/log',         icon: <IconLayers />, adminOnly: true },
 ];
 
 const CSS = `
@@ -88,7 +90,7 @@ export default function Club1000Layout({ children }) {
   // visibility from admin_modules alone; this only changes where the nav lives.
   const isTrueManager = user?.role === 'Admin' || user?.is_staff || (user?.manager_modules || []).includes('Club 1000');
   const isAdminModulesOnly = !isTrueManager && (user?.admin_modules || []).includes('Club 1000');
-  const managerOnlyItems = NAV.filter((item) => item.managerOnly);
+  const managerOnlyItems = NAV.filter((item) => item.managerOnly && !item.adminOnly);
 
   // "Back to Modules" for anyone with more than one module to switch between
   // (matches the generic m/[module] shell's behaviour); admins go to /admin instead.
@@ -230,7 +232,7 @@ export default function Club1000Layout({ children }) {
           ) : (
             <>
               <div style={s.sectionLabel}>CLUB 1000</div>
-              {(isTrueManager ? NAV.filter(item => !item.managerOnly || manager) : NAV.filter(item => !item.managerOnly)).map((item) => {
+              {(isTrueManager ? NAV.filter(item => !item.managerOnly || manager) : NAV.filter(item => !item.managerOnly)).filter((item) => !item.adminOnly || isAdmin).map((item) => {
                 const active = isActive(item.href);
                 return (
                   <Link key={item.href} href={item.href} className="c1k-nav-link"

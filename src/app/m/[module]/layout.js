@@ -27,6 +27,7 @@ const IconGrid  = () => <SvgIcon><rect x="3" y="3" width="7" height="7"/><rect x
 const IconUsers = () => <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></SvgIcon>;
 const IconBook  = () => <SvgIcon><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></SvgIcon>;
 const IconCheck = () => <SvgIcon><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
+const IconLog = () => <SvgIcon><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 11.5 4"/><polyline points="3 16 3 11 8 11"/></SvgIcon>;
 const IconBell = () => <SvgIcon><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></SvgIcon>;
 const IconChart = () => <SvgIcon><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></SvgIcon>;
 const IconBack  = () => <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>;
@@ -108,6 +109,8 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Register', href: `${base}/register`, icon: <IconBook /> },
       { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck /> },
     ] : []),
+    // Who changed what in this module, and when — real admins only.
+    ...(isAdmin ? [{ label: 'Log', href: `${base}/log`, icon: <IconLog /> }] : []),
   ];
   // "Back to Modules" only makes sense when the user actually has more than one module
   // to switch between (or is an admin). A single-module employee is boxed into it.
