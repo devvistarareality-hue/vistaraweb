@@ -1129,3 +1129,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .act-changes td.arrow { color: var(--faint); }
 .act-target.is-link { text-decoration: none; cursor: pointer; }
 .act-target.is-link:hover { color: var(--accent); text-decoration: underline; }
+
+/* ─── Searchable Channel Partner Name picker (booking form) ─────────────── */
+.nx-cp-picker { position: relative; flex: 1; min-width: 0; }
+.nx-cp-picker-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin-top: 4px; max-height: 220px; overflow-y: auto; }
+.nx-cp-picker-empty { padding: 10px 12px; font-size: 12.5px; color: var(--faint); }
+.nx-cp-picker-row { padding: 9px 12px; font-size: 13px; cursor: pointer; color: var(--text); border-top: 1px solid var(--surface-2); }
+.nx-cp-picker-row:first-child { border-top: none; }
+.nx-cp-picker-row:hover { background: var(--accent-softer); }

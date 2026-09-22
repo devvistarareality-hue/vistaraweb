@@ -892,7 +892,7 @@ function BookingPage() {
         <Row><L>Phone *</L><In value={f.phone} invalid={errs.phone} onChange={(e) => set('phone', e.target.value)} /></Row>
         <Row><L>Source</L><Sel value={f.source} onChange={(e) => set('source', e.target.value)} opts={['', ...(() => { const mapped = sources.map(s => srcDisplay(s.name)); const extra = ['Reference', 'Channel Partner', 'Other'].filter(n => !mapped.some(m => m.toLowerCase() === n.toLowerCase())); return [...mapped, ...extra]; })()] } /></Row>
         {/^reference$/i.test(f.source) && <Row><L>Reference Name</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
-        {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><Sel value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} opts={['', ...channelPartners.map((cp) => cp.name)]} /></Row>}
+        {/^channel partner$/i.test(f.source) && <Row><L>Channel Partner Name</L><CpNamePicker value={f.cp_name} onChange={(name) => set('cp_name', name)} options={channelPartners.map((cp) => cp.name).sort((a, b) => a.localeCompare(b))} /></Row>}
         {/^other$/i.test(f.source) && <Row><L>Other</L><In value={f.cp_name} onChange={(e) => set('cp_name', e.target.value)} /></Row>}
         <Row><L>Address</L><In value={f.address} onChange={(e) => set('address', e.target.value)} /></Row>
         {/* Kiosk: the booking is created by the kiosk account, so the salesperson
@@ -1326,6 +1326,40 @@ const Sel = ({ opts, invalid, ...p }) => (
     {opts.map((o) => <option key={o} value={o}>{o === '' ? '— Select —' : o}</option>)}
   </select>
 );
+// Channel Partner Name — a plain <select> made scrolling through a company's
+// whole CP list painful. Type-to-filter combobox instead (same pattern as the
+// Add Lead form's ChannelPartnerPicker), keyed by name since this form stores
+// the CP as a free-text field, not a foreign key.
+function CpNamePicker({ value, onChange, options }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const q = query.trim().toLowerCase();
+  const filtered = q ? options.filter((name) => name.toLowerCase().includes(q)) : options;
+  return (
+    <div className="nx-cp-picker">
+      <input
+        className="nx-input"
+        value={open ? query : (value || '')}
+        placeholder="Search channel partner…"
+        onFocus={() => { setQuery(''); setOpen(true); }}
+        onChange={(e) => setQuery(e.target.value)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        autoComplete="off"
+      />
+      {open && (
+        <div className="nx-popover nx-cp-picker-list">
+          {filtered.length === 0 ? (
+            <div className="nx-cp-picker-empty">No match</div>
+          ) : filtered.map((name) => (
+            <div key={name} className="nx-cp-picker-row" onMouseDown={() => { onChange(name); setQuery(''); setOpen(false); }}>
+              {name}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>
