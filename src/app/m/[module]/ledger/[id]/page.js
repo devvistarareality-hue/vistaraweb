@@ -159,11 +159,6 @@ export default function ARLedgerPage({ params }) {
           {' '}Ask Sales to add the installments to the booking and they appear here.
         </div>
       )}
-      {data.suspect_amount && (
-        <div className="nx-note bad">
-          The deal amount on this booking is only {rupee(data.total_deal)}, which looks like a typing mistake. Correct the booking in Sales before relying on these figures.
-        </div>
-      )}
       {data.plan_mismatch !== 0 && (
         <div className="nx-note warn">
           The LOI schedule adds up to {rupee(data.collectable)}, which is {rupee(Math.abs(data.plan_mismatch))} {data.plan_mismatch > 0 ? 'more' : 'less'} than Total Deal − Stamp Duty − Registration. Check the booking&apos;s installments.
