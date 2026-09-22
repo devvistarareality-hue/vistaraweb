@@ -12,6 +12,8 @@ import { getCache, getCacheWithStatus, setCache } from './_cache';
 
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
+import { DashHero, DashAlerts } from '../../components/Dash';
+import { pct } from '../../lib/inr';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
 
@@ -238,36 +240,29 @@ function StatusBadge({ status }) {
   );
 }
 
-function StatCard({ label, value, icon, color, textColor, href, loading, flat }) {
-  // `flat` tiles live inside a section panel, so they drop the white card and its
-  // shadow — the panel already provides both — and sit tighter.
-  const inner = (
-    <div className={flat ? 'nx-stat flat' : 'nx-card nx-stat'} style={flat ? tile : { ...card, textDecoration: 'none', display: 'block', cursor: href ? 'pointer' : 'default' }}>
-      <div className="nx-stat-icon" style={{ width: flat ? 34 : 42, height: flat ? 34 : 42, borderRadius: 12, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor, marginBottom: flat ? 10 : 14 }}>
-        {icon}
-      </div>
-      {loading
-        ? <div style={{ height: 24, width: 42, borderRadius: 6, background: 'var(--surface-3)', animation: 'pulse 1.4s ease infinite' }} />
-        : <div className="nx-stat-value" style={{ fontSize: flat ? 22 : 28, fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '-0.02em' }}>{(value ?? 0).toLocaleString()}</div>
-      }
-      <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 4, lineHeight: 1.3, minHeight: flat ? 28 : 31 }}>{label}</div>
-    </div>
+// Tile colours used to be passed as raw CSS; they now pick one of the shared
+// dashboard tones (components/Dash.js), so Sales reads like the AR and Club 1000 homes.
+const toneOf = (c) => (/danger/.test(c) ? 'bad' : /success/.test(c) ? 'good' : /warning/.test(c) ? 'warn' : 'info');
+
+function StatCard({ label, value, icon, textColor, href, loading }) {
+  const tone = toneOf(textColor || '');
+  const body = (
+    <>
+      <div className="ard-kpi-top"><span className={`ard-kpi-icon ${tone}`}>{icon}</span>{href && <span className="ard-kpi-go">›</span>}</div>
+      <div className="ard-kpi-label">{label}</div>
+      {loading ? <div className="ard-skel" /> : <div className={`ard-kpi-value ${tone === 'info' ? '' : tone}`}>{typeof value === 'number' ? value.toLocaleString('en-IN') : (value ?? 0)}</div>}
+    </>
   );
-  return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
+  return href ? <Link href={href} className="nx-card ard-kpi is-link">{body}</Link> : <div className="nx-card ard-kpi">{body}</div>;
 }
 
-// A group of related tiles in one panel. The panels are laid out by .dash-sections
-// in globals.css, which carries the breakpoints inline styles cannot express.
+// A group of related tiles under a section title — the question they answer.
 function StatSection({ title, cards, loading }) {
-  // One column per tile, each free to shrink (minmax(0,1fr)), so a group always
-  // shows its tiles on a single row and never strands one on a row of its own.
-  // Panels come from a uniform column track, so every panel is the same width at
-  // any screen size and the tiles line up across them.
   return (
-    <section className="nx-card" style={panel}>
-      <h3 style={sectionLabel}>{title}</h3>
-      <div style={{ ...sectionGrid, gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))` }}>
-        {cards.map((c) => <StatCard key={c.label} {...c} flat loading={loading} />)}
+    <section className="ard-group">
+      <h3 className="ard-group-title">{title}</h3>
+      <div className="ard-kpi-grid">
+        {cards.map((c) => <StatCard key={c.label} {...c} loading={loading} />)}
       </div>
     </section>
   );
@@ -352,9 +347,22 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
       </div>
 
       {loading ? <SkeletonGrid count={6} /> : (
-        <div style={statsGrid}>
-          {cards.map((c) => <StatCard key={c.label} {...c} loading={loading} />)}
-        </div>
+        <>
+          <DashHero
+            eyebrow={isCp ? 'Channel Partner leads' : 'Total leads'}
+            value={(stats?.total_leads ?? 0).toLocaleString('en-IN')}
+            splits={[
+              { label: 'New today', value: (stats?.leads_today ?? 0).toLocaleString('en-IN') },
+              { label: 'Site visits', value: (stats?.sv_done ?? 0).toLocaleString('en-IN') },
+              { label: 'Closures', value: (stats?.closures ?? 0).toLocaleString('en-IN') },
+            ]}
+            ring={{ pct: pct(stats?.closures || 0, stats?.total_leads || 0), label: 'converted', caption: `${stats?.closures ?? 0} closures of ${stats?.total_leads ?? 0} leads` }}
+          />
+          {!isCp && <DashAlerts items={[{ tone: 'warn', count: stats?.unassigned_leads ?? 0, label: 'Unassigned leads', text: 'Waiting for an owner', href: `${leadsHref}?unassigned=true` }]} />}
+          <div className="ard-kpi-grid">
+            {cards.map((c) => <StatCard key={c.label} {...c} loading={loading} />)}
+          </div>
+        </>
       )}
 
       <div className="nx-card" style={cardWrap}>
@@ -696,8 +704,20 @@ function TelecallerDashboard({ user }) {
         </div>
       </div>
 
-      {/* Stats, grouped into panels */}
-      <div className="dash-sections">
+      <DashHero
+        eyebrow="My leads"
+        value={total.toLocaleString('en-IN')}
+        splits={[{ label: 'New today', value: newToday.toLocaleString('en-IN') }, { label: 'To call', value: toCall.toLocaleString('en-IN') },
+                 { label: 'Warm / SQL', value: warm.toLocaleString('en-IN') }]}
+        ring={{ pct: pct(called, total), label: 'called', caption: `${called} of ${total} leads called` }}
+      />
+      <DashAlerts items={[
+        { tone: 'bad', count: fuOverdue, label: 'Follow-ups overdue', text: 'Past their follow-up date', href: withDate('/sales/follow-ups?filter=overdue') },
+        { tone: 'info', count: callback, label: 'Callbacks due', text: 'Asked to be called back', href: withDate('/sales/leads?tab=called&telecaller_status=callback') },
+      ]} />
+
+      {/* Stats, grouped by the question they answer */}
+      <div className="ard-groups">
         {sections.map((sec) => <StatSection key={sec.title} title={sec.title} cards={sec.cards} loading={loading} />)}
       </div>
 
@@ -819,7 +839,19 @@ function STMDashboard({ user }) {
 
       <DateFilter onChange={setEff} />
 
-      <div className="dash-sections">
+      <DashHero
+        eyebrow="My pipeline"
+        value={total.toLocaleString('en-IN')}
+        splits={[{ label: 'Hot', value: hot.toLocaleString('en-IN') }, { label: 'Warm / SQL', value: warm.toLocaleString('en-IN') },
+                 { label: 'Site visits done', value: svDone.toLocaleString('en-IN') }]}
+        ring={{ pct: pct(closed, sql), label: 'SQL closed', caption: `${closed} closures of ${sql} SQLs` }}
+      />
+      <DashAlerts items={[
+        { tone: 'bad', count: fuOverdue, label: 'Follow-ups overdue', text: 'Past their follow-up date', href: withDate('/sales/follow-ups?filter=overdue') },
+        { tone: 'warn', count: svSched, label: 'Site visits scheduled', text: 'Coming up', href: '/sales/site-visits?tab=scheduled' },
+      ]} />
+
+      <div className="ard-groups">
       {[
         { title: 'My Pipeline', cards: [
           { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads') },

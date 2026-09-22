@@ -965,3 +965,48 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 @media (max-width: 860px) {
   .nx-c1k-grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ── Shared dashboard pieces (components/Dash.js) on top of the .ard-* AR styles ── */
+.ard-hero-side { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; flex-shrink: 0; }
+.ard-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.ard-hero-actions .nx-btn { box-shadow: none; }
+.ard-hero-note { margin-top: 14px; font-size: 12px; opacity: .8; }
+.ard-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.ard-section { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 12px; }
+.ard-section h2 { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.ard-section span { font-size: 12.5px; color: var(--muted); }
+.ard-issue.info { background: var(--accent-soft); border-color: var(--blue-2); color: var(--accent); }
+.ard-issue.info .ard-issue-n small { color: var(--accent); }
+.ard-issue.good { background: var(--success-soft); border-color: var(--success-2); color: var(--success); }
+.ard-issue.good .ard-issue-n small { color: var(--success); }
+.tone-good { background: var(--success); } .tone-warn { background: var(--warning-solid); }
+.tone-bad { background: var(--danger); } .tone-info { background: var(--accent); } .tone-muted { background: var(--faint-solid); }
+.tone-purple { background: color-mix(in srgb, var(--accent) 55%, #8b5cf6); }
+.ard-age-track span.tone-good, .ard-age-track span.tone-warn, .ard-age-track span.tone-bad, .ard-age-track span.tone-info, .ard-age-track span.tone-muted, .ard-age-track span.tone-purple { display: block; height: 100%; border-radius: 999px; }
+.ard-row-bar.tone-good span { background: var(--success); } .ard-row-bar.tone-info span { background: var(--accent); } .ard-row-bar.tone-warn span { background: var(--warning-solid); }
+.ard-row-bar[class*="tone-"] { background: var(--surface-2); }
+.ard-row-amt.tone-good { color: var(--success); background: none; } .ard-row-amt.tone-info { color: var(--accent); background: none; }
+.ard-row-amt.tone-bad { color: var(--danger); background: none; } .ard-row-amt.tone-warn { color: var(--warning); background: none; }
+.ard-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.ard-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 0 10px 10px; }
+.ard-table td { padding: 10px; border-top: 1px solid var(--hairline); color: var(--text-2); }
+.ard-table td.strong { font-weight: 700; color: var(--text); }
+.ard-table td.num, .ard-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ard-link { font-size: 12.5px; font-weight: 700; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.ard-link:hover { text-decoration: underline; }
+.ard-money-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ard-money { padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--hairline); }
+.ard-money span { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.ard-money b { display: block; font-size: 20px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.ard-money.warn b { color: var(--warning); } .ard-money.good b { color: var(--success); }
+@media (max-width: 600px) { .ard-hero-side { align-items: flex-start; } .ard-kpi-grid { grid-template-columns: 1fr 1fr; } }
+/* Sales dashboard tile groups (sales/page.js StatSection) */
+.ard-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 6px 18px; margin-bottom: 18px; }
+.ard-group-title { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 6px 0 8px; }
+.ard-group .ard-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-bottom: 8px; }
+.ard-group .ard-kpi { padding: 13px 14px 12px; }
+.ard-group .ard-kpi-value { font-size: 22px; }
+.ard-kpi-icon svg { width: 18px; height: 18px; }
+.ard-skel { height: 24px; width: 46px; border-radius: 6px; background: var(--surface-3); animation: pulse 1.4s ease infinite; margin-top: 4px; }
+.ard-hero { margin-bottom: 16px; }
+.ard-top > .ard-hero { margin-bottom: 0; }
