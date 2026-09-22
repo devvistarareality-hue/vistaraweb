@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
@@ -12,6 +12,7 @@ import BookingDetails from '../../../components/BookingDetails';
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import LeadTransfers from '../_LeadTransfers';
 // Open the confidential LOI via a short-lived signed URL (never a public link).
 async function openLoi(id) {
   try {
@@ -229,7 +230,6 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // Pending lead transfers for the projects this user approves. Same authority as a
   // booking on that project, so it belongs on the same screen.
   const [xfers, setXfers] = useState([]);
-  const [xferBusy, setXferBusy] = useState(null);
   function loadTransfers() {
     // cp_only in the Channel Partner module: a lead transfer is a Sales activity, so
     // without it the CP approver was shown transfers for leads that never came through
@@ -240,15 +240,6 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       .catch(() => setXfers([]));
   }
   useEffect(() => { loadTransfers(); }, [companyId, adminView, cpOnly]);
-
-  async function actOnTransfer(id, action) {
-    setXferBusy(id);
-    await fetch(SALES_ENDPOINTS.leadTransferAction(id), {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }),
-    }).catch(() => {});
-    setXferBusy(null);
-    loadTransfers();
-  }
 
   function load() {
     setLoading(true);
@@ -346,14 +337,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
   // Two jobs live on this page, so they get their own sections rather than one
   // long scroll: lead transfers waiting on this manager, and booking approvals.
-  // It opens on whichever has work — transfers only when some are pending.
+  // It always opens on booking approvals; transfers show their pending count on the tab.
   const [section, setSection] = useState('bookings');
-  const sectionPicked = useRef(false);
-  useEffect(() => {
-    if (sectionPicked.current) return;
-    if (xfers.length > 0) setSection('transfers');
-  }, [xfers.length]);
-  const pickSection = (next) => { sectionPicked.current = true; setSection(next); };
+  const pickSection = setSection;
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -365,53 +351,18 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       </p>
 
       <div className="nx-filters">
-        <button type="button" onClick={() => pickSection('transfers')}
-          className={`nx-btn nx-btn-md nx-toggle${section === 'transfers' ? ' is-on' : ''}`}>
-          Lead Transfer Approvals{xfers.length > 0 ? ` · ${xfers.length}` : ''}
-        </button>
         <button type="button" onClick={() => pickSection('bookings')}
           className={`nx-btn nx-btn-md nx-toggle${section === 'bookings' ? ' is-on' : ''}`}>
           Booking Approvals
         </button>
+        <button type="button" onClick={() => pickSection('transfers')}
+          className={`nx-btn nx-btn-md nx-toggle${section === 'transfers' ? ' is-on' : ''}`}>
+          Lead Transfer Approvals{xfers.length > 0 ? ` · ${xfers.length}` : ''}
+        </button>
       </div>
 
-      {section === 'transfers' && xfers.length === 0 && (
-        <div className="nx-card nx-empty-card">No lead transfers are waiting for your approval.</div>
-      )}
-
-      {section === 'transfers' && xfers.length > 0 && (
-        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 8px rgba(140,148,160,0.18)', borderLeft: '4px solid var(--warning)' }}>
-          <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--warning)', margin: '0 0 2px' }}>
-            ⇄ Lead Transfers awaiting your approval · {xfers.length}
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 12px' }}>
-            The lead stays with the current STM until you approve.
-          </p>
-          <div style={{ display: 'grid', gap: 8 }}>
-            {xfers.map((x) => (
-              <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-                border: '1px solid var(--surface-2)', borderRadius: 14, padding: '10px 12px', background: 'var(--warning-soft)' }}>
-                <div style={{ flex: '1 1 320px', minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                    {x.lead_name || 'Lead'} {x.project_name && <span style={{ fontWeight: 500, color: 'var(--muted)' }}>· {x.project_name}</span>}
-                  </p>
-                  <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '3px 0 0' }}>
-                    {x.from_stm_name || 'Unassigned'} <span style={{ color: 'var(--warning)', fontWeight: 700 }}>→</span> {x.to_stm_name}
-                    {x.reason ? <span style={{ color: 'var(--muted)' }}> · {x.reason}</span> : null}
-                  </p>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => actOnTransfer(x.id, 'reject')} disabled={xferBusy === x.id}
-                    style={{ padding: '8px 14px', background: 'var(--surface)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Reject</button>
-                  <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => actOnTransfer(x.id, 'approve')} disabled={xferBusy === x.id}
-                    style={{ padding: '8px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
-                    {xferBusy === x.id ? '…' : 'Approve'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {section === 'transfers' && (
+        <LeadTransfers companyId={companyId} cpOnly={cpOnly} pendingCount={xfers.length} onChanged={loadTransfers} />
       )}
 
       {section === 'bookings' && (<>

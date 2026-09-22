@@ -9,6 +9,8 @@ import { confirmDialog, notify } from '../../../../../lib/notify';
 import { formatDMY } from '../../../../../lib/dateFormat';
 import Loader from '../../../../../components/Loader';
 import BookingDetails from '../../../../../components/BookingDetails';
+import ActivityHistory from '../../../../../components/ActivityHistory';
+import FollowUpModal from '../../_FollowUpModal';
 import { rupee, MODES, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
@@ -29,6 +31,8 @@ export default function ARLedgerPage({ params }) {
   const [legalDate, setLegalDate] = useState('');
   const [audit, setAudit] = useState(null);       // null | { receipt, rows }
   const [booking, setBooking] = useState(null);   // null | 'loading' | booking — the details panel
+  const [followUps, setFollowUps] = useState(false);
+  const me = useSelector((s) => s.auth.user?.id);
 
   const qs = useCallback(() => {
     const p = [`as_of=${asOf}`];
@@ -148,6 +152,7 @@ export default function ARLedgerPage({ params }) {
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={showBooking}>Booking details</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={openLoi}>View {String(data.plots).toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'}</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setFollowUps(true)}>Follow-ups</button>
           {!frozen && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Record payment</button>}
         </div>
       </div>
@@ -295,6 +300,12 @@ export default function ARLedgerPage({ params }) {
           </div>
         )}
       </div>
+
+      <div className="nx-card ar-card ar-card-body">
+        <ActivityHistory targetType="ar_account" targetId={data.id} companyId={companyId} title="Account history — receipts, follow-ups, changes" />
+      </div>
+
+      {followUps && <FollowUpModal row={data} companyId={companyId} me={me} onClose={() => setFollowUps(false)} />}
 
       {form && (
         <div className="ar-backdrop" onClick={() => !saving && setForm(null)}>
