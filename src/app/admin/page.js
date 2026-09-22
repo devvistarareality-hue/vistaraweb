@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
+import { LayoutGrid } from 'lucide-react';
 import { moduleAccess } from '../../lib/moduleAccess';
 
 const NAVY   = 'var(--text)';
@@ -92,26 +93,26 @@ export default function AdminDashboardPage() {
             <div style={s.heroGreet}>{greeting || 'Welcome back'}</div>
             <div style={s.heroName}>{user?.name?.toUpperCase() || 'ADMIN'}</div>
             <div style={s.heroMeta}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <span>{dateStr || '—'}</span>
               {company?.name && <><span style={{ opacity: 0.3 }}>·</span><span>{company.name}</span></>}
             </div>
           </div>
 
-          {/* Right: stat chips */}
-          <div style={s.heroChips}>
-            <div style={s.chip}>
-              <div style={{ ...s.chipDot, backgroundColor: 'var(--blue)', boxShadow: `0 0 0 4px rgba(162,210,255,0.18)` }} />
+          {/* Right: stat chips — frosted glass on the hero, readable in both themes */}
+          <div className="adm-chips">
+            <div className="adm-chip">
+              <span className="adm-chip-icon"><LayoutGrid size={17} /></span>
               <div>
-                <div style={s.chipNum}>{visibleOpen.length}</div>
-                <div style={s.chipLabel}>Active Modules</div>
+                <div className="adm-chip-num">{visibleOpen.length}</div>
+                <div className="adm-chip-label">Active modules</div>
               </div>
             </div>
-            <div style={s.chip}>
-              <div style={{ ...s.chipDot, backgroundColor: 'var(--green)', boxShadow: '0 0 0 4px rgba(164,245,166,0.2)' }} />
+            <div className="adm-chip">
+              <span className="adm-chip-icon ok"><span className="adm-live" /></span>
               <div>
-                <div className="nx-chip-ok" style={s.chipLabel}>System Online</div>
-                <div style={{ ...s.chipLabel, fontSize: 10, marginTop: 1 }}>All services operational</div>
+                <div className="adm-chip-title">System online</div>
+                <div className="adm-chip-label">All services operational</div>
               </div>
             </div>
           </div>
@@ -121,7 +122,7 @@ export default function AdminDashboardPage() {
         <div style={s.heroStrip}>
           <span style={s.stripItem}>Admin</span>
           <span style={s.stripSep}>›</span>
-          <span style={{ ...s.stripItem, color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>Dashboard</span>
+          <span className="adm-strip-current">Dashboard</span>
         </div>
       </div>
 
@@ -220,9 +221,9 @@ const s = {
     padding: '36px 40px 28px', position: 'relative', zIndex: 1,
     flexWrap: 'wrap', gap: 20,
   },
-  heroGreet: { fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 8, fontWeight: 500, letterSpacing: 0.3 },
+  heroGreet: { fontSize: 13, color: 'rgba(255,255,255,0.78)', marginBottom: 8, fontWeight: 500, letterSpacing: 0.3 },
   heroName:  { fontSize: 32, fontWeight: 900, color: '#fff', letterSpacing: -0.5, marginBottom: 10 },
-  heroMeta:  { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.38)', fontWeight: 400 },
+  heroMeta:  { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: 500 },
   heroChips: { display: 'flex', flexDirection: 'column', gap: 10 },
   chip: {
     display: 'flex', alignItems: 'center', gap: 14,
@@ -238,8 +239,8 @@ const s = {
     padding: '10px 40px 12px', position: 'relative', zIndex: 1,
     borderTop: '1px solid rgba(255,255,255,0.06)',
   },
-  stripItem: { fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 500 },
-  stripSep:  { color: 'rgba(255,255,255,0.2)', fontSize: 13 },
+  stripItem: { fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 500 },
+  stripSep:  { color: 'rgba(255,255,255,0.45)', fontSize: 13 },
 
   /* ── Sections ── */
   section: { padding: '28px 24px 0' },

@@ -1022,3 +1022,17 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 [data-theme="dark"] .ard-hbtn.solid:hover { filter: brightness(1.08); }
 .ard-hbtn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .ard-hbtn:focus-visible { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
+/* Admin home hero: status chips (admin/page.js) */
+.adm-chips { display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 1; }
+.adm-chip { display: flex; align-items: center; gap: 12px; min-width: 210px; padding: 12px 16px; border-radius: 16px;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; }
+.adm-chip-icon { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.16); color: #fff; }
+.adm-chip-icon.ok { background: rgba(91,224,154,.16); }
+.adm-live { width: 10px; height: 10px; border-radius: 50%; background: #5BE09A; box-shadow: 0 0 0 0 rgba(91,224,154,.6); animation: adm-pulse 2s ease-out infinite; }
+@keyframes adm-pulse { 0% { box-shadow: 0 0 0 0 rgba(91,224,154,.55); } 70% { box-shadow: 0 0 0 9px rgba(91,224,154,0); } 100% { box-shadow: 0 0 0 0 rgba(91,224,154,0); } }
+@media (prefers-reduced-motion: reduce) { .adm-live { animation: none; } }
+.adm-chip-num { font-size: 22px; font-weight: 800; line-height: 1; color: #fff; }
+.adm-chip-title { font-size: 13.5px; font-weight: 800; color: #7CF0B0; line-height: 1.2; }
+.adm-chip-label { font-size: 11.5px; color: rgba(255,255,255,.78); margin-top: 3px; font-weight: 500; }
+.adm-strip-current { font-size: 11px; font-weight: 700; color: #fff; }
