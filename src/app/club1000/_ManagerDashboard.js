@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Phone, PartyPopper, Users, Building2, Clock, CircleCheckBig, CalendarClock, ClipboardList, AlarmClock, Gift, Layers, Trophy } from 'lucide-react';
+import { Phone, PartyPopper, Users, Building2, Clock, CircleCheckBig, CalendarClock, ClipboardList, AlarmClock, Gift, Layers, Trophy, Settings2, Plus } from 'lucide-react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { rupee, inrShort, pct } from '../../lib/inr';
@@ -68,8 +68,8 @@ export default function ManagerDashboard() {
               ring={{ pct: pct(breakdown.active || 0, investors), label: 'active', caption: `${breakdown.active || 0} of ${investors} investors` }}
               actions={(
                 <>
-                  <Link href="/club1000/schemes" className="nx-btn nx-btn-md nx-btn-secondary">Manage schemes</Link>
-                  <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add investor</button>
+                  <Link href="/club1000/schemes" className="ard-hbtn"><Settings2 size={16} /> Manage schemes</Link>
+                  <button type="button" className="ard-hbtn solid" onClick={() => setShowAdd(true)} disabled={!schemes.length}><Plus size={16} /> Add investor</button>
                 </>
               )}
               note={!schemes.length ? 'Create a scheme first — Add investor unlocks once one exists.' : null}

@@ -19,12 +19,10 @@ export function DashHero({ eyebrow, value, valueTitle, splits = [], ring, action
             {splits.map((x) => <div key={x.label}><span>{x.label}</span><b title={x.title}>{x.value}</b></div>)}
           </div>
         )}
+        {actions && <div className="ard-hero-actions">{actions}</div>}
         {note && <div className="ard-hero-note">{note}</div>}
       </div>
-      <div className="ard-hero-side">
-        {actions && <div className="ard-hero-actions">{actions}</div>}
-        {ring && <DashRing {...ring} />}
-      </div>
+      {ring && <div className="ard-hero-side"><DashRing {...ring} /></div>}
     </div>
   );
 }

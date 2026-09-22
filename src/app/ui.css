@@ -968,7 +968,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 
 /* ── Shared dashboard pieces (components/Dash.js) on top of the .ard-* AR styles ── */
 .ard-hero-side { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; flex-shrink: 0; }
-.ard-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.ard-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
 .ard-hero-actions .nx-btn { box-shadow: none; }
 .ard-hero-note { margin-top: 14px; font-size: 12px; opacity: .8; }
 .ard-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -1010,3 +1010,15 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ard-skel { height: 24px; width: 46px; border-radius: 6px; background: var(--surface-3); animation: pulse 1.4s ease infinite; margin-top: 4px; }
 .ard-hero { margin-bottom: 16px; }
 .ard-top > .ard-hero { margin-bottom: 0; }
+/* Buttons that sit on the gradient hero: frosted glass, and a solid primary. */
+.ard-hbtn { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; border-radius: 12px; cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 700; text-decoration: none; white-space: nowrap; color: #fff;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.26); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: background .15s, border-color .15s, transform .15s, box-shadow .15s; }
+.ard-hbtn:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.4); transform: translateY(-1px); }
+.ard-hbtn.solid { background: #fff; color: #0F2E57; border-color: #fff; box-shadow: 0 8px 22px -10px rgba(0,0,0,.45); }
+.ard-hbtn.solid:hover { background: #F2F6FC; }
+[data-theme="dark"] .ard-hbtn.solid { background: var(--primary-grad); color: #fff; border-color: transparent; box-shadow: 0 10px 24px -10px var(--primary-glow); }
+[data-theme="dark"] .ard-hbtn.solid:hover { filter: brightness(1.08); }
+.ard-hbtn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.ard-hbtn:focus-visible { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }

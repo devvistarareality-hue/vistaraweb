@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Phone, PartyPopper, Users, Clock, CircleCheckBig, CalendarClock, AlarmClock, Gift, Layers, Trophy } from 'lucide-react';
+import { Phone, PartyPopper, Users, Clock, CircleCheckBig, CalendarClock, AlarmClock, Gift, Layers, Trophy, Plus } from 'lucide-react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { rupee, inrShort, pct } from '../../lib/inr';
@@ -67,7 +67,7 @@ export default function EmployeeDashboard() {
                 { label: 'Pending payouts', value: inrShort(s.pending_payout_amount), title: rupee(s.pending_payout_amount) },
               ]}
               ring={{ pct: pct(s.converted_count || 0, s.leads_count || 0), label: 'converted', caption: `${s.converted_count ?? 0} of ${s.leads_count ?? 0} leads` }}
-              actions={<button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add investor</button>}
+              actions={<button type="button" className="ard-hbtn solid" onClick={() => setShowAdd(true)} disabled={!schemes.length}><Plus size={16} /> Add investor</button>}
               note={!schemes.length ? 'No schemes yet — ask your manager to create one.' : null}
             />
             <div className="ard-kpis">
