@@ -281,7 +281,7 @@ export default function ModuleBookingsPage() {
                         )}
                         {!b.cancelled_by_name && !b.rejected_by_name && b.approved_by_name && (
                           <div style={{ fontSize: 11, color: 'var(--success)', marginTop: 2, fontWeight: 600 }}>
-                            Approved by {b.approved_by_name}{b.approved_at ? ` · ${fmtDateTime(b.approved_at)}` : ''}
+                            Sales approved by {b.approved_by_name}{b.approved_at ? ` · ${fmtDateTime(b.approved_at)}` : ''}
                           </div>
                         )}
                       </div>
