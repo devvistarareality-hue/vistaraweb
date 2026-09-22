@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { History, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { History, ChevronDown, ExternalLink } from 'lucide-react';
 import { ACTIVITY_ENDPOINTS } from '../constants/api';
 import { apiFetch } from '../utils/apiFetch';
 
@@ -35,7 +36,11 @@ function ActivityRow({ r, showModule }) {
       <span className="act-dot" />
       <div className="act-body">
         <div className="act-summary">{r.summary}</div>
-        {named && <div className="act-target"><span>{TYPE_NAME[r.target_type] || 'Record'}</span>{r.label}</div>}
+        {r.lead_id ? (
+          <Link href={`/sales/leads?open=${r.lead_id}`} className="act-target is-link" title="Open this lead">
+            <span>{TYPE_NAME[r.target_type] || 'Lead'}</span>{r.label || `Lead #${r.lead_id}`}<ExternalLink size={12} />
+          </Link>
+        ) : named && <div className="act-target"><span>{TYPE_NAME[r.target_type] || 'Record'}</span>{r.label}</div>}
         <div className="act-meta">
           <b>{r.actor?.name || 'System'}</b>
           {showModule && r.module ? <span className="act-chip">{r.module}</span> : null}

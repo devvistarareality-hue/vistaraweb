@@ -1127,3 +1127,5 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .act-changes td { padding: 3px 8px 3px 0; color: var(--text); overflow-wrap: anywhere; vertical-align: top; }
 .act-changes td.old { color: var(--muted); text-decoration: line-through; }
 .act-changes td.arrow { color: var(--faint); }
+.act-target.is-link { text-decoration: none; cursor: pointer; }
+.act-target.is-link:hover { color: var(--accent); text-decoration: underline; }
