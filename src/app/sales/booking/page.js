@@ -862,8 +862,7 @@ function BookingPage() {
       {saving && (
         <div className="nx-modal-backdrop nx-busy">
           <Loader />
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Submitting booking…</div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <div>Submitting booking…</div>
         </div>
       )}
       <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => kioskMode ? router.push('/kiosk') : router.back()} >← Back</button>
@@ -1302,7 +1301,7 @@ function BookingPage() {
         <button className="nx-btn nx-btn-lg nx-btn-secondary" onClick={saveDraft} disabled={saving || !projectId || pratBookMissing}>
           {saving ? '…' : <><Icon name="save" /> Save Draft</>}
         </button>
-        <button className="nx-btn nx-btn-lg nx-btn-primary" onClick={submit} disabled={saving || pratBookMissing}>{saving ? 'Saving…' : 'Submit Booking'}</button>
+        <button className="nx-btn nx-btn-lg nx-btn-primary" onClick={submit} disabled={saving || pratBookMissing}>{saving ? 'Submitting…' : 'Submit Booking'}</button>
       </div>
     </div>
   );
