@@ -1036,3 +1036,26 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .adm-chip-title { font-size: 13.5px; font-weight: 800; color: #7CF0B0; line-height: 1.2; }
 .adm-chip-label { font-size: 11.5px; color: rgba(255,255,255,.78); margin-top: 3px; font-weight: 500; }
 .adm-strip-current { font-size: 11px; font-weight: 700; color: #fff; }
+
+/* Lead transfer approvals (sales/_LeadTransfers.js) */
+.lx-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.lx-hint { font-size: 12.5px; color: var(--muted); margin: -2px 0 12px; }
+.lx-list { display: grid; gap: 10px; }
+.lx-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; border-radius: 18px; border-left: 4px solid transparent !important; }
+.lx-row.is-pending { border-left-color: var(--warning-solid) !important; }
+.lx-row.is-approved { border-left-color: var(--success) !important; }
+.lx-row.is-rejected { border-left-color: var(--danger) !important; }
+.lx-row.is-cancelled { border-left-color: var(--border-strong) !important; }
+.lx-main { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.lx-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lx-lead { font-size: 14.5px; font-weight: 800; color: var(--text); }
+.lx-project { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.lx-move { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-2); }
+.lx-move svg { color: var(--warning); }
+.lx-move b { color: var(--text); }
+.lx-meta { font-size: 12px; color: var(--muted); }
+.lx-decision { font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+.lx-decision.ok { color: var(--success); } .lx-decision.bad { color: var(--danger); } .lx-decision.off { color: var(--muted); }
+.lx-decision b { font-weight: 800; }
+.lx-actions { display: flex; gap: 8px; }
+.lx-actions .nx-btn { display: inline-flex; align-items: center; gap: 6px; }
