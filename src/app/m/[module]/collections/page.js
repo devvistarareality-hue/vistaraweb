@@ -14,7 +14,8 @@ import { rupee, inrShort } from '../_ar';
 import FollowUpModal from '../_FollowUpModal';
 
 const dmy = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
-const WINDOWS = [7, 30, 60, 90];
+const WINDOWS = [0, 7, 30, 60, 90];   // 0 = due today
+const windowLabel = (w) => (w === 0 ? 'Today' : `${w} days`);
 
 // Collections: who has not paid (overdue), what falls due next (upcoming), and
 // the follow-ups chasing both. Each row opens its follow-ups; the ledger is a click away.
@@ -92,7 +93,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
           {err && <div className="nx-note bad">{err}</div>}
           <div className="col-kpis">
             <DashKpi icon={AlarmClock} tone="bad" label="Overdue" value={inrShort(c.overdue_amount)} valueTitle={rupee(c.overdue_amount)} sub={`${c.overdue_accounts || 0} accounts not paid`} />
-            <DashKpi icon={CalendarClock} tone="warn" label={`Due in ${days} days`} value={inrShort(c.upcoming_amount)} valueTitle={rupee(c.upcoming_amount)} sub={`${c.upcoming_accounts || 0} accounts`} />
+            <DashKpi icon={CalendarClock} tone="warn" label={days === 0 ? 'Due today' : `Due in ${days} days`} value={inrShort(c.upcoming_amount)} valueTitle={rupee(c.upcoming_amount)} sub={`${c.upcoming_accounts || 0} accounts`} />
             <DashKpi icon={PhoneCall} tone="info" label="Follow-ups today" value={c.followups_today || 0} sub={`${c.followups_overdue || 0} overdue`} />
             <DashKpi icon={UserX} tone="muted" label="Not followed up" value={c.no_followup || 0} sub="Overdue with nothing scheduled" />
           </div>
@@ -110,14 +111,14 @@ export default function ARCollectionsPage({ params, searchParams }) {
                 {tab === 'upcoming' && (
                   <div className="col-window">
                     {WINDOWS.map((w) => (
-                      <button type="button" key={w} className={`nx-btn nx-btn-sm nx-toggle${days === w ? ' is-on' : ''}`} onClick={() => setDays(w)}>{w} days</button>
+                      <button type="button" key={w} className={`nx-btn nx-btn-sm nx-toggle${days === w ? ' is-on' : ''}`} onClick={() => setDays(w)}>{windowLabel(w)}</button>
                     ))}
                   </div>
                 )}
               </div>
               <div className="nx-card ar-card">
                 {rows.length === 0 ? (
-                  <div className="ar-empty">{tab === 'overdue' ? 'Nobody is overdue. Every due installment is paid.' : `Nothing falls due in the next ${days} days.`}</div>
+                  <div className="ar-empty">{tab === 'overdue' ? 'Nobody is overdue. Every due installment is paid.' : (days === 0 ? 'Nothing falls due today.' : `Nothing falls due in the next ${days} days.`)}</div>
                 ) : (
                   <div className="ar-scroll">
                     <table className="ar-table">

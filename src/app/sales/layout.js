@@ -41,6 +41,7 @@ function IconMapPin()       { return <SvgIcon><path d="M21 10c0 7-9 13-9 13s-9-6
 function IconConversion()   { return <SvgIcon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></SvgIcon>; }
 function IconTrash()        { return <SvgIcon><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></SvgIcon>; }
 function IconAdmin()        { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></SvgIcon>; }
+function IconLog()          { return <SvgIcon><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 11.5 4"/><polyline points="3 16 3 11 8 11"/></SvgIcon>; }
 function IconPartner()      { return <SvgIcon><path d="M8.5 8.5L3 14l3 3 5.5-5.5M15.5 15.5L21 10l-3-3-5.5 5.5"/><path d="M9 15l1.5 1.5M13.5 9L15 10.5"/></SvgIcon>; }
 
 // Sub-pages shown inline under "Channel Partner" when it's expanded — shared by
@@ -62,6 +63,8 @@ const CP_CHILDREN = [
   // page would only ever show them an empty chart.
   { label: 'My Team',     href: '/sales/channel-partners/my-team', managerOnly: true },
   { label: 'Approvals',   href: '/sales/channel-partners/bookings' },
+  // Who changed what — real admins only.
+  { label: 'Log',         href: '/sales/channel-partners/log', trueAdminOnly: true },
 ];
 
 const CP_NAV_ITEM = { label: 'Channel Partner', href: '/sales/channel-partners', icon: <IconPartner />, children: CP_CHILDREN };
@@ -84,6 +87,8 @@ const NAV = [
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
   { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
   { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true },
+  // Who changed what, and when — real admins only (not Sales admin-modules users).
+  { label: 'Log',          href: '/sales/log',           icon: <IconLog />,       adminOnly: true, trueAdminOnly: true },
 ];
 
 // Full Admin-section menu for a Sales Admin-Modules user — mirrors every item a
@@ -305,7 +310,7 @@ export default function SalesLayout({ children }) {
             <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
             <span style={{ color: 'inherit', opacity: 0.6, fontSize: 10, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
           </div>
-          {expanded && item.children.filter((child) => !child.managerOnly || isAdmin || isManager).map((child) => {
+          {expanded && item.children.filter((child) => (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin)).map((child) => {
             const childActive = isActive(child.href) && (child.href !== '/sales/channel-partners' || pathname === child.href);
             return (
               <Link key={child.href} href={child.href} className="s-nav-link"

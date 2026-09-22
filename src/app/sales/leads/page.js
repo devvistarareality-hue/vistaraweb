@@ -1778,6 +1778,13 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   }, [page, filters, companyId, isCaller, workTab, adminView, cpOnly]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
+  // Opened from a link such as the Log's (?open=<lead id>): show that lead's details.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('open');
+    if (!id || !/^\d+$/.test(id)) return;
+    loadDetail({ id });
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
   useEffect(() => { if (seeded) loadLeads(); }, [loadLeads, seeded]);
   useEffect(() => { setPage(1); }, [filters, companyId, workTab]);
 
