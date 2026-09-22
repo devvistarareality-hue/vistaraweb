@@ -512,6 +512,9 @@ export default function ModuleApprovalsPage() {
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{b.phone} · STM {b.stm_name || '—'}</div>
                         <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Booked {fmtDateTime(b.created_at)}</div>
+                        {b.approved_by_name && (
+                          <div className="acc-sales-approver">Sales approved by <b>{b.approved_by_name}</b>{b.approved_at ? ` · ${fmtDateTime(b.approved_at)}` : ''}</div>
+                        )}
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent-deep)' }}>{rupee(b.final_amount)}</div>
