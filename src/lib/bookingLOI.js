@@ -26,6 +26,12 @@ export function ensureJsPDF() {
 // The ERP is company-wise — Vistara Group is one tenant of several — so a hardcoded
 // name would put the wrong seller on another company's signed instrument. Callers
 // pass `companyName`; an empty one prints nothing rather than someone else's name.
+// Joint buyers typed on one line ("A (50%), B (25%) & C (25%)") print one per row.
+export function splitBuyers(name) {
+  const parts = String(name || '').split(/\s*[,&]\s*/).map((x) => x.trim()).filter(Boolean);
+  return parts.length ? parts : [String(name || '').trim() || '—'];
+}
+
 export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const sellerName = (opts.companyName || '').toString().trim();
   const formulaSet = opts.formulaSet || 'kalrav';
@@ -160,21 +166,28 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   doc.text('Booking Date: ' + fmtDate(meta.bookingDate), PW - M, HDR_H + 6, { align: 'right' });
   y = HDR_H + 10; drawBorder();
 
-  // Client box
-  chk(30); sf(WASH); doc.roundedRect(M, y, CW, 24, 2, 2, 'F'); sd([206, 217, 235]); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 24, 2, 2, 'S');
-  sf(ORG); doc.roundedRect(M, y, 3, 24, 1, 1, 'F');
-  st(MB); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(meta.clientName || '—', M + 6, y + 8);
+  // Client box — one row per buyer, so the box grows with the names.
+  doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+  const buyerLines = splitBuyers(meta.clientName).flatMap((n) => doc.splitTextToSize(n, CW - 12));
+  const NAME_LH = 5.2;
+  const extraH = (buyerLines.length - 1) * NAME_LH;
+  const boxH = 24 + extraH;
+  chk(boxH + 6); sf(WASH); doc.roundedRect(M, y, CW, boxH, 2, 2, 'F'); sd([206, 217, 235]); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, boxH, 2, 2, 'S');
+  sf(ORG); doc.roundedRect(M, y, 3, boxH, 1, 1, 'F');
+  st(MB); doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+  buyerLines.forEach((line, i) => doc.text(line, M + 6, y + 8 + i * NAME_LH));
+  const yb = y + extraH;   // everything under the names moves down with them
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); st(MD);
-  if (meta.phoneNumber) doc.text('Ph: ' + meta.phoneNumber, M + 6, y + 14);
+  if (meta.phoneNumber) doc.text('Ph: ' + meta.phoneNumber, M + 6, yb + 14);
   const pairs = [['Gender', meta.gender || '—'], ['Project', meta.project || '—']];
   const colW = CW / pairs.length;
   pairs.forEach((p, i) => {
     const cx = M + 6 + colW * i;
-    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(LT); doc.text(p[0], cx, y + 18);
-    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(String(p[1]), cx, y + 22.5);
-    if (i < pairs.length - 1) { sd(LN); doc.setLineWidth(0.3); doc.line(M + colW * (i + 1), y + 16, M + colW * (i + 1), y + 24); }
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(LT); doc.text(p[0], cx, yb + 18);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(String(p[1]), cx, yb + 22.5);
+    if (i < pairs.length - 1) { sd(LN); doc.setLineWidth(0.3); doc.line(M + colW * (i + 1), yb + 16, M + colW * (i + 1), yb + 24); }
   });
-  y += 30;
+  y += boxH + 6;
 
   // Section header — rounded matte-blue bar with a small inset orange accent.
   function secHead(title) { chk(14); sf(MB); doc.roundedRect(M, y, CW, 8, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y + 2, 1.7, 4, 0.85, 0.85, 'F'); st(WHT); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.text(title.toUpperCase(), M + 5.5, y + 5.5); y += 12; }
@@ -524,14 +537,22 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     doc.setFont('helvetica', 'normal'); st(MD); doc.text(descLines, M + 48, y); y += rowH;
   });
 
-  // Signatures + declaration
-  chk(44); y += 8; const BW = 75, BH = 26;
+  // Signatures + declaration — every buyer named under the buyer's line, one per row.
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+  const BW = 75;
+  const signNames = splitBuyers(meta.clientName).flatMap((n) => doc.splitTextToSize(n, BW - 8));
+  const SIGN_LH = 3.8;
+  const signExtra = (signNames.length - 1) * SIGN_LH;
+  const BH = 26 + signExtra;
+  chk(44 + signExtra); y += 8;
   sd(LN); doc.setLineWidth(0.5); doc.roundedRect(M, y, BW, BH, 2, 2, 'S'); doc.roundedRect(PW - M - BW, y, BW, BH, 2, 2, 'S');
   sd([200, 200, 210]); doc.setLineWidth(0.4); doc.line(M + 8, y + 17, M + BW - 8, y + 17); doc.line(PW - M - BW + 8, y + 17, PW - M - 8, y + 17);
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); st(LT); doc.text('BUYER SIGNATURE', M + BW / 2, y + 5, { align: 'center' }); doc.text('SELLER SIGNATURE', PW - M - BW / 2, y + 5, { align: 'center' });
-  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(meta.clientName || '—', M + BW / 2, y + 22, { align: 'center' }); doc.text(sellerName || '—', PW - M - BW / 2, y + 22, { align: 'center' });
-  doc.setFontSize(8.5); st(MD); doc.text('Date: ________________________', PW / 2, y + 32, { align: 'center' });
-  chk(16); y += 40; sf(WASH); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(MB2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK);
+  signNames.forEach((n, i) => doc.text(n, M + BW / 2, y + 22 + i * SIGN_LH, { align: 'center' }));
+  doc.text(sellerName || '—', PW - M - BW / 2, y + 22, { align: 'center' });
+  doc.setFontSize(8.5); st(MD); doc.text('Date: ________________________', PW / 2, y + 32 + signExtra, { align: 'center' });
+  chk(16); y += 40 + signExtra; sf(WASH); doc.roundedRect(M, y, CW, 12, 2, 2, 'F'); sd(MB2); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, 12, 2, 2, 'S');
   sf(ORG); doc.roundedRect(M + 1.2, y + 2, 1.7, 8, 0.85, 0.85, 'F');
   doc.setFontSize(8); doc.setFont('helvetica', 'italic'); st(MB);
   doc.text('I hereby declare that I have read, understood, and agreed to all terms and conditions.', PW / 2, y + 7.5, { align: 'center', maxWidth: CW - 10 });
