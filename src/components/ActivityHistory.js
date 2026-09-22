@@ -19,24 +19,53 @@ export function actionTone(action) {
   return 'off';
 }
 
+const TYPE_NAME = {
+  lead: 'Lead', 'follow-up': 'Follow-up', 'site-visit': 'Site visit', booking: 'Booking', closure: 'Closure',
+  plot: 'Plot', project: 'Project', ar_account: 'AR account', user: 'User', 'channel-partner': 'Channel partner',
+};
+
+// One log line: what happened, to whom (named, not "#45975"), and — when asked —
+// every field that changed, old → new.
+function ActivityRow({ r, showModule }) {
+  const [open, setOpen] = useState(false);
+  const changes = r.changes || [];
+  const named = r.label && !(r.summary || '').includes(r.label);
+  return (
+    <li className={`act-item act-${actionTone(r.action)}`}>
+      <span className="act-dot" />
+      <div className="act-body">
+        <div className="act-summary">{r.summary}</div>
+        {named && <div className="act-target"><span>{TYPE_NAME[r.target_type] || 'Record'}</span>{r.label}</div>}
+        <div className="act-meta">
+          <b>{r.actor?.name || 'System'}</b>
+          {showModule && r.module ? <span className="act-chip">{r.module}</span> : null}
+          <span>{fmtWhen(r.at)}</span>
+          {r.legacy ? <span className="act-faint">from the record</span> : null}
+          {changes.length > 0 && (
+            <button type="button" className="act-more-btn" onClick={() => setOpen((v) => !v)}>
+              {open ? 'Hide changes' : `${changes.length} change${changes.length === 1 ? '' : 's'}`}
+            </button>
+          )}
+        </div>
+        {open && (
+          <table className="act-changes">
+            <tbody>
+              {changes.map((c, i) => (
+                <tr key={i}><th>{c.field}</th><td className="old">{c.from}</td><td className="arrow">→</td><td>{c.to}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export function ActivityRows({ rows, showModule = true }) {
   if (!rows.length) return <div className="act-empty">Nothing recorded yet.</div>;
   return (
     <ol className="act-list">
-      {rows.map((r) => (
-        <li key={r.id} className={`act-item act-${actionTone(r.action)}`}>
-          <span className="act-dot" />
-          <div className="act-body">
-            <div className="act-summary">{r.summary}</div>
-            <div className="act-meta">
-              <b>{r.actor?.name || 'System'}</b>
-              {showModule && r.module ? <span className="act-chip">{r.module}</span> : null}
-              <span>{fmtWhen(r.at)}</span>
-              {r.legacy ? <span className="act-faint">from the record</span> : null}
-            </div>
-          </div>
-        </li>
-      ))}
+      {rows.map((r) => <ActivityRow key={r.id} r={r} showModule={showModule} />)}
     </ol>
   );
 }
