@@ -209,7 +209,7 @@ export default function SalesLayout({ children }) {
   // through with no guard at all).
   // Exception: /sales/closure* and /sales/booking* are the actual booking-
   // creation flow (project → unit map → booking form) and are DELIBERATELY
-  // shared, unprefixed routes — see channel-partners/closure/page.js's own
+  // shared, unprefixed routes — see m/[module]/closure/page.js's own
   // comment ("not filtered to channel partner leads, since choosing a
   // project/unit isn't a CP-specific concept"). The CP module's own "Booking"
   // nav item lands here, and picking a unit/marking a CP lead Closed both
