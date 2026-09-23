@@ -1,7 +1,7 @@
 'use client';
 import { useSelector } from 'react-redux';
 import { canAccessChannelPartner } from '../../../../../lib/moduleAccess';
-import { ClosureViewerContent } from '../../../closure/[id]/page';
+import { ClosureViewerContent } from '../../../../sales/closure/[id]/page';
 
 // Same unit-map/booking flow as the main Sales module's (see channel-partners/
 // closure/page.js) — just keeps the CP manager's "← All projects" back button
@@ -13,5 +13,5 @@ export default function ChannelPartnerClosureViewerPage() {
     return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
   }
 
-  return <ClosureViewerContent backHref="/sales/channel-partners/closure" />;
+  return <ClosureViewerContent backHref="/m/cp/closure" />;
 }

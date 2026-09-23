@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
-import { SalesLeadsContent } from '../../leads/page';
+import { SalesLeadsContent } from '../../../sales/leads/page';
 
 import Icon from '../../../../components/Icon';
 import { confirmDialog } from '../../../../lib/notify';

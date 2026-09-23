@@ -1035,7 +1035,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
         setSaving(false);
         onUpdated(updated);
         onClose();
-        const closureBase = cpOnly ? '/sales/channel-partners/closure' : '/sales/closure';
+        const closureBase = cpOnly ? '/m/cp/closure' : '/sales/closure';
         router.push(form.project ? `${closureBase}/${form.project}` : closureBase);
         return;
       }

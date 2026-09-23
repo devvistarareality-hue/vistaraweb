@@ -7,10 +7,11 @@
 // are unaffected and keep full ERP access. Regular employees are also unaffected;
 // the guards only redirect restricted module admins.
 
-export const ALL_MODULES = ['Sales', 'HR', 'Accounts & Finance', 'AR', 'Execution', 'Purchase', 'Land', 'Club 1000'];
+export const ALL_MODULES = ['Sales', 'Channel Partner', 'HR', 'Accounts & Finance', 'AR', 'Execution', 'Purchase', 'Land', 'Club 1000'];
 
 export const MODULE_ROUTES = {
   'Sales':              '/sales',
+  'Channel Partner':    '/m/cp/dashboard',
   'HR':                 '/m/hr',
   'Accounts & Finance': '/m/accounts',
   'AR':                 '/m/ar/dashboard',
@@ -22,7 +23,8 @@ export const MODULE_ROUTES = {
 
 // /m/[module] slug → module display name
 export const SLUG_TO_MODULE = {
-  hr: 'HR', accounts: 'Accounts & Finance', ar: 'AR', execution: 'Execution', purchase: 'Purchase', land: 'Land',
+  hr: 'HR', accounts: 'Accounts & Finance', ar: 'AR', cp: 'Channel Partner',
+  execution: 'Execution', purchase: 'Purchase', land: 'Land',
 };
 
 // A departmental / module admin = role='Admin' restricted to exactly ONE module
@@ -145,5 +147,10 @@ export function isCp(user) {
 // CP-designation Manager or CP Executive gets in via their designation. Mirrors
 // backend's can_access_cp_module(user) — keep in sync.
 export function canAccessChannelPartner(user) {
-  return !!(user && (user.is_staff || user.role === 'Admin' || isCpManager(user) || isCp(user)));
+  // Channel Partner is a module of its own now: whoever has been granted it, the
+  // same as AR or Club 1000. A CP designation still gets in on its own so nobody
+  // loses access on the day it ships.
+  const mods = [...(user?.modules || []), ...(user?.manager_modules || []), ...(user?.admin_modules || [])];
+  return !!(mods.includes('Channel Partner') || isSuperAdmin(user) || user?.role === 'Admin'
+    || user?.is_staff || isCpManager(user) || isCp(user));
 }

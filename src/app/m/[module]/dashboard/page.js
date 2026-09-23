@@ -14,6 +14,7 @@ import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
 import { MODULE_META } from '../moduleMeta';
 import ModuleDashboard from '../_ModuleDashboard';
+import ChannelPartnerDashboard from '../_CpDashboard';
 import DashboardRoleFilter from '../../../../components/DashboardRoleFilter';
 import { dashboardFor } from '../../../../lib/moduleAccess';
 import { DESIGNATION_ENDPOINTS } from '../../../../constants/api';
@@ -50,7 +51,9 @@ export default function ModuleDashboardPage({ params }) {
   const chosen = preview || dashboardFor(user, moduleName);
   // Every role opens the same dashboard in these modules for now; the filter is
   // how you see which one a role is pinned to.
-  const body = slug === 'ar' ? <ARDashboard /> : <ModuleDashboard slug={slug} />;
+  const body = slug === 'ar' ? <ARDashboard />
+    : slug === 'cp' ? <ChannelPartnerDashboard chosen={chosen} user={user} />
+      : <ModuleDashboard slug={slug} />;
 
   if (!isAdmin) return body;
   return (
@@ -63,7 +66,7 @@ export default function ModuleDashboardPage({ params }) {
 
 // /m/<slug> → the module display name its dashboards are declared under.
 const MODULE_NAME = {
-  ar: 'AR', accounts: 'Accounts & Finance', hr: 'HR',
+  ar: 'AR', cp: 'Channel Partner', accounts: 'Accounts & Finance', hr: 'HR',
   execution: 'Execution', purchase: 'Purchase', land: 'Land',
 };
 

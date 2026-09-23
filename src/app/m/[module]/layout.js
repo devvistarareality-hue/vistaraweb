@@ -101,6 +101,16 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Approvals', href: `${base}/approvals`, icon: <IconCheck />, screen: 'accounts.screen.approvals' },
       { label: 'Bookings',  href: `${base}/bookings`,  icon: <IconBook />, screen: 'accounts.screen.bookings' },
     ] : []),
+    // Channel Partner: the partner desk — the same work as Sales, scoped to
+    // partner-sourced records.
+    ...(slug === 'cp' ? [
+      { label: 'All Leads',   href: `${base}/leads`,       icon: <IconUsers />, screen: 'cp.screen.leads' },
+      { label: 'Site Visits', href: `${base}/site-visits`, icon: <IconCheck />, screen: 'cp.screen.sitevisits' },
+      { label: 'Follow-Ups',  href: `${base}/follow-ups`,  icon: <IconBell />,  screen: 'cp.screen.followups' },
+      { label: 'Closures',    href: `${base}/closures`,    icon: <IconChart />, screen: 'cp.screen.closures' },
+      { label: 'Booking',     href: `${base}/closure`,     icon: <IconBook />,  screen: 'cp.screen.booking' },
+      { label: 'Approvals',   href: `${base}/approvals`,   icon: <IconCheck />, screen: 'cp.screen.approvals' },
+    ] : []),
     // Accounts Receivable: the register of approved bookings (each opening its
     // ledger) and the import of past receipts.
     ...(slug === 'ar' ? [

@@ -45,31 +45,6 @@ function IconAdmin()        { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8
 function IconLog()          { return <SvgIcon><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 11.5 4"/><polyline points="3 16 3 11 8 11"/></SvgIcon>; }
 function IconPartner()      { return <SvgIcon><path d="M8.5 8.5L3 14l3 3 5.5-5.5M15.5 15.5L21 10l-3-3-5.5 5.5"/><path d="M9 15l1.5 1.5M13.5 9L15 10.5"/></SvgIcon>; }
 
-// Sub-pages shown inline under "Channel Partner" when it's expanded — shared by
-// both the real-admin NAV entry and the module-scoped admin's ADMIN_SECTION_NAV
-// entry, since (like Team Users/Distribution/Data Reset) these routes are already
-// company-wide rather than admin_view-scoped.
-const CP_CHILDREN = [
-  { label: 'Dashboard',   href: '/sales/channel-partners', screen: 'cp.screen.dashboard' },
-  { label: 'All Leads',   href: '/sales/channel-partners/leads', screen: 'cp.screen.leads' },
-  { label: 'Site Visits', href: '/sales/channel-partners/site-visits', screen: 'cp.screen.sitevisits' },
-  { label: 'Follow-Ups',  href: '/sales/channel-partners/follow-ups', screen: 'cp.screen.followups' },
-  { label: 'Closures',    href: '/sales/channel-partners/closures', screen: 'cp.screen.closures' },
-  // "Booking" is the actual record-a-closure flow (project → units → form),
-  // same as the main Sales module's Booking item; "Approvals" is the
-  // Drafts/Pending/Approved/Rejected list — they used to share one nav item
-  // (labelled "Bookings"), which only ever opened the approvals list.
-  { label: 'Booking',     href: '/sales/channel-partners/closure', screen: 'cp.screen.booking' },
-  // Managers only, as in the Sales menu — a CP Executive has no reports, so the
-  // page would only ever show them an empty chart.
-  { label: 'My Team',     href: '/sales/channel-partners/my-team', managerOnly: true, screen: 'cp.screen.myteam' },
-  { label: 'Approvals',   href: '/sales/channel-partners/bookings', screen: 'cp.screen.approvals' },
-  // Who changed what — real admins only.
-  { label: 'Log',         href: '/sales/channel-partners/log', trueAdminOnly: true },
-];
-
-const CP_NAV_ITEM = { label: 'Channel Partner', href: '/sales/channel-partners', icon: <IconPartner />, children: CP_CHILDREN, screen: 'sales.screen.cp' };
-
 const NAV = [
   { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> , screen: 'sales.screen.dashboard' },
   { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> , screen: 'sales.screen.leads' },
@@ -84,7 +59,6 @@ const NAV = [
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true , screen: 'sales.screen.projects' },
   { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true , screen: 'sales.screen.leadsetup' },
   { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true , screen: 'sales.screen.teamusers' },
-  { ...CP_NAV_ITEM, adminOnly: true },
   { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true , screen: 'sales.screen.distribution' },
   { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> , screen: 'sales.screen.import' },
   { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true , screen: 'sales.screen.datareset' },
@@ -110,7 +84,6 @@ const ADMIN_SECTION_NAV = [
   { label: 'Projects',       href: '/sales/projects',              icon: <IconBuilding /> },
   { label: 'Lead Setup',     href: '/sales/sources',               icon: <IconSource /> },
   { label: 'Team Users',     href: '/sales/users',                 icon: <IconUsers /> },
-  CP_NAV_ITEM,
   { label: 'Distribution',   href: '/sales/distribution',          icon: <IconDistribute /> },
   { label: 'Import Leads',   href: '/sales/import',                icon: <IconImport /> },
   { label: 'Data Reset',     href: '/sales/data-reset',            icon: <IconTrash /> },
@@ -152,7 +125,6 @@ export default function SalesLayout({ children }) {
   const isVRLAdmin = superAdmin && user?.company_code === 'VRL';
 
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
-  const [cpOpen,         setCpOpen]         = useState(false);
   const [profileOpen,    setProfileOpen]    = useState(false);
   const [profileData,    setProfileData]    = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -245,26 +217,14 @@ export default function SalesLayout({ children }) {
   // one click into their own module's Booking flow.
   const _isTrueAdminEarly = user?.role === 'Admin' || user?.is_staff;
   const _isSalesModuleAdminEarly = !_isTrueAdminEarly && (user?.admin_modules || []).includes('Sales');
-  const _cpSharedBookingFlow = pathname.startsWith('/sales/closure') || pathname.startsWith('/sales/booking');
-  const _cpBoxedEarly = !_isTrueAdminEarly && !_isSalesModuleAdminEarly
-    && (isCpManager(user) || isCpDesignation(user));
-  const _cpOnlyOffRoot = _cpBoxedEarly
-    && !pathname.startsWith('/sales/channel-partners') && !_cpSharedBookingFlow;
   // Hiding a menu item has to mean hiding the page: otherwise anyone who
   // remembers the address walks straight back in. A designation with no menu
   // configured passes everything, as before.
-  // CP_NAV_ITEM is left out on purpose: its href is the Channel Partner dashboard,
-  // which CP_CHILDREN already covers with its own key.
-  const _screenRoutes = [...NAV, ...CP_CHILDREN].filter((i) => i.screen && i.href);
+  const _screenRoutes = NAV.filter((i) => i.screen && i.href);
   const _currentRoute = _screenRoutes
     .filter((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  // A module's own landing page is always reachable by someone boxed into it:
-  // whatever their menu says, the module has to open somewhere, and bouncing
-  // them off it is how "the dashboard does not open" happens.
-  const _moduleHome = _cpBoxedEarly && pathname === '/sales/channel-partners';
-  const _blockedScreen = !!user && !!_currentRoute && !_moduleHome
-    && !canSee(user, _currentRoute.screen);
+  const _blockedScreen = !!user && !!_currentRoute && !canSee(user, _currentRoute.screen);
   // Where to send them instead: the first screen they may see AND may use. The
   // role rules that hide an item from the sidebar apply here too, or we would
   // land a telecaller on a page their own menu never offers.
@@ -272,11 +232,7 @@ export default function SalesLayout({ children }) {
   const _mayManagerItem = _mayAdminItem || isManagerRole(user);
   const _mayStmItem = _mayManagerItem || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp');
   const _mayTcItem = _mayAdminItem || can(user, 'sales.pipeline.telecalling');
-  // Someone boxed into Channel Partner is sent back there from anywhere else, so
-  // their fallback has to be a CP page — otherwise the two redirects chase each
-  // other and the page never settles.
-  const _fallbackRoutes = _cpBoxedEarly ? CP_CHILDREN.filter((i) => i.screen && i.href) : _screenRoutes;
-  const _firstAllowed = _fallbackRoutes.find((i) => canSee(user, i.screen)
+  const _firstAllowed = _screenRoutes.find((i) => canSee(user, i.screen)
     && i.href !== _currentRoute?.href
     && (!i.adminOnly || _mayAdminItem) && (!i.trueAdminOnly || _isTrueAdminEarly)
     && (!i.managerOnly || _mayManagerItem)
@@ -288,13 +244,11 @@ export default function SalesLayout({ children }) {
     if (!user) { router.replace('/company'); return; }
     if (user.role === 'Kiosk') { router.replace('/kiosk'); return; } // Kiosk users are locked to the kiosk
     if (_blockedFromSales) { router.replace(_modHome); return; }
-    if (_cpOnlyOffRoot) { router.replace('/sales/channel-partners'); return; }
     if (_blockedScreen && _firstAllowed) router.replace(_firstAllowed.href);
   }, [user, pathname]);
 
   if (user?.role === 'Kiosk') return null;
   if (_blockedFromSales) return null;
-  if (_cpOnlyOffRoot) return null;
 
   if (!user) {
     return (
@@ -320,13 +274,8 @@ export default function SalesLayout({ children }) {
   const isActive = (href) => (href === '/sales' || href === '/sales/admin') ? pathname === href : pathname.startsWith(href);
   // Real admins get these 6 appended flat, inline, in NAV's own order — unchanged.
   const trueAdminExtraItems = NAV.filter((item) => item.adminOnly && canSee(user, item.screen));
-  // A module-scoped admin's full Admin section (mirrors a real admin's menu) —
-  // except Channel Partner, which "Sales" alone no longer implies: a Sales
-  // Admin-Modules user only gets it if their designation also starts with "cp"
-  // (isCpManager).
-  const adminSectionNavItems = ADMIN_SECTION_NAV.filter(
-    (item) => item.href !== CP_NAV_ITEM.href || isCpManager(user)
-  );
+  // A module-scoped admin's full Admin section mirrors a real admin's menu.
+  const adminSectionNavItems = ADMIN_SECTION_NAV;
   // Whether the module-scoped admin is currently inside their Admin section — derived
   // from the URL, so a direct link or refresh lands on the right sidebar automatically.
   const inAdminSection = isSalesModuleAdmin && adminSectionNavItems.some((item) => isActive(item.href));
@@ -335,39 +284,6 @@ export default function SalesLayout({ children }) {
   // Admin section — a nav item with `children` renders as an expand/collapse header
   // with its sub-pages indented below, instead of navigating away directly.
   function renderNavItem(item) {
-    if (item.children) {
-      const onOwnPage = item.children.some((c) => isActive(c.href));
-      const expanded = cpOpen || onOwnPage;
-      return (
-        <div key={item.href}>
-          <div
-            className="s-nav-link"
-            style={{ ...s.navItem, ...(onOwnPage ? s.navActive : {}), cursor: 'pointer' }}
-            onClick={() => setCpOpen((o) => !o)}
-          >
-            <span style={{ ...s.iconWrap, color: onOwnPage ? 'var(--nav-active-fg)' : 'rgba(var(--ink-rgb),0.6)' }}>
-              {item.icon}
-            </span>
-            <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
-            <span style={{ color: 'inherit', opacity: 0.6, fontSize: 10, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
-          </div>
-          {expanded && item.children.filter((child) => (
-            // The module's own landing page stays in the menu for someone boxed
-            // into it, so the menu and what opens can never disagree.
-            (canSee(user, child.screen) || (isCpBoxed && child.href === item.href))
-            && (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin)
-          )).map((child) => {
-            const childActive = isActive(child.href) && (child.href !== '/sales/channel-partners' || pathname === child.href);
-            return (
-              <Link key={child.href} href={child.href} className="s-nav-link"
-                style={{ ...s.navItem, paddingLeft: 44, ...(childActive ? s.navChildActive : {}) }}>
-                <span style={{ fontSize: 12.5, fontWeight: childActive ? 600 : 500, color: childActive ? 'var(--text)' : 'rgba(var(--ink-rgb),0.82)' }}>{child.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      );
-    }
     const active = isActive(item.href);
     return (
       <Link key={item.href} href={item.href} className="s-nav-link"
@@ -389,18 +305,6 @@ export default function SalesLayout({ children }) {
   // Managers oversee the sales floor, so they also get the STM-portal modules
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
   const isManager = isManagerRole(user);
-  // A Manager whose designation starts with "cp" (e.g. "CP Cluster Head") gets
-  // into the Channel Partner module ONLY — not the rest of Sales. Excludes
-  // true/Sales-admin-modules admins, who already see everything (including
-  // Channel Partner) in the regular sidebar. Their lead visibility inside it
-  // still comes from the ordinary Manager project-assignment mechanism (see
-  // Team Users → Assign), same as any other Manager.
-  const isCpMgr = !isTrueAdmin && !isSalesModuleAdmin && isCpManager(user);
-  // A CP Executive gets the same module-boxing as a CP Manager — just scoped to
-  // their own records (is_cp in scope_leads_to_role) instead of project
-  // assignment. Both render the same dedicated Channel Partner nav below.
-  const isCpExec = !isTrueAdmin && !isSalesModuleAdmin && isCp;
-  const isCpBoxed = isCpMgr || isCpExec;
   // Someone boxed into Channel Partner always keeps the module's landing page in
   // the menu — they have to be able to open the module they are boxed into. An
   // admin who unticks everything leaves them that and nothing else.
@@ -437,14 +341,7 @@ export default function SalesLayout({ children }) {
 
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
-          {isCpBoxed ? (
-            // A CP-designation Manager or Executive's entire Sales sidebar —
-            // just the one module, nothing else.
-            <>
-              <div style={s.sectionLabel}>CHANNEL PARTNER</div>
-              {renderNavItem(CP_NAV_ITEM)}
-            </>
-          ) : inAdminSection ? (
+          {inAdminSection ? (
             <>
               {/* Module-scoped admin, inside their Admin section — this REPLACES the
                   Sales menu entirely, the same way tapping into Sales itself replaces

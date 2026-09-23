@@ -1,7 +1,7 @@
 'use client';
 import { useSelector } from 'react-redux';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
-import { SiteVisitsContent } from '../../site-visits/page';
+import { SiteVisitsContent } from '../../../sales/site-visits/page';
 
 // Same Site Visits flow as the main Sales module, scoped to leads referred by a
 // channel partner (see backend/sales/views.py::SiteVisitListView ?cp_only=true).

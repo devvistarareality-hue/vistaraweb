@@ -322,10 +322,10 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
 
   // CP Cluster Heads land on their own Channel Partner section, not the regular
   // Sales/Admin one — every tile has to point at the CP-scoped equivalent page.
-  const leadsHref     = isCp ? '/sales/channel-partners/leads'       : (adminView ? '/sales/admin/leads' : '/sales/leads');
-  const svHref         = isCp ? '/sales/channel-partners/site-visits' : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`;
-  const closuresHref   = isCp ? '/sales/channel-partners/closures'    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
-  const projectsHref   = isCp ? '/sales/channel-partners/closure'     : '/sales/closure';
+  const leadsHref     = isCp ? '/m/cp/leads'       : (adminView ? '/sales/admin/leads' : '/sales/leads');
+  const svHref         = isCp ? '/m/cp/site-visits' : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`;
+  const closuresHref   = isCp ? '/m/cp/closures'    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
+  const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: leadsHref },
     { label: 'New Today',       value: stats.leads_today,     icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: `${leadsHref}?date_from=today` },

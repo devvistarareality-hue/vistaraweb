@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
+import { BookingsContent } from '../../../sales/bookings/page';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import DateFilter from '../../../sales/_DateFilter';
 import { unitLabel } from '../../../../lib/bookingUnit';
@@ -170,7 +172,7 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
 // approved here — Sales/CP approval alone just puts it in the Pending tab. Once
 // approved it also moves to the Bookings ledger; Cancel (undoing that approval, same
 // as Sales' own Cancel Booking) lives here too, in the Approved tab.
-export default function ModuleApprovalsPage() {
+function AccountsApprovals() {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
@@ -628,4 +630,21 @@ export default function ModuleApprovalsPage() {
       )}
     </div>
   );
+}
+
+
+// Channel Partner's Approvals is the same Drafts/Pending/Approved list, filtered
+// to partner-sourced bookings, with the CP approver panel. Accounts & Finance
+// keeps its own review queue above.
+export default function ModuleApprovalsPage({ params }) {
+  if (params.module === 'cp') return <ChannelPartnerApprovals />;
+  return <AccountsApprovals />;
+}
+
+function ChannelPartnerApprovals() {
+  const user = useSelector((s) => s.auth.user);
+  if (!canAccessChannelPartner(user)) {
+    return <div className="nx-note info">Admin access only.</div>;
+  }
+  return <BookingsContent adminView cpMode cpOnly />;
 }

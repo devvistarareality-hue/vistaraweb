@@ -19,7 +19,7 @@ const MODULE_CONFIG = {
   'Purchase':           { title: 'Purchase',            href: '/m/purchase',             desc: 'Vendors and purchase orders',                 Icon: ShoppingCart,       tone: 'peach' },
   'Land':               { title: 'Land',                href: '/m/land',                 desc: 'Land parcels and site portfolio',             Icon: MapPin,             tone: 'blue' },
   'Club 1000':          { title: 'Club 1000',           href: '/club1000',               desc: 'Investors, schemes and payouts',              Icon: Coins,              tone: 'green' },
-  'Channel Partner':    { title: 'Channel Partners',    href: '/sales/channel-partners', desc: 'Referral partners and their leads',           Icon: Handshake,          tone: 'peach' },
+  'Channel Partner':    { title: 'Channel Partners',    href: '/m/cp/dashboard', desc: 'Referral partners and their leads',           Icon: Handshake,          tone: 'peach' },
 };
 
 function greeting() {

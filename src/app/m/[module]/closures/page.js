@@ -1,7 +1,7 @@
 'use client';
 import { useSelector } from 'react-redux';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
-import { MyConversionsContent } from '../../my-conversions/page';
+import { MyConversionsContent } from '../../../sales/my-conversions/page';
 
 // Same Site Visits/Closures history as the main Sales module's My Conversions,
 // scoped to leads referred by a channel partner (?cp_only=true).

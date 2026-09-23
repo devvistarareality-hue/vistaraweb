@@ -111,7 +111,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
             // block picker rather than short-circuiting a project with zero plots so far.
             const goTo = () => (!p.block_industrial && noPlots)
               ? router.push(`/sales/booking?project=${p.id}&eoi=1${eoiQuery}`)
-              : router.push(cpOnly ? `/sales/channel-partners/closure/${p.id}` : `/sales/closure/${p.id}`);
+              : router.push(cpOnly ? `/m/cp/closure/${p.id}` : `/sales/closure/${p.id}`);
             return (
               <div className="nx-card" key={p.id} onClick={goTo}
                 style={{ ...card, cursor: 'pointer' }}
