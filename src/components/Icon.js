@@ -3,8 +3,7 @@ import {
   X, Check, CircleCheck, CircleX, FileText, MapPin, Search, TriangleAlert, Download, Building2,
   Settings, Bell, User, FolderOpen, RefreshCw, PencilLine, Save, House, CircleDot, Trash2, Clock,
   Flame, Paperclip, ClipboardList, ChartColumn, Calendar, PartyPopper, Pencil, Link, Phone, BookOpen,
-  Users, Factory, Trophy, Ban, Zap, Menu, Camera, Lightbulb, Hand, Info, CloudUpload,
-} from 'lucide-react';
+  Users, Factory, Trophy, Ban, Zap, Menu, Camera, Lightbulb, Hand, Info, CloudUpload, ShieldCheck} from 'lucide-react';
 
 // One icon set for the whole site (Lucide). Sized in `em` by default so an icon
 // dropped into a line of text matches that text, and coloured by `currentColor`.
@@ -16,6 +15,7 @@ const ICONS = {
   clipboard: ClipboardList, chart: ChartColumn, calendar: Calendar, party: PartyPopper, pencil: Pencil,
   link: Link, phone: Phone, book: BookOpen, users: Users, factory: Factory, trophy: Trophy, ban: Ban,
   zap: Zap, menu: Menu, camera: Camera, idea: Lightbulb, hand: Hand, info: Info, upload: CloudUpload,
+  shield: ShieldCheck,
 };
 
 export default function Icon({ name, size = '1.1em', strokeWidth = 2, style, ...rest }) {

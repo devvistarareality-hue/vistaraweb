@@ -51,6 +51,12 @@ export const COMPANY_ENDPOINTS = {
   detail: (id) => `${BASE_URL}/api/company/${id}/`,
 };
 
+export const DESIGNATION_ENDPOINTS = {
+  get list()          { return `${getBaseUrl()}/api/auth/designations/`; },
+  detail: (id)        => `${getBaseUrl()}/api/auth/designations/${id}/`,
+  get capabilities()  { return `${getBaseUrl()}/api/auth/designations/capabilities/`; },
+};
+
 export const AUTH_ENDPOINTS = {
   get login()      { return `${BASE_URL}/api/auth/login/`; },
   get otpVerify()  { return `${BASE_URL}/api/auth/otp/verify/`; },

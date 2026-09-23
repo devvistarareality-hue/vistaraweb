@@ -6,6 +6,7 @@ import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
 
 import Icon from '../../../components/Icon';
+import PermissionsModal from './_PermissionsModal';
 const MODULE_COLOR = {
   Sales:      { bg: 'var(--warning-soft)', text: 'var(--warning-2)', dot: 'var(--warning-2)' },
   HR:         { bg: 'var(--accent-soft)', text: 'var(--accent)', dot: 'var(--accent)' },
@@ -21,6 +22,8 @@ export default function DesignationMasterPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [form,  setForm]  = useState({ module: 'Sales', name: '' });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  // Which designation's permissions are open for editing.
+  const [perms, setPerms] = useState(null);
 
   useEffect(() => { dispatch(fetchDesignations(true, companyId)); }, [companyId]);
 
@@ -53,7 +56,7 @@ export default function DesignationMasterPage() {
       <div style={s.pageHeader}>
         <div>
           <h1 style={s.pageTitle}>Designation Master</h1>
-          <p style={s.pageSubtitle}>Define designations per module. These appear in the user creation form based on selected modules.</p>
+          <p style={s.pageSubtitle}>Define designations per module, and set what each one may do — permissions are per company, so the same title can mean different things elsewhere.</p>
         </div>
       </div>
 
@@ -104,6 +107,11 @@ export default function DesignationMasterPage() {
                   {list.map((d) => (
                     <div key={d.id} style={{ ...s.chip, backgroundColor: c.bg }}>
                       <span style={{ ...s.chipText, color: c.text }}>{d.name}</span>
+                      <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost desig-chip-btn"
+                        title="Permissions — what this designation may do"
+                        onClick={() => setPerms(d)} style={{ color: c.text }}>{/* inline-ok: module tone colour */}
+                        <Icon name="shield" />
+                      </button>
                       <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost"
                         onClick={() => handleDelete(d)}
                         style={{ ...s.chipDel, color: c.text }}
@@ -119,6 +127,11 @@ export default function DesignationMasterPage() {
           );
         })}
       </div>
+
+      {perms && (
+        <PermissionsModal designation={perms} onClose={() => setPerms(null)}
+          onSaved={() => { dispatch(fetchDesignations(true, companyId)); showToast(`Permissions saved for "${perms.name}".`); }} />
+      )}
     </div>
   );
 }
