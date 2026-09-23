@@ -1097,7 +1097,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .col-act .nx-btn { justify-content: center; white-space: nowrap; padding-left: 10px; padding-right: 10px; }
 /* Long client names wrap instead of widening the table, and the Client column stays
    put when the table does scroll sideways — it was the first thing cut off. */
-.col-client { white-space: normal; min-width: 150px; max-width: 230px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
+.col-client { white-space: normal; width: 30%; min-width: 170px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
 .ar-table thead th.col-client { background: var(--table-head); }
 .ar-row-link:hover td.col-client, .ar-table tbody tr:hover td.col-client { background: var(--accent-softer); }
 .col-client::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: var(--hairline); }
@@ -1106,7 +1106,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ar-table thead th.col-actions { background: var(--table-head); }
 .ar-row-link:hover td.col-actions, .ar-table tbody tr:hover td.col-actions { background: var(--accent-softer); }
 .col-actions::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 1px; background: var(--hairline); }
-.col-follow { max-width: 210px; }
+/* Shrink-to-content, so the leftover width goes to the Client column instead of
+   leaving a blank strip before the pinned buttons. */
+.col-follow { width: 1%; white-space: nowrap; }
 .col-outcome { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; }
 .fu-modal { max-width: 600px; max-height: 88vh; overflow-y: auto; }
 .fu-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
