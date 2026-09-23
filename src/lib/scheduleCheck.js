@@ -18,7 +18,31 @@ export function scheduleGap(p) {
   return Math.round(total - (Number(p.final_amount || 0) || 0));
 }
 
+// Installment dates whose year can't be real ("0026-01-26" for 2026) — AR would
+// read the unit as two thousand years overdue.
+export const MIN_INST_YEAR = 2015;
+export const MAX_INST_YEAR = 2100;
+
+export function badInstallmentDates(p) {
+  const bad = [];
+  ['installments', 'extra_work_inst'].forEach((key) => {
+    (Array.isArray(p?.[key]) ? p[key] : []).forEach((i) => {
+      const d = String((i && i.date) || '');
+      const y = Number(d.slice(0, 4));
+      if (d.length >= 4 && /^\d{4}$/.test(d.slice(0, 4)) && (y < MIN_INST_YEAR || y > MAX_INST_YEAR)) {
+        bad.push(`#${(i && i.no) ?? '?'} is ${d}`);
+      }
+    });
+  });
+  return bad;
+}
+
 export function scheduleError(p) {
+  const bad = badInstallmentDates(p);
+  if (bad.length) {
+    return `Check the installment date${bad.length === 1 ? '' : 's'}: ${bad.slice(0, 5).join(', ')}. `
+      + `The year must be between ${MIN_INST_YEAR} and ${MAX_INST_YEAR}.`;
+  }
   const gap = scheduleGap(p);
   if (gap === null || Math.abs(gap) <= SCHEDULE_TOLERANCE) return '';
   return `The payment schedule is ₹${Math.abs(gap).toLocaleString('en-IN')} ${gap < 0 ? 'short of' : 'more than'} the total deal. `
