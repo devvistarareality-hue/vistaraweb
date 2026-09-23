@@ -636,16 +636,16 @@ function AccountsApprovals() {
 // Channel Partner's Approvals is the same Drafts/Pending/Approved list, filtered
 // to partner-sourced bookings, with the CP approver panel. Accounts & Finance
 // keeps its own review queue above.
-export default function ModuleApprovalsPage({ params }) {
-  if (params.module === 'cp') return <ChannelPartnerApprovals />;
+export default function ModuleApprovalsPage({ params, searchParams }) {
+  if (params.module === 'cp') return <ChannelPartnerApprovals initialTab={searchParams?.tab} />;
   return <AccountsApprovals />;
 }
 
-function ChannelPartnerApprovals() {
+function ChannelPartnerApprovals({ initialTab }) {
   const user = useSelector((s) => s.auth.user);
   if (!user) return null;
   if (!canAccessChannelPartner(user)) {
     return <div className="nx-note info">Admin access only.</div>;
   }
-  return <BookingsContent adminView cpMode cpOnly />;
+  return <BookingsContent adminView cpMode cpOnly initialTab={initialTab} />;
 }

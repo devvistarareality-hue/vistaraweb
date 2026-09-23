@@ -107,7 +107,6 @@ export default function ModuleLayout({ children, params }) {
       { label: 'All Leads',   href: `${base}/leads`,       icon: <IconUsers />, screen: 'cp.screen.leads' },
       { label: 'Site Visits', href: `${base}/site-visits`, icon: <IconCheck />, screen: 'cp.screen.sitevisits' },
       { label: 'Follow-Ups',  href: `${base}/follow-ups`,  icon: <IconBell />,  screen: 'cp.screen.followups' },
-      { label: 'Closures',    href: `${base}/closures`,    icon: <IconChart />, screen: 'cp.screen.closures' },
       { label: 'Booking',     href: `${base}/closure`,     icon: <IconBook />,  screen: 'cp.screen.booking' },
       { label: 'Approvals',   href: `${base}/approvals`,   icon: <IconCheck />, screen: 'cp.screen.approvals' },
     ] : []),

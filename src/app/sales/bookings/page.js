@@ -148,14 +148,17 @@ export function ExportBookings({ projects, companyId }) {
   );
 }
 
-export function BookingsContent({ adminView = false, cpOnly = false, cpMode = false }) {
+export function BookingsContent({ adminView = false, cpOnly = false, cpMode = false, initialTab = '' }) {
   const router = useRouter();
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
   const isApprover = me?.role === 'Admin' || isManagerRole(me) || me?.is_staff;
   const isAdmin = me?.role === 'Admin' || me?.is_staff || (me?.admin_modules || []).includes('Sales');
-  const [tab, setTab] = useState('pending');
+  // Opens on Pending unless a link asked for another tab — the Closures card
+  // on the dashboard points straight at Approved, for instance.
+  const [tab, setTab] = useState(
+    TABS.some(([k]) => k === initialTab) ? initialTab : 'pending');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);

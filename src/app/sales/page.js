@@ -324,7 +324,9 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   // Sales/Admin one — every tile has to point at the CP-scoped equivalent page.
   const leadsHref     = isCp ? '/m/cp/leads'       : (adminView ? '/sales/admin/leads' : '/sales/leads');
   const svHref         = isCp ? '/m/cp/site-visits' : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`;
-  const closuresHref   = isCp ? '/m/cp/closures'    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
+  // Channel Partner has no Closures page of its own: a closure there is a
+  // booking, so the card opens the bookings list on its Approved tab.
+  const closuresHref   = isCp ? '/m/cp/approvals?tab=sold' : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
   const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: leadsHref },
