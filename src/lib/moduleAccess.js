@@ -82,6 +82,24 @@ export function hasClub1000Access(user) {
 // them. Mirrors MANAGER_ROLES in the backend — keep the two in step.
 // Kiosk is not a rank: it is the unattended self-booking account.
 export const ROLE_HIERARCHY = ['Director', 'General Manager', 'Manager', 'Employee', 'Intern'];
+// ── What a person may do ───────────────────────────────────────────────────────
+// Resolved by the server from their company's designation settings and sent with
+// the login (`capabilities`). Falls back to the old designation text for a session
+// signed in before this shipped, so nothing changes mid-session.
+export function can(user, key) {
+  const caps = user?.capabilities;
+  if (Array.isArray(caps)) return caps.includes(key);
+  const d = (user?.designation || '').toLowerCase();
+  switch (key) {
+    case 'sales.pipeline.telecalling': return d.includes('telecaller') || d.includes('tele caller');
+    case 'sales.pipeline.stm': return d.includes('stm') || d.includes('sales team') || d.includes('sales executive');
+    case 'sales.pipeline.cp': return d.includes('cp executive') || d.includes('channel partner');
+    case 'sales.pipeline.cp_manager': return d.trim().startsWith('cp');
+    case 'sales.lead.assign': return !(can(user, 'sales.pipeline.telecalling') || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp'));
+    default: return true;   // module actions everyone could already do
+  }
+}
+
 export const MANAGER_ROLES = ['Director', 'General Manager', 'Manager'];
 
 /** Manager or more senior (not Admin/staff — check those separately). */
@@ -94,15 +112,14 @@ export function isManagerRole(user) {
 // the Channel Partner module ONLY — not the rest of Sales. Mirrors
 // backend/sales/views.py::is_cp_manager exactly — keep in sync.
 export function isCpManager(user) {
-  return !!(user && user.role === 'Manager' && (user.designation || '').toLowerCase().trim().startsWith('cp'));
+  return !!(user && user.role === 'Manager' && can(user, 'sales.pipeline.cp_manager'));
 }
 
 // CP Executive — an employee-level Channel Partner who sources & works their own
 // leads (no Meta distribution), scoped to their own records only (not project-wide
 // like isCpManager). Mirrors backend/sales/views.py::is_cp exactly — keep in sync.
 export function isCp(user) {
-  const d = (user?.designation || '').toLowerCase();
-  return !!(user && (d.includes('cp executive') || d.includes('channel partner')));
+  return !!(user && can(user, 'sales.pipeline.cp'));
 }
 
 // Who can reach the Channel Partner module: true/hard admins always can; a

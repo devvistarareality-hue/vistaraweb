@@ -10,7 +10,7 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation} from '../../lib/moduleAccess';
+import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation, can} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
@@ -335,8 +335,8 @@ export default function SalesLayout({ children }) {
   }
 
   const des = (user?.designation || '').toLowerCase();
-  const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
-  const isTelecaller = des.includes('telecaller') || des.includes('tele caller');
+  const isStm = can(user, 'sales.pipeline.stm');
+  const isTelecaller = can(user, 'sales.pipeline.telecalling');
   // CP Executive — a channel partner who works their own leads (no Meta).
   // (CP Cluster Heads are Managers, covered by isManager.)
   const isCp = isCpDesignation(user);

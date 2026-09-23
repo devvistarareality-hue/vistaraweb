@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
-import { isManagerRole } from '../../../lib/moduleAccess';
+import { isManagerRole, can} from '../../../lib/moduleAccess';
 
 
 import Icon from '../../../components/Icon';
@@ -101,7 +101,7 @@ export default function ImportPage() {
   // An STM only works the STM stage — telecaller assignment isn't theirs to set, so
   // the template/mapping UI doesn't offer those fields at all for an STM login. Same
   // designation-substring check the backend uses (there's no separate CRM-role field).
-  const isStm   = (user?.designation || '').toLowerCase().includes('stm');
+  const isStm   = can(user, 'sales.pipeline.stm');
   const pipelineFields = isStm ? PIPELINE_FIELDS.filter((f) => !f.startsWith('telecaller_')) : PIPELINE_FIELDS;
 
   useEffect(() => {

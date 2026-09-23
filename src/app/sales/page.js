@@ -14,6 +14,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
+import { can } from '../../lib/moduleAccess';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
 
@@ -290,7 +291,7 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   // viewer's own designation — a true admin browsing into the Channel Partner
   // section still needs the CP-scoped view, not their own (non-CP) designation.
   const _des = (user?.designation || '').toLowerCase();
-  const isCp = cpOnly || _des.includes('cp executive') || _des.includes('channel partner') || _des.includes('cp cluster head');
+  const isCp = cpOnly || can(user, 'sales.pipeline.cp') || _des.includes('cp cluster head');
 
   useEffect(() => {
     // `adminView` (Admin-section mirror for a Sales Admin-Modules user) always hits
@@ -755,7 +756,7 @@ function STMDashboard({ user }) {
   // CP Executives reuse this dashboard but aren't in the availability/distribution
   // pool, so the "Mark Available" toggle doesn't apply to them.
   const _des = (user?.designation || '').toLowerCase();
-  const isCp = _des.includes('cp executive') || _des.includes('channel partner');
+  const isCp = can(user, 'sales.pipeline.cp');
 
   useEffect(() => {
     if (!user?.id) return;
@@ -947,13 +948,13 @@ export function SalesDashboardContent({ adminView = false }) {
 
   if (adminView) return <AdminDashboard user={user} adminView />;
 
-  if (des.includes('telecaller') || des.includes('tele caller')) {
+  if (can(user, 'sales.pipeline.telecalling')) {
     return <TelecallerDashboard user={user} />;
   }
   // CP Executive works like an STM (own pipeline). CP Cluster Heads are Managers
   // and fall through to the admin/overview dashboard (all CP data).
-  if (des.includes('stm') || des.includes('sales team') || des.includes('sales executive')
-      || des.includes('cp executive') || des.includes('channel partner')) {
+  if (can(user, 'sales.pipeline.stm')
+      || can(user, 'sales.pipeline.cp')) {
     return <STMDashboard user={user} />;
   }
   return <AdminDashboard user={user} />;

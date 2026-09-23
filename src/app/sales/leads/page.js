@@ -8,6 +8,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 import Icon from '../../../components/Icon';
 import { confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import { can } from '../../../lib/moduleAccess';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -234,10 +235,10 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const _desig = (user?.designation || '').toLowerCase();
-  const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
-  const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
+  const _isTelecaller = can(user, 'sales.pipeline.telecalling');
+  const _isStm = can(user, 'sales.pipeline.stm');
   const _isCpHead = _desig.includes('cp cluster head');
-  const _isCp = _desig.includes('cp executive') || _desig.includes('channel partner') || _isCpHead;
+  const _isCp = can(user, 'sales.pipeline.cp') || _isCpHead;
   const _isAdminMgr = !(_isTelecaller || _isStm || _isCp);
   const showTC  = _isAdminMgr || _isTelecaller;
   const showStm = _isAdminMgr || _isStm || _isCp;
@@ -788,10 +789,10 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
   // Only admins/managers may (re)assign telecaller / STM. Telecaller & Sales Executive
   // portals can update status & remarks but cannot reassign leads.
   const _desig = (user?.designation || '').toLowerCase();
-  const _isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
-  const _isStm = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
+  const _isTelecaller = can(user, 'sales.pipeline.telecalling');
+  const _isStm = can(user, 'sales.pipeline.stm');
   const _isCpHead = _desig.includes('cp cluster head');
-  const _isCp  = _desig.includes('cp executive') || _desig.includes('channel partner') || _isCpHead;
+  const _isCp  = can(user, 'sales.pipeline.cp') || _isCpHead;
   const canAssign = !(_isTelecaller || _isStm || _isCp);
   // Telecallers see only the Telecaller (TC) section; STMs / CPs (exec + cluster
   // head) see only the STM/CP section. Admins/managers see both.
@@ -1561,9 +1562,9 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Telecallers & Sales Executives (STM) cannot delete leads — only admins/managers.
   const _desig = (user?.designation || '').toLowerCase();
-  const isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
-  const isStm        = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
-  const isCp         = _desig.includes('cp executive') || _desig.includes('channel partner');
+  const isTelecaller = can(user, 'sales.pipeline.telecalling');
+  const isStm        = can(user, 'sales.pipeline.stm');
+  const isCp         = can(user, 'sales.pipeline.cp');
   const isCpHead     = _desig.includes('cp cluster head');
   const isCpAny      = isCp || isCpHead;
   const isCaller     = isTelecaller || isStm || isCp;       // CP Head sees the full team list (no work split)

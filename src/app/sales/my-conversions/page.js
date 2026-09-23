@@ -7,6 +7,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
+import { can } from '../../../lib/moduleAccess';
 function fmtDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -173,7 +174,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const cq = cqParts.length ? `?${cqParts.join('&')}` : '';
   const des = (user?.designation || '').toLowerCase();
   // Cancelling a booking lives on Bookings & Approvals — this page is read-only.
-  const isStm = des.includes('stm') || des.includes('sales team') || des.includes('sales executive');
+  const isStm = can(user, 'sales.pipeline.stm');
   const [tab, setTab] = useState('sv');
   // Deep-link to a tab (dashboard Closures card → ?tab=closures). Read in an
   // effect, not a lazy initializer — during client navigation window.location
