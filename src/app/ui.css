@@ -1306,3 +1306,6 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .perm-foot-btns { width: 100%; }
   .perm-foot-btns .nx-btn { flex: 1; justify-content: center; }
 }
+
+/* The scrolling content column beside a module sidebar. */
+.nx-main-scroll { flex: 1; overflow: auto; min-width: 0; }

@@ -121,6 +121,13 @@ export default function ModuleLayout({ children, params }) {
   // A company can hide menu items per designation (Designation Master → Permissions).
   const visibleNav = NAV.filter((item) => canSee(user, item.screen));
   const isActive = (href) => href === base ? pathname === base : pathname.startsWith(href);
+  // Hiding a menu item has to hide the page too, or the address still lets them in.
+  const currentItem = NAV.filter((i) => i.screen && isActive(i.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const blockedScreen = !!user && !!currentItem && !canSee(user, currentItem.screen);
+  useEffect(() => {
+    if (blockedScreen && visibleNav.length) router.replace(visibleNav[0].href);
+  }, [blockedScreen, pathname]);
 
   if (!meta) {
     return <div style={{ padding: 40 }}>Unknown module.</div>;
@@ -191,7 +198,14 @@ export default function ModuleLayout({ children, params }) {
           <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={s.logoutBtn}>Sign Out</button>
         </div>
       </div>
-      <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>{children}</main>
+      <main className="nx-main-scroll">
+        {blockedScreen && !visibleNav.length ? (
+          <div className="nx-note info">
+            No screens have been switched on for your designation in this module. Ask your
+            administrator to set them in Designation Master → Permissions.
+          </div>
+        ) : children}
+      </main>
 
       {/* ── Profile Modal ── */}
       {profileOpen && (

@@ -10,7 +10,7 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { refreshUser } from '../../lib/refreshUser';
 import { apiFetch } from '../../utils/apiFetch';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import { moduleAccess, isSuperAdmin, canAccessModule, isClub1000Manager } from '../../lib/moduleAccess';
+import {moduleAccess, isSuperAdmin, canAccessModule, isClub1000Manager, canSee} from '../../lib/moduleAccess';
 
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
@@ -42,15 +42,15 @@ function IconCalendar()  { return <SvgIcon><rect x="3" y="4" width="18" height="
 function IconApprovals() { return <SvgIcon><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></SvgIcon>; }
 
 const NAV = [
-  { label: 'Dashboard',  href: '/club1000',            icon: <IconDashboard /> },
-  { label: 'Leads',      href: '/club1000/leads',       icon: <IconLeads /> },
-  { label: 'Follow-Ups', href: '/club1000/follow-ups',  icon: <IconCalendar /> },
-  { label: 'Schemes',    href: '/club1000/schemes',     icon: <IconLayers /> },
-  { label: 'Investors',  href: '/club1000/investors',   icon: <IconUsers /> },
-  { label: 'Approvals',  href: '/club1000/approvals',   icon: <IconApprovals />, managerOnly: true },
-  { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true },
-  { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift /> },
-  { label: 'My Team',    href: '/club1000/my-team',     icon: <IconTeam />,   managerOnly: true },
+  { label: 'Dashboard',  href: '/club1000',            icon: <IconDashboard />, screen: 'club.screen.dashboard' },
+  { label: 'Leads',      href: '/club1000/leads',       icon: <IconLeads />, screen: 'club.screen.leads' },
+  { label: 'Follow-Ups', href: '/club1000/follow-ups',  icon: <IconCalendar />, screen: 'club.screen.followups' },
+  { label: 'Schemes',    href: '/club1000/schemes',     icon: <IconLayers />, screen: 'club.screen.schemes' },
+  { label: 'Investors',  href: '/club1000/investors',   icon: <IconUsers />, screen: 'club.screen.investors' },
+  { label: 'Approvals',  href: '/club1000/approvals',   icon: <IconApprovals />, managerOnly: true, screen: 'club.screen.approvals' },
+  { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true, screen: 'club.screen.payouts' },
+  { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift />, screen: 'club.screen.rewards' },
+  { label: 'My Team',    href: '/club1000/my-team',     icon: <IconTeam />,   managerOnly: true, screen: 'club.screen.myteam' },
   // Who changed what, and when — real admins only.
   { label: 'Log',        href: '/club1000/log',         icon: <IconLayers />, adminOnly: true },
 ];
@@ -141,6 +141,19 @@ export default function Club1000Layout({ children }) {
     if (_blocked) router.replace(_modHome);
     else if (_noAccess) router.replace('/admin');
   }, [user]);
+
+  // Same rule as the menu: a screen this designation cannot see is not reachable
+  // by typing its address either. This sits above the early returns so the hook
+  // runs on every render.
+  const _isActive = (href) => href === '/club1000' ? pathname === '/club1000' : pathname.startsWith(href);
+  const _visibleNav = NAV.filter((item) => canSee(user, item.screen)
+    && (!item.managerOnly || isClub1000Manager(user)) && (!item.adminOnly || user?.role === 'Admin' || user?.is_staff));
+  const _currentItem = NAV.filter((item) => item.screen && _isActive(item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const _blockedScreen = !!user && !!_currentItem && !canSee(user, _currentItem.screen);
+  useEffect(() => {
+    if (_blockedScreen && _visibleNav.length) router.replace(_visibleNav[0].href);
+  }, [_blockedScreen, pathname]);
 
   if (_blocked || _noAccess) return null;
 
@@ -234,7 +247,7 @@ export default function Club1000Layout({ children }) {
           ) : (
             <>
               <div style={s.sectionLabel}>CLUB 1000</div>
-              {(isTrueManager ? NAV.filter(item => !item.managerOnly || manager) : NAV.filter(item => !item.managerOnly)).filter((item) => !item.adminOnly || isAdmin).map((item) => {
+              {(isTrueManager ? NAV.filter(item => !item.managerOnly || manager) : NAV.filter(item => !item.managerOnly)).filter((item) => canSee(user, item.screen) && (!item.adminOnly || isAdmin)).map((item) => {
                 const active = isActive(item.href);
                 return (
                   <Link key={item.href} href={item.href} className="c1k-nav-link"
@@ -411,7 +424,12 @@ export default function Club1000Layout({ children }) {
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Club 1000</span>
         </div>
         <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
-          {children}
+          {_blockedScreen && !_visibleNav.length ? (
+            <div className="nx-note info">
+              No Club 1000 screens have been switched on for your designation. Ask your
+              administrator to set them in Designation Master → Permissions.
+            </div>
+          ) : children}
         </main>
       </div>
     </div>
