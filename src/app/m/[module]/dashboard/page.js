@@ -13,6 +13,10 @@ import Loader from '../../../../components/Loader';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
 import { MODULE_META } from '../moduleMeta';
+import ModuleDashboard from '../_ModuleDashboard';
+import DashboardRoleFilter from '../../../../components/DashboardRoleFilter';
+import { dashboardFor } from '../../../../lib/moduleAccess';
+import { DESIGNATION_ENDPOINTS } from '../../../../constants/api';
 
 const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
@@ -20,27 +24,48 @@ const ISSUE_TEXT = {
   bad_dates: 'An installment date has an impossible year — Sales needs to correct it',
 };
 
-// Every module opens here. AR has a full receivables dashboard; the modules whose
-// dashboard is still to be written get the plain one below, so the tab is in the
-// same place everywhere.
+// Every module opens here, with the role filter on top: an admin flips between
+// the dashboards built for each role level, and Designation Master → Permissions
+// pins the one a designation opens. AR has its receivables dashboard; the other
+// modules share one dashboard for every role until their own is written.
 export default function ModuleDashboardPage({ params }) {
-  if (params.module !== 'ar') return <PlainDashboard slug={params.module} />;
-  return <ARDashboard />;
-}
+  const slug = params.module;
+  const user = useSelector((s) => s.auth.user);
+  const isAdmin = user?.role === 'Admin' || user?.is_staff;
+  const [preview, setPreview] = useState('');
+  const [options, setOptions] = useState([]);
 
-function PlainDashboard({ slug }) {
-  const meta = MODULE_META[slug];
-  if (!meta) notFound();
+  const moduleName = MODULE_NAME[slug];
+  useEffect(() => {
+    if (!moduleName) return;
+    apiFetch(DESIGNATION_ENDPOINTS.capabilities)
+      .then((r) => r.json())
+      .then((d) => setOptions((d?.dashboards || [])
+        .filter((x) => x.module === moduleName)
+        .map((x) => ({ key: x.value, role: x.role, label: x.role }))))
+      .catch(() => {});
+  }, [moduleName]);
+
+  if (!MODULE_META[slug]) notFound();
+  const chosen = preview || dashboardFor(user, moduleName);
+  // Every role opens the same dashboard in these modules for now; the filter is
+  // how you see which one a role is pinned to.
+  const body = slug === 'ar' ? <ARDashboard /> : <ModuleDashboard slug={slug} />;
+
+  if (!isAdmin) return body;
   return (
-    <div className="nx-page">
-      <h1 className="nx-page-title">{meta.name}</h1>
-      <p className="nx-page-sub">{meta.desc}</p>
-      <div className="nx-note info">
-        This module&apos;s dashboard is still being built. Its other tabs are in the menu.
-      </div>
-    </div>
+    <>
+      <DashboardRoleFilter options={options} value={chosen} onChange={setPreview} module={moduleName} />
+      {body}
+    </>
   );
 }
+
+// /m/<slug> → the module display name its dashboards are declared under.
+const MODULE_NAME = {
+  ar: 'AR', accounts: 'Accounts & Finance', hr: 'HR',
+  execution: 'Execution', purchase: 'Purchase', land: 'Land',
+};
 
 // AR Dashboard — the receivables book at a glance: what is owed, how late, what
 // falls due month by month, who owes the most, and what data needs fixing.

@@ -57,6 +57,9 @@ export const DESIGNATION_ENDPOINTS = {
   get capabilities()  { return `${getBaseUrl()}/api/auth/designations/capabilities/`; },
 };
 
+// Which dashboard each role opens in a module, per company (the Copy button).
+export const ROLE_DASHBOARD_ENDPOINT = () => `${getBaseUrl()}/api/auth/role-dashboards/`;
+
 export const AUTH_ENDPOINTS = {
   get login()      { return `${BASE_URL}/api/auth/login/`; },
   get otpVerify()  { return `${BASE_URL}/api/auth/otp/verify/`; },

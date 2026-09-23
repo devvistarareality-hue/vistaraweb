@@ -59,15 +59,26 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
     }
   }
 
+  // A designation belongs to one module and only decides that module — a Sales
+  // title has nothing to say about AR. Channel Partner rides with Sales.
+  const FAMILY = {
+    'Sales': ['Sales', 'Channel Partner'],
+    'Channel Partner': ['Sales', 'Channel Partner'],
+    'Accounts Receivable': ['AR'],
+  };
+  const mine = FAMILY[designation.module] || [designation.module];
   const group = (rows) => {
-    const mods = [...new Set((rows || []).map((c) => c.module))];
-    return mods.map((m) => ({ module: m, items: rows.filter((c) => c.module === m) }));
+    const own = (rows || []).filter((c) => mine.includes(c.module));
+    const mods = [...new Set(own.map((c) => c.module))];
+    return mods.map((m) => ({ module: m, items: own.filter((c) => c.module === m) }));
   };
   const byModule = useMemo(() => group(catalogue?.capabilities), [catalogue]);
   // Dashboards, narrowed to one role and then grouped by module. The default
   // ("decide from their permissions") has no role, so it always stays visible.
   const dashGroups = useMemo(() => {
-    const rows = (catalogue?.dashboards || []).filter((d) => !dashRole || !d.role || d.role === dashRole);
+    const rows = (catalogue?.dashboards || [])
+      .filter((d) => !d.module || mine.includes(d.module))
+      .filter((d) => !dashRole || !d.role || d.role === dashRole);
     const mods = [...new Set(rows.map((d) => d.module))];
     return mods.map((m) => ({ module: m, items: rows.filter((d) => d.module === m) }));
   }, [catalogue, dashRole]);

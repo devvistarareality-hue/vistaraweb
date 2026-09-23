@@ -974,7 +974,7 @@ export function SalesDashboardContent({ adminView = false }) {
 
   // A company can pin which dashboard a designation opens; '' decides from their
   // permissions, exactly as before.
-  const pinned = dashboardFor(user);
+  const pinned = dashboardFor(user, 'Sales');
   const chosen = preview || pinned;
   const picked = chosen ? salesView(chosen, user) : null;
 
@@ -989,7 +989,7 @@ export function SalesDashboardContent({ adminView = false }) {
   if (!isAdmin) return body;
   return (
     <>
-      <DashboardRoleFilter options={SALES_DASHBOARDS} value={chosen} onChange={setPreview} />
+      <DashboardRoleFilter options={SALES_DASHBOARDS} value={chosen} onChange={setPreview} module="Sales" />
       {body}
     </>
   );

@@ -18,7 +18,7 @@ export default function Club1000Dashboard() {
   const [preview, setPreview] = useState('');
   if (!user) return null;
 
-  const chosen = preview || dashboardFor(user);
+  const chosen = preview || dashboardFor(user, 'Club 1000');
   const body = chosen === 'club_manager' ? <ManagerDashboard />
     : chosen === 'club_exec' ? <EmployeeDashboard />
       // Nothing pinned: the old rule — managers get the desk view.
@@ -27,7 +27,7 @@ export default function Club1000Dashboard() {
   if (!isAdmin) return body;
   return (
     <>
-      <DashboardRoleFilter options={CLUB_DASHBOARDS} value={chosen} onChange={setPreview} />
+      <DashboardRoleFilter options={CLUB_DASHBOARDS} value={chosen} onChange={setPreview} module="Club 1000" />
       {body}
     </>
   );

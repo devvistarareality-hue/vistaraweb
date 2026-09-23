@@ -24,7 +24,7 @@ export default function ChannelPartnersPage() {
     return <div className="nx-note info">Admin access only.</div>;
   }
 
-  const chosen = preview || dashboardFor(user);
+  const chosen = preview || dashboardFor(user, 'Channel Partner');
   // cp_director is the company-wide cut; the rest are the ordinary desk, which
   // the backend already scopes by role and the reporting tree.
   const body = <AdminDashboard user={user} cpOnly adminView={chosen === 'cp_director'} />;
@@ -32,7 +32,7 @@ export default function ChannelPartnersPage() {
   if (!isAdmin) return body;
   return (
     <>
-      <DashboardRoleFilter options={CP_DASHBOARDS} value={chosen} onChange={setPreview} />
+      <DashboardRoleFilter options={CP_DASHBOARDS} value={chosen} onChange={setPreview} module="Channel Partner" />
       {body}
     </>
   );
