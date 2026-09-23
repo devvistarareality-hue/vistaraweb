@@ -246,13 +246,14 @@ function StatusBadge({ status }) {
 // dashboard tones (components/Dash.js), so Sales reads like the AR and Club 1000 homes.
 const toneOf = (c) => (/danger/.test(c) ? 'bad' : /success/.test(c) ? 'good' : /warning/.test(c) ? 'warn' : 'info');
 
-function StatCard({ label, value, icon, textColor, href, loading }) {
+function StatCard({ label, value, sub, icon, textColor, href, loading }) {
   const tone = toneOf(textColor || '');
   const body = (
     <>
       <div className="ard-kpi-top"><span className={`ard-kpi-icon ${tone}`}>{icon}</span>{href && <span className="ard-kpi-go">›</span>}</div>
       <div className="ard-kpi-label">{label}</div>
       {loading ? <div className="ard-skel" /> : <div className={`ard-kpi-value ${tone === 'info' ? '' : tone}`}>{typeof value === 'number' ? value.toLocaleString('en-IN') : (value ?? 0)}</div>}
+      {!loading && sub ? <div className="ard-kpi-sub">{sub}</div> : null}
     </>
   );
   return href ? <Link href={href} className="nx-card ard-kpi is-link">{body}</Link> : <div className="nx-card ard-kpi">{body}</div>;
@@ -337,10 +338,15 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
     // moves warm to an STM, so `new_leads` counted assigned leads as unassigned.
     ...(isCp ? [] : [{ label: 'Unassigned', value: stats.unassigned_leads, icon: <IconActivity />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: `${leadsHref}?unassigned=true` }]),
     { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: svHref },
-    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: closuresHref },
+    { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: closuresHref,
+      // The partner desk also closes deals that came from elsewhere. Those belong
+      // to the Sales book, so they are not in this figure — naming them keeps the
+      // tile from looking short against the same people's My Bookings.
+      sub: isCp ? `${(stats.closures_other_source ?? 0).toLocaleString('en-IN')} more from other sources` : null },
     // Closed and approved here, but not yet signed off by Accounts. They are not
     // in Closures yet — they join it the moment Accounts approves.
-    { label: 'Pending from Accounts', value: stats.accounts_pending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)' },
+    { label: 'Pending from Accounts', value: stats.accounts_pending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)',
+      sub: isCp ? `${(stats.accounts_pending_other_source ?? 0).toLocaleString('en-IN')} more from other sources` : null },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: projectsHref },
   ] : [];
 
@@ -884,10 +890,12 @@ export function STMDashboard({ user, cpOnly = false }) {
           // that page has its own date filter and ignores the params.
           { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: '/sales/site-visits?tab=scheduled' },
           { label: 'SV Done', value: svDone, icon: <IconEye />, color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
-          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings' },
+          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings',
+            sub: cpOnly ? `${(stats?.closures_other_source ?? 0).toLocaleString('en-IN')} more from other sources` : null },
           // Closed and approved here, waiting at the Accounts gate — not counted
           // as a closure until Accounts signs off.
-          { label: 'Pending from Accounts', value: accPending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning)' },
+          { label: 'Pending from Accounts', value: accPending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning)',
+            sub: cpOnly ? `${(stats?.accounts_pending_other_source ?? 0).toLocaleString('en-IN')} more from other sources` : null },
         ] },
         { title: 'Conversion Rates', cards: [
           { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: 'var(--accent-softer)', textColor: 'var(--accent)' },
