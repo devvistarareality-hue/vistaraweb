@@ -17,6 +17,8 @@ const TABS = [
 export default function PermissionsModal({ designation, onClose, onSaved }) {
   const [catalogue, setCatalogue] = useState(null);
   const [tab, setTab] = useState('actions');
+  // The Dashboard tab lists one view per role per module; this narrows it.
+  const [dashRole, setDashRole] = useState('');
   // An unconfigured designation starts ticked with what it already does today.
   const [caps, setCaps] = useState(new Set(designation.effective_capabilities || designation.capabilities || []));
   const [screens, setScreens] = useState(new Set(designation.effective_screens || designation.screens || []));
@@ -62,6 +64,13 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
     return mods.map((m) => ({ module: m, items: rows.filter((c) => c.module === m) }));
   };
   const byModule = useMemo(() => group(catalogue?.capabilities), [catalogue]);
+  // Dashboards, narrowed to one role and then grouped by module. The default
+  // ("decide from their permissions") has no role, so it always stays visible.
+  const dashGroups = useMemo(() => {
+    const rows = (catalogue?.dashboards || []).filter((d) => !dashRole || !d.role || d.role === dashRole);
+    const mods = [...new Set(rows.map((d) => d.module))];
+    return mods.map((m) => ({ module: m, items: rows.filter((d) => d.module === m) }));
+  }, [catalogue, dashRole]);
   const screensByModule = useMemo(() => group(catalogue?.screens), [catalogue]);
 
   const scopeLabel = (catalogue?.scopes || []).find((s) => s.value === scope)?.label || '';
@@ -158,14 +167,32 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
             <>
               <section className="perm-card">
                 <div className="perm-card-head"><h3><LayoutDashboard size={15} /> Which dashboard opens</h3></div>
-                <div className="perm-radios">
-                  {(catalogue.dashboards || []).map((d) => (
-                    <label className={`perm-radio${dash === d.value ? ' is-on' : ''}`} key={d.value || 'auto'}>
-                      <input type="radio" name="dash" checked={dash === d.value} onChange={() => setDash(d.value)} />
-                      <span><b>{d.label}</b>{d.module ? <small>{d.module}</small> : null}</span>
-                    </label>
+                <div className="perm-chips perm-rolebar">
+                  <span className="perm-rolelead">Role</span>
+                  {['', ...(catalogue.dashboard_roles || [])].map((r) => (
+                    <button type="button" key={r || 'all'} onClick={() => setDashRole(r)}
+                      className={`perm-chip${dashRole === r ? ' is-on' : ''}`}>{r || 'All'}</button>
                   ))}
                 </div>
+                {dashGroups.map(({ module, items }) => (
+                  <div className="perm-dashgroup" key={module || 'any'}>
+                    {module ? <h4>{module}</h4> : null}
+                    <div className="perm-radios">
+                      {items.map((d) => (
+                        <label className={`perm-radio${dash === d.value ? ' is-on' : ''}`} key={d.value || 'auto'}>
+                          <input type="radio" name="dash" checked={dash === d.value} onChange={() => setDash(d.value)} />
+                          <span>
+                            <b>{d.label}</b>
+                            <small>
+                              {d.role ? d.role : 'Any role'}
+                              {d.built === false ? ' · not built yet — opens the current dashboard' : ''}
+                            </small>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </section>
               <section className="perm-card">
                 <div className="perm-card-head"><h3><Eye size={15} /> Whose records they see</h3></div>

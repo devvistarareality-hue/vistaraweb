@@ -1309,3 +1309,10 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 
 /* The scrolling content column beside a module sidebar. */
 .nx-main-scroll { flex: 1; overflow: auto; min-width: 0; }
+
+/* Permissions editor — the Dashboard tab's role filter and its per-module groups. */
+.perm-rolebar { align-items: center; margin-bottom: 10px; }
+.perm-rolelead { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-right: 2px; }
+.perm-dashgroup + .perm-dashgroup { margin-top: 12px; }
+.perm-dashgroup h4 { margin: 0 0 6px; font-size: 10.5px; font-weight: 800;
+  letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); }
