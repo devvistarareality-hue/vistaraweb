@@ -19,7 +19,7 @@ const MODULE_CONFIG = {
   'Purchase':           { title: 'Purchase',            href: '/m/purchase',             desc: 'Vendors and purchase orders',                 Icon: ShoppingCart,       tone: 'peach' },
   'Land':               { title: 'Land',                href: '/m/land',                 desc: 'Land parcels and site portfolio',             Icon: MapPin,             tone: 'blue' },
   'Club 1000':          { title: 'Club 1000',           href: '/club1000',               desc: 'Investors, schemes and payouts',              Icon: Coins,              tone: 'green' },
-  'Channel Partner':    { title: 'Channel Partners',    href: '/m/cp/dashboard', desc: 'Referral partners and their leads',           Icon: Handshake,          tone: 'peach' },
+  'Channel Partner':    { title: 'Channel Partner',     href: '/m/cp/dashboard', desc: 'Partner-sourced leads, visits and bookings',  Icon: Handshake,          tone: 'peach' },
 };
 
 function greeting() {
@@ -33,13 +33,9 @@ export default function DashboardPage() {
   const [hello, setHello] = useState('Welcome back');
   const [today, setToday] = useState('');
 
-  const baseModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m] && m !== 'Channel Partner');
-  // A standalone tile only for someone who'd otherwise have no way in — anyone
-  // with the Sales module (or a true admin) already sees Channel Partner nested
-  // under Sales, so adding it here too would just duplicate that entry point.
-  // Mirrors sales/layout.js's isCpMgr exclusions (!isTrueAdmin && !isSalesModuleAdmin).
-  const isTrueAdmin = !!(user?.is_staff || user?.role === 'Admin');
-  const showCpTile = !isTrueAdmin && !baseModules.includes('Sales') && canAccessChannelPartner(user);
+  // Channel Partner is a module of its own now, so it is simply one of theirs.
+  const baseModules = (user?.modules || []).filter((m) => MODULE_CONFIG[m]);
+  const showCpTile = !baseModules.includes('Channel Partner') && canAccessChannelPartner(user);
   const userModules = showCpTile ? [...baseModules, 'Channel Partner'] : baseModules;
 
   useEffect(() => {

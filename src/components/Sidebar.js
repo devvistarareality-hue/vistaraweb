@@ -83,6 +83,7 @@ const NAV_ITEMS = [
 
 const PARKED_ITEMS = [
   { label: 'Sales',              href: '/sales',       icon: <IconTrending />,  live: true },
+  { label: 'Channel Partner',    href: '/m/cp/dashboard', icon: <IconPeople />, live: true },
   { label: 'HR',                 href: '/m/hr',        icon: <IconPeople />,    live: true },
   { label: 'Accounts & Finance', href: '/m/accounts',  icon: <IconWallet />,    live: true },
   { label: 'Accounts Receivable', href: '/m/ar/dashboard', icon: <IconReceivable />, live: true },
