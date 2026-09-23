@@ -17,9 +17,15 @@ export async function refreshUser(dispatch, res) {
     if (!r || !r.ok) return null;
     const fresh = await r.json();
     if (!fresh || !fresh.id) return null;
-    const stored = JSON.parse(localStorage.getItem('user') || '{}');
+    const storedRaw = localStorage.getItem('user') || '{}';
+    const stored = JSON.parse(storedRaw);
     const merged = { ...stored, ...fresh };
-    localStorage.setItem('user', JSON.stringify(merged));
+    const mergedRaw = JSON.stringify(merged);
+    // Nothing changed — and this runs every 30 seconds, so handing Redux a new
+    // object each time would re-render every screen that reads the user and
+    // re-run its fetches.
+    if (mergedRaw === JSON.stringify(stored)) return stored;
+    localStorage.setItem('user', mergedRaw);
     dispatch({ type: LOGIN_SUCCESS, payload: merged });
     return merged;
   } catch {

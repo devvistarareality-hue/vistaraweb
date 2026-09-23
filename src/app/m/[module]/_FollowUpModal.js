@@ -1,4 +1,6 @@
 'use client';
+import { useSelector } from 'react-redux';
+import { can } from '../../../lib/moduleAccess';
 import { useEffect, useState } from 'react';
 import { Phone, MessageCircle, MapPin, Mail, CircleDot, CalendarClock, CheckCircle2, X } from 'lucide-react';
 import { AR_ENDPOINTS } from '../../../constants/api';
@@ -30,6 +32,10 @@ const blankNew = (me) => ({ scheduled_at: localAt(1), channel: 'call', note: '',
 // One account's follow-ups: what is scheduled, what was said last time, and the
 // forms to book the next one or close the open one.
 export default function FollowUpModal({ row, companyId, me, onClose, onChanged }) {
+  // Reading the history is fine without the capability; booking, closing or
+  // cancelling a follow-up is not (Designation Master → Permissions).
+  const user = useSelector((s) => s.auth.user);
+  const mayManage = can(user, 'ar.followup.manage');
   const [items, setItems] = useState(null);
   const [people, setPeople] = useState([]);
   const [draft, setDraft] = useState(() => blankNew(me));
@@ -128,11 +134,11 @@ export default function FollowUpModal({ row, companyId, me, onClose, onChanged }
                       </div>
                     ) : (
                       <div className="fu-actions">
-                        <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => cancel(f)} disabled={busy}>Cancel</button>
-                        <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" disabled={busy}
+                        {mayManage && <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => cancel(f)} disabled={busy}>Cancel</button>}
+                        {mayManage && <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" disabled={busy}
                           onClick={() => setClosing({ id: f.id, outcome: '', promised_amount: '', promised_on: '', next_at: '' })}>
                           <CheckCircle2 size={14} /> Log outcome
-                        </button>
+                        </button>}
                       </div>
                     )}
                   </div>
@@ -140,8 +146,8 @@ export default function FollowUpModal({ row, companyId, me, onClose, onChanged }
               );
             })}
 
-            <div className="fu-section">New follow-up</div>
-            <div className="fu-new">
+            {mayManage && <div className="fu-section">New follow-up</div>}
+            {mayManage && <div className="fu-new">
               <div className="fu-chips">
                 {CHANNELS.map((c) => (
                   <button type="button" key={c.value} className={`nx-btn nx-btn-sm nx-toggle${draft.channel === c.value ? ' is-on' : ''}`}
@@ -162,7 +168,7 @@ export default function FollowUpModal({ row, companyId, me, onClose, onChanged }
                   <CalendarClock size={15} /> {busy ? 'Saving…' : 'Schedule'}
                 </button>
               </div>
-            </div>
+            </div>}
 
             {past.length > 0 && <div className="fu-section">History</div>}
             {past.map((f) => {

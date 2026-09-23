@@ -257,7 +257,20 @@ export default function SalesLayout({ children }) {
     .filter((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))
     .sort((a, b) => b.href.length - a.href.length)[0];
   const _blockedScreen = !!user && !!_currentRoute && !canSee(user, _currentRoute.screen);
-  const _firstAllowed = _screenRoutes.find((i) => canSee(user, i.screen) && i.href !== _currentRoute?.href);
+  // Where to send them instead: the first screen they may see AND may use. The
+  // role rules that hide an item from the sidebar apply here too, or we would
+  // land a telecaller on a page their own menu never offers.
+  const _mayAdminItem = _isTrueAdminEarly || _isSalesModuleAdminEarly;
+  const _mayManagerItem = _mayAdminItem || isManagerRole(user);
+  const _mayStmItem = _mayManagerItem || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp');
+  const _mayTcItem = _mayAdminItem || can(user, 'sales.pipeline.telecalling');
+  const _firstAllowed = _screenRoutes.find((i) => canSee(user, i.screen)
+    && i.href !== _currentRoute?.href
+    && (!i.adminOnly || _mayAdminItem) && (!i.trueAdminOnly || _isTrueAdminEarly)
+    && (!i.managerOnly || _mayManagerItem)
+    && (!i.stmPortal || _mayStmItem)
+    && (!i.tcPortal || _mayTcItem)
+    && (!i.tcStmPortal || _mayStmItem || _mayTcItem));
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
