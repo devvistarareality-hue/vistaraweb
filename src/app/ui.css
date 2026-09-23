@@ -1180,14 +1180,16 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 
 /* ─── AR Register table ───────────────────────────────────────────────── */
 .reg-scroll { max-height: calc(100vh - 300px); overflow: auto; }
-.reg-table thead th { position: sticky; top: 0; z-index: 3; background: var(--table-head); backdrop-filter: blur(6px); }
+/* Sticky cells need a solid background — a translucent one lets the scrolling
+   columns show through the pinned column and the header. */
+.reg-table thead th { position: sticky; top: 0; z-index: 3; background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
 .reg-table td { padding: 12px; vertical-align: middle; }
 .reg-table td.num, .reg-table th.num { font-variant-numeric: tabular-nums; }
 .reg-table tbody tr { transition: background-color .12s; }
 /* Unit & client stays put while the money columns scroll. */
 .reg-table th.reg-unit, .reg-table td.reg-unit { position: sticky; left: 0; z-index: 2; background: var(--surface); min-width: 270px; white-space: normal; }
-.reg-table thead th.reg-unit { z-index: 4; background: var(--table-head); }
-.reg-table tr:hover td.reg-unit { background: var(--accent-softer); }
+.reg-table thead th.reg-unit { z-index: 4; background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.reg-table tr:hover td.reg-unit { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
 .reg-table td.reg-unit::after, .reg-table th.reg-unit::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: var(--hairline); }
 .reg-id { display: flex; align-items: flex-start; gap: 10px; }
 .reg-avatar { flex: 0 0 34px; height: 34px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
