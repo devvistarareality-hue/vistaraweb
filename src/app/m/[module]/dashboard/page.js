@@ -43,7 +43,7 @@ export default function ModuleDashboardPage({ params }) {
       .then((r) => r.json())
       .then((d) => setOptions((d?.dashboards || [])
         .filter((x) => x.module === moduleName)
-        .map((x) => ({ key: x.value, role: x.role, label: x.role }))))
+        .map((x) => ({ key: x.value, role: x.role, label: x.label }))))
       .catch(() => {});
   }, [moduleName]);
 
