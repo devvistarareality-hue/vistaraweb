@@ -16,6 +16,7 @@ import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
 const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
   plan_mismatch: "LOI schedule doesn't add up to the deal",
+  bad_dates: 'An installment date has an impossible year — Sales needs to correct it',
 };
 
 // AR Dashboard — the receivables book at a glance: what is owed, how late, what

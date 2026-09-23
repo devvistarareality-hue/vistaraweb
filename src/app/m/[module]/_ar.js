@@ -38,6 +38,7 @@ export function worstBucket(ageing) {
 export const ISSUES = [
   { value: 'no_schedule', label: 'No schedule', tone: 'warn', test: (r) => r.no_schedule },
   { value: 'plan_mismatch', label: 'Plan mismatch', tone: 'warn', test: (r) => !!r.plan_mismatch },
+  { value: 'bad_dates', label: 'Check due dates', tone: 'bad', test: (r) => !!r.bad_dates },
 ];
 export const hasIssue = (r) => ISSUES.some((i) => i.test(r));
 

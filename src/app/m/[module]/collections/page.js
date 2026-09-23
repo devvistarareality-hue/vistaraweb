@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { AlarmClock, CalendarClock, PhoneCall, UserX, Building2, BellRing } from 'lucide-react';
+import { AlarmClock, CalendarClock, PhoneCall, UserX, Building2, BellRing, Phone } from 'lucide-react';
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
@@ -116,57 +116,72 @@ export default function ARCollectionsPage({ params, searchParams }) {
                   </div>
                 )}
               </div>
-              <div className="nx-card ar-card">
-                {rows.length === 0 ? (
-                  <div className="ar-empty">{tab === 'overdue' ? 'Nobody is overdue. Every due installment is paid.' : (days === 0 ? 'Nothing falls due today.' : `Nothing falls due in the next ${days} days.`)}</div>
-                ) : (
-                  <div className="ar-scroll">
-                    <table className="ar-table">
-                      <thead>
-                        <tr>
-                          <th>Client</th><th>Project · Plot</th>
-                          {tab === 'overdue'
-                            ? <><th className="num">Overdue</th><th className="num">Days late</th><th className="num">O/s + interest</th></>
-                            : <><th className="num">Due in window</th><th>Next due</th><th className="num">Also overdue</th></>}
-                          <th>Last paid</th><th>Follow-up</th><th />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((r) => (
-                          <tr key={r.id}>
-                            <td><div className="ar-client">{r.client_name || '—'}</div><div className="ar-client-sub">{r.phone}</div></td>
-                            <td>{r.project}<div className="ar-client-sub">Plot {r.plots}</div></td>
-                            {tab === 'overdue' ? (
-                              <>
-                                <td className="num ar-pos-bad">{rupee(r.overdue)}<div className="ar-client-sub">{r.overdue_installments} inst · since {dmy(r.overdue_since)}</div></td>
-                                <td className="num"><span className={`nx-status ${r.days_overdue > 90 ? 'bad' : 'warn'}`}>{r.days_overdue} d</span></td>
-                                <td className="num"><b>{rupee(r.os_with_interest)}</b></td>
-                              </>
-                            ) : (
-                              <>
-                                <td className="num"><b>{rupee(r.upcoming_amount)}</b><div className="ar-client-sub">{r.upcoming_installments} inst</div></td>
-                                <td>{r.next_due ? <>{dmy(r.next_due.date)}<div className="ar-client-sub">{r.next_due.label} · {rupee(r.next_due.amount)}</div></> : '—'}</td>
-                                <td className={`num${r.overdue > 0 ? ' ar-pos-bad' : ' muted'}`}>{r.overdue > 0 ? rupee(r.overdue) : '—'}</td>
-                              </>
-                            )}
-                            <td>{r.last_paid_on ? <>{dmy(r.last_paid_on)}<div className="ar-client-sub">{rupee(r.last_paid_amount)}</div></> : <span className="muted">Never</span>}</td>
-                            <td className="wrap">
-                              {r.followup
-                                ? <span className={`nx-status ${r.followup.is_overdue ? 'bad' : 'ok'}`}>{r.followup.channel_label} · {fmtWhen(r.followup.scheduled_at)}</span>
-                                : <span className="nx-status off">None scheduled</span>}
-                              {r.last_outcome?.text && <div className="ar-client-sub col-outcome" title={r.last_outcome.text}>“{r.last_outcome.text}”</div>}
-                            </td>
-                            <td><div className="col-act">
-                              <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setOpen(r)}><BellRing size={13} /> Follow up</button>
-                              <Link href={`/m/ar/ledger/${r.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Ledger</Link>
-                            </div></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+              {rows.length === 0 ? (
+                <div className="nx-card ar-card"><div className="ar-empty">{tab === 'overdue' ? 'Nobody is overdue. Every due installment is paid.' : (days === 0 ? 'Nothing falls due today.' : `Nothing falls due in the next ${days} days.`)}</div></div>
+              ) : (
+                <div className="coll-grid">
+                  {rows.map((r) => (
+                    <article key={r.id} className={`nx-card coll-card${tab === 'overdue' && r.days_overdue > 90 ? ' is-late' : ''}`}>
+                      <header className="coll-head">
+                        <div className="coll-who">
+                          <h3 title={r.client_name}>{r.client_name || '—'}</h3>
+                          <div className="coll-meta">
+                            <span className="coll-chip"><Building2 size={12} /> {r.project}</span>
+                            <span className="coll-chip">Plot {r.plots}</span>
+                            {r.phone ? <span className="coll-chip"><Phone size={12} /> {r.phone}</span> : null}
+                          </div>
+                        </div>
+                        {tab === 'overdue'
+                          ? <span className={`coll-age ${r.days_overdue > 90 ? 'bad' : 'warn'}`}><b>{r.days_overdue}</b><span>days late</span></span>
+                          : <span className="coll-age info"><b>{r.upcoming_installments}</b><span>inst due</span></span>}
+                      </header>
+
+                      <div className="coll-figs">
+                        {tab === 'overdue' ? (
+                          <>
+                            <div className="coll-fig bad">
+                              <span>Overdue</span><b title={rupee(r.overdue)}>{rupee(r.overdue)}</b>
+                              <small>{r.overdue_installments} inst · since {dmy(r.overdue_since)}</small>
+                            </div>
+                            <div className="coll-fig">
+                              <span>O/s + interest</span><b>{rupee(r.os_with_interest)}</b>
+                              <small>Interest {rupee(r.net_interest)}</small>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="coll-fig">
+                              <span>{days === 0 ? 'Due today' : `Due in ${days} days`}</span><b>{rupee(r.upcoming_amount)}</b>
+                              <small>{r.next_due ? `Next ${dmy(r.next_due.date)} · ${r.next_due.label}` : '—'}</small>
+                            </div>
+                            <div className={`coll-fig${r.overdue > 0 ? ' bad' : ''}`}>
+                              <span>Also overdue</span><b>{r.overdue > 0 ? rupee(r.overdue) : '—'}</b>
+                              <small>{r.overdue > 0 ? `${r.days_overdue} days late` : 'Nothing overdue'}</small>
+                            </div>
+                          </>
+                        )}
+                        <div className="coll-fig">
+                          <span>Last paid</span><b>{r.last_paid_on ? rupee(r.last_paid_amount) : '—'}</b>
+                          <small>{r.last_paid_on ? dmy(r.last_paid_on) : 'Never paid'}</small>
+                        </div>
+                      </div>
+
+                      <footer className="coll-foot">
+                        <div className="coll-fu">
+                          {r.followup
+                            ? <span className={`nx-status ${r.followup.is_overdue ? 'bad' : 'ok'}`}>{r.followup.channel_label} · {fmtWhen(r.followup.scheduled_at)}</span>
+                            : <span className="nx-status off">No follow-up scheduled</span>}
+                          {r.last_outcome?.text && <p className="coll-outcome" title={r.last_outcome.text}>“{r.last_outcome.text}”</p>}
+                        </div>
+                        <div className="coll-actions">
+                          <Link href={`/m/ar/ledger/${r.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Ledger</Link>
+                          <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setOpen(r)}><BellRing size={13} /> Follow up</button>
+                        </div>
+                      </footer>
+                    </article>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -179,32 +194,44 @@ export default function ARCollectionsPage({ params, searchParams }) {
                   <button type="button" key={k} className={`nx-btn nx-btn-sm nx-toggle${fuWhen === k ? ' is-on' : ''}`} onClick={() => setFuWhen(k)}>{label}</button>
                 ))}
               </div>
-              <div className="nx-card ar-card">
-                {fus === null ? <Loader label="Loading…" /> : fus.length === 0 ? <div className="ar-empty">No follow-ups here.</div> : (
-                  <div className="ar-scroll">
-                    <table className="ar-table">
-                      <thead><tr><th>When</th><th>Client</th><th>Project · Plot</th><th>How</th><th>Note / outcome</th><th>Assigned to</th><th /></tr></thead>
-                      <tbody>
-                        {fus.map((f) => (
-                          <tr key={f.id}>
-                            <td>{fmtWhen(f.status === 'done' ? f.done_at : f.scheduled_at)}{f.is_overdue ? <div><span className="nx-status bad">Overdue</span></div> : null}</td>
-                            <td><div className="ar-client">{f.account.client_name || '—'}</div><div className="ar-client-sub">{f.account.phone}</div></td>
-                            <td>{f.account.project}<div className="ar-client-sub">Plot {f.account.plots}</div></td>
-                            <td>{f.channel_label}</td>
-                            <td className="wrap">{f.outcome || f.note || <span className="muted">—</span>}
-                              {f.promised_amount != null && <div className="ar-client-sub">Promised {rupee(f.promised_amount)}{f.promised_on ? ` by ${dmy(f.promised_on)}` : ''}</div>}</td>
-                            <td>{f.assigned_to?.name || '—'}</td>
-                            <td><div className="col-act">
-                              <button type="button" className="nx-btn nx-btn-sm nx-btn-primary"
-                                onClick={() => setOpen(byId[f.account_id] || { ...f.account, overdue: 0 })}>Open</button>
-                            </div></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+              {fus === null ? <Loader label="Loading…" /> : fus.length === 0 ? (
+                <div className="nx-card ar-card"><div className="ar-empty">No follow-ups here.</div></div>
+              ) : (
+                <div className="coll-grid">
+                  {fus.map((f) => (
+                    <article key={f.id} className={`nx-card coll-card${f.is_overdue ? ' is-late' : ''}`}>
+                      <header className="coll-head">
+                        <div className="coll-who">
+                          <h3 title={f.account.client_name}>{f.account.client_name || '—'}</h3>
+                          <div className="coll-meta">
+                            <span className="coll-chip"><Building2 size={12} /> {f.account.project}</span>
+                            <span className="coll-chip">Plot {f.account.plots}</span>
+                            {f.account.phone ? <span className="coll-chip"><Phone size={12} /> {f.account.phone}</span> : null}
+                          </div>
+                        </div>
+                        <span className={`nx-status ${f.status === 'done' ? 'ok' : f.is_overdue ? 'bad' : 'info'}`}>
+                          {f.status === 'done' ? 'Done' : f.is_overdue ? 'Overdue' : 'Scheduled'}
+                        </span>
+                      </header>
+                      <div className="coll-fu-when">
+                        <b>{f.channel_label}</b> · {fmtWhen(f.status === 'done' ? f.done_at : f.scheduled_at)}
+                        <span className="coll-assignee">{f.assigned_to?.name || '—'}</span>
+                      </div>
+                      {(f.outcome || f.note) && <p className="coll-outcome">{f.outcome || f.note}</p>}
+                      {f.promised_amount != null && (
+                        <p className="coll-promise">Promised {rupee(f.promised_amount)}{f.promised_on ? ` by ${dmy(f.promised_on)}` : ''}</p>
+                      )}
+                      <footer className="coll-foot">
+                        <div />
+                        <div className="coll-actions">
+                          <button type="button" className="nx-btn nx-btn-sm nx-btn-primary"
+                            onClick={() => setOpen(byId[f.account_id] || { ...f.account, overdue: 0 })}>Open follow-ups</button>
+                        </div>
+                      </footer>
+                    </article>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </>

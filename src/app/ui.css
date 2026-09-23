@@ -1093,9 +1093,6 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .col-tabs { margin-bottom: 12px; }
 .col-window { display: flex; gap: 6px; flex-wrap: wrap; }
 .col-sep { width: 1px; align-self: stretch; background: var(--hairline); margin: 0 4px; }
-.col-act { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-.col-act .nx-btn { justify-content: center; }
-.col-outcome { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; }
 .fu-modal { max-width: 600px; max-height: 88vh; overflow-y: auto; }
 .fu-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .fu-x { background: var(--surface-2); border: 0; border-radius: 50%; width: 32px; height: 32px; display: inline-flex;
@@ -1141,3 +1138,70 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-cp-picker-row:hover { background: var(--accent-softer); }
 .acc-sales-approver { font-size: 11.5px; color: var(--success); margin-top: 3px; }
 .acc-sales-approver b { font-weight: 700; }
+
+/* ─── Collections cards (AR → Collections) ────────────────────────────── */
+.coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+.coll-card { padding: 16px 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 14px; transition: box-shadow .16s, transform .16s; }
+.coll-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.coll-card.is-late { border-color: var(--danger-2); }
+.coll-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.coll-who { min-width: 0; }
+.coll-who h3 { margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text); line-height: 1.3; overflow-wrap: anywhere; }
+.coll-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.coll-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; background: var(--surface-2);
+  color: var(--text-3); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.coll-age { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px;
+  padding: 6px 10px; border-radius: 14px; background: var(--surface-2); color: var(--text-3); line-height: 1.15; text-align: center; }
+.coll-age b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.coll-age span { font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; opacity: .85; }
+.coll-age.bad { background: var(--danger-soft); color: var(--danger); }
+.coll-age.warn { background: var(--warning-soft); color: var(--warning); }
+.coll-age.info { background: var(--accent-soft); color: var(--accent); }
+.coll-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 12px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.coll-fig { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.coll-fig > span { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.coll-fig > b { font-size: 15px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.coll-fig > small { font-size: 11px; color: var(--faint); }
+.coll-fig.bad > b { color: var(--danger); }
+.coll-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.coll-fu { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.coll-outcome { margin: 0; font-size: 12px; font-style: italic; color: var(--muted); overflow-wrap: anywhere; }
+.coll-promise { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--success); }
+.coll-fu-when { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.coll-fu-when b { color: var(--text); }
+.coll-assignee { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+.coll-actions { display: flex; gap: 8px; margin-left: auto; }
+@media (max-width: 520px) {
+  .coll-grid { grid-template-columns: 1fr; }
+  .coll-figs { grid-template-columns: 1fr 1fr; }
+  .coll-actions { width: 100%; }
+  .coll-actions .nx-btn { flex: 1; justify-content: center; }
+}
+
+/* ─── AR Register table ───────────────────────────────────────────────── */
+.reg-scroll { max-height: calc(100vh - 300px); overflow: auto; }
+/* Sticky cells need a solid background — a translucent one lets the scrolling
+   columns show through the pinned column and the header. */
+.reg-table thead th { position: sticky; top: 0; z-index: 3; background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.reg-table td { padding: 12px; vertical-align: middle; }
+.reg-table td.num, .reg-table th.num { font-variant-numeric: tabular-nums; }
+.reg-table tbody tr { transition: background-color .12s; }
+/* Unit & client stays put while the money columns scroll. */
+.reg-table th.reg-unit, .reg-table td.reg-unit { position: sticky; left: 0; z-index: 2; background: var(--surface); min-width: 270px; white-space: normal; }
+.reg-table thead th.reg-unit { z-index: 4; background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.reg-table tr:hover td.reg-unit { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.reg-table td.reg-unit::after, .reg-table th.reg-unit::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: var(--hairline); }
+.reg-id { display: flex; align-items: flex-start; gap: 10px; }
+.reg-avatar { flex: 0 0 34px; height: 34px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.reg-id-text { min-width: 0; }
+.reg-name { font-size: 13.5px; font-weight: 700; color: var(--text); line-height: 1.3; overflow-wrap: anywhere; }
+.reg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 3px; font-size: 11.5px; color: var(--muted); }
+.reg-unit-chip { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-3); font-weight: 700; }
+.reg-prog { min-width: 130px; }
+.reg-prog-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.reg-prog-top span { font-size: 11px; color: var(--muted); font-weight: 700; }
+.reg-bar { display: block; height: 5px; margin-top: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.reg-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.reg-bar > span.is-full { background: var(--success); }
+.reg-total b { color: var(--text); font-size: 13.5px; }
