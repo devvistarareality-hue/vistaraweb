@@ -7,6 +7,7 @@ import { logout } from '../../redux/actions/authActions';
 import { fetchCompanies } from '../../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminFilterReducer';
 import { AUTH_ENDPOINTS } from '../../constants/api';
+import { refreshUser } from '../../lib/refreshUser';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -49,20 +50,20 @@ function IconPartner()      { return <SvgIcon><path d="M8.5 8.5L3 14l3 3 5.5-5.5
 // entry, since (like Team Users/Distribution/Data Reset) these routes are already
 // company-wide rather than admin_view-scoped.
 const CP_CHILDREN = [
-  { label: 'Dashboard',   href: '/sales/channel-partners' },
-  { label: 'All Leads',   href: '/sales/channel-partners/leads' },
-  { label: 'Site Visits', href: '/sales/channel-partners/site-visits' },
-  { label: 'Follow-Ups',  href: '/sales/channel-partners/follow-ups' },
-  { label: 'Closures',    href: '/sales/channel-partners/closures' },
+  { label: 'Dashboard',   href: '/sales/channel-partners', screen: 'cp.screen.dashboard' },
+  { label: 'All Leads',   href: '/sales/channel-partners/leads', screen: 'cp.screen.leads' },
+  { label: 'Site Visits', href: '/sales/channel-partners/site-visits', screen: 'cp.screen.sitevisits' },
+  { label: 'Follow-Ups',  href: '/sales/channel-partners/follow-ups', screen: 'cp.screen.followups' },
+  { label: 'Closures',    href: '/sales/channel-partners/closures', screen: 'cp.screen.closures' },
   // "Booking" is the actual record-a-closure flow (project → units → form),
   // same as the main Sales module's Booking item; "Approvals" is the
   // Drafts/Pending/Approved/Rejected list — they used to share one nav item
   // (labelled "Bookings"), which only ever opened the approvals list.
-  { label: 'Booking',     href: '/sales/channel-partners/closure' },
+  { label: 'Booking',     href: '/sales/channel-partners/closure', screen: 'cp.screen.booking' },
   // Managers only, as in the Sales menu — a CP Executive has no reports, so the
   // page would only ever show them an empty chart.
-  { label: 'My Team',     href: '/sales/channel-partners/my-team', managerOnly: true },
-  { label: 'Approvals',   href: '/sales/channel-partners/bookings' },
+  { label: 'My Team',     href: '/sales/channel-partners/my-team', managerOnly: true, screen: 'cp.screen.myteam' },
+  { label: 'Approvals',   href: '/sales/channel-partners/bookings', screen: 'cp.screen.approvals' },
   // Who changed what — real admins only.
   { label: 'Log',         href: '/sales/channel-partners/log', trueAdminOnly: true },
 ];
@@ -168,8 +169,11 @@ export default function SalesLayout({ children }) {
     async function checkSession() {
       if (typeof window === 'undefined') return;
       if (!localStorage.getItem('access_token')) return;
-      await apiFetch(AUTH_ENDPOINTS.me);
+      const res = await apiFetch(AUTH_ENDPOINTS.me);
       // apiFetch handles 401 internally: tries refresh, then dispatches LOGOUT + redirect
+      // The answer also carries their current permissions, so a designation
+      // change an admin makes now reaches them without signing out.
+      refreshUser(dispatch, res);
     }
     checkSession();
     window.addEventListener('focus', checkSession);
@@ -243,12 +247,24 @@ export default function SalesLayout({ children }) {
   const _cpSharedBookingFlow = pathname.startsWith('/sales/closure') || pathname.startsWith('/sales/booking');
   const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && (isCpManager(user) || isCpDesignation(user))
     && !pathname.startsWith('/sales/channel-partners') && !_cpSharedBookingFlow;
+  // Hiding a menu item has to mean hiding the page: otherwise anyone who
+  // remembers the address walks straight back in. A designation with no menu
+  // configured passes everything, as before.
+  // CP_NAV_ITEM is left out on purpose: its href is the Channel Partner dashboard,
+  // which CP_CHILDREN already covers with its own key.
+  const _screenRoutes = [...NAV, ...CP_CHILDREN].filter((i) => i.screen && i.href);
+  const _currentRoute = _screenRoutes
+    .filter((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const _blockedScreen = !!user && !!_currentRoute && !canSee(user, _currentRoute.screen);
+  const _firstAllowed = _screenRoutes.find((i) => canSee(user, i.screen) && i.href !== _currentRoute?.href);
   useEffect(() => {
     if (user === null) return;
     if (!user) { router.replace('/company'); return; }
     if (user.role === 'Kiosk') { router.replace('/kiosk'); return; } // Kiosk users are locked to the kiosk
     if (_blockedFromSales) { router.replace(_modHome); return; }
-    if (_cpOnlyOffRoot) router.replace('/sales/channel-partners');
+    if (_cpOnlyOffRoot) { router.replace('/sales/channel-partners'); return; }
+    if (_blockedScreen && _firstAllowed) router.replace(_firstAllowed.href);
   }, [user, pathname]);
 
   if (user?.role === 'Kiosk') return null;
@@ -310,7 +326,7 @@ export default function SalesLayout({ children }) {
             <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
             <span style={{ color: 'inherit', opacity: 0.6, fontSize: 10, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
           </div>
-          {expanded && item.children.filter((child) => (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin)).map((child) => {
+          {expanded && item.children.filter((child) => canSee(user, child.screen) && (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin)).map((child) => {
             const childActive = isActive(child.href) && (child.href !== '/sales/channel-partners' || pathname === child.href);
             return (
               <Link key={child.href} href={child.href} className="s-nav-link"
@@ -355,6 +371,10 @@ export default function SalesLayout({ children }) {
   // assignment. Both render the same dedicated Channel Partner nav below.
   const isCpExec = !isTrueAdmin && !isSalesModuleAdmin && isCp;
   const isCpBoxed = isCpMgr || isCpExec;
+  // Nothing left to show them: every Channel Partner screen is unticked on their
+  // designation (Designation Master → Permissions → Menu).
+  const cpMenuIsEmpty = !CP_CHILDREN.some((child) => canSee(user, child.screen)
+    && (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin));
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
     : (isCp || des.includes('cp cluster head') || isCpMgr)
@@ -389,12 +409,16 @@ export default function SalesLayout({ children }) {
         {/* Nav */}
         <div className="s-scroll" style={s.scroll}>
           {isCpBoxed ? (
-            <>
-              {/* A CP-designation Manager or Executive's entire Sales sidebar —
-                  just the one module, nothing else. */}
-              <div style={s.sectionLabel}>CHANNEL PARTNER</div>
-              {renderNavItem(CP_NAV_ITEM)}
-            </>
+            // A CP-designation Manager or Executive's entire Sales sidebar —
+            // just the one module, nothing else. An admin who unticks every
+            // Channel Partner screen for their designation leaves them no menu,
+            // so the heading goes too rather than sitting above nothing.
+            cpMenuIsEmpty ? null : (
+              <>
+                <div style={s.sectionLabel}>CHANNEL PARTNER</div>
+                {renderNavItem(CP_NAV_ITEM)}
+              </>
+            )
           ) : inAdminSection ? (
             <>
               {/* Module-scoped admin, inside their Admin section — this REPLACES the
@@ -600,7 +624,14 @@ export default function SalesLayout({ children }) {
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{portalTitle}</span>
         </div>
         <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
-          {children}
+          {/* Nothing at all is ticked for them: say so, and leave them the sidebar
+              so they can still sign out. */}
+          {_blockedScreen && !_firstAllowed ? (
+            <div className="nx-note info">
+              No screens have been switched on for your designation yet. Ask your administrator
+              to set them in Designation Master → Permissions.
+            </div>
+          ) : children}
         </main>
       </div>
     </div>

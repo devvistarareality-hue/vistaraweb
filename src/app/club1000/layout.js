@@ -7,6 +7,7 @@ import { logout } from '../../redux/actions/authActions';
 import { fetchCompanies } from '../../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../../redux/reducers/adminFilterReducer';
 import { AUTH_ENDPOINTS } from '../../constants/api';
+import { refreshUser } from '../../lib/refreshUser';
 import { apiFetch } from '../../utils/apiFetch';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 import { moduleAccess, isSuperAdmin, canAccessModule, isClub1000Manager } from '../../lib/moduleAccess';
@@ -117,7 +118,8 @@ export default function Club1000Layout({ children }) {
     async function checkSession() {
       if (typeof window === 'undefined') return;
       if (!localStorage.getItem('access_token')) return;
-      await apiFetch(AUTH_ENDPOINTS.me);
+      const res = await apiFetch(AUTH_ENDPOINTS.me);
+      refreshUser(dispatch, res);   // their permissions may have changed since login
     }
     checkSession();
     window.addEventListener('focus', checkSession);
