@@ -129,7 +129,7 @@ export default function DesignationMasterPage() {
       </div>
 
       {perms && (
-        <PermissionsModal designation={perms} onClose={() => setPerms(null)}
+        <PermissionsModal designation={perms} others={designations} onClose={() => setPerms(null)}
           onSaved={() => { dispatch(fetchDesignations(true, companyId)); showToast(`Permissions saved for "${perms.name}".`); }} />
       )}
     </div>

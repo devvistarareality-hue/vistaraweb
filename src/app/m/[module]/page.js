@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { pinnedDashboard } from '../../../lib/dashboards';
 import { MODULE_META } from './moduleMeta';
 import { isManagerRole } from '../../../lib/moduleAccess';
 
@@ -16,7 +15,6 @@ const ICONS = {
 };
 
 function Tile({ href, icon, title, desc }) {
-  if (Pinned) return <Pinned user={user} />;
 
   return (
     <Link href={href} className="nx-tile-link">
@@ -34,10 +32,6 @@ function Tile({ href, icon, title, desc }) {
   );
 }
 
-// Views built for a pinned dashboard key, per module. Empty means every module
-// opens the overview below, as before.
-const VIEWS = {};
-
 export default function ModuleOverview({ params }) {
   const slug = params.module;
   const router = useRouter();
@@ -45,8 +39,6 @@ export default function ModuleOverview({ params }) {
   useEffect(() => { if (slug === 'ar') router.replace('/m/ar/dashboard'); }, [slug, router]);
   const meta = MODULE_META[slug] || { name: slug, accent: 'var(--accent)', desc: '' };
   const user = useSelector((s) => s.auth.user);
-  // A designation can pin which view opens for this module — see lib/dashboards.js.
-  const Pinned = pinnedDashboard(user, VIEWS);
   const canSeeTeam = isManagerRole(user) || user?.role === 'Admin' || user?.is_staff;
 
   if (slug === 'ar') return null;

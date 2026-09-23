@@ -15,6 +15,7 @@ import Loader from '../../components/Loader';
 import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
 import { can, dashboardFor } from '../../lib/moduleAccess';
+import DashboardRoleFilter from '../../components/DashboardRoleFilter';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
 
@@ -942,29 +943,56 @@ function STMDashboard({ user }) {
 // `adminView` is for the Admin-section mirror (/sales/admin) — a Sales
 // Admin-Modules user always lands on the AdminDashboard there, in full-company mode.
 // ─────────────────────────────────────────────
+// The dashboards this module has, one per role level. The role filter at the top
+// of the Dashboard switches between them (admins only), and Designation Master →
+// Permissions pins the one a designation opens.
+export const SALES_DASHBOARDS = [
+  { key: 'telecaller', role: 'Employee', label: 'Telecaller' },
+  { key: 'stm', role: 'Employee', label: 'Sales Executive' },
+  { key: 'manager', role: 'Manager', label: 'Manager' },
+  { key: 'gm', role: 'General Manager', label: 'General Manager' },
+  { key: 'director', role: 'Director', label: 'Director' },
+];
+
+function salesView(key, user) {
+  if (key === 'telecaller') return <TelecallerDashboard user={user} />;
+  if (key === 'stm') return <STMDashboard user={user} />;
+  if (key === 'manager' || key === 'gm') return <AdminDashboard user={user} />;
+  if (key === 'director') return <AdminDashboard user={user} adminView />;
+  return null;
+}
+
 export function SalesDashboardContent({ adminView = false }) {
   const user = useSelector((s) => s.auth.user);
   const des  = (user?.designation || '').toLowerCase();
+  // An admin can look at any role's dashboard from here — that is how you see
+  // what each one will show before pinning it to a designation.
+  const isAdmin = user?.role === 'Admin' || user?.is_staff;
+  const [preview, setPreview] = useState('');
 
   if (adminView) return <AdminDashboard user={user} adminView />;
 
   // A company can pin which dashboard a designation opens; '' decides from their
   // permissions, exactly as before.
   const pinned = dashboardFor(user);
-  if (pinned === 'telecaller') return <TelecallerDashboard user={user} />;
-  if (pinned === 'stm') return <STMDashboard user={user} />;
-  if (pinned === 'manager' || pinned === 'director') return <AdminDashboard user={user} adminView={pinned === 'director'} />;
+  const chosen = preview || pinned;
+  const picked = chosen ? salesView(chosen, user) : null;
 
-  if (can(user, 'sales.pipeline.telecalling')) {
-    return <TelecallerDashboard user={user} />;
-  }
-  // CP Executive works like an STM (own pipeline). CP Cluster Heads are Managers
-  // and fall through to the admin/overview dashboard (all CP data).
-  if (can(user, 'sales.pipeline.stm')
-      || can(user, 'sales.pipeline.cp')) {
-    return <STMDashboard user={user} />;
-  }
-  return <AdminDashboard user={user} />;
+  const body = picked || (
+    can(user, 'sales.pipeline.telecalling') ? <TelecallerDashboard user={user} />
+      // CP Executive works like an STM (own pipeline). CP Cluster Heads are Managers
+      // and fall through to the admin/overview dashboard (all CP data).
+      : (can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp')) ? <STMDashboard user={user} />
+        : <AdminDashboard user={user} />
+  );
+
+  if (!isAdmin) return body;
+  return (
+    <>
+      <DashboardRoleFilter options={SALES_DASHBOARDS} value={chosen} onChange={setPreview} />
+      {body}
+    </>
+  );
 }
 
 export default function SalesDashboard() {

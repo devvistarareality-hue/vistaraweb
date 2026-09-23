@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, X, Check, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye } from 'lucide-react';
+import { ShieldCheck, X, Check, Copy, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye } from 'lucide-react';
 import { DESIGNATION_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 
@@ -14,11 +14,14 @@ const TABS = [
   { key: 'view', label: 'Dashboard & records', icon: LayoutDashboard },
 ];
 
-export default function PermissionsModal({ designation, onClose, onSaved }) {
+export default function PermissionsModal({ designation, others, onClose, onSaved }) {
   const [catalogue, setCatalogue] = useState(null);
   const [tab, setTab] = useState('actions');
   // The Dashboard tab lists one view per role per module; this narrows it.
   const [dashRole, setDashRole] = useState('');
+  // Copying from a designation that is already set up: pick it, then take
+  // everything or just the dashboard.
+  const [copyFrom, setCopyFrom] = useState('');
   // An unconfigured designation starts ticked with what it already does today.
   const [caps, setCaps] = useState(new Set(designation.effective_capabilities || designation.capabilities || []));
   const [screens, setScreens] = useState(new Set(designation.effective_screens || designation.screens || []));
@@ -40,6 +43,21 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   });
   const toggle = flip(setCaps);
   const toggleScreen = flip(setScreens);
+
+  // What that designation grants today — its own ticks, or the old rules when
+  // nobody has configured it, which is what the editor shows for it too.
+  const sourceRow = (others || []).find((d) => String(d.id) === String(copyFrom));
+  function copyAll() {
+    if (!sourceRow) return;
+    setCaps(new Set(sourceRow.effective_capabilities || sourceRow.capabilities || []));
+    setScreens(new Set(sourceRow.effective_screens || sourceRow.screens || []));
+    setDash(sourceRow.dashboard || '');
+    setScope(sourceRow.data_scope || '');
+  }
+  function copyDashboard() {
+    if (!sourceRow) return;
+    setDash(sourceRow.dashboard || '');
+  }
 
   async function save() {
     setSaving(true); setErr('');
@@ -102,6 +120,25 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
             </button>
           ))}
         </nav>
+
+        {(others || []).length > 1 && (
+          <div className="perm-copy">
+            <span>Copy from</span>
+            <select className="nx-input nx-input-sm" value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)}>
+              <option value="">Another designation…</option>
+              {(others || []).filter((d) => d.id !== designation.id).map((d) => (
+                <option key={d.id} value={d.id}>{d.name} · {d.module}</option>
+              ))}
+            </select>
+            <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" disabled={!sourceRow} onClick={copyAll}>
+              <Copy size={13} /> Everything
+            </button>
+            <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" disabled={!sourceRow} onClick={copyDashboard}>
+              Dashboard only
+            </button>
+            <small>Nothing is saved until you press Save.</small>
+          </div>
+        )}
 
         <div className="perm-body">
           {!catalogue ? <div className="act-empty">Loading…</div> : tab === 'actions' ? (

@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { pinnedDashboard } from '../../../../lib/dashboards';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -22,13 +21,8 @@ const ISSUE_TEXT = {
 
 // AR Dashboard — the receivables book at a glance: what is owed, how late, what
 // falls due month by month, who owes the most, and what data needs fixing.
-// A designation can pin which AR dashboard opens (Designation Master →
-// Permissions → Dashboard). Add a built view here — see lib/dashboards.js.
-const VIEWS = {};
-
 export default function ARDashboardPage({ params }) {
   if (params.module !== 'ar') notFound();
-  const pinnedUser = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [project, setProject] = useState('');
   const [asOf, setAsOf] = useState(today());
@@ -58,8 +52,6 @@ export default function ARDashboardPage({ params }) {
   const t = data?.totals;
   const regQ = project ? `&project=${project}` : '';
 
-  const Pinned = pinnedDashboard(pinnedUser, VIEWS);
-  if (Pinned) return <Pinned user={pinnedUser} />;
 
   return (
     <div className="nx-page ard">
