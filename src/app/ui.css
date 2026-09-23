@@ -1177,3 +1177,29 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .coll-actions { width: 100%; }
   .coll-actions .nx-btn { flex: 1; justify-content: center; }
 }
+
+/* ─── AR Register table ───────────────────────────────────────────────── */
+.reg-scroll { max-height: calc(100vh - 300px); overflow: auto; }
+.reg-table thead th { position: sticky; top: 0; z-index: 3; background: var(--table-head); backdrop-filter: blur(6px); }
+.reg-table td { padding: 12px; vertical-align: middle; }
+.reg-table td.num, .reg-table th.num { font-variant-numeric: tabular-nums; }
+.reg-table tbody tr { transition: background-color .12s; }
+/* Unit & client stays put while the money columns scroll. */
+.reg-table th.reg-unit, .reg-table td.reg-unit { position: sticky; left: 0; z-index: 2; background: var(--surface); min-width: 270px; white-space: normal; }
+.reg-table thead th.reg-unit { z-index: 4; background: var(--table-head); }
+.reg-table tr:hover td.reg-unit { background: var(--accent-softer); }
+.reg-table td.reg-unit::after, .reg-table th.reg-unit::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: var(--hairline); }
+.reg-id { display: flex; align-items: flex-start; gap: 10px; }
+.reg-avatar { flex: 0 0 34px; height: 34px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.reg-id-text { min-width: 0; }
+.reg-name { font-size: 13.5px; font-weight: 700; color: var(--text); line-height: 1.3; overflow-wrap: anywhere; }
+.reg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 3px; font-size: 11.5px; color: var(--muted); }
+.reg-unit-chip { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-3); font-weight: 700; }
+.reg-prog { min-width: 130px; }
+.reg-prog-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.reg-prog-top span { font-size: 11px; color: var(--muted); font-weight: 700; }
+.reg-bar { display: block; height: 5px; margin-top: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.reg-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.reg-bar > span.is-full { background: var(--success); }
+.reg-total b { color: var(--text); font-size: 13.5px; }

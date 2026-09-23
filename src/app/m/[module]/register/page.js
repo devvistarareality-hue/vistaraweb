@@ -5,7 +5,8 @@ import { useRouter, notFound } from 'next/navigation';
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
-import { Building2, Filter } from 'lucide-react';
+import { Building2, Filter, Wallet, CircleCheckBig, Hourglass, AlarmClock, Percent, Receipt } from 'lucide-react';
+import { DashKpi } from '../../../../components/Dash';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
 
@@ -17,6 +18,11 @@ function plotMatches(plots, query) {
   return String(plots || '').split(',').map((p) => p.trim().toUpperCase()).some((p) =>
     (/^\d+$/.test(want) ? (p === want || p.replace(/^[A-Z-]*/, '') === want) : p.startsWith(want)));
 }
+
+const initials = (name) => {
+  const parts = String(name || '').replace(/^(mr|mrs|ms|dr)\.?\s+/i, '').split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() || '—';
+};
 
 // AR Register — the old workbook's "Plot Master": one row per approved booking.
 export default function ARRegisterPage({ params, searchParams }) {
@@ -71,6 +77,9 @@ export default function ARRegisterPage({ params, searchParams }) {
     net_interest: t.net_interest + r.net_interest, os_with_interest: t.os_with_interest + r.os_with_interest,
   }), { collectable: 0, received: 0, outstanding: 0, overdue: 0, net_interest: 0, os_with_interest: 0 }), [shown]);
 
+  const pctRealised = totals.collectable ? Math.round((totals.received / totals.collectable) * 1000) / 10 : 0;
+  const overdueCount = shown.filter((r) => r.overdue > 0).length;
+
   return (
     <div className="nx-page">
       <div className="ar-head">
@@ -83,13 +92,13 @@ export default function ARRegisterPage({ params, searchParams }) {
       {rows === null ? <Loader label="Calculating accounts…" /> : (
         <>
           {err && <div className="nx-note bad">{err}</div>}
-          <div className="ar-stats">
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Collectable</div><div className="ar-stat-value" title={rupee(totals.collectable)}>{inrShort(totals.collectable)}</div></div>
-            <div className="nx-card ar-stat good"><div className="ar-stat-label">Received</div><div className="ar-stat-value" title={rupee(totals.received)}>{inrShort(totals.received)}</div></div>
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Outstanding</div><div className="ar-stat-value" title={rupee(totals.outstanding)}>{inrShort(totals.outstanding)}</div></div>
-            <div className="nx-card ar-stat warn"><div className="ar-stat-label">Overdue</div><div className="ar-stat-value" title={rupee(totals.overdue)}>{inrShort(totals.overdue)}</div></div>
-            <div className="nx-card ar-stat"><div className="ar-stat-label">Net interest</div><div className="ar-stat-value" title={rupee(totals.net_interest)}>{inrShort(totals.net_interest)}</div></div>
-            <div className="nx-card ar-stat warn"><div className="ar-stat-label">O/s with interest</div><div className="ar-stat-value" title={rupee(totals.os_with_interest)}>{inrShort(totals.os_with_interest)}</div></div>
+          <div className="col-kpis">
+            <DashKpi icon={Wallet} tone="info" label="Collectable" value={inrShort(totals.collectable)} valueTitle={rupee(totals.collectable)} sub={`${shown.length} account${shown.length === 1 ? '' : 's'}`} />
+            <DashKpi icon={CircleCheckBig} tone="good" label="Received" value={inrShort(totals.received)} valueTitle={rupee(totals.received)} sub={`${pctRealised}% realised`} />
+            <DashKpi icon={Hourglass} tone="muted" label="Outstanding" value={inrShort(totals.outstanding)} valueTitle={rupee(totals.outstanding)} sub="Still to collect" />
+            <DashKpi icon={AlarmClock} tone="bad" label="Overdue" value={inrShort(totals.overdue)} valueTitle={rupee(totals.overdue)} sub={`${overdueCount} not paid`} />
+            <DashKpi icon={Percent} tone="warn" label="Net interest" value={inrShort(totals.net_interest)} valueTitle={rupee(totals.net_interest)} sub="Late less early credit" />
+            <DashKpi icon={Receipt} tone="bad" label="O/s with interest" value={inrShort(totals.os_with_interest)} valueTitle={rupee(totals.os_with_interest)} sub="What customers owe" />
           </div>
 
           <div className="ar-filters">
@@ -116,13 +125,13 @@ export default function ARRegisterPage({ params, searchParams }) {
                   : 'No accounts match these filters.'}
               </div>
             ) : (
-              <div className="ar-scroll">
-                <table className="ar-table">
+              <div className="ar-scroll reg-scroll">
+                <table className="ar-table reg-table">
                   <thead>
                     <tr>
-                      <th>Project</th><th>Plot</th><th>Client</th>
-                      <th className="num">Total deal</th><th className="num">Collectable</th><th className="num">Received</th>
-                      <th className="num">%</th><th className="num">Outstanding</th><th className="num">Overdue</th>
+                      <th className="reg-unit">Unit &amp; client</th>
+                      <th className="num">Total deal</th><th className="num">Collectable</th><th className="reg-prog">Received</th>
+                      <th className="num">Outstanding</th><th className="num">Overdue</th>
                       <th className="num">Not due</th><th className="num">Interest</th><th className="num">O/s + interest</th>
                       {showAgeing ? AGE_LABELS.map((a) => <th key={a} className="num">{a}</th>) : <th>Oldest</th>}
                     </tr>
@@ -130,28 +139,35 @@ export default function ARRegisterPage({ params, searchParams }) {
                   <tbody>
                     {shown.map((r) => (
                       <tr key={r.id} className="ar-row-link" onClick={() => router.push(`/m/ar/ledger/${r.id}`)}>
-                        <td>{r.project}</td>
-                        <td>{r.plots}</td>
-                        <td>
-                          <div className="ar-client">{r.client_name || '—'}</div>
-                          <div className="ar-client-sub">
-                            {r.phone}{r.status === 'frozen' ? ' · Cancelled' : ''}
-                          </div>
-                          {hasIssue(r) && (
-                            <div className="ar-badges">
-                              {ISSUES.filter((i) => i.test(r)).map((i) => <span key={i.value} className={`nx-status ${i.tone}`}>{i.label}</span>)}
+                        <td className="reg-unit">
+                          <div className="reg-id">
+                            <span className="reg-avatar" aria-hidden="true">{initials(r.client_name)}</span>
+                            <div className="reg-id-text">
+                              <div className="reg-name" title={r.client_name}>{r.client_name || '—'}</div>
+                              <div className="reg-sub">
+                                <span className="reg-unit-chip">{r.project} · {r.plots}</span>
+                                {r.phone ? <span>{r.phone}</span> : null}
+                                {r.status === 'frozen' ? <span className="nx-status off">Cancelled</span> : null}
+                              </div>
+                              {hasIssue(r) && (
+                                <div className="ar-badges">
+                                  {ISSUES.filter((i) => i.test(r)).map((i) => <span key={i.value} className={`nx-status ${i.tone}`}>{i.label}</span>)}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </td>
                         <td className="num">{rupee(r.total_deal)}</td>
                         <td className="num">{rupee(r.collectable)}</td>
-                        <td className="num">{rupee(r.received)}</td>
-                        <td className="num muted">{r.pct_realised}%</td>
+                        <td className="reg-prog">
+                          <div className="reg-prog-top"><b>{rupee(r.received)}</b><span>{r.pct_realised}%</span></div>
+                          <span className="reg-bar"><span className={r.pct_realised >= 100 ? 'is-full' : ''} style={{ width: `${Math.min(100, Math.max(0, r.pct_realised))}%` }} /></span>{/* inline-ok: share realised, from data */}
+                        </td>
                         <td className={`num${r.outstanding < 0 ? ' ar-neg' : ''}`}>{rupee(r.outstanding)}</td>
                         <td className={`num${r.overdue > 0 ? ' ar-pos-bad' : ' muted'}`}>{rupee(r.overdue)}</td>
                         <td className="num muted">{rupee(r.not_due)}</td>
                         <td className="num">{rupee(r.net_interest)}</td>
-                        <td className="num"><b>{rupee(r.os_with_interest)}</b></td>
+                        <td className="num reg-total"><b>{rupee(r.os_with_interest)}</b></td>
                         {showAgeing
                           ? AGE_LABELS.map((a) => <td key={a} className="num muted">{r.ageing[a] ? rupee(r.ageing[a]) : '—'}</td>)
                           : <td>{worstBucket(r.ageing) ? <span className="nx-status bad">{worstBucket(r.ageing)} days</span> : <span className="muted">—</span>}</td>}
