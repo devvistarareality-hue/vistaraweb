@@ -1094,8 +1094,20 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .col-window { display: flex; gap: 6px; flex-wrap: wrap; }
 .col-sep { width: 1px; align-self: stretch; background: var(--hairline); margin: 0 4px; }
 .col-act { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-.col-act .nx-btn { justify-content: center; }
-.col-outcome { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; }
+.col-act .nx-btn { justify-content: center; white-space: nowrap; padding-left: 10px; padding-right: 10px; }
+/* Long client names wrap instead of widening the table, and the Client column stays
+   put when the table does scroll sideways — it was the first thing cut off. */
+.col-client { white-space: normal; min-width: 150px; max-width: 230px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
+.ar-table thead th.col-client { background: var(--table-head); }
+.ar-row-link:hover td.col-client, .ar-table tbody tr:hover td.col-client { background: var(--accent-softer); }
+.col-client::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: var(--hairline); }
+/* Follow up / Ledger stay reachable at the right edge however wide the row gets. */
+.col-actions { position: sticky; right: 0; z-index: 2; background: var(--surface); }
+.ar-table thead th.col-actions { background: var(--table-head); }
+.ar-row-link:hover td.col-actions, .ar-table tbody tr:hover td.col-actions { background: var(--accent-softer); }
+.col-actions::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 1px; background: var(--hairline); }
+.col-follow { max-width: 210px; }
+.col-outcome { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; }
 .fu-modal { max-width: 600px; max-height: 88vh; overflow-y: auto; }
 .fu-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .fu-x { background: var(--surface-2); border: 0; border-radius: 50%; width: 32px; height: 32px; display: inline-flex;

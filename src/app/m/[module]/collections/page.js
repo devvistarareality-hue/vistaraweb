@@ -124,17 +124,17 @@ export default function ARCollectionsPage({ params, searchParams }) {
                     <table className="ar-table">
                       <thead>
                         <tr>
-                          <th>Client</th><th>Project · Plot</th>
+                          <th className="col-client">Client</th><th>Project · Plot</th>
                           {tab === 'overdue'
                             ? <><th className="num">Overdue</th><th className="num">Days late</th><th className="num">O/s + interest</th></>
                             : <><th className="num">Due in window</th><th>Next due</th><th className="num">Also overdue</th></>}
-                          <th>Last paid</th><th>Follow-up</th><th />
+                          <th>Last paid</th><th className="col-follow">Follow-up</th><th className="col-actions" />
                         </tr>
                       </thead>
                       <tbody>
                         {rows.map((r) => (
                           <tr key={r.id}>
-                            <td><div className="ar-client">{r.client_name || '—'}</div><div className="ar-client-sub">{r.phone}</div></td>
+                            <td className="col-client"><div className="ar-client">{r.client_name || '—'}</div><div className="ar-client-sub">{r.phone}</div></td>
                             <td>{r.project}<div className="ar-client-sub">Plot {r.plots}</div></td>
                             {tab === 'overdue' ? (
                               <>
@@ -150,13 +150,13 @@ export default function ARCollectionsPage({ params, searchParams }) {
                               </>
                             )}
                             <td>{r.last_paid_on ? <>{dmy(r.last_paid_on)}<div className="ar-client-sub">{rupee(r.last_paid_amount)}</div></> : <span className="muted">Never</span>}</td>
-                            <td className="wrap">
+                            <td className="wrap col-follow">
                               {r.followup
                                 ? <span className={`nx-status ${r.followup.is_overdue ? 'bad' : 'ok'}`}>{r.followup.channel_label} · {fmtWhen(r.followup.scheduled_at)}</span>
                                 : <span className="nx-status off">None scheduled</span>}
                               {r.last_outcome?.text && <div className="ar-client-sub col-outcome" title={r.last_outcome.text}>“{r.last_outcome.text}”</div>}
                             </td>
-                            <td><div className="col-act">
+                            <td className="col-actions"><div className="col-act">
                               <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setOpen(r)}><BellRing size={13} /> Follow up</button>
                               <Link href={`/m/ar/ledger/${r.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Ledger</Link>
                             </div></td>
@@ -183,18 +183,18 @@ export default function ARCollectionsPage({ params, searchParams }) {
                 {fus === null ? <Loader label="Loading…" /> : fus.length === 0 ? <div className="ar-empty">No follow-ups here.</div> : (
                   <div className="ar-scroll">
                     <table className="ar-table">
-                      <thead><tr><th>When</th><th>Client</th><th>Project · Plot</th><th>How</th><th>Note / outcome</th><th>Assigned to</th><th /></tr></thead>
+                      <thead><tr><th>When</th><th className="col-client">Client</th><th>Project · Plot</th><th>How</th><th>Note / outcome</th><th>Assigned to</th><th className="col-actions" /></tr></thead>
                       <tbody>
                         {fus.map((f) => (
                           <tr key={f.id}>
                             <td>{fmtWhen(f.status === 'done' ? f.done_at : f.scheduled_at)}{f.is_overdue ? <div><span className="nx-status bad">Overdue</span></div> : null}</td>
-                            <td><div className="ar-client">{f.account.client_name || '—'}</div><div className="ar-client-sub">{f.account.phone}</div></td>
+                            <td className="col-client"><div className="ar-client">{f.account.client_name || '—'}</div><div className="ar-client-sub">{f.account.phone}</div></td>
                             <td>{f.account.project}<div className="ar-client-sub">Plot {f.account.plots}</div></td>
                             <td>{f.channel_label}</td>
                             <td className="wrap">{f.outcome || f.note || <span className="muted">—</span>}
                               {f.promised_amount != null && <div className="ar-client-sub">Promised {rupee(f.promised_amount)}{f.promised_on ? ` by ${dmy(f.promised_on)}` : ''}</div>}</td>
                             <td>{f.assigned_to?.name || '—'}</td>
-                            <td><div className="col-act">
+                            <td className="col-actions"><div className="col-act">
                               <button type="button" className="nx-btn nx-btn-sm nx-btn-primary"
                                 onClick={() => setOpen(byId[f.account_id] || { ...f.account, overdue: 0 })}>Open</button>
                             </div></td>
