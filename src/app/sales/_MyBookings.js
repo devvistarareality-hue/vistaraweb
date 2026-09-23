@@ -20,10 +20,24 @@ const TABS = [['', 'All'], ['pending', 'Pending'], ['sold', 'Approved'],
 // difference is in approval_status. Filtering on status alone put a live sale that
 // came off the books in the same list as one an approver refused up front.
 const isCancelled = (b) => String(b.approval_status || '').toUpperCase().includes('CANCEL');
+// A sale clears two gates: the Sales or CP approver puts it on the books, then
+// Accounts signs it off — and only then is the unit gone and the deal a closure.
+// Approved means both, so this list and the Closures figure count the same deals.
+// Blank reads as approved, the way everything booked before the gate existed
+// carries it. The ones in between are on the Pending tab with their own note.
+const accStatus = (b) => String(b.accounts_status ?? '').toLowerCase();
+const accountsApproved = (b) => accStatus(b) === 'approved' || accStatus(b) === '';
 const inTab = (b, tab) => (
   !tab ? true
   : tab === 'cancelled' ? isCancelled(b)
-  : tab === 'rejected' ? (b.status === 'rejected' && !isCancelled(b))
+  // Sent back at either gate. One was refused before it counted, the other after
+  // Sales or CP had already put it on the books.
+  : tab === 'rejected' ? ((b.status === 'rejected' && !isCancelled(b))
+                          || (b.status === 'sold' && accStatus(b) === 'rejected'))
+  : tab === 'sold' ? (b.status === 'sold' && accountsApproved(b))
+  // Waiting at either gate, so a deal is never in none of the tabs.
+  : tab === 'pending' ? (b.status === 'pending'
+                         || (b.status === 'sold' && accStatus(b) === 'pending'))
   : b.status === tab
 );
 
