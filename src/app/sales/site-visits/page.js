@@ -54,6 +54,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const [range,   setRange]   = useState({ from: '', to: '' });   // visit date
   const [proj,    setProj]    = useState('');                     // '' = every project
   const [outcomeFilter, setOutcomeFilter] = useState('');         // '' = every outcome
+  const [searchText, setSearchText] = useState('');               // '' = every name/phone
   // Allow deep-linking to a tab (e.g. dashboard Site Visits card → ?tab=completed).
   // Read in an effect — window.location isn't committed yet when a lazy useState
   // initializer runs during Next client navigation.
@@ -248,13 +249,19 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   // removes the other projects from the dropdown.
   const projName = (v) => v.project_name || '—';
   const projOptions = [...new Set(visits.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = dated || !!proj || !!outcomeFilter;
+  const q = searchText.trim().toLowerCase();
+  const narrowed = dated || !!proj || !!outcomeFilter || !!q;
 
   const [shown, setShown] = useState(PAGE_STEP);
   const visible = visits.filter((v) => {
     if (!inRange(v)) return false;
     if (proj && projName(v) !== proj) return false;
     if (outcomeFilter && v.outcome !== outcomeFilter) return false;
+    if (q) {
+      const name  = (v.lead_name  || '').toLowerCase();
+      const phone = (v.lead_phone || '').toLowerCase();
+      if (!name.includes(q) && !phone.includes(q)) return false;
+    }
     if (filter === 'all') return true;
     if (filter === 'today') {
       const at = new Date(v.scheduled_at);
@@ -287,6 +294,13 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
         })}
       </div>
 
+      {/* Search bar */}
+      <div className="nx-search-wrap nx-mb-14">
+        <span className="nx-search-icon"><Icon name="search" /></span>
+        <input className="nx-input nx-search-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search name, phone…" />
+      </div>
+
       {/* Visit date + project. The date control is the one the dashboards use, so its
           Month / Quarter / FY choices mean the same thing here. */}
       <DateFilter onChange={setRange} />
@@ -314,8 +328,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           );
         })}
         {narrowed && (
-          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setProj(''); setOutcomeFilter(''); }} style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-            cursor: 'pointer', background: 'var(--surface)', color: 'var(--muted)', border: '1.5px solid var(--border)' }}>
+          <button className="nx-btn nx-btn-sm nx-btn-secondary nx-clear-filters-btn" onClick={() => { setProj(''); setOutcomeFilter(''); setSearchText(''); }}>
             <Icon name="x" /> Clear filters
           </button>
         )}

@@ -24,6 +24,12 @@ const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); 
 const TC_STATUS_OPTS  = [['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested'], ['not_reachable', 'Not Reachable'], ['callback', 'Callback']];
 const STM_STATUS_OPTS = [['hot', 'Hot'], ['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested'], ['sv_scheduled', 'SV Scheduled'], ['sv_done', 'SV Done'], ['closed', 'Closed']];
 
+// Filter-bar status options — same full set the Leads list's filter dropdowns use
+// (superset of TC_STATUS_OPTS/STM_STATUS_OPTS above, which only offer the statuses
+// a follow-up can set on completion).
+const TC_FILTER_STATUSES  = ['warm', 'cold', 'not_interested', 'not_reachable', 'callback', 'not_qualified'];
+const STM_FILTER_STATUSES = ['hot', 'warm', 'cold', 'not_interested', 'sv_scheduled', 'sv_done', 'closed', 'not_qualified'];
+
 const PAGE_STEP = 50;
 const TABS = [
   { key: 'today',   label: "Today's" },
@@ -40,9 +46,57 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const user      = useSelector((s) => s.auth.user);
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  // Same designation split as the Leads list, so this page offers the same filter
+  // set (a Telecaller only ever sees their own follow-ups anyway, so hiding the
+  // assignee/status pickers that don't apply to them keeps the bar uncluttered).
+  const _desig = (user?.designation || '').toLowerCase();
+  const isTelecaller = _desig.includes('telecaller') || _desig.includes('tele caller');
+  const isStm        = _desig.includes('stm') || _desig.includes('sales team') || _desig.includes('sales executive');
+  const isCp         = _desig.includes('cp executive') || _desig.includes('channel partner');
+  const isCpHead     = _desig.includes('cp cluster head');
+  const isCpAny      = isCp || isCpHead;
+  const isAdminMgr   = !isTelecaller && !isStm && !isCpAny;
+  const showTcStatus = isAdminMgr || isTelecaller;
+  const showStmStatus= isAdminMgr || isStm || isCpAny;
+  const showAssignees= isAdminMgr;
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  const [projects,    setProjects]    = useState([]);
+  const [telecallers, setTelecallers] = useState([]);
+  const [stms,        setStms]        = useState([]);
+  const [cpModuleUsers, setCpModuleUsers] = useState([]);
+  const [searchText,      setSearchText]      = useState('');
+  const [projectFilter,   setProjectFilter]   = useState('');
+  const [tcStatusFilter,  setTcStatusFilter]  = useState('');
+  const [stmStatusFilter, setStmStatusFilter] = useState('');
+  const [telecallerFilter, setTelecallerFilter] = useState('');
+  const [stmFilter,        setStmFilter]        = useState('');
+
+  const loadMeta = useCallback(async () => {
+    const cqUser = companyId ? `&company_id=${companyId}` : '';
+    try {
+      const pRes = await fetch(SALES_ENDPOINTS.projects + (companyId ? `?company_id=${companyId}` : ''), { headers: authHeaders() });
+      if (pRes.ok) setProjects(await pRes.json());
+    } catch (_) {}
+    if (showAssignees && !cpOnly) {
+      try {
+        const [tRes, sRes] = await Promise.all([
+          fetch(SALES_ENDPOINTS.telecallers + cqUser, { headers: authHeaders() }),
+          fetch(SALES_ENDPOINTS.stms        + cqUser, { headers: authHeaders() }),
+        ]);
+        if (tRes.ok) setTelecallers(await tRes.json());
+        if (sRes.ok) setStms(await sRes.json());
+      } catch (_) {}
+    }
+    if (showAssignees && cpOnly) {
+      try {
+        const cRes = await fetch(SALES_ENDPOINTS.cpModuleUsers + cqUser, { headers: authHeaders() });
+        if (cRes.ok) setCpModuleUsers(await cRes.json());
+      } catch (_) {}
+    }
+  }, [companyId, showAssignees, cpOnly]);
+  useEffect(() => { loadMeta(); }, [loadMeta]);
   // Deep link from the dashboard's Pending / Overdue tiles, e.g. ?filter=overdue.
   // Read in an effect, not a lazy initialiser: during a Next client navigation
   // window.location isn't committed yet when the initialiser runs.
@@ -156,15 +210,27 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   }
 
   const now = new Date();
-  // Date-range filter on the scheduled date (applies before the tab filter).
-  const inDateRange = (fu) => {
-    if (!dateFrom && !dateTo) return true;
+  // Date-range + filter-bar predicate (applies before the tab filter, same as the
+  // Leads list's `filters` object) — the stat chips below are computed off this,
+  // so they always describe what the filter bar is currently showing.
+  const q = searchText.trim().toLowerCase();
+  const matchesFilters = (fu) => {
     const d = new Date(fu.scheduled_at);
     if (dateFrom && d < new Date(dateFrom + 'T00:00:00')) return false;
     if (dateTo   && d > new Date(dateTo   + 'T23:59:59')) return false;
+    if (q) {
+      const name  = (fu.lead_name  || '').toLowerCase();
+      const phone = (fu.lead_phone || '').toLowerCase();
+      if (!name.includes(q) && !phone.includes(q)) return false;
+    }
+    if (projectFilter   && String(fu.lead_project || '') !== String(projectFilter)) return false;
+    if (tcStatusFilter  && (fu.lead_telecaller_status || '') !== tcStatusFilter) return false;
+    if (stmStatusFilter && (fu.lead_stm_status || '') !== stmStatusFilter) return false;
+    if (telecallerFilter && String(fu.assigned_to || '') !== String(telecallerFilter)) return false;
+    if (stmFilter         && String(fu.assigned_to || '') !== String(stmFilter)) return false;
     return true;
   };
-  const dateItems = items.filter(inDateRange);
+  const dateItems = items.filter(matchesFilters);
 
   // Status-wise counts for the selected date range (independent of the tab).
   const counts = {
@@ -192,19 +258,107 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}
       </p>
 
-      {/* Date range filter + status-wise counts */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Date</span>
-        <input className="nx-input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid var(--surface-3)', fontSize: 12.5, color: 'var(--text)', outline: 'none' }} />
-        <span style={{ color: 'var(--faint)' }}>→</span>
-        <input className="nx-input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-          style={{ padding: '7px 10px', borderRadius: 9, border: '1.5px solid var(--surface-3)', fontSize: 12.5, color: 'var(--text)', outline: 'none' }} />
-        {(dateFrom || dateTo) && (
-          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setDateFrom(''); setDateTo(''); }}
-            style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid var(--surface-3)', background: 'var(--surface)', color: 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
-        )}
-      </div>
+      {/* Filter bar — same shape as the Leads list's: search bar, then date range +
+          quick presets + project/status pickers, then a row of assignee pickers. */}
+      {(() => {
+        const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const today   = localDate(new Date());
+        const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
+        const anyFilter = !!(searchText || dateFrom || dateTo || projectFilter || tcStatusFilter || stmStatusFilter || telecallerFilter || stmFilter);
+        const clearAll = () => {
+          setSearchText(''); setDateFrom(''); setDateTo('');
+          setProjectFilter(''); setTcStatusFilter(''); setStmStatusFilter('');
+          setTelecallerFilter(''); setStmFilter('');
+        };
+        const fSel = {
+          height: 36, padding: '0 10px', borderRadius: 8,
+          border: '1.5px solid var(--surface-3)', fontSize: 12, background: 'var(--surface-2)',
+          cursor: 'pointer', outline: 'none', color: 'var(--text)', fontWeight: 500,
+        };
+        const activeSelStyle = (val) => val ? { ...fSel, borderColor: 'var(--accent)', background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 } : fSel;
+
+        return (
+          <div className="nx-card nx-fu-filterbar">
+
+            {/* Search bar */}
+            <div className="nx-fu-filterbar-search">
+              <div className="nx-search-wrap">
+                <span className="nx-search-icon"><Icon name="search" /></span>
+                <input className="nx-input nx-search-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Search name, phone…" />
+              </div>
+            </div>
+
+            {/* Row 1: date range + quick buttons + project + tc/stm status */}
+            <div className="nx-fu-filterbar-row">
+              <span className="nx-fu-filterbar-label">Date</span>
+              <input className="nx-input nx-fu-date-input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              <span className="nx-fu-arrow">→</span>
+              <input className="nx-input nx-fu-date-input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              <div className="nx-fu-divider" />
+              <select className="nx-input nx-input-sm nx-filter-sel"
+                value={(dateFrom === today && dateTo === today) ? 'today'
+                     : (dateFrom === daysAgo(6) && dateTo === today) ? 'week'
+                     : (dateFrom === daysAgo(29) && dateTo === today) ? 'month' : ''}
+                onChange={(e) => {
+                  const k = e.target.value;
+                  setDateFrom(k === 'today' ? today : k === 'week' ? daysAgo(6) : k === 'month' ? daysAgo(29) : '');
+                  setDateTo(k ? today : '');
+                }}>
+                <option value="">Any date</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 days</option>
+                <option value="month">Last 30 days</option>
+              </select>
+              <div className="nx-fu-divider" />
+              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} style={activeSelStyle(projectFilter)}>
+                <option value="">All Projects</option>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              {showTcStatus && (
+                <select value={tcStatusFilter} onChange={(e) => setTcStatusFilter(e.target.value)} style={activeSelStyle(tcStatusFilter)}>
+                  <option value="">TC Status</option>
+                  {TC_FILTER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                </select>
+              )}
+              {showStmStatus && (
+                <select value={stmStatusFilter} onChange={(e) => setStmStatusFilter(e.target.value)} style={activeSelStyle(stmStatusFilter)}>
+                  <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
+                  {STM_FILTER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                </select>
+              )}
+              {anyFilter && (
+                <button className="nx-btn nx-btn-sm nx-btn-danger-soft nx-ml-auto" onClick={clearAll}>
+                  <Icon name="x" /> Clear all
+                </button>
+              )}
+            </div>
+
+            {/* Row 2: assignee pickers */}
+            {showAssignees && !cpOnly && (
+              <div className="nx-fu-filterbar-row">
+                <select value={telecallerFilter} onChange={(e) => setTelecallerFilter(e.target.value)} style={activeSelStyle(telecallerFilter)}>
+                  <option value="">All Telecallers</option>
+                  {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+                <select value={stmFilter} onChange={(e) => setStmFilter(e.target.value)} style={activeSelStyle(stmFilter)}>
+                  <option value="">All STMs</option>
+                  {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+            )}
+            {showAssignees && cpOnly && (
+              <div className="nx-fu-filterbar-row">
+                <select value={stmFilter} onChange={(e) => setStmFilter(e.target.value)} style={activeSelStyle(stmFilter)}>
+                  <option value="">All Team Members</option>
+                  {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
         {[
           { label: 'Total',     n: counts.total,     c: 'var(--accent)', bg: 'var(--accent-softer)' },
