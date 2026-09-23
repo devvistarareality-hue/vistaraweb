@@ -60,13 +60,9 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   }
 
   // A designation belongs to one module and only decides that module — a Sales
-  // title has nothing to say about AR. Channel Partner rides with Sales.
-  const FAMILY = {
-    'Sales': ['Sales', 'Channel Partner'],
-    'Channel Partner': ['Sales', 'Channel Partner'],
-    'Accounts Receivable': ['AR'],
-  };
-  const mine = FAMILY[designation.module] || [designation.module];
+  // title has nothing to say about Channel Partner or AR, and vice versa.
+  const ALIAS = { 'Accounts Receivable': 'AR' };
+  const mine = [ALIAS[designation.module] || designation.module];
   const group = (rows) => {
     const own = (rows || []).filter((c) => mine.includes(c.module));
     const mods = [...new Set(own.map((c) => c.module))];
@@ -119,7 +115,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
             <>
               <div className="perm-presets">
                 <span>Start from</span>
-                {catalogue.presets.map((p) => (
+                {catalogue.presets.filter((p) => !p.module || mine.includes(p.module)).map((p) => (
                   <button type="button" key={p.key} className="perm-preset"
                     onClick={() => { setCaps(new Set(p.capabilities)); setScreens(new Set(p.screens || [])); }}>
                     {p.label}

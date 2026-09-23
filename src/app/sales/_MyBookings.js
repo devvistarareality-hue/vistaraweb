@@ -125,7 +125,13 @@ export function MyBookingsList({ cpOnly = false }) {
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
   // Filtering happens here rather than server-side: the list is already everything
   // this person submitted, so narrowing it is instant and costs no round trip.
-  const [tab, setTab] = useState('');
+  // ?status= opens the list already filtered — the Closures card on the
+  // dashboard points at Approved.
+  const [tab, setTab] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const want = new URLSearchParams(window.location.search).get('status') || '';
+    return TABS.some(([k]) => k === want) ? want : '';
+  });
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');
