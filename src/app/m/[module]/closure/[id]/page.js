@@ -9,8 +9,10 @@ import { ClosureViewerContent } from '../../../../sales/closure/[id]/page';
 export default function ChannelPartnerClosureViewerPage() {
   const user = useSelector((s) => s.auth.user);
 
+  if (!user) return null;
+
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
+    return <div className="nx-note info">This is the Channel Partner module — ask an administrator for access.</div>;
   }
 
   return <ClosureViewerContent backHref="/m/cp/closure" />;

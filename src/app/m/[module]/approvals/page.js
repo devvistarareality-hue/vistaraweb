@@ -643,6 +643,7 @@ export default function ModuleApprovalsPage({ params }) {
 
 function ChannelPartnerApprovals() {
   const user = useSelector((s) => s.auth.user);
+  if (!user) return null;
   if (!canAccessChannelPartner(user)) {
     return <div className="nx-note info">Admin access only.</div>;
   }

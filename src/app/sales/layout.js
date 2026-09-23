@@ -271,7 +271,11 @@ export default function SalesLayout({ children }) {
   // '/sales' and '/sales/admin' are both "Dashboard" hrefs whose sub-routes share
   // their prefix (e.g. '/sales/leads', '/sales/admin/leads') — exact-match those two
   // so the Dashboard link doesn't light up while looking at a different page.
-  const isActive = (href) => (href === '/sales' || href === '/sales/admin') ? pathname === href : pathname.startsWith(href);
+  // A path only counts as "inside" a nav item when it matches it exactly or
+  // continues with a slash: /closures must not light up /closure as well.
+  const isActive = (href) => ((href === '/sales' || href === '/sales/admin')
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`));
   // Real admins get these 6 appended flat, inline, in NAV's own order — unchanged.
   const trueAdminExtraItems = NAV.filter((item) => item.adminOnly && canSee(user, item.screen));
   // A module-scoped admin's full Admin section mirrors a real admin's menu.

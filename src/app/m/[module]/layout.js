@@ -132,7 +132,11 @@ export default function ModuleLayout({ children, params }) {
     : null;
   // A company can hide menu items per designation (Designation Master → Permissions).
   const visibleNav = NAV.filter((item) => canSee(user, item.screen));
-  const isActive = (href) => href === base ? pathname === base : pathname.startsWith(href);
+  // A path only counts as "inside" a nav item when it matches it exactly or
+  // continues with a slash: /closures must not light up /closure as well.
+  const isActive = (href) => (href === base
+    ? pathname === base
+    : pathname === href || pathname.startsWith(`${href}/`));
   // Hiding a menu item has to hide the page too, or the address still lets them in.
   const currentItem = NAV.filter((i) => i.screen && isActive(i.href))
     .sort((a, b) => b.href.length - a.href.length)[0];

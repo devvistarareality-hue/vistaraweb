@@ -7,8 +7,9 @@ import { MyConversionsContent } from '../../../sales/my-conversions/page';
 // scoped to leads referred by a channel partner (?cp_only=true).
 export default function ChannelPartnerClosuresPage() {
   const user = useSelector((s) => s.auth.user);
+  if (!user) return null;
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
+    return <div className="nx-note info">This is the Channel Partner module — ask an administrator for access.</div>;
   }
 
   return <MyConversionsContent adminView cpOnly />;

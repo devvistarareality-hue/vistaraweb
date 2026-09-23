@@ -145,7 +145,9 @@ export default function Club1000Layout({ children }) {
   // Same rule as the menu: a screen this designation cannot see is not reachable
   // by typing its address either. This sits above the early returns so the hook
   // runs on every render.
-  const _isActive = (href) => href === '/club1000' ? pathname === '/club1000' : pathname.startsWith(href);
+  const _isActive = (href) => (href === '/club1000'
+    ? pathname === '/club1000'
+    : pathname === href || pathname.startsWith(`${href}/`));
   const _visibleNav = NAV.filter((item) => canSee(user, item.screen)
     && (!item.managerOnly || isClub1000Manager(user)) && (!item.adminOnly || user?.role === 'Admin' || user?.is_staff));
   const _currentItem = NAV.filter((item) => item.screen && _isActive(item.href))
@@ -166,7 +168,11 @@ export default function Club1000Layout({ children }) {
     );
   }
 
-  const isActive = (href) => href === '/club1000' ? pathname === '/club1000' : pathname.startsWith(href);
+  // A path only counts as "inside" a nav item when it matches it exactly or
+  // continues with a slash: /closures must not light up /closure as well.
+  const isActive = (href) => (href === '/club1000'
+    ? pathname === '/club1000'
+    : pathname === href || pathname.startsWith(`${href}/`));
   // Whether the Admin-Modules-only user is currently inside their Admin section —
   // derived from the URL, so a direct link or refresh lands on the right sidebar.
   const inAdminSection = isAdminModulesOnly && managerOnlyItems.some((item) => isActive(item.href));

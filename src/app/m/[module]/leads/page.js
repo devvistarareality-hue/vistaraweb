@@ -279,8 +279,10 @@ export default function ChannelPartnerLeadsPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [tab, setTab] = useState('leads');
 
+  if (!user) return null;
+
   if (!canAccessChannelPartner(user)) {
-    return <div style={{ padding: 40, color: 'var(--muted)' }}>Admin access only.</div>;
+    return <div className="nx-note info">This is the Channel Partner module — ask an administrator for access.</div>;
   }
 
   return (
