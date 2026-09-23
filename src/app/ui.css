@@ -1322,11 +1322,3 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .dbf-lead { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-right: 2px; }
 .dbf-role { font-size: 10px; font-weight: 600; opacity: 0.65; margin-left: 5px; }
 @media (max-width: 560px) { .dbf { padding: 12px 16px 0; } .dbf-role { display: none; } }
-
-/* Permissions editor — "copy from another designation" bar. */
-.perm-copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
-.perm-copy > span { font-size: 11.5px; font-weight: 700; color: var(--muted); }
-.perm-copy select { min-width: 200px; max-width: 320px; }
-.perm-copy small { font-size: 11px; color: var(--muted); margin-left: auto; }
-@media (max-width: 560px) { .perm-copy small { display: none; } }

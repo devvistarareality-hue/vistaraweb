@@ -87,11 +87,10 @@ export default function ModuleLayout({ children, params }) {
   const isAdmin = user?.role === 'Admin' || user?.is_staff;
   const isManager = isManagerRole(user);
   const base = `/m/${slug}`;
+  // Every module has the same three: a Dashboard, My Team, and — for admins —
+  // the Log. Anything else is what that module actually does.
   const NAV = [
-    // AR has no overview page — the module opens straight on its Dashboard.
-    ...(slug !== 'ar' ? [{ label: 'Overview', href: base, icon: <IconGrid /> }] : []),
-    // My Team is a management view — only managers/admins see it.
-    ...((isManager || isAdmin) && slug !== 'ar' ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
+    { label: 'Dashboard', href: `${base}/dashboard`, icon: <IconChart />, screen: `${slug}.screen.dashboard` },
     // Accounts & Finance: Approvals is the Pending/Approved/Rejected review queue
     // (approve, reject with remarks) — same split Sales uses (its own "Approvals"
     // nav item is the Drafts/Pending/Approved/Rejected list, separate from the
@@ -101,14 +100,16 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Approvals', href: `${base}/approvals`, icon: <IconCheck />, screen: 'accounts.screen.approvals' },
       { label: 'Bookings',  href: `${base}/bookings`,  icon: <IconBook />, screen: 'accounts.screen.bookings' },
     ] : []),
-    // Accounts Receivable: the portfolio dashboard, the register of approved
-    // bookings (each opening its ledger) and the import of past receipts.
+    // Accounts Receivable: the register of approved bookings (each opening its
+    // ledger) and the import of past receipts.
     ...(slug === 'ar' ? [
-      { label: 'Dashboard', href: `${base}/dashboard`, icon: <IconChart />, screen: 'ar.screen.dashboard' },
       { label: 'Collections', href: `${base}/collections`, icon: <IconBell />, screen: 'ar.screen.collections' },
       { label: 'Register', href: `${base}/register`, icon: <IconBook />, screen: 'ar.screen.register' },
       { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck />, screen: 'ar.screen.import' },
     ] : []),
+    // My Team is a management view — only managers and admins see it.
+    ...(isManager || isAdmin ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers />,
+                                 screen: `${slug}.screen.myteam` }] : []),
     // Who changed what in this module, and when — real admins only.
     ...(isAdmin ? [{ label: 'Log', href: `${base}/log`, icon: <IconLog /> }] : []),
   ];

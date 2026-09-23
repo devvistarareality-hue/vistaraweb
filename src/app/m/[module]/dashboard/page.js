@@ -12,6 +12,7 @@ import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
+import { MODULE_META } from '../moduleMeta';
 
 const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
@@ -19,10 +20,31 @@ const ISSUE_TEXT = {
   bad_dates: 'An installment date has an impossible year — Sales needs to correct it',
 };
 
+// Every module opens here. AR has a full receivables dashboard; the modules whose
+// dashboard is still to be written get the plain one below, so the tab is in the
+// same place everywhere.
+export default function ModuleDashboardPage({ params }) {
+  if (params.module !== 'ar') return <PlainDashboard slug={params.module} />;
+  return <ARDashboard />;
+}
+
+function PlainDashboard({ slug }) {
+  const meta = MODULE_META[slug];
+  if (!meta) notFound();
+  return (
+    <div className="nx-page">
+      <h1 className="nx-page-title">{meta.name}</h1>
+      <p className="nx-page-sub">{meta.desc}</p>
+      <div className="nx-note info">
+        This module&apos;s dashboard is still being built. Its other tabs are in the menu.
+      </div>
+    </div>
+  );
+}
+
 // AR Dashboard — the receivables book at a glance: what is owed, how late, what
 // falls due month by month, who owes the most, and what data needs fixing.
-export default function ARDashboardPage({ params }) {
-  if (params.module !== 'ar') notFound();
+function ARDashboard() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [project, setProject] = useState('');
   const [asOf, setAsOf] = useState(today());
