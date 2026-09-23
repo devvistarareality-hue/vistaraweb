@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import { isClub1000Manager } from '../../../lib/moduleAccess';
+import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 import { confirmDialog } from '../../../lib/notify';
@@ -119,7 +119,7 @@ export default function ReferralRewardsPage() {
                 </td>
                 {manager && (
                   <td style={td}>
-                    {r.status === 'pending' && (
+                    {r.status === 'pending' && can(user, 'club.payout.mark_paid') && (
                       <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => markPaid(r.id)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
                     )}
                   </td>

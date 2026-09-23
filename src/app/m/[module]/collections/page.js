@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { can } from '../../../../lib/moduleAccess';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AlarmClock, CalendarClock, PhoneCall, UserX, Building2, BellRing, Phone } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const me = useSelector((s) => s.auth.user?.id);
+  const user = useSelector((s) => s.auth.user);
   const [tab, setTab] = useState(searchParams?.tab || 'overdue');
   const [days, setDays] = useState(30);
   const [project, setProject] = useState('');
@@ -175,7 +177,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
                         </div>
                         <div className="coll-actions">
                           <Link href={`/m/ar/ledger/${r.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Ledger</Link>
-                          <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setOpen(r)}><BellRing size={13} /> Follow up</button>
+                          {can(user, 'ar.followup.manage') && <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setOpen(r)}><BellRing size={13} /> Follow up</button>}
                         </div>
                       </footer>
                     </article>

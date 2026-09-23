@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { can } from '../../../../lib/moduleAccess';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Building2, Download, Upload, FileSpreadsheet, X } from 'lucide-react';
@@ -20,6 +21,7 @@ const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 export default function ARImportPage({ params, searchParams }) {
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const user = useSelector((s) => s.auth.user);
   const [accounts, setAccounts] = useState(null);
   const [project, setProject] = useState(searchParams?.project || '');
   const [file, setFile] = useState(null);
@@ -149,7 +151,7 @@ export default function ARImportPage({ params, searchParams }) {
               ) : result.ready > 0 ? (
                 <div className="nx-note info imp-note">
                   Nothing has been saved yet. Check the rows below, then import.
-                  <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={commit} disabled={busy}>{busy ? 'Importing…' : `Import ${result.ready} receipts`}</button>
+                  {can(user, 'ar.import.run') && <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={commit} disabled={busy}>{busy ? 'Importing…' : `Import ${result.ready} receipts`}</button>}
                 </div>
               ) : <div className="nx-note warn">No payment in this file can be imported — see the reasons below.</div>}
               {result.rows.length > 0 && (

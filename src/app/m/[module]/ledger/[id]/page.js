@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { can } from '../../../../../lib/moduleAccess';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AR_ENDPOINTS } from '../../../../../constants/api';
@@ -33,6 +34,8 @@ export default function ARLedgerPage({ params }) {
   const [booking, setBooking] = useState(null);   // null | 'loading' | booking — the details panel
   const [followUps, setFollowUps] = useState(false);
   const me = useSelector((s) => s.auth.user?.id);
+  // What this designation may do in AR (Designation Master → Permissions).
+  const user = useSelector((s) => s.auth.user);
 
   const qs = useCallback(() => {
     const p = [`as_of=${asOf}`];
@@ -153,7 +156,7 @@ export default function ARLedgerPage({ params }) {
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={openLoi}>View {String(data.plots).toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'}</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setFollowUps(true)}>Follow-ups</button>
-          {!frozen && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Record payment</button>}
+          {!frozen && can(user, 'ar.receipt.record') && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Record payment</button>}
         </div>
       </div>
 
@@ -224,7 +227,7 @@ export default function ARLedgerPage({ params }) {
                     {p.kind === 'legal' && !frozen ? (
                       <span className="ar-inline-date">
                         <input type="date" className="nx-input" value={legalDate} onChange={(e) => setLegalDate(e.target.value)} />
-                        <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={saveLegalDate} disabled={(legalDate || null) === (data.legal_due_date || null)}>Save</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={saveLegalDate} disabled={!can(user, 'ar.legal_date.set') || (legalDate || null) === (data.legal_due_date || null)}>Save</button>
                       </span>
                     ) : (p.due ? formatDMY(p.due) : <span className="muted">{p.kind === 'balance' ? 'No schedule' : 'No date'}</span>)}
                   </td>
@@ -257,8 +260,8 @@ export default function ARLedgerPage({ params }) {
                     <td className="muted">{rc.source === 'import' ? 'Excel import' : (rc.created_by || '—')}</td>
                     <td>
                       <span className="ar-actions">
-                        {!frozen && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openEdit(rc)}>Edit</button>}
-                        {!frozen && <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => deleteReceipt(rc)}>Delete</button>}
+                        {!frozen && can(user, 'ar.receipt.edit') && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openEdit(rc)}>Edit</button>}
+                        {!frozen && can(user, 'ar.receipt.edit') && <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => deleteReceipt(rc)}>Delete</button>}
                         <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => showAudit(rc)}>History</button>
                       </span>
                     </td>

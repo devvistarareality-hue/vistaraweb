@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import { isClub1000Manager } from '../../../lib/moduleAccess';
+import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
@@ -116,7 +116,7 @@ export default function InvestorsPage() {
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: schemes.length ? 'pointer' : 'default', opacity: schemes.length ? 1 : 0.6 }}>+ Add Investor</button>
+          {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add Investor</button>}
           {!loading && !schemes.length && (
             <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
           )}
@@ -198,16 +198,16 @@ export default function InvestorsPage() {
                 <td style={td}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
-                    <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)} style={{ padding: '5px 10px', background: 'var(--accent-soft)', color: PURPLE, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Revise LOI</button>
-                    {inv.is_matured ? (
+                    {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
+                    {inv.is_matured ? (can(user, 'club.investor.manage') && (
                       <>
                         <button onClick={() => setRenewing(inv)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: AMBER, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Renew</button>
                         {manager && (
                           <button onClick={() => maturePayout(inv.id)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Payout</button>
                         )}
                       </>
-                    ) : (
-                      manager && inv.status === 'active' && (
+                    )) : (
+                      manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
                         <button onClick={() => redeem(inv.id)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Redeem</button>
                       )
                     )}

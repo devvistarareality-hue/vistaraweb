@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import { isClub1000Manager } from '../../../lib/moduleAccess';
+import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 import Loader from '../../../components/Loader';
@@ -133,7 +133,7 @@ export default function PayoutsPage() {
                   {p.status === 'paid' && p.notes && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, fontStyle: 'italic' }}>"{p.notes}"</div>}
                 </td>
                 <td style={td}>
-                  {p.status === 'pending' && (
+                  {p.status === 'pending' && can(user, 'club.payout.mark_paid') && (
                     <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => openMarkPaid(p)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
                   )}
                 </td>
