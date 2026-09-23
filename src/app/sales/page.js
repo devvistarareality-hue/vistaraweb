@@ -14,7 +14,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
-import { can } from '../../lib/moduleAccess';
+import { can, dashboardFor } from '../../lib/moduleAccess';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
 
@@ -947,6 +947,13 @@ export function SalesDashboardContent({ adminView = false }) {
   const des  = (user?.designation || '').toLowerCase();
 
   if (adminView) return <AdminDashboard user={user} adminView />;
+
+  // A company can pin which dashboard a designation opens; '' decides from their
+  // permissions, exactly as before.
+  const pinned = dashboardFor(user);
+  if (pinned === 'telecaller') return <TelecallerDashboard user={user} />;
+  if (pinned === 'stm') return <STMDashboard user={user} />;
+  if (pinned === 'manager' || pinned === 'director') return <AdminDashboard user={user} adminView={pinned === 'director'} />;
 
   if (can(user, 'sales.pipeline.telecalling')) {
     return <TelecallerDashboard user={user} />;

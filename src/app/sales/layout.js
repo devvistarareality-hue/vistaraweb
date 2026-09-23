@@ -10,7 +10,7 @@ import { AUTH_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation, can} from '../../lib/moduleAccess';
+import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation, can, canSee} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
@@ -67,26 +67,26 @@ const CP_CHILDREN = [
   { label: 'Log',         href: '/sales/channel-partners/log', trueAdminOnly: true },
 ];
 
-const CP_NAV_ITEM = { label: 'Channel Partner', href: '/sales/channel-partners', icon: <IconPartner />, children: CP_CHILDREN };
+const CP_NAV_ITEM = { label: 'Channel Partner', href: '/sales/channel-partners', icon: <IconPartner />, children: CP_CHILDREN, screen: 'sales.screen.cp' };
 
 const NAV = [
-  { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> },
-  { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> },
-  { label: 'Follow-Ups',   href: '/sales/follow-ups',    icon: <IconCalendar /> },
-  { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true },
-  { label: 'Booking',      href: '/sales/closure',       icon: <IconBuilding />,  stmPortal: true },
+  { label: 'Dashboard',    href: '/sales',               icon: <IconDashboard /> , screen: 'sales.screen.dashboard' },
+  { label: 'All Leads',    href: '/sales/leads',         icon: <IconLeads /> , screen: 'sales.screen.leads' },
+  { label: 'Follow-Ups',   href: '/sales/follow-ups',    icon: <IconCalendar /> , screen: 'sales.screen.followups' },
+  { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true , screen: 'sales.screen.sitevisits' },
+  { label: 'Booking',      href: '/sales/closure',       icon: <IconBuilding />,  stmPortal: true , screen: 'sales.screen.booking' },
   // Not for an STM: their site visits and closures are reached from Site Visits
   // and Booking → My Bookings, which the dashboard tiles now link to directly.
-  { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true, hideForStm: true },
-  { label: 'My Team',      href: '/sales/my-team',       icon: <IconUsers />,     managerOnly: true },
-  { label: 'Approvals',    href: '/sales/bookings',      icon: <IconBuilding />,  managerOnly: true },
-  { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true },
-  { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true },
-  { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true },
+  { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true, hideForStm: true , screen: 'sales.screen.conversions' },
+  { label: 'My Team',      href: '/sales/my-team',       icon: <IconUsers />,     managerOnly: true , screen: 'sales.screen.myteam' },
+  { label: 'Approvals',    href: '/sales/bookings',      icon: <IconBuilding />,  managerOnly: true , screen: 'sales.screen.approvals' },
+  { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true , screen: 'sales.screen.projects' },
+  { label: 'Lead Setup',   href: '/sales/sources',       icon: <IconSource />,    adminOnly: true , screen: 'sales.screen.leadsetup' },
+  { label: 'Team Users',   href: '/sales/users',         icon: <IconUsers />,     adminOnly: true , screen: 'sales.screen.teamusers' },
   { ...CP_NAV_ITEM, adminOnly: true },
-  { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true },
-  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> },
-  { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true },
+  { label: 'Distribution', href: '/sales/distribution',  icon: <IconDistribute />, adminOnly: true , screen: 'sales.screen.distribution' },
+  { label: 'Import Leads', href: '/sales/import',        icon: <IconImport /> , screen: 'sales.screen.import' },
+  { label: 'Data Reset',   href: '/sales/data-reset',    icon: <IconTrash />,     adminOnly: true , screen: 'sales.screen.datareset' },
   // Who changed what, and when — real admins only (not Sales admin-modules users).
   { label: 'Log',          href: '/sales/log',           icon: <IconLog />,       adminOnly: true, trueAdminOnly: true },
 ];
@@ -278,7 +278,7 @@ export default function SalesLayout({ children }) {
   // so the Dashboard link doesn't light up while looking at a different page.
   const isActive = (href) => (href === '/sales' || href === '/sales/admin') ? pathname === href : pathname.startsWith(href);
   // Real admins get these 6 appended flat, inline, in NAV's own order — unchanged.
-  const trueAdminExtraItems = NAV.filter((item) => item.adminOnly);
+  const trueAdminExtraItems = NAV.filter((item) => item.adminOnly && canSee(user, item.screen));
   // A module-scoped admin's full Admin section (mirrors a real admin's menu) —
   // except Channel Partner, which "Sales" alone no longer implies: a Sales
   // Admin-Modules user only gets it if their designation also starts with "cp"
@@ -411,7 +411,7 @@ export default function SalesLayout({ children }) {
           ) : (
             <>
               <div style={s.sectionLabel}>SALES MENU</div>
-              {NAV.filter(item => !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp) && !(item.hideForStm && isStm && !isAdmin && !isManager)).map((item) => renderNavItem(item))}
+              {NAV.filter(item => canSee(user, item.screen) && !item.adminOnly && (!item.managerOnly || isAdmin || isManager) && (!item.stmPortal || isAdmin || isStm || isManager || isCp) && (!item.tcPortal || isAdmin || isTelecaller) && (!item.tcStmPortal || isAdmin || isTelecaller || isStm || isManager || isCp) && !(item.hideForStm && isStm && !isAdmin && !isManager)).map((item) => renderNavItem(item))}
 
               {isTrueAdmin && trueAdminExtraItems.map((item) => renderNavItem(item))}
               {/* Real admins (Chinmay, Prince, platform staff) get the flat,

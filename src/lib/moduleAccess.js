@@ -100,6 +100,20 @@ export function can(user, key) {
   }
 }
 
+// Which menu items this person sees. `screens` is null unless their company has
+// set the menu for their designation, in which case the old role-based rules still
+// decide (canSee returns true and the caller's own checks apply).
+export function canSee(user, key) {
+  const screens = user?.screens;
+  if (!Array.isArray(screens)) return true;
+  return screens.includes(key);
+}
+
+// Which dashboard opens: '' means decide from their permissions, as before.
+export function dashboardFor(user) {
+  return user?.dashboard || '';
+}
+
 export const MANAGER_ROLES = ['Director', 'General Manager', 'Manager'];
 
 /** Manager or more senior (not Admin/staff — check those separately). */

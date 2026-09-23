@@ -7,7 +7,7 @@ import { logout } from '../../../redux/actions/authActions';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adminFilterReducer';
 import { MODULE_META } from './moduleMeta';
-import {SLUG_TO_MODULE, isManagerRole, moduleAccess} from '../../../lib/moduleAccess';
+import {SLUG_TO_MODULE, isManagerRole, moduleAccess, canSee} from '../../../lib/moduleAccess';
 import { AUTH_ENDPOINTS } from '../../../constants/api';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
 import Loader from '../../../components/Loader';
@@ -98,16 +98,16 @@ export default function ModuleLayout({ children, params }) {
     // record-a-closure flow). Bookings is the resulting ledger once approved —
     // read-only besides Cancel, which lives there instead.
     ...(slug === 'accounts' ? [
-      { label: 'Approvals', href: `${base}/approvals`, icon: <IconCheck /> },
-      { label: 'Bookings',  href: `${base}/bookings`,  icon: <IconBook /> },
+      { label: 'Approvals', href: `${base}/approvals`, icon: <IconCheck />, screen: 'accounts.screen.approvals' },
+      { label: 'Bookings',  href: `${base}/bookings`,  icon: <IconBook />, screen: 'accounts.screen.bookings' },
     ] : []),
     // Accounts Receivable: the portfolio dashboard, the register of approved
     // bookings (each opening its ledger) and the import of past receipts.
     ...(slug === 'ar' ? [
-      { label: 'Dashboard', href: `${base}/dashboard`, icon: <IconChart /> },
-      { label: 'Collections', href: `${base}/collections`, icon: <IconBell /> },
-      { label: 'Register', href: `${base}/register`, icon: <IconBook /> },
-      { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck /> },
+      { label: 'Dashboard', href: `${base}/dashboard`, icon: <IconChart />, screen: 'ar.screen.dashboard' },
+      { label: 'Collections', href: `${base}/collections`, icon: <IconBell />, screen: 'ar.screen.collections' },
+      { label: 'Register', href: `${base}/register`, icon: <IconBook />, screen: 'ar.screen.register' },
+      { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck />, screen: 'ar.screen.import' },
     ] : []),
     // Who changed what in this module, and when — real admins only.
     ...(isAdmin ? [{ label: 'Log', href: `${base}/log`, icon: <IconLog /> }] : []),
@@ -118,6 +118,8 @@ export default function ModuleLayout({ children, params }) {
   const back = isAdmin ? { href: '/admin', label: 'Back to Admin' }
     : moduleCount > 1 ? { href: '/dashboard', label: 'Back to Modules' }
     : null;
+  // A company can hide menu items per designation (Designation Master → Permissions).
+  const visibleNav = NAV.filter((item) => canSee(user, item.screen));
   const isActive = (href) => href === base ? pathname === base : pathname.startsWith(href);
 
   if (!meta) {
@@ -137,7 +139,7 @@ export default function ModuleLayout({ children, params }) {
         </div>
         <div style={{ flex: 1, padding: '16px 10px 0' }}>
           <div style={s.sectionLabel}>{meta.name.toUpperCase()} MENU</div>
-          {NAV.map((item) => {
+          {visibleNav.map((item) => {
             const active = isActive(item.href);
             return (
               <Link key={item.href} href={item.href} style={{ ...s.navItem, ...(active ? s.navActive : {}) }}>

@@ -12,6 +12,9 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   // An unconfigured designation starts ticked with what it already does today.
   const [caps, setCaps] = useState(new Set(designation.effective_capabilities || designation.capabilities || []));
   const [scope, setScope] = useState(designation.data_scope || '');
+  // Which menu items they see, and which dashboard opens for them.
+  const [screens, setScreens] = useState(new Set(designation.effective_screens || designation.screens || []));
+  const [dash, setDash] = useState(designation.dashboard || '');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
@@ -21,18 +24,21 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
       .catch(() => setErr('Could not load the permission list.'));
   }, []);
 
-  const toggle = (key) => setCaps((prev) => {
+  const flip = (setter) => (key) => setter((prev) => {
     const next = new Set(prev);
     if (next.has(key)) next.delete(key); else next.add(key);
     return next;
   });
+  const toggle = flip(setCaps);
+  const toggleScreen = flip(setScreens);
 
   async function save() {
     setSaving(true); setErr('');
     try {
       const r = await apiFetch(DESIGNATION_ENDPOINTS.detail(designation.id), {
         method: 'PATCH',
-        body: JSON.stringify({ capabilities: [...caps], data_scope: scope }),
+        body: JSON.stringify({ capabilities: [...caps], data_scope: scope,
+                               screens: [...screens], dashboard: dash }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setErr(d.detail || d.capabilities || 'Could not save.'); return; }
@@ -70,7 +76,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
               <span>Start from</span>
               {catalogue.presets.map((p) => (
                 <button type="button" key={p.key} className="nx-btn nx-btn-sm nx-toggle"
-                  onClick={() => setCaps(new Set(p.capabilities))}>{p.label}</button>
+                  onClick={() => { setCaps(new Set(p.capabilities)); setScreens(new Set(p.screens || [])); }}>{p.label}</button>
               ))}
             </div>
 
@@ -85,6 +91,26 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                 ))}
               </div>
             ))}
+
+            <div className="perm-group">
+              <div className="perm-group-title">Menu — which screens they see</div>
+              {[...new Set((catalogue.screens || []).map((c) => c.module))].map((mod) => (
+                <div className="perm-screens" key={mod}>
+                  <span className="perm-screens-mod">{mod}</span>
+                  {(catalogue.screens || []).filter((c) => c.module === mod).map((c) => (
+                    <button type="button" key={c.key} onClick={() => toggleScreen(c.key)}
+                      className={`nx-btn nx-btn-sm nx-toggle${screens.has(c.key) ? ' is-on' : ''}`}>{c.label}</button>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div className="perm-group">
+              <div className="perm-group-title">Which dashboard opens</div>
+              <select className="nx-input" value={dash} onChange={(e) => setDash(e.target.value)}>
+                {(catalogue.dashboards || []).map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </div>
 
             <div className="perm-group">
               <div className="perm-group-title">Whose records they see</div>
