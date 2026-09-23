@@ -259,7 +259,12 @@ export default function SalesLayout({ children }) {
   const _currentRoute = _screenRoutes
     .filter((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  const _blockedScreen = !!user && !!_currentRoute && !canSee(user, _currentRoute.screen);
+  // A module's own landing page is always reachable by someone boxed into it:
+  // whatever their menu says, the module has to open somewhere, and bouncing
+  // them off it is how "the dashboard does not open" happens.
+  const _moduleHome = _cpBoxedEarly && pathname === '/sales/channel-partners';
+  const _blockedScreen = !!user && !!_currentRoute && !_moduleHome
+    && !canSee(user, _currentRoute.screen);
   // Where to send them instead: the first screen they may see AND may use. The
   // role rules that hide an item from the sidebar apply here too, or we would
   // land a telecaller on a page their own menu never offers.
@@ -346,7 +351,12 @@ export default function SalesLayout({ children }) {
             <span style={{ fontSize: 13, fontWeight: onOwnPage ? 600 : 500, flex: 1 }}>{item.label}</span>
             <span style={{ color: 'inherit', opacity: 0.6, fontSize: 10, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
           </div>
-          {expanded && item.children.filter((child) => canSee(user, child.screen) && (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin)).map((child) => {
+          {expanded && item.children.filter((child) => (
+            // The module's own landing page stays in the menu for someone boxed
+            // into it, so the menu and what opens can never disagree.
+            (canSee(user, child.screen) || (isCpBoxed && child.href === item.href))
+            && (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin)
+          )).map((child) => {
             const childActive = isActive(child.href) && (child.href !== '/sales/channel-partners' || pathname === child.href);
             return (
               <Link key={child.href} href={child.href} className="s-nav-link"
@@ -391,10 +401,9 @@ export default function SalesLayout({ children }) {
   // assignment. Both render the same dedicated Channel Partner nav below.
   const isCpExec = !isTrueAdmin && !isSalesModuleAdmin && isCp;
   const isCpBoxed = isCpMgr || isCpExec;
-  // Nothing left to show them: every Channel Partner screen is unticked on their
-  // designation (Designation Master → Permissions → Menu).
-  const cpMenuIsEmpty = !CP_CHILDREN.some((child) => canSee(user, child.screen)
-    && (!child.managerOnly || isAdmin || isManager) && (!child.trueAdminOnly || isTrueAdmin));
+  // Someone boxed into Channel Partner always keeps the module's landing page in
+  // the menu — they have to be able to open the module they are boxed into. An
+  // admin who unticks everything leaves them that and nothing else.
   const portalTitle = isTelecaller
     ? 'Telecaller Portal'
     : (isCp || des.includes('cp cluster head') || isCpMgr)
@@ -430,15 +439,11 @@ export default function SalesLayout({ children }) {
         <div className="s-scroll" style={s.scroll}>
           {isCpBoxed ? (
             // A CP-designation Manager or Executive's entire Sales sidebar —
-            // just the one module, nothing else. An admin who unticks every
-            // Channel Partner screen for their designation leaves them no menu,
-            // so the heading goes too rather than sitting above nothing.
-            cpMenuIsEmpty ? null : (
-              <>
-                <div style={s.sectionLabel}>CHANNEL PARTNER</div>
-                {renderNavItem(CP_NAV_ITEM)}
-              </>
-            )
+            // just the one module, nothing else.
+            <>
+              <div style={s.sectionLabel}>CHANNEL PARTNER</div>
+              {renderNavItem(CP_NAV_ITEM)}
+            </>
           ) : inAdminSection ? (
             <>
               {/* Module-scoped admin, inside their Admin section — this REPLACES the
