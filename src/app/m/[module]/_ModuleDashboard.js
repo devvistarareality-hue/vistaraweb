@@ -20,31 +20,36 @@ export default function ModuleDashboard({ slug }) {
   const meta = MODULE_META[slug] || { name: slug, desc: '' };
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const isAccounts = slug === 'accounts';
-  const [rows, setRows] = useState(isAccounts ? null : []);
+  const [counts, setCounts] = useState(isAccounts ? null : {});
 
   useEffect(() => {
     if (!isAccounts) return;
-    const q = companyId ? `?company_id=${companyId}` : '';
+    // Counted on the server, so the tiles are not limited by how many bookings
+    // the list endpoint will hand back.
+    const q = `?counts_only=true${companyId ? `&company_id=${companyId}` : ''}`;
     apiFetch(SALES_ENDPOINTS.bookingsAll + q)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((d) => setRows(Array.isArray(d) ? d : (d?.results || [])))
-      .catch(() => setRows([]));
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d) => setCounts(d && typeof d === 'object' ? d : {}))
+      .catch(() => setCounts({}));
   }, [isAccounts, companyId]);
 
+  // Only a deal Sales or Channel Partner has already approved reaches the
+  // Accounts gate, so every figure here counts those and nothing else — which is
+  // what makes Approved equal the Sales and Channel Partner dashboards' closures
+  // added together.
   const kpis = useMemo(() => {
-    const list = rows || [];
-    const at = (s) => list.filter((b) => (b.accounts_status || b.status || '').toLowerCase() === s).length;
+    const n = counts || {};
     return [
-      { key: 'pending', icon: ClipboardCheck, label: 'Waiting for sign-off', value: at('pending'),
+      { key: 'pending', icon: ClipboardCheck, label: 'Waiting for sign-off', value: n.pending || 0,
         sub: 'Bookings at the Accounts gate', href: `/m/${slug}/approvals` },
-      { key: 'approved', icon: BookCheck, label: 'Approved', value: at('approved'),
+      { key: 'approved', icon: BookCheck, label: 'Approved', value: n.approved || 0,
         sub: 'Signed off by Accounts', href: `/m/${slug}/bookings` },
-      { key: 'rejected', icon: CircleSlash, label: 'Sent back', value: at('rejected'),
+      { key: 'rejected', icon: CircleSlash, label: 'Sent back', value: n.rejected || 0,
         sub: 'Returned to Sales with remarks', href: `/m/${slug}/approvals` },
-      { key: 'total', icon: Clock3, label: 'Bookings on the books', value: list.length,
-        sub: 'Every booking this company has', href: `/m/${slug}/bookings` },
+      { key: 'total', icon: Clock3, label: 'Deals on the books', value: n.total || 0,
+        sub: 'Approved by Sales or Channel Partner', href: `/m/${slug}/bookings` },
     ];
-  }, [rows, slug]);
+  }, [counts, slug]);
 
   return (
     <div className="nx-page">
@@ -55,7 +60,7 @@ export default function ModuleDashboard({ slug }) {
         </div>
       </div>
 
-      {rows === null ? <Loader label="Adding it up…" /> : (
+      {counts === null ? <Loader label="Adding it up…" /> : (
         <>
           <div className="md-kpis">
             {kpis.map((k) => (

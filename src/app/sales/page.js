@@ -338,6 +338,9 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
     ...(isCp ? [] : [{ label: 'Unassigned', value: stats.unassigned_leads, icon: <IconActivity />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: `${leadsHref}?unassigned=true` }]),
     { label: 'Site Visits',     value: stats.sv_done,         icon: <IconPin />,      color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: svHref },
     { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: closuresHref },
+    // Closed and approved here, but not yet signed off by Accounts. They are not
+    // in Closures yet — they join it the moment Accounts approves.
+    { label: 'Pending from Accounts', value: stats.accounts_pending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)' },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: projectsHref },
   ] : [];
 
@@ -798,6 +801,7 @@ export function STMDashboard({ user, cpOnly = false }) {
   const svSched    = stats?.stm_sv_scheduled_count ?? count('stm_status', 'sv_scheduled');
   const svDone     = stats?.sv_done ?? count('stm_status', 'sv_done');
   const closed     = stats?.closures ?? count('stm_status', 'closed');
+  const accPending = stats?.accounts_pending ?? 0;
   // Backlog tiles: leads handed over but not yet worked, and follow-ups still open.
   const toWork     = stats?.to_call_count           ?? count('stm_status', '');
   const fuPending  = stats?.followup_pending_count  ?? 0;
@@ -881,6 +885,9 @@ export function STMDashboard({ user, cpOnly = false }) {
           { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: '/sales/site-visits?tab=scheduled' },
           { label: 'SV Done', value: svDone, icon: <IconEye />, color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
           { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings' },
+          // Closed and approved here, waiting at the Accounts gate — not counted
+          // as a closure until Accounts signs off.
+          { label: 'Pending from Accounts', value: accPending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning)' },
         ] },
         { title: 'Conversion Rates', cards: [
           { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: 'var(--accent-softer)', textColor: 'var(--accent)' },

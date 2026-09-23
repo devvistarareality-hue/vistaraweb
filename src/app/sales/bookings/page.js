@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../../constants/api';
@@ -244,14 +244,20 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   }
   useEffect(() => { loadTransfers(); }, [companyId, adminView, cpOnly]);
 
+  // Which fetch is the current one. Switching tabs quickly used to leave the
+  // slower reply on screen — the All tab's 498 bookings sitting under an
+  // "Approved" heading — because whichever landed last won.
+  const reqId = useRef(0);
   function load() {
     setLoading(true);
     // Channel Partner's approvals are the partner-sourced bookings; Sales's are the
     // rest. Each module answers for its own book, so nothing shows up in both.
     const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : '', cpOnly ? 'cp_only=true' : 'source=sales'].filter(Boolean).join('&');
+    const mine = ++reqId.current;
     fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
-      .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((r) => r.json())
+      .then((d) => { if (mine === reqId.current) { setRows(Array.isArray(d) ? d : []); setLoading(false); } })
+      .catch(() => { if (mine === reqId.current) setLoading(false); });
   }
   // Collapse state is per project name, so reset it whenever the visible set changes.
   useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView, cpOnly]);
