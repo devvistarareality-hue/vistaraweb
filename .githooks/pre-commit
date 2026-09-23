@@ -1,3 +1,6 @@
 #!/bin/sh
 # Enabled automatically by `npm install` (package.json "prepare").
 node scripts/check-inline-styles.js || exit 1
+# An identifier used but never declared builds fine and then throws in the
+# browser — the project has no linter, so this stands in for one.
+node scripts/check-undefined.js || exit 1

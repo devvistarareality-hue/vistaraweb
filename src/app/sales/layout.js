@@ -11,7 +11,7 @@ import { refreshUser } from '../../lib/refreshUser';
 import { apiFetch } from '../../utils/apiFetch';
 import { useOneSignal } from '../../lib/useOneSignal';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import {isManagerRole, isSuperAdmin, moduleAccess, isCpManager, isCp as isCpDesignation, can, canSee} from '../../lib/moduleAccess';
+import {isManagerRole, isSuperAdmin, moduleAccess, isCp as isCpDesignation, can, canSee} from '../../lib/moduleAccess';
 import NotificationBell from './_NotificationBell';
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
@@ -305,16 +305,9 @@ export default function SalesLayout({ children }) {
   // Managers oversee the sales floor, so they also get the STM-portal modules
   // (Site Visits, Booking, My Conversions) — without changing their portal title.
   const isManager = isManagerRole(user);
-  // Someone boxed into Channel Partner always keeps the module's landing page in
-  // the menu — they have to be able to open the module they are boxed into. An
-  // admin who unticks everything leaves them that and nothing else.
-  const portalTitle = isTelecaller
-    ? 'Telecaller Portal'
-    : (isCp || des.includes('cp cluster head') || isCpMgr)
-    ? 'Channel Partner'
-    : isStm
-    ? 'Sales Executive'
-    : 'Sales CRM';
+  // Channel Partner is its own module now, so nobody lands in Sales as a partner
+  // person: this is the Sales floor's own title.
+  const portalTitle = isTelecaller ? 'Telecaller Portal' : isStm ? 'Sales Executive' : 'Sales CRM';
 
   return (
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open-active' : ''}`}>
