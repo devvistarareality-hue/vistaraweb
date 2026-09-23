@@ -155,7 +155,9 @@ export function MyBookingsList({ cpOnly = false }) {
     // cp_only tells the server this is the Channel Partner module, where My Bookings
     // also covers the CP pool. Without it the same screen in Sales shows only own and
     // team work, which is the intended difference between the two.
-    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (cpOnly ? '&cp_only=true' : '')
+    // The two modules are two books: Channel Partner keeps the partner-sourced
+    // bookings, Sales keeps the rest, so a booking is only ever counted once.
+    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (cpOnly ? '&cp_only=true' : '&source=sales')
       + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));

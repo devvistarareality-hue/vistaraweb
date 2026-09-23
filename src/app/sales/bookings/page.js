@@ -246,7 +246,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
   function load() {
     setLoading(true);
-    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : '', cpOnly ? 'cp_only=true' : ''].filter(Boolean).join('&');
+    // Channel Partner's approvals are the partner-sourced bookings; Sales's are the
+    // rest. Each module answers for its own book, so nothing shows up in both.
+    const q = '?' + [tab ? `status=${tab}` : '', companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : '', cpOnly ? 'cp_only=true' : 'source=sales'].filter(Boolean).join('&');
     fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
