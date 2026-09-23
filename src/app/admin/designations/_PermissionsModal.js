@@ -126,6 +126,12 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                   </button>
                 ))}
               </div>
+              {!byModule.length && (
+                <div className="nx-note info">
+                  {designation.module} has no switchable actions yet — everyone with the module
+                  can do what it offers. Its menu and dashboard are on the other tabs.
+                </div>
+              )}
               {byModule.map(({ module, items }) => {
                 const on = items.filter((c) => caps.has(c.key)).length;
                 const allOn = on === items.length;
