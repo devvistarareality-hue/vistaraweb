@@ -39,7 +39,6 @@ function IconImport()       { return <SvgIcon><path d="M21 15v4a2 2 0 01-2 2H5a2
 function IconBack()         { return <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>; }
 function IconCalendar()     { return <SvgIcon><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></SvgIcon>; }
 function IconMapPin()       { return <SvgIcon><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></SvgIcon>; }
-function IconConversion()   { return <SvgIcon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></SvgIcon>; }
 function IconTrash()        { return <SvgIcon><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></SvgIcon>; }
 function IconAdmin()        { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></SvgIcon>; }
 function IconLog()          { return <SvgIcon><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 11.5 4"/><polyline points="3 16 3 11 8 11"/></SvgIcon>; }
@@ -51,9 +50,6 @@ const NAV = [
   { label: 'Follow-Ups',   href: '/sales/follow-ups',    icon: <IconCalendar /> , screen: 'sales.screen.followups' },
   { label: 'Site Visits',  href: '/sales/site-visits',   icon: <IconMapPin />,    stmPortal: true , screen: 'sales.screen.sitevisits' },
   { label: 'Booking',      href: '/sales/closure',       icon: <IconBuilding />,  stmPortal: true , screen: 'sales.screen.booking' },
-  // Not for an STM: their site visits and closures are reached from Site Visits
-  // and Booking → My Bookings, which the dashboard tiles now link to directly.
-  { label: 'My Conversions', href: '/sales/my-conversions', icon: <IconConversion />, tcStmPortal: true, hideForStm: true , screen: 'sales.screen.conversions' },
   { label: 'My Team',      href: '/sales/my-team',       icon: <IconUsers />,     managerOnly: true , screen: 'sales.screen.myteam' },
   { label: 'Approvals',    href: '/sales/bookings',      icon: <IconBuilding />,  managerOnly: true , screen: 'sales.screen.approvals' },
   { label: 'Projects',     href: '/sales/projects',      icon: <IconBuilding />,  adminOnly: true , screen: 'sales.screen.projects' },
@@ -78,7 +74,6 @@ const ADMIN_SECTION_NAV = [
   { label: 'Follow-Ups',     href: '/sales/admin/follow-ups',      icon: <IconCalendar /> },
   { label: 'Site Visits',    href: '/sales/admin/site-visits',     icon: <IconMapPin /> },
   { label: 'Booking',        href: '/sales/admin/closure',         icon: <IconBuilding /> },
-  { label: 'My Conversions', href: '/sales/admin/my-conversions',  icon: <IconConversion /> },
   { label: 'My Team',        href: '/sales/admin/my-team',         icon: <IconUsers /> },
   { label: 'Approvals',      href: '/sales/admin/bookings',        icon: <IconBuilding /> },
   { label: 'Projects',       href: '/sales/projects',              icon: <IconBuilding /> },

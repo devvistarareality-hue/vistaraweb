@@ -324,11 +324,14 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   // CP Cluster Heads land on their own Channel Partner section, not the regular
   // Sales/Admin one — every tile has to point at the CP-scoped equivalent page.
   const leadsHref     = isCp ? '/m/cp/leads'       : (adminView ? '/sales/admin/leads' : '/sales/leads');
-  const svHref         = isCp ? '/m/cp/site-visits' : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`;
-  // Channel Partner has no Closures page of its own: a closure there is a
-  // booking, so the card opens Booking → My Bookings with Approved chosen.
+  // Site Visits opens on its Completed tab — the visits themselves, which is what
+  // the tile counted.
+  const svHref         = isCp ? '/m/cp/site-visits?tab=completed'
+    : `${adminView ? '/sales/admin/site-visits' : '/sales/site-visits'}?tab=completed`;
+  // A closure is a booking that cleared both gates, so the card opens Booking →
+  // My Bookings with Approved chosen, in Sales as well as Channel Partner.
   const closuresHref   = isCp ? '/m/cp/closure?view=mybookings&status=sold'
-    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
+    : `${adminView ? '/sales/admin/closure' : '/sales/closure'}?view=mybookings&status=sold`;
   const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: leadsHref },
@@ -566,9 +569,9 @@ function TelecallerDashboard({ user }) {
     ] },
     { title: 'Conversions', cards: [
       { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
-      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/my-conversions' },
-      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/my-conversions?tab=closures' },
-      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/my-conversions' },
+      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
+      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold' },
+      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/site-visits?tab=completed' },
     ] },
   ];
 
@@ -890,7 +893,7 @@ export function STMDashboard({ user, cpOnly = false }) {
           // that page has its own date filter and ignores the params.
           { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: '/sales/site-visits?tab=scheduled' },
           { label: 'SV Done', value: svDone, icon: <IconEye />, color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
-          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings',
+          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold',
             sub: cpOnly ? `${(stats?.closures_other_source ?? 0).toLocaleString('en-IN')} more from other sources` : null },
           // Closed and approved here, waiting at the Accounts gate — not counted
           // as a closure until Accounts signs off.

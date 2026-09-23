@@ -30,7 +30,7 @@ const URL_FOR_TYPE = {
   lead_transfer_requested: '/sales/bookings',
   lead_transfer_approved: '/sales/leads',
   lead_transfer_rejected: '/sales/leads',
-  closure: '/sales/my-conversions',
+  closure: '/sales/closure?view=mybookings&status=sold',
   followup_overdue: '/sales/follow-ups',
   sv_overdue: '/sales/site-visits',
   availability_reminder: '/sales',
