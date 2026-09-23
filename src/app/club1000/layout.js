@@ -199,6 +199,7 @@ export default function Club1000Layout({ children }) {
     { label: 'Email',             value: profileData?.email },
     { label: 'Organisation',      value: profileData?.company_name },
     { label: 'Designation',       value: profileData?.designation },
+    { label: 'Role',              value: profileData?.role },
     { label: 'Reporting Manager', value: profileData?.reporting_manager?.name },
   ];
 

@@ -219,6 +219,7 @@ export default function SalesLayout({ children }) {
     { label: 'Organisation',      value: profileData?.company_name },
     { label: 'Department',        value: profileData?.department },
     { label: 'Designation',       value: profileData?.designation },
+    { label: 'Role',              value: profileData?.role },
     { label: 'Reporting Manager', value: profileData?.reporting_manager?.name },
   ];
 
@@ -245,7 +246,9 @@ export default function SalesLayout({ children }) {
   const _isTrueAdminEarly = user?.role === 'Admin' || user?.is_staff;
   const _isSalesModuleAdminEarly = !_isTrueAdminEarly && (user?.admin_modules || []).includes('Sales');
   const _cpSharedBookingFlow = pathname.startsWith('/sales/closure') || pathname.startsWith('/sales/booking');
-  const _cpOnlyOffRoot = !_isTrueAdminEarly && !_isSalesModuleAdminEarly && (isCpManager(user) || isCpDesignation(user))
+  const _cpBoxedEarly = !_isTrueAdminEarly && !_isSalesModuleAdminEarly
+    && (isCpManager(user) || isCpDesignation(user));
+  const _cpOnlyOffRoot = _cpBoxedEarly
     && !pathname.startsWith('/sales/channel-partners') && !_cpSharedBookingFlow;
   // Hiding a menu item has to mean hiding the page: otherwise anyone who
   // remembers the address walks straight back in. A designation with no menu
@@ -264,7 +267,11 @@ export default function SalesLayout({ children }) {
   const _mayManagerItem = _mayAdminItem || isManagerRole(user);
   const _mayStmItem = _mayManagerItem || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp');
   const _mayTcItem = _mayAdminItem || can(user, 'sales.pipeline.telecalling');
-  const _firstAllowed = _screenRoutes.find((i) => canSee(user, i.screen)
+  // Someone boxed into Channel Partner is sent back there from anywhere else, so
+  // their fallback has to be a CP page — otherwise the two redirects chase each
+  // other and the page never settles.
+  const _fallbackRoutes = _cpBoxedEarly ? CP_CHILDREN.filter((i) => i.screen && i.href) : _screenRoutes;
+  const _firstAllowed = _fallbackRoutes.find((i) => canSee(user, i.screen)
     && i.href !== _currentRoute?.href
     && (!i.adminOnly || _mayAdminItem) && (!i.trueAdminOnly || _isTrueAdminEarly)
     && (!i.managerOnly || _mayManagerItem)

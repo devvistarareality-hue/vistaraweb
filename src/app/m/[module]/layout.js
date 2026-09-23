@@ -63,6 +63,7 @@ export default function ModuleLayout({ children, params }) {
     { label: 'Organisation',      value: profileData?.company_name },
     { label: 'Department',        value: profileData?.department },
     { label: 'Designation',       value: profileData?.designation },
+    { label: 'Role',              value: profileData?.role },
     { label: 'Reporting Manager', value: profileData?.reporting_manager?.name },
   ];
 

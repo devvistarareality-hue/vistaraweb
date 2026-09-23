@@ -748,7 +748,7 @@ function TelecallerDashboard({ user }) {
 // ─────────────────────────────────────────────
 // STM DASHBOARD
 // ─────────────────────────────────────────────
-function STMDashboard({ user }) {
+export function STMDashboard({ user, cpOnly = false }) {
   const [stats,   setStats]   = useState(null);
   const [trend,   setTrend]   = useState(null);
   const [leads,   setLeads]   = useState([]);
@@ -766,6 +766,9 @@ function STMDashboard({ user }) {
     const params = new URLSearchParams();
     if (eff.from) params.set('date_from', eff.from);
     if (eff.to)   params.set('date_to',   eff.to);
+    // Inside the Channel Partner module this same view counts partner-sourced
+    // records only — the backend does the scoping, as it does for the desk.
+    if (cpOnly) params.set('cp_only', 'true');
     const qs = params.toString() ? `?${params}` : '';
     Promise.all([
       apiFetch(`${SALES_ENDPOINTS.stats}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
