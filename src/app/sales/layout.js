@@ -118,6 +118,11 @@ export default function SalesLayout({ children }) {
   // (module) admin is scoped to their own company and stays inside Sales.
   const superAdmin = isSuperAdmin(user);
   const isVRLAdmin = superAdmin && user?.company_code === 'VRL';
+  // Anyone holding more than one module needs a way back to the module picker;
+  // a single-module employee is boxed into Sales (same rule as /m/[module]).
+  const back = superAdmin ? { href: '/admin', label: 'Back to Admin' }
+    : (user?.modules || []).length > 1 ? { href: '/dashboard', label: 'Back to Modules' }
+    : null;
 
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
   const [profileOpen,    setProfileOpen]    = useState(false);
@@ -406,12 +411,12 @@ export default function SalesLayout({ children }) {
             </div>
           )}
 
-          {superAdmin && (
+          {back && (
             <>
-              <div style={{ ...s.sectionLabel, marginTop: 22 }}>NAVIGATE</div>
-              <Link href="/admin" className="s-nav-link" style={s.navItem}>
-                <span style={{ ...s.iconWrap, color: 'rgba(var(--ink-rgb),0.6)' }}><IconBack /></span>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>Back to Admin</span>
+              <div className="s-nav-gap" style={s.sectionLabel}>NAVIGATE</div>
+              <Link href={back.href} className="s-nav-link" style={s.navItem}>
+                <span className="s-nav-back-icon" style={s.iconWrap}><IconBack /></span>
+                <span className="s-nav-back-label">{back.label}</span>
               </Link>
             </>
           )}

@@ -1345,3 +1345,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .dbf-copy > span { font-size: 11.5px; font-weight: 700; color: var(--muted); }
 .dbf-copybtn { margin-left: auto; }
 @media (max-width: 560px) { .dbf-copybtn { margin-left: 0; } }
+
+/* Sales sidebar: the "NAVIGATE" back link (Back to Admin / Back to Modules). */
+.s-nav-gap { margin-top: 22px; }
+.s-nav-back-icon { color: rgba(var(--ink-rgb),0.6); }
+.s-nav-back-label { font-size: 13px; font-weight: 500; }
