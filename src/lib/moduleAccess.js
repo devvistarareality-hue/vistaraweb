@@ -7,7 +7,7 @@
 // are unaffected and keep full ERP access. Regular employees are also unaffected;
 // the guards only redirect restricted module admins.
 
-export const ALL_MODULES = ['Sales', 'Channel Partner', 'HR', 'Accounts & Finance', 'AR', 'Execution', 'Purchase', 'Land', 'Club 1000'];
+export const ALL_MODULES = ['Sales', 'Channel Partner', 'HR', 'Accounts & Finance', 'AR', 'Task Allocation', 'Purchase', 'Land', 'Club 1000'];
 
 export const MODULE_ROUTES = {
   'Sales':              '/sales',
@@ -15,16 +15,17 @@ export const MODULE_ROUTES = {
   'HR':                 '/m/hr',
   'Accounts & Finance': '/m/accounts',
   'AR':                 '/m/ar/dashboard',
-  'Execution':          '/m/execution',
+  'Task Allocation':    '/m/execution/dashboard',
   'Purchase':           '/m/purchase',
   'Land':               '/m/land',
   'Club 1000':          '/club1000',
 };
 
-// /m/[module] slug → module display name
+// /m/[module] slug → module display name (the `execution` slug predates this
+// module's real name — kept as-is so its URL never changes).
 export const SLUG_TO_MODULE = {
   hr: 'HR', accounts: 'Accounts & Finance', ar: 'AR', cp: 'Channel Partner',
-  execution: 'Execution', purchase: 'Purchase', land: 'Land',
+  execution: 'Task Allocation', purchase: 'Purchase', land: 'Land',
 };
 
 // A departmental / module admin = role='Admin' restricted to exactly ONE module
@@ -124,7 +125,7 @@ export function canSee(user, key) {
 // in the backend's capabilities.py.
 const SCREEN_PREFIX = {
   sales: 'Sales', cp: 'Channel Partner', hr: 'HR', accounts: 'Accounts & Finance',
-  ar: 'AR', execution: 'Execution', purchase: 'Purchase', land: 'Land', club: 'Club 1000',
+  ar: 'AR', execution: 'Task Allocation', purchase: 'Purchase', land: 'Land', club: 'Club 1000',
 };
 export function moduleOfScreen(key) {
   return SCREEN_PREFIX[String(key || '').split('.')[0]] || '';

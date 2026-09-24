@@ -10,7 +10,7 @@ import PermissionsModal from './_PermissionsModal';
 const MODULE_COLOR = {
   Sales:      { bg: 'var(--warning-soft)', text: 'var(--warning-2)', dot: 'var(--warning-2)' },
   HR:         { bg: 'var(--accent-soft)', text: 'var(--accent)', dot: 'var(--accent)' },
-  Execution:  { bg: 'var(--warning-soft)', text: 'var(--warning-2)', dot: 'var(--warning-2)' },
+  'Task Allocation': { bg: 'var(--warning-soft)', text: 'var(--warning-2)', dot: 'var(--warning-2)' },
   Purchase:   { bg: 'var(--accent-soft)', text: 'var(--accent-deep)', dot: 'var(--accent-deep)' },
   Land:       { bg: 'var(--success-soft)', text: 'var(--success)', dot: 'var(--success)' },
   'Club 1000': { bg: 'var(--success-soft)', text: 'var(--success)', dot: 'var(--success)' },

@@ -47,7 +47,7 @@ export const CARD_SHADOW = '0 1px 2px rgba(var(--ink-rgb),0.04), 0 8px 24px rgba
 export const MODULE_ACCENT = {
   HR:          { bg: 'var(--accent-soft)', icon: 'var(--accent)' },
   Sales:       { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
-  Execution:   { bg: 'var(--success-soft)', icon: 'var(--success)' },
+  'Task Allocation': { bg: 'var(--success-soft)', icon: 'var(--success)' },
   Purchase:    { bg: 'var(--warning-soft)', icon: 'var(--warning-2)' },
   Land:        { bg: 'var(--accent-soft)', icon: 'var(--accent-deep)' },
   'Accounts & Finance': { bg: 'var(--success-soft)', icon: 'var(--success)' },

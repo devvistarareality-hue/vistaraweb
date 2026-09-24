@@ -34,6 +34,9 @@ const URL_FOR_TYPE = {
   followup_overdue: '/sales/follow-ups',
   sv_overdue: '/sales/site-visits',
   availability_reminder: '/sales',
+  task_assigned: '/m/execution/list?my_tasks=true',
+  task_comment: '/m/execution/list?my_tasks=true',
+  task_due_soon: '/m/execution/list?my_tasks=true',
 };
 
 
@@ -55,6 +58,7 @@ const ICON = {
   lead_transfer_requested: 'user', lead_transfer_approved: 'user', lead_transfer_rejected: 'user',
   closure: 'trophy', overdue: 'clock', mark_available: 'dot', test: 'bell',
   followup_overdue: 'clock', sv_overdue: 'clock', availability_reminder: 'dot',
+  task_assigned: 'note', task_comment: 'phone', task_due_soon: 'clock',
 };
 const TYPE_COLOR = {
   new_lead: 'var(--success)', followup: 'var(--accent)', sv: 'var(--success)', sv_done: 'var(--success)',
@@ -66,6 +70,7 @@ const TYPE_COLOR = {
   lead_transfer_requested: 'var(--warning)', lead_transfer_approved: 'var(--success)', lead_transfer_rejected: 'var(--danger)',
   closure: 'var(--accent)', overdue: 'var(--danger)', mark_available: 'var(--success)', test: 'var(--accent)',
   followup_overdue: 'var(--danger)', sv_overdue: 'var(--danger)', availability_reminder: 'var(--success)',
+  task_assigned: 'var(--accent)', task_comment: 'var(--accent)', task_due_soon: 'var(--warning)',
 };
 
 export default function NotificationBell({ up = false, align = 'right' }) {

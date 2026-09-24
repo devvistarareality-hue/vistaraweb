@@ -120,6 +120,14 @@ export default function ModuleLayout({ children, params }) {
     // My Team is a management view — only managers and admins see it.
     ...(isManager || isAdmin ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers />,
                                  screen: `${slug}.screen.myteam` }] : []),
+    // Task Allocation: a kanban board and a filterable list are two views onto
+    // the same tasks (Dashboard is already added above); Task Lists manages
+    // the containers themselves.
+    ...(slug === 'execution' ? [
+      { label: 'Board', href: `${base}/board`, icon: <IconGrid /> },
+      { label: 'List', href: `${base}/list`, icon: <IconBook /> },
+      { label: 'Task Lists', href: `${base}/lists`, icon: <IconCheck /> },
+    ] : []),
     // Who changed what in this module, and when — real admins only.
     ...(isAdmin ? [{ label: 'Log', href: `${base}/log`, icon: <IconLog /> }] : []),
   ];

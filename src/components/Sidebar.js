@@ -87,7 +87,7 @@ const PARKED_ITEMS = [
   { label: 'HR',                 href: '/m/hr',        icon: <IconPeople />,    live: true },
   { label: 'Accounts & Finance', href: '/m/accounts',  icon: <IconWallet />,    live: true },
   { label: 'Accounts Receivable', href: '/m/ar/dashboard', icon: <IconReceivable />, live: true },
-  { label: 'Execution',          href: '/m/execution', icon: <IconChecklist />, live: true },
+  { label: 'Task Allocation',    href: '/m/execution/dashboard', icon: <IconChecklist />, live: true },
   { label: 'Purchase',           href: '/m/purchase',  icon: <IconCart />,      live: true },
   { label: 'Land',               href: '/m/land',      icon: <IconPin />,       live: true },
   { label: 'Club 1000',          href: '/club1000',    icon: <IconCoins />,     live: true },
