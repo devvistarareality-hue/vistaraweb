@@ -256,7 +256,10 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
     setLoading(true);
     // Channel Partner's approvals are the partner-sourced bookings; Sales's are the
     // rest. Each module answers for its own book, so nothing shows up in both.
-    const q = '?' + [tab === 'accounts' ? 'status=sold&accounts_status=pending' : tab ? `status=${tab}` : '',
+    // to_decide: this screen asks what the viewer is named to rule on. Someone
+    // named on no project sees nothing here — their own sales are on My Bookings,
+    // not on the screen where verdicts are given.
+    const q = '?' + ['to_decide=1', tab === 'accounts' ? 'status=sold&accounts_status=pending' : tab ? `status=${tab}` : '',
       companyId ? `company_id=${companyId}` : '', adminView ? 'admin_view=1' : '', cpOnly ? 'cp_only=true' : 'source=sales'].filter(Boolean).join('&');
     const mine = ++reqId.current;
     fetch(SALES_ENDPOINTS.bookings + q, { headers: authHeaders() })
