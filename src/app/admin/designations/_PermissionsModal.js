@@ -100,7 +100,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
     const mods = [...new Set(own.map((c) => c.module))];
     return mods.map((m) => ({ module: m, items: own.filter((c) => c.module === m) }));
   };
-  const byModule = useMemo(() => group(catalogue?.capabilities), [catalogue]);
+  const byModule = useMemo(() => group(catalogue?.capabilities), [catalogue, extra]);
   // Dashboards, narrowed to one role and then grouped by module. The default
   // ("decide from their permissions") has no role, so it always stays visible.
   const dashGroups = useMemo(() => {
@@ -109,8 +109,8 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
       .filter((d) => !dashRole || !d.role || d.role === dashRole);
     const mods = [...new Set(rows.map((d) => d.module))];
     return mods.map((m) => ({ module: m, items: rows.filter((d) => d.module === m) }));
-  }, [catalogue, dashRole]);
-  const screensByModule = useMemo(() => group(catalogue?.screens), [catalogue]);
+  }, [catalogue, dashRole, extra]);
+  const screensByModule = useMemo(() => group(catalogue?.screens), [catalogue, extra]);
 
   const scopeLabel = (catalogue?.scopes || []).find((s) => s.value === scope)?.label || '';
   const dashLabel = (catalogue?.dashboards || []).find((d) => d.value === dash)?.label || '';
