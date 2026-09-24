@@ -1437,3 +1437,97 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-board-col-title.tone-warn  { color: var(--warning-2); }
 .nx-board-col-title.tone-bad   { color: var(--danger); }
 .nx-board-col-title.tone-muted { color: var(--text-3); }
+
+/* ─── My Conversions (Sales: site visits + closures a telecaller referred) ─── */
+.myconv-head { margin-bottom: 24px; }
+.myconv-card { border-radius: 18px; overflow: hidden; }
+.myconv-scroll { max-height: 560px; overflow-y: auto; overflow-x: auto; }
+.myconv-empty { text-align: center; padding: 60px 0; color: var(--faint); font-size: 14px; }
+.myconv-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.myconv-name { font-weight: 600; }
+.myconv-muted { color: var(--text-3); }
+.myconv-bold { font-weight: 600; }
+.myconv-row { cursor: pointer; }
+.myconv-row.is-static { cursor: default; }
+
+.myconv-stats { display: flex; gap: 16px; margin-bottom: 24px; }
+.myconv-stat { flex: 1; border-radius: 18px; padding: 18px 20px; border: 1px solid; }
+.myconv-stat-value { font-size: 28px; font-weight: 800; }
+.myconv-stat-label { font-size: 12px; font-weight: 700; margin-top: 4px; }
+.myconv-stat.is-sv { background: var(--success-soft); border-color: var(--success-2); }
+.myconv-stat.is-sv .myconv-stat-value, .myconv-stat.is-sv .myconv-stat-label { color: var(--success); }
+.myconv-stat.is-closures { background: var(--surface-3); border-color: var(--border-strong); }
+.myconv-stat.is-closures .myconv-stat-value { color: var(--accent-deep); }
+.myconv-stat.is-closures .myconv-stat-label { color: var(--text); }
+.myconv-stat.is-upcoming { background: var(--warning-soft); border-color: var(--warning-soft); }
+.myconv-stat.is-upcoming .myconv-stat-value { color: var(--warning-2); }
+.myconv-stat.is-upcoming .myconv-stat-label { color: var(--danger-deep); }
+
+.myconv-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid var(--surface-2); }
+.myconv-tab { padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; background: none;
+  color: var(--faint); border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.myconv-tab.is-on { color: var(--warning-2); border-bottom-color: var(--warning-2); }
+
+.myconv-status { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; }
+.myconv-status[data-kind="sv"][data-status="scheduled"]  { background: var(--warning-soft); color: var(--warning-2); }
+.myconv-status[data-kind="sv"][data-status="completed"]  { background: var(--success-soft); color: var(--success); }
+.myconv-status[data-kind="sv"][data-status="no_show"]    { background: var(--danger-soft); color: var(--danger); }
+.myconv-status[data-kind="sv"][data-status="cancelled"]  { background: var(--surface-2); color: var(--text-3); }
+.myconv-status[data-kind="closure"][data-status="booked"]    { background: var(--success-soft); color: var(--success); }
+.myconv-status[data-kind="closure"][data-status="cancelled"] { background: var(--danger-soft); color: var(--danger); }
+.myconv-status[data-kind="closure"][data-status="refunded"]  { background: var(--warning-soft); color: var(--warning-2); }
+/* Fallback for a status not in the map above. */
+.myconv-status { background: var(--surface-2); color: var(--text-3); }
+
+/* ── Lead history modal ── */
+.myconv-modal { width: 480px; max-width: 100%; max-height: 88vh; overflow: hidden; display: flex; flex-direction: column; }
+.myconv-modal-head { padding: 18px 22px; display: flex; align-items: flex-start; justify-content: space-between; }
+.myconv-modal-name { font-size: 17px; font-weight: 800; color: #fff; }
+.myconv-modal-phone { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.myconv-modal-close { background: rgba(255,255,255,0.12); border: none; border-radius: 8px; width: 32px; height: 32px;
+  cursor: pointer; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.myconv-modal-body { padding: 22px; overflow-y: auto; }
+
+.myconv-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 20px; }
+.myconv-detail-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.myconv-detail-value { font-size: 13px; color: var(--text); margin-top: 2px; }
+.myconv-detail-value.is-status { text-transform: capitalize; }
+
+.myconv-history-title { font-size: 12px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+
+.myconv-tl-row { display: flex; gap: 12px; margin-bottom: 18px; }
+.myconv-tl-row.is-last { margin-bottom: 0; }
+.myconv-tl-rail { display: flex; flex-direction: column; align-items: center; }
+.myconv-tl-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.myconv-tl-line { width: 2px; flex: 1; background: var(--surface-2); margin-top: 4px; }
+.myconv-tl-body { padding-bottom: 18px; flex: 1; }
+.myconv-tl-body.is-last { padding-bottom: 0; }
+.myconv-tl-title { font-size: 13px; font-weight: 700; color: var(--text); margin: 0; }
+.myconv-tl-value { font-size: 12px; color: var(--text); margin: 3px 0 0; }
+.myconv-tl-old { color: var(--muted); }
+.myconv-tl-new { font-weight: 600; }
+.myconv-tl-by { font-size: 11px; color: var(--muted); margin: 2px 0 0; }
+.myconv-tl-date { font-size: 11px; color: var(--faint); margin: 2px 0 0; }
+.myconv-tl-desc { font-size: 11px; color: var(--muted); margin: 3px 0 0; }
+.myconv-tl-empty { font-size: 13px; color: var(--faint); text-align: center; margin-top: 8px; }
+
+/* The dot + the "new value" text share the same field colour — a small fixed
+   palette keyed by what changed, not a per-record dynamic value. */
+.myconv-tl-dot[data-field="created"]        { background: color-mix(in srgb, var(--text-3) 9%, transparent); color: var(--text-3); }
+.myconv-tl-dot[data-field="status"]         { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--accent); }
+.myconv-tl-dot[data-field="telecaller_status"] { background: color-mix(in srgb, var(--success) 9%, transparent); color: var(--success); }
+.myconv-tl-dot[data-field="stm_status"]     { background: color-mix(in srgb, var(--warning-2) 9%, transparent); color: var(--warning-2); }
+.myconv-tl-dot[data-field="telecaller"]     { background: color-mix(in srgb, var(--accent-deep) 9%, transparent); color: var(--accent-deep); }
+.myconv-tl-dot[data-field="stm"]            { background: color-mix(in srgb, var(--success) 9%, transparent); color: var(--success); }
+.myconv-tl-dot[data-field="warm_transfer"]  { background: color-mix(in srgb, var(--danger) 9%, transparent); color: var(--danger); }
+.myconv-tl-dot[data-field="site_visit"]     { background: color-mix(in srgb, var(--warning-2) 9%, transparent); color: var(--warning-2); }
+.myconv-tl-dot[data-field="closure"]        { background: color-mix(in srgb, var(--success) 9%, transparent); color: var(--success); }
+.myconv-tl-new[data-field="created"]        { color: var(--text-3); }
+.myconv-tl-new[data-field="status"]         { color: var(--accent); }
+.myconv-tl-new[data-field="telecaller_status"] { color: var(--success); }
+.myconv-tl-new[data-field="stm_status"]     { color: var(--warning-2); }
+.myconv-tl-new[data-field="telecaller"]     { color: var(--accent-deep); }
+.myconv-tl-new[data-field="stm"]            { color: var(--success); }
+.myconv-tl-new[data-field="warm_transfer"]  { color: var(--danger); }
+.myconv-tl-new[data-field="site_visit"]     { color: var(--warning-2); }
+.myconv-tl-new[data-field="closure"]        { color: var(--success); }
