@@ -54,6 +54,21 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   const toggle = flip(setCaps);
   const toggleScreen = flip(setScreens);
 
+  // Adding a module brings its whole menu in, ticked, so the job is to untick
+  // what this designation should not see — rather than starting from a blank
+  // sidebar and having to remember every tab. Removing it takes its keys back
+  // out, so a module dropped by mistake leaves nothing behind.
+  function toggleModule(m) {
+    const keys = (catalogue?.screens || []).filter((c) => c.module === m).map((c) => c.key);
+    const adding = !extra.includes(m);
+    setExtra((e) => (adding ? [...e, m] : e.filter((x) => x !== m)));
+    setScreens((prev) => {
+      const next = new Set(prev);
+      keys.forEach((k) => (adding ? next.add(k) : next.delete(k)));
+      return next;
+    });
+  }
+
   async function save() {
     setSaving(true); setErr('');
     try {
@@ -190,12 +205,16 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                   </button>
                   {otherModules.map((m) => (
                     <button type="button" key={m} className={`perm-chip${extra.includes(m) ? ' is-on' : ''}`}
-                      onClick={() => setExtra((e) => (e.includes(m) ? e.filter((x) => x !== m) : [...e, m]))}>
+                      onClick={() => toggleModule(m)}>
                       {extra.includes(m) && <Check size={13} />} {m}
                     </button>
                   ))}
                 </div>
-                <p className="perm-note">A module not chosen here keeps its default menu for anyone holding it.</p>
+                <p className="perm-note">
+                  A module not chosen here keeps its default menu for anyone holding it.
+                  Choose one and its tabs appear below, all on — untick the ones this
+                  designation should not see.
+                </p>
               </section>
               {screensByModule.map(({ module, items }) => (
                 <section className="perm-card" key={module}>
