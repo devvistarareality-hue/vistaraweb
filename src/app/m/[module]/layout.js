@@ -124,9 +124,9 @@ export default function ModuleLayout({ children, params }) {
     // the same tasks (Dashboard is already added above); Task Lists manages
     // the containers themselves.
     ...(slug === 'execution' ? [
-      { label: 'Board', href: `${base}/board`, icon: <IconGrid /> },
-      { label: 'List', href: `${base}/list`, icon: <IconBook /> },
-      { label: 'Task Lists', href: `${base}/lists`, icon: <IconCheck /> },
+      { label: 'Board', href: `${base}/board`, icon: <IconGrid />, screen: 'execution.screen.board' },
+      { label: 'List', href: `${base}/list`, icon: <IconBook />, screen: 'execution.screen.list' },
+      { label: 'Task Lists', href: `${base}/lists`, icon: <IconCheck />, screen: 'execution.screen.lists' },
     ] : []),
     // Who changed what in this module, and when — real admins only.
     ...(isAdmin ? [{ label: 'Log', href: `${base}/log`, icon: <IconLog /> }] : []),
