@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, loiHref, authHeaders } from '../../constants/api';
 import { unitLabel } from './../../lib/bookingUnit';
+import { isManagerRole } from '../../lib/moduleAccess';
 import DateFilter from './_DateFilter';
 import BookingDetails from '../../components/BookingDetails';
 
@@ -152,6 +153,14 @@ export function MyBookingsList({ cpOnly = false }) {
   const [range, setRange] = useState({ from: '', to: '' });
   const [proj, setProj] = useState('');
   const [who, setWho] = useState('');     // 'booked by' — a user id, '' for everyone
+  // Whose bookings the server sends: this person's own desk, or everything they
+  // may see. The default is the desk — that is what My Bookings means — but the
+  // dashboard's Closures tile counts everything a manager can see, so it opens
+  // this list on the wider view rather than one its figure cannot fit inside.
+  const [scope, setScope] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('scope') === 'visible' ? 'visible' : '';
+  });
   // Revision history, fetched per booking on demand: only a handful of deals are
   // ever revised, so loading every chain up front would be work for nothing.
   const [revs, setRevs] = useState({});      // booking id → array of versions
@@ -174,11 +183,12 @@ export function MyBookingsList({ cpOnly = false }) {
     // The two modules are two books: Channel Partner keeps the partner-sourced
     // bookings, Sales keeps the rest, so a booking is only ever counted once.
     fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (cpOnly ? '&cp_only=true' : '&source=sales')
+      + (scope === 'visible' && !cpOnly ? '&scope=visible' : '')
       + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
-  useEffect(load, [companyId, cpOnly]);
+  useEffect(load, [companyId, cpOnly, scope]);
 
   // The reporting tree, for the 'Booked by' filter. Failing quietly is right here:
   // someone with no reports gets an empty list and simply never sees the dropdown,
@@ -367,6 +377,13 @@ export function MyBookingsList({ cpOnly = false }) {
           <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }} style={selectStyle}>
             <option value="">All Projects</option>
             {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        )}
+        {!cpOnly && (isManagerRole(me) || me?.is_staff || me?.role === 'Admin') && (
+          <select className="nx-input" value={scope} onChange={(e) => { setScope(e.target.value); setOpen({}); setWho(''); }}
+            style={selectStyle} title="Whose bookings to show">
+            <option value="">My desk</option>
+            <option value="visible">Everyone I can see</option>
           </select>
         )}
         {(peopleOptions.length > 0 || others.length > 0 || showSource) && (

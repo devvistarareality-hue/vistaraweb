@@ -330,8 +330,11 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
     : `${adminView ? '/sales/admin/site-visits' : '/sales/site-visits'}?tab=completed`;
   // A closure is a booking that cleared both gates, so the card opens Booking →
   // My Bookings with Approved chosen, in Sales as well as Channel Partner.
+  // scope=visible because this figure counts everything the viewer may see, and
+  // My Bookings defaults to their own desk — without it a Regional Head lands on
+  // 270 having just read 367.
   const closuresHref   = isCp ? '/m/cp/closure?view=mybookings&status=sold'
-    : `${adminView ? '/sales/admin/closure' : '/sales/closure'}?view=mybookings&status=sold`;
+    : `${adminView ? '/sales/admin/closure' : '/sales/closure'}?view=mybookings&status=sold&scope=visible`;
   const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: leadsHref },
@@ -570,7 +573,7 @@ function TelecallerDashboard({ user }) {
     { title: 'Conversions', cards: [
       { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
       { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
-      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold' },
+      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold&scope=visible' },
       { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/site-visits?tab=completed' },
     ] },
   ];
@@ -893,7 +896,7 @@ export function STMDashboard({ user, cpOnly = false }) {
           // that page has its own date filter and ignores the params.
           { label: 'SV Scheduled',   value: svSched, icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: '/sales/site-visits?tab=scheduled' },
           { label: 'SV Done', value: svDone, icon: <IconEye />, color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/site-visits?tab=completed' },
-          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold',
+          { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold&scope=visible',
             sub: cpOnly ? `${(stats?.closures_other_source ?? 0).toLocaleString('en-IN')} more from other sources` : null },
           // Closed and approved here, waiting at the Accounts gate — not counted
           // as a closure until Accounts signs off.
