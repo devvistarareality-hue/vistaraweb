@@ -132,6 +132,10 @@ textarea.nx-input { line-height: 1.5; }
   background: rgba(var(--ink-rgb), 0.30) !important;
   backdrop-filter: blur(8px) saturate(120%) !important; -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
   animation: nx-fade .18s ease;
+  /* Base positioning every usage needs — existing call sites still supply
+     their own inline position/display (harmless, now redundant); new call
+     sites can rely on the class alone. */
+  position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box;
 }
 [data-theme="dark"] .nx-modal-backdrop { background: rgba(0,0,0,0.66) !important; }
 .nx-modal {
@@ -1155,3 +1159,86 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-cp-picker-row { padding: 9px 12px; font-size: 13px; cursor: pointer; color: var(--text); border-top: 1px solid var(--surface-2); }
 .nx-cp-picker-row:first-child { border-top: none; }
 .nx-cp-picker-row:hover { background: var(--accent-softer); }
+
+/* ─── Task Allocation module ────────────────────────────────────────────── */
+.nx-task-modal { width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto; }
+.nx-task-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 24px 12px; border-bottom: 1px solid var(--surface-2); }
+.nx-task-modal-body { padding: 18px 24px 24px; }
+.nx-task-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+.nx-task-row > .nx-field { flex: 1 1 200px; margin-bottom: 0; }
+
+.nx-pill-select { display: flex; flex-wrap: wrap; gap: 6px; }
+.nx-pill-select button { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--surface-3); background: var(--surface-2); color: var(--muted); }
+.nx-pill-select button.is-on.tone-good { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+.nx-pill-select button.is-on.tone-info { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.nx-pill-select button.is-on.tone-warn { background: var(--warning-soft); border-color: var(--warning-2); color: var(--warning-2); }
+.nx-pill-select button.is-on.tone-bad { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+.nx-pill-select button.is-on.tone-muted { background: var(--surface-3); border-color: var(--border-strong); color: var(--text-3); }
+
+.nx-assignee-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.nx-assignee-chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 16px; background: var(--accent-softer); color: var(--accent); font-size: 12px; font-weight: 700; }
+.nx-assignee-chip button { background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; padding: 0; }
+.nx-assignee-add { position: relative; }
+.nx-assignee-picker-list { max-height: 220px; overflow-y: auto; }
+.nx-assignee-picker-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text); }
+.nx-assignee-picker-row:hover { background: var(--surface-2); }
+.nx-assignee-picker-empty { padding: 10px 12px; font-size: 12.5px; color: var(--faint); }
+
+.nx-checklist { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.nx-checklist-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 8px; }
+.nx-checklist-row:hover { background: var(--surface-2); }
+.nx-checklist-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+.nx-checklist-text { flex: 1; font-size: 13px; color: var(--text); }
+.nx-checklist-text.is-done { text-decoration: line-through; color: var(--faint); }
+.nx-checklist-del { background: none; border: none; cursor: pointer; color: var(--faint); flex-shrink: 0; display: flex; }
+.nx-checklist-progress { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.nx-checklist-add { display: flex; gap: 8px; margin-top: 8px; }
+.nx-checklist-add .nx-input { flex: 1; }
+
+.nx-comment-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; max-height: 220px; overflow-y: auto; }
+.nx-comment-row { padding: 8px 12px; border-radius: 12px; background: var(--surface-2); }
+.nx-comment-author { font-size: 12px; font-weight: 700; color: var(--text); }
+.nx-comment-time { font-size: 10px; color: var(--faint); margin-left: 6px; font-weight: 500; }
+.nx-comment-body { font-size: 12.5px; color: var(--text-2); margin-top: 2px; white-space: pre-wrap; }
+.nx-comment-add { display: flex; gap: 8px; margin-top: 10px; }
+.nx-comment-add .nx-input { flex: 1; }
+
+.nx-task-list-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 14px; background: var(--surface); border: 1.5px solid var(--surface-3); margin-bottom: 8px; }
+
+.nx-task-card { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1.5px solid var(--surface-3); cursor: pointer; }
+.nx-task-card:hover { box-shadow: 0 4px 14px rgba(var(--ink-rgb),0.08); }
+.nx-task-card.is-overdue { border-color: var(--danger-2); }
+.nx-task-card.is-dragging { opacity: 0.5; }
+.nx-task-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.nx-task-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nx-task-avatars { display: flex; }
+.nx-task-avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-softer); color: var(--accent); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--surface); margin-left: -6px; }
+.nx-task-avatar:first-child { margin-left: 0; }
+.nx-task-due { font-size: 11px; font-weight: 700; color: var(--muted); }
+.nx-task-due.is-overdue { color: var(--danger); }
+.nx-task-checklist-badge { font-size: 11px; font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 3px; }
+
+.nx-board { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; align-items: flex-start; }
+.nx-board-col { flex: 0 0 280px; background: var(--surface-2); border-radius: 16px; padding: 12px; min-height: 200px; }
+.nx-board-col.is-drag-over { background: var(--accent-softer); }
+.nx-board-col-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 10px; }
+.nx-board-col-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-2); }
+.nx-board-col-count { font-size: 11px; font-weight: 700; color: var(--muted); background: var(--surface); border-radius: 12px; padding: 2px 8px; }
+.nx-board-col-body { display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+.nx-task-modal-head .nx-page-title-input { flex: 1; font-size: 17px; font-weight: 800; border: none !important; background: none !important; padding: 4px 0 !important; min-height: 0; }
+
+/* Priority/tone badges (task cards, task lists) — pairs with .nx-badge's shell. */
+.nx-badge.tone-good, .nx-badge.tone-info, .nx-badge.tone-warn, .nx-badge.tone-bad, .nx-badge.tone-muted {
+  padding: 3px 10px; font-size: 11px;
+}
+.nx-badge.tone-good  { background: var(--success-soft); color: var(--success); }
+.nx-badge.tone-info  { background: var(--accent-soft); color: var(--accent); }
+.nx-badge.tone-warn  { background: var(--warning-soft); color: var(--warning-2); }
+.nx-badge.tone-bad   { background: var(--danger-soft); color: var(--danger); }
+.nx-badge.tone-muted { background: var(--surface-3); color: var(--text-3); }
+/* Board column header label — text colour, not the generic .tone-* solid fill. */
+.nx-board-col-title.tone-good  { color: var(--success); }
+.nx-board-col-title.tone-info  { color: var(--accent); }
+.nx-board-col-title.tone-warn  { color: var(--warning-2); }
+.nx-board-col-title.tone-bad   { color: var(--danger); }
+.nx-board-col-title.tone-muted { color: var(--text-3); }

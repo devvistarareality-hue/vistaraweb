@@ -15,7 +15,7 @@ const MODULE_CONFIG = {
   'HR':                 { title: 'HR',                  href: '/m/hr',                   desc: 'People, attendance and team structure',       Icon: Users,              tone: 'blue' },
   'Accounts & Finance': { title: 'Accounts & Finance',  href: '/m/accounts',             desc: 'Booking approvals and the bookings ledger',   Icon: Wallet,             tone: 'green' },
   'AR':                 { title: 'Accounts Receivable', href: '/m/ar/dashboard',         desc: 'Collections, dues, ageing and interest',      Icon: ReceiptIndianRupee, tone: 'blue' },
-  'Execution':          { title: 'Execution',           href: '/m/execution',            desc: 'Tasks, milestones and project delivery',      Icon: ListChecks,         tone: 'green' },
+  'Task Allocation':    { title: 'Task Allocation',     href: '/m/execution/dashboard',  desc: 'Assign, track and close out tasks across every team', Icon: ListChecks,   tone: 'green' },
   'Purchase':           { title: 'Purchase',            href: '/m/purchase',             desc: 'Vendors and purchase orders',                 Icon: ShoppingCart,       tone: 'peach' },
   'Land':               { title: 'Land',                href: '/m/land',                 desc: 'Land parcels and site portfolio',             Icon: MapPin,             tone: 'blue' },
   'Club 1000':          { title: 'Club 1000',           href: '/club1000',               desc: 'Investors, schemes and payouts',              Icon: Coins,              tone: 'green' },

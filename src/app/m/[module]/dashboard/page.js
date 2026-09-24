@@ -5,22 +5,32 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   Building2, CalendarDays, Wallet, CircleCheckBig, AlarmClock, Hourglass, Percent,
-  CalendarClock, TriangleAlert, ArrowRight, ChevronRight,
+  CalendarClock, TriangleAlert, ArrowRight, ChevronRight, ListChecks, ClipboardList,
+  ClipboardCheck, UserCheck,
 } from 'lucide-react';
-import { AR_ENDPOINTS } from '../../../../constants/api';
+import { AR_ENDPOINTS, TASK_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import Dropdown from '../../../../components/Dropdown';
+import { DashHero, DashKpi, DashKpiGrid, DashAlerts, DashCard, DashGrid, DashBars } from '../../../../components/Dash';
 import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
+import { STATUSES, PRIORITIES, companyParam } from '../_execution';
 
 const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
   plan_mismatch: "LOI schedule doesn't add up to the deal",
 };
 
+// Dispatches to the AR or Task Allocation dashboard by slug — both live in this
+// one dynamic-route file, same as every other page under m/[module].
+export default function DashboardPage({ params }) {
+  if (params.module === 'execution') return <TaskDashboardPage />;
+  return <ARDashboardPage params={params} />;
+}
+
 // AR Dashboard — the receivables book at a glance: what is owed, how late, what
 // falls due month by month, who owes the most, and what data needs fixing.
-export default function ARDashboardPage({ params }) {
+function ARDashboardPage({ params }) {
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [project, setProject] = useState('');
@@ -119,6 +129,84 @@ export default function ARDashboardPage({ params }) {
             <TopList title="Most overdue" icon={<Percent size={16} />} rows={data.top_overdue} empty="Nothing is overdue." />
             <TopList title="Overdue over 180 days" icon={<CalendarClock size={16} />} rows={data.top_over_180} empty="Nothing is more than 180 days overdue." />
           </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Task Allocation Dashboard — open work at a glance: what's due, what's overdue,
+// what closed this week, and how the open pile breaks down by status/priority.
+function TaskDashboardPage() {
+  const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    setData(null); setErr('');
+    const q = companyParam(companyId);
+    apiFetch(`${TASK_ENDPOINTS.stats}${q ? `?${q}` : ''}`)
+      .then(async (r) => {
+        const d = await r.json().catch(() => ({}));
+        if (!alive) return;
+        if (!r.ok) { setErr(d.detail || 'Could not load the dashboard.'); setData({}); return; }
+        setData(d);
+      })
+      .catch(() => { if (alive) { setErr('Could not load the dashboard. Check your connection.'); setData({}); } });
+    return () => { alive = false; };
+  }, [companyId]);
+
+  return (
+    <div className="nx-page ard">
+      <div className="ard-head">
+        <div>
+          <h1 className="nx-page-title">Task Allocation</h1>
+          <p className="nx-page-sub">Assign, track and close out tasks across every team</p>
+        </div>
+      </div>
+
+      {data === null ? <Loader label="Loading your tasks…" /> : err ? <div className="nx-note bad">{err}</div> : (
+        <>
+          <DashHero
+            eyebrow="Open right now"
+            value={data.total_open ?? 0}
+            splits={[
+              { label: 'My open tasks', value: data.my_open_tasks ?? 0 },
+              { label: 'Assigned by me', value: data.assigned_by_me ?? 0 },
+            ]}
+          />
+
+          <DashKpiGrid>
+            <DashKpi icon={ListChecks} tone="info" label="My Open Tasks" value={data.my_open_tasks ?? 0}
+              sub="Assigned to you" href="/m/execution/list?my_tasks=true" />
+            <DashKpi icon={AlarmClock} tone="bad" label="Overdue" value={data.overdue ?? 0}
+              sub="Past their due date" href="/m/execution/list?overdue=true" />
+            <DashKpi icon={Hourglass} tone="warn" label="Due Today" value={data.due_today ?? 0}
+              sub="Close these out today" href="/m/execution/board" />
+            <DashKpi icon={CircleCheckBig} tone="good" label="Completed This Week" value={data.completed_this_week ?? 0}
+              sub="Marked done in the last 7 days" />
+            <DashKpi icon={UserCheck} tone="info" label="Assigned By Me" value={data.assigned_by_me ?? 0}
+              sub="Tasks you handed out" href="/m/execution/list?assigned_by_me=true" />
+          </DashKpiGrid>
+
+          <DashAlerts items={[
+            { label: 'overdue tasks', count: data.overdue ?? 0, tone: 'bad', icon: TriangleAlert,
+              text: 'Past their due date and still open', href: '/m/execution/list?overdue=true' },
+          ]} />
+
+          <DashGrid>
+            <DashCard title="By status" icon={ClipboardList} sub="Every open + closed task">
+              <DashBars empty="No tasks yet." rows={STATUSES.map((s) => ({
+                label: s.label, tone: s.tone, value: data.by_status?.[s.value] ?? 0,
+              }))} />
+            </DashCard>
+            <DashCard title="By priority" icon={ClipboardCheck} sub="Every open + closed task">
+              <DashBars empty="No tasks yet." rows={PRIORITIES.map((p) => ({
+                label: p.label, tone: p.tone, value: data.by_priority?.[p.value] ?? 0,
+              }))} />
+            </DashCard>
+          </DashGrid>
         </>
       )}
     </div>

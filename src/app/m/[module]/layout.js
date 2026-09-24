@@ -88,10 +88,10 @@ export default function ModuleLayout({ children, params }) {
   const isManager = isManagerRole(user);
   const base = `/m/${slug}`;
   const NAV = [
-    // AR has no overview page — the module opens straight on its Dashboard.
-    ...(slug !== 'ar' ? [{ label: 'Overview', href: base, icon: <IconGrid /> }] : []),
+    // AR and Task Allocation have no overview page — each opens straight on its Dashboard.
+    ...(slug !== 'ar' && slug !== 'execution' ? [{ label: 'Overview', href: base, icon: <IconGrid /> }] : []),
     // My Team is a management view — only managers/admins see it.
-    ...((isManager || isAdmin) && slug !== 'ar' ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
+    ...((isManager || isAdmin) && slug !== 'ar' && slug !== 'execution' ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers /> }] : []),
     // Accounts & Finance: Approvals is the Pending/Approved/Rejected review queue
     // (approve, reject with remarks) — same split Sales uses (its own "Approvals"
     // nav item is the Drafts/Pending/Approved/Rejected list, separate from the
@@ -108,6 +108,14 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Collections', href: `${base}/collections`, icon: <IconBell /> },
       { label: 'Register', href: `${base}/register`, icon: <IconBook /> },
       { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck /> },
+    ] : []),
+    // Task Allocation: dashboard, a kanban board and a filterable list are two
+    // views onto the same tasks; Task Lists manages the containers themselves.
+    ...(slug === 'execution' ? [
+      { label: 'Dashboard', href: `${base}/dashboard`, icon: <IconChart /> },
+      { label: 'Board', href: `${base}/board`, icon: <IconGrid /> },
+      { label: 'List', href: `${base}/list`, icon: <IconBook /> },
+      { label: 'Task Lists', href: `${base}/lists`, icon: <IconCheck /> },
     ] : []),
     // Who changed what in this module, and when — real admins only.
     ...(isAdmin ? [{ label: 'Log', href: `${base}/log`, icon: <IconLog /> }] : []),

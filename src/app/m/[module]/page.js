@@ -34,13 +34,17 @@ function Tile({ href, icon, title, desc }) {
 export default function ModuleOverview({ params }) {
   const slug = params.module;
   const router = useRouter();
-  // AR opens straight on its Dashboard; /m/ar (old links, bookmarks) forwards there.
-  useEffect(() => { if (slug === 'ar') router.replace('/m/ar/dashboard'); }, [slug, router]);
+  // AR and Task Allocation open straight on their Dashboard; old links/bookmarks
+  // to the bare module root forward there.
+  useEffect(() => {
+    if (slug === 'ar') router.replace('/m/ar/dashboard');
+    if (slug === 'execution') router.replace('/m/execution/dashboard');
+  }, [slug, router]);
   const meta = MODULE_META[slug] || { name: slug, accent: 'var(--accent)', desc: '' };
   const user = useSelector((s) => s.auth.user);
   const canSeeTeam = isManagerRole(user) || user?.role === 'Admin' || user?.is_staff;
 
-  if (slug === 'ar') return null;
+  if (slug === 'ar' || slug === 'execution') return null;
   const tiles = [
     canSeeTeam && { href: `/m/${slug}/team`, icon: 'team', title: 'My Team', desc: `View the ${meta.name} department org chart` },
     slug === 'accounts' && { href: `/m/${slug}/approvals`, icon: 'check', title: 'Approvals', desc: "Review pending LOI & EOI bookings and approve/reject each one's Accounts-stage sign-off" },

@@ -162,6 +162,19 @@ export const ACTIVITY_ENDPOINTS = {
   get log()        { return `${BASE_URL}/api/activity/`; },
 };
 
+export const TASK_ENDPOINTS = {
+  get lists()      { return `${BASE_URL}/api/tasks/lists/`; },
+  list: (id)       => `${BASE_URL}/api/tasks/lists/${id}/`,
+  get tasks()      { return `${BASE_URL}/api/tasks/`; },
+  task: (id)       => `${BASE_URL}/api/tasks/${id}/`,
+  comments: (id)   => `${BASE_URL}/api/tasks/${id}/comments/`,
+  checklist: (id)  => `${BASE_URL}/api/tasks/${id}/checklist/`,
+  checklistItem: (id) => `${BASE_URL}/api/tasks/checklist/${id}/`,
+  get tags()       { return `${BASE_URL}/api/tasks/tags/`; },
+  get assignees()  { return `${BASE_URL}/api/tasks/assignees/`; },
+  get stats()      { return `${BASE_URL}/api/tasks/stats/`; },
+};
+
 export const CLUB1000_ENDPOINTS = {
   get stats()      { return `${BASE_URL}/api/club1000/stats/`; },
   get users()      { return `${BASE_URL}/api/club1000/users/`; },
