@@ -111,7 +111,23 @@ export function canSee(user, key) {
   if (!key) return true;
   const screens = user?.screens;
   if (!Array.isArray(screens)) return true;
+  // A designation belongs to one module, but its people may hold others — a CFO
+  // with Sales and Land. The saved menu answers only for the modules it was
+  // configured for; the rest keep their default menu. Same rule the server
+  // applies in can_see_screen, so the sidebar and the API agree.
+  const named = user?.screen_modules;
+  if (Array.isArray(named) && !named.includes(moduleOfScreen(key))) return true;
   return screens.includes(key);
+}
+
+// Which module a menu key belongs to, read off its prefix. Mirrors SCREEN_MODULE
+// in the backend's capabilities.py.
+const SCREEN_PREFIX = {
+  sales: 'Sales', cp: 'Channel Partner', hr: 'HR', accounts: 'Accounts & Finance',
+  ar: 'AR', execution: 'Execution', purchase: 'Purchase', land: 'Land', club: 'Club 1000',
+};
+export function moduleOfScreen(key) {
+  return SCREEN_PREFIX[String(key || '').split('.')[0]] || '';
 }
 
 // Which dashboard opens: '' means decide from their permissions, as before.

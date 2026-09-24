@@ -3,6 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, X, Check, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye } from 'lucide-react';
 import { DESIGNATION_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
+import { ALL_MODULES } from '../../../lib/moduleAccess';
+
+// Designation Master writes AR's full name; the capability vocabulary uses the
+// short one. One place, so the two cannot drift.
+const ALIAS_MODULE = { 'Accounts Receivable': 'AR' };
 
 // What a designation may do, per company. The vocabulary comes from the server; the
 // ticks are this company's own answer, so the same title can mean different things
@@ -22,6 +27,14 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   // An unconfigured designation starts ticked with what it already does today.
   const [caps, setCaps] = useState(new Set(designation.effective_capabilities || designation.capabilities || []));
   const [screens, setScreens] = useState(new Set(designation.effective_screens || designation.screens || []));
+  // Modules beyond this designation's own that its menu also answers for. A CFO
+  // sits under Accounts & Finance but may be granted Sales and Land; without
+  // naming those here, saving an Accounts menu would empty them.
+  const [extra, setExtra] = useState(() => {
+    const own = designation.module;
+    return (designation.effective_screen_modules || designation.screens_modules || [])
+      .filter((m) => m && m !== own && m !== ALIAS_MODULE[own]);
+  });
   const [scope, setScope] = useState(designation.data_scope || '');
   const [dash, setDash] = useState(designation.dashboard || '');
   const [saving, setSaving] = useState(false);
@@ -46,7 +59,8 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
     try {
       const r = await apiFetch(DESIGNATION_ENDPOINTS.detail(designation.id), {
         method: 'PATCH',
-        body: JSON.stringify({ capabilities: [...caps], screens: [...screens], data_scope: scope, dashboard: dash }),
+        body: JSON.stringify({ capabilities: [...caps], screens: [...screens],
+          screens_modules: mine, data_scope: scope, dashboard: dash }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setErr(d.detail || d.capabilities || d.screens || 'Could not save.'); return; }
@@ -59,10 +73,13 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
     }
   }
 
-  // A designation belongs to one module and only decides that module — a Sales
-  // title has nothing to say about Channel Partner or AR, and vice versa.
-  const ALIAS = { 'Accounts Receivable': 'AR' };
-  const mine = [ALIAS[designation.module] || designation.module];
+  // A designation belongs to one module and decides that module by default — a
+  // Sales title has nothing to say about Channel Partner or AR. Where the same
+  // people are granted another module, an admin can add it here, and then this
+  // menu answers for it too. Nothing is added on its own.
+  const own = ALIAS_MODULE[designation.module] || designation.module;
+  const mine = [own, ...extra];
+  const otherModules = ALL_MODULES.filter((m) => m !== own);
   const group = (rows) => {
     const own = (rows || []).filter((c) => mine.includes(c.module));
     const mods = [...new Set(own.map((c) => c.module))];
@@ -159,6 +176,27 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
           ) : tab === 'menu' ? (
             <>
               <p className="perm-lead">Tap a screen to show or hide it for this designation.</p>
+              {/* A module left off this list keeps its own default menu, so a CFO
+                  granted Sales still sees the Sales sidebar. Adding it here is how
+                  you take charge of it — including hiding all of it. */}
+              <section className="perm-card">
+                <div className="perm-card-head">
+                  <h3>Which modules this menu answers for</h3>
+                  <span className="perm-count">{mine.length}</span>
+                </div>
+                <div className="perm-chips">
+                  <button type="button" className="perm-chip is-on" disabled>
+                    <Check size={13} /> {own}
+                  </button>
+                  {otherModules.map((m) => (
+                    <button type="button" key={m} className={`perm-chip${extra.includes(m) ? ' is-on' : ''}`}
+                      onClick={() => setExtra((e) => (e.includes(m) ? e.filter((x) => x !== m) : [...e, m]))}>
+                      {extra.includes(m) && <Check size={13} />} {m}
+                    </button>
+                  ))}
+                </div>
+                <p className="perm-note">A module not chosen here keeps its default menu for anyone holding it.</p>
+              </section>
               {screensByModule.map(({ module, items }) => (
                 <section className="perm-card" key={module}>
                   <div className="perm-card-head">

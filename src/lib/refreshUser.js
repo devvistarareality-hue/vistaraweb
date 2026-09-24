@@ -12,7 +12,7 @@ import { clearAllCache } from '../app/sales/_cache';
 // client added stay as they were.
 // The fields that decide what a person may see. A change to any of them makes
 // every cached list suspect.
-const PERMISSION_FIELDS = ['capabilities', 'screens', 'dashboard', 'role_dashboards',
+const PERMISSION_FIELDS = ['capabilities', 'screens', 'screen_modules', 'dashboard', 'role_dashboards',
                            'modules', 'manager_modules', 'admin_modules', 'role', 'designation'];
 
 function permissionsChanged(before, after) {
