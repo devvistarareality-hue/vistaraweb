@@ -1444,6 +1444,15 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .myconv-scroll { max-height: 560px; overflow-y: auto; overflow-x: auto; }
 .myconv-empty { text-align: center; padding: 60px 0; color: var(--faint); font-size: 14px; }
 .myconv-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+/* .nx-table's own thead/tbody rules only cover header colour/border and body
+   borders — padding, cell font-size/colour and the sticky header were always
+   supplied by the page itself, not the shared class. */
+.myconv-table th {
+  padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.3px; text-align: left; white-space: nowrap;
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+}
+.myconv-table td { padding: 10px 14px; font-size: 13px; color: var(--text); }
 .myconv-name { font-weight: 600; }
 .myconv-muted { color: var(--text-3); }
 .myconv-bold { font-weight: 600; }
