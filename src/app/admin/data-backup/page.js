@@ -77,6 +77,7 @@ export default function DataBackupPage() {
   const [resetKey, setResetKey] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetBusy, setResetBusy] = useState(false);
+  const [resetStage, setResetStage] = useState('');   // backup → download → reset
   const [resetMsg, setResetMsg] = useState(null);
 
   useEffect(() => {
@@ -178,14 +179,15 @@ export default function DataBackupPage() {
     try {
       const r = await fetch(SALES_ENDPOINTS.backupStored(id, companyId), { headers: authHeaders() });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.url) { setSchedMsg(bad('Could not get a download link', d.detail)); return; }
+      if (!r.ok || !d.url) { setSchedMsg(bad('Could not get a download link', d.detail)); return false; }
       const a = document.createElement('a');
       a.href = d.url;
       a.download = '';
       document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch (e) { setSchedMsg(bad('Could not get a download link', e.message)); }
+      return true;
+    } catch (e) { setSchedMsg(bad('Could not get a download link', e.message)); return false; }
   }
 
   async function openStored(id) {
@@ -228,9 +230,28 @@ export default function DataBackupPage() {
     setRestoreBusy('');
   }
 
+  // A reset always starts from a fresh backup: store one, download it, and only then
+  // empty the company. If either step fails the reset does not run.
   async function runReset() {
     setResetBusy(true); setResetMsg(null);
     try {
+      setResetStage('backup');
+      const b = await fetch(SALES_ENDPOINTS.backupSchedule(companyId), {
+        method: 'POST', headers: authHeaders() });
+      const bd = await b.json().catch(() => ({}));
+      const latest = (bd.history || [])[0];
+      if (!b.ok || !latest?.id) {
+        setResetMsg(bad('Reset stopped — the backup failed', bd.detail || 'Nothing was deleted.'));
+        setResetBusy(false); setResetStage(''); return;
+      }
+      setSched(bd);
+      setResetStage('download');
+      if (!(await downloadStored(latest.id))) {
+        setResetMsg(bad('Reset stopped — the backup could not be downloaded',
+          'The backup is stored in the list above. Nothing was deleted.'));
+        setResetBusy(false); setResetStage(''); return;
+      }
+      setResetStage('reset');
       const res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }) });
@@ -242,12 +263,18 @@ export default function DataBackupPage() {
       }
       loadReset();
     } catch (e) { setResetMsg(bad('Reset failed', e.message)); }
-    setResetBusy(false);
+    setResetBusy(false); setResetStage('');
   }
 
   if (!mayBackUp) return <div className="dbx-denied">Admin access only.</div>;
 
-  const canReset = !!resetInfo?.can_reset && !!resetInfo?.key_configured;
+  // The reset takes its own backup first, so only the key is needed up front.
+  const canReset = !!resetInfo?.key_configured;
+  const STAGE = {
+    backup:   ['Taking a backup…', 'Storing a full backup before anything is deleted.'],
+    download: ['Downloading the backup…', 'The workbook is going to your downloads.'],
+    reset:    ['Emptying the company…', 'Deleting every module in dependency order. Do not close this tab.'],
+  };
 
   return (
     <div className="nx-page nx-page-center nx-w-sm">
@@ -427,7 +454,7 @@ export default function DataBackupPage() {
             <span className="dbx-gate-mark">{resetInfo?.can_reset ? '✓' : '✕'}</span>
             <span>{resetInfo?.can_reset
               ? `Backup taken ${fmtWhen(resetInfo.backup_taken_at)} — a reset is allowed for 2 hours`
-              : 'No recent backup — download one above first'}</span>
+              : 'No recent backup — one is taken and downloaded automatically when you reset'}</span>
           </div>
           <div className={`dbx-gate ${resetInfo?.key_configured ? 'is-met' : 'is-unmet'}`}>
             <span className="dbx-gate-mark">{resetInfo?.key_configured ? '✓' : '✕'}</span>
@@ -467,12 +494,12 @@ export default function DataBackupPage() {
 
         <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
           disabled={resetBusy || !canReset || !resetKey || resetConfirm !== 'DELETE'}>
-          {resetBusy ? <><span className="dbx-spin" />Deleting…</> : 'Reset this company'}
+          {resetBusy ? <><span className="dbx-spin" />{resetStage === 'reset' ? 'Deleting…' : 'Backing up…'}</> : 'Back up & reset this company'}
         </button>
 
         {resetBusy
-          ? <Working label="Emptying the company…"
-                     note="Deleting every module in dependency order. Do not close this tab." />
+          ? <Working label={(STAGE[resetStage] || STAGE.reset)[0]}
+                     note={(STAGE[resetStage] || STAGE.reset)[1]} />
           : <Result value={resetMsg} />}
       </section>
     </div>
