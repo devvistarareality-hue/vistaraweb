@@ -1546,6 +1546,10 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* ─── Data Backup: the Excel snapshot and the restore beside it ──────────── */
 .dbx-card { background: var(--surface); border: 1px solid var(--surface-3); border-radius: 18px;
   padding: 18px; margin-bottom: 18px; }
+/* Same shell, for a panel whose own rows carry the padding (the history table). */
+.dbx-panel { background: var(--surface); border: 1px solid var(--surface-3); border-radius: 18px;
+  overflow: hidden; }
+.dbx-denied { padding: 40px; color: var(--muted); }
 .dbx-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .dbx-title { font-size: 14px; font-weight: 700; color: var(--text); }
 .dbx-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }

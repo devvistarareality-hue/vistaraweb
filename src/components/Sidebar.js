@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/actions/authActions';
 import { fetchCompanies } from '../redux/actions/companiesActions';
 import { setAdminCompany, restoreAdminFilter } from '../redux/reducers/adminFilterReducer';
+import { canBackUp } from '../lib/moduleAccess';
 import NotificationBell from '../app/sales/_NotificationBell';
 
 import Icon from './Icon';
@@ -118,7 +119,8 @@ export default function Sidebar({ user, onClose, className }) {
 
   const visibleNav = NAV_ITEMS.filter((item) => {
     if (item.href === '/admin/companies') return isVRLAdmin;
-    if (item.href === '/admin/data-backup') return isVRLAdmin;
+    // A company's own Admin backs up their own company here too.
+    if (item.href === '/admin/data-backup') return canBackUp(user);
     return true;
   });
 

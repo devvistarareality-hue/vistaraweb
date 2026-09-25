@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
-import { isSuperAdmin } from '../../../lib/moduleAccess';
+import { canBackUp, isSuperAdmin } from '../../../lib/moduleAccess';
 
 import Icon from '../../../components/Icon';
 import { notify } from '../../../lib/notify';
@@ -34,12 +34,20 @@ function fmtDateTime(iso) {
 export default function DataBackupPage() {
   const user = useSelector((s) => s.auth.user);
   const superAdmin = isSuperAdmin(user);
+  const mayBackUp = canBackUp(user);
   const dispatch = useDispatch();
-  // Which company the Excel snapshot is of — the one picked in the sidebar,
-  // the same selector Data Reset works off, so the two always agree.
-  const companyId = useSelector((s) => s.adminFilter?.companyId);
+  // A platform admin picks the company in the sidebar — the same selector Data
+  // Reset works off, so the two always agree. A company's own Admin has only
+  // one to back up, so there is nothing to pick: the id is left off and the
+  // server pins it to them.
+  const pickedId = useSelector((s) => s.adminFilter?.companyId);
   const companies = useSelector((s) => s.companies?.companies || []);
-  const company = companies.find((c) => c.id === companyId) || null;
+  const companyId = superAdmin ? pickedId : null;
+  const company = superAdmin
+    ? (companies.find((c) => c.id === pickedId) || null)
+    : (user?.company_name ? { name: user.company_name } : null);
+  // Only a platform admin has a company to choose; everyone else is ready at once.
+  const ready = superAdmin ? !!pickedId : mayBackUp;
 
   const [excelBusy, setExcelBusy] = useState(false);
   const [excelMsg, setExcelMsg] = useState('');
@@ -76,11 +84,9 @@ export default function DataBackupPage() {
   }, []);
 
   useEffect(() => {
-    if (!superAdmin) return;
-    loadSettings();
-    loadRecords();
-    dispatch(fetchCompanies());
-  }, [superAdmin, loadSettings, loadRecords, dispatch]);
+    if (!mayBackUp) return;
+    if (superAdmin) { loadSettings(); loadRecords(); dispatch(fetchCompanies()); }
+  }, [mayBackUp, superAdmin, loadSettings, loadRecords, dispatch]);
 
   // A new file, or a different company, invalidates whatever was previewed.
   useEffect(() => { setPreview(null); setRestoreMsg(''); }, [restoreFile, companyId]);
@@ -111,7 +117,7 @@ export default function DataBackupPage() {
     try {
       const fd = new FormData();
       fd.append('file', restoreFile);
-      fd.append('company_id', String(companyId));
+      if (companyId) fd.append('company_id', String(companyId));
       if (commit) fd.append('commit', '1');
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       // No Content-Type here on purpose — the browser sets the multipart boundary.
@@ -175,8 +181,8 @@ export default function DataBackupPage() {
     setDownloadingId(null);
   }
 
-  if (!superAdmin) {
-    return <div style={{ padding: 40, color: 'var(--muted)' }}>Super admin access only.</div>;
+  if (!mayBackUp) {
+    return <div className="dbx-denied">Admin access only.</div>;
   }
 
   const dirty = settings && (frequency !== settings.frequency || enabled !== settings.is_enabled);
@@ -185,13 +191,18 @@ export default function DataBackupPage() {
     <div className="nx-page nx-page-center nx-w-sm">
       <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Data Backup</h1>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>
-        A full backup of every business record (leads, bookings, projects, Club 1000, users) is taken
-        automatically on the schedule below and stored securely. Restoring one of those scheduled
-        backups is a deliberate, assisted operation — ask your platform admin. The Excel backup below
-        is the one you can take and put back yourself, around a Data Reset.
+        {superAdmin
+          ? <>A full backup of every business record (leads, bookings, projects, Club 1000, users) is
+            taken automatically on the schedule below and stored securely. Restoring one of those
+            scheduled backups is a deliberate, assisted operation — ask your platform admin. The
+            Excel backup below is the one you can take and put back yourself, around a Data Reset.</>
+          : <>Take an Excel copy of your company&apos;s records whenever you want one, and put it back
+            after a Data Reset. A backup only ever covers your own company, and can only be restored
+            into it.</>}
       </p>
 
-      {/* Schedule */}
+      {/* Schedule — the platform-wide JSON dump, which is not a per-company thing. */}
+      {superAdmin && <>
       <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: 14 }}>
           Backup Schedule
@@ -237,13 +248,14 @@ export default function DataBackupPage() {
         </button>
       </div>
       {!!runMsg && <p style={{ marginTop: -8, marginBottom: 18, fontSize: 13, fontWeight: 600, color: runMsg[0] === '✅' ? GREEN : RED, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={runMsg[0] === '✅' ? 'check-circle' : 'alert'} />{runMsg.replace(/^[^\p{L}\p{N}]+/u, '')}</p>}
+      </>}
 
       {/* Excel snapshot — readable, and the thing Restore below reads back. */}
       <div className="nx-card dbx-card">
         <div className="dbx-head">Excel Backup</div>
         <div className="dbx-row">
           <div>
-            <div className="dbx-title">Download one company as Excel</div>
+            <div className="dbx-title">{superAdmin ? 'Download one company as Excel' : 'Download your data as Excel'}</div>
             <div className="dbx-sub">
               {company
                 ? <>A sheet per module for <b>{company.name}</b> — Sales, Channel Partner, HR, AR, Task Allocation and Club 1000, as they stand right now.</>
@@ -251,7 +263,7 @@ export default function DataBackupPage() {
             </div>
           </div>
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={downloadExcel}
-            disabled={!companyId || excelBusy}>
+            disabled={!ready || excelBusy}>
             {excelBusy ? 'Building…' : 'Download Excel'}
           </button>
         </div>
@@ -280,7 +292,7 @@ export default function DataBackupPage() {
         <div className="dbx-actions">
           <button className="nx-btn nx-btn-md nx-btn-secondary"
             onClick={() => sendRestore(false)}
-            disabled={!companyId || !restoreFile || restoreBusy}>
+            disabled={!ready || !restoreFile || restoreBusy}>
             {restoreBusy && !preview ? 'Checking…' : 'Check file'}
           </button>
           <button className="nx-btn nx-btn-md nx-btn-primary"
@@ -290,7 +302,7 @@ export default function DataBackupPage() {
           </button>
         </div>
 
-        {!companyId && <p className="dbx-msg is-plain">Pick a company in the sidebar first.</p>}
+        {superAdmin && !pickedId && <p className="dbx-msg is-plain">Pick a company in the sidebar first.</p>}
 
         {preview && (
           <div className="dbx-plan">
@@ -314,8 +326,8 @@ export default function DataBackupPage() {
         )}
       </div>
 
-      {/* History */}
-      <div className="nx-card" style={{ background: 'var(--surface)', border: '1px solid var(--surface-3)', borderRadius: 18, overflow: 'hidden' }}>
+      {/* History — of the scheduled platform dump, so platform admins only. */}
+      {superAdmin && <div className="nx-card dbx-panel">
         <div style={{ padding: '14px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 0.5, color: 'var(--faint)', textTransform: 'uppercase', borderBottom: '1px solid var(--surface-2)' }}>
           Backup History
         </div>
@@ -361,7 +373,7 @@ export default function DataBackupPage() {
             </tbody>
           </table>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

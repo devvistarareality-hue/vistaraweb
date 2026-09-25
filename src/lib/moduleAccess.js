@@ -34,6 +34,16 @@ export function isModuleAdminUser(user) {
   return !!(user && user.role === 'Admin' && !user.is_staff && ((user.modules || []).length === 1));
 }
 
+// Who may take or restore a backup: a platform admin, for any company, or a
+// company's own full Admin, for their own only. Not a module-scoped admin — a
+// Sales-only admin has no business pulling the whole company's HR, AR and
+// Club 1000 records out in one file. Mirrors backend/sales/views.py::
+// _may_back_up — keep the two in step.
+export function canBackUp(user) {
+  if (isSuperAdmin(user)) return true;
+  return !!(user && user.role === 'Admin' && !isModuleAdminUser(user));
+}
+
 export function isSuperAdmin(user) {
   if (!user) return false;
   if (user.is_staff) return true;
