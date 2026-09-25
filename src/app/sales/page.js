@@ -346,7 +346,8 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
     { label: 'Closures',        value: stats.closures,        icon: <IconTrend />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: closuresHref },
     // Closed and approved here, but not yet signed off by Accounts. They are not
     // in Closures yet — they join it the moment Accounts approves.
-    { label: 'Pending from Accounts', value: stats.accounts_pending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)' },
+    { label: 'Pending from Accounts', value: stats.accounts_pending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)',
+      href: isCp ? '/m/cp/closure?view=mybookings&status=accounts' : '/sales/closure?view=mybookings&status=accounts&scope=visible' },
     { label: 'Active Projects', value: stats.active_projects, icon: <IconBuilding />, color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: projectsHref },
   ] : [];
 
@@ -893,7 +894,7 @@ export function STMDashboard({ user, cpOnly = false }) {
           { label: 'Closures',       value: closed,  icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/closure?view=mybookings&status=sold&scope=visible' },
           // Closed and approved here, waiting at the Accounts gate — not counted
           // as a closure until Accounts signs off.
-          { label: 'Pending from Accounts', value: accPending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning)' },
+          { label: 'Pending from Accounts', value: accPending, icon: <IconClock />, color: 'var(--warning-soft)', textColor: 'var(--warning)', href: '/sales/closure?view=mybookings&status=accounts&scope=visible' },
         ] },
         { title: 'Conversion Rates', cards: [
           { label: 'SQL → SV Ratio',      value: sqlToSv,      icon: <IconEye />,      color: 'var(--accent-softer)', textColor: 'var(--accent)' },
