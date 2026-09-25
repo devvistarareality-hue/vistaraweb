@@ -33,6 +33,12 @@ export default function DataBackupPage() {
   const [restoreBusy, setRestoreBusy] = useState(false);
   const fileRef = useRef(null);
 
+  // Which modules to back up, and which to reset. Empty means all.
+  const [backupMods, setBackupMods] = useState([]);
+  const [resetMods, setResetMods] = useState([]);
+  const [sched, setSched] = useState(null);
+  const [schedBusy, setSchedBusy] = useState('');
+
   const [resetInfo, setResetInfo] = useState(null);   // what a reset would delete
   const [resetKey, setResetKey] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
@@ -52,11 +58,58 @@ export default function DataBackupPage() {
 
   const loadReset = useCallback(() => {
     if (!ready) { setResetInfo(null); return; }
-    fetch(SALES_ENDPOINTS.backupReset(companyId), { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.backupReset(companyId, resetMods), { headers: authHeaders() })
       .then((r) => (r.ok ? r.json() : null))
       .then(setResetInfo)
       .catch(() => setResetInfo(null));
+  }, [ready, companyId, resetMods]);
+
+  const loadSched = useCallback(() => {
+    if (!ready) { setSched(null); return; }
+    fetch(SALES_ENDPOINTS.backupSchedule(companyId), { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setSched)
+      .catch(() => setSched(null));
   }, [ready, companyId]);
+
+  useEffect(() => { loadSched(); }, [loadSched]);
+
+  const modules = sched?.modules || resetInfo?.modules || [];
+  // What a reset would actually empty: the ticks, plus whatever they drag in.
+  const destroys = resetInfo?.destroys || [];
+  const toggle = (list, setList) => (m) =>
+    setList(list.includes(m) ? list.filter((x) => x !== m) : [...list, m]);
+
+  async function saveSched(patch) {
+    setSchedBusy('save');
+    try {
+      const r = await fetch(SALES_ENDPOINTS.backupSchedule(companyId), {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify(patch) });
+      if (r.ok) setSched(await r.json());
+    } catch (e) { /* the panel just stays as it was */ }
+    setSchedBusy('');
+  }
+
+  async function takeStored() {
+    setSchedBusy('take');
+    try {
+      const r = await fetch(SALES_ENDPOINTS.backupSchedule(companyId), {
+        method: 'POST', headers: authHeaders() });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) { setSched(d); loadReset(); }
+      else setExcelMsg(d.detail || 'Could not store the backup.');
+    } catch (e) { setExcelMsg(e.message); }
+    setSchedBusy('');
+  }
+
+  async function openStored(id) {
+    try {
+      const r = await fetch(SALES_ENDPOINTS.backupStored(id, companyId), { headers: authHeaders() });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
+      else setExcelMsg(d.detail || 'Could not get a download link.');
+    } catch (e) { setExcelMsg(e.message); }
+  }
 
   useEffect(() => { loadReset(); }, [loadReset]);
 
@@ -65,13 +118,14 @@ export default function DataBackupPage() {
     try {
       const res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }),
+        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm,
+                               modules: resetMods.join(',') }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) setResetMsg(d.detail || `Failed (${res.status}).`);
       else {
         setResetMsg(`✅ ${d.detail}`);
-        setResetKey(''); setResetConfirm('');
+        setResetKey(''); setResetConfirm(''); loadSched();
       }
       loadReset();
     } catch (e) { setResetMsg(e.message); }
@@ -81,7 +135,7 @@ export default function DataBackupPage() {
   async function downloadExcel() {
     setExcelBusy(true); setExcelMsg('Building the workbook — a large company takes a minute.');
     try {
-      const res = await fetch(SALES_ENDPOINTS.backupExcel(companyId), { headers: authHeaders() });
+      const res = await fetch(SALES_ENDPOINTS.backupExcel(companyId, backupMods), { headers: authHeaders() });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         setExcelMsg('Could not build the backup: ' + (d.detail || res.status));
@@ -162,12 +216,100 @@ export default function DataBackupPage() {
             {excelBusy ? 'Building…' : 'Download Excel'}
           </button>
         </div>
+
+        {modules.length > 0 && (<>
+          <div className="dbx-mods">
+            {modules.map((m) => (
+              <button type="button" key={m}
+                className={`dbx-mod${backupMods.includes(m) ? ' is-on' : ''}`}
+                onClick={() => toggle(backupMods, setBackupMods)(m)}>{m}</button>
+            ))}
+          </div>
+          <p className="dbx-modnote">
+            {backupMods.length
+              ? `${backupMods.length} module${backupMods.length === 1 ? '' : 's'} — a reset is only allowed for what a backup covers.`
+              : 'Nothing picked, so the backup covers every module.'}
+          </p>
+        </>)}
         {!!excelMsg && (
           <p className={`dbx-msg ${excelMsg[0] === '✅' ? 'is-good' : excelMsg.startsWith('Building') ? 'is-plain' : 'is-bad'}`}>
             {excelMsg[0] === '✅' ? <Icon name="check-circle" /> : null}
             {excelMsg.replace(/^[^\p{L}\p{N}]+/u, '')}
           </p>
         )}
+      </div>
+
+      {/* Automatic backups, kept server-side so there is one even if nobody remembers. */}
+      <div className="nx-card dbx-card">
+        <div className="dbx-head">Automatic Backup</div>
+        <div className="dbx-title">Take one on a schedule</div>
+        <div className="dbx-sub">
+          Runs unattended and keeps the workbook, so there is always a recent one to fall back
+          on. The download above is the on-demand copy and is never stored.
+        </div>
+
+        <div className="dbx-sched">
+          <label>
+            <input type="checkbox" checked={!!sched?.is_enabled} disabled={!ready || !!schedBusy}
+              onChange={(e) => saveSched({ is_enabled: e.target.checked })} />
+            Enabled
+          </label>
+          <select className="nx-input" value={sched?.frequency || 'weekly'}
+            disabled={!ready || !!schedBusy}
+            onChange={(e) => saveSched({ frequency: e.target.value })}>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <label>
+            Keep last
+            <input className="nx-input" type="number" min="1" max="50"
+              value={sched?.keep_last ?? 10} disabled={!ready || !!schedBusy}
+              onChange={(e) => saveSched({ keep_last: e.target.value })} />
+          </label>
+          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={takeStored}
+            disabled={!ready || !!schedBusy}>
+            {schedBusy === 'take' ? 'Taking…' : 'Take one now'}
+          </button>
+        </div>
+
+        {modules.length > 0 && (
+          <div className="dbx-mods">
+            {modules.map((m) => {
+              const on = (sched?.selected_modules || []).includes(m);
+              return (
+                <button type="button" key={m} className={`dbx-mod${on ? ' is-on' : ''}`}
+                  disabled={!ready || !!schedBusy}
+                  onClick={() => saveSched({ modules: on
+                    ? (sched.selected_modules || []).filter((x) => x !== m)
+                    : [...(sched?.selected_modules || []), m] })}>{m}</button>
+              );
+            })}
+          </div>
+        )}
+        <p className="dbx-modnote">
+          {(sched?.selected_modules || []).length
+            ? 'The scheduled backup covers only these modules.'
+            : 'Nothing picked, so the scheduled backup covers every module.'}
+        </p>
+
+        <div className="dbx-history">
+          {(sched?.history || []).length === 0
+            ? <p className="dbx-empty">No stored backups yet.</p>
+            : sched.history.map((h) => (
+              <div className="dbx-hrow" key={h.id}>
+                <span className="dbx-hwhen">{new Date(h.taken_at).toLocaleString('en-IN')}</span>
+                <span className="dbx-hmeta">
+                  {h.rows?.toLocaleString('en-IN')} rows
+                  {h.size ? ` · ${(h.size / 1024 / 1024).toFixed(1)} MB` : ''}
+                  {` · ${h.modules?.length ? h.modules.join(', ') : 'every module'}`}
+                  {h.by ? ` · ${h.by}` : ''}
+                </span>
+                <button className="nx-btn nx-btn-sm nx-btn-secondary"
+                  onClick={() => openStored(h.id)}>Download</button>
+              </div>
+            ))}
+        </div>
       </div>
 
       {/* Restore — the other half of the export → Data Reset → restore loop. */}
@@ -231,23 +373,42 @@ export default function DataBackupPage() {
       {/* Reset — the destructive half, and the reason the backup above exists. */}
       <div className="nx-card dbx-card is-danger">
         <div className="dbx-head">Reset</div>
-        <div className="dbx-title">Delete everything in this company</div>
+        <div className="dbx-title">
+          {resetMods.length ? 'Delete these modules' : 'Delete everything in this company'}
+        </div>
         <div className="dbx-sub">
-          Empties every module — leads, bookings, projects, plots, users, AR, tasks, Club 1000 —
-          back to nothing. Your own account is kept so you can sign back in and restore. There is
-          no undo except the Excel backup above, which is why one is required first.
+          Empties the modules below back to nothing. Your own account is kept so you can sign
+          back in and restore. There is no undo except a backup that covers what goes.
         </div>
 
-        <div className="dbx-gate is-met"><span className="dbx-gate-mark">1</span>
-          <span>Download the Excel backup above{resetInfo?.backup_taken_at
-            ? ` — taken ${new Date(resetInfo.backup_taken_at).toLocaleString('en-IN')}`
-            : ''}</span>
-        </div>
+        {modules.length > 0 && (<>
+          <div className="dbx-mods">
+            {modules.map((m) => {
+              const picked = resetMods.includes(m);
+              const dragged = !picked && destroys.includes(m);
+              return (
+                <button type="button" key={m}
+                  className={`dbx-mod${picked ? ' is-on' : ''}${dragged ? ' is-forced' : ''}`}
+                  onClick={() => toggle(resetMods, setResetMods)(m)}>
+                  {m}{dragged ? ' ·' : ''}
+                </button>
+              );
+            })}
+          </div>
+          <p className="dbx-modnote">
+            {resetMods.length === 0
+              ? 'Nothing picked, so every module goes.'
+              : destroys.length > resetMods.length
+                ? `Also empties ${destroys.filter((m) => !resetMods.includes(m)).join(', ')} — those records hang off what you picked and cannot survive it.`
+                : 'Only these modules go.'}
+          </p>
+        </>)}
+
         <div className={`dbx-gate ${resetInfo?.can_reset ? 'is-met' : 'is-unmet'}`}>
           <span className="dbx-gate-mark">{resetInfo?.can_reset ? '✓' : '✕'}</span>
           <span>{resetInfo?.can_reset
-            ? 'Backup taken — a reset is allowed for 2 hours'
-            : 'No recent backup, so a reset is blocked'}</span>
+            ? `Backup covers ${(resetInfo.backup_covers || []).join(', ') || 'every module'} — a reset is allowed for 2 hours`
+            : `No recent backup covering ${destroys.join(', ') || 'these modules'}`}</span>
         </div>
         <div className={`dbx-gate ${resetInfo?.key_configured ? 'is-met' : 'is-unmet'}`}>
           <span className="dbx-gate-mark">{resetInfo?.key_configured ? '✓' : '✕'}</span>
@@ -279,7 +440,9 @@ export default function DataBackupPage() {
         <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
           disabled={resetBusy || !resetInfo?.can_reset || !resetInfo?.key_configured
                     || !resetKey || resetConfirm !== 'DELETE'}>
-          {resetBusy ? 'Deleting…' : 'Reset this company'}
+          {resetBusy ? 'Deleting…'
+            : resetMods.length ? `Reset ${destroys.length} module${destroys.length === 1 ? '' : 's'}`
+            : 'Reset this company'}
         </button>
 
         {!!resetMsg && (
