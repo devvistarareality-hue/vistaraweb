@@ -1543,65 +1543,89 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .myconv-tl-new[data-field="site_visit"]     { color: var(--warning-2); }
 .myconv-tl-new[data-field="closure"]        { color: var(--success); }
 
-/* ─── Data Backup: the Excel snapshot and the restore beside it ──────────── */
-.dbx-card { background: var(--surface); border: 1px solid var(--surface-3); border-radius: 18px;
-  padding: 18px; margin-bottom: 18px; }
-/* Same shell, for a panel whose own rows carry the padding (the history table). */
-.dbx-panel { background: var(--surface); border: 1px solid var(--surface-3); border-radius: 18px;
-  overflow: hidden; }
+/* ─── Data Backup & Reset ─────────────────────────────────────────────────── */
+.dbx-card { border-radius: 20px; padding: 20px 22px; margin-bottom: 16px; }
+/* .nx-card sets background with !important, so the destructive panel has to say
+   so too or it reads as an ordinary card. */
+.nx-card.dbx-card.is-danger { background: var(--danger-soft) !important;
+  border-color: var(--danger-2) !important; }
+.dbx-card.is-danger .dbx-head, .dbx-card.is-danger .dbx-title { color: var(--danger); }
 .dbx-denied { padding: 40px; color: var(--muted); }
-.dbx-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.dbx-title { font-size: 14px; font-weight: 700; color: var(--text); }
-.dbx-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.dbx-sub b { color: var(--text-2); }
-.dbx-head { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; color: var(--faint);
+
+.dbx-head { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--faint);
   text-transform: uppercase; margin-bottom: 14px; }
-.dbx-file { display: block; margin: 12px 0; font-size: 13px; color: var(--text-2); max-width: 100%; }
-.dbx-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.dbx-msg { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-top: 12px; }
-.dbx-msg.is-good { color: var(--success); }
-.dbx-msg.is-bad { color: var(--danger); }
-.dbx-msg.is-plain { color: var(--muted); font-weight: 500; }
-.dbx-plan { margin-top: 12px; border-top: 1px solid var(--surface-2); padding-top: 12px; }
+.dbx-row { display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; }
+.dbx-rowtext { flex: 1 1 280px; min-width: 0; }
+.dbx-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.dbx-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.55; }
+.dbx-sub b { color: var(--text-2); font-weight: 700; }
+.dbx-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+/* Fields: a label above its control, wrapping on narrow screens. */
+.dbx-fields { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.dbx-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 200px; min-width: 0; }
+.dbx-field-sm { flex: 0 1 120px; }
+.dbx-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted);
+  text-transform: uppercase; }
+.dbx-field .nx-input { width: 100%; height: 42px; border-radius: 12px; font-size: 13.5px; }
+.dbx-field-toggle { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 9px;
+  align-self: flex-end; height: 42px; padding: 0 14px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--surface); cursor: pointer;
+  font-size: 13.5px; font-weight: 600; color: var(--text-2); }
+.dbx-field-toggle input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+
+/* The file picker, as a control rather than a browser default. */
+.dbx-file { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 0 6px 0 16px;
+  height: 46px; border: 1.5px dashed var(--border-strong); border-radius: 14px;
+  background: var(--surface); cursor: pointer; transition: border-color .14s, background-color .14s; }
+.dbx-file:hover { border-color: var(--accent); background: var(--accent-softer); }
+.dbx-file input { position: absolute; width: 0; height: 0; opacity: 0; }
+.dbx-file-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbx-file-btn { flex: 0 0 auto; padding: 7px 14px; border-radius: 10px; background: var(--surface-2);
+  color: var(--text-2); font-size: 12.5px; font-weight: 700; }
+
+/* Gates: what a reset is still waiting for. */
+.dbx-gates { margin-top: 16px; display: flex; flex-direction: column; gap: 2px; }
+.dbx-gate { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-2);
+  padding: 5px 0; }
+.dbx-gate-mark { flex: 0 0 20px; height: 20px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
+.dbx-gate.is-met .dbx-gate-mark { background: var(--success-soft); color: var(--success); }
+.dbx-gate.is-unmet .dbx-gate-mark { background: var(--danger-soft); color: var(--danger); }
+
+/* Counts, both for what would be restored and what would be deleted. */
+.dbx-plan { margin-top: 16px; border-top: 1px solid var(--hairline); padding-top: 12px; }
 .dbx-plan-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px;
   padding: 4px 0; color: var(--text-2); }
 .dbx-plan-row b { color: var(--text); font-variant-numeric: tabular-nums; }
-.dbx-plan-total { display: flex; justify-content: space-between; gap: 12px; font-size: 13px;
-  font-weight: 800; color: var(--text); border-top: 1px solid var(--surface-2); margin-top: 6px; padding-top: 8px; }
-
-/* The reset half of the page: same shell, coloured as what it is. .nx-card sets
-   its background with !important, so this has to say so too or the card reads as
-   an ordinary one and the most destructive panel on the page looks like the rest. */
-.nx-card.dbx-card.is-danger { background: var(--danger-soft) !important;
-  border-color: var(--danger-2) !important; }
-.dbx-card.is-danger .dbx-head { color: var(--danger); }
-.dbx-card.is-danger .dbx-title { color: var(--danger); font-size: 15px; }
-
-/* Module chips: what a backup covers, or what a reset would empty. */
-.dbx-mods { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
-.dbx-mod { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
-  border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface);
-  color: var(--text-3); font-size: 12.5px; font-weight: 700; cursor: pointer;
-  transition: background-color .14s, border-color .14s, color .14s; }
-.dbx-mod:hover { border-color: var(--border-strong); color: var(--text); }
-.dbx-mod.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-.dbx-mod.is-forced { background: var(--danger-soft); border-color: var(--danger-2);
-  color: var(--danger); cursor: not-allowed; }
-.dbx-modnote { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.dbx-plan-total { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px;
+  font-weight: 800; color: var(--text); border-top: 1px solid var(--hairline);
+  margin-top: 6px; padding-top: 10px; }
+.dbx-plan-total b { font-variant-numeric: tabular-nums; }
 
 /* Stored backups */
-.dbx-history { margin-top: 12px; border-top: 1px solid var(--surface-2); }
-.dbx-hrow { display: flex; align-items: center; gap: 12px; padding: 9px 0;
-  border-bottom: 1px solid var(--hairline); font-size: 12.5px; }
+.dbx-history { margin-top: 16px; border-top: 1px solid var(--hairline); }
+.dbx-hrow { display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--hairline); font-size: 12.5px; flex-wrap: wrap; }
 .dbx-hrow:last-child { border-bottom: 0; }
-.dbx-hwhen { font-weight: 700; color: var(--text); min-width: 150px; }
+.dbx-hwhen { font-weight: 700; color: var(--text); }
 .dbx-hmeta { color: var(--muted); flex: 1; min-width: 0; }
 .dbx-hrow .nx-btn { margin-left: auto; }
-.dbx-empty { font-size: 12.5px; color: var(--muted); padding: 10px 0; }
-.dbx-sched { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
-.dbx-sched label { display: inline-flex; align-items: center; gap: 7px; font-size: 13px;
-  color: var(--text-2); cursor: pointer; }
-.dbx-sched select { min-width: 130px; }
+.dbx-empty { font-size: 12.5px; color: var(--muted); padding: 12px 0 2px; }
+
+.dbx-msg { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
+  margin-top: 14px; }
+.dbx-msg.is-good { color: var(--success); }
+.dbx-msg.is-bad { color: var(--danger); }
+.dbx-msg.is-plain { color: var(--muted); font-weight: 500; }
+
+@media (max-width: 560px) {
+  .dbx-card { padding: 16px; }
+  .dbx-field, .dbx-field-sm { flex: 1 1 100%; }
+  .dbx-hrow .nx-btn { margin-left: 0; }
+}
 .dbx-gate { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2);
   padding: 6px 0; }
 .dbx-gate-mark { width: 18px; text-align: center; font-weight: 800; }
