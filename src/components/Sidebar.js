@@ -12,6 +12,7 @@ import NotificationBell from '../app/sales/_NotificationBell';
 import Icon from './Icon';
 import ThemeToggle from './ThemeToggle';
 import NexoraLogo from './NexoraLogo';
+import { useImpersonating } from '../lib/useImpersonating';
 const ORANGE = 'var(--accent)';
 
 function SvgIcon({ children, size = 16 }) {
@@ -105,6 +106,7 @@ const CSS = `
 `;
 
 export default function Sidebar({ user, onClose, className }) {
+  const viewingAs = useImpersonating();   // hide Sign Out while viewing as someone
   const pathname    = usePathname();
   const dispatch    = useDispatch();
   const router      = useRouter();
@@ -244,12 +246,14 @@ export default function Sidebar({ user, onClose, className }) {
             <div style={s.userBadge}>Administrator</div>
           </div>
         </div>
+        {!viewingAs && (
         <button onClick={handleLogout} className="logout-btn" style={s.logoutBtn}>
           <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <IconLogout />
           </span>
           Sign Out
         </button>
+        )}
       </div>
     </div>
   );

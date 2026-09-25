@@ -13,6 +13,7 @@ import ChangePasswordModal from '../../../components/ChangePasswordModal';
 import Loader from '../../../components/Loader';
 import ThemeToggle from '../../../components/ThemeToggle';
 import NexoraLogo from '../../../components/NexoraLogo';
+import { useImpersonating } from '../../../lib/useImpersonating';
 
 const ORANGE = 'var(--accent)';
 const NAVY = 'var(--text)';
@@ -33,6 +34,7 @@ const IconChart = () => <SvgIcon><line x1="18" y1="20" x2="18" y2="10"/><line x1
 const IconBack  = () => <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>;
 
 export default function ModuleLayout({ children, params }) {
+  const viewingAs = useImpersonating();   // hide Sign Out while viewing as someone
   const slug = params.module;
   const meta = MODULE_META[slug];
   const user = useSelector((s) => s.auth.user);
@@ -218,7 +220,9 @@ export default function ModuleLayout({ children, params }) {
               <div style={s.userBadge}>{user?.designation || user?.role || 'Admin'}</div>
             </div>
           </button>
+          {!viewingAs && (
           <button onClick={() => { dispatch(logout()); router.replace('/company'); }} style={s.logoutBtn}>Sign Out</button>
+          )}
         </div>
       </div>
       <main className="nx-main-scroll">
@@ -255,7 +259,9 @@ export default function ModuleLayout({ children, params }) {
             </div>
             <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => { setProfileOpen(false); setChangePwOpen(true); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Change Password</button>
+              {!viewingAs && (
               <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => { dispatch(logout()); router.replace('/company'); }} style={{ width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Sign Out</button>
+              )}
             </div>
           </div>
         </div>

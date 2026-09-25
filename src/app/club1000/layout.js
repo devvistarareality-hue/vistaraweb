@@ -16,6 +16,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
+import { useImpersonating } from '../../lib/useImpersonating';
 const ORANGE = 'var(--accent)';
 const NAVY   = 'var(--text)';
 const TEAL = 'var(--accent)';
@@ -73,6 +74,7 @@ const CSS = `
 `;
 
 export default function Club1000Layout({ children }) {
+  const viewingAs = useImpersonating();   // hide Sign Out while viewing as someone
   const user      = useSelector((s) => s.auth.user);
   const companies = useSelector((s) => s.companies.companies || []);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -337,12 +339,14 @@ export default function Club1000Layout({ children }) {
               <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
             </svg>
           </button>
+          {!viewingAs && (
           <button onClick={handleLogout} className="c1k-logout" style={s.logoutBtn}>
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
             Sign Out
           </button>
+          )}
         </div>
       </div>
 
@@ -403,6 +407,7 @@ export default function Club1000Layout({ children }) {
                 </svg>
                 Change Password
               </button>
+              {!viewingAs && (
               <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={handleLogout} style={{
                 width: '100%', padding: '10px 0', borderRadius: 14,
                 border: '1.5px solid var(--danger-2)', backgroundColor: 'var(--danger-soft)',
@@ -414,6 +419,7 @@ export default function Club1000Layout({ children }) {
                 </svg>
                 Sign Out
               </button>
+              )}
             </div>
           </div>
         </div>
