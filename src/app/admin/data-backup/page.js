@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
@@ -33,6 +33,12 @@ export default function DataBackupPage() {
   const [restoreBusy, setRestoreBusy] = useState(false);
   const fileRef = useRef(null);
 
+  const [resetInfo, setResetInfo] = useState(null);   // what a reset would delete
+  const [resetKey, setResetKey] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetMsg, setResetMsg] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
 
@@ -43,6 +49,34 @@ export default function DataBackupPage() {
 
   // A new file, or a different company, invalidates whatever was previewed.
   useEffect(() => { setPreview(null); setRestoreMsg(''); }, [restoreFile, companyId]);
+
+  const loadReset = useCallback(() => {
+    if (!ready) { setResetInfo(null); return; }
+    fetch(SALES_ENDPOINTS.backupReset(companyId), { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setResetInfo)
+      .catch(() => setResetInfo(null));
+  }, [ready, companyId]);
+
+  useEffect(() => { loadReset(); }, [loadReset]);
+
+  async function runReset() {
+    setResetBusy(true); setResetMsg('');
+    try {
+      const res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) setResetMsg(d.detail || `Failed (${res.status}).`);
+      else {
+        setResetMsg(`✅ ${d.detail}`);
+        setResetKey(''); setResetConfirm('');
+      }
+      loadReset();
+    } catch (e) { setResetMsg(e.message); }
+    setResetBusy(false);
+  }
 
   async function downloadExcel() {
     setExcelBusy(true); setExcelMsg('Building the workbook — a large company takes a minute.');
@@ -60,6 +94,7 @@ export default function DataBackupPage() {
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
         setExcelMsg('✅ Downloaded.');
+        loadReset();
       }
     } catch (e) { setExcelMsg(e.message); }
     setExcelBusy(false);
@@ -189,6 +224,68 @@ export default function DataBackupPage() {
           <p className={`dbx-msg ${restoreMsg[0] === '✅' ? 'is-good' : 'is-bad'}`}>
             <Icon name={restoreMsg[0] === '✅' ? 'check-circle' : 'alert'} />
             {restoreMsg.replace(/^[^\p{L}\p{N}]+/u, '')}
+          </p>
+        )}
+      </div>
+
+      {/* Reset — the destructive half, and the reason the backup above exists. */}
+      <div className="nx-card dbx-card is-danger">
+        <div className="dbx-head">Reset</div>
+        <div className="dbx-title">Delete everything in this company</div>
+        <div className="dbx-sub">
+          Empties every module — leads, bookings, projects, plots, users, AR, tasks, Club 1000 —
+          back to nothing. Your own account is kept so you can sign back in and restore. There is
+          no undo except the Excel backup above, which is why one is required first.
+        </div>
+
+        <div className="dbx-gate is-met"><span className="dbx-gate-mark">1</span>
+          <span>Download the Excel backup above{resetInfo?.backup_taken_at
+            ? ` — taken ${new Date(resetInfo.backup_taken_at).toLocaleString('en-IN')}`
+            : ''}</span>
+        </div>
+        <div className={`dbx-gate ${resetInfo?.can_reset ? 'is-met' : 'is-unmet'}`}>
+          <span className="dbx-gate-mark">{resetInfo?.can_reset ? '✓' : '✕'}</span>
+          <span>{resetInfo?.can_reset
+            ? 'Backup taken — a reset is allowed for 2 hours'
+            : 'No recent backup, so a reset is blocked'}</span>
+        </div>
+        <div className={`dbx-gate ${resetInfo?.key_configured ? 'is-met' : 'is-unmet'}`}>
+          <span className="dbx-gate-mark">{resetInfo?.key_configured ? '✓' : '✕'}</span>
+          <span>{resetInfo?.key_configured
+            ? 'Reset key is configured on the server'
+            : 'No DATA_RESET_KEY set on the server — reset is disabled'}</span>
+        </div>
+
+        {resetInfo?.total > 0 && (
+          <div className="dbx-plan">
+            {Object.entries(resetInfo.counts).map(([table, n]) => (
+              <div className="dbx-plan-row" key={table}><span>{table}</span><b>{n.toLocaleString('en-IN')}</b></div>
+            ))}
+            <div className="dbx-plan-total">
+              <span>Would be deleted</span><b>{resetInfo.total.toLocaleString('en-IN')}</b>
+            </div>
+          </div>
+        )}
+
+        <div className="dbx-fields">
+          <input className="nx-input" type="password" placeholder="Reset key"
+            value={resetKey} onChange={(e) => setResetKey(e.target.value)}
+            autoComplete="off" disabled={!resetInfo?.can_reset || !resetInfo?.key_configured} />
+          <input className="nx-input" placeholder="Type DELETE to confirm"
+            value={resetConfirm} onChange={(e) => setResetConfirm(e.target.value)}
+            disabled={!resetInfo?.can_reset || !resetInfo?.key_configured} />
+        </div>
+
+        <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
+          disabled={resetBusy || !resetInfo?.can_reset || !resetInfo?.key_configured
+                    || !resetKey || resetConfirm !== 'DELETE'}>
+          {resetBusy ? 'Deleting…' : 'Reset this company'}
+        </button>
+
+        {!!resetMsg && (
+          <p className={`dbx-msg ${resetMsg[0] === '✅' ? 'is-good' : 'is-bad'}`}>
+            <Icon name={resetMsg[0] === '✅' ? 'check-circle' : 'alert'} />
+            {resetMsg.replace(/^[^\p{L}\p{N}]+/u, '')}
           </p>
         )}
       </div>

@@ -143,6 +143,7 @@ export const SALES_ENDPOINTS = {
   // No company_id means "my own company" — the server pins it and refuses anyone else's.
   backupExcel: (companyId) => `${BASE_URL}/api/sales/backups/excel/${companyId ? `?company_id=${companyId}` : ''}`,
   get backupRestore()    { return `${BASE_URL}/api/sales/backups/restore/`; },
+  backupReset: (companyId) => `${BASE_URL}/api/sales/backups/reset/${companyId ? `?company_id=${companyId}` : ''}`,
   get channelPartners()  { return `${BASE_URL}/api/sales/channel-partners/`; },
   channelPartner: (id)   => `${BASE_URL}/api/sales/channel-partners/${id}/`,
 };

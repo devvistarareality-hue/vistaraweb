@@ -78,7 +78,7 @@ const NAV_ITEMS = [
   { label: 'User Management',    href: '/admin/users',          icon: <IconUsers /> },
   { label: 'Company Management', href: '/admin/companies',      icon: <IconBuilding /> },
   { label: 'Designation Master', href: '/admin/designations',   icon: <IconDesignation /> },
-  { label: 'Data Backup',        href: '/admin/data-backup',    icon: <IconBackup /> },
+  { label: 'Data Backup & Reset', href: '/admin/data-backup',   icon: <IconBackup /> },
   { label: 'Activity Log',       href: '/admin/activity',       icon: <IconActivity /> },
 ];
 

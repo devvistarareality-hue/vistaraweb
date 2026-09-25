@@ -1568,3 +1568,14 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .dbx-plan-row b { color: var(--text); font-variant-numeric: tabular-nums; }
 .dbx-plan-total { display: flex; justify-content: space-between; gap: 12px; font-size: 13px;
   font-weight: 800; color: var(--text); border-top: 1px solid var(--surface-2); margin-top: 6px; padding-top: 8px; }
+
+/* The reset half of the page: same shell, coloured as what it is. */
+.dbx-card.is-danger { border-color: var(--danger-2); background: var(--danger-soft); }
+.dbx-card.is-danger .dbx-title { color: var(--danger); }
+.dbx-gate { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2);
+  padding: 6px 0; }
+.dbx-gate-mark { width: 18px; text-align: center; font-weight: 800; }
+.dbx-gate.is-met .dbx-gate-mark { color: var(--success); }
+.dbx-gate.is-unmet .dbx-gate-mark { color: var(--danger); }
+.dbx-fields { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.dbx-fields .nx-input { flex: 1 1 200px; }
