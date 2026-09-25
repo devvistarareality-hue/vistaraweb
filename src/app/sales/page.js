@@ -557,13 +557,15 @@ function TelecallerDashboard({ user }) {
   // how to read it.
   const sections = [
     { title: 'My Pipeline', cards: [
-      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads') },
-      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads') },
+      { label: 'My Leads',       value: total,    icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads?tab=all') },
+      // Today's leads, whatever range the dashboard is set to — that is what it counts.
+      { label: 'New Today',      value: newToday, icon: <IconTrend />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/leads?tab=all&date_from=today' },
       { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
     ] },
     { title: 'Calling Activity', cards: [
       { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
-      { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/follow-ups' },
+      // Follow-ups actually made — the Completed tab, not today's queue.
+      { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/follow-ups?filter=completed') },
       { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
     ] },
     { title: 'Follow-ups Due', cards: [

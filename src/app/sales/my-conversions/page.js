@@ -161,7 +161,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   // isn't committed yet when the initializer runs.
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get('tab');
-    if (t === 'closures' || t === 'sv') setTab(t);
+    if (t === 'closures' || t === 'sv' || t === 'upcoming') setTab(t);
   }, []);
   const [historyLead, setHistoryLead] = useState(null); // { id, name, phone, project_name } | null
 
@@ -191,6 +191,12 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   useEffect(() => { load(); }, [load]);
 
   const svCompleted = visits.filter(v => v.status === 'completed');
+  // Visits still to happen, soonest first — what "Upcoming Visits" counts.
+  const upcoming = visits.filter(v => v.status === 'scheduled')
+    .sort((a, b) => new Date(a.scheduled_at || 0) - new Date(b.scheduled_at || 0));
+  // Each tab lists exactly what its card counts: the Site Visits tab used to show
+  // every visit (scheduled, cancelled…) under a "Site Visits Done" number.
+  const svRows = tab === 'upcoming' ? upcoming : svCompleted;
   const allClosures = closures;
   const loaderPad = { padding: '28px 0' };
 
@@ -216,7 +222,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
           <div className="myconv-stat-label">Total Closures</div>
         </div>
         <div className="myconv-stat is-upcoming">
-          <div className="myconv-stat-value">{visits.filter(v => v.status === 'scheduled').length}</div>
+          <div className="myconv-stat-value">{upcoming.length}</div>
           <div className="myconv-stat-label">Upcoming Visits</div>
         </div>
       </div>
@@ -225,6 +231,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
       <div className="myconv-tabs">
         {[
           { key: 'sv', label: 'Site Visits' },
+          { key: 'upcoming', label: 'Upcoming Visits' },
           { key: 'closures', label: 'Closures' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} className={`myconv-tab${tab === t.key ? ' is-on' : ''}`}>
@@ -235,11 +242,13 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
 
       {loading ? (
         <Loader label="Loading…" style={loaderPad} />
-      ) : tab === 'sv' ? (
+      ) : tab === 'sv' || tab === 'upcoming' ? (
         <div className="nx-card myconv-card">
-          {svCompleted.length === 0 ? (
+          {svRows.length === 0 ? (
             <div className="myconv-empty">
-              {isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.'}
+              {tab === 'upcoming'
+                ? (isStm ? 'No visits scheduled.' : 'No visits scheduled for your referred leads.')
+                : (isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.')}
             </div>
           ) : (<>
             <div className="myconv-scroll convScroll">
@@ -256,7 +265,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
                 </tr>
               </thead>
               <tbody>
-                {visits.slice(0, shown).map(v => (
+                {svRows.slice(0, shown).map(v => (
                   <tr key={v.id} onClick={() => openLead(v)} className="myconv-row">
                     <td><span className="myconv-name">{v.lead_name || '—'}</span></td>
                     <td className="myconv-muted">{v.lead_phone || '—'}</td>
@@ -270,9 +279,9 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
               </tbody>
             </table>
             </div>
-            {visits.length > shown && (
+            {svRows.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {visits.length}</span>
+                <span className="nx-more-count">Showing {shown} of {svRows.length}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}
