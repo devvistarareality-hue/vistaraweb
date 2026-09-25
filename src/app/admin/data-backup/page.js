@@ -84,8 +84,11 @@ export default function DataBackupPage() {
     if (mayBackUp && superAdmin) dispatch(fetchCompanies());
   }, [mayBackUp, superAdmin, dispatch]);
 
-  // A new file, or a different company, invalidates whatever was previewed.
-  useEffect(() => { setPreview(null); setRestoreMsg(null); }, [restoreFile, companyId]);
+  // A new file, or a different company, invalidates whatever was previewed. Clearing
+  // the file after a successful restore must not also clear the "restored" message,
+  // so only a newly chosen file does that.
+  useEffect(() => { setPreview(null); if (restoreFile) setRestoreMsg(null); }, [restoreFile]);
+  useEffect(() => { setPreview(null); setRestoreMsg(null); }, [companyId]);
 
   const loadReset = useCallback(() => {
     if (!ready) { setResetInfo(null); return; }
@@ -207,11 +210,29 @@ export default function DataBackupPage() {
       if (companyId) fd.append('company_id', String(companyId));
       if (commit) fd.append('commit', '1');
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const before = resetInfo?.total ?? 0;
       // No Content-Type here on purpose — the browser sets the multipart boundary.
-      const res = await fetch(SALES_ENDPOINTS.backupRestore, {
-        method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      let res = null, d = {};
+      try {
+        res = await fetch(SALES_ENDPOINTS.backupRestore, {
+          method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } });
+        d = await res.json().catch(() => ({}));
+      } catch (e) { res = null; }
+      // Restoring a big company can outlast the proxy's connection while the server
+      // carries on and finishes — so a lost reply means "ask the server".
+      if (commit && (!res || res.status === 502 || res.status === 504)) {
+        const after = await waitForRestore(before);
+        setPreview(null); setRestoreFile(null);
+        if (fileRef.current) fileRef.current.value = '';
+        setRestoreMsg(after > before
+          ? good('Backup restored', `${(after - before).toLocaleString('en-IN')} records put back into `
+              + `${company?.name || 'this company'}. It took longer than the connection stayed open, but the server finished it.`)
+          : bad('Could not confirm the restore',
+              'The server may still be working. Refresh this page in a minute to see the counts.'));
+        loadReset(); loadSched();
+      } else if (!res) {
+        setRestoreMsg(bad('That file cannot be checked', 'The connection dropped. Try again.'));
+      } else if (!res.ok) {
         setPreview(null);
         setRestoreMsg(bad(commit ? 'Restore failed' : 'That file cannot be restored',
                           d.detail || `The server returned ${res.status}.`));
@@ -281,6 +302,23 @@ export default function DataBackupPage() {
       loadReset();
     } catch (e) { setResetMsg(bad('Reset failed', e.message)); }
     setResetBusy(false); setResetStage('');
+  }
+
+  // A restore is done once the company's record count has grown and then holds still.
+  async function waitForRestore(before) {
+    let last = before, still = 0;
+    for (let i = 0; i < 120; i++) {              // up to 10 minutes
+      await new Promise((r) => setTimeout(r, 5000));
+      try {
+        const r = await fetch(SALES_ENDPOINTS.backupReset(companyId), { headers: authHeaders() });
+        if (!r.ok) continue;
+        const total = (await r.json()).total || 0;
+        still = total === last ? still + 1 : 0;
+        last = total;
+        if (total > before && still >= 2) return total;
+      } catch (e) { /* keep asking */ }
+    }
+    return last;
   }
 
   // Emptied means nothing is left but the account(s) the reset keeps.
