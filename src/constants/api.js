@@ -140,10 +140,6 @@ export const SALES_ENDPOINTS = {
   get mediaUpload()      { return `${BASE_URL}/api/sales/media/upload/`; },
   get mediaDelete()      { return `${BASE_URL}/api/sales/media/delete/`; },
   get dataReset()        { return `${BASE_URL}/api/sales/admin/reset-trial-data/`; },
-  get backupSettings()   { return `${BASE_URL}/api/sales/backups/settings/`; },
-  get backups()          { return `${BASE_URL}/api/sales/backups/`; },
-  get backupRun()        { return `${BASE_URL}/api/sales/backups/run/`; },
-  backupDownload: (id)   => `${BASE_URL}/api/sales/backups/${id}/download/`,
   // No company_id means "my own company" — the server pins it and refuses anyone else's.
   backupExcel: (companyId) => `${BASE_URL}/api/sales/backups/excel/${companyId ? `?company_id=${companyId}` : ''}`,
   get backupRestore()    { return `${BASE_URL}/api/sales/backups/restore/`; },
