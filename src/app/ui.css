@@ -1568,7 +1568,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .dbx-field-sm { flex: 0 1 120px; }
 .dbx-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted);
   text-transform: uppercase; }
-.dbx-field .nx-input { width: 100%; height: 42px; border-radius: 12px; font-size: 13.5px; }
+.dbx-field .nx-input { width: 100%; flex: 0 0 auto; height: 42px; min-height: 42px;
+  max-height: 42px; padding: 0 14px; border-radius: 12px; font-size: 13.5px; }
+.dbx-field select.nx-input { padding-right: 34px; }
 .dbx-field-toggle { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 9px;
   align-self: flex-end; height: 42px; padding: 0 14px; border-radius: 12px;
   border: 1.5px solid var(--border); background: var(--surface); cursor: pointer;
@@ -1626,10 +1628,4 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .dbx-field, .dbx-field-sm { flex: 1 1 100%; }
   .dbx-hrow .nx-btn { margin-left: 0; }
 }
-.dbx-gate { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2);
-  padding: 6px 0; }
-.dbx-gate-mark { width: 18px; text-align: center; font-weight: 800; }
-.dbx-gate.is-met .dbx-gate-mark { color: var(--success); }
-.dbx-gate.is-unmet .dbx-gate-mark { color: var(--danger); }
-.dbx-fields { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-.dbx-fields .nx-input { flex: 1 1 200px; }
+
