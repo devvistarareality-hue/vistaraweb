@@ -571,7 +571,7 @@ function TelecallerDashboard({ user }) {
       { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
       // Follow-ups actually made — the Completed tab, not today's queue.
       { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/follow-ups?filter=completed') },
-      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
+      { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)' },  // view only — a count, not a list,
     ] },
     { title: 'Follow-ups Due', cards: [
       { label: 'Callback Due',   value: callback, icon: <IconClock />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/leads?tab=called&telecaller_status=callback') },
@@ -584,7 +584,7 @@ function TelecallerDashboard({ user }) {
       // Visits booked from my leads that haven't happened yet — My Conversions' Upcoming tab.
       { label: 'Upcoming SV',    value: svUpcoming, icon: <IconClock />,  color: 'var(--warning-soft)', textColor: 'var(--warning)', href: convHref('upcoming', '/sales/site-visits?tab=scheduled') },
       { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: convHref('closures', '/sales/closure?view=mybookings&status=sold&scope=visible') },
-      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: convHref('sv', '/sales/site-visits?tab=completed') },
+      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)' },  // view only — a ratio, not a list,
     ] },
   ];
 
