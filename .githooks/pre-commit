@@ -4,3 +4,6 @@ node scripts/check-inline-styles.js || exit 1
 # An identifier used but never declared builds fine and then throws in the
 # browser — the project has no linter, so this stands in for one.
 node scripts/check-undefined.js || exit 1
+# A named import of something that is not exported is NOT a build error — it is
+# `undefined` at runtime and throws on first use. Neither check above sees it.
+node scripts/check-imports.js || exit 1

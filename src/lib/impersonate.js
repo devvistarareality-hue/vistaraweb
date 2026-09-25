@@ -5,7 +5,7 @@
  * away, so "Exit" is a local swap back — no second login, and no way to get
  * stranded in someone else's account if the network drops mid-exit.
  */
-import { API } from '../constants/api';
+import { AUTH_ENDPOINTS } from '../constants/api';
 import { apiFetch } from '../utils/apiFetch';
 import { clearAllCache } from '../app/sales/_cache';
 
@@ -19,7 +19,7 @@ export function impersonating() {
 }
 
 export async function startImpersonation(userId) {
-  const res = await apiFetch(API.impersonate, {
+  const res = await apiFetch(AUTH_ENDPOINTS.impersonate, {
     method: 'POST',
     body: JSON.stringify({ user_id: userId, platform: 'web' }),
   });
