@@ -343,8 +343,11 @@ export default function DataBackupPage() {
           overwrites what is live.
         </div>
 
+        {/* .gz is accepted too: stored backups taken before the content-type fix
+            were labelled gzip by the bucket and land on disk named ".gz". The
+            bytes are the same workbook, so they restore as they are. */}
         <label className="dbx-file">
-          <input type="file" accept=".xlsx" ref={fileRef}
+          <input type="file" accept=".xlsx,.gz" ref={fileRef}
             onChange={(e) => setRestoreFile(e.target.files?.[0] || null)} />
           <span className="dbx-file-name">{restoreFile ? restoreFile.name : 'Choose a backup file'}</span>
           <span className="dbx-file-btn">Browse</span>
