@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { downloadInBackground } from '../../../lib/downloadInBackground';
+import ReviveCompany from './_ReviveCompany';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { canBackUp, isSuperAdmin } from '../../../lib/moduleAccess';
 
@@ -514,6 +515,9 @@ export default function DataBackupPage() {
                 : 'Reading the workbook and working out what is missing. Nothing is written yet.'} />
           : <Result value={restoreMsg} />}
       </section>
+
+      {/* ── Bring a deleted company back (platform admins) ── */}
+      {superAdmin && <ReviveCompany />}
 
       {/* ── Empty it ── */}
       <section className="nx-card dbx-card is-danger">

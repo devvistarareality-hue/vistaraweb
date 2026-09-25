@@ -38,8 +38,9 @@ async function waitUntilGone(companyId) {
   for (let i = 0; i < 120; i++) {                 // up to 10 minutes
     await new Promise((r) => setTimeout(r, 5000));
     try {
-      const r = await fetch(COMPANY_ENDPOINTS.detail(companyId), { headers: authHeaders() });
-      if (r.status === 404) return true;
+      // The detail URL has no GET, so ask the list whether it is still there.
+      const r = await fetch(COMPANY_ENDPOINTS.list, { headers: authHeaders() });
+      if (r.ok && !(await r.json()).some((c) => c.id === companyId)) return true;
     } catch (e) { /* keep asking */ }
   }
   return false;
@@ -108,8 +109,8 @@ export default function DeleteCompanyModal({ company, onClose, onDeleted }) {
           <p className="cdel-text">
             This permanently deletes <b>{company.name}</b> and everything in it — users, leads,
             bookings, projects, AR, Club 1000, tasks and its backups list. A full backup is taken
-            and downloaded first, but it can only be restored into this company, which will no
-            longer exist.
+            and downloaded first — keep it: <b>Data Backup → Bring back a deleted company</b> can
+            recreate the company from that file.
           </p>
 
           <label className="nx-field stack">
