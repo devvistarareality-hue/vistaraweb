@@ -12,6 +12,37 @@ const fmtWhen = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', {
 }) : '');
 const fmtSize = (b) => (b ? `${(b / 1024 / 1024).toFixed(1)} MB` : '—');
 
+// These operations run for minutes on a large company. A disabled button reads
+// as a hung page, so anything long-running shows this instead.
+function Working({ label, note }) {
+  return (
+    <div className="dbx-working" role="status" aria-live="polite">
+      <div className="dbx-working-bar"><span /></div>
+      <div className="dbx-working-label"><span className="dbx-spin" />{label}</div>
+      {note ? <div className="dbx-working-note">{note}</div> : null}
+    </div>
+  );
+}
+
+// The answer to "did that work?", stated once it is known.
+function Result({ value }) {
+  if (!value) return null;
+  return (
+    <div className={`dbx-result is-${value.tone}`} role="status" aria-live="polite">
+      <span className="dbx-result-mark">
+        <Icon name={value.tone === 'good' ? 'check' : value.tone === 'bad' ? 'alert' : 'info'} />
+      </span>
+      <div className="dbx-result-text">
+        <div className="dbx-result-title">{value.title}</div>
+        {value.detail ? <div className="dbx-result-sub">{value.detail}</div> : null}
+      </div>
+    </div>
+  );
+}
+
+const good = (title, detail) => ({ tone: 'good', title, detail });
+const bad  = (title, detail) => ({ tone: 'bad', title, detail });
+
 export default function DataBackupPage() {
   const user = useSelector((s) => s.auth.user);
   const superAdmin = isSuperAdmin(user);
@@ -30,29 +61,30 @@ export default function DataBackupPage() {
   const ready = superAdmin ? !!pickedId : mayBackUp;
 
   const [excelBusy, setExcelBusy] = useState(false);
-  const [excelMsg, setExcelMsg] = useState('');
+  const [excelMsg, setExcelMsg] = useState(null);
 
   const [sched, setSched] = useState(null);
   const [schedBusy, setSchedBusy] = useState('');
+  const [schedMsg, setSchedMsg] = useState(null);
 
   const [restoreFile, setRestoreFile] = useState(null);
   const [preview, setPreview] = useState(null);      // a clean dry run, ready to commit
-  const [restoreMsg, setRestoreMsg] = useState('');
-  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreMsg, setRestoreMsg] = useState(null);
+  const [restoreBusy, setRestoreBusy] = useState('');   // '' | 'check' | 'commit'
   const fileRef = useRef(null);
 
   const [resetInfo, setResetInfo] = useState(null);  // what a reset would delete
   const [resetKey, setResetKey] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetBusy, setResetBusy] = useState(false);
-  const [resetMsg, setResetMsg] = useState('');
+  const [resetMsg, setResetMsg] = useState(null);
 
   useEffect(() => {
     if (mayBackUp && superAdmin) dispatch(fetchCompanies());
   }, [mayBackUp, superAdmin, dispatch]);
 
   // A new file, or a different company, invalidates whatever was previewed.
-  useEffect(() => { setPreview(null); setRestoreMsg(''); }, [restoreFile, companyId]);
+  useEffect(() => { setPreview(null); setRestoreMsg(null); }, [restoreFile, companyId]);
 
   const loadReset = useCallback(() => {
     if (!ready) { setResetInfo(null); return; }
@@ -70,12 +102,12 @@ export default function DataBackupPage() {
   useEffect(() => { loadSched(); }, [loadSched]);
 
   async function downloadExcel() {
-    setExcelBusy(true); setExcelMsg('Building the workbook — a large company takes a minute.');
+    setExcelBusy(true); setExcelMsg(null);
     try {
       const res = await fetch(SALES_ENDPOINTS.backupExcel(companyId), { headers: authHeaders() });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        setExcelMsg('Could not build the backup: ' + (d.detail || res.status));
+        setExcelMsg(bad('Could not build the backup', d.detail || `The server returned ${res.status}.`));
       } else {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -84,10 +116,11 @@ export default function DataBackupPage() {
         a.download = `${(company?.name || 'company').replace(/[^A-Za-z0-9]+/g, '-')}-backup.xlsx`;
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
-        setExcelMsg('✅ Downloaded.');
+        setExcelMsg(good('Backup downloaded',
+          `The workbook for ${company?.name || 'this company'} is in your downloads.`));
         loadReset();
       }
-    } catch (e) { setExcelMsg(e.message); }
+    } catch (e) { setExcelMsg(bad('Could not build the backup', e.message)); }
     setExcelBusy(false);
   }
 
@@ -120,14 +153,20 @@ export default function DataBackupPage() {
   }
 
   async function takeStored() {
-    setSchedBusy('take');
+    setSchedBusy('take'); setSchedMsg(null);
     try {
       const r = await fetch(SALES_ENDPOINTS.backupSchedule(companyId), {
         method: 'POST', headers: authHeaders() });
       const d = await r.json().catch(() => ({}));
-      if (r.ok) { setSched(d); loadReset(); }
-      else setExcelMsg(d.detail || 'Could not store the backup.');
-    } catch (e) { setExcelMsg(e.message); }
+      if (r.ok) {
+        setSched(d);
+        const latest = (d.history || [])[0];
+        setSchedMsg(good('Backup stored', latest
+          ? `${latest.rows?.toLocaleString('en-IN')} records · ${fmtSize(latest.size)} · kept in the list below.`
+          : 'It is in the list below, ready to download or restore.'));
+        loadReset();
+      } else setSchedMsg(bad('Could not store the backup', d.detail));
+    } catch (e) { setSchedMsg(bad('Could not store the backup', e.message)); }
     setSchedBusy('');
   }
 
@@ -136,12 +175,12 @@ export default function DataBackupPage() {
       const r = await fetch(SALES_ENDPOINTS.backupStored(id, companyId), { headers: authHeaders() });
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-      else setExcelMsg(d.detail || 'Could not get a download link.');
-    } catch (e) { setExcelMsg(e.message); }
+      else setSchedMsg(bad('Could not get a download link', d.detail));
+    } catch (e) { setSchedMsg(bad('Could not get a download link', e.message)); }
   }
 
   async function sendRestore(commit) {
-    setRestoreBusy(true); setRestoreMsg('');
+    setRestoreBusy(commit ? 'commit' : 'check'); setRestoreMsg(null);
     try {
       const fd = new FormData();
       fd.append('file', restoreFile);
@@ -154,33 +193,37 @@ export default function DataBackupPage() {
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
         setPreview(null);
-        setRestoreMsg(d.detail || `Failed (${res.status}).`);
+        setRestoreMsg(bad(commit ? 'Restore failed' : 'That file cannot be restored',
+                          d.detail || `The server returned ${res.status}.`));
       } else if (commit) {
         setPreview(null); setRestoreFile(null);
         if (fileRef.current) fileRef.current.value = '';
-        setRestoreMsg(`✅ Restored ${d.total} record${d.total === 1 ? '' : 's'}.`);
+        const n = (d.total || 0).toLocaleString('en-IN');
+        setRestoreMsg(good('Backup restored',
+          `${n} record${d.total === 1 ? '' : 's'} put back into ${company?.name || 'this company'}` +
+          (d.already_there ? `. ${d.already_there.toLocaleString('en-IN')} were already there and were left alone.` : '.')));
         loadReset(); loadSched();
       } else {
-        setPreview(d); setRestoreMsg('');
+        setPreview(d); setRestoreMsg(null);
       }
-    } catch (e) { setRestoreMsg(e.message); }
-    setRestoreBusy(false);
+    } catch (e) { setRestoreMsg(bad('Restore failed', e.message)); }
+    setRestoreBusy('');
   }
 
   async function runReset() {
-    setResetBusy(true); setResetMsg('');
+    setResetBusy(true); setResetMsg(null);
     try {
       const res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }) });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) setResetMsg(d.detail || `Failed (${res.status}).`);
+      if (!res.ok) setResetMsg(bad('Reset failed', d.detail || `The server returned ${res.status}.`));
       else {
-        setResetMsg(`✅ ${d.detail}`);
+        setResetMsg(good('Company emptied', d.detail));
         setResetKey(''); setResetConfirm(''); loadSched();
       }
       loadReset();
-    } catch (e) { setResetMsg(e.message); }
+    } catch (e) { setResetMsg(bad('Reset failed', e.message)); }
     setResetBusy(false);
   }
 
@@ -212,15 +255,13 @@ export default function DataBackupPage() {
           </div>
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={downloadExcel}
             disabled={!ready || excelBusy}>
-            {excelBusy ? 'Building…' : 'Download Excel'}
+            {excelBusy ? <><span className="dbx-spin" />Building…</> : 'Download Excel'}
           </button>
         </div>
-        {!!excelMsg && (
-          <p className={`dbx-msg ${excelMsg[0] === '✅' ? 'is-good' : excelMsg.startsWith('Building') ? 'is-plain' : 'is-bad'}`}>
-            {excelMsg[0] === '✅' ? <Icon name="check-circle" /> : null}
-            {excelMsg.replace(/^[^\p{L}\p{N}]+/u, '')}
-          </p>
-        )}
+        {excelBusy
+          ? <Working label="Building the workbook…"
+                     note="Every module for this company, in one file. A large company takes a minute or two — leave this tab open." />
+          : <Result value={excelMsg} />}
       </section>
 
       {/* ── On a schedule ── */}
@@ -236,9 +277,14 @@ export default function DataBackupPage() {
           </div>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={takeStored}
             disabled={!ready || !!schedBusy}>
-            {schedBusy === 'take' ? 'Taking…' : 'Take one now'}
+            {schedBusy === 'take' ? <><span className="dbx-spin" />Taking…</> : 'Take one now'}
           </button>
         </div>
+
+        {schedBusy === 'take'
+          ? <Working label="Taking a backup…"
+                     note="Reading every module and writing the workbook, then storing it. This takes a minute or two on a large company — leave this tab open." />
+          : <Result value={schedMsg} />}
 
         <div className="dbx-fields">
           <label className="dbx-field dbx-field-toggle">
@@ -325,21 +371,22 @@ export default function DataBackupPage() {
 
         <div className="dbx-actions">
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => sendRestore(false)}
-            disabled={!ready || !restoreFile || restoreBusy}>
-            {restoreBusy && !preview ? 'Checking…' : 'Check file'}
+            disabled={!ready || !restoreFile || !!restoreBusy}>
+            {restoreBusy === 'check' ? <><span className="dbx-spin" />Checking…</> : 'Check file'}
           </button>
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => sendRestore(true)}
-            disabled={!preview || restoreBusy}>
-            {restoreBusy && preview ? 'Restoring…' : 'Restore'}
+            disabled={!preview || !!restoreBusy}>
+            {restoreBusy === 'commit' ? <><span className="dbx-spin" />Restoring…</> : 'Restore'}
           </button>
         </div>
 
-        {!!restoreMsg && (
-          <p className={`dbx-msg ${restoreMsg[0] === '✅' ? 'is-good' : 'is-bad'}`}>
-            <Icon name={restoreMsg[0] === '✅' ? 'check-circle' : 'alert'} />
-            {restoreMsg.replace(/^[^\p{L}\p{N}]+/u, '')}
-          </p>
-        )}
+        {restoreBusy
+          ? <Working
+              label={restoreBusy === 'commit' ? 'Restoring…' : 'Checking the file…'}
+              note={restoreBusy === 'commit'
+                ? 'Writing every module back in dependency order. Do not close this tab — a half-finished restore is rolled back, but you would have to start again.'
+                : 'Reading the workbook and working out what is missing. Nothing is written yet.'} />
+          : <Result value={restoreMsg} />}
       </section>
 
       {/* ── Empty it ── */}
@@ -397,15 +444,13 @@ export default function DataBackupPage() {
 
         <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
           disabled={resetBusy || !canReset || !resetKey || resetConfirm !== 'DELETE'}>
-          {resetBusy ? 'Deleting…' : 'Reset this company'}
+          {resetBusy ? <><span className="dbx-spin" />Deleting…</> : 'Reset this company'}
         </button>
 
-        {!!resetMsg && (
-          <p className={`dbx-msg ${resetMsg[0] === '✅' ? 'is-good' : 'is-bad'}`}>
-            <Icon name={resetMsg[0] === '✅' ? 'check-circle' : 'alert'} />
-            {resetMsg.replace(/^[^\p{L}\p{N}]+/u, '')}
-          </p>
-        )}
+        {resetBusy
+          ? <Working label="Emptying the company…"
+                     note="Deleting every module in dependency order. Do not close this tab." />
+          : <Result value={resetMsg} />}
       </section>
     </div>
   );

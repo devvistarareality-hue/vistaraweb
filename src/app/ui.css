@@ -1617,11 +1617,51 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .dbx-hrow .nx-btn { margin-left: auto; }
 .dbx-empty { font-size: 12.5px; color: var(--muted); padding: 12px 0 2px; }
 
-.dbx-msg { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
-  margin-top: 14px; }
-.dbx-msg.is-good { color: var(--success); }
-.dbx-msg.is-bad { color: var(--danger); }
-.dbx-msg.is-plain { color: var(--muted); font-weight: 500; }
+/* Working: these run for minutes on a large company, so "Taking…" on a button
+   is not enough feedback — the page has to look alive or it reads as hung. The
+   bar is indeterminate on purpose: the server streams no progress. */
+.dbx-working { margin-top: 14px; }
+.dbx-working-bar { height: 4px; border-radius: 99px; background: var(--surface-2);
+  overflow: hidden; }
+.dbx-working-bar span { display: block; width: 38%; height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: dbx-slide 1.15s ease-in-out infinite; }
+@keyframes dbx-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(365%); } }
+.dbx-working-label { display: flex; align-items: center; gap: 7px; margin-top: 9px;
+  font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.dbx-working-note { font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+
+/* The spinner inside a button that is mid-action. */
+.dbx-spin { display: inline-block; width: 13px; height: 13px; margin-right: 7px;
+  vertical-align: -2px; border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: 50%; opacity: 0.85; animation: dbx-rot 0.7s linear infinite; }
+@keyframes dbx-rot { to { transform: rotate(360deg); } }
+
+/* The outcome, once it is done. Big enough to be the answer to "did that work?"
+   from across the desk — a one-line note in the body text was missed. */
+.dbx-result { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px;
+  padding: 14px 16px; border-radius: 14px; border: 1.5px solid transparent;
+  animation: dbx-rise 0.26s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes dbx-rise { from { opacity: 0; transform: translateY(6px); } }
+.dbx-result.is-good { background: var(--success-soft); border-color: var(--success); }
+.dbx-result.is-bad { background: var(--danger-soft); border-color: var(--danger-2); }
+.dbx-result.is-plain { background: var(--surface-2); border-color: var(--border); }
+.dbx-result-mark { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+.dbx-result.is-good .dbx-result-mark { background: var(--success); color: #fff; }
+.dbx-result.is-bad .dbx-result-mark { background: var(--danger); color: #fff; }
+.dbx-result.is-plain .dbx-result-mark { background: var(--border); color: var(--text-2); }
+.dbx-result-text { flex: 1; min-width: 0; }
+.dbx-result-title { font-size: 13.5px; font-weight: 800; color: var(--text); }
+.dbx-result.is-good .dbx-result-title { color: var(--success); }
+.dbx-result.is-bad .dbx-result-title { color: var(--danger); }
+.dbx-result-sub { font-size: 12.5px; color: var(--text-2); margin-top: 3px; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dbx-working-bar span, .dbx-spin { animation: none; }
+  .dbx-working-bar span { width: 100%; opacity: 0.5; }
+  .dbx-result { animation: none; }
+}
 
 @media (max-width: 560px) {
   .dbx-card { padding: 16px; }
