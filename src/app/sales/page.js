@@ -872,7 +872,7 @@ export function STMDashboard({ user, cpOnly = false }) {
       <div className="ard-groups">
       {[
         { title: 'My Pipeline', cards: [
-          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads') },
+          { label: 'My Pipeline',    value: total,   icon: <IconActivity />, color: 'var(--accent-soft)', textColor: 'var(--accent)', href: withDate('/sales/leads?tab=all') },
           { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
         ] },
         { title: 'Lead Temperature', cards: [

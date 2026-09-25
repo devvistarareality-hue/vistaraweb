@@ -1577,7 +1577,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const showAssignees= isAdminMgr;                          // telecaller/STM picker dropdowns
   // Telecaller / STM portals split their assigned leads into "To Call" (pending) vs
   // "Called" (already actioned) so they can tell what's left to work.
-  const [workTab,     setWorkTab]     = useState('pending'); // 'pending' | 'called'
+  // 'all' is both together — the whole pipeline, which the dashboard's My Pipeline opens.
+  const [workTab,     setWorkTab]     = useState('pending'); // 'pending' | 'called' | 'all'
   const [leads,       setLeads]       = useState([]);
   const [total,       setTotal]       = useState(0);
   const [page,        setPage]        = useState(1);
@@ -1621,7 +1622,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       date_from:         df === 'today' ? today : (df || ''),
       date_to:           df === 'today' ? today : (p.get('date_to') || ''),
     }));
-    if (p.get('tab') === 'called') setWorkTab('called');
+    if (p.get('tab') === 'called' || p.get('tab') === 'all') setWorkTab(p.get('tab'));
     setSeeded(true);
   }, []);
   // Search box is debounced: typing updates `searchText` instantly (responsive UI)
@@ -1911,7 +1912,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>All Leads</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>
-            {total.toLocaleString()} {isCaller ? (workTab === 'pending' ? 'to call' : 'called') : 'total leads'}
+            {total.toLocaleString()} {isCaller ? (workTab === 'pending' ? 'to call' : workTab === 'called' ? 'called' : 'in your pipeline') : 'total leads'}
             {selectedIds.size > 0 && <span style={{ marginLeft: 8, color: 'var(--accent)', fontWeight: 600 }}>· {selectedIds.size} selected</span>}
           </p>
         </div>
@@ -1928,7 +1929,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       {/* To Call / Called split — telecaller & STM portals only */}
       {isCaller && (
         <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--surface-3)', marginBottom: 18 }}>
-          {[['pending', 'To Call'], ['called', 'Called']].map(([key, label]) => {
+          {[['pending', 'To Call'], ['called', 'Called'], ['all', 'All']].map(([key, label]) => {
             const active = workTab === key;
             return (
               <button key={key} onClick={() => setWorkTab(key)}
