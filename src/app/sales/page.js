@@ -876,9 +876,9 @@ export function STMDashboard({ user, cpOnly = false }) {
           { label: 'To Work',        value: toWork,  icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
         ] },
         { title: 'Lead Temperature', cards: [
-          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: 'var(--danger-soft)', textColor: 'var(--danger)', href: withDate('/sales/leads?stm_status=hot') },
-          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?stm_status=warm') },
-          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/leads?stm_status=cold') },
+          { label: 'Hot Leads',      value: hot,     icon: <IconFire />,     color: 'var(--danger-soft)', textColor: 'var(--danger)', href: withDate('/sales/leads?stm_status=hot&tab=called') },
+          { label: 'Warm / SQL',     value: warm,    icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?stm_status=warm&tab=called') },
+          { label: 'Cold Leads',     value: cold,    icon: <IconActivity />, color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/leads?stm_status=cold&tab=called') },
         ] },
         { title: 'Follow-ups Due', cards: [
           { label: 'Follow-ups Pending',  value: fuPending,    icon: <IconClock />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/follow-ups?filter=pending') },
