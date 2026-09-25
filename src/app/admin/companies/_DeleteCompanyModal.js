@@ -2,12 +2,14 @@
 import { useState } from 'react';
 import { COMPANY_ENDPOINTS, SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import Icon from '../../../components/Icon';
+import { downloadInBackground } from '../../../lib/downloadInBackground';
 
 // Deleting a company takes every module's data with it and leaves nothing to restore
 // into, so it asks for what a reset asks for and more: the reset key, the company's
 // own code typed out, and it backs the company up and downloads that backup first.
 // The server enforces the same gates; this is where they are gathered.
 const STAGES = {
+  check:    'Checking the reset key and company code…',
   backup:   'Taking a full backup…',
   download: 'Downloading the backup…',
   delete:   'Deleting the company…',
@@ -27,10 +29,7 @@ async function startDownload(backupId, companyId) {
   const r = await fetch(SALES_ENDPOINTS.backupStored(backupId, companyId), { headers: authHeaders() });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || !d.url) throw new Error(d.detail || 'The backup could not be downloaded.');
-  // A link click, not window.open: after an await a new window counts as a pop-up.
-  const a = document.createElement('a');
-  a.href = d.url; a.download = '';
-  document.body.appendChild(a); a.click(); a.remove();
+  downloadInBackground(d.url);
 }
 
 // A big company takes longer to delete than the proxy keeps the connection open;
@@ -59,6 +58,16 @@ export default function DeleteCompanyModal({ company, onClose, onDeleted }) {
   async function run() {
     setError('');
     try {
+      // Refuse a wrong key or code straight away, before minutes of backup.
+      setStage('check');
+      const chk = await fetch(COMPANY_ENDPOINTS.detail(company.id), {
+        method: 'DELETE', headers: authHeaders(),
+        body: JSON.stringify({ reset_key: key, confirm: typed.trim(), check_only: true }) });
+      if (!chk.ok) {
+        const cd = await chk.json().catch(() => ({}));
+        setError(cd.detail || `The server returned ${chk.status}. Nothing was deleted.`);
+        setStage(''); return;
+      }
       setStage('backup');
       const backupId = await downloadBackup(company.id);
       setStage('download');

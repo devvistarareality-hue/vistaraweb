@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
+import { downloadInBackground } from '../../../lib/downloadInBackground';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { canBackUp, isSuperAdmin } from '../../../lib/moduleAccess';
 
@@ -176,19 +177,13 @@ export default function DataBackupPage() {
     setSchedBusy('');
   }
 
-  // Starts the download without a new tab: window.open after an await is treated as
-  // a pop-up and blocked (Safari especially), a plain link click is not.
+  // Starts the download without a new tab or a navigation (see downloadInBackground).
   async function downloadStored(id) {
     try {
       const r = await fetch(SALES_ENDPOINTS.backupStored(id, companyId), { headers: authHeaders() });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.url) { setSchedMsg(bad('Could not get a download link', d.detail)); return false; }
-      const a = document.createElement('a');
-      a.href = d.url;
-      a.download = '';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      downloadInBackground(d.url);
       return true;
     } catch (e) { setSchedMsg(bad('Could not get a download link', e.message)); return false; }
   }
@@ -256,6 +251,16 @@ export default function DataBackupPage() {
   async function runReset() {
     setResetBusy(true); setResetMsg(null);
     try {
+      // Refuse a wrong key or confirmation straight away, before minutes of backup.
+      setResetStage('check');
+      const chk = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm, check_only: true }) });
+      if (!chk.ok) {
+        const cd = await chk.json().catch(() => ({}));
+        setResetMsg(bad('Reset refused', cd.detail || `The server returned ${chk.status}. Nothing was changed.`));
+        setResetBusy(false); setResetStage(''); return;
+      }
       setResetStage('backup');
       const b = await fetch(SALES_ENDPOINTS.backupSchedule(companyId), {
         method: 'POST', headers: authHeaders() });
@@ -340,6 +345,7 @@ export default function DataBackupPage() {
   // The reset takes its own backup first, so only the key is needed up front.
   const canReset = !!resetInfo?.key_configured;
   const STAGE = {
+    check:    ['Checking the reset key…', 'Nothing is changed until the key and confirmation are accepted.'],
     backup:   ['Taking a backup…', 'Storing a full backup before anything is deleted.'],
     download: ['Downloading the backup…', 'The workbook is going to your downloads.'],
     reset:    ['Emptying the company…', 'Deleting every module in dependency order. Do not close this tab.'],
@@ -564,7 +570,7 @@ export default function DataBackupPage() {
 
         <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
           disabled={resetBusy || !canReset || !resetKey || resetConfirm !== 'DELETE'}>
-          {resetBusy ? <><span className="dbx-spin" />{resetStage === 'backup' || resetStage === 'download' ? 'Backing up…' : 'Deleting…'}</> : 'Back up & reset this company'}
+          {resetBusy ? <><span className="dbx-spin" />{resetStage === 'check' ? 'Checking…' : resetStage === 'backup' || resetStage === 'download' ? 'Backing up…' : 'Deleting…'}</> : 'Back up & reset this company'}
         </button>
 
         {resetBusy
