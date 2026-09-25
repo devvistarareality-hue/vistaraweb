@@ -377,8 +377,11 @@ export default function DataBackupPage() {
           {resetMods.length ? 'Delete these modules' : 'Delete everything in this company'}
         </div>
         <div className="dbx-sub">
-          Empties the modules below back to nothing. Your own account is kept so you can sign
-          back in and restore. There is no undo except a backup that covers what goes.
+          Empties the modules below back to nothing. There is no undo except a backup that
+          covers what goes. Your own account survives with its password, so you can sign back in
+          and restore — but everyone else comes back from the workbook <b>without a password</b>,
+          since hashes are deliberately never written to a backup file. Set one for each of them
+          in User Management afterwards.
         </div>
 
         {modules.length > 0 && (<>
