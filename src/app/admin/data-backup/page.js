@@ -378,10 +378,8 @@ export default function DataBackupPage() {
         </div>
         <div className="dbx-sub">
           Empties the modules below back to nothing. There is no undo except a backup that
-          covers what goes. Your own account survives with its password, so you can sign back in
-          and restore — but everyone else comes back from the workbook <b>without a password</b>,
-          since hashes are deliberately never written to a backup file. Set one for each of them
-          in User Management afterwards.
+          covers what goes. Your own account survives so you can sign back in and restore, and
+          everyone else comes back able to sign in with the password they had.
         </div>
 
         {modules.length > 0 && (<>
