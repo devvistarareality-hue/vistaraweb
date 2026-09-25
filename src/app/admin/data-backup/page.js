@@ -162,12 +162,30 @@ export default function DataBackupPage() {
         setSched(d);
         const latest = (d.history || [])[0];
         setSchedMsg(good('Backup stored', latest
-          ? `${latest.rows?.toLocaleString('en-IN')} records · ${fmtSize(latest.size)} · kept in the list below.`
+          ? `${latest.rows?.toLocaleString('en-IN')} records · ${fmtSize(latest.size)} · downloading, and kept in the list below.`
           : 'It is in the list below, ready to download or restore.'));
         loadReset();
+        // Taking one by hand means you want it in hand too, so it downloads straight away.
+        if (latest?.id) downloadStored(latest.id);
       } else setSchedMsg(bad('Could not store the backup', d.detail));
     } catch (e) { setSchedMsg(bad('Could not store the backup', e.message)); }
     setSchedBusy('');
+  }
+
+  // Starts the download without a new tab: window.open after an await is treated as
+  // a pop-up and blocked (Safari especially), a plain link click is not.
+  async function downloadStored(id) {
+    try {
+      const r = await fetch(SALES_ENDPOINTS.backupStored(id, companyId), { headers: authHeaders() });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.url) { setSchedMsg(bad('Could not get a download link', d.detail)); return; }
+      const a = document.createElement('a');
+      a.href = d.url;
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) { setSchedMsg(bad('Could not get a download link', e.message)); }
   }
 
   async function openStored(id) {
