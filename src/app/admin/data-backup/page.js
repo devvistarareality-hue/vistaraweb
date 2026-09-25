@@ -252,11 +252,28 @@ export default function DataBackupPage() {
         setResetBusy(false); setResetStage(''); return;
       }
       setResetStage('reset');
-      const res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }) });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) setResetMsg(bad('Reset failed', d.detail || `The server returned ${res.status}.`));
+      let res = null, d = {};
+      try {
+        res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }) });
+        d = await res.json().catch(() => ({}));
+      } catch (e) { res = null; }
+      // A big company takes longer to empty than the proxy keeps the connection open,
+      // so the reply can be lost while the server carries on and finishes. Lost
+      // connection or a gateway timeout means "ask the server", not "it failed".
+      if (!res || res.status === 502 || res.status === 504) {
+        setResetStage('confirm');
+        const done = await waitForEmpty();
+        if (done) {
+          setResetMsg(good('Company emptied',
+            'The reset took longer than the connection stayed open, but the server finished it.'));
+          setResetKey(''); setResetConfirm(''); loadSched();
+        } else {
+          setResetMsg(bad('Could not confirm the reset',
+            'The server may still be working. Refresh this page in a minute to see what is left.'));
+        }
+      } else if (!res.ok) setResetMsg(bad('Reset failed', d.detail || `The server returned ${res.status}.`));
       else {
         setResetMsg(good('Company emptied', d.detail));
         setResetKey(''); setResetConfirm(''); loadSched();
@@ -264,6 +281,20 @@ export default function DataBackupPage() {
       loadReset();
     } catch (e) { setResetMsg(bad('Reset failed', e.message)); }
     setResetBusy(false); setResetStage('');
+  }
+
+  // Emptied means nothing is left but the account(s) the reset keeps.
+  async function waitForEmpty() {
+    for (let i = 0; i < 120; i++) {              // up to 10 minutes
+      await new Promise((r) => setTimeout(r, 5000));
+      try {
+        const r = await fetch(SALES_ENDPOINTS.backupReset(companyId), { headers: authHeaders() });
+        if (!r.ok) continue;
+        const info = await r.json();
+        if (Object.keys(info.counts || {}).every((k) => k === 'Users')) return true;
+      } catch (e) { /* keep asking */ }
+    }
+    return false;
   }
 
   if (!mayBackUp) return <div className="dbx-denied">Admin access only.</div>;
@@ -274,6 +305,7 @@ export default function DataBackupPage() {
     backup:   ['Taking a backup…', 'Storing a full backup before anything is deleted.'],
     download: ['Downloading the backup…', 'The workbook is going to your downloads.'],
     reset:    ['Emptying the company…', 'Deleting every module in dependency order. Do not close this tab.'],
+    confirm:  ['Still emptying the company…', 'A large company takes a few minutes. Checking with the server until it is done.'],
   };
 
   return (
@@ -494,7 +526,7 @@ export default function DataBackupPage() {
 
         <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
           disabled={resetBusy || !canReset || !resetKey || resetConfirm !== 'DELETE'}>
-          {resetBusy ? <><span className="dbx-spin" />{resetStage === 'reset' ? 'Deleting…' : 'Backing up…'}</> : 'Back up & reset this company'}
+          {resetBusy ? <><span className="dbx-spin" />{resetStage === 'backup' || resetStage === 'download' ? 'Backing up…' : 'Deleting…'}</> : 'Back up & reset this company'}
         </button>
 
         {resetBusy
