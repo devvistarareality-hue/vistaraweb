@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchCompanies, updateCompany, resetUpdateCompany,
-  createCompany, resetCreateCompany, deleteCompany,
+  createCompany, resetCreateCompany,
 } from '../../../redux/actions/companiesActions';
 import Toast from '../../../components/Toast';
+import DeleteCompanyModal from './_DeleteCompanyModal';
 
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
@@ -47,6 +48,7 @@ export default function CompanyManagementPage() {
   const [createForm, setCreateForm] = useState(EMPTY_FORM);
   const [toast,      setToast]      = useState({ visible: false, message: '', type: 'success' });
   const [dialog,     setDialog]     = useState({ open: false });
+  const [delTarget,  setDelTarget]  = useState(null);
 
   useEffect(() => { dispatch(fetchCompanies()); }, []);
 
@@ -96,15 +98,20 @@ export default function CompanyManagementPage() {
     setDialog({ open: true, title: 'Reactivate Company', message: `Reactivate "${c.name}"? Users will regain access.`, confirmLabel: 'Activate', confirmColor: 'var(--success-solid)',
       onConfirm: () => { dispatch(updateCompany(c.id, { is_active: true })); showToast(`"${c.name}" reactivated.`, 'success'); closeDialog(); } });
   };
-  const handleDelete = (c) => {
-    setDialog({ open: true, title: 'Delete Company', message: `Permanently delete "${c.name}"? This cannot be undone and all related data will be removed.`, confirmLabel: 'Delete', confirmColor: 'var(--danger-solid)',
-      onConfirm: () => { dispatch(deleteCompany(c.id)); showToast(`"${c.name}" permanently deleted.`, 'error'); closeDialog(); } });
+  // Delete goes through its own guarded dialog: backup + download first, reset key,
+  // company code typed out. The toast only fires once the server has done it.
+  const handleDelete = (c) => setDelTarget(c);
+  const handleDeleted = (c) => {
+    setDelTarget(null);
+    dispatch(fetchCompanies(true));
+    showToast(`"${c.name}" permanently deleted. Its backup is in your downloads.`, 'error');
   };
 
   return (
     <div style={s.page}>
       <Toast {...toast} onHide={() => setToast((t) => ({ ...t, visible: false }))} />
       <ConfirmModal {...dialog} onCancel={closeDialog} />
+      <DeleteCompanyModal company={delTarget} onClose={() => setDelTarget(null)} onDeleted={handleDeleted} />
 
       <div style={s.pageHeader}>
         <div>

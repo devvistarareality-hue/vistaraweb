@@ -45,6 +45,8 @@
   --nav-active-fg: #0B3E76;
   --nav-active-shadow: inset 1px 0 0 #1F5490, inset 0 0 0 1px rgba(47,109,181,0.12);
   --hero: radial-gradient(760px 320px at 80% -45%, rgba(86,148,224,0.42) 0%, transparent 60%), linear-gradient(135deg, #0F2E57 0%, #14406F 52%, #1B5290 100%);
+  --on-hero: #FFFFFF;                  /* text/icons on the --hero band (dark in both themes) */
+  --on-hero-soft: rgba(255,255,255,0.12);
 
   --primary: #1F5490;
   --primary-deep: #163F6E;
@@ -125,6 +127,8 @@
   --nav-active-fg: #FFD8C6;
   --nav-active-shadow: inset 1px 0 0 #FF7A3D, inset 0 0 0 1px rgba(255,122,61,0.12);
   --hero: radial-gradient(780px 320px at 78% -40%, rgba(255,100,35,0.42) 0%, transparent 62%), linear-gradient(180deg, #120E0C 0%, #0A0808 100%);
+  --on-hero: #FFFFFF;                  /* text/icons on the --hero band (dark in both themes) */
+  --on-hero-soft: rgba(255,255,255,0.12);
 
   --primary: #F2561B;
   --primary-deep: #C4390C;
