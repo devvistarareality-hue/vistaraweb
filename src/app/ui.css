@@ -1431,12 +1431,14 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-badge.tone-warn  { background: var(--warning-soft); color: var(--warning-2); }
 .nx-badge.tone-bad   { background: var(--danger-soft); color: var(--danger); }
 .nx-badge.tone-muted { background: var(--surface-3); color: var(--text-3); }
-/* Board column header label — text colour, not the generic .tone-* solid fill. */
-.nx-board-col-title.tone-good  { color: var(--success); }
-.nx-board-col-title.tone-info  { color: var(--accent); }
-.nx-board-col-title.tone-warn  { color: var(--warning-2); }
-.nx-board-col-title.tone-bad   { color: var(--danger); }
-.nx-board-col-title.tone-muted { color: var(--text-3); }
+/* Board column header label — text colour, not the generic .tone-* solid fill
+   (the .tone-* utility sets a background too; reset it back here since both
+   rules apply independently per-property, not one-rule-wins-all). */
+.nx-board-col-title.tone-good  { background: none; color: var(--success); }
+.nx-board-col-title.tone-info  { background: none; color: var(--accent); }
+.nx-board-col-title.tone-warn  { background: none; color: var(--warning-2); }
+.nx-board-col-title.tone-bad   { background: none; color: var(--danger); }
+.nx-board-col-title.tone-muted { background: none; color: var(--text-3); }
 
 /* ─── My Conversions (Sales: site visits + closures a telecaller referred) ─── */
 .myconv-head { margin-bottom: 24px; }
