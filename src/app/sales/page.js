@@ -532,6 +532,11 @@ function TelecallerDashboard({ user }) {
   const warm     = stats?.warm_count     ?? 0;
   const callback = stats?.callback_count ?? 0;
   const svDone   = stats?.sv_done        ?? 0;
+  const svUpcoming = stats?.stm_sv_scheduled_count ?? 0;
+  // My Conversions where the menu has it; the layout bounces anyone off a screen
+  // their menu leaves out, so otherwise the tiles open the real screens.
+  const convHref = (tab, fallback) =>
+    canSee(user, 'sales.screen.conversions') ? `/sales/my-conversions?tab=${tab}` : fallback;
   const closed   = stats?.closures       ?? 0;
   // Backlog tiles: what is still waiting to be worked, as opposed to what was done.
   const toCall     = stats?.to_call_count           ?? 0;
@@ -575,9 +580,11 @@ function TelecallerDashboard({ user }) {
     ] },
     { title: 'Conversions', cards: [
       { label: 'Warm/SQL',       value: warm,     icon: <IconTrend />,    color: 'var(--warning-soft)', textColor: 'var(--warning-2)', href: withDate('/sales/leads?tab=called&telecaller_status=warm') },
-      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/my-conversions' },
-      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: '/sales/my-conversions?tab=closures' },
-      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: '/sales/my-conversions' },
+      { label: 'SV Done',        value: svDone,   icon: <IconEye />,      color: 'var(--success-soft)', textColor: 'var(--success)', href: convHref('sv', '/sales/site-visits?tab=completed') },
+      // Visits booked from my leads that haven't happened yet — My Conversions' Upcoming tab.
+      { label: 'Upcoming SV',    value: svUpcoming, icon: <IconClock />,  color: 'var(--warning-soft)', textColor: 'var(--warning)', href: convHref('upcoming', '/sales/site-visits?tab=scheduled') },
+      { label: 'Closures',       value: closed,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: convHref('closures', '/sales/closure?view=mybookings&status=sold&scope=visible') },
+      { label: 'MQL→SV Ratio',   value: mqlToSv,  icon: <IconTrend />,   color: 'var(--accent-softer)', textColor: 'var(--accent)', href: convHref('sv', '/sales/site-visits?tab=completed') },
     ] },
   ];
 
