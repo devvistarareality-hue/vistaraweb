@@ -1686,3 +1686,27 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   font-weight: 700; cursor: pointer; transition: background-color .14s; }
 .imp-exit:hover { background: rgba(255,255,255,0.28); }
 @media (prefers-reduced-motion: reduce) { .imp-dot { animation: none; } }
+
+/* ─── Booking submit: why it was refused ──────────────────────────────────── */
+/* This used to be a one-line nx-note that could read "Error: {}" — the literal
+   output of stringifying an unparseable body. It now sits above the buttons
+   that were just pressed and has to carry several field errors legibly. */
+.bkerr { display: flex; align-items: flex-start; gap: 12px; margin: 14px 0;
+  padding: 14px 16px; border-radius: 14px; border: 1.5px solid transparent;
+  animation: bkerr-rise .26s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes bkerr-rise { from { opacity: 0; transform: translateY(6px); } }
+.bkerr.is-good { background: var(--success-soft); border-color: var(--success); }
+.bkerr.is-bad { background: var(--danger-soft); border-color: var(--danger-2); }
+.bkerr-mark { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #fff; }
+.bkerr.is-good .bkerr-mark { background: var(--success); }
+.bkerr.is-bad .bkerr-mark { background: var(--danger); }
+.bkerr-text { flex: 1; min-width: 0; }
+.bkerr-title { font-size: 13.5px; font-weight: 800; }
+.bkerr.is-good .bkerr-title { color: var(--success); }
+.bkerr.is-bad .bkerr-title { color: var(--danger); }
+.bkerr-line { font-size: 12.5px; color: var(--text-2); line-height: 1.55; margin-top: 3px; }
+.bkerr-list { margin: 5px 0 0; padding-left: 18px; }
+.bkerr-list li { font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+@media (prefers-reduced-motion: reduce) { .bkerr { animation: none; } }

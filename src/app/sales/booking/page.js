@@ -13,6 +13,7 @@ import { useCurrentCompany } from '../../../lib/currentCompany';
 
 
 import Icon from '../../../components/Icon';
+import { explainApiError, explainNetworkError } from '../../../lib/apiError';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { scheduleError } from '../../../lib/scheduleCheck';
@@ -830,9 +831,9 @@ function BookingPage() {
         setTimeout(() => router.push(kioskMode ? '/kiosk' : '/sales/closure'), 1000);
         return;
       }
-      const errData = await res.json().catch(() => ({}));
-      setMsg('Error: ' + (errData.detail || JSON.stringify(errData)));
-    } catch (e) { setMsg(e.message); }
+      const errData = await res.json().catch(() => null);
+      setMsg(explainApiError(res, errData));
+    } catch (e) { setMsg(explainNetworkError(e)); }
     setSaving(false);
   }
 
@@ -853,9 +854,9 @@ function BookingPage() {
           ? `✅ Draft saved — but Plot ${conflicts.map((c) => c.number).join(', ')} is no longer held for you.`
           : '✅ Draft saved — safe to come back later.');
       } else {
-        setMsg('Error: ' + (data.detail || JSON.stringify(data)));
+        setMsg(explainApiError(res, data, 'The draft could not be saved. Nothing was lost — try again.'));
       }
-    } catch (e) { setMsg(e.message); }
+    } catch (e) { setMsg(explainNetworkError(e)); }
     setSaving(false);
   }
 
@@ -1301,7 +1302,25 @@ function BookingPage() {
 
       </div>
 
-      {msg && <div className={`nx-note ${msg[0] === '✅' ? 'ok' : 'bad'}`}><Icon name={msg[0] === '✅' ? 'check-circle' : 'alert'} />{msg.replace(/^[^\p{L}\p{N}]+/u, '')}</div>}
+      {msg && (() => {
+        const ok = msg[0] === '✅';
+        // A rejected submit can name several fields at once; each gets its own
+        // line so the list reads as a checklist rather than a paragraph.
+        const lines = msg.replace(/^[^\p{L}\p{N}]+/u, '').split('\n').filter(Boolean);
+        return (
+          <div className={`bkerr ${ok ? 'is-good' : 'is-bad'}`} role="status" aria-live="polite">
+            <span className="bkerr-mark"><Icon name={ok ? 'check' : 'alert'} /></span>
+            <div className="bkerr-text">
+              <div className="bkerr-title">
+                {ok ? 'Saved' : lines.length > 1 ? 'This booking could not be submitted' : 'Could not submit'}
+              </div>
+              {lines.length > 1
+                ? <ul className="bkerr-list">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+                : <div className="bkerr-line">{lines[0]}</div>}
+            </div>
+          </div>
+        );
+      })()}
       <div className="nx-actions">
         <button className="nx-btn nx-btn-lg nx-btn-secondary" onClick={saveDraft} disabled={saving || !projectId || pratBookMissing}>
           {saving ? '…' : <><Icon name="save" /> Save Draft</>}
