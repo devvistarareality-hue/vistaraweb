@@ -14,7 +14,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
-import { can, dashboardFor } from '../../lib/moduleAccess';
+import { can, canSee, dashboardFor } from '../../lib/moduleAccess';
 import DashboardRoleFilter from '../../components/DashboardRoleFilter';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
@@ -327,13 +327,19 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   // Site Visits opens on its Completed tab — the visits themselves, which is what
   // the tile counted. Channel Partner has no My Conversions of its own, so it
   // keeps the direct deep link.
+  // My Conversions is a screen a designation's menu may leave out — and the layout
+  // sends anyone who opens a screen they can't see straight back, so a tile
+  // pointing there would look dead. Without it, the tiles open the real screens.
+  const conversions    = adminView || canSee(user, 'sales.screen.conversions');
   const svHref         = isCp ? '/m/cp/site-visits?tab=completed'
-    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`;
+    : conversions ? `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`
+    : '/sales/site-visits?tab=completed';
   // A closure is a booking that cleared both gates. Channel Partner opens
   // Booking → My Bookings with Approved chosen directly; Sales keeps its own
-  // My Conversions view.
+  // My Conversions view where the menu has it.
   const closuresHref   = isCp ? '/m/cp/closure?view=mybookings&status=sold'
-    : `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`;
+    : conversions ? `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`
+    : '/sales/closure?view=mybookings&status=sold&scope=visible';
   const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
     { label: 'Total Leads',     value: stats.total_leads,     icon: <IconPhone />,    color: 'var(--accent-soft)', textColor: 'var(--accent)', href: leadsHref },
