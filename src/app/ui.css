@@ -1542,3 +1542,25 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .myconv-tl-new[data-field="warm_transfer"]  { color: var(--danger); }
 .myconv-tl-new[data-field="site_visit"]     { color: var(--warning-2); }
 .myconv-tl-new[data-field="closure"]        { color: var(--success); }
+
+/* ─── Data Backup: the Excel snapshot and the restore beside it ──────────── */
+.dbx-card { background: var(--surface); border: 1px solid var(--surface-3); border-radius: 18px;
+  padding: 18px; margin-bottom: 18px; }
+.dbx-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.dbx-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.dbx-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.dbx-sub b { color: var(--text-2); }
+.dbx-head { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; color: var(--faint);
+  text-transform: uppercase; margin-bottom: 14px; }
+.dbx-file { display: block; margin: 12px 0; font-size: 13px; color: var(--text-2); max-width: 100%; }
+.dbx-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dbx-msg { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-top: 12px; }
+.dbx-msg.is-good { color: var(--success); }
+.dbx-msg.is-bad { color: var(--danger); }
+.dbx-msg.is-plain { color: var(--muted); font-weight: 500; }
+.dbx-plan { margin-top: 12px; border-top: 1px solid var(--surface-2); padding-top: 12px; }
+.dbx-plan-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px;
+  padding: 4px 0; color: var(--text-2); }
+.dbx-plan-row b { color: var(--text); font-variant-numeric: tabular-nums; }
+.dbx-plan-total { display: flex; justify-content: space-between; gap: 12px; font-size: 13px;
+  font-weight: 800; color: var(--text); border-top: 1px solid var(--surface-2); margin-top: 6px; padding-top: 8px; }

@@ -144,6 +144,8 @@ export const SALES_ENDPOINTS = {
   get backups()          { return `${BASE_URL}/api/sales/backups/`; },
   get backupRun()        { return `${BASE_URL}/api/sales/backups/run/`; },
   backupDownload: (id)   => `${BASE_URL}/api/sales/backups/${id}/download/`,
+  backupExcel: (companyId) => `${BASE_URL}/api/sales/backups/excel/?company_id=${companyId}`,
+  get backupRestore()    { return `${BASE_URL}/api/sales/backups/restore/`; },
   get channelPartners()  { return `${BASE_URL}/api/sales/channel-partners/`; },
   channelPartner: (id)   => `${BASE_URL}/api/sales/channel-partners/${id}/`,
 };
