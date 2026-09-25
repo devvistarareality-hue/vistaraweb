@@ -340,7 +340,9 @@ export default function DataBackupPage() {
           Rebuilds this company from the workbook — every module, with the original ids, so
           everything still points where it did and restored accounts keep the passwords they
           had. Records already there are left alone, so this fills what is missing and never
-          overwrites what is live.
+          overwrites what is live. Notifications are the one thing not carried: a reset clears
+          the bell and it stays clear, rather than re-delivering alerts for things that already
+          happened.
         </div>
 
         {/* .gz is accepted too: stored backups taken before the content-type fix
