@@ -65,6 +65,8 @@ export const AUTH_ENDPOINTS = {
   get otpVerify()  { return `${BASE_URL}/api/auth/otp/verify/`; },
   get otpResend()  { return `${BASE_URL}/api/auth/otp/resend/`; },
   get me()         { return `${BASE_URL}/api/auth/me/`; },
+  // Platform admins only: open a session as another user to see what they see.
+  get impersonate() { return `${BASE_URL}/api/auth/impersonate/`; },
   get changePassword() { return `${BASE_URL}/api/auth/change-password/`; },
   get refresh()    { return `${BASE_URL}/api/auth/token/refresh/`; },
   get notifications()        { return `${BASE_URL}/api/auth/notifications/`; },

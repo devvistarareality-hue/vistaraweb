@@ -72,6 +72,10 @@ export const logout = () => (dispatch) => {
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   localStorage.removeItem('company');
+  // Logging out while viewing as another user must not leave the banner up over
+  // a logged-out app, nor the admin's stashed tokens sitting in storage.
+  ['impersonated_by', 'admin_access_token', 'admin_refresh_token', 'admin_user',
+   'admin_company'].forEach((k) => localStorage.removeItem(k));
   // Same reasoning as login — don't leave this session's cached data sitting
   // around for whoever logs in next on this browser/device.
   clearAllCache();

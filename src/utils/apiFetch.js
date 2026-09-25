@@ -45,6 +45,10 @@ function forceLogout() {
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   localStorage.removeItem('company');
+  // A session that died mid-impersonation would otherwise leave the banner up
+  // over a logged-out app, and the admin's stashed tokens sitting in storage.
+  ['impersonated_by', 'admin_access_token', 'admin_refresh_token', 'admin_user',
+   'admin_company'].forEach((k) => localStorage.removeItem(k));
   // sc_* cache entries are keyed by company, not by user — leaving them would
   // let whoever logs in next on this browser/device reuse this session's
   // cached data (see authActions.login/logout for the same fix).

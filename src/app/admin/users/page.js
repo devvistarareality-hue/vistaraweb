@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { fetchUsers, updateUser, deleteUser, resetUpdateUser } from '../../../redux/actions/userManagementActions';
 import { fetchDesignations } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
-import { ALL_MODULES } from '../../../lib/moduleAccess';
+import { ALL_MODULES, isSuperAdmin } from '../../../lib/moduleAccess';
+import { startImpersonation } from '../../../lib/impersonate';
 import { isManagerRole } from '../../../lib/moduleAccess';
 import PasswordInput from '../../../components/PasswordInput';
 import { needsReportingManager } from '../../../lib/orgTree';
@@ -53,6 +54,8 @@ export default function UserManagementPage() {
   const [dialog,            setDialog]            = useState({ open: false });
   const [editManagerSearch, setEditManagerSearch] = useState('');
   const opLabel = useRef('updated');
+  const me = useSelector((st) => st.auth?.user);
+  const canViewAs = isSuperAdmin(me);
 
   useEffect(() => {
     dispatch(fetchUsers(true, companyId));
@@ -132,6 +135,27 @@ export default function UserManagementPage() {
         opLabel.current = 'reactivated';
         dispatch(updateUser(u.id, { is_active: true }));
         closeDialog();
+      },
+    });
+  };
+
+  // Open the app as this person, to see exactly what they see. Confirmed first
+  // because it is a real session in their account, not a read-only preview.
+  const handleViewAs = (u) => {
+    setDialog({
+      open:         true,
+      title:        'View as User',
+      message:      `Open the app as ${u.name}? You will see what they see, and anything you do will be recorded against them. Use Exit in the banner to come back.`,
+      confirmLabel: 'View as user',
+      confirmColor: 'var(--warning-solid)',
+      onConfirm:    async () => {
+        closeDialog();
+        try {
+          await startImpersonation(u.id);
+          window.location.replace(window.location.origin + '/');
+        } catch (e) {
+          showToast(e.message, 'error');
+        }
       },
     });
   };
@@ -234,6 +258,9 @@ export default function UserManagementPage() {
                   <td style={s.td}>
                     <div style={s.rowActions}>
                       <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => openEdit(u)} style={s.editBtn}>Edit</button>
+                      {canViewAs && u.is_active && !u.is_staff && u.id !== me?.id && (
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => handleViewAs(u)} style={s.viewAsBtn}>View as</button>
+                      )}
                       {u.is_active
                         ? <button onClick={() => handleDeactivate(u)} style={s.deactBtn}>Deactivate</button>
                         : <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => handleActivate(u)}   style={s.activateBtn}>Activate</button>
@@ -448,6 +475,7 @@ const s = {
   muted:     { color: 'var(--muted)' },
   rolePill:  { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 },
   rowActions:{ display: 'flex', gap: 6, flexWrap: 'nowrap' },
+  viewAsBtn: { padding: '6px 12px', borderRadius: 10, border: '1.5px solid var(--warning-2)', background: 'var(--surface)', color: 'var(--warning-2)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   editBtn:     { padding: '5px 10px', backgroundColor: 'var(--accent-softer)', color: 'var(--accent)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   deactBtn:    { padding: '5px 10px', backgroundColor: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   activateBtn: { padding: '5px 10px', backgroundColor: 'var(--surface-2)', color: 'var(--success)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
