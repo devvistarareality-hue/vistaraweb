@@ -101,6 +101,24 @@ export default function DataBackupPage() {
     setSchedBusy('');
   }
 
+  // "Keep last" is typed, so it needs a draft of its own: the field follows the
+  // saved value except while you are editing it.
+  const [keepDraft, setKeepDraft] = useState('10');
+  useEffect(() => {
+    if (sched?.keep_last != null) setKeepDraft(String(sched.keep_last));
+  }, [sched?.keep_last]);
+
+  function commitKeep() {
+    const n = parseInt(keepDraft, 10);
+    if (!Number.isFinite(n)) {                 // emptied, or not a number
+      setKeepDraft(String(sched?.keep_last ?? 10));
+      return;
+    }
+    const clamped = Math.max(1, Math.min(50, n));   // same bounds the server applies
+    setKeepDraft(String(clamped));
+    if (clamped !== sched?.keep_last) saveSched({ keep_last: clamped });
+  }
+
   async function takeStored() {
     setSchedBusy('take');
     try {
@@ -240,9 +258,15 @@ export default function DataBackupPage() {
           </label>
           <label className="dbx-field dbx-field-sm">
             <span className="dbx-label">Keep last</span>
-            <input className="nx-input" type="number" min="1" max="50"
-              value={sched?.keep_last ?? 10} disabled={!ready || !!schedBusy}
-              onChange={(e) => saveSched({ keep_last: e.target.value })} />
+            {/* Saved when you leave the field, not on every keystroke — a
+                per-keystroke save disabled the input mid-typing and replaced
+                what you had typed with the half-number the server had just
+                stored, so "10" could never be reached from "1". */}
+            <input className="nx-input" type="number" min="1" max="50" inputMode="numeric"
+              value={keepDraft} disabled={!ready || schedBusy === 'take'}
+              onChange={(e) => setKeepDraft(e.target.value)}
+              onBlur={commitKeep}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
           </label>
         </div>
 
