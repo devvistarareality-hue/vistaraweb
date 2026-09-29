@@ -1788,3 +1788,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .fu-sv-req { color: var(--danger); }
 .fu-sv-input { width: 100%; margin-top: 6px; box-sizing: border-box; }
 .fu-sv-note { font-size: 11px; color: var(--success); margin: 8px 0 0; }
+
+/* Project page count tiles: Total, Available, In Progress, Hold, Sold. */
+.proj-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 720px) { .proj-stats { grid-template-columns: repeat(3, 1fr); } }
