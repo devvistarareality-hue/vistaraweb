@@ -11,6 +11,7 @@ import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
 import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
+import LeadNumberCheck from '../../../components/LeadNumberCheck';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -251,6 +252,17 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const cpSource = cpOnly ? sources.find((s) => (s.name || '').toLowerCase() === 'channel partner') : null;
   const [form, setForm] = useState({ name: prefill?.name || '', phone: prefill?.phone || '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', disqualify_reason: '', disqualify_note: '', lead_date: '' });
   const isNotQualified = form.telecaller_status === 'not_qualified' || form.stm_status === 'not_qualified';
+  // Step 1 is the number check (components/LeadNumberCheck): it lists every lead on
+  // this number, project by project. Skipped when the number came in prefilled.
+  const [step, setStep] = useState(prefill?.phone ? 'form' : 'number');
+  const pickExisting = (row) => {
+    // Working on that lead: its project and name are set, so saving goes down the
+    // server's same-phone-same-project path and updates it rather than adding one.
+    setForm((f) => ({ ...f, phone: row.phone || f.phone, name: row.name || f.name,
+      project: row.project_id ? String(row.project_id) : f.project }));
+    setStep('form');
+  };
+  const addNew = (phone) => { setForm((f) => ({ ...f, phone })); setStep('form'); };
   useEffect(() => {
     if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
   }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -417,6 +429,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
 
+        {step === 'number' ? <LeadNumberCheck initialPhone={form.phone} onPick={pickExisting} onNew={addNew} /> : (
         <form onSubmit={submit} style={{ padding: '22px 24px 24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {/* Contact Info */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
@@ -725,6 +738,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

@@ -1830,3 +1830,25 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .fu-hist-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
 .fu-hist-title { font-size: 16px; font-weight: 800; color: var(--text); }
 .fu-hist-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Add Lead step 1 — the number check (components/LeadNumberCheck.js). */
+.lnc { padding: 22px 24px 24px; overflow-y: auto; flex: 1; min-height: 0; }
+.lnc-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 5px; }
+.lnc-input { width: 100%; height: 44px; font-size: 15px; box-sizing: border-box; }
+.lnc-hint { font-size: 11.5px; color: var(--faint); margin: 6px 0 14px; }
+.lnc-none { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px;
+  border-radius: 14px; background: var(--surface-2); font-size: 13px; color: var(--text-2); }
+.lnc-none p { margin: 0; }
+.lnc-found { font-size: 13px; color: var(--text-2); margin: 0 0 10px; }
+.lnc-list { display: flex; flex-direction: column; gap: 8px; }
+.lnc-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; width: 100%;
+  padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: border-color .15s, background .15s; font: inherit; color: var(--text); }
+.lnc-row:hover { border-color: var(--accent); background: var(--accent-softer); }
+.lnc-row.is-closed { opacity: .75; }
+.lnc-proj { font-size: 13px; font-weight: 800; color: var(--accent); }
+.lnc-name { font-size: 13px; font-weight: 600; }
+.lnc-side { font-size: 12px; color: var(--text-2); text-transform: capitalize; }
+.lnc-side b { color: var(--text-3); font-weight: 700; }
+.lnc-status { font-size: 11px; color: var(--muted); text-transform: capitalize; margin-top: 2px; }
+.lnc-new { margin-top: 12px; width: 100%; }
