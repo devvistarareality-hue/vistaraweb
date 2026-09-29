@@ -9,6 +9,7 @@ import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
+import { notify } from '../../../lib/notify';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -118,6 +119,9 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   // Completing with sv_scheduled schedules the visit inline, the same way the lead modal does.
   const [svAt, setSvAt] = useState('');
   const [svRemarks, setSvRemarks] = useState('');
+  // SV Done needs the visit itself: its outcome and date go with the status.
+  const [svOutcome, setSvOutcome] = useState('');
+  const [svDate, setSvDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
@@ -140,12 +144,17 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
     // Pre-select the lead's current TC/STM status so the caller sees where it stands.
     const cur = (fu.role_context === 'stm' ? fu.lead_stm_status : fu.lead_telecaller_status) || '';
     setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus(cur);
-    setSvAt(''); setSvRemarks('');
+    setSvAt(''); setSvRemarks(''); setSvOutcome(''); setSvDate(new Date().toISOString().slice(0, 10));
   }
 
   async function completeFollowUp() {
     if (!done) return;
     if (schedNext && !nextAt) { return; }
+    const origStm = (done.role_context === 'stm' ? done.lead_stm_status : done.lead_telecaller_status) || '';
+    const markingSvDone = newStatus === 'sv_done' && origStm !== 'sv_done';
+    if (markingSvDone && (!svOutcome || !svDate || !outcome.trim())) {
+      notify('Pick the visit outcome and date, and add remarks, to mark SV Done.', 'error'); return;
+    }
     setSubmitting(true);
     try {
       // Mark this follow-up completed, saving the outcome remarks.
@@ -161,10 +170,16 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       const origStatus = (done.role_context === 'stm' ? done.lead_stm_status : done.lead_telecaller_status) || '';
       if (newStatus && newStatus !== origStatus && done.lead) {
         const field = done.role_context === 'stm' ? 'stm_status' : 'telecaller_status';
-        await fetch(SALES_ENDPOINTS.lead(done.lead), {
+        // SV Done carries its visit — the server records it in the same save.
+        const extra = markingSvDone ? { sv_outcome: svOutcome, sv_visited_at: svDate, sv_remarks: outcome.trim() } : {};
+        const lr = await fetch(SALES_ENDPOINTS.lead(done.lead), {
           method: 'PATCH', headers: authHeaders(),
-          body: JSON.stringify({ [field]: newStatus }),
+          body: JSON.stringify({ [field]: newStatus, ...extra }),
         });
+        if (!lr.ok) {
+          const d = await lr.json().catch(() => ({}));
+          notify(d.detail || 'The lead status could not be saved.', 'error');
+        }
       }
       // STM set sv_scheduled -> create the site visit, matching the lead modal.
       if (newStatus === 'sv_scheduled' && svAt && done.lead) {
@@ -472,6 +487,23 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                 <input className="nx-input" value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…"
                   style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                 {!svAt && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Set a date &amp; time to create the site visit automatically.</p>}
+              </div>
+            )}
+            {newStatus === 'sv_done' && (done.lead_stm_status || '') !== 'sv_done' && (
+              <div className="fu-sv-box">
+                <div className="fu-sv-title"><Icon name="pin" /> Site visit done</div>
+                <label className="fu-sv-label">Outcome <span className="fu-sv-req">*</span></label>
+                <select className="nx-input fu-sv-input" value={svOutcome} onChange={(e) => setSvOutcome(e.target.value)}>
+                  <option value="">Pick outcome</option>
+                  <option value="hot">Hot</option>
+                  <option value="warm">Warm</option>
+                  <option value="cold">Cold</option>
+                  <option value="not_interested">Not Interested</option>
+                </select>
+                <label className="fu-sv-label">Visit date <span className="fu-sv-req">*</span></label>
+                <input className="nx-input fu-sv-input" type="date" value={svDate} max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setSvDate(e.target.value)} />
+                <p className="fu-sv-note">The visit is recorded with this status, using your remarks above.</p>
               </div>
             )}
             {newStatus === 'closed' && (

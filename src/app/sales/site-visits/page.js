@@ -184,12 +184,9 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
         }),
       });
       if (res.ok) {
-        // The lead's pipeline stage stays "sv done" — the outcome is recorded on
-        // the SiteVisit itself (and rolls up into the SV Hot/Warm/Cold dashboard
-        // tiles), but it does not overwrite the lead's own STM Status.
-        await fetch(SALES_ENDPOINTS.lead(doneSv.lead), {
-          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: 'sv_done' }),
-        }).catch(() => {});
+        // The server moves the lead to SV Done itself when a visit completes (and
+        // leaves a lead that has already moved on, e.g. booked, where it is). The
+        // outcome stays on the SiteVisit, not in the lead's own STM Status.
         const updated = await res.json();
         setVisits((list) => list.map((v) => (v.id === updated.id ? updated : v)));
         setDoneSv(null);
