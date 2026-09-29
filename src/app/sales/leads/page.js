@@ -1598,7 +1598,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const [cpModuleUsers, setCpModuleUsers] = useState([]);
   const [filters, setFilters] = useState({
     search: '', status: '', project_id: '', source_id: '',
-    telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
+    telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '', disqualify_reason: '',
     campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
@@ -1760,6 +1760,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.stm_id)          params.set('stm_id',           filters.stm_id);
     if (filters.telecaller_status) params.set('telecaller_status', filters.telecaller_status);
     if (filters.stm_status)      params.set('stm_status',       filters.stm_status);
+    if (filters.disqualify_reason) params.set('disqualify_reason', filters.disqualify_reason);
     if (filters.campaign)        params.set('campaign',         filters.campaign);
     if (filters.is_duplicate)    params.set('is_duplicate',     'true');
     if (filters.unassigned)      params.set('unassigned',       'true');
@@ -1944,14 +1945,30 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
       {/* Filters */}
       {(() => {
-        const sf = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
+        const sf = (k, v) => setFilters((f) => {
+          const next = { ...f, [k]: v };
+          // Moving a status filter off Not Qualified takes the reason with it.
+          // Left behind, it keeps narrowing a list that no longer shows it, and
+          // the result is an empty table with no visible cause.
+          if ((k === 'telecaller_status' || k === 'stm_status')
+              && next.telecaller_status !== 'not_qualified'
+              && next.stm_status !== 'not_qualified') {
+            next.disqualify_reason = '';
+          }
+          return next;
+        });
         const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const today = localDate(new Date());
         const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
         const TC_STATUSES  = ['warm','cold','not_interested','not_reachable','callback','not_qualified'];
         const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed','not_qualified'];
+        // A reason only narrows a Not Qualified list; on any other status it would
+        // silently return nothing, since only disqualified leads carry one.
+        const notQualifiedFiltered = filters.telecaller_status === 'not_qualified'
+          || filters.stm_status === 'not_qualified';
         const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
           filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
+          filters.disqualify_reason ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
         const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
 
@@ -2021,6 +2038,21 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
                 {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
+              )}
+              {/* Why they were disqualified — only meaningful once a status filter
+                  says Not Qualified, so it appears with it rather than sitting
+                  there empty. One reason per lead whichever stage set it, so the
+                  same dropdown serves the TC and STM filters both. */}
+              {notQualifiedFiltered && (
+                <select value={filters.disqualify_reason}
+                  onChange={(e) => sf('disqualify_reason', e.target.value)}
+                  style={activeSelStyle(filters.disqualify_reason)}>
+                  <option value="">Any reason</option>
+                  <option value="religion">Religion</option>
+                  <option value="caste">Caste</option>
+                  <option value="budget">Budget</option>
+                  <option value="other">Other</option>
+                </select>
               )}
               {anyFilter && (
                 <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
