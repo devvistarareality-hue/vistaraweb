@@ -616,19 +616,15 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
         )}
       </div>
 
-      {/* Status toggles — Resale isn't a generic toggle here (it only ever makes
-          sense starting from Sold), so it gets its own conditional button below
-          instead of joining this fixed 3-way grid. */}
-      <div className="plot-st-grid">
-        {['available', 'hold', 'pending', 'sold'].map((s) => {
-          const on = plotState(plot) === s;
-          return (
-            <button className={`nx-btn nx-btn-sm nx-toggle plot-st-btn st-${s}${on ? ' is-on' : ''}`} key={s}
-              onClick={() => setStatus(s)} disabled={on || saving}>
-              {STATUS_CFG[s].label}
-            </button>
-          );
-        })}
+      {/* Status dropdown — every change is confirmed first (setStatus). Resale only
+          ever follows Sold, so it keeps its own button below rather than a menu entry. */}
+      <div className="plot-st-row">
+        <select className={`nx-input plot-st-select st-${plotState(plot)}`} value={plotState(plot)} disabled={saving}
+          onChange={(e) => setStatus(e.target.value)} aria-label={`Status of ${plot.number}`}>
+          {['available', 'hold', 'pending', 'sold', ...(plot.status === 'resale' ? ['resale'] : [])].map((s) => (
+            <option key={s} value={s}>{STATUS_CFG[s].label}</option>
+          ))}
+        </select>
       </div>
       {/* Already-sold units can be put back on the market for resale — bookable
           again, shown purple instead of green so it reads as "resold", not new. */}
