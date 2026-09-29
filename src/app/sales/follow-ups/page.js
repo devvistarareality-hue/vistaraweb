@@ -10,6 +10,7 @@ import Loader from '../../../components/Loader';
 import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
 import { notify } from '../../../lib/notify';
+import LeadHistory from '../../../components/LeadHistory';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -122,6 +123,8 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   // SV Done needs the visit itself: its outcome and date go with the status.
   const [svOutcome, setSvOutcome] = useState('');
   const [svDate, setSvDate] = useState('');
+  // The Complete dialog's tabs: 'complete' (the form) or 'history' (the lead's timeline).
+  const [doneTab, setDoneTab] = useState('complete');
   const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
@@ -145,6 +148,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
     const cur = (fu.role_context === 'stm' ? fu.lead_stm_status : fu.lead_telecaller_status) || '';
     setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus(cur);
     setSvAt(''); setSvRemarks(''); setSvOutcome(''); setSvDate(new Date().toISOString().slice(0, 10));
+    setDoneTab('complete');
   }
 
   async function completeFollowUp() {
@@ -458,6 +462,15 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 16 }}>{done.lead_name}{!!done.lead_phone && ` · ${done.lead_phone}`} · {fmtDateTime(done.scheduled_at)}</div>
 
+            {/* Complete: the form below. History: this lead's timeline, to read before
+                writing the outcome. */}
+            <div className="fu-done-tabs">
+              {[['complete', 'Complete'], ['history', 'History']].map(([k, l]) => (
+                <button type="button" key={k} className={`fu-done-tab${doneTab === k ? ' is-on' : ''}`} onClick={() => setDoneTab(k)}>{l}</button>
+              ))}
+            </div>
+            {doneTab === 'history' ? <LeadHistory leadId={done.lead} /> : (<>
+
             {/* Update the lead's status after this call (TC or STM, per the follow-up's role). */}
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>
               {done.role_context === 'stm' ? 'Update STM Status' : 'Update TC Status'}
@@ -541,6 +554,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                 {submitting ? 'Saving…' : newStatus === 'closed' ? 'Record Closure →' : 'Mark Done'}
               </button>
             </div>
+            </>)}
           </div>
         </div>
       )}
