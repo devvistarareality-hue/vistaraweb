@@ -1990,7 +1990,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
         return (
-          <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div className="nx-card nx-fu-filterbar">
 
             {/* Search bar */}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' }}>

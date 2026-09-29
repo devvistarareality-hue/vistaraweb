@@ -517,7 +517,9 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-clear-filters-btn { padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--surface); color: var(--muted); border: 1.5px solid var(--border); }
 
 /* ─── Follow-Ups filter bar (mirrors the Leads list's filter card) ─────────── */
-.nx-fu-filterbar { background: var(--surface); border-radius: 18px; border: 1.5px solid var(--surface-3); margin-bottom: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+/* Not overflow:hidden — the pickers' menus open below the bar and were being cut
+   off by it. Lifted above the list that follows so an open menu lies on top. */
+.nx-fu-filterbar { background: var(--surface); border-radius: 18px; border: 1.5px solid var(--surface-3); margin-bottom: 16px; overflow: visible; position: relative; z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .nx-fu-filterbar-search { padding: 12px 16px; border-bottom: 1px solid var(--surface-2); }
 .nx-fu-filterbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--surface-2); }
 .nx-fu-filterbar-row:last-child { border-bottom: none; }
