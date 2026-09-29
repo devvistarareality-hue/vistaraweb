@@ -41,16 +41,21 @@ const STATUS = {
   // is mid-paperwork on this" from "someone just clicked it a second ago".
   drafted:   { label: 'Drafted',   dot: 'var(--faint)', text: 'var(--text-2)', bg: 'var(--surface-2)' },
 };
+// Hold: a submitted booking waiting for approval, or an admin's manual Hold set on
+// Projects → the plot's status (manual_hold) — as long as nobody's live pick
+// (held_by) is on it. Everything else held is In Progress.
+const isHold = (plot) => !!(plot.pending_booking_id
+  || (plot.status === 'hold' && plot.manual_hold && !plot.held_by_name));
 // Visual state for a plot, folding in the drafted override — everywhere the map colours
 // a unit should go through this instead of indexing STATUS[plot.status] directly.
 const plotCfg = (plot) => (
-  plot.pending_booking_id ? STATUS.pending
+  isHold(plot) ? STATUS.pending
     : plot.drafted_booking_id ? STATUS.drafted
       : (STATUS[plot.status] || STATUS.available));
 // The filter chips and the count tiles key off this, not plot.status, so
 // "In Progress" means only what is still being worked on.
 const plotState = (plot) => (
-  plot.pending_booking_id ? 'pending' : (plot.status === 'hold' ? 'hold' : plot.status));
+  isHold(plot) ? 'pending' : (plot.status === 'hold' ? 'hold' : plot.status));
 
 // Visual centre of a zone. Uses the polygon's area centroid (shoelace), not the average
 // of its vertices — unit outlines are notched, and a vertex average drifts toward
