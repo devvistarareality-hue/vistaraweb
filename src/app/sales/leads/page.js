@@ -743,6 +743,9 @@ const HISTORY_LABEL = {
   warm_transfer:      'Transferred to STM',
   site_visit:         'Site Visit',
   closure:            'Closure',
+  follow_up:          'Follow-up Scheduled',
+  follow_up_done:     'Follow-up Done',
+  follow_up_missed:   'Follow-up Missed',
 };
 const HISTORY_COLOR = {
   created:            'var(--text-3)',
@@ -756,6 +759,9 @@ const HISTORY_COLOR = {
   warm_transfer:      'var(--danger)',
   site_visit:         'var(--warning-2)',
   closure:            'var(--success)',
+  follow_up:          'var(--accent)',
+  follow_up_done:     'var(--success)',
+  follow_up_missed:   'var(--danger)',
 };
 
 function fmtDateTime(iso) {
@@ -1473,6 +1479,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                              : h.field_changed === 'stm'           ? 'building'
                              : h.field_changed === 'site_visit'    ? 'home'
                              : h.field_changed === 'closure'       ? 'check-circle'
+                             : h.field_changed.startsWith('follow_up') ? 'calendar'
                              : h.field_changed.includes('remarks') ? 'note'
                              : h.field_changed.includes('status')  ? 'refresh' : 'pencil';
                 // Lead-flow events (created / assignment / transfer / closure) and free-text
