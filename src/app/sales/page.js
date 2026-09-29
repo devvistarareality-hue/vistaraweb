@@ -284,7 +284,7 @@ function SkeletonGrid({ count = 6, grid }) {
 // ─────────────────────────────────────────────
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────
-export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
+export function AdminDashboard({ user, adminView = false, adminSection = false, cpOnly = false }) {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -330,15 +330,21 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   // My Conversions is a screen a designation's menu may leave out — and the layout
   // sends anyone who opens a screen they can't see straight back, so a tile
   // pointing there would look dead. Without it, the tiles open the real screens.
-  const conversions    = adminView || canSee(user, 'sales.screen.conversions');
+  // Only the Admin section itself (/sales/admin, a Sales admin's own menu, which
+  // always has My Conversions) may skip that check. A designation pinned to the
+  // Director dashboard also gets `adminView` (full-company numbers), but its tiles
+  // must still respect its menu — they used to open the admin copy of the page,
+  // which no menu guards, for people never given My Conversions.
+  const convBase       = adminSection ? '/sales/admin/my-conversions' : '/sales/my-conversions';
+  const conversions    = adminSection || canSee(user, 'sales.screen.conversions');
   const svHref         = isCp ? '/m/cp/site-visits?tab=completed'
-    : conversions ? `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`
+    : conversions ? `${convBase}?tab=sv`
     : '/sales/site-visits?tab=completed';
   // A closure is a booking that cleared both gates. Channel Partner opens
   // Booking → My Bookings with Approved chosen directly; Sales keeps its own
   // My Conversions view where the menu has it.
   const closuresHref   = isCp ? '/m/cp/closure?view=mybookings&status=sold'
-    : conversions ? `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`
+    : conversions ? `${convBase}?tab=closures`
     : '/sales/closure?view=mybookings&status=sold&scope=visible';
   const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
@@ -1005,7 +1011,7 @@ export function SalesDashboardContent({ adminView = false }) {
   const isAdmin = user?.role === 'Admin' || user?.is_staff;
   const [preview, setPreview] = useState('');
 
-  if (adminView) return <AdminDashboard user={user} adminView />;
+  if (adminView) return <AdminDashboard user={user} adminView adminSection />;
 
   // A company can pin which dashboard a designation opens; '' decides from their
   // permissions, exactly as before.

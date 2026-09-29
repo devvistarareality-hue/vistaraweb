@@ -1721,7 +1721,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cdel-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 
 /* My Conversions — search */
-.myconv-search { margin-bottom: 14px; }
+/* Search box with the Project / STM pickers beside it; the box takes the room left. */
+.myconv-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.myconv-filters .myconv-search { flex: 1 1 260px; margin-bottom: 0; }
 /* Sits inside the field, so clearing a long query does not mean selecting it. */
 .myconv-search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
@@ -1737,3 +1739,6 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 
 /* Bookings / Approvals: the picked projects or STMs named after a section heading. */
 .bk-filter-tag { font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+/* Names stored lower-case (lead sources) shown with a capital. */
+.nx-cap { text-transform: capitalize; }

@@ -10,6 +10,7 @@ import { confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
 import MultiSelect from '../../../components/MultiSelect';
+import { onlyPresent } from '../../../lib/presentOptions';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -1781,6 +1782,22 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     setLoading(false);
   }, [page, filters, companyId, isCaller, workTab, adminView, cpOnly]);
 
+  // What the filter pickers may offer: only the projects, people, sources and
+  // statuses that occur in the leads this person can see (?facets=1), so no
+  // choice returns an empty list. Until it answers, the pickers list everything.
+  const [facets, setFacets] = useState(null);
+  useEffect(() => {
+    const params = new URLSearchParams({ facets: '1' });
+    if (companyId) params.set('company_id', companyId);
+    if (adminView) params.set('admin_view', '1');
+    if (cpOnly)    params.set('cp_only', 'true');
+    let alive = true;
+    fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [companyId, adminView, cpOnly]);
+  const fx = (key) => facets?.[key] ?? null;
+
   useEffect(() => { loadMeta(); }, [loadMeta]);
   // Opened from a link such as the Log's (?open=<lead id>): show that lead's details.
   useEffect(() => {
@@ -2008,17 +2025,18 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               </select>
               <div style={divider} />
               <MultiSelect allLabel="All Projects" noun="projects" value={filters.project_id} onChange={(v) => sf('project_id', v)}
-                options={[{ value: 'none', label: 'No project' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]} />
+                options={onlyPresent([{ value: 'none', label: 'No project' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))],
+                  facets && [...facets.project_ids, ...(facets.has_no_project ? ['none'] : [])], filters.project_id)} />
               {showTcStatus && (
               <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>
-                {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {onlyPresent(TC_STATUSES, fx('telecaller_statuses'), filters.telecaller_status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
               {showStmStatus && (
               <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
                 <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
-                {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {onlyPresent(STM_STATUSES, fx('stm_statuses'), filters.stm_status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
               {anyFilter && (
@@ -2033,24 +2051,24 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               {showAssignees && (
               <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
                 <option value="">All Statuses</option>
-                {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {onlyPresent(ALL_STATUSES, fx('statuses'), filters.status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
               <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={activeSelStyle(filters.source_id)}>
                 <option value="">All Sources</option>
-                {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
+                {onlyPresent(sources.map((s) => ({ value: String(s.id), label: s.name })), fx('source_ids'), filters.source_id).map((s) => <option key={s.value} value={s.value} className="nx-cap">{s.label}</option>)}
               </select>
               {showAssignees && !cpOnly && (
               <MultiSelect allLabel="All Telecallers" noun="telecallers" value={filters.telecaller_id} onChange={(v) => sf('telecaller_id', v)}
-                options={telecallers.map((u) => ({ value: String(u.id), label: u.name }))} />
+                options={onlyPresent(telecallers.map((u) => ({ value: String(u.id), label: u.name })), fx('telecaller_ids'), filters.telecaller_id)} />
               )}
               {showAssignees && !cpOnly && (
               <MultiSelect allLabel="All STMs" noun="STMs" value={filters.stm_id} onChange={(v) => sf('stm_id', v)}
-                options={stms.map((u) => ({ value: String(u.id), label: u.name }))} />
+                options={onlyPresent(stms.map((u) => ({ value: String(u.id), label: u.name })), fx('stm_ids'), filters.stm_id)} />
               )}
               {showAssignees && cpOnly && (
               <MultiSelect allLabel="All Team Members" noun="people" value={filters.stm_id} onChange={(v) => sf('stm_id', v)}
-                options={cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name }))} />
+                options={onlyPresent(cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name })), fx('stm_ids'), filters.stm_id)} />
               )}
               <input className="nx-input" value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"

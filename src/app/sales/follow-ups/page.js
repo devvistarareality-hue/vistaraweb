@@ -8,6 +8,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import MultiSelect from '../../../components/MultiSelect';
+import { onlyPresent } from '../../../lib/presentOptions';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -235,6 +236,9 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   };
   const dateItems = items.filter(matchesFilters);
 
+  // The pickers list only what these follow-ups hold (see lib/presentOptions).
+  const seen = (key) => (loading ? null : items.map((f) => f[key]));
+
   // Status-wise counts for the selected date range (independent of the tab).
   const counts = {
     total:     dateItems.length,
@@ -315,17 +319,17 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
               </select>
               <div className="nx-fu-divider" />
               <MultiSelect allLabel="All Projects" noun="projects" value={projectFilter} onChange={setProjectFilter}
-                options={projects.map((p) => ({ value: String(p.id), label: p.name }))} />
+                options={onlyPresent(projects.map((p) => ({ value: String(p.id), label: p.name })), seen('lead_project'), projectFilter)} />
               {showTcStatus && (
                 <select value={tcStatusFilter} onChange={(e) => setTcStatusFilter(e.target.value)} style={activeSelStyle(tcStatusFilter)}>
                   <option value="">TC Status</option>
-                  {TC_FILTER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                  {onlyPresent(TC_FILTER_STATUSES, seen('lead_telecaller_status'), tcStatusFilter).map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               )}
               {showStmStatus && (
                 <select value={stmStatusFilter} onChange={(e) => setStmStatusFilter(e.target.value)} style={activeSelStyle(stmStatusFilter)}>
                   <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
-                  {STM_FILTER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                  {onlyPresent(STM_FILTER_STATUSES, seen('lead_stm_status'), stmStatusFilter).map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               )}
               {anyFilter && (
@@ -339,15 +343,15 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             {showAssignees && !cpOnly && (
               <div className="nx-fu-filterbar-row">
                 <MultiSelect allLabel="All Telecallers" noun="telecallers" value={telecallerFilter} onChange={setTelecallerFilter}
-                  options={telecallers.map((u) => ({ value: String(u.id), label: u.name }))} />
+                  options={onlyPresent(telecallers.map((u) => ({ value: String(u.id), label: u.name })), seen('assigned_to'), telecallerFilter)} />
                 <MultiSelect allLabel="All STMs" noun="STMs" value={stmFilter} onChange={setStmFilter}
-                  options={stms.map((u) => ({ value: String(u.id), label: u.name }))} />
+                  options={onlyPresent(stms.map((u) => ({ value: String(u.id), label: u.name })), seen('assigned_to'), stmFilter)} />
               </div>
             )}
             {showAssignees && cpOnly && (
               <div className="nx-fu-filterbar-row">
                 <MultiSelect allLabel="All Team Members" noun="people" value={stmFilter} onChange={setStmFilter}
-                  options={cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name }))} />
+                  options={onlyPresent(cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name })), seen('assigned_to'), stmFilter)} />
               </div>
             )}
           </div>
