@@ -1773,7 +1773,9 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (cpOnly)    params.set('cp_only', 'true');
     let alive = true;
     fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() })
-      .then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+      // Only a real facets answer counts — a server without ?facets=1 (e.g. mid-deploy)
+      // replies with the plain list, and trusting that crashed the whole page.
+      .then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && Array.isArray(d?.project_ids)) setFacets(d); }).catch(() => {});
     return () => { alive = false; };
   }, [companyId, adminView, cpOnly]);
   const fx = (key) => facets?.[key] ?? null;
@@ -2006,7 +2008,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               <div style={divider} />
               <MultiSelect allLabel="All Projects" noun="projects" value={filters.project_id} onChange={(v) => sf('project_id', v)}
                 options={onlyPresent([{ value: 'none', label: 'No project' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))],
-                  facets && [...facets.project_ids, ...(facets.has_no_project ? ['none'] : [])], filters.project_id)} />
+                  facets && [...(facets.project_ids || []), ...(facets.has_no_project ? ['none'] : [])], filters.project_id)} />
               {showTcStatus && (
               <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>

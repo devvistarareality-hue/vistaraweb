@@ -12,7 +12,8 @@
  * Vistarafront/src/lib/presentOptions.js.
  */
 export function onlyPresent(options, present, picked = []) {
-  if (!present) return options;
+  // Not loaded yet, or not a list (a server that doesn't answer ?facets=1): no narrowing.
+  if (!Array.isArray(present)) return options;
   const keep = new Set([...present, ...[].concat(picked)]
     .filter((v) => v !== '' && v != null).map(String));
   return options.filter((o) => keep.has(String(o && typeof o === 'object' ? o.value : o)));

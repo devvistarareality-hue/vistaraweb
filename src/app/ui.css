@@ -1848,7 +1848,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .lnc-row.is-closed { opacity: .75; }
 .lnc-proj { font-size: 13px; font-weight: 800; color: var(--accent); }
 .lnc-name { font-size: 13px; font-weight: 600; }
-.lnc-side { font-size: 12px; color: var(--text-2); text-transform: capitalize; }
+.lnc-side { font-size: 12px; color: var(--text-2); }
 .lnc-side b { color: var(--text-3); font-weight: 700; }
-.lnc-status { font-size: 11px; color: var(--muted); text-transform: capitalize; margin-top: 2px; }
+.lnc-status { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .lnc-new { margin-top: 12px; width: 100%; }

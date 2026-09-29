@@ -8,7 +8,8 @@ import Loader from './Loader';
 // each stands. Picking one works on THAT lead (the form opens on its project, and
 // saving updates it — see LeadListView.post's merge path); "Add in another project",
 // or a number nobody has, opens the empty form. Mirrored in the app.
-const pretty = (s) => (s ? s.replace(/_/g, ' ') : '');
+// 'sv_done' → 'SV done', 'not_reachable' → 'Not reachable'.
+const pretty = (s) => (s ? s.replace(/_/g, ' ').replace(/^sv\b/i, 'SV').replace(/^./, (c) => c.toUpperCase()) : '');
 
 export default function LeadNumberCheck({ initialPhone = '', onPick, onNew }) {
   const [phone, setPhone] = useState(initialPhone);
