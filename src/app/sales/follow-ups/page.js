@@ -112,6 +112,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const [dateTo,   setDateTo]   = useState('');
   // Completion modal: capture remarks + optionally schedule the next follow-up.
   const [done,    setDone]    = useState(null);   // the follow-up being completed
+  const [historyFu, setHistoryFu] = useState(null); // the follow-up whose lead history is open
   const [outcome, setOutcome] = useState('');
   const [schedNext, setSchedNext] = useState(false);
   const [nextAt,  setNextAt]  = useState('');
@@ -437,11 +438,17 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                   {fu.remarks && <p className="nx-fu-note">“{fu.remarks}”</p>}
                   {fu.outcome && <p className="nx-fu-outcome"><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
-                {fu.status === 'pending' && (
-                  <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => openDone(fu)}>
-                    Mark Done
+                <div className="nx-fu-actions">
+                  {/* Every follow-up — done ones included — can open its lead's timeline. */}
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFu(fu)}>
+                    History
                   </button>
-                )}
+                  {fu.status === 'pending' && (
+                    <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => openDone(fu)}>
+                      Mark Done
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -451,6 +458,22 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         <div className="nx-more">
           <span className="nx-more-count">Showing {shown} of {visible.length}</span>
           <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
+        </div>
+      )}
+
+      {/* A follow-up's lead history — the same timeline as the Complete dialog's tab. */}
+      {historyFu && (
+        <div className="nx-modal-backdrop" onClick={() => setHistoryFu(null)}>
+          <div className="nx-modal fu-hist-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="fu-hist-head">
+              <div>
+                <div className="fu-hist-title">{historyFu.lead_name || 'Lead'} · History</div>
+                {!!historyFu.lead_phone && <div className="fu-hist-sub">{historyFu.lead_phone}</div>}
+              </div>
+              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFu(null)}>Close</button>
+            </div>
+            <LeadHistory leadId={historyFu.lead} />
+          </div>
         </div>
       )}
 

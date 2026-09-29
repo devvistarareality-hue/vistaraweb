@@ -1822,3 +1822,10 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .fu-done-tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; font-size: 13px;
   font-weight: 700; color: var(--muted); cursor: pointer; }
 .fu-done-tab.is-on { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Follow-up row buttons (History, Mark Done) and the History dialog. */
+.nx-fu-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.fu-hist-modal { width: 100%; max-width: 520px; padding: 20px 22px; box-sizing: border-box; }
+.fu-hist-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.fu-hist-title { font-size: 16px; font-weight: 800; color: var(--text); }
+.fu-hist-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
