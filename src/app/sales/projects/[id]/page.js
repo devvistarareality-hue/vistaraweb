@@ -507,7 +507,10 @@ function parseSizeUnit(sizeStr) {
 // What a unit shows as: a submitted booking awaiting approval is Hold, anything
 // else still being worked on is In Progress. Badges, map colours, counts and the
 // filter tabs all go through this rather than plot.status.
-const plotState = (plot) => (plot.pending_booking_id ? 'pending' : plot.status);
+// An admin's manual Hold (manual_hold, pressed on the card) reads Hold too; a unit
+// someone is still picking/filling (held_by set) never does.
+const plotState = (plot) => ((plot.pending_booking_id
+  || (plot.status === 'hold' && plot.manual_hold && !plot.held_by_name)) ? 'pending' : plot.status);
 
 /* ─── Plot Card ─── */
 function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floorWise = false }) {
@@ -549,8 +552,8 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
   // The status buttons sit right under the unit number, so one stray click used
   // to mark a unit sold with no way back except setting it again. Confirm first.
   async function setStatus(newStatus) {
-    if (plot.status === newStatus || saving) return;
-    const from = STATUS_CFG[plot.status]?.label || plot.status;
+    if (plotState(plot) === newStatus || saving) return;
+    const from = STATUS_CFG[plotState(plot)]?.label || plot.status;
     const to = STATUS_CFG[newStatus]?.label || newStatus;
     const ok = await confirmDialog(
       `Unit ${plot.number} is currently ${from}. Change it to ${to}? Everyone on the project sees this.`,
@@ -616,20 +619,13 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
       {/* Status toggles — Resale isn't a generic toggle here (it only ever makes
           sense starting from Sold), so it gets its own conditional button below
           instead of joining this fixed 3-way grid. */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 12px' }}>
-        {['available', 'hold', 'sold'].map((s) => {
-          const c = STATUS_CFG[s];
+      <div className="plot-st-grid">
+        {['available', 'hold', 'pending', 'sold'].map((s) => {
+          const on = plotState(plot) === s;
           return (
-            <button className={`nx-btn nx-btn-sm nx-toggle${plot.status === s ? ' is-on' : ''}`} key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
-              style={{
-                padding: '8px 4px', borderRadius: 14, fontSize: 12, fontWeight: 700,
-                cursor: plot.status === s ? 'default' : 'pointer',
-                background: plot.status === s ? c.bg : 'var(--surface-2)',
-                color: plot.status === s ? c.color : 'var(--faint)',
-                border: `1.5px solid ${plot.status === s ? `color-mix(in srgb, ${c.border} 38%, transparent)` : 'transparent'}`,
-                transition: 'all 0.15s',
-              }}>
-              {c.label}
+            <button className={`nx-btn nx-btn-sm nx-toggle plot-st-btn st-${s}${on ? ' is-on' : ''}`} key={s}
+              onClick={() => setStatus(s)} disabled={on || saving}>
+              {STATUS_CFG[s].label}
             </button>
           );
         })}
@@ -1204,13 +1200,20 @@ export default function ManagePlotsPage() {
     }).catch(() => setLoading(false));
   }, [id]);
 
+  // 'pending' is the card's Hold button: the unit is held (plot.status='hold') and
+  // marked as a deliberate Hold, not someone mid-form (In Progress).
   const handleStatusChange = useCallback(async (plotId, newStatus) => {
+    const body = newStatus === 'pending' ? { status: 'hold', manual_hold: true }
+      : { status: newStatus, manual_hold: false };
     const res = await fetch(SALES_ENDPOINTS.plot(plotId), {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status: newStatus }),
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
     if (res.ok) {
       const updated = await res.json();
       setPlots(prev => prev.map(p => p.id === plotId ? updated : p));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      notify(d.detail || 'The unit could not be changed.', 'error');
     }
   }, []);
 
