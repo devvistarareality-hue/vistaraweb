@@ -1175,7 +1175,7 @@ export default function ManagePlotsPage() {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ project_id: id, plots: toCreate.map((u) => ({ number: u.number, floor: u.floor })) }),
       });
-      const fresh = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then((r) => r.json());
+      const fresh = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}&include_locked=1`, { headers: authHeaders() }).then((r) => r.json());
       setPlots(Array.isArray(fresh) ? fresh : []);
     } catch (_) { /* surfaced by the unchanged unit count */ }
     setGenBusy(false);
@@ -1184,7 +1184,7 @@ export default function ManagePlotsPage() {
   useEffect(() => {
     Promise.all([
       fetch(SALES_ENDPOINTS.project(id), { headers: authHeaders() }).then(r => r.json()),
-      fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then(r => r.json()),
+      fetch(`${SALES_ENDPOINTS.plots}?project=${id}&include_locked=1`, { headers: authHeaders() }).then(r => r.json()),
     ]).then(([proj, plotList]) => {
       setProject(proj);
       setPlots(Array.isArray(plotList) ? plotList : []);
