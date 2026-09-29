@@ -115,10 +115,16 @@ function ProjectModal({ project, onClose, onSaved }) {
     master_plan_url: project?.master_plan_url || '',
     eoi_unit_types:  project?.eoi_unit_types  || [],
     kiosk_enabled:   project?.kiosk_enabled   ?? false,
+    is_locked:       project?.is_locked       ?? false,
+    locked_blocks:   project?.locked_blocks   || [],
     floor_wise:       project?.floor_wise       ?? false,
     block_industrial: project?.block_industrial ?? false,
     floor_plans:     (project?.floor_plans?.length ? project.floor_plans : [{ floor: 0, label: 'Ground', prefix: 'Shop', from: 1, to: 12, image_url: '' }]),
   });
+
+  // The blocks this project actually declares, read off its floor plans — the
+  // same place a unit's number prefix comes from. No floor plans, no blocks.
+  const blocks = [...new Set((form.floor_plans || []).map((f) => f.block || '').filter(Boolean))].sort();
 
   // EOI standard unit types (pre-approval sizes) — [{type, plot_area, const_area}].
   const addEoiType    = () => setForm(f => ({ ...f, eoi_unit_types: [...(f.eoi_unit_types || []), { type: '', plot_area: '', const_area: '' }] }));
@@ -401,6 +407,53 @@ function ProjectModal({ project, onClose, onSaved }) {
             </label>
           </div>
 
+          {/* Access — who can see this project at all. Separate from "Active",
+              which is about a project being over rather than not yet started. */}
+          <div style={mSec}>Access</div>
+          <div className="pl-lock">
+            <label className={`pl-lock-toggle${form.is_locked ? ' is-on' : ''}`}>
+              <input type="checkbox" checked={form.is_locked}
+                onChange={(e) => set('is_locked', e.target.checked)} />
+              <span className="pl-lock-text">
+                <span className="pl-lock-title">
+                  <Icon name={form.is_locked ? 'ban' : 'check'} /> Lock this project
+                </span>
+                <span className="pl-lock-sub">
+                  {form.is_locked
+                    ? 'Hidden from everyone but admins. It cannot be picked, booked against, or opened by link until you unlock it. Existing leads, visits and bookings are untouched.'
+                    : 'Visible to everyone in the company who has Sales access.'}
+                </span>
+              </span>
+            </label>
+
+            {/* Blocks only exist on floor-wise projects, and only once some are
+                declared — there is nothing to lock otherwise. */}
+            {blocks.length > 0 && (
+              <div className="pl-lock-blocks">
+                <div className="pl-lock-blocks-head">
+                  Lock individual blocks
+                  <span className="pl-lock-blocks-hint">
+                    A locked block's units come off the unit map and cannot be booked.
+                  </span>
+                </div>
+                <div className="pl-lock-chips">
+                  {blocks.map((b) => {
+                    const on = (form.locked_blocks || []).includes(b);
+                    return (
+                      <button key={b} type="button"
+                        className={`pl-lock-chip${on ? ' is-locked' : ''}`}
+                        onClick={() => set('locked_blocks', on
+                          ? form.locked_blocks.filter((x) => x !== b)
+                          : [...(form.locked_blocks || []), b])}>
+                        <Icon name={on ? 'ban' : 'check'} /> Block {b}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Media */}
           <div style={mSec}>Media</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
@@ -618,8 +671,19 @@ export default function ProjectsPage() {
                     <span className="nx-badge" style={{ fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.92)', color: 'var(--muted)', textTransform: 'capitalize', backdropFilter: 'blur(4px)' }}>
                       {p.project_type}
                     </span>
-                    <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, backgroundColor: p.is_active ? 'var(--success-soft)' : 'var(--danger-soft)', color: p.is_active ? 'var(--success)' : 'var(--danger)', boxShadow: '0 1px 6px rgba(0,0,0,0.10)' }}>
-                      {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                    <span className="pl-badges">
+                      {/* Only an admin ever receives a locked project, so this
+                          badge is the reminder that the sales floor cannot see
+                          this card at all. */}
+                      {p.is_locked && <span className="nx-badge pl-badge-lock"><Icon name="ban" /> LOCKED</span>}
+                      {!p.is_locked && (p.locked_blocks || []).length > 0 && (
+                        <span className="nx-badge pl-badge-lock is-partial">
+                          <Icon name="ban" /> {p.locked_blocks.length} BLOCK{p.locked_blocks.length > 1 ? 'S' : ''} LOCKED
+                        </span>
+                      )}
+                      <span className={`nx-badge pl-badge-active${p.is_active ? '' : ' is-off'}`}>
+                        {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
                     </span>
                   </div>
                 </div>
