@@ -13,11 +13,12 @@ const LABEL = {
   telecaller_remarks: 'TC Remarks', stm_remarks: 'STM Remarks', telecaller: 'Telecaller Assigned',
   stm: 'STM Assigned', warm_transfer: 'Transferred to STM', site_visit: 'Site Visit', closure: 'Closure',
   follow_up: 'Follow-up Scheduled', follow_up_done: 'Follow-up Done', follow_up_missed: 'Follow-up Missed',
+  re_enquiry: 'Enquired Again',
 };
 const TONE = {
   status: 'accent', telecaller_status: 'success', stm_status: 'warn', telecaller_remarks: 'success',
   stm_remarks: 'warn', telecaller: 'accent', stm: 'success', warm_transfer: 'danger', site_visit: 'warn',
-  closure: 'success', follow_up: 'accent', follow_up_done: 'success', follow_up_missed: 'danger',
+  closure: 'success', follow_up: 'accent', follow_up_done: 'success', follow_up_missed: 'danger', re_enquiry: 'warn',
 };
 const icon = (f) => (f === 'warm_transfer' ? 'flame' : f === 'telecaller' ? 'user' : f === 'stm' ? 'building'
   : f === 'site_visit' ? 'home' : f === 'closure' ? 'check-circle' : f.startsWith('follow_up') ? 'calendar'

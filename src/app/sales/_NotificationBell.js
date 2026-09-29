@@ -10,6 +10,7 @@ import Icon from '../../components/Icon';
 // booker's My Bookings (Booking → My Bookings), not My Conversions.
 const URL_FOR_TYPE = {
   new_lead: '/sales/leads',
+  re_enquiry: '/sales/leads',
   followup: '/sales/follow-ups',
   sv: '/sales/site-visits',
   sv_done: '/sales/site-visits',
@@ -46,7 +47,9 @@ const URL_FOR_TYPE = {
 // someone who has it; a role without that screen (a telecaller has no Site Visits
 // or Booking, a non-manager no Approvals) is sent to its own equivalent instead —
 // never to a page its menu doesn't offer. Mirrors the Sales layout's role rules.
-function urlFor(type, user) {
+function urlFor(type, user, data) {
+  // A repeat enquiry opens that very lead.
+  if (type === 're_enquiry' && data?.lead_id) return `/sales/leads?open=${data.lead_id}`;
   const url = URL_FOR_TYPE[type];
   if (!url || !user) return url;
   const admin = user.role === 'Admin' || user.is_staff || (user.admin_modules || []).includes('Sales');
@@ -85,7 +88,7 @@ function ago(iso) {
 }
 
 const ICON = {
-  new_lead: 'user', followup: 'phone', sv: 'pin', sv_done: 'check-circle',
+  new_lead: 'user', re_enquiry: 'user', followup: 'phone', sv: 'pin', sv_done: 'check-circle',
   booking_approval: 'note', booking_approved: 'party', booking_rejected: 'ban',
   booking_submitted: 'note', booking_update: 'note', booking_cancelled: 'ban',
   accounts_booking_approval: 'note', accounts_booking_update: 'note', accounts_booking_cancelled: 'ban',
@@ -169,7 +172,7 @@ export default function NotificationBell({ up = false, align = 'right' }) {
             {rows.length === 0 ? (
               <div style={{ padding: 30, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>You're all caught up <Icon name="party" /></div>
             ) : rows.map((n) => {
-              const url = urlFor(n.type, me);
+              const url = urlFor(n.type, me, n.data);
               const color = TYPE_COLOR[n.type] || 'var(--accent)';
               return (
               <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}

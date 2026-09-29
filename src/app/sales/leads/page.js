@@ -763,6 +763,7 @@ const HISTORY_LABEL = {
   follow_up:          'Follow-up Scheduled',
   follow_up_done:     'Follow-up Done',
   follow_up_missed:   'Follow-up Missed',
+  re_enquiry:         'Enquired Again',
 };
 const HISTORY_COLOR = {
   created:            'var(--text-3)',
@@ -779,6 +780,7 @@ const HISTORY_COLOR = {
   follow_up:          'var(--accent)',
   follow_up_done:     'var(--success)',
   follow_up_missed:   'var(--danger)',
+  re_enquiry:         'var(--warning-2)',
 };
 
 function fmtDateTime(iso) {
