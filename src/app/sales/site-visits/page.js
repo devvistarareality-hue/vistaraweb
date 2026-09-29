@@ -7,6 +7,7 @@ import DateFilter from '../_DateFilter';
 
 
 import Icon from '../../../components/Icon';
+import { can } from '../../../lib/moduleAccess';
 import Loader from '../../../components/Loader';
 function fmtDateTime(iso) {
   if (!iso) return '';
@@ -55,6 +56,8 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const [proj,    setProj]    = useState('');                     // '' = every project
   const [outcomeFilter, setOutcomeFilter] = useState('');         // '' = every outcome
   const [searchText, setSearchText] = useState('');               // '' = every name/phone
+  const [tcPerson,  setTcPerson]  = useState('');                 // '' = every telecaller
+  const [stmPerson, setStmPerson] = useState('');                 // '' = every STM
   // Allow deep-linking to a tab (e.g. dashboard Site Visits card → ?tab=completed).
   // Read in an effect — window.location isn't committed yet when a lazy useState
   // initializer runs during Next client navigation.
@@ -250,13 +253,26 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const projName = (v) => v.project_name || '—';
   const projOptions = [...new Set(visits.map(projName))].sort((a, b) => a.localeCompare(b));
   const q = searchText.trim().toLowerCase();
-  const narrowed = dated || !!proj || !!outcomeFilter || !!q;
+  // Telecaller / STM pickers for manager-level viewers — the Follow-Ups rule: anyone
+  // who isn't a telecaller, STM or CP. Options come from every visit, like projects.
+  const isAdminMgr = !can(user, 'sales.pipeline.telecalling') && !can(user, 'sales.pipeline.stm')
+    && !can(user, 'sales.pipeline.cp') && !can(user, 'sales.pipeline.cp_manager');
+  const peopleOf = (idKey, nameKey) => {
+    const m = new Map();
+    visits.forEach((v) => { if (v[idKey]) m.set(String(v[idKey]), v[nameKey] || `#${v[idKey]}`); });
+    return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  };
+  const tcOptions  = isAdminMgr ? peopleOf('referred_by_telecaller', 'referred_by_telecaller_name') : [];
+  const stmOptions = isAdminMgr ? peopleOf('stm', 'stm_name') : [];
+  const narrowed = dated || !!proj || !!outcomeFilter || !!q || !!tcPerson || !!stmPerson;
 
   const [shown, setShown] = useState(PAGE_STEP);
   const visible = visits.filter((v) => {
     if (!inRange(v)) return false;
     if (proj && projName(v) !== proj) return false;
     if (outcomeFilter && v.outcome !== outcomeFilter) return false;
+    if (tcPerson && String(v.referred_by_telecaller || '') !== tcPerson) return false;
+    if (stmPerson && String(v.stm || '') !== stmPerson) return false;
     if (q) {
       const name  = (v.lead_name  || '').toLowerCase();
       const phone = (v.lead_phone || '').toLowerCase();
@@ -312,6 +328,18 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
               cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
             <option value="">All Projects</option>
             {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        )}
+        {tcOptions.length > 0 && (
+          <select className={`nx-input svf-sel${tcPerson ? ' is-on' : ''}`} value={tcPerson} onChange={(e) => setTcPerson(e.target.value)}>
+            <option value="">All Telecallers</option>
+            {tcOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+        )}
+        {stmOptions.length > 0 && (
+          <select className={`nx-input svf-sel${stmPerson ? ' is-on' : ''}`} value={stmPerson} onChange={(e) => setStmPerson(e.target.value)}>
+            <option value="">All STMs</option>
+            {stmOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
         )}
         <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginLeft: 4 }}>OUTCOME</span>

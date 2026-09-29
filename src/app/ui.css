@@ -1719,3 +1719,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cdel-body { padding: 18px 22px 20px; }
 .cdel-text { margin: 0 0 16px; font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
 .cdel-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+/* Site Visits: the telecaller / STM pickers beside All Projects (manager-level). */
+.svf-sel { height: 36px; padding: 0 10px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; outline: none; max-width: 240px; }
+.svf-sel.is-on { border-color: var(--accent); font-weight: 700; color: var(--text); }
