@@ -9,6 +9,7 @@ import Icon from '../../../components/Icon';
 import { confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
+import MultiSelect from '../../../components/MultiSelect';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -1597,8 +1598,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   // "STM" is really just whoever added it (see cp_module in TelecallerListView).
   const [cpModuleUsers, setCpModuleUsers] = useState([]);
   const [filters, setFilters] = useState({
-    search: '', status: '', project_id: '', source_id: '',
-    telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '',
+    search: '', status: '', project_id: [], source_id: '',
+    telecaller_id: [], stm_id: [], telecaller_status: '', stm_status: '',
     campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
@@ -1614,7 +1615,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     setFilters((f) => ({
       ...f,
       status:            p.get('status') || '',
-      project_id:        p.get('project_id') || '',
+      project_id:        (p.get('project_id') || '').split(',').filter(Boolean),
       source_id:         p.get('source_id') || '',
       telecaller_status: p.get('telecaller_status') || '',
       stm_status:        p.get('stm_status') || '',
@@ -1754,10 +1755,11 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (companyId)               params.set('company_id',       companyId);
     if (filters.search)          params.set('search',           filters.search);
     if (filters.status)          params.set('status',           filters.status);
-    if (filters.project_id)      params.set('project_id',       filters.project_id);
+    // Several ids at once from the multi-selects — the server reads them comma-separated.
+    if (filters.project_id.length)    params.set('project_id',    filters.project_id.join(','));
     if (filters.source_id)       params.set('source_id',        filters.source_id);
-    if (filters.telecaller_id)   params.set('telecaller_id',    filters.telecaller_id);
-    if (filters.stm_id)          params.set('stm_id',           filters.stm_id);
+    if (filters.telecaller_id.length) params.set('telecaller_id', filters.telecaller_id.join(','));
+    if (filters.stm_id.length)        params.set('stm_id',        filters.stm_id.join(','));
     if (filters.telecaller_status) params.set('telecaller_status', filters.telecaller_status);
     if (filters.stm_status)      params.set('stm_status',       filters.stm_status);
     if (filters.campaign)        params.set('campaign',         filters.campaign);
@@ -1950,10 +1952,10 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
         const TC_STATUSES  = ['warm','cold','not_interested','not_reachable','callback','not_qualified'];
         const STM_STATUSES = ['hot','warm','cold','not_interested','sv_scheduled','sv_done','closed','not_qualified'];
-        const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
-          filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
+        const anyFilter = filters.search || filters.status || filters.project_id.length || filters.source_id ||
+          filters.telecaller_id.length || filters.stm_id.length || filters.telecaller_status || filters.stm_status ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
-        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
+        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -2005,11 +2007,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 <option value="month">Last 30 days</option>
               </select>
               <div style={divider} />
-              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
-                <option value="">All Projects</option>
-                <option value="none">— No Project —</option>
-                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Projects" noun="projects" value={filters.project_id} onChange={(v) => sf('project_id', v)}
+                options={[{ value: 'none', label: 'No project' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]} />
               {showTcStatus && (
               <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>
@@ -2042,22 +2041,16 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
               </select>
               {showAssignees && !cpOnly && (
-              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={activeSelStyle(filters.telecaller_id)}>
-                <option value="">All Telecallers</option>
-                {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Telecallers" noun="telecallers" value={filters.telecaller_id} onChange={(v) => sf('telecaller_id', v)}
+                options={telecallers.map((u) => ({ value: String(u.id), label: u.name }))} />
               )}
               {showAssignees && !cpOnly && (
-              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
-                <option value="">All STMs</option>
-                {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All STMs" noun="STMs" value={filters.stm_id} onChange={(v) => sf('stm_id', v)}
+                options={stms.map((u) => ({ value: String(u.id), label: u.name }))} />
               )}
               {showAssignees && cpOnly && (
-              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
-                <option value="">All Team Members</option>
-                {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Team Members" noun="people" value={filters.stm_id} onChange={(v) => sf('stm_id', v)}
+                options={cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name }))} />
               )}
               <input className="nx-input" value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"

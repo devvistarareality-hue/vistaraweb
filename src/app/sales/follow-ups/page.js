@@ -7,6 +7,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
+import MultiSelect from '../../../components/MultiSelect';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -67,11 +68,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const [stms,        setStms]        = useState([]);
   const [cpModuleUsers, setCpModuleUsers] = useState([]);
   const [searchText,      setSearchText]      = useState('');
-  const [projectFilter,   setProjectFilter]   = useState('');
+  const [projectFilter,   setProjectFilter]   = useState([]);   // [] = every project
   const [tcStatusFilter,  setTcStatusFilter]  = useState('');
   const [stmStatusFilter, setStmStatusFilter] = useState('');
-  const [telecallerFilter, setTelecallerFilter] = useState('');
-  const [stmFilter,        setStmFilter]        = useState('');
+  const [telecallerFilter, setTelecallerFilter] = useState([]);  // [] = everyone
+  const [stmFilter,        setStmFilter]        = useState([]);  // [] = everyone
 
   const loadMeta = useCallback(async () => {
     const cqUser = companyId ? `&company_id=${companyId}` : '';
@@ -223,11 +224,13 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       const phone = (fu.lead_phone || '').toLowerCase();
       if (!name.includes(q) && !phone.includes(q)) return false;
     }
-    if (projectFilter   && String(fu.lead_project || '') !== String(projectFilter)) return false;
+    if (projectFilter.length && !projectFilter.includes(String(fu.lead_project || ''))) return false;
     if (tcStatusFilter  && (fu.lead_telecaller_status || '') !== tcStatusFilter) return false;
     if (stmStatusFilter && (fu.lead_stm_status || '') !== stmStatusFilter) return false;
-    if (telecallerFilter && String(fu.assigned_to || '') !== String(telecallerFilter)) return false;
-    if (stmFilter         && String(fu.assigned_to || '') !== String(stmFilter)) return false;
+    // Both pickers name who the follow-up is assigned to, so together they are one
+    // list of people: a follow-up shows if it belongs to any of them.
+    const people = [...telecallerFilter, ...stmFilter];
+    if (people.length && !people.includes(String(fu.assigned_to || ''))) return false;
     return true;
   };
   const dateItems = items.filter(matchesFilters);
@@ -264,11 +267,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const today   = localDate(new Date());
         const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
-        const anyFilter = !!(searchText || dateFrom || dateTo || projectFilter || tcStatusFilter || stmStatusFilter || telecallerFilter || stmFilter);
+        const anyFilter = !!(searchText || dateFrom || dateTo || projectFilter.length || tcStatusFilter || stmStatusFilter || telecallerFilter.length || stmFilter.length);
         const clearAll = () => {
           setSearchText(''); setDateFrom(''); setDateTo('');
-          setProjectFilter(''); setTcStatusFilter(''); setStmStatusFilter('');
-          setTelecallerFilter(''); setStmFilter('');
+          setProjectFilter([]); setTcStatusFilter(''); setStmStatusFilter('');
+          setTelecallerFilter([]); setStmFilter([]);
         };
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -311,10 +314,8 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                 <option value="month">Last 30 days</option>
               </select>
               <div className="nx-fu-divider" />
-              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} style={activeSelStyle(projectFilter)}>
-                <option value="">All Projects</option>
-                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Projects" noun="projects" value={projectFilter} onChange={setProjectFilter}
+                options={projects.map((p) => ({ value: String(p.id), label: p.name }))} />
               {showTcStatus && (
                 <select value={tcStatusFilter} onChange={(e) => setTcStatusFilter(e.target.value)} style={activeSelStyle(tcStatusFilter)}>
                   <option value="">TC Status</option>
@@ -337,22 +338,16 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             {/* Row 2: assignee pickers */}
             {showAssignees && !cpOnly && (
               <div className="nx-fu-filterbar-row">
-                <select value={telecallerFilter} onChange={(e) => setTelecallerFilter(e.target.value)} style={activeSelStyle(telecallerFilter)}>
-                  <option value="">All Telecallers</option>
-                  {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
-                <select value={stmFilter} onChange={(e) => setStmFilter(e.target.value)} style={activeSelStyle(stmFilter)}>
-                  <option value="">All STMs</option>
-                  {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <MultiSelect allLabel="All Telecallers" noun="telecallers" value={telecallerFilter} onChange={setTelecallerFilter}
+                  options={telecallers.map((u) => ({ value: String(u.id), label: u.name }))} />
+                <MultiSelect allLabel="All STMs" noun="STMs" value={stmFilter} onChange={setStmFilter}
+                  options={stms.map((u) => ({ value: String(u.id), label: u.name }))} />
               </div>
             )}
             {showAssignees && cpOnly && (
               <div className="nx-fu-filterbar-row">
-                <select value={stmFilter} onChange={(e) => setStmFilter(e.target.value)} style={activeSelStyle(stmFilter)}>
-                  <option value="">All Team Members</option>
-                  {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <MultiSelect allLabel="All Team Members" noun="people" value={stmFilter} onChange={setStmFilter}
+                  options={cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name }))} />
               </div>
             )}
           </div>

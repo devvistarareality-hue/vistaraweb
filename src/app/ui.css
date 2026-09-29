@@ -1720,11 +1720,6 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cdel-text { margin: 0 0 16px; font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
 .cdel-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 
-/* Site Visits: the telecaller / STM pickers beside All Projects (manager-level). */
-.svf-sel { height: 36px; padding: 0 10px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface);
-  font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; outline: none; max-width: 240px; }
-.svf-sel.is-on { border-color: var(--accent); font-weight: 700; color: var(--text); }
-
 /* My Conversions — search */
 .myconv-search { margin-bottom: 14px; }
 /* Sits inside the field, so clearing a long query does not mean selecting it. */
@@ -1733,3 +1728,12 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   border: 0; border-radius: 50%; background: var(--surface-3); color: var(--muted);
   font-size: 12px; cursor: pointer; transition: background-color .14s, color .14s; }
 .myconv-search-clear:hover { background: var(--danger-soft); color: var(--danger); }
+
+/* MultiSelect: a tick box in front of each option (components/MultiSelect.js). */
+.nx-ms-opt { justify-content: flex-start; gap: 10px; }
+.nx-ms-box { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 4px; border: 1.5px solid var(--border-strong);
+  display: inline-flex; align-items: center; justify-content: center; color: var(--surface); }
+.nx-ms-box.is-on { background: var(--accent); border-color: var(--accent); }
+
+/* Bookings / Approvals: the picked projects or STMs named after a section heading. */
+.bk-filter-tag { font-weight: 600; text-transform: none; letter-spacing: 0; }

@@ -4,14 +4,13 @@ import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
-  Building2, CalendarDays, Wallet, CircleCheckBig, AlarmClock, Hourglass, Percent,
+  CalendarDays, Wallet, CircleCheckBig, AlarmClock, Hourglass, Percent,
   CalendarClock, TriangleAlert, ArrowRight, ChevronRight, ListChecks, ClipboardList,
   ClipboardCheck, UserCheck,
 } from 'lucide-react';
 import { AR_ENDPOINTS, TASK_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
-import Dropdown from '../../../../components/Dropdown';
 import { DashHero, DashKpi, DashKpiGrid, DashAlerts, DashCard, DashGrid, DashBars } from '../../../../components/Dash';
 import { rupee, inrShort, AGE_LABELS, ISSUES, today } from '../_ar';
 import { STATUSES, PRIORITIES, companyParam } from '../_execution';
@@ -21,6 +20,7 @@ import ChannelPartnerDashboard from '../_CpDashboard';
 import DashboardRoleFilter from '../../../../components/DashboardRoleFilter';
 import { dashboardFor } from '../../../../lib/moduleAccess';
 import { DESIGNATION_ENDPOINTS } from '../../../../constants/api';
+import MultiSelect from '../../../../components/MultiSelect';
 
 const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
@@ -78,7 +78,7 @@ const MODULE_NAME = {
 // falls due month by month, who owes the most, and what data needs fixing.
 function ARDashboard() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
-  const [project, setProject] = useState('');
+  const [project, setProject] = useState([]);   // [] = every project
   const [asOf, setAsOf] = useState(today());
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
@@ -87,7 +87,7 @@ function ARDashboard() {
     let alive = true;
     setData(null); setErr('');
     const p = [`as_of=${asOf}`];
-    if (project) p.push(`project=${project}`);
+    if (project.length) p.push(`project=${project.join(',')}`);
     if (companyId) p.push(`company_id=${companyId}`);
     apiFetch(`${AR_ENDPOINTS.dashboard}?${p.join('&')}`)
       .then(async (r) => {
@@ -104,7 +104,7 @@ function ARDashboard() {
   useEffect(() => { if (data?.projects) setProjects(data.projects); }, [data]);
 
   const t = data?.totals;
-  const regQ = project ? `&project=${project}` : '';
+  const regQ = project.length ? `&project=${project.join(',')}` : '';
 
 
   return (
@@ -117,9 +117,8 @@ function ARDashboard() {
           </p>
         </div>
         <div className="ard-filters">
-          <Dropdown value={project} onChange={setProject} searchable ariaLabel="Project"
-            icon={<Building2 size={15} />}
-            options={[{ value: '', label: 'All projects' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]} />
+          <MultiSelect allLabel="All projects" noun="projects" value={project} onChange={setProject} ariaLabel="Project"
+            options={projects.map((p) => ({ value: String(p.id), label: p.name }))} />
           <label className="ard-date">
             <CalendarDays size={15} />
             <input type="date" aria-label="As of" value={asOf} max={today()} onChange={(e) => setAsOf(e.target.value || today())} />
