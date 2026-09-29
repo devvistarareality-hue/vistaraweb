@@ -14,7 +14,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
-import { can, canSee, dashboardFor } from '../../lib/moduleAccess';
+import { can, canSee, dashboardFor, isManagerRole } from '../../lib/moduleAccess';
 import DashboardRoleFilter from '../../components/DashboardRoleFilter';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
@@ -541,8 +541,13 @@ function TelecallerDashboard({ user }) {
   const svUpcoming = stats?.stm_sv_scheduled_count ?? 0;
   // My Conversions where the menu has it; the layout bounces anyone off a screen
   // their menu leaves out, so otherwise the tiles open the real screens.
+  // …and the fallback (Site Visits / Booking) only for a role that has those screens:
+  // a plain telecaller doesn't, so for them the tile stays view-only rather than
+  // linking into a page their menu never offers.
+  const _stmSide = user?.role === 'Admin' || user?.is_staff || isManagerRole(user)
+    || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp');
   const convHref = (tab, fallback) =>
-    canSee(user, 'sales.screen.conversions') ? `/sales/my-conversions?tab=${tab}` : fallback;
+    canSee(user, 'sales.screen.conversions') ? `/sales/my-conversions?tab=${tab}` : (_stmSide ? fallback : null);
   const closed   = stats?.closures       ?? 0;
   // Backlog tiles: what is still waiting to be worked, as opposed to what was done.
   const toCall     = stats?.to_call_count           ?? 0;

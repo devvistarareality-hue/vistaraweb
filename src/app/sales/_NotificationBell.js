@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { can, canSee, isManagerRole } from '../../lib/moduleAccess';
 import { AUTH_ENDPOINTS, authHeaders } from '../../constants/api';
 
 import Icon from '../../components/Icon';
@@ -40,6 +42,40 @@ const URL_FOR_TYPE = {
 };
 
 
+// Where a notification opens for THIS person. URL_FOR_TYPE is the screen for
+// someone who has it; a role without that screen (a telecaller has no Site Visits
+// or Booking, a non-manager no Approvals) is sent to its own equivalent instead —
+// never to a page its menu doesn't offer. Mirrors the Sales layout's role rules.
+function urlFor(type, user) {
+  const url = URL_FOR_TYPE[type];
+  if (!url || !user) return url;
+  const admin = user.role === 'Admin' || user.is_staff || (user.admin_modules || []).includes('Sales');
+  const manager = admin || isManagerRole(user);
+  const stmSide = manager || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp');
+  const conversions = canSee(user, 'sales.screen.conversions')
+    && (admin || can(user, 'sales.pipeline.telecalling') || stmSide);
+  const visits = stmSide && canSee(user, 'sales.screen.sitevisits');
+  const booking = stmSide && canSee(user, 'sales.screen.booking');
+  const approvals = manager && canSee(user, 'sales.screen.approvals');
+  const fallback = '/sales';
+  if (['sv', 'sv_overdue'].includes(type)) {
+    return visits ? '/sales/site-visits?tab=scheduled' : conversions ? '/sales/my-conversions?tab=upcoming' : fallback;
+  }
+  if (type === 'sv_done') {
+    return visits ? '/sales/site-visits?tab=completed' : conversions ? '/sales/my-conversions?tab=sv' : fallback;
+  }
+  if (type === 'closure') {
+    return conversions ? '/sales/my-conversions?tab=closures' : booking ? '/sales/closure?view=mybookings&status=sold' : fallback;
+  }
+  if (url.startsWith('/sales/bookings')) {
+    return approvals ? url : booking ? '/sales/closure?view=mybookings' : conversions ? '/sales/my-conversions?tab=closures' : fallback;
+  }
+  if (url.startsWith('/sales/closure')) {
+    return booking ? url : conversions ? '/sales/my-conversions?tab=closures' : fallback;
+  }
+  return url;
+}
+
 function ago(iso) {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (s < 60) return 'just now';
@@ -74,6 +110,7 @@ const TYPE_COLOR = {
 };
 
 export default function NotificationBell({ up = false, align = 'right' }) {
+  const me = useSelector((s) => s.auth?.user);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
@@ -132,7 +169,7 @@ export default function NotificationBell({ up = false, align = 'right' }) {
             {rows.length === 0 ? (
               <div style={{ padding: 30, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>You're all caught up <Icon name="party" /></div>
             ) : rows.map((n) => {
-              const url = URL_FOR_TYPE[n.type];
+              const url = urlFor(n.type, me);
               const color = TYPE_COLOR[n.type] || 'var(--accent)';
               return (
               <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}
