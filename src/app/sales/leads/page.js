@@ -431,6 +431,17 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
 
         {step === 'number' ? <LeadNumberCheck initialPhone={form.phone} onPick={pickExisting} onNew={addNew} /> : (
         <form onSubmit={submit} style={{ padding: '22px 24px 24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
+          {/* Shown first: whether this number is already a lead, before anything is filled in. */}
+          {dupMatch && (
+            <div className="nx-callout-info">
+              {dupMatch.sameProject ? (
+                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
+              ) : (
+                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for this project instead.</>
+              )}
+            </div>
+          )}
+
           {/* Contact Info */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 18 }}>
@@ -558,15 +569,6 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             )}
           </div>
 
-          {dupMatch && (
-            <div className="nx-callout-info">
-              {dupMatch.sameProject ? (
-                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
-              ) : (
-                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for this project instead.</>
-              )}
-            </div>
-          )}
 
           {/* Telecaller (Pre-Sales) — a Channel Partner lead skips telecaller calling
               entirely: it goes straight into the STM pipeline. */}
