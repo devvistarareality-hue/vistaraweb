@@ -34,6 +34,8 @@ export default function DataResetPage() {
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirmText, setConfirmText] = useState('');
+  // The company's own code, typed out — the server refuses a reset without it.
+  const [companyCode, setCompanyCode] = useState('');
   const [resetKey, setResetKey] = useState('');
   const [withAttendance, setWithAttendance] = useState(false);
   const [withLoi, setWithLoi] = useState(true);
@@ -67,13 +69,13 @@ export default function DataResetPage() {
   const nothingSelected = selected.size === 0;
 
   async function doReset() {
-    if (confirmText !== 'DELETE' || nothingSelected) return;
+    if (confirmText !== 'DELETE' || !companyCode.trim() || nothingSelected) return;
     if (!(await confirmDialog('This permanently deletes the selected trial data for this company. This cannot be undone. Continue?'))) return;
     setBusy(true); setMsg('');
     try {
       const res = await fetch(SALES_ENDPOINTS.dataReset + cq('?'), {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ confirm: 'DELETE', reset_key: resetKey, targets: [...selected], with_attendance: withAttendance, with_loi_files: withLoi }),
+        body: JSON.stringify({ confirm: 'DELETE', reset_key: resetKey, company_code: companyCode, targets: [...selected], with_attendance: withAttendance, with_loi_files: withLoi }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) { setMsg('✅ Trial data cleared. Your CRM is now a clean slate.'); setConfirmText(''); load(); }
@@ -155,7 +157,7 @@ export default function DataResetPage() {
       <div style={{ background: 'var(--danger-soft)', border: `1.5px solid ${RED}`, borderRadius: 18, padding: 18 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: RED, marginBottom: 6 }}><Icon name="alert" /> Danger zone — this cannot be undone</div>
         <p style={{ fontSize: 13, color: 'var(--danger-deep)', marginBottom: 12 }}>
-          Take a Railway database backup first. Then type <b>DELETE</b> and enter the reset key.
+          Take a Railway database backup first. Then type <b>DELETE</b>, enter the reset key and this company&apos;s code.
         </p>
         <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="Type DELETE"
           style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 14, border: `1.5px solid color-mix(in srgb, ${RED} 40%, transparent)`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }} />
@@ -164,14 +166,16 @@ export default function DataResetPage() {
         <input type="password" value={resetKey} onChange={(e) => setResetKey(e.target.value)}
           placeholder="Reset key" autoComplete="new-password"
           style={{ width: '100%', maxWidth: 240, height: 40, padding: '0 12px', borderRadius: 14, border: `1.5px solid color-mix(in srgb, ${RED} 40%, transparent)`, fontSize: 14, marginBottom: 12, boxSizing: 'border-box', display: 'block' }} />
+        <input value={companyCode} onChange={(e) => setCompanyCode(e.target.value)}
+          placeholder="Company code" autoComplete="off" className="nx-input dr-input" />
         <div>
           {(() => {
-            const ready = confirmText === 'DELETE' && !!resetKey.trim() && !busy && !nothingSelected;
+            const ready = confirmText === 'DELETE' && !!resetKey.trim() && !!companyCode.trim() && !busy && !nothingSelected;
             return (
               <button onClick={doReset} disabled={!ready}
                 style={{ padding: '11px 22px', borderRadius: 14, border: 'none', fontSize: 14, fontWeight: 800,
                   background: ready ? 'var(--danger-solid)' : 'var(--danger-2)', color: '#fff', cursor: ready ? 'pointer' : 'not-allowed' }}>
-                {busy ? 'Clearing…' : nothingSelected ? 'Select at least one item' : !resetKey.trim() ? 'Enter the reset key' : `Permanently delete ${total} records`}
+                {busy ? 'Clearing…' : nothingSelected ? 'Select at least one item' : !resetKey.trim() ? 'Enter the reset key' : !companyCode.trim() ? 'Enter the company code' : `Permanently delete ${total} records`}
               </button>
             );
           })()}

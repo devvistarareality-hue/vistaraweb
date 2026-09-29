@@ -14,7 +14,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
-import { can, canSee, dashboardFor } from '../../lib/moduleAccess';
+import { can, canSee, dashboardFor, isManagerRole } from '../../lib/moduleAccess';
 import DashboardRoleFilter from '../../components/DashboardRoleFilter';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
@@ -284,7 +284,7 @@ function SkeletonGrid({ count = 6, grid }) {
 // ─────────────────────────────────────────────
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────
-export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
+export function AdminDashboard({ user, adminView = false, adminSection = false, cpOnly = false }) {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -330,15 +330,21 @@ export function AdminDashboard({ user, adminView = false, cpOnly = false }) {
   // My Conversions is a screen a designation's menu may leave out — and the layout
   // sends anyone who opens a screen they can't see straight back, so a tile
   // pointing there would look dead. Without it, the tiles open the real screens.
-  const conversions    = adminView || canSee(user, 'sales.screen.conversions');
+  // Only the Admin section itself (/sales/admin, a Sales admin's own menu, which
+  // always has My Conversions) may skip that check. A designation pinned to the
+  // Director dashboard also gets `adminView` (full-company numbers), but its tiles
+  // must still respect its menu — they used to open the admin copy of the page,
+  // which no menu guards, for people never given My Conversions.
+  const convBase       = adminSection ? '/sales/admin/my-conversions' : '/sales/my-conversions';
+  const conversions    = adminSection || canSee(user, 'sales.screen.conversions');
   const svHref         = isCp ? '/m/cp/site-visits?tab=completed'
-    : conversions ? `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=sv`
+    : conversions ? `${convBase}?tab=sv`
     : '/sales/site-visits?tab=completed';
   // A closure is a booking that cleared both gates. Channel Partner opens
   // Booking → My Bookings with Approved chosen directly; Sales keeps its own
   // My Conversions view where the menu has it.
   const closuresHref   = isCp ? '/m/cp/closure?view=mybookings&status=sold'
-    : conversions ? `${adminView ? '/sales/admin/my-conversions' : '/sales/my-conversions'}?tab=closures`
+    : conversions ? `${convBase}?tab=closures`
     : '/sales/closure?view=mybookings&status=sold&scope=visible';
   const projectsHref   = isCp ? '/m/cp/closure'     : '/sales/closure';
   const cards = stats ? [
@@ -535,8 +541,13 @@ function TelecallerDashboard({ user }) {
   const svUpcoming = stats?.stm_sv_scheduled_count ?? 0;
   // My Conversions where the menu has it; the layout bounces anyone off a screen
   // their menu leaves out, so otherwise the tiles open the real screens.
+  // …and the fallback (Site Visits / Booking) only for a role that has those screens:
+  // a plain telecaller doesn't, so for them the tile stays view-only rather than
+  // linking into a page their menu never offers.
+  const _stmSide = user?.role === 'Admin' || user?.is_staff || isManagerRole(user)
+    || can(user, 'sales.pipeline.stm') || can(user, 'sales.pipeline.cp');
   const convHref = (tab, fallback) =>
-    canSee(user, 'sales.screen.conversions') ? `/sales/my-conversions?tab=${tab}` : fallback;
+    canSee(user, 'sales.screen.conversions') ? `/sales/my-conversions?tab=${tab}` : (_stmSide ? fallback : null);
   const closed   = stats?.closures       ?? 0;
   // Backlog tiles: what is still waiting to be worked, as opposed to what was done.
   const toCall     = stats?.to_call_count           ?? 0;
@@ -1005,7 +1016,7 @@ export function SalesDashboardContent({ adminView = false }) {
   const isAdmin = user?.role === 'Admin' || user?.is_staff;
   const [preview, setPreview] = useState('');
 
-  if (adminView) return <AdminDashboard user={user} adminView />;
+  if (adminView) return <AdminDashboard user={user} adminView adminSection />;
 
   // A company can pin which dashboard a designation opens; '' decides from their
   // permissions, exactly as before.

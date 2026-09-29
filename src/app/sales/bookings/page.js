@@ -13,6 +13,7 @@ import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import LeadTransfers from '../_LeadTransfers';
+import MultiSelect from '../../../components/MultiSelect';
 // Open the confidential LOI via a short-lived signed URL (never a public link).
 async function openLoi(id) {
   try {
@@ -196,8 +197,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const [q, setQ] = useState('');
   // Booking-date range, from the same filter the dashboards use.
   const [range, setRange] = useState({ from: '', to: '' });
-  const [stm, setStm] = useState('');     // '' = every STM
-  const [proj, setProj] = useState('');   // '' = every project
+  const [stm, setStm] = useState([]);     // '' = every STM
+  const [proj, setProj] = useState([]);   // '' = every project
   // Resale cuts across every status — a resold unit can be pending, approved or
   // cancelled — so it is a filter beside the others rather than a tab of its own.
   const [resale, setResale] = useState('');   // '' = both, 'yes' = resales only
@@ -332,10 +333,10 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(rows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = !!ql || dated || !!stm || !!proj || !!resale;
+  const narrowed = !!ql || dated || stm.length > 0 || proj.length > 0 || !!resale;
   const resaleCount = rows.filter((b) => b.is_resale).length;
   const visible = rows.filter((b) => matches(b) && inRange(b)
-    && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj)
+    && (!stm.length || stm.includes(stmName(b))) && (!proj.length || proj.includes(projName(b)))
     && (!resale || b.is_resale));
 
   // Project-wise grouping (same shape as the Accounts & Finance bookings view), but
@@ -457,22 +458,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         {/* Which project, and whose bookings — one value at a time. Options come from
             the loaded tab, so a tab holding a single project or STM shows no control. */}
         {projOptions.length > 1 && (
-          <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpenProj({}); }}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? 'var(--accent)' : 'var(--border)'}`,
-              background: 'var(--surface)', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)',
-              cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
-            <option value="">All Projects</option>
-            {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={(v) => { setProj(v); setOpenProj({}); }}
+            options={projOptions.map((n) => ({ value: n, label: n }))} />
         )}
         {stmOptions.length > 1 && (
-          <select className="nx-input" value={stm} onChange={(e) => { setStm(e.target.value); setOpenProj({}); }}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${stm ? 'var(--accent)' : 'var(--border)'}`,
-              background: 'var(--surface)', fontSize: 13, fontWeight: stm ? 700 : 500, color: stm ? 'var(--text)' : 'var(--muted)',
-              cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
-            <option value="">All STMs</option>
-            {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          <MultiSelect allLabel="All STMs" noun="STMs" value={stm} onChange={(v) => { setStm(v); setOpenProj({}); }}
+            options={stmOptions.map((n) => ({ value: n, label: n }))} />
         )}
         {/* Only offered when this tab actually holds one — a filter that can only
             ever return nothing is a way to waste a click. */}
@@ -493,8 +484,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {visible.length} booking{visible.length === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
-            {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
-            {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}
+            {stm.length > 0 && <span className="bk-filter-tag"> · STM {stm.join(', ')}</span>}
+            {proj.length > 0 && <span className="bk-filter-tag"> · {proj.join(', ')}</span>}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>

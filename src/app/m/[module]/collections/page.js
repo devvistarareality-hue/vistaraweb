@@ -8,11 +8,11 @@ import { AlarmClock, CalendarClock, PhoneCall, UserX, Building2, BellRing, Phone
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
-import Dropdown from '../../../../components/Dropdown';
 import { DashKpi } from '../../../../components/Dash';
 import { fmtWhen } from '../../../../components/ActivityHistory';
 import { rupee, inrShort } from '../_ar';
 import FollowUpModal from '../_FollowUpModal';
+import MultiSelect from '../../../../components/MultiSelect';
 
 const dmy = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
 const WINDOWS = [0, 7, 30, 60, 90];   // 0 = due today
@@ -27,7 +27,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
   const user = useSelector((s) => s.auth.user);
   const [tab, setTab] = useState(searchParams?.tab || 'overdue');
   const [days, setDays] = useState(30);
-  const [project, setProject] = useState('');
+  const [project, setProject] = useState([]);   // [] = every project
   const [q, setQ] = useState('');
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
@@ -42,7 +42,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
   useEffect(() => {
     let alive = true;
     const qs = new URLSearchParams({ view, days: String(days) });
-    if (project) qs.set('project', project);
+    if (project.length) qs.set('project', project.join(','));
     if (companyId) qs.set('company_id', companyId);
     setErr('');
     apiFetch(`${AR_ENDPOINTS.collections}?${qs}`)
@@ -85,8 +85,8 @@ export default function ARCollectionsPage({ params, searchParams }) {
           <p className="nx-page-sub">Who has not paid, what falls due next, and the follow-ups chasing it{data?.as_of ? ` · as of ${dmy(data.as_of)}` : ''}</p>
         </div>
         <div className="ard-filters">
-          <Dropdown value={project} onChange={setProject} searchable ariaLabel="Project" icon={<Building2 size={15} />}
-            options={[{ value: '', label: 'All projects' }, ...(data?.projects || []).map((p) => ({ value: String(p.id), label: p.name }))]} />
+          <MultiSelect allLabel="All projects" noun="projects" value={project} onChange={setProject} ariaLabel="Project"
+            options={(data?.projects || []).map((p) => ({ value: String(p.id), label: p.name }))} />
         </div>
       </div>
 

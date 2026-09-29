@@ -8,6 +8,7 @@ import DateFilter from '../_DateFilter';
 
 import Icon from '../../../components/Icon';
 import { can } from '../../../lib/moduleAccess';
+import MultiSelect from '../../../components/MultiSelect';
 import Loader from '../../../components/Loader';
 function fmtDateTime(iso) {
   if (!iso) return '';
@@ -53,11 +54,11 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
   const [range,   setRange]   = useState({ from: '', to: '' });   // visit date
-  const [proj,    setProj]    = useState('');                     // '' = every project
+  const [proj,    setProj]    = useState([]);                     // [] = every project
   const [outcomeFilter, setOutcomeFilter] = useState('');         // '' = every outcome
   const [searchText, setSearchText] = useState('');               // '' = every name/phone
-  const [tcPerson,  setTcPerson]  = useState('');                 // '' = every telecaller
-  const [stmPerson, setStmPerson] = useState('');                 // '' = every STM
+  const [tcPerson,  setTcPerson]  = useState([]);                 // [] = every telecaller
+  const [stmPerson, setStmPerson] = useState([]);                 // [] = every STM
   // Allow deep-linking to a tab (e.g. dashboard Site Visits card → ?tab=completed).
   // Read in an effect — window.location isn't committed yet when a lazy useState
   // initializer runs during Next client navigation.
@@ -183,12 +184,9 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
         }),
       });
       if (res.ok) {
-        // The lead's pipeline stage stays "sv done" — the outcome is recorded on
-        // the SiteVisit itself (and rolls up into the SV Hot/Warm/Cold dashboard
-        // tiles), but it does not overwrite the lead's own STM Status.
-        await fetch(SALES_ENDPOINTS.lead(doneSv.lead), {
-          method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ stm_status: 'sv_done' }),
-        }).catch(() => {});
+        // The server moves the lead to SV Done itself when a visit completes (and
+        // leaves a lead that has already moved on, e.g. booked, where it is). The
+        // outcome stays on the SiteVisit, not in the lead's own STM Status.
         const updated = await res.json();
         setVisits((list) => list.map((v) => (v.id === updated.id ? updated : v)));
         setDoneSv(null);
@@ -264,15 +262,15 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   };
   const tcOptions  = isAdminMgr ? peopleOf('referred_by_telecaller', 'referred_by_telecaller_name') : [];
   const stmOptions = isAdminMgr ? peopleOf('stm', 'stm_name') : [];
-  const narrowed = dated || !!proj || !!outcomeFilter || !!q || !!tcPerson || !!stmPerson;
+  const narrowed = dated || proj.length > 0 || !!outcomeFilter || !!q || tcPerson.length > 0 || stmPerson.length > 0;
 
   const [shown, setShown] = useState(PAGE_STEP);
   const visible = visits.filter((v) => {
     if (!inRange(v)) return false;
-    if (proj && projName(v) !== proj) return false;
+    if (proj.length && !proj.includes(projName(v))) return false;
     if (outcomeFilter && v.outcome !== outcomeFilter) return false;
-    if (tcPerson && String(v.referred_by_telecaller || '') !== tcPerson) return false;
-    if (stmPerson && String(v.stm || '') !== stmPerson) return false;
+    if (tcPerson.length && !tcPerson.includes(String(v.referred_by_telecaller || ''))) return false;
+    if (stmPerson.length && !stmPerson.includes(String(v.stm || ''))) return false;
     if (q) {
       const name  = (v.lead_name  || '').toLowerCase();
       const phone = (v.lead_phone || '').toLowerCase();
@@ -322,25 +320,16 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       <DateFilter onChange={setRange} />
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -10, marginBottom: 16 }}>
         {projOptions.length > 1 && (
-          <select className="nx-input" value={proj} onChange={(e) => setProj(e.target.value)}
-            style={{ height: 36, padding: '0 10px', borderRadius: 8, border: `1.5px solid ${proj ? 'var(--accent)' : 'var(--border)'}`,
-              background: 'var(--surface)', fontSize: 13, fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)',
-              cursor: 'pointer', outline: 'none', maxWidth: 240 }}>
-            <option value="">All Projects</option>
-            {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={setProj}
+            options={projOptions.map((n) => ({ value: n, label: n === '—' ? 'No project' : n }))} />
         )}
         {tcOptions.length > 0 && (
-          <select className={`nx-input svf-sel${tcPerson ? ' is-on' : ''}`} value={tcPerson} onChange={(e) => setTcPerson(e.target.value)}>
-            <option value="">All Telecallers</option>
-            {tcOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-          </select>
+          <MultiSelect allLabel="All Telecallers" noun="telecallers" value={tcPerson} onChange={setTcPerson}
+            options={tcOptions.map(([id, name]) => ({ value: id, label: name }))} />
         )}
         {stmOptions.length > 0 && (
-          <select className={`nx-input svf-sel${stmPerson ? ' is-on' : ''}`} value={stmPerson} onChange={(e) => setStmPerson(e.target.value)}>
-            <option value="">All STMs</option>
-            {stmOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-          </select>
+          <MultiSelect allLabel="All STMs" noun="STMs" value={stmPerson} onChange={setStmPerson}
+            options={stmOptions.map(([id, name]) => ({ value: id, label: name }))} />
         )}
         <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted)', letterSpacing: 0.6, marginLeft: 4 }}>OUTCOME</span>
         {['', 'hot', 'warm', 'cold', 'not_interested'].map((val) => {
@@ -356,7 +345,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           );
         })}
         {narrowed && (
-          <button className="nx-btn nx-btn-sm nx-btn-secondary nx-clear-filters-btn" onClick={() => { setProj(''); setOutcomeFilter(''); setSearchText(''); }}>
+          <button className="nx-btn nx-btn-sm nx-btn-secondary nx-clear-filters-btn" onClick={() => { setProj([]); setOutcomeFilter(''); setSearchText(''); setTcPerson([]); setStmPerson([]); }}>
             <Icon name="x" /> Clear filters
           </button>
         )}

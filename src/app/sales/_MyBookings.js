@@ -11,6 +11,7 @@ import BookingDetails from '../../components/BookingDetails';
 import Icon from '../../components/Icon';
 import { confirmDialog, notify } from '../../lib/notify';
 import Loader from '../../components/Loader';
+import MultiSelect from '../../components/MultiSelect';
 // Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
 // and a draft has not been. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
@@ -151,7 +152,7 @@ export function MyBookingsList({ cpOnly = false }) {
   });
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
-  const [proj, setProj] = useState('');
+  const [proj, setProj] = useState([]);
   const [who, setWho] = useState('');     // 'booked by' — a user id, '' for everyone
   // Whose bookings the server sends: this person's own desk, or everything they
   // may see. The default is the desk — that is what My Bookings means — but the
@@ -256,7 +257,7 @@ export function MyBookingsList({ cpOnly = false }) {
   // on Approved they then summed to the full 244 next to a list of 229 — a filter
   // that misreports its own result is worse than one that moves.
   const preWho = rows.filter((b) => inTab(b, tab) && matches(b) && inRange(b)
-    && (!proj || projName(b) === proj));
+    && (!proj.length || proj.includes(projName(b))));
 
   // 'Booked by' — a manager's list holds their whole reporting subtree, so let them
   // narrow it to one person. Picking a manager keeps that manager's own reports in
@@ -374,10 +375,8 @@ export function MyBookingsList({ cpOnly = false }) {
           )}
         </div>
         {projOptions.length > 1 && (
-          <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }} style={selectStyle}>
-            <option value="">All Projects</option>
-            {projOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={(v) => { setProj(v); setOpen({}); }}
+            options={projOptions.map((n) => ({ value: n, label: n }))} />
         )}
         {!cpOnly && (isManagerRole(me) || me?.is_staff || me?.role === 'Admin') && (
           <select className="nx-input" value={scope} onChange={(e) => { setScope(e.target.value); setOpen({}); setWho(''); }}

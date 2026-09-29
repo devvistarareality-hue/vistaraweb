@@ -7,6 +7,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
+import MultiSelect from '../../../components/MultiSelect';
 import { can } from '../../../lib/moduleAccess';
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -175,7 +176,9 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   // Narrowing the list and switching tabs both start a new list, so the window
   // goes back to the top — otherwise a search that matches 3 rows still reads
   // "Showing 50 of 3" from wherever the last one had been scrolled to.
-  useEffect(() => { setShown(PAGE_STEP); }, [search, tab]);
+  const [projF, setProjF] = useState([]);   // project names; empty = all
+  const [stmF, setStmF] = useState([]);     // STM names; empty = all
+  useEffect(() => { setShown(PAGE_STEP); }, [search, tab, projF, stmF]);
   const [visits, setVisits] = useState([]);
   const [closures, setClosures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -211,7 +214,19 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   ].some((f) => String(f || '').toLowerCase().includes(needle));
 
   const q = search.trim().toLowerCase();
-  const filter = (rows) => (q ? rows.filter((r) => match(r, q)) : rows);
+  const filter = (rows) => rows.filter((r) => (!q || match(r, q))
+    && (!projF.length || projF.includes(r.project_name || '—'))
+    && (!stmF.length || stmF.includes(r.stm_name || '—')));
+
+  // The pickers offer only what this tab's rows hold — no project or STM that
+  // would empty the list. A pick made on another tab stays listed so it can be
+  // seen and cleared.
+  const tabRows = tab === 'upcoming' ? upcoming : tab === 'closures' ? closures : svCompleted;
+  const present = (key, picked) => [...new Set([...tabRows.map((r) => r[key] || '—'), ...picked])]
+    .sort((a, b) => (a === '—') - (b === '—') || a.localeCompare(b))
+    .map((n) => ({ value: n, label: n === '—' ? (key === 'stm_name' ? 'No STM' : 'No project') : n }));
+  const projOptions = present('project_name', projF);
+  const stmOptions = present('stm_name', stmF);
 
   const svRows = filter(tab === 'upcoming' ? upcoming : svCompleted);
   const allClosures = filter(closures);
@@ -261,7 +276,8 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search + filters */}
+      <div className="myconv-filters">
       <div className="nx-search-wrap myconv-search">
         <span className="nx-search-icon"><Icon name="search" /></span>
         <input className="nx-input nx-search-input" value={search}
@@ -272,6 +288,9 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             aria-label="Clear search"><Icon name="x" /></button>
         )}
       </div>
+        <MultiSelect allLabel="All Projects" noun="projects" value={projF} onChange={setProjF} options={projOptions} />
+        <MultiSelect allLabel="All STMs" noun="STMs" value={stmF} onChange={setStmF} options={stmOptions} align="right" />
+      </div>
 
       {loading ? (
         <Loader label="Loading…" style={loaderPad} />
@@ -279,8 +298,8 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         <div className="nx-card myconv-card">
           {svRows.length === 0 ? (
             <div className="myconv-empty">
-              {q
-                ? <>Nothing matches <b>{search}</b> in this tab.</>
+              {(q || projF.length || stmF.length)
+                ? <>Nothing matches {search ? <b>{search}</b> : 'these filters'} in this tab.</>
                 : tab === 'upcoming'
                   ? (isStm ? 'No visits scheduled.' : 'No visits scheduled for your referred leads.')
                   : (isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.')}
@@ -316,7 +335,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             </div>
             {svRows.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {svRows.length}{q ? ' matching' : ''}</span>
+                <span className="nx-more-count">Showing {shown} of {svRows.length}{(q || projF.length || stmF.length) ? ' matching' : ''}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}
@@ -326,8 +345,8 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         <div className="nx-card myconv-card">
           {allClosures.length === 0 ? (
             <div className="myconv-empty">
-              {q
-                ? <>Nothing matches <b>{search}</b> in this tab.</>
+              {(q || projF.length || stmF.length)
+                ? <>Nothing matches {search ? <b>{search}</b> : 'these filters'} in this tab.</>
                 : isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
           ) : (<>
@@ -366,7 +385,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             </div>
             {allClosures.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {allClosures.length}{q ? ' matching' : ''}</span>
+                <span className="nx-more-count">Showing {shown} of {allClosures.length}{(q || projF.length || stmF.length) ? ' matching' : ''}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}

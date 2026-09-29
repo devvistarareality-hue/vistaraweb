@@ -18,10 +18,13 @@ import Loader from '../../../../components/Loader';
 import { mapHex, MAP_INK } from '../../../../lib/mapColors';
 const STATUS_CFG = {
   available: { label: 'Available', color: 'var(--success)', bg: 'var(--success-soft)', border: 'var(--success)', zone: 'var(--success)' },
-  // Covers both a soft pick (auto-expires in 10 min) and a hard hold backed by
-  // a pending-approval booking — "Hold" read as one deliberate state and
-  // confused which of the two it was. "In Progress" reads correctly for both.
+  // Someone is filling the booking form for this unit (a soft pick that expires
+  // in 10 min, a saved draft, or an admin's manual hold).
   hold:      { label: 'In Progress', color: 'var(--text-2)', bg: 'var(--surface-2)', border: 'var(--text-2)', zone: 'var(--accent)' },
+  // The booking is submitted and waiting for approval. Same plot.status='hold'
+  // underneath — told apart by the pending booking the server reports, exactly as
+  // the booking unit map (closure/[id]) does.
+  pending:   { label: 'Hold', color: 'var(--warning-deep)', bg: 'var(--warning-soft)', border: 'var(--warning-2)', zone: 'var(--warning-2)' },
   sold:      { label: 'Sold',      color: 'var(--danger)', bg: 'var(--danger-soft)', border: 'var(--danger)', zone: 'var(--danger)' },
   // A previously-sold unit an admin has put back on the market — bookable
   // exactly like Available, just kept visually distinct (purple, not green)
@@ -231,7 +234,7 @@ function SiteMapEditor({ project, plots, onProjectUpdate, zonesOverride, onZones
   const getZoneColor = (plotNumber) => {
     const plot = plots.find(p => String(p.number) === String(plotNumber));
     if (!plot) return 'var(--warning)';
-    return STATUS_CFG[plot.status]?.zone || 'var(--warning)';
+    return STATUS_CFG[plotState(plot)]?.zone || 'var(--warning)';
   };
 
   return (
@@ -501,9 +504,17 @@ function parseSizeUnit(sizeStr) {
   return { sizeVal: sizeStr.trim(), unit: 'sqft' };
 }
 
+// What a unit shows as: a submitted booking awaiting approval is Hold, anything
+// else still being worked on is In Progress. Badges, map colours, counts and the
+// filter tabs all go through this rather than plot.status.
+// An admin's manual Hold (manual_hold, pressed on the card) reads Hold too; a unit
+// someone is still picking/filling (held_by set) never does.
+const plotState = (plot) => ((plot.pending_booking_id
+  || (plot.status === 'hold' && plot.manual_hold && !plot.held_by_name)) ? 'pending' : plot.status);
+
 /* ─── Plot Card ─── */
 function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floorWise = false }) {
-  const cfg = STATUS_CFG[plot.status] || STATUS_CFG.available;
+  const cfg = STATUS_CFG[plotState(plot)] || STATUS_CFG.available;
   const [saving,  setSaving]  = useState(false);
   const [editing, setEditing] = useState(false);
 
@@ -541,8 +552,8 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
   // The status buttons sit right under the unit number, so one stray click used
   // to mark a unit sold with no way back except setting it again. Confirm first.
   async function setStatus(newStatus) {
-    if (plot.status === newStatus || saving) return;
-    const from = STATUS_CFG[plot.status]?.label || plot.status;
+    if (plotState(plot) === newStatus || saving) return;
+    const from = STATUS_CFG[plotState(plot)]?.label || plot.status;
     const to = STATUS_CFG[newStatus]?.label || newStatus;
     const ok = await confirmDialog(
       `Unit ${plot.number} is currently ${from}. Change it to ${to}? Everyone on the project sees this.`,
@@ -605,26 +616,15 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
         )}
       </div>
 
-      {/* Status toggles — Resale isn't a generic toggle here (it only ever makes
-          sense starting from Sold), so it gets its own conditional button below
-          instead of joining this fixed 3-way grid. */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '0 14px 12px' }}>
-        {['available', 'hold', 'sold'].map((s) => {
-          const c = STATUS_CFG[s];
-          return (
-            <button className={`nx-btn nx-btn-sm nx-toggle${plot.status === s ? ' is-on' : ''}`} key={s} onClick={() => setStatus(s)} disabled={plot.status === s || saving}
-              style={{
-                padding: '8px 4px', borderRadius: 14, fontSize: 12, fontWeight: 700,
-                cursor: plot.status === s ? 'default' : 'pointer',
-                background: plot.status === s ? c.bg : 'var(--surface-2)',
-                color: plot.status === s ? c.color : 'var(--faint)',
-                border: `1.5px solid ${plot.status === s ? `color-mix(in srgb, ${c.border} 38%, transparent)` : 'transparent'}`,
-                transition: 'all 0.15s',
-              }}>
-              {c.label}
-            </button>
-          );
-        })}
+      {/* Status dropdown — every change is confirmed first (setStatus). Resale only
+          ever follows Sold, so it keeps its own button below rather than a menu entry. */}
+      <div className="plot-st-row">
+        <select className={`nx-input plot-st-select st-${plotState(plot)}`} value={plotState(plot)} disabled={saving}
+          onChange={(e) => setStatus(e.target.value)} aria-label={`Status of ${plot.number}`}>
+          {['available', 'hold', 'pending', 'sold', ...(plot.status === 'resale' ? ['resale'] : [])].map((s) => (
+            <option key={s} value={s}>{STATUS_CFG[s].label}</option>
+          ))}
+        </select>
       </div>
       {/* Already-sold units can be put back on the market for resale — bookable
           again, shown purple instead of green so it reads as "resold", not new. */}
@@ -1196,13 +1196,20 @@ export default function ManagePlotsPage() {
     }).catch(() => setLoading(false));
   }, [id]);
 
+  // 'pending' is the card's Hold button: the unit is held (plot.status='hold') and
+  // marked as a deliberate Hold, not someone mid-form (In Progress).
   const handleStatusChange = useCallback(async (plotId, newStatus) => {
+    const body = newStatus === 'pending' ? { status: 'hold', manual_hold: true }
+      : { status: newStatus, manual_hold: false };
     const res = await fetch(SALES_ENDPOINTS.plot(plotId), {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status: newStatus }),
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
     if (res.ok) {
       const updated = await res.json();
       setPlots(prev => prev.map(p => p.id === plotId ? updated : p));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      notify(d.detail || 'The unit could not be changed.', 'error');
     }
   }, []);
 
@@ -1247,7 +1254,7 @@ export default function ManagePlotsPage() {
   const scoped = plots.filter(p =>
     (!blockF || blockOfPlot(p) === blockF) &&
     (floorF === '' || Number(p.floor) === Number(floorF)));
-  const filtered = (filter === 'all' ? scoped : scoped.filter(p => p.status === filter))
+  const filtered = (filter === 'all' ? scoped : scoped.filter(p => plotState(p) === filter))
     .slice()
     // Block first, then floor, then unit number — otherwise every block's "1" sorts
     // together and A/B/C interleave down the grid.
@@ -1259,7 +1266,8 @@ export default function ManagePlotsPage() {
   const counts = {
     all:       scoped.length,
     available: scoped.filter(p => p.status === 'available').length,
-    hold:      scoped.filter(p => p.status === 'hold').length,
+    hold:      scoped.filter(p => plotState(p) === 'hold').length,
+    pending:   scoped.filter(p => plotState(p) === 'pending').length,
     sold:      scoped.filter(p => p.status === 'sold').length,
   };
   const soldPct = plots.length ? Math.round(plots.filter(p => p.status === 'sold').length / plots.length * 100) : 0;
@@ -1304,11 +1312,12 @@ export default function ManagePlotsPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="proj-stats">
         {[
           { label: 'Total Plots', value: plots.length, color: 'var(--text)' },
           { label: 'Available',   value: counts.available, color: 'var(--success)' },
           { label: 'In Progress', value: counts.hold,      color: 'var(--text-2)' },
+          { label: 'Hold',        value: counts.pending,   color: 'var(--warning-deep)' },
           { label: 'Sold',        value: counts.sold,      color: 'var(--danger)' },
         ].map(s => (
           <div className="nx-card" key={s.label} style={{ backgroundColor: 'var(--surface)', borderRadius: 16, padding: '14px 18px', boxShadow: '0 2px 8px rgba(140,148,160,0.12)', textAlign: 'center' }}>
@@ -1403,6 +1412,7 @@ export default function ManagePlotsPage() {
           { key: 'all',       label: 'All',      color: 'var(--text)', bg: 'var(--accent-softer)', border: 'var(--text)' },
           { key: 'available', label: 'Available', color: 'var(--success)', bg: 'var(--success-soft)', border: 'var(--success)' },
           { key: 'hold',      label: 'In Progress', color: 'var(--text-2)', bg: 'var(--surface-2)', border: 'var(--text-2)' },
+          { key: 'pending',   label: 'Hold',      color: 'var(--warning-deep)', bg: 'var(--warning-soft)', border: 'var(--warning-2)' },
           { key: 'sold',      label: 'Sold',      color: 'var(--danger)', bg: 'var(--danger-soft)', border: 'var(--danger)' },
         ].map(({ key, label, color, bg, border }) => (
           <button className={`nx-btn nx-btn-sm nx-toggle${filter === key ? ' is-on' : ''}`} key={key} onClick={() => setFilter(key)}

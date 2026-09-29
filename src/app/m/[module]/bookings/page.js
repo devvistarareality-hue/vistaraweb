@@ -9,6 +9,7 @@ import BookingDetails, { fmtDateTime } from '../../../../components/BookingDetai
 import Icon from '../../../../components/Icon';
 import { notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
+import MultiSelect from '../../../../components/MultiSelect';
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const isEoi = (b) => String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
 // Project / STM pickers — sized to sit under the date filter in this module's teal.
@@ -91,8 +92,8 @@ export default function ModuleBookingsPage() {
   // Same filters as the Approvals view: search, booking date, project, STM.
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
-  const [proj, setProj] = useState('');   // '' = every project
-  const [stm, setStm] = useState('');     // '' = every STM
+  const [proj, setProj] = useState([]);   // '' = every project
+  const [stm, setStm] = useState([]);     // '' = every STM
 
   function load() {
     setLoading(true); setErr('');
@@ -149,11 +150,11 @@ export default function ModuleBookingsPage() {
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(tabRows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(tabRows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = !!ql || dated || !!stm || !!proj;
+  const narrowed = !!ql || dated || stm.length > 0 || proj.length > 0;
 
   const groups = {};
   tabRows
-    .filter((b) => matches(b) && inRange(b) && (!stm || stmName(b) === stm) && (!proj || projName(b) === proj))
+    .filter((b) => matches(b) && inRange(b) && (!stm.length || stm.includes(stmName(b))) && (!proj.length || proj.includes(projName(b))))
     .forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
   const projectNames = Object.keys(groups).sort();
   // Latest first — by accounts approval time for the ledger, falling back to the
@@ -201,18 +202,12 @@ export default function ModuleBookingsPage() {
           {(projOptions.length > 1 || stmOptions.length > 1) && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: -8, marginBottom: 4 }}>
               {projOptions.length > 1 && (
-                <select className="nx-input" value={proj} onChange={(e) => { setProj(e.target.value); setOpen({}); }}
-                  style={{ ...modSel, borderColor: proj ? 'var(--success)' : 'var(--border)', fontWeight: proj ? 700 : 500, color: proj ? 'var(--text)' : 'var(--muted)' }}>
-                  <option value="">All Projects</option>
-                  {projOptions.map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
+                <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={(v) => { setProj(v); setOpen({}); }}
+            options={projOptions.map((n) => ({ value: n, label: n }))} />
               )}
               {stmOptions.length > 1 && (
-                <select className="nx-input" value={stm} onChange={(e) => { setStm(e.target.value); setOpen({}); }}
-                  style={{ ...modSel, borderColor: stm ? 'var(--success)' : 'var(--border)', fontWeight: stm ? 700 : 500, color: stm ? 'var(--text)' : 'var(--muted)' }}>
-                  <option value="">All STMs</option>
-                  {stmOptions.map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
+                <MultiSelect allLabel="All STMs" noun="STMs" value={stm} onChange={(v) => { setStm(v); setOpen({}); }}
+            options={stmOptions.map((n) => ({ value: n, label: n }))} />
               )}
             </div>
           )}
@@ -224,8 +219,8 @@ export default function ModuleBookingsPage() {
           <div style={{ color: tab === 'cancelled' ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.82)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {narrowed ? 'Matching' : 'Total'} {tabLabel} · {grandCount} booking{grandCount === 1 ? '' : 's'} · {projectNames.length} project{projectNames.length === 1 ? '' : 's'}
             {dated && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · booked {range.from || '…'} → {range.to || '…'}</span>}
-            {!!proj && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · {proj}</span>}
-            {!!stm && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> · STM {stm}</span>}
+            {proj.length > 0 && <span className="bk-filter-tag"> · {proj.join(', ')}</span>}
+            {stm.length > 0 && <span className="bk-filter-tag"> · STM {stm.join(', ')}</span>}
           </div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{rupee(grandTotal)}</div>
         </div>

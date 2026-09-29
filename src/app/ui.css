@@ -517,7 +517,9 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-clear-filters-btn { padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--surface); color: var(--muted); border: 1.5px solid var(--border); }
 
 /* ─── Follow-Ups filter bar (mirrors the Leads list's filter card) ─────────── */
-.nx-fu-filterbar { background: var(--surface); border-radius: 18px; border: 1.5px solid var(--surface-3); margin-bottom: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+/* Not overflow:hidden — the pickers' menus open below the bar and were being cut
+   off by it. Lifted above the list that follows so an open menu lies on top. */
+.nx-fu-filterbar { background: var(--surface); border-radius: 18px; border: 1.5px solid var(--surface-3); margin-bottom: 16px; overflow: visible; position: relative; z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .nx-fu-filterbar-search { padding: 12px 16px; border-bottom: 1px solid var(--surface-2); }
 .nx-fu-filterbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--surface-2); }
 .nx-fu-filterbar-row:last-child { border-bottom: none; }
@@ -1720,13 +1722,10 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cdel-text { margin: 0 0 16px; font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
 .cdel-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 
-/* Site Visits: the telecaller / STM pickers beside All Projects (manager-level). */
-.svf-sel { height: 36px; padding: 0 10px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface);
-  font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; outline: none; max-width: 240px; }
-.svf-sel.is-on { border-color: var(--accent); font-weight: 700; color: var(--text); }
-
 /* My Conversions — search */
-.myconv-search { margin-bottom: 14px; }
+/* Search box with the Project / STM pickers beside it; the box takes the room left. */
+.myconv-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.myconv-filters .myconv-search { flex: 1 1 260px; margin-bottom: 0; }
 /* Sits inside the field, so clearing a long query does not mean selecting it. */
 .myconv-search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
@@ -1734,6 +1733,17 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   font-size: 12px; cursor: pointer; transition: background-color .14s, color .14s; }
 .myconv-search-clear:hover { background: var(--danger-soft); color: var(--danger); }
 
+/* MultiSelect: a tick box in front of each option (components/MultiSelect.js). */
+.nx-ms-opt { justify-content: flex-start; gap: 10px; }
+.nx-ms-box { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 4px; border: 1.5px solid var(--border-strong);
+  display: inline-flex; align-items: center; justify-content: center; color: var(--surface); }
+.nx-ms-box.is-on { background: var(--accent); border-color: var(--accent); }
+
+/* Bookings / Approvals: the picked projects or STMs named after a section heading. */
+.bk-filter-tag { font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+/* Names stored lower-case (lead sources) shown with a capital. */
+.nx-cap { text-transform: capitalize; }
 /* ─── Project locking ─────────────────────────────────────────────────────── */
 /* A locked project is held back from the sales floor while it is being set up —
    distinct from "inactive", which means a project that is over. */
@@ -1770,3 +1780,79 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pl-badge-active { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;
   background: var(--success-soft); color: var(--success); box-shadow: 0 1px 6px rgba(0,0,0,0.10); }
 .pl-badge-active.is-off { background: var(--danger-soft); color: var(--danger); }
+
+/* Follow-ups → mark done at SV Done: the visit's outcome and date (they are saved with it). */
+.fu-sv-box { background: var(--surface-2); border: 1px solid var(--success-2); border-radius: 16px; padding: 14px; margin-top: 12px; }
+.fu-sv-title { font-size: 12px; font-weight: 800; color: var(--success); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+.fu-sv-label { display: block; font-size: 12px; font-weight: 700; color: var(--success); margin-top: 10px; }
+.fu-sv-req { color: var(--danger); }
+.fu-sv-input { width: 100%; margin-top: 6px; box-sizing: border-box; }
+.fu-sv-note { font-size: 11px; color: var(--success); margin: 8px 0 0; }
+
+/* Project page count tiles: Total, Available, In Progress, Hold, Sold. */
+.proj-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 720px) { .proj-stats { grid-template-columns: repeat(3, 1fr); } }
+
+/* Plot card status: one dropdown (Available / In Progress / Hold / Sold), tinted by the current state. */
+.plot-st-row { padding: 0 14px 12px; }
+.plot-st-select { width: 100%; height: 38px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.plot-st-select.st-available { background: var(--success-soft); color: var(--success); border-color: color-mix(in srgb, var(--success) 38%, transparent); }
+.plot-st-select.st-hold { background: var(--surface-2); color: var(--text-2); }
+.plot-st-select.st-pending { background: var(--warning-soft); color: var(--warning-deep); border-color: color-mix(in srgb, var(--warning-2) 38%, transparent); }
+.plot-st-select.st-sold { background: var(--danger-soft); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 38%, transparent); }
+.plot-st-select.st-resale { background: var(--accent-soft); color: var(--accent); }
+.plot-st-select option { color: var(--text); background: var(--surface); }
+
+/* LeadHistory (components/LeadHistory.js): a lead's timeline, newest first. */
+.lh-list { display: flex; flex-direction: column; gap: 14px; max-height: 52vh; overflow-y: auto; padding-right: 4px; }
+.lh-row { display: flex; gap: 10px; --lh: var(--muted); }
+/* lh-* tone names, not the shared tone-* ones: .tone-warn / .tone-muted paint a solid background (AR bars). */
+.lh-row.lh-accent { --lh: var(--accent); } .lh-row.lh-success { --lh: var(--success); }
+.lh-row.lh-warn { --lh: var(--warning-2); } .lh-row.lh-danger { --lh: var(--danger); }
+.lh-dot { flex: 0 0 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--lh); background: color-mix(in srgb, var(--lh) 10%, transparent); }
+.lh-body { min-width: 0; }
+.lh-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.lh-value { font-size: 12px; color: var(--text); margin-top: 2px; white-space: pre-wrap; }
+.lh-value b { color: var(--lh); font-weight: 600; }
+.lh-old { color: var(--muted); }
+.lh-meta { font-size: 11px; color: var(--faint); margin-top: 2px; }
+.lh-empty { font-size: 13px; color: var(--faint); text-align: center; margin: 20px 0; }
+/* Complete follow-up dialog: Complete / History tabs. */
+.fu-done-tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid var(--surface-2); }
+.fu-done-tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; font-size: 13px;
+  font-weight: 700; color: var(--muted); cursor: pointer; }
+.fu-done-tab.is-on { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Follow-up row buttons (History, Mark Done) and the History dialog. */
+.nx-fu-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.fu-hist-modal { width: 100%; max-width: 520px; padding: 20px 22px; box-sizing: border-box; }
+.fu-hist-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.fu-hist-title { font-size: 16px; font-weight: 800; color: var(--text); }
+.fu-hist-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Add Lead step 1 — the number check (components/LeadNumberCheck.js). */
+.lnc { padding: 22px 24px 24px; overflow-y: auto; flex: 1; min-height: 0; }
+.lnc-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 5px; }
+.lnc-input { width: 100%; height: 44px; font-size: 15px; box-sizing: border-box; }
+.lnc-hint { font-size: 11.5px; color: var(--faint); margin: 6px 0 14px; }
+.lnc-none { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px;
+  border-radius: 14px; background: var(--surface-2); font-size: 13px; color: var(--text-2); }
+.lnc-none p { margin: 0; }
+.lnc-found { font-size: 13px; color: var(--text-2); margin: 0 0 10px; }
+.lnc-list { display: flex; flex-direction: column; gap: 8px; }
+.lnc-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; width: 100%;
+  padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: border-color .15s, background .15s; font: inherit; color: var(--text); }
+.lnc-row:hover { border-color: var(--accent); background: var(--accent-softer); }
+.lnc-row.is-closed { opacity: .75; }
+.lnc-proj { font-size: 13px; font-weight: 800; color: var(--accent); }
+.lnc-name { font-size: 13px; font-weight: 600; }
+.lnc-side { font-size: 12px; color: var(--text-2); }
+.lnc-side b { color: var(--text-3); font-weight: 700; }
+.lnc-status { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.lnc-new { margin-top: 12px; width: 100%; }
+
+/* Sales → Data Reset: the company-code box, matching the two above it. */
+.dr-input { display: block; width: 100%; max-width: 240px; height: 40px; padding: 0 12px; border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--danger) 40%, transparent); font-size: 14px; margin-bottom: 12px; box-sizing: border-box; }

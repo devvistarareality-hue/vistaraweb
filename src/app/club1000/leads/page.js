@@ -9,6 +9,7 @@ import AddInvestorModal from '../_AddInvestorModal';
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import { onlyPresent } from '../../../lib/presentOptions';
 const TEAL = 'var(--success)';
 const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
@@ -327,6 +328,15 @@ export default function Club1000LeadsPage() {
   const [leads, setLeads] = useState([]);
   const [schemes, setSchemes] = useState([]);
   const [assignees, setAssignees] = useState([]);
+  // Only the values these rows hold (?facets=1) — see lib/presentOptions.
+  const [facets, setFacets] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    apiFetch(`${CLUB1000_ENDPOINTS.leads}?facets=1`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const fx = (key) => facets?.[key] ?? null;
+
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -542,20 +552,20 @@ export default function Club1000LeadsPage() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px' }}>
           <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
             <option value="">All Statuses</option>
-            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+            {onlyPresent(STATUS_OPTIONS, fx('statuses'), filters.status).map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
           </select>
           <select value={filters.source} onChange={(e) => sf('source', e.target.value)} style={activeSelStyle(filters.source)}>
             <option value="">All Sources</option>
-            {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            {onlyPresent(Object.keys(SOURCE_LABELS), fx('sources'), filters.source).map((v) => <option key={v} value={v}>{SOURCE_LABELS[v]}</option>)}
           </select>
           <select value={filters.scheme_interest} onChange={(e) => sf('scheme_interest', e.target.value)} style={activeSelStyle(filters.scheme_interest)}>
             <option value="">All Schemes</option>
-            {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), filters.scheme_interest).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           {manager && (
             <select value={filters.assigned_to} onChange={(e) => sf('assigned_to', e.target.value)} style={activeSelStyle(filters.assigned_to)}>
               <option value="">All Assignees</option>
-              {assignees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              {onlyPresent(assignees.map((u) => ({ value: String(u.id), label: u.name })), fx('assignee_ids'), filters.assigned_to).map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
             </select>
           )}
         </div>

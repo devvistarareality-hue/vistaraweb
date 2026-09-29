@@ -9,6 +9,7 @@ import { Building2, Filter, Wallet, CircleCheckBig, Hourglass, AlarmClock, Perce
 import { DashKpi } from '../../../../components/Dash';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
+import MultiSelect from '../../../../components/MultiSelect';
 
 // Plot number search: "25" finds plot 25 (not 125 or 250), "Ananda" finds Ananda1…,
 // and "EOI-1" finds EOI-1 — any plot of a multi-plot booking counts.
@@ -32,7 +33,8 @@ export default function ARRegisterPage({ params, searchParams }) {
   const [rows, setRows] = useState(null);
   const [asOf, setAsOf] = useState('');
   const [err, setErr] = useState('');
-  const [project, setProject] = useState(searchParams?.project || '');
+  // [] = every project; the dashboard can open this with one or several already picked.
+  const [project, setProject] = useState((searchParams?.project || '').split(',').filter(Boolean));
   const [q, setQ] = useState('');
   const [plotQ, setPlotQ] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(searchParams?.overdue === '1');
@@ -63,7 +65,7 @@ export default function ARRegisterPage({ params, searchParams }) {
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return (rows || []).filter((r) =>
-      (!project || String(r.project_id) === project)
+      (!project.length || project.includes(String(r.project_id)))
       && (!overdueOnly || r.overdue > 0)
       && (!issue || (issue === 'any' ? hasIssue(r) : ISSUES.find((i) => i.value === issue)?.test(r)))
       && (!needle || r.client_name.toLowerCase().includes(needle) || (r.phone || '').includes(needle)
@@ -102,8 +104,8 @@ export default function ARRegisterPage({ params, searchParams }) {
           </div>
 
           <div className="ar-filters">
-            <Dropdown value={project} onChange={setProject} searchable ariaLabel="Project" icon={<Building2 size={15} />}
-              options={[{ value: '', label: 'All projects' }, ...projects.map(([id, name]) => ({ value: String(id), label: name }))]} />
+            <MultiSelect allLabel="All projects" noun="projects" value={project} onChange={setProject} ariaLabel="Project"
+              options={projects.map(([id, name]) => ({ value: String(id), label: name }))} />
             <input className="nx-input nx-input-sm ar-plot-search" placeholder="Plot no." aria-label="Plot number" value={plotQ} onChange={(e) => setPlotQ(e.target.value)} />
             <input className="nx-input nx-input-sm ar-search" placeholder="Search client or phone…" value={q} onChange={(e) => setQ(e.target.value)} />
             <label className={`nx-check${overdueOnly ? ' is-on' : ''}`}>

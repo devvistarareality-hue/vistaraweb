@@ -9,6 +9,9 @@ import Icon from '../../../components/Icon';
 import { confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
+import MultiSelect from '../../../components/MultiSelect';
+import { onlyPresent } from '../../../lib/presentOptions';
+import LeadNumberCheck from '../../../components/LeadNumberCheck';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -249,6 +252,17 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const cpSource = cpOnly ? sources.find((s) => (s.name || '').toLowerCase() === 'channel partner') : null;
   const [form, setForm] = useState({ name: prefill?.name || '', phone: prefill?.phone || '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', disqualify_reason: '', disqualify_note: '', lead_date: '' });
   const isNotQualified = form.telecaller_status === 'not_qualified' || form.stm_status === 'not_qualified';
+  // Step 1 is the number check (components/LeadNumberCheck): it lists every lead on
+  // this number, project by project. Skipped when the number came in prefilled.
+  const [step, setStep] = useState(prefill?.phone ? 'form' : 'number');
+  const pickExisting = (row) => {
+    // Working on that lead: its project and name are set, so saving goes down the
+    // server's same-phone-same-project path and updates it rather than adding one.
+    setForm((f) => ({ ...f, phone: row.phone || f.phone, name: row.name || f.name,
+      project: row.project_id ? String(row.project_id) : f.project }));
+    setStep('form');
+  };
+  const addNew = (phone) => { setForm((f) => ({ ...f, phone })); setStep('form'); };
   useEffect(() => {
     if (cpOnly && cpSource && !form.source) setForm((f) => ({ ...f, source: cpSource.id }));
   }, [cpOnly, cpSource]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -361,6 +375,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
     if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
     if (showStm && form.stm_remarks)        body.stm_remarks        = form.stm_remarks;
+    // Added straight at SV Done: the visit is recorded by the server in the same
+    // save — a lead is never SV Done without its visit on record.
+    if (showStm && form.stm_status === 'sv_done') {
+      body.sv_outcome = svOutcome;
+      body.sv_visited_at = svVisitedDate;
+      body.sv_remarks = form.stm_remarks || '';
+    }
     if (isNotQualified && form.disqualify_reason) {
       body.disqualify_reason = form.disqualify_reason;
       if (form.disqualify_reason === 'other') body.disqualify_note = form.disqualify_note;
@@ -371,32 +392,6 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     });
     const data = await res.json();
     if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
-
-    // A lead created directly at STM Status = sv_done needs the visit itself on
-    // record too — same as marking a scheduled visit done, just with no prior
-    // "scheduled" row to complete. Best-effort: the lead is already saved.
-    if (showStm && form.stm_status === 'sv_done' && data?.id && svOutcome && svVisitedDate) {
-      const now = new Date();
-      const visitedAt = new Date(`${svVisitedDate}T00:00:00`);
-      visitedAt.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
-      const visitedIso = visitedAt.toISOString();
-      try {
-        await fetch(SALES_ENDPOINTS.siteVisits, {
-          method: 'POST', headers: authHeaders(),
-          body: JSON.stringify({
-            lead: data.id, project: form.project || null,
-            scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
-            stm: form.stm || user?.id,
-            // data.telecaller (not form.telecaller) — when this Add Lead call merged
-            // into an existing telecaller-held lead (same phone+project), the returned
-            // record carries that telecaller, and their work should be credited with
-            // this visit even though this form never showed a Telecaller field.
-            referred_by_telecaller: data.telecaller || null,
-            outcome: svOutcome, remarks: form.stm_remarks || '',
-          }),
-        });
-      } catch { /* ignore */ }
-    }
 
     // Schedule the first follow-up against the lead we just created. Best-effort: the
     // lead is already saved, so a failure here must not read as "lead not added".
@@ -434,7 +429,19 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" /></button>
         </div>
 
+        {step === 'number' ? <LeadNumberCheck initialPhone={form.phone} onPick={pickExisting} onNew={addNew} /> : (
         <form onSubmit={submit} style={{ padding: '22px 24px 24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
+          {/* Shown first: whether this number is already a lead, before anything is filled in. */}
+          {dupMatch && (
+            <div className="nx-callout-info">
+              {dupMatch.sameProject ? (
+                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
+              ) : (
+                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for this project instead.</>
+              )}
+            </div>
+          )}
+
           {/* Contact Info */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--faint)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Contact Info</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 14px', marginBottom: 18 }}>
@@ -562,15 +569,6 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             )}
           </div>
 
-          {dupMatch && (
-            <div className="nx-callout-info">
-              {dupMatch.sameProject ? (
-                <>Already a lead here: <b>{dupMatch.name}</b> · {dupMatch.status}{dupMatch.telecaller_name ? ` · TC: ${dupMatch.telecaller_name}` : ''}{dupMatch.stm_name ? ` · ${dupMatch.is_cp ? 'CP' : 'STM'}: ${dupMatch.stm_name}` : ''}. Adding this will update that lead, not create a new one.</>
-              ) : (
-                <>This number already has a lead in <b>{dupMatch.project_name || 'another project'}</b>{dupMatch.telecaller_name || dupMatch.stm_name ? ` (${dupMatch.telecaller_name || dupMatch.stm_name})` : ''}. A separate lead will be created for this project instead.</>
-              )}
-            </div>
-          )}
 
           {/* Telecaller (Pre-Sales) — a Channel Partner lead skips telecaller calling
               entirely: it goes straight into the STM pipeline. */}
@@ -742,6 +740,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
@@ -760,6 +759,9 @@ const HISTORY_LABEL = {
   warm_transfer:      'Transferred to STM',
   site_visit:         'Site Visit',
   closure:            'Closure',
+  follow_up:          'Follow-up Scheduled',
+  follow_up_done:     'Follow-up Done',
+  follow_up_missed:   'Follow-up Missed',
 };
 const HISTORY_COLOR = {
   created:            'var(--text-3)',
@@ -773,6 +775,9 @@ const HISTORY_COLOR = {
   warm_transfer:      'var(--danger)',
   site_visit:         'var(--warning-2)',
   closure:            'var(--success)',
+  follow_up:          'var(--accent)',
+  follow_up_done:     'var(--success)',
+  follow_up_missed:   'var(--danger)',
 };
 
 function fmtDateTime(iso) {
@@ -941,6 +946,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     if (form.project)          body.project          = form.project;
     if (form.source)           body.source           = form.source;
     if (cpOnly)                body.channel_partner  = form.channel_partner;
+    // Turning SV Done carries the visit: the server completes the scheduled visit
+    // (or logs one) in the same save, and refuses SV Done with no visit on record.
+    if (form.stm_status === 'sv_done' && lead.stm_status !== 'sv_done') {
+      body.sv_outcome = svOutcome;
+      body.sv_visited_at = svVisitedDate;
+      body.sv_remarks = form.stm_remarks || '';
+    }
     const res = await fetch(SALES_ENDPOINTS.lead(lead.id), {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
@@ -987,38 +999,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
         } catch { /* ignore */ }
       }
 
-      // STM marked sv_done → complete the latest pending visit (or create a completed one)
-      if (stmStatusChanged && form.stm_status === 'sv_done') {
-        try {
-          const svRes = await fetch(`${SALES_ENDPOINTS.siteVisits}?lead_id=${lead.id}`, { headers: authHeaders() });
-          const list = svRes.ok ? await svRes.json() : [];
-          const pending = (Array.isArray(list) ? list : []).filter(v => v.status === 'scheduled')
-            .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))[0];
-          // Keeps the current time-of-day but lets the date itself be backdated to
-          // when the visit actually happened.
-          const visitedNow = new Date();
-          const visitedAt = new Date(`${svVisitedDate}T00:00:00`);
-          visitedAt.setHours(visitedNow.getHours(), visitedNow.getMinutes(), visitedNow.getSeconds(), 0);
-          const visitedIso = visitedAt.toISOString();
-          if (pending) {
-            await fetch(SALES_ENDPOINTS.siteVisit(pending.id), {
-              method: 'PATCH', headers: authHeaders(),
-              body: JSON.stringify({ status: 'completed', visited_at: visitedIso, outcome: svOutcome, remarks: form.stm_remarks || '' }),
-            });
-          } else {
-            await fetch(SALES_ENDPOINTS.siteVisits, {
-              method: 'POST', headers: authHeaders(),
-              body: JSON.stringify({
-                lead: lead.id, project: form.project || null,
-                scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
-                stm: form.stm || user?.id, referred_by_telecaller: form.telecaller || null,
-                outcome: svOutcome, remarks: form.stm_remarks || '',
-              }),
-            });
-          }
-        } catch { /* ignore */ }
-      }
-
       // STM/CP marked closed → save the lead, then jump straight into the booking
       // flow with this lead prefilled. The unit map lets them pick plot(s) and the
       // booking form records the actual closure/booking. A CP lead routes into the
@@ -1044,6 +1024,9 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
       onUpdated(updated);
       onClose();
     } else {
+      let detail = '';
+      try { const d = await res.json(); detail = d.detail || Object.values(d).flat().join(' '); } catch { /* ignore */ }
+      setSaveErr(detail || 'Could not save. Try again.');
       setSaving(false);
     }
   }
@@ -1512,6 +1495,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                              : h.field_changed === 'stm'           ? 'building'
                              : h.field_changed === 'site_visit'    ? 'home'
                              : h.field_changed === 'closure'       ? 'check-circle'
+                             : h.field_changed.startsWith('follow_up') ? 'calendar'
                              : h.field_changed.includes('remarks') ? 'note'
                              : h.field_changed.includes('status')  ? 'refresh' : 'pencil';
                 // Lead-flow events (created / assignment / transfer / closure) and free-text
@@ -1597,8 +1581,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   // "STM" is really just whoever added it (see cp_module in TelecallerListView).
   const [cpModuleUsers, setCpModuleUsers] = useState([]);
   const [filters, setFilters] = useState({
-    search: '', status: '', project_id: '', source_id: '',
-    telecaller_id: '', stm_id: '', telecaller_status: '', stm_status: '', disqualify_reason: '',
+    search: '', status: '', project_id: [], source_id: '',
+    telecaller_id: [], stm_id: [], telecaller_status: '', stm_status: '', disqualify_reason: '',
     campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
@@ -1614,7 +1598,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     setFilters((f) => ({
       ...f,
       status:            p.get('status') || '',
-      project_id:        p.get('project_id') || '',
+      project_id:        (p.get('project_id') || '').split(',').filter(Boolean),
       source_id:         p.get('source_id') || '',
       telecaller_status: p.get('telecaller_status') || '',
       stm_status:        p.get('stm_status') || '',
@@ -1754,10 +1738,11 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (companyId)               params.set('company_id',       companyId);
     if (filters.search)          params.set('search',           filters.search);
     if (filters.status)          params.set('status',           filters.status);
-    if (filters.project_id)      params.set('project_id',       filters.project_id);
+    // Several ids at once from the multi-selects — the server reads them comma-separated.
+    if (filters.project_id.length)    params.set('project_id',    filters.project_id.join(','));
     if (filters.source_id)       params.set('source_id',        filters.source_id);
-    if (filters.telecaller_id)   params.set('telecaller_id',    filters.telecaller_id);
-    if (filters.stm_id)          params.set('stm_id',           filters.stm_id);
+    if (filters.telecaller_id.length) params.set('telecaller_id', filters.telecaller_id.join(','));
+    if (filters.stm_id.length)        params.set('stm_id',        filters.stm_id.join(','));
     if (filters.telecaller_status) params.set('telecaller_status', filters.telecaller_status);
     if (filters.stm_status)      params.set('stm_status',       filters.stm_status);
     if (filters.disqualify_reason) params.set('disqualify_reason', filters.disqualify_reason);
@@ -1779,6 +1764,24 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     setTotal(data.count ?? 0);
     setLoading(false);
   }, [page, filters, companyId, isCaller, workTab, adminView, cpOnly]);
+
+  // What the filter pickers may offer: only the projects, people, sources and
+  // statuses that occur in the leads this person can see (?facets=1), so no
+  // choice returns an empty list. Until it answers, the pickers list everything.
+  const [facets, setFacets] = useState(null);
+  useEffect(() => {
+    const params = new URLSearchParams({ facets: '1' });
+    if (companyId) params.set('company_id', companyId);
+    if (adminView) params.set('admin_view', '1');
+    if (cpOnly)    params.set('cp_only', 'true');
+    let alive = true;
+    fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() })
+      // Only a real facets answer counts — a server without ?facets=1 (e.g. mid-deploy)
+      // replies with the plain list, and trusting that crashed the whole page.
+      .then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && Array.isArray(d?.project_ids)) setFacets(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [companyId, adminView, cpOnly]);
+  const fx = (key) => facets?.[key] ?? null;
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
   // Opened from a link such as the Log's (?open=<lead id>): show that lead's details.
@@ -1966,11 +1969,11 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         // silently return nothing, since only disqualified leads carry one.
         const notQualifiedFiltered = filters.telecaller_status === 'not_qualified'
           || filters.stm_status === 'not_qualified';
-        const anyFilter = filters.search || filters.status || filters.project_id || filters.source_id ||
-          filters.telecaller_id || filters.stm_id || filters.telecaller_status || filters.stm_status ||
+        const anyFilter = filters.search || filters.status || filters.project_id.length || filters.source_id ||
+          filters.telecaller_id.length || filters.stm_id.length || filters.telecaller_status || filters.stm_status ||
           filters.disqualify_reason ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
-        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:'', source_id:'', telecaller_id:'', stm_id:'', telecaller_status:'', stm_status:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
+        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -1988,7 +1991,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
         const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
         return (
-          <div className="nx-card" style={{ backgroundColor: 'var(--surface)', borderRadius: 18, border: '1.5px solid var(--surface-3)', marginBottom: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div className="nx-card nx-fu-filterbar">
 
             {/* Search bar */}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' }}>
@@ -2022,21 +2025,19 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 <option value="month">Last 30 days</option>
               </select>
               <div style={divider} />
-              <select value={filters.project_id} onChange={(e) => sf('project_id', e.target.value)} style={activeSelStyle(filters.project_id)}>
-                <option value="">All Projects</option>
-                <option value="none">— No Project —</option>
-                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Projects" noun="projects" value={filters.project_id} onChange={(v) => sf('project_id', v)}
+                options={onlyPresent([{ value: 'none', label: 'No project' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))],
+                  facets && [...(facets.project_ids || []), ...(facets.has_no_project ? ['none'] : [])], filters.project_id)} />
               {showTcStatus && (
               <select value={filters.telecaller_status} onChange={(e) => sf('telecaller_status', e.target.value)} style={activeSelStyle(filters.telecaller_status)}>
                 <option value="">TC Status</option>
-                {TC_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {onlyPresent(TC_STATUSES, fx('telecaller_statuses'), filters.telecaller_status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
               {showStmStatus && (
               <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
                 <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
-                {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {onlyPresent(STM_STATUSES, fx('stm_statuses'), filters.stm_status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
               {/* Why they were disqualified — only meaningful once a status filter
@@ -2066,30 +2067,24 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               {showAssignees && (
               <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
                 <option value="">All Statuses</option>
-                {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {onlyPresent(ALL_STATUSES, fx('statuses'), filters.status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
               </select>
               )}
               <select value={filters.source_id} onChange={(e) => sf('source_id', e.target.value)} style={activeSelStyle(filters.source_id)}>
                 <option value="">All Sources</option>
-                {sources.map((s) => <option key={s.id} value={s.id} style={{ textTransform: 'capitalize' }}>{s.name}</option>)}
+                {onlyPresent(sources.map((s) => ({ value: String(s.id), label: s.name })), fx('source_ids'), filters.source_id).map((s) => <option key={s.value} value={s.value} className="nx-cap">{s.label}</option>)}
               </select>
               {showAssignees && !cpOnly && (
-              <select value={filters.telecaller_id} onChange={(e) => sf('telecaller_id', e.target.value)} style={activeSelStyle(filters.telecaller_id)}>
-                <option value="">All Telecallers</option>
-                {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Telecallers" noun="telecallers" value={filters.telecaller_id} onChange={(v) => sf('telecaller_id', v)}
+                options={onlyPresent(telecallers.map((u) => ({ value: String(u.id), label: u.name })), fx('telecaller_ids'), filters.telecaller_id)} />
               )}
               {showAssignees && !cpOnly && (
-              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
-                <option value="">All STMs</option>
-                {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All STMs" noun="STMs" value={filters.stm_id} onChange={(v) => sf('stm_id', v)}
+                options={onlyPresent(stms.map((u) => ({ value: String(u.id), label: u.name })), fx('stm_ids'), filters.stm_id)} />
               )}
               {showAssignees && cpOnly && (
-              <select value={filters.stm_id} onChange={(e) => sf('stm_id', e.target.value)} style={activeSelStyle(filters.stm_id)}>
-                <option value="">All Team Members</option>
-                {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Team Members" noun="people" value={filters.stm_id} onChange={(v) => sf('stm_id', v)}
+                options={onlyPresent(cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name })), fx('stm_ids'), filters.stm_id)} />
               )}
               <input className="nx-input" value={filters.campaign} onChange={(e) => sf('campaign', e.target.value)}
                 placeholder="Campaign name…"

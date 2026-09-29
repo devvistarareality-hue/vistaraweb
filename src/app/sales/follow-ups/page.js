@@ -7,6 +7,10 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
+import MultiSelect from '../../../components/MultiSelect';
+import { onlyPresent } from '../../../lib/presentOptions';
+import { notify } from '../../../lib/notify';
+import LeadHistory from '../../../components/LeadHistory';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -67,11 +71,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const [stms,        setStms]        = useState([]);
   const [cpModuleUsers, setCpModuleUsers] = useState([]);
   const [searchText,      setSearchText]      = useState('');
-  const [projectFilter,   setProjectFilter]   = useState('');
+  const [projectFilter,   setProjectFilter]   = useState([]);   // [] = every project
   const [tcStatusFilter,  setTcStatusFilter]  = useState('');
   const [stmStatusFilter, setStmStatusFilter] = useState('');
-  const [telecallerFilter, setTelecallerFilter] = useState('');
-  const [stmFilter,        setStmFilter]        = useState('');
+  const [telecallerFilter, setTelecallerFilter] = useState([]);  // [] = everyone
+  const [stmFilter,        setStmFilter]        = useState([]);  // [] = everyone
 
   const loadMeta = useCallback(async () => {
     const cqUser = companyId ? `&company_id=${companyId}` : '';
@@ -108,6 +112,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const [dateTo,   setDateTo]   = useState('');
   // Completion modal: capture remarks + optionally schedule the next follow-up.
   const [done,    setDone]    = useState(null);   // the follow-up being completed
+  const [historyFu, setHistoryFu] = useState(null); // the follow-up whose lead history is open
   const [outcome, setOutcome] = useState('');
   const [schedNext, setSchedNext] = useState(false);
   const [nextAt,  setNextAt]  = useState('');
@@ -116,6 +121,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   // Completing with sv_scheduled schedules the visit inline, the same way the lead modal does.
   const [svAt, setSvAt] = useState('');
   const [svRemarks, setSvRemarks] = useState('');
+  // SV Done needs the visit itself: its outcome and date go with the status.
+  const [svOutcome, setSvOutcome] = useState('');
+  const [svDate, setSvDate] = useState('');
+  // The Complete dialog's tabs: 'complete' (the form) or 'history' (the lead's timeline).
+  const [doneTab, setDoneTab] = useState('complete');
   const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
@@ -138,12 +148,18 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
     // Pre-select the lead's current TC/STM status so the caller sees where it stands.
     const cur = (fu.role_context === 'stm' ? fu.lead_stm_status : fu.lead_telecaller_status) || '';
     setDone(fu); setOutcome(''); setSchedNext(false); setNextAt(''); setNextRemarks(''); setNewStatus(cur);
-    setSvAt(''); setSvRemarks('');
+    setSvAt(''); setSvRemarks(''); setSvOutcome(''); setSvDate(new Date().toISOString().slice(0, 10));
+    setDoneTab('complete');
   }
 
   async function completeFollowUp() {
     if (!done) return;
     if (schedNext && !nextAt) { return; }
+    const origStm = (done.role_context === 'stm' ? done.lead_stm_status : done.lead_telecaller_status) || '';
+    const markingSvDone = newStatus === 'sv_done' && origStm !== 'sv_done';
+    if (markingSvDone && (!svOutcome || !svDate || !outcome.trim())) {
+      notify('Pick the visit outcome and date, and add remarks, to mark SV Done.', 'error'); return;
+    }
     setSubmitting(true);
     try {
       // Mark this follow-up completed, saving the outcome remarks.
@@ -159,10 +175,16 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       const origStatus = (done.role_context === 'stm' ? done.lead_stm_status : done.lead_telecaller_status) || '';
       if (newStatus && newStatus !== origStatus && done.lead) {
         const field = done.role_context === 'stm' ? 'stm_status' : 'telecaller_status';
-        await fetch(SALES_ENDPOINTS.lead(done.lead), {
+        // SV Done carries its visit — the server records it in the same save.
+        const extra = markingSvDone ? { sv_outcome: svOutcome, sv_visited_at: svDate, sv_remarks: outcome.trim() } : {};
+        const lr = await fetch(SALES_ENDPOINTS.lead(done.lead), {
           method: 'PATCH', headers: authHeaders(),
-          body: JSON.stringify({ [field]: newStatus }),
+          body: JSON.stringify({ [field]: newStatus, ...extra }),
         });
+        if (!lr.ok) {
+          const d = await lr.json().catch(() => ({}));
+          notify(d.detail || 'The lead status could not be saved.', 'error');
+        }
       }
       // STM set sv_scheduled -> create the site visit, matching the lead modal.
       if (newStatus === 'sv_scheduled' && svAt && done.lead) {
@@ -223,14 +245,19 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       const phone = (fu.lead_phone || '').toLowerCase();
       if (!name.includes(q) && !phone.includes(q)) return false;
     }
-    if (projectFilter   && String(fu.lead_project || '') !== String(projectFilter)) return false;
+    if (projectFilter.length && !projectFilter.includes(String(fu.lead_project || ''))) return false;
     if (tcStatusFilter  && (fu.lead_telecaller_status || '') !== tcStatusFilter) return false;
     if (stmStatusFilter && (fu.lead_stm_status || '') !== stmStatusFilter) return false;
-    if (telecallerFilter && String(fu.assigned_to || '') !== String(telecallerFilter)) return false;
-    if (stmFilter         && String(fu.assigned_to || '') !== String(stmFilter)) return false;
+    // Both pickers name who the follow-up is assigned to, so together they are one
+    // list of people: a follow-up shows if it belongs to any of them.
+    const people = [...telecallerFilter, ...stmFilter];
+    if (people.length && !people.includes(String(fu.assigned_to || ''))) return false;
     return true;
   };
   const dateItems = items.filter(matchesFilters);
+
+  // The pickers list only what these follow-ups hold (see lib/presentOptions).
+  const seen = (key) => (loading ? null : items.map((f) => f[key]));
 
   // Status-wise counts for the selected date range (independent of the tab).
   const counts = {
@@ -264,11 +291,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         const localDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const today   = localDate(new Date());
         const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return localDate(d); };
-        const anyFilter = !!(searchText || dateFrom || dateTo || projectFilter || tcStatusFilter || stmStatusFilter || telecallerFilter || stmFilter);
+        const anyFilter = !!(searchText || dateFrom || dateTo || projectFilter.length || tcStatusFilter || stmStatusFilter || telecallerFilter.length || stmFilter.length);
         const clearAll = () => {
           setSearchText(''); setDateFrom(''); setDateTo('');
-          setProjectFilter(''); setTcStatusFilter(''); setStmStatusFilter('');
-          setTelecallerFilter(''); setStmFilter('');
+          setProjectFilter([]); setTcStatusFilter(''); setStmStatusFilter('');
+          setTelecallerFilter([]); setStmFilter([]);
         };
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -311,20 +338,18 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                 <option value="month">Last 30 days</option>
               </select>
               <div className="nx-fu-divider" />
-              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} style={activeSelStyle(projectFilter)}>
-                <option value="">All Projects</option>
-                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <MultiSelect allLabel="All Projects" noun="projects" value={projectFilter} onChange={setProjectFilter}
+                options={onlyPresent(projects.map((p) => ({ value: String(p.id), label: p.name })), seen('lead_project'), projectFilter)} />
               {showTcStatus && (
                 <select value={tcStatusFilter} onChange={(e) => setTcStatusFilter(e.target.value)} style={activeSelStyle(tcStatusFilter)}>
                   <option value="">TC Status</option>
-                  {TC_FILTER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                  {onlyPresent(TC_FILTER_STATUSES, seen('lead_telecaller_status'), tcStatusFilter).map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               )}
               {showStmStatus && (
                 <select value={stmStatusFilter} onChange={(e) => setStmStatusFilter(e.target.value)} style={activeSelStyle(stmStatusFilter)}>
                   <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
-                  {STM_FILTER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                  {onlyPresent(STM_FILTER_STATUSES, seen('lead_stm_status'), stmStatusFilter).map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                 </select>
               )}
               {anyFilter && (
@@ -337,22 +362,16 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
             {/* Row 2: assignee pickers */}
             {showAssignees && !cpOnly && (
               <div className="nx-fu-filterbar-row">
-                <select value={telecallerFilter} onChange={(e) => setTelecallerFilter(e.target.value)} style={activeSelStyle(telecallerFilter)}>
-                  <option value="">All Telecallers</option>
-                  {telecallers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
-                <select value={stmFilter} onChange={(e) => setStmFilter(e.target.value)} style={activeSelStyle(stmFilter)}>
-                  <option value="">All STMs</option>
-                  {stms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <MultiSelect allLabel="All Telecallers" noun="telecallers" value={telecallerFilter} onChange={setTelecallerFilter}
+                  options={onlyPresent(telecallers.map((u) => ({ value: String(u.id), label: u.name })), seen('assigned_to'), telecallerFilter)} />
+                <MultiSelect allLabel="All STMs" noun="STMs" value={stmFilter} onChange={setStmFilter}
+                  options={onlyPresent(stms.map((u) => ({ value: String(u.id), label: u.name })), seen('assigned_to'), stmFilter)} />
               </div>
             )}
             {showAssignees && cpOnly && (
               <div className="nx-fu-filterbar-row">
-                <select value={stmFilter} onChange={(e) => setStmFilter(e.target.value)} style={activeSelStyle(stmFilter)}>
-                  <option value="">All Team Members</option>
-                  {cpModuleUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <MultiSelect allLabel="All Team Members" noun="people" value={stmFilter} onChange={setStmFilter}
+                  options={onlyPresent(cpModuleUsers.map((u) => ({ value: String(u.id), label: u.name })), seen('assigned_to'), stmFilter)} />
               </div>
             )}
           </div>
@@ -419,11 +438,17 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                   {fu.remarks && <p className="nx-fu-note">“{fu.remarks}”</p>}
                   {fu.outcome && <p className="nx-fu-outcome"><b>Remarks:</b> {fu.outcome}</p>}
                 </div>
-                {fu.status === 'pending' && (
-                  <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => openDone(fu)}>
-                    Mark Done
+                <div className="nx-fu-actions">
+                  {/* Every follow-up — done ones included — can open its lead's timeline. */}
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFu(fu)}>
+                    History
                   </button>
-                )}
+                  {fu.status === 'pending' && (
+                    <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => openDone(fu)}>
+                      Mark Done
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -436,6 +461,22 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         </div>
       )}
 
+      {/* A follow-up's lead history — the same timeline as the Complete dialog's tab. */}
+      {historyFu && (
+        <div className="nx-modal-backdrop" onClick={() => setHistoryFu(null)}>
+          <div className="nx-modal fu-hist-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="fu-hist-head">
+              <div>
+                <div className="fu-hist-title">{historyFu.lead_name || 'Lead'} · History</div>
+                {!!historyFu.lead_phone && <div className="fu-hist-sub">{historyFu.lead_phone}</div>}
+              </div>
+              <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFu(null)}>Close</button>
+            </div>
+            <LeadHistory leadId={historyFu.lead} />
+          </div>
+        </div>
+      )}
+
       {/* Complete follow-up: remarks + optional next follow-up */}
       {done && (
         <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
@@ -443,6 +484,15 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
           <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 16 }}>{done.lead_name}{!!done.lead_phone && ` · ${done.lead_phone}`} · {fmtDateTime(done.scheduled_at)}</div>
+
+            {/* Complete: the form below. History: this lead's timeline, to read before
+                writing the outcome. */}
+            <div className="fu-done-tabs">
+              {[['complete', 'Complete'], ['history', 'History']].map(([k, l]) => (
+                <button type="button" key={k} className={`fu-done-tab${doneTab === k ? ' is-on' : ''}`} onClick={() => setDoneTab(k)}>{l}</button>
+              ))}
+            </div>
+            {doneTab === 'history' ? <LeadHistory leadId={done.lead} /> : (<>
 
             {/* Update the lead's status after this call (TC or STM, per the follow-up's role). */}
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>
@@ -473,6 +523,23 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                 <input className="nx-input" value={svRemarks} onChange={(e) => setSvRemarks(e.target.value)} placeholder="Location, notes…"
                   style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
                 {!svAt && <p style={{ fontSize: 11, color: 'var(--success)', margin: '8px 0 0' }}>Set a date &amp; time to create the site visit automatically.</p>}
+              </div>
+            )}
+            {newStatus === 'sv_done' && (done.lead_stm_status || '') !== 'sv_done' && (
+              <div className="fu-sv-box">
+                <div className="fu-sv-title"><Icon name="pin" /> Site visit done</div>
+                <label className="fu-sv-label">Outcome <span className="fu-sv-req">*</span></label>
+                <select className="nx-input fu-sv-input" value={svOutcome} onChange={(e) => setSvOutcome(e.target.value)}>
+                  <option value="">Pick outcome</option>
+                  <option value="hot">Hot</option>
+                  <option value="warm">Warm</option>
+                  <option value="cold">Cold</option>
+                  <option value="not_interested">Not Interested</option>
+                </select>
+                <label className="fu-sv-label">Visit date <span className="fu-sv-req">*</span></label>
+                <input className="nx-input fu-sv-input" type="date" value={svDate} max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setSvDate(e.target.value)} />
+                <p className="fu-sv-note">The visit is recorded with this status, using your remarks above.</p>
               </div>
             )}
             {newStatus === 'closed' && (
@@ -510,6 +577,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
                 {submitting ? 'Saving…' : newStatus === 'closed' ? 'Record Closure →' : 'Mark Done'}
               </button>
             </div>
+            </>)}
           </div>
         </div>
       )}
