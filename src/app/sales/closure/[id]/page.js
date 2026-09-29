@@ -166,11 +166,21 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
   const allFloors = useMemo(() => (project?.floor_plans || []), [project]);
   // A tower may be one block or several (A, B, C…), each with its own floor count —
   // so pick the block first, then the floor within it.
+  // A locked block is not for sale, so it is not offered here — for anyone,
+  // admins included. The server refuses a booking naming one of its units and
+  // returns none of them, so listing the block would only be a dead end.
+  const lockedBlocks = useMemo(
+    () => new Set((project?.locked_blocks || []).map(b => String(b).trim()).filter(Boolean)),
+    [project]);
   const blocks = useMemo(() => {
     const seen = [];
-    allFloors.forEach(f => { const b = f.block || ''; if (!seen.includes(b)) seen.push(b); });
+    allFloors.forEach(f => {
+      const b = f.block || '';
+      if (lockedBlocks.has(b)) return;
+      if (!seen.includes(b)) seen.push(b);
+    });
     return seen.length ? seen : [''];
-  }, [allFloors]);
+  }, [allFloors, lockedBlocks]);
   // A block's height is quoted the way the trade quotes it — "G+12", ground plus the
   // floors above it — not as a raw floor count. A block with no ground floor falls
   // back to counting.

@@ -144,7 +144,7 @@ function ProjectModal({ project, onClose, onSaved }) {
   const [existingNumbers, setExistingNumbers] = useState(() => new Set());
   useEffect(() => {
     if (!isEdit) return;
-    fetch(`${SALES_ENDPOINTS.plots}?project=${project.id}`, { headers: authHeaders() })
+    fetch(`${SALES_ENDPOINTS.plots}?project=${project.id}&include_locked=1`, { headers: authHeaders() })
       .then(r => r.json())
       .then(arr => {
         const list = Array.isArray(arr) ? arr : [];
