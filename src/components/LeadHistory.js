@@ -49,7 +49,7 @@ export default function LeadHistory({ leadId }) {
         const text = (f.includes('remarks') ? h.remarks : null) || h.new_value || '—';
         const by = h.changed_by_name || (['telecaller', 'stm'].includes(f) ? 'System (auto)' : null);
         return (
-          <div key={h.id} className={`lh-row tone-${TONE[f] || 'muted'}`}>
+          <div key={h.id} className={`lh-row lh-${TONE[f] || 'muted'}`}>
             <span className="lh-dot"><Icon name={icon(f)} size={14} /></span>
             <div className="lh-body">
               <div className="lh-title">{LABEL[f] || f}</div>

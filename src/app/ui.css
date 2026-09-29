@@ -1806,8 +1806,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* LeadHistory (components/LeadHistory.js): a lead's timeline, newest first. */
 .lh-list { display: flex; flex-direction: column; gap: 14px; max-height: 52vh; overflow-y: auto; padding-right: 4px; }
 .lh-row { display: flex; gap: 10px; --lh: var(--muted); }
-.lh-row.tone-accent { --lh: var(--accent); } .lh-row.tone-success { --lh: var(--success); }
-.lh-row.tone-warn { --lh: var(--warning-2); } .lh-row.tone-danger { --lh: var(--danger); }
+/* lh-* tone names, not the shared tone-* ones: .tone-warn / .tone-muted paint a solid background (AR bars). */
+.lh-row.lh-accent { --lh: var(--accent); } .lh-row.lh-success { --lh: var(--success); }
+.lh-row.lh-warn { --lh: var(--warning-2); } .lh-row.lh-danger { --lh: var(--danger); }
 .lh-dot { flex: 0 0 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
   color: var(--lh); background: color-mix(in srgb, var(--lh) 10%, transparent); }
 .lh-body { min-width: 0; }
