@@ -221,6 +221,7 @@ function NotQualifiedFields({ reason, note, onReason, onNote, lblStyle, selStyle
           <option value="religion">Religion</option>
           <option value="caste">Caste</option>
           <option value="budget">Budget</option>
+          <option value="not_enquired">Not Enquired</option>
           <option value="other">Other</option>
         </select>
       </div>
@@ -2052,6 +2053,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                   <option value="religion">Religion</option>
                   <option value="caste">Caste</option>
                   <option value="budget">Budget</option>
+                  <option value="not_enquired">Not Enquired</option>
                   <option value="other">Other</option>
                 </select>
               )}
