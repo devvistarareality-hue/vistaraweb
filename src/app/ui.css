@@ -1728,3 +1728,40 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   border: 0; border-radius: 50%; background: var(--surface-3); color: var(--muted);
   font-size: 12px; cursor: pointer; transition: background-color .14s, color .14s; }
 .myconv-search-clear:hover { background: var(--danger-soft); color: var(--danger); }
+
+/* ─── Project locking ─────────────────────────────────────────────────────── */
+/* A locked project is held back from the sales floor while it is being set up —
+   distinct from "inactive", which means a project that is over. */
+.pl-lock { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.pl-lock-toggle { display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border);
+  background: var(--surface-2); transition: border-color .14s, background-color .14s; }
+.pl-lock-toggle.is-on { border-color: var(--warning-2); background: var(--warning-soft); }
+.pl-lock-toggle input { margin-top: 2px; accent-color: var(--warning-2); width: 16px; height: 16px; cursor: pointer; }
+.pl-lock-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pl-lock-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-3); }
+.pl-lock-toggle.is-on .pl-lock-title { color: var(--warning-2); }
+.pl-lock-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.pl-lock-blocks { padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border);
+  background: var(--surface-2); }
+.pl-lock-blocks-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  font-size: 12.5px; font-weight: 700; color: var(--text-3); margin-bottom: 10px; }
+.pl-lock-blocks-hint { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+.pl-lock-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pl-lock-chip { display: inline-flex; align-items: center; gap: 6px; height: 32px;
+  padding: 0 13px; border-radius: 10px; border: 1.5px solid var(--border-strong);
+  background: var(--surface); color: var(--text-3); font-size: 12.5px; font-weight: 700;
+  cursor: pointer; transition: border-color .14s, background-color .14s, color .14s; }
+.pl-lock-chip:hover { border-color: var(--warning-2); }
+.pl-lock-chip.is-locked { border-color: var(--warning-2); background: var(--warning-soft); color: var(--warning-2); }
+.pl-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.pl-badge-lock { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800;
+  padding: 4px 9px; border-radius: 20px; background: var(--warning-2); color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12); }
+.pl-badge-lock.is-partial { background: var(--surface); color: var(--warning-2);
+  border: 1.5px solid var(--warning-2); }
+/* Moved out of JSX when the lock badges joined it (AGENTS.md: no inline styles). */
+.pl-badge-active { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;
+  background: var(--success-soft); color: var(--success); box-shadow: 0 1px 6px rgba(0,0,0,0.10); }
+.pl-badge-active.is-off { background: var(--danger-soft); color: var(--danger); }
