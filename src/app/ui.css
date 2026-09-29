@@ -1852,3 +1852,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .lnc-side b { color: var(--text-3); font-weight: 700; }
 .lnc-status { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .lnc-new { margin-top: 12px; width: 100%; }
+
+/* Sales → Data Reset: the company-code box, matching the two above it. */
+.dr-input { display: block; width: 100%; max-width: 240px; height: 40px; padding: 0 12px; border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--danger) 40%, transparent); font-size: 14px; margin-bottom: 12px; box-sizing: border-box; }

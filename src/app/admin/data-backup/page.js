@@ -59,7 +59,7 @@ export default function DataBackupPage() {
   const companyId = superAdmin ? pickedId : null;
   const company = superAdmin
     ? (companies.find((c) => c.id === pickedId) || null)
-    : (user?.company_name ? { name: user.company_name } : null);
+    : (user?.company_name ? { name: user.company_name, code: user.company_code } : null);
   const ready = superAdmin ? !!pickedId : mayBackUp;
 
   const [excelBusy, setExcelBusy] = useState(false);
@@ -78,6 +78,12 @@ export default function DataBackupPage() {
   const [resetInfo, setResetInfo] = useState(null);  // what a reset would delete
   const [resetKey, setResetKey] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
+  // The company's own code, typed out — the server refuses a reset without it.
+  const [resetCode, setResetCode] = useState('');
+  // A code typed for one company never carries over to the next one picked.
+  useEffect(() => { setResetCode(''); }, [pickedId]);
+  const codeMatches = !!resetCode.trim()
+    && (!company?.code || resetCode.trim().toUpperCase() === String(company.code).toUpperCase());
   const [resetBusy, setResetBusy] = useState(false);
   const [resetStage, setResetStage] = useState('');   // backup → download → reset
   const [resetMsg, setResetMsg] = useState(null);
@@ -256,7 +262,7 @@ export default function DataBackupPage() {
       setResetStage('check');
       const chk = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm, check_only: true }) });
+        body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm, company_code: resetCode, check_only: true }) });
       if (!chk.ok) {
         const cd = await chk.json().catch(() => ({}));
         setResetMsg(bad('Reset refused', cd.detail || `The server returned ${chk.status}. Nothing was changed.`));
@@ -283,7 +289,7 @@ export default function DataBackupPage() {
       try {
         res = await fetch(SALES_ENDPOINTS.backupReset(companyId), {
           method: 'POST', headers: authHeaders(),
-          body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm }) });
+          body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm, company_code: resetCode }) });
         d = await res.json().catch(() => ({}));
       } catch (e) { res = null; }
       // A big company takes longer to empty than the proxy keeps the connection open,
@@ -570,10 +576,16 @@ export default function DataBackupPage() {
               value={resetConfirm} onChange={(e) => setResetConfirm(e.target.value)}
               disabled={!canReset} />
           </label>
+          <label className="dbx-field">
+            <span className="dbx-label">Company code</span>
+            <input className="nx-input" placeholder={company?.code ? `Type ${company.code}` : 'Type the company code'}
+              value={resetCode} onChange={(e) => setResetCode(e.target.value)}
+              autoComplete="off" disabled={!canReset} />
+          </label>
         </div>
 
         <button className="nx-btn nx-btn-md nx-btn-danger" onClick={runReset}
-          disabled={resetBusy || !canReset || !resetKey || resetConfirm !== 'DELETE'}>
+          disabled={resetBusy || !canReset || !resetKey || resetConfirm !== 'DELETE' || !codeMatches}>
           {resetBusy ? <><span className="dbx-spin" />{resetStage === 'check' ? 'Checking…' : resetStage === 'backup' || resetStage === 'download' ? 'Backing up…' : 'Deleting…'}</> : 'Back up & reset this company'}
         </button>
 
