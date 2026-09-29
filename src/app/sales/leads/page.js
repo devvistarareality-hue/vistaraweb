@@ -363,6 +363,13 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (showTC && form.telecaller_remarks)  body.telecaller_remarks = form.telecaller_remarks;
     if (showStm && form.stm_status)         body.stm_status         = form.stm_status;
     if (showStm && form.stm_remarks)        body.stm_remarks        = form.stm_remarks;
+    // Added straight at SV Done: the visit is recorded by the server in the same
+    // save — a lead is never SV Done without its visit on record.
+    if (showStm && form.stm_status === 'sv_done') {
+      body.sv_outcome = svOutcome;
+      body.sv_visited_at = svVisitedDate;
+      body.sv_remarks = form.stm_remarks || '';
+    }
     if (isNotQualified && form.disqualify_reason) {
       body.disqualify_reason = form.disqualify_reason;
       if (form.disqualify_reason === 'other') body.disqualify_note = form.disqualify_note;
@@ -373,32 +380,6 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     });
     const data = await res.json();
     if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
-
-    // A lead created directly at STM Status = sv_done needs the visit itself on
-    // record too — same as marking a scheduled visit done, just with no prior
-    // "scheduled" row to complete. Best-effort: the lead is already saved.
-    if (showStm && form.stm_status === 'sv_done' && data?.id && svOutcome && svVisitedDate) {
-      const now = new Date();
-      const visitedAt = new Date(`${svVisitedDate}T00:00:00`);
-      visitedAt.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
-      const visitedIso = visitedAt.toISOString();
-      try {
-        await fetch(SALES_ENDPOINTS.siteVisits, {
-          method: 'POST', headers: authHeaders(),
-          body: JSON.stringify({
-            lead: data.id, project: form.project || null,
-            scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
-            stm: form.stm || user?.id,
-            // data.telecaller (not form.telecaller) — when this Add Lead call merged
-            // into an existing telecaller-held lead (same phone+project), the returned
-            // record carries that telecaller, and their work should be credited with
-            // this visit even though this form never showed a Telecaller field.
-            referred_by_telecaller: data.telecaller || null,
-            outcome: svOutcome, remarks: form.stm_remarks || '',
-          }),
-        });
-      } catch { /* ignore */ }
-    }
 
     // Schedule the first follow-up against the lead we just created. Best-effort: the
     // lead is already saved, so a failure here must not read as "lead not added".
@@ -943,6 +924,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
     if (form.project)          body.project          = form.project;
     if (form.source)           body.source           = form.source;
     if (cpOnly)                body.channel_partner  = form.channel_partner;
+    // Turning SV Done carries the visit: the server completes the scheduled visit
+    // (or logs one) in the same save, and refuses SV Done with no visit on record.
+    if (form.stm_status === 'sv_done' && lead.stm_status !== 'sv_done') {
+      body.sv_outcome = svOutcome;
+      body.sv_visited_at = svVisitedDate;
+      body.sv_remarks = form.stm_remarks || '';
+    }
     const res = await fetch(SALES_ENDPOINTS.lead(lead.id), {
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
@@ -989,38 +977,6 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
         } catch { /* ignore */ }
       }
 
-      // STM marked sv_done → complete the latest pending visit (or create a completed one)
-      if (stmStatusChanged && form.stm_status === 'sv_done') {
-        try {
-          const svRes = await fetch(`${SALES_ENDPOINTS.siteVisits}?lead_id=${lead.id}`, { headers: authHeaders() });
-          const list = svRes.ok ? await svRes.json() : [];
-          const pending = (Array.isArray(list) ? list : []).filter(v => v.status === 'scheduled')
-            .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))[0];
-          // Keeps the current time-of-day but lets the date itself be backdated to
-          // when the visit actually happened.
-          const visitedNow = new Date();
-          const visitedAt = new Date(`${svVisitedDate}T00:00:00`);
-          visitedAt.setHours(visitedNow.getHours(), visitedNow.getMinutes(), visitedNow.getSeconds(), 0);
-          const visitedIso = visitedAt.toISOString();
-          if (pending) {
-            await fetch(SALES_ENDPOINTS.siteVisit(pending.id), {
-              method: 'PATCH', headers: authHeaders(),
-              body: JSON.stringify({ status: 'completed', visited_at: visitedIso, outcome: svOutcome, remarks: form.stm_remarks || '' }),
-            });
-          } else {
-            await fetch(SALES_ENDPOINTS.siteVisits, {
-              method: 'POST', headers: authHeaders(),
-              body: JSON.stringify({
-                lead: lead.id, project: form.project || null,
-                scheduled_at: visitedIso, visited_at: visitedIso, status: 'completed',
-                stm: form.stm || user?.id, referred_by_telecaller: form.telecaller || null,
-                outcome: svOutcome, remarks: form.stm_remarks || '',
-              }),
-            });
-          }
-        } catch { /* ignore */ }
-      }
-
       // STM/CP marked closed → save the lead, then jump straight into the booking
       // flow with this lead prefilled. The unit map lets them pick plot(s) and the
       // booking form records the actual closure/booking. A CP lead routes into the
@@ -1046,6 +1002,9 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
       onUpdated(updated);
       onClose();
     } else {
+      let detail = '';
+      try { const d = await res.json(); detail = d.detail || Object.values(d).flat().join(' '); } catch { /* ignore */ }
+      setSaveErr(detail || 'Could not save. Try again.');
       setSaving(false);
     }
   }
