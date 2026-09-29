@@ -171,6 +171,11 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   // Only a window of rows reaches the DOM; a thousand table rows is what made
   // this page crawl.
   const [shown, setShown] = useState(PAGE_STEP);
+  const [search, setSearch] = useState('');
+  // Narrowing the list and switching tabs both start a new list, so the window
+  // goes back to the top — otherwise a search that matches 3 rows still reads
+  // "Showing 50 of 3" from wherever the last one had been scrolled to.
+  useEffect(() => { setShown(PAGE_STEP); }, [search, tab]);
   const [visits, setVisits] = useState([]);
   const [closures, setClosures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,8 +201,20 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
     .sort((a, b) => new Date(a.scheduled_at || 0) - new Date(b.scheduled_at || 0));
   // Each tab lists exactly what its card counts: the Site Visits tab used to show
   // every visit (scheduled, cancelled…) under a "Site Visits Done" number.
-  const svRows = tab === 'upcoming' ? upcoming : svCompleted;
-  const allClosures = closures;
+  // One box across every column a person would recognise a row by. Names are the
+  // obvious one, but phone is what someone has in hand when a client rings back,
+  // and STM/telecaller is how a manager narrows a long list to one person's work.
+  const match = (row, needle) => [
+    row.lead_name, row.lead_phone, row.project_name,
+    row.stm_name, row.referred_by_telecaller_name,
+    row.unit_type, row.unit_no,
+  ].some((f) => String(f || '').toLowerCase().includes(needle));
+
+  const q = search.trim().toLowerCase();
+  const filter = (rows) => (q ? rows.filter((r) => match(r, q)) : rows);
+
+  const svRows = filter(tab === 'upcoming' ? upcoming : svCompleted);
+  const allClosures = filter(closures);
   const loaderPad = { padding: '28px 0' };
 
   return (
@@ -218,7 +235,11 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
           <div className="myconv-stat-label">Site Visits Done</div>
         </div>
         <div className="myconv-stat is-closures">
-          <div className="myconv-stat-value">{allClosures.length}</div>
+          {/* The three cards are the totals for this person, so they stay put
+              while a search narrows the table under them — `closures`, not the
+              filtered `allClosures`, which would make the headline number
+              flicker as you type. */}
+          <div className="myconv-stat-value">{closures.length}</div>
           <div className="myconv-stat-label">Total Closures</div>
         </div>
         <div className="myconv-stat is-upcoming">
@@ -240,15 +261,29 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         ))}
       </div>
 
+      {/* Search */}
+      <div className="nx-search-wrap myconv-search">
+        <span className="nx-search-icon"><Icon name="search" /></span>
+        <input className="nx-input nx-search-input" value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search lead, phone, project, STM or telecaller…" />
+        {!!search && (
+          <button type="button" className="myconv-search-clear" onClick={() => setSearch('')}
+            aria-label="Clear search"><Icon name="x" /></button>
+        )}
+      </div>
+
       {loading ? (
         <Loader label="Loading…" style={loaderPad} />
       ) : tab === 'sv' || tab === 'upcoming' ? (
         <div className="nx-card myconv-card">
           {svRows.length === 0 ? (
             <div className="myconv-empty">
-              {tab === 'upcoming'
-                ? (isStm ? 'No visits scheduled.' : 'No visits scheduled for your referred leads.')
-                : (isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.')}
+              {q
+                ? <>Nothing matches <b>{search}</b> in this tab.</>
+                : tab === 'upcoming'
+                  ? (isStm ? 'No visits scheduled.' : 'No visits scheduled for your referred leads.')
+                  : (isStm ? 'No site visits recorded yet.' : 'No site visits completed for your referred leads yet.')}
             </div>
           ) : (<>
             <div className="myconv-scroll convScroll">
@@ -281,7 +316,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             </div>
             {svRows.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {svRows.length}</span>
+                <span className="nx-more-count">Showing {shown} of {svRows.length}{q ? ' matching' : ''}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}
@@ -291,7 +326,9 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         <div className="nx-card myconv-card">
           {allClosures.length === 0 ? (
             <div className="myconv-empty">
-              {isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
+              {q
+                ? <>Nothing matches <b>{search}</b> in this tab.</>
+                : isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
           ) : (<>
             <div className="myconv-scroll convScroll">
@@ -329,7 +366,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             </div>
             {allClosures.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {allClosures.length}</span>
+                <span className="nx-more-count">Showing {shown} of {allClosures.length}{q ? ' matching' : ''}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}

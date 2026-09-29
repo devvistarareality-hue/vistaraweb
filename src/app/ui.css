@@ -1724,3 +1724,12 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .svf-sel { height: 36px; padding: 0 10px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface);
   font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; outline: none; max-width: 240px; }
 .svf-sel.is-on { border-color: var(--accent); font-weight: 700; color: var(--text); }
+
+/* My Conversions — search */
+.myconv-search { margin-bottom: 14px; }
+/* Sits inside the field, so clearing a long query does not mean selecting it. */
+.myconv-search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: var(--surface-3); color: var(--muted);
+  font-size: 12px; cursor: pointer; transition: background-color .14s, color .14s; }
+.myconv-search-clear:hover { background: var(--danger-soft); color: var(--danger); }
