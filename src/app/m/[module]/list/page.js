@@ -7,6 +7,7 @@ import { TASK_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import TaskModal from '../_TaskModal';
+import { onlyPresent } from '../../../../lib/presentOptions';
 import { STATUSES, PRIORITIES, STATUS_LABEL, PRIORITY_LABEL, fmtDate, isOverdue, companyParam } from '../_execution';
 
 const PAGE_STEP = 50;
@@ -48,6 +49,14 @@ export default function TaskListPage({ params }) {
     apiFetch(`${TASK_ENDPOINTS.assignees}${q ? `?${q}` : ''}`).then((r) => r.json()).then((d) => setPeople(d.results || [])).catch(() => {});
   }, [companyId]);
   useEffect(() => { loadMeta(); }, [loadMeta]);
+  // Only the values these rows hold (?facets=1) — see lib/presentOptions.
+  const [facets, setFacets] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    apiFetch(`${TASK_ENDPOINTS.tasks}?facets=1${companyId ? `&${companyParam(companyId)}` : ''}`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [companyId]);
+  const fx = (key) => facets?.[key] ?? null;
 
   const loadTasks = useCallback(() => {
     setLoading(true);
@@ -102,19 +111,19 @@ export default function TaskListPage({ params }) {
         <div className="nx-fu-filterbar-row">
           <select value={listFilter} onChange={(e) => setListFilter(e.target.value)} style={activeSelStyle(listFilter)}>
             <option value="">All Task Lists</option>
-            {lists.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            {onlyPresent(lists.map((l) => ({ value: String(l.id), label: l.name })), fx('list_ids'), listFilter).map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={activeSelStyle(statusFilter)}>
             <option value="">All Statuses</option>
-            {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {onlyPresent(STATUSES, fx('statuses'), statusFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={activeSelStyle(priorityFilter)}>
             <option value="">All Priorities</option>
-            {PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            {onlyPresent(PRIORITIES, fx('priorities'), priorityFilter).map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
           <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)} style={activeSelStyle(assigneeFilter)}>
             <option value="">All Assignees</option>
-            {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {onlyPresent(people.map((p) => ({ value: String(p.id), label: p.name })), fx('assignee_ids'), assigneeFilter).map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
           {anyFilter && (
             <button className="nx-btn nx-btn-sm nx-btn-danger-soft nx-ml-auto" onClick={clearAll}><X size={13} /> Clear all</button>

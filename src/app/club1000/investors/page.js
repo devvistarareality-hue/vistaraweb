@@ -5,6 +5,7 @@ import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
+import { onlyPresent } from '../../../lib/presentOptions';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import ReviseInvestorModal from '../_ReviseInvestorModal';
@@ -14,6 +15,12 @@ import LedgerModal from '../_LedgerModal';
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+
+// The Status filter's choices (narrowed to those present, see onlyPresent).
+const INVESTOR_STATUSES = [
+  { value: 'active', label: 'Active' }, { value: 'matured', label: 'Matured' },
+  { value: 'redeemed', label: 'Redeemed' }, { value: 'premature_redeemed', label: 'Premature Redeemed' },
+];
 const TEAL = 'var(--success)';
 const PURPLE = 'var(--accent)';
 const AMBER = 'var(--warning)';
@@ -44,6 +51,14 @@ export default function InvestorsPage() {
   const [ledgerFor, setLedgerFor] = useState(null);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // Only the values these rows hold (?facets=1) — see lib/presentOptions.
+  const [facets, setFacets] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    apiFetch(`${CLUB1000_ENDPOINTS.investors}?facets=1&approval_status=approved`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const fx = (key) => facets?.[key] ?? null;
   const [search, setSearch] = useState('');
   // Search box is debounced: typing updates `searchText` instantly (responsive UI)
   // but only commits to `search` (which triggers the fetch) after a pause.
@@ -136,14 +151,11 @@ export default function InvestorsPage() {
       <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
         <select className="nx-input" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Schemes</option>
-          {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), schemeFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
         <select className="nx-input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="matured">Matured</option>
-          <option value="redeemed">Redeemed</option>
-          <option value="premature_redeemed">Premature Redeemed</option>
+          {onlyPresent(INVESTOR_STATUSES, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 
