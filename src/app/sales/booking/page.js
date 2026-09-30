@@ -855,7 +855,8 @@ function BookingPage() {
         // momentarily. Re-enabling it here let an impatient re-click during that
         // 1s window fire a second, identical submission (confirmed against real
         // duplicate bookings in production).
-        setTimeout(() => router.push(kioskMode ? '/kiosk' : '/sales/closure'), 1000);
+        // replace, not push: Back must not return to the booking that was just submitted.
+        setTimeout(() => router.replace(kioskMode ? '/kiosk' : '/sales/closure'), 1000);
         return;
       }
       const errData = await res.json().catch(() => null);
