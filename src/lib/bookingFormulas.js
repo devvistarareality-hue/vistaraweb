@@ -73,7 +73,7 @@ export function computeFormulas(inp = {}) {
   // Kalrav: PLC Amount is computed here (Plot Area × plc_rate), same shape as Plot
   // Development Amount. Other sets keep premiumLocation as whatever flat amount the
   // caller passed in (Ankhol's own manually-typed field) — plcRate is unused there.
-  // Kalrav PLC: the Corner / Club House Facing amounts the booking applies (the form
+  // Kalrav PLC: the Corner / Common Plot Facing amounts the booking applies (the form
   // passes 0 for an unticked one).
   const plcCorner    = isKalrav && fieldFlags(formulaSet).hasPlcFixed ? num(inp.plcCorner) : 0;
   const plcClubhouse = isKalrav && fieldFlags(formulaSet).hasPlcFixed ? num(inp.plcClubhouse) : 0;

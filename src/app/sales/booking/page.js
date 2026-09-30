@@ -46,7 +46,7 @@ function safeDate(s) {
 }
 
 // Kalrav PLC kinds: [key used in plc_<key>, label].
-const PLC_KINDS = [['corner', 'Corner Plot'], ['clubhouse', 'Club House Facing']];
+const PLC_KINDS = [['corner', 'Corner Plot'], ['clubhouse', 'Common Plot Facing']];
 
 export default function BookingPageWrapper() {
   return <Suspense fallback={<Loader fullScreen label="Loading…" />}><BookingPage /></Suspense>;
@@ -325,7 +325,7 @@ function BookingPage() {
 
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
-  // PLC defaults for a new booking: tick Corner / Club House Facing when a picked plot
+  // PLC defaults for a new booking: tick Corner / Common Plot Facing when a picked plot
   // is marked so, and charge the Rate Master price once per such plot. A resumed
   // booking keeps what it saved; the rep can still change both here.
   const plcSeeded = useRef(false);
@@ -1123,7 +1123,7 @@ function BookingPage() {
         {flags.hasConstructionFields && <Row><L>Development Rate (₹/{unit})</L><In type="number" value={f.dev_rate} onChange={(e) => set('dev_rate', e.target.value)} /></Row>}
         {flags.hasConstructionFields && <Row><L>Construction Rate (₹/{unit})</L><In type="number" value={f.const_rate} onChange={(e) => set('const_rate', e.target.value)} /></Row>}
         {flags.hasPlcRate && <Row><L>PLC Rate (₹/{unit})</L><In type="number" value={f.plc_rate} onChange={(e) => set('plc_rate', e.target.value)} /></Row>}
-        {/* PLC: ticked from the plot's own Corner / Club House Facing marks; the amount
+        {/* PLC: ticked from the plot's own Corner / Common Plot Facing marks; the amount
             comes from the Rate Master and can be changed (or typed when there is none). */}
         {flags.hasPlcFixed && PLC_KINDS.map(([k, label]) => (
           <Row key={k}>
@@ -1192,7 +1192,7 @@ function BookingPage() {
         {flags.hasConstructionFields && formulaSet === 'ankhol' && v.premiumLocation > 0 && <T label="Premium Location Charge" val={v.premiumLocation} />}
         {flags.hasPlcRate && v.premiumLocation > 0 && <T label="Premium Location Amount" sub="Plot Area × PLC Rate" sub2={`${inr(v.area)} × ${inr(v.plcRate)}`} val={v.premiumLocation} />}
         {flags.hasPlcFixed && v.plcCorner > 0 && <T label="PLC — Corner Plot" val={v.plcCorner} />}
-        {flags.hasPlcFixed && v.plcClubhouse > 0 && <T label="PLC — Club House Facing" val={v.plcClubhouse} />}
+        {flags.hasPlcFixed && v.plcClubhouse > 0 && <T label="PLC — Common Plot Facing" val={v.plcClubhouse} />}
         {flags.hasConstructionFields && <T
           label="Total Basic Amount"
           sub={formulaSet === 'ankhol' || flags.hasPlcRate ? 'Plot Basic + Plot Dev + Construction + Premium'

@@ -611,7 +611,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
       {plcMarks && (plot.is_corner || plot.is_clubhouse_facing) && (
         <div className="plc-tags">
           {plot.is_corner && <span className="plc-tag">Corner</span>}
-          {plot.is_clubhouse_facing && <span className="plc-tag">Club House Facing</span>}
+          {plot.is_clubhouse_facing && <span className="plc-tag">Common Plot Facing</span>}
         </div>
       )}
       {/* Size sub-row — always rendered so all cards stay the same height. A terrace is
@@ -719,7 +719,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
             <div className="plc-marks">
               <span className="plc-marks-title">PLC (Premium Location)</span>
               <label className="plc-check"><input type="checkbox" checked={isCorner} onChange={(e) => setIsCorner(e.target.checked)} /> Corner Plot</label>
-              <label className="plc-check"><input type="checkbox" checked={isClub} onChange={(e) => setIsClub(e.target.checked)} /> Club House Facing</label>
+              <label className="plc-check"><input type="checkbox" checked={isClub} onChange={(e) => setIsClub(e.target.checked)} /> Common Plot Facing</label>
             </div>
           )}
 
@@ -1098,9 +1098,9 @@ function rateMasterFields(formulaSet) {
     flags.hasConstructionFields && { key: 'const_rate', label: 'Construction Rate', unit: flags.areaUnit },
     flags.hasPlcRate && { key: 'plc_rate', label: 'PLC Rate', unit: flags.areaUnit },
     // Kalrav PLC: a fixed amount per plot, charged when the plot is marked Corner /
-    // Club House Facing (Edit Info on the plot). No unit — it is not a rate.
+    // Common Plot Facing (Edit Info on the plot). No unit — it is not a rate.
     flags.hasPlcFixed && { key: 'plc_corner_price', label: 'PLC — Corner Plot', unit: null },
-    flags.hasPlcFixed && { key: 'plc_clubhouse_price', label: 'PLC — Club House Facing', unit: null },
+    flags.hasPlcFixed && { key: 'plc_clubhouse_price', label: 'PLC — Common Plot Facing', unit: null },
     flags.hasSaleDeedRate && { key: 'sale_deed_rate', label: 'Sale Deed Rate', unit: 'sq.ft' },
     flags.hasDevAgreement && { key: 'dev_agreement_rate', label: 'Dev Agreement Rate', unit: 'sq.ft' },
     { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
