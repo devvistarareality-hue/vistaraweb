@@ -17,11 +17,14 @@ const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--
 const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
 
 const APPROVAL_COLORS = {
+  draft: { bg: 'var(--surface-2)', fg: 'var(--text-3)' },
   pending: { bg: 'var(--warning-soft)', fg: 'var(--warning)' },
   approved: { bg: 'var(--success-soft)', fg: 'var(--success)' },
   rejected: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
 };
-const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
+// Drafts first because that is the step before Pending. The server only ever
+// returns your own, so this tab is personal even though the page is shared.
+const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
 
 function ApprovalBadge({ approvalStatus }) {
   const c = APPROVAL_COLORS[approvalStatus] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' };
@@ -300,6 +303,11 @@ export default function InvestorApprovalsPage() {
                   </td>
                   <td style={td}><ApprovalBadge approvalStatus={inv.approval_status} /></td>
                   <td style={td}>
+                    {inv.approval_status === 'draft' && (
+                      <span className="inv-draft-hint">
+                        Yours — open it from Investors to finish and submit
+                      </span>
+                    )}
                     {inv.approval_status === 'pending' && (
                       canApprove(inv) ? (
                         <div style={{ display: 'flex', gap: 6 }}>

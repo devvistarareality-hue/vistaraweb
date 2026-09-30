@@ -135,7 +135,7 @@ function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
-export default function AddInvestorModal({ schemes, prefillLead, onClose, onCreated }) {
+export default function AddInvestorModal({ schemes, prefillLead, draft, onClose, onCreated }) {
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
   const initialSchemeId = prefillLead?.scheme_interest || schemes[0]?.id || '';
@@ -287,6 +287,33 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
     }
   }
 
+  // Saved but not submitted. None of submit()'s completeness checks apply —
+  // the whole point is never to lose a long form because one field is missing.
+  // The row it writes is the same one submitting later promotes, so saving twice
+  // never leaves two investors behind.
+  const [draftId, setDraftId] = useState(draft?.id || null);
+  const [savingDraft, setSavingDraft] = useState(false);
+
+  async function saveDraft() {
+    setError('');
+    if (!form.scheme) { setError('Pick a scheme before saving a draft.'); return; }
+    setSavingDraft(true);
+    try {
+      const payload = { ...form, ...(draftId ? { id: draftId } : {}) };
+      if (payload.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
+      const res = await apiFetch(CLUB1000_ENDPOINTS.investorDraft, {
+        method: 'POST', body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(data?.detail || 'Could not save the draft.'); return; }
+      setDraftId(data.id);
+      onCreated?.(data);
+      onClose();
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError('');
@@ -300,7 +327,7 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
     }
     setBusy(true);
     try {
-      const payload = { ...form, loi_file: loiFile };
+      const payload = { ...form, loi_file: loiFile, ...(draftId ? { draft_id: draftId } : {}) };
       if (payload.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
       if (documentFile) payload.document_file = documentFile;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
@@ -499,6 +526,12 @@ export default function AddInvestorModal({ schemes, prefillLead, onClose, onCrea
         </div>
         <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          {/* Enabled without the signed LOI on purpose — saving a draft is what
+              you do BEFORE you have one. */}
+          <button className={`nx-btn nx-btn-md nx-btn-secondary inv-draft-btn${(busy || savingDraft) ? ' is-busy' : ''}`}
+            type="button" onClick={saveDraft} disabled={busy || savingDraft}>
+            {savingDraft ? 'Saving…' : draftId ? 'Update Draft' : 'Save Draft'}
+          </button>
           <button className="nx-btn nx-btn-md nx-btn-success" type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
             {busy ? 'Submitting…' : 'Submit for Approval'}
           </button>

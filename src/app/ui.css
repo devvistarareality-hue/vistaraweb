@@ -1867,3 +1867,13 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .plc-marks-title { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; width: 100%; }
 .plc-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 6px; }
 .plc-tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--warning-soft); color: var(--warning-deep); }
+
+/* ─── Club 1000: investor drafts ──────────────────────────────────────────── */
+/* Save Draft is the quieter of the two footer buttons — the fallback, not the
+   goal — so it is outlined rather than filled like Submit for Approval. */
+.inv-draft-btn { padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 700;
+  background: var(--surface); color: var(--accent); border: 1.5px solid var(--blue-2);
+  cursor: pointer; }
+.inv-draft-btn.is-busy { opacity: 0.5; cursor: default; }
+/* Stands in for the Approve/Reject buttons on a draft row, which has neither. */
+.inv-draft-hint { font-size: 11px; color: var(--faint); }
