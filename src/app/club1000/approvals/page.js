@@ -10,6 +10,7 @@ import { fmtMoney } from '../_StatCard';
 import Icon from '../../../components/Icon';
 import { notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import AddInvestorModal from '../_AddInvestorModal';
 const TEAL = 'var(--success)';
 const PURPLE = 'var(--accent)';
 const AMBER = 'var(--warning)';
@@ -99,6 +100,9 @@ export default function InvestorApprovalsPage() {
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  // A draft is edited from here, because it deliberately does not appear in the
+  // Investors list — there is nowhere else to open it from.
+  const [editDraft, setEditDraft] = useState(null);
 
   const [managers, setManagers] = useState([]);
   const [cfgOpen, setCfgOpen] = useState(false);
@@ -304,9 +308,10 @@ export default function InvestorApprovalsPage() {
                   <td style={td}><ApprovalBadge approvalStatus={inv.approval_status} /></td>
                   <td style={td}>
                     {inv.approval_status === 'draft' && (
-                      <span className="inv-draft-hint">
-                        Yours — open it from Investors to finish and submit
-                      </span>
+                      <button className="nx-btn nx-btn-sm nx-btn-secondary inv-draft-edit"
+                        onClick={() => setEditDraft(inv)}>
+                        <Icon name="pencil" /> Edit &amp; Submit
+                      </button>
                     )}
                     {inv.approval_status === 'pending' && (
                       canApprove(inv) ? (
@@ -323,6 +328,15 @@ export default function InvestorApprovalsPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {editDraft && (
+        <AddInvestorModal
+          schemes={schemes}
+          draft={editDraft}
+          onClose={() => setEditDraft(null)}
+          onCreated={() => { setEditDraft(null); load(); }}
+        />
       )}
     </div>
   );

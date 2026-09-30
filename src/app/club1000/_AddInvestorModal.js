@@ -138,19 +138,31 @@ const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', mat
 export default function AddInvestorModal({ schemes, prefillLead, draft, onClose, onCreated }) {
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
-  const initialSchemeId = prefillLead?.scheme_interest || schemes[0]?.id || '';
+  // Reopening a saved draft: it wins over the lead prefill, because the draft IS
+  // what was last typed.
+  const initialSchemeId = draft?.scheme || prefillLead?.scheme_interest || schemes[0]?.id || '';
   const initialScheme = schemes.find((s) => String(s.id) === String(initialSchemeId));
   const [form, setForm] = useState({
     scheme: initialSchemeId,
-    source: 'referral',
-    reference_name: prefillLead?.reference_name || '', reference_phone: prefillLead?.reference_phone || '',
-    name: prefillLead?.name || '', phone: prefillLead?.phone || '', email: prefillLead?.email || '', pan: '',
-    amount_invested: prefillLead?.amount_interested || '', investment_date: toISODate(new Date()), notes: '',
-    security: '',
-    interest_payout: initialScheme?.interest_payout_options?.[0] || 'maturity',
+    source: draft?.source || 'referral',
+    reference_name: draft?.reference_name || prefillLead?.reference_name || '',
+    reference_phone: draft?.reference_phone || prefillLead?.reference_phone || '',
+    name: draft?.name || prefillLead?.name || '',
+    phone: draft?.phone || prefillLead?.phone || '',
+    email: draft?.email || prefillLead?.email || '',
+    pan: draft?.pan || '',
+    // A draft's amount may legitimately be 0 — that is "not said yet", and the
+    // field should read empty rather than showing a figure nobody typed.
+    amount_invested: (draft && Number(draft.amount_invested) > 0)
+      ? String(draft.amount_invested) : (prefillLead?.amount_interested || ''),
+    investment_date: draft?.investment_date || toISODate(new Date()),
+    notes: draft?.notes || '',
+    security: draft?.security || '',
+    interest_payout: draft?.interest_payout || initialScheme?.interest_payout_options?.[0] || 'maturity',
     // The lead's negotiated rate wins over the scheme's rate for the default
     // frequency, if one was set.
-    total_return_pct: prefillLead?.total_return_pct ?? initialScheme?.payout_rates?.[initialScheme?.interest_payout_options?.[0] || 'maturity'] ?? '',
+    total_return_pct: (draft && Number(draft.total_return_pct) > 0) ? String(draft.total_return_pct)
+      : (prefillLead?.total_return_pct ?? initialScheme?.payout_rates?.[initialScheme?.interest_payout_options?.[0] || 'maturity'] ?? ''),
   });
   const [documentFile, setDocumentFile] = useState(null); // {name, type, data(base64)}
   const [schedule, setSchedule] = useState([]); // [{due_date, amount_due, payout_type}] — editable preview
@@ -352,7 +364,7 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
     <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Add Investor</div>
+          <div className="inv-modal-title">{draft ? 'Edit Draft Investor' : 'Add Investor'}</div>
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
