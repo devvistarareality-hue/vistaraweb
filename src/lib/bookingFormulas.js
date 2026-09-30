@@ -24,8 +24,10 @@ export function fieldFlags(formulaSet) {
     hasConstructionFields: true, hasMaintDeposit: false, hasMaintAdvance: false, hasAreaSqMtr: false,
     // PLC (Premium Location Charge): a rate × Plot Area field, same shape as Dev Rate —
     // distinct from Ankhol's hasPremiumLocation above, which is a flat, manually-typed
-    // amount rather than something computed from a rate.
-    hasPlcRate: true,
+    // amount rather than something computed from a rate. Switched OFF (30 Sep) at the
+    // owner's request until they define how it should work; flip back to true to
+    // restore the field, the price-book rate and the amount in the total.
+    hasPlcRate: false,
   };
 }
 
@@ -64,7 +66,7 @@ export function computeFormulas(inp = {}) {
   // Kalrav: PLC Amount is computed here (Plot Area × plc_rate), same shape as Plot
   // Development Amount. Other sets keep premiumLocation as whatever flat amount the
   // caller passed in (Ankhol's own manually-typed field) — plcRate is unused there.
-  const premiumLocation = isKalrav ? (area * plcRate) : num(inp.premiumLocation);
+  const premiumLocation = isKalrav ? (fieldFlags(formulaSet).hasPlcRate ? area * plcRate : 0) : num(inp.premiumLocation);
   const saleDeedRate    = num(inp.saleDeedRate);
   const devAgreementRate = num(inp.devAgreementRate);
   // Ankhol sale-deed percentage — editable per booking, defaults to 60%.
