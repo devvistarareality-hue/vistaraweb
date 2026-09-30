@@ -28,6 +28,13 @@ export function fieldFlags(formulaSet) {
     // owner's request until they define how it should work; flip back to true to
     // restore the field, the price-book rate and the amount in the total.
     hasPlcRate: false,
+    // PLC as it works now: a fixed amount per plot for a Corner plot and for a Club
+    // House Facing one (either or both). Preset in the project's Rate Master
+    // (plc_corner_price / plc_clubhouse_price), editable per booking, and part of the
+    // Extra Work Amount — it raises the basic total, not the Unit Price.
+    // Only for a Kalrav-set project: this default branch also answers for sets it
+    // doesn't name (e.g. pratishtha), which must not get PLC.
+    hasPlcFixed: !formulaSet || formulaSet === 'kalrav',
   };
 }
 
@@ -66,7 +73,13 @@ export function computeFormulas(inp = {}) {
   // Kalrav: PLC Amount is computed here (Plot Area × plc_rate), same shape as Plot
   // Development Amount. Other sets keep premiumLocation as whatever flat amount the
   // caller passed in (Ankhol's own manually-typed field) — plcRate is unused there.
-  const premiumLocation = isKalrav ? (fieldFlags(formulaSet).hasPlcRate ? area * plcRate : 0) : num(inp.premiumLocation);
+  // Kalrav PLC: the Corner / Club House Facing amounts the booking applies (the form
+  // passes 0 for an unticked one).
+  const plcCorner    = isKalrav && fieldFlags(formulaSet).hasPlcFixed ? num(inp.plcCorner) : 0;
+  const plcClubhouse = isKalrav && fieldFlags(formulaSet).hasPlcFixed ? num(inp.plcClubhouse) : 0;
+  const premiumLocation = isKalrav
+    ? (fieldFlags(formulaSet).hasPlcRate ? area * plcRate : 0) + plcCorner + plcClubhouse
+    : num(inp.premiumLocation);
   const saleDeedRate    = num(inp.saleDeedRate);
   const devAgreementRate = num(inp.devAgreementRate);
   // Ankhol sale-deed percentage — editable per booking, defaults to 60%.
@@ -177,7 +190,7 @@ export function computeFormulas(inp = {}) {
     formulaSet, isTundav, isKalrav3, area, landRate, devRate, constArea, constRate, discount,
     plcRate, lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
     saleDeedRate, saleDeedPct: effSaleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
-    maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation,
+    maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation, plcCorner, plcClubhouse,
     applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
     nonSaleDeed, nonSaleDeedDoc, docTotal,
     extraWorkDesc: inp.extraWorkDesc || '', finalAmt,

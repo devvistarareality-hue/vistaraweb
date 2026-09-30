@@ -1856,3 +1856,14 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* Sales → Data Reset: the company-code box, matching the two above it. */
 .dr-input { display: block; width: 100%; max-width: 240px; height: 40px; padding: 0 12px; border-radius: 14px;
   border: 1.5px solid color-mix(in srgb, var(--danger) 40%, transparent); font-size: 14px; margin-bottom: 12px; box-sizing: border-box; }
+
+/* Projects → Rate Master field label. */
+.rm-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 4px; }
+/* Booking → Pricing: the PLC tick box beside its label. */
+.plc-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.plc-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+/* Projects → plot card: Kalrav PLC marks (edit) and tags (card). */
+.plc-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.plc-marks-title { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; width: 100%; }
+.plc-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 6px; }
+.plc-tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--warning-soft); color: var(--warning-deep); }

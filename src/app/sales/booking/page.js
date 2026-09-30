@@ -45,6 +45,9 @@ function safeDate(s) {
   return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
 }
 
+// Kalrav PLC kinds: [key used in plc_<key>, label].
+const PLC_KINDS = [['corner', 'Corner Plot'], ['clubhouse', 'Club House Facing']];
+
 export default function BookingPageWrapper() {
   return <Suspense fallback={<Loader fullScreen label="Loading…" />}><BookingPage /></Suspense>;
 }
@@ -104,6 +107,10 @@ function BookingPage() {
     land_rate: '', dev_rate: '', const_rate: '', plc_rate: '', sale_deed_rate: '', dev_agreement_rate: '',
     sale_deed_pct: '60', sale_deed_amount: '',
     land_sale_deed: '', const_agreement: '', premium_location: '',
+    // Kalrav PLC: whether each applies, the amount charged, and the Rate Master's
+    // per-plot price (plc_*_price) the amount defaults from.
+    plc_corner_on: false, plc_corner: '', plc_corner_price: '',
+    plc_clubhouse_on: false, plc_clubhouse: '', plc_clubhouse_price: '',
     discount: '0', legal_charges: '', maint_rate: '', maint_months: '',
     apply_reg_fee: 'Yes', apply_page_fee: 'Yes', apply_stamp_duty: 'Yes', apply_gst: 'Yes',
     booking_date: new Date().toISOString().slice(0, 10), cp_name: '',
@@ -149,7 +156,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
@@ -196,7 +203,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
@@ -229,7 +236,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area_unit: b.area_unit || s.area_unit, const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
@@ -318,6 +325,24 @@ function BookingPage() {
 
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
+  // PLC defaults for a new booking: tick Corner / Club House Facing when a picked plot
+  // is marked so, and charge the Rate Master price once per such plot. A resumed
+  // booking keeps what it saved; the rep can still change both here.
+  const plcSeeded = useRef(false);
+  useEffect(() => {
+    if (!flags.hasPlcFixed || plcSeeded.current || reviseId || draftId || convertEoiId) return;
+    if (!plots.length || !project) return;
+    plcSeeded.current = true;
+    const nCorner = plots.filter((p) => p.is_corner).length;
+    const nClub = plots.filter((p) => p.is_clubhouse_facing).length;
+    const rm = project.rate_master || {};
+    const amt = (price, n) => (n && parseFloat(price) > 0 ? String(parseFloat(price) * n) : '');
+    setF((s) => ({
+      ...s,
+      plc_corner_on: nCorner > 0, plc_corner: s.plc_corner || amt(rm.plc_corner_price, nCorner),
+      plc_clubhouse_on: nClub > 0, plc_clubhouse: s.plc_clubhouse || amt(rm.plc_clubhouse_price, nClub),
+    }));
+  }, [flags.hasPlcFixed, plots, project, reviseId, draftId, convertEoiId]);
   // All pricing sets share the sale-deed % split (Unit Price + Additional Extra Work Amount).
   // Which pricing sections apply depends on the project's formula set and, for a unit
   // booking, on that unit's price book — neither is known on the first paint. Render a
@@ -513,6 +538,7 @@ function BookingPage() {
     discount: f.discount, legalCharges: f.legal_charges, maintRate: f.maint_rate, maintMonths: f.maint_months,
     gender: f.gender, landSaleDeed: f.land_sale_deed, constAgreement: f.const_agreement,
     premiumLocation: f.premium_location, plcRate: f.plc_rate, saleDeedRate: f.sale_deed_rate, devAgreementRate: f.dev_agreement_rate,
+    plcCorner: f.plc_corner_on ? f.plc_corner : 0, plcClubhouse: f.plc_clubhouse_on ? f.plc_clubhouse : 0,
     saleDeedPct: f.sale_deed_pct, saleDeedAmount: f.sale_deed_amount,
     applyRegFee: f.apply_reg_fee, applyPageFee: f.apply_page_fee, applyStampDuty: f.apply_stamp_duty, applyGst: f.apply_gst,
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
@@ -784,7 +810,8 @@ function BookingPage() {
       land_sale_deed: f.land_sale_deed || 0, const_agreement: f.const_agreement || 0,
       stamp_duty: Math.round(v.stampDuty), reg_fees: Math.round(v.regFees), gst: Math.round(v.gst),
       maintenance: Math.round(v.maint), maint_deposit: Math.round(v.maintDeposit), maint_advance: Math.round(v.maintAdvance),
-      legal_charges: f.legal_charges || 0, premium_location: Math.round(flags.hasPlcRate ? v.premiumLocation : (f.premium_location || 0)),
+      legal_charges: f.legal_charges || 0, premium_location: Math.round((flags.hasPlcRate || flags.hasPlcFixed) ? v.premiumLocation : (f.premium_location || 0)),
+      plc_corner: Math.round(v.plcCorner || 0), plc_clubhouse: Math.round(v.plcClubhouse || 0),
       total_extra: Math.round(prat ? pratExtraTotal : v.totalExtra), discount: f.discount || 0,
       final_amount: Math.round(prat ? pratTotal : v.finalAmt),
       apply_reg_fee: f.apply_reg_fee, apply_page_fee: f.apply_page_fee, apply_stamp_duty: f.apply_stamp_duty, apply_gst: f.apply_gst,
@@ -1096,6 +1123,18 @@ function BookingPage() {
         {flags.hasConstructionFields && <Row><L>Development Rate (₹/{unit})</L><In type="number" value={f.dev_rate} onChange={(e) => set('dev_rate', e.target.value)} /></Row>}
         {flags.hasConstructionFields && <Row><L>Construction Rate (₹/{unit})</L><In type="number" value={f.const_rate} onChange={(e) => set('const_rate', e.target.value)} /></Row>}
         {flags.hasPlcRate && <Row><L>PLC Rate (₹/{unit})</L><In type="number" value={f.plc_rate} onChange={(e) => set('plc_rate', e.target.value)} /></Row>}
+        {/* PLC: ticked from the plot's own Corner / Club House Facing marks; the amount
+            comes from the Rate Master and can be changed (or typed when there is none). */}
+        {flags.hasPlcFixed && PLC_KINDS.map(([k, label]) => (
+          <Row key={k}>
+            <L><span className="plc-check">
+              <input type="checkbox" checked={!!f[`plc_${k}_on`]} onChange={(e) => set(`plc_${k}_on`, e.target.checked)} />
+              PLC — {label} (₹)
+            </span></L>
+            <In type="number" value={f[`plc_${k}`]} disabled={!f[`plc_${k}_on`]} placeholder={f[`plc_${k}_on`] ? 'Amount' : 'Not applied'}
+              onChange={(e) => set(`plc_${k}`, e.target.value)} />
+          </Row>
+        ))}
         {flags.hasSaleDeedRate && <Row><L>Sale Deed Rate (₹/sq.ft)</L><In type="number" value={f.sale_deed_rate} onChange={(e) => set('sale_deed_rate', e.target.value)} /></Row>}
         {flags.hasDevAgreement && <Row><L>Dev Agreement Rate (₹/sq.ft)</L><In type="number" value={f.dev_agreement_rate} onChange={(e) => set('dev_agreement_rate', e.target.value)} /></Row>}
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
@@ -1152,10 +1191,13 @@ function BookingPage() {
         {flags.hasConstructionFields && <T label="Construction Amount" sub="Construction Area × Construction Rate" sub2={`${inr(v.constArea)} × ${inr(v.constRate)}`} val={v.constAmt} />}
         {flags.hasConstructionFields && formulaSet === 'ankhol' && v.premiumLocation > 0 && <T label="Premium Location Charge" val={v.premiumLocation} />}
         {flags.hasPlcRate && v.premiumLocation > 0 && <T label="Premium Location Amount" sub="Plot Area × PLC Rate" sub2={`${inr(v.area)} × ${inr(v.plcRate)}`} val={v.premiumLocation} />}
+        {flags.hasPlcFixed && v.plcCorner > 0 && <T label="PLC — Corner Plot" val={v.plcCorner} />}
+        {flags.hasPlcFixed && v.plcClubhouse > 0 && <T label="PLC — Club House Facing" val={v.plcClubhouse} />}
         {flags.hasConstructionFields && <T
           label="Total Basic Amount"
-          sub={(formulaSet === 'ankhol' || flags.hasPlcRate) ? 'Plot Basic + Plot Dev + Construction + Premium' : 'Plot Basic + Plot Dev + Construction'}
-          val={(formulaSet === 'ankhol' || flags.hasPlcRate) ? v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation : v.plotBasic + v.plotDev + v.constAmt}
+          sub={formulaSet === 'ankhol' || flags.hasPlcRate ? 'Plot Basic + Plot Dev + Construction + Premium'
+            : v.premiumLocation > 0 ? 'Plot Basic + Plot Dev + Construction + PLC' : 'Plot Basic + Plot Dev + Construction'}
+          val={v.plotBasic + v.plotDev + v.constAmt + v.premiumLocation}
           subtotal />}
         {flags.hasSaleDeed && formulaSet !== 'ankhol' && !hasSaleDeedSplit && <T label="Sale Deed" sub={saleDeedSub} sub2={saleDeedSub2} val={v.saleDeed} />}
         {hasSaleDeedSplit && <>

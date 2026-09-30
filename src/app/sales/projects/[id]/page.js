@@ -513,7 +513,7 @@ const plotState = (plot) => ((plot.pending_booking_id
   || (plot.status === 'hold' && plot.manual_hold && !plot.held_by_name)) ? 'pending' : plot.status);
 
 /* ─── Plot Card ─── */
-function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floorWise = false }) {
+function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floorWise = false, plcMarks = false }) {
   const cfg = STATUS_CFG[plotState(plot)] || STATUS_CFG.available;
   const [saving,  setSaving]  = useState(false);
   const [editing, setEditing] = useState(false);
@@ -534,6 +534,9 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
   // terrace area, if any. Both are per-unit and feed the unit's price.
   const [facing, setFacing] = useState(plot.facing || '');
   const [hasTerrace, setHasTerrace] = useState(!!(plot.terrace_area || '').trim());
+  // Kalrav PLC marks: where the plot sits (each adds that PLC to a booking of it).
+  const [isCorner, setIsCorner] = useState(!!plot.is_corner);
+  const [isClub, setIsClub] = useState(!!plot.is_clubhouse_facing);
   const [terraceArea, setTerraceArea] = useState(plot.terrace_area || '');
 
   function openEdit() {
@@ -576,6 +579,7 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
         // Clearing the terrace toggle wipes the stored area, so a unit can't keep a
         // stale terrace charge after being switched back.
         ...(floorWise ? { facing, terrace_area: hasTerrace ? terraceArea.trim() : '' } : {}),
+        ...(plcMarks ? { is_corner: isCorner, is_clubhouse_facing: isClub } : {}),
       }),
     });
     if (res.ok) { onPlotUpdate(await res.json()); setEditing(false); }
@@ -604,6 +608,12 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
           {cfg.label}
         </span>
       </div>
+      {plcMarks && (plot.is_corner || plot.is_clubhouse_facing) && (
+        <div className="plc-tags">
+          {plot.is_corner && <span className="plc-tag">Corner</span>}
+          {plot.is_clubhouse_facing && <span className="plc-tag">Club House Facing</span>}
+        </div>
+      )}
       {/* Size sub-row — always rendered so all cards stay the same height. A terrace is
           charged on top of the flat and only half the flats have one, so it is called
           out here rather than hidden behind Edit Info. */}
@@ -703,6 +713,14 @@ function PlotCard({ plot, onStatusChange, onPlotUpdate, clusterTypes = [], floor
                 )}
               </div>
             </>
+          )}
+
+          {plcMarks && (
+            <div className="plc-marks">
+              <span className="plc-marks-title">PLC (Premium Location)</span>
+              <label className="plc-check"><input type="checkbox" checked={isCorner} onChange={(e) => setIsCorner(e.target.checked)} /> Corner Plot</label>
+              <label className="plc-check"><input type="checkbox" checked={isClub} onChange={(e) => setIsClub(e.target.checked)} /> Club House Facing</label>
+            </div>
           )}
 
           {/* Cluster/Type + Number */}
@@ -1079,6 +1097,10 @@ function rateMasterFields(formulaSet) {
     flags.hasConstructionFields && { key: 'dev_rate', label: 'Development Rate', unit: flags.areaUnit },
     flags.hasConstructionFields && { key: 'const_rate', label: 'Construction Rate', unit: flags.areaUnit },
     flags.hasPlcRate && { key: 'plc_rate', label: 'PLC Rate', unit: flags.areaUnit },
+    // Kalrav PLC: a fixed amount per plot, charged when the plot is marked Corner /
+    // Club House Facing (Edit Info on the plot). No unit — it is not a rate.
+    flags.hasPlcFixed && { key: 'plc_corner_price', label: 'PLC — Corner Plot', unit: null },
+    flags.hasPlcFixed && { key: 'plc_clubhouse_price', label: 'PLC — Club House Facing', unit: null },
     flags.hasSaleDeedRate && { key: 'sale_deed_rate', label: 'Sale Deed Rate', unit: 'sq.ft' },
     flags.hasDevAgreement && { key: 'dev_agreement_rate', label: 'Dev Agreement Rate', unit: 'sq.ft' },
     { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
@@ -1122,7 +1144,7 @@ function RateMasterEditor({ project, onProjectUpdate }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 12, marginBottom: 14 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 4 }}>{f.label} (₹/{f.unit})</label>
+            <label className="rm-label">{f.label} ({f.unit ? `₹/${f.unit}` : '₹ per plot'})</label>
             <input className="nx-input" type="number" value={form[f.key] ?? ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
               placeholder="Not set" style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' }} />
           </div>
@@ -1472,6 +1494,7 @@ export default function ManagePlotsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12, alignItems: 'start' }}>
           {filtered.map(plot => (
             <PlotCard key={plot.id} plot={plot} onStatusChange={handleStatusChange} onPlotUpdate={handlePlotUpdate}
+              plcMarks={project?.formula_set === 'kalrav'}
               clusterTypes={[...new Set(plots.map(p => p.cluster_type).filter(Boolean))]}
               // Facing/terrace are Pratishtha-tower concepts (a flat facing road vs
               // garden, an optional terrace charged separately) -- meaningless for an
