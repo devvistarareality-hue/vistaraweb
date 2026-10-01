@@ -215,41 +215,68 @@ export default function ProjectApprovals({ isAdmin }) {
           {tab === 'pending' ? 'No projects waiting for approval.' : `No ${tab} projects.`}
         </div>
       ) : (
-        <div className="nx-card pa-list">
+        /* Card per project, matching the booking approval cards on the sibling
+           tab — same shape, same button row, so the page reads as one screen
+           rather than three that grew separately. */
+        <div className="pa-cards">
           {shown.map((p) => {
             const st = p.approval_status || 'approved';
             const open = openId === p.id;
             return (
-              <div className="pa-row-wrap" key={p.id}>
-              <div className="pa-row">
-                <button type="button" className="pa-row-main pa-row-open"
-                  onClick={() => setOpenId(open ? null : p.id)}
-                  aria-expanded={open}>
-                  <div className="pa-row-name">
-                    <span className="pa-row-caret">{open ? '▾' : '▸'}</span> {p.name}
+              <div className="nx-card pa-card" key={p.id}>
+                <div className="pa-card-head">
+                  <div className="pa-card-id">
+                    <div className="pa-card-name">{p.name}</div>
+                    <div className="pa-card-sub">
+                      {(p.location || '—')} · {p.project_type}
+                      {p.total_plots ? ` · ${p.total_plots} units` : ''}
+                    </div>
+                    <div className="pa-card-sub2">
+                      Added by {p.created_by_name || '—'}
+                      {p.created_at ? ` · ${new Date(p.created_at).toLocaleDateString('en-IN', {
+                        day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                    </div>
+                    {st === 'rejected' && p.rejected_reason ? (
+                      <div className="pa-card-reason">
+                        <div className="pa-card-reason-title">
+                          Rejected{p.approved_by_name ? ` · ${p.approved_by_name}` : ''}
+                        </div>
+                        <div className="pa-card-reason-body">{p.rejected_reason}</div>
+                      </div>
+                    ) : null}
+                    {st === 'approved' && p.approved_by_name ? (
+                      <div className="pa-card-decided">
+                        Approved by {p.approved_by_name}
+                        {p.approved_at ? ` · ${new Date(p.approved_at).toLocaleDateString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="pa-row-meta">
-                    {p.location || '—'} · {p.project_type}
-                    {p.created_by_name ? ` · added by ${p.created_by_name}` : ''}
-                    {st === 'rejected' && p.rejected_reason ? ` · ${p.rejected_reason}` : ''}
-                  </div>
-                </button>
-                <span className={`nx-badge pa-badge is-${st}`}>{st.toUpperCase()}</span>
-                {st === 'pending' && (
-                  <div className="pa-row-actions">
-                    <button className="nx-btn nx-btn-sm nx-btn-success" disabled={busy === p.id}
-                      onClick={() => act(p, 'approve')}>
-                      <Icon name="check" /> Approve
-                    </button>
-                    <button className="nx-btn nx-btn-sm nx-btn-danger" disabled={busy === p.id}
-                      onClick={() => { setRejecting(p); setReason(''); }}>
-                      <Icon name="x" /> Reject
-                    </button>
-                  </div>
-                )}
-              </div>
+                  <span className={`nx-badge pa-badge is-${st}`}>
+                    {st === 'pending' ? 'AWAITING APPROVAL' : st.toUpperCase()}
+                  </span>
+                </div>
 
-              {open && <ProjectDetail project={p} />}
+                <div className="pa-card-actions">
+                  <button type="button" className="nx-btn nx-btn-md nx-btn-secondary pa-btn-link"
+                    onClick={() => setOpenId(open ? null : p.id)}>
+                    {open ? '▴ Hide Details' : '▾ View Details'}
+                  </button>
+                  {st === 'pending' && (
+                    <>
+                      <button className="nx-btn nx-btn-md nx-btn-success pa-btn-ok" disabled={busy === p.id}
+                        onClick={() => act(p, 'approve')}>
+                        <Icon name="check" /> Approve
+                      </button>
+                      <button className="nx-btn nx-btn-md nx-btn-danger pa-btn-bad" disabled={busy === p.id}
+                        onClick={() => { setRejecting(p); setReason(''); }}>
+                        <Icon name="x" /> Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {open && <ProjectDetail project={p} />}
               </div>
             );
           })}
