@@ -797,6 +797,13 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                         {FACING_LABEL[plot.facing] || plot.facing}
                       </div>
                     )}
+                    {/* Corner / Common Plot Facing carry a PLC charge, so they belong here
+                        with the other things that move the price. */}
+                    {(plot.is_corner || plot.is_clubhouse_facing) && (
+                      <div className="nx-unit-meta plc">
+                        {[plot.is_corner && 'Corner Plot', plot.is_clubhouse_facing && 'Common Plot Facing'].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                     {(plot.terrace_area || '').trim() && (
                       <div className="nx-unit-meta green">
                         Terrace {plot.terrace_area} sq.yd
@@ -881,6 +888,11 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     {plot.drafted_booking_id && plot.held_by_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.held_by_name}</span>}
                     {plot.size && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.size}</span>}
                     {plot.facing && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{FACING_LABEL[plot.facing] || plot.facing}</span>}
+                    {(plot.is_corner || plot.is_clubhouse_facing) && (
+                      <span className="nx-unit-chip-plc">
+                        {[plot.is_corner && 'Corner Plot', plot.is_clubhouse_facing && 'Common Plot Facing'].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
                     {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
                     {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}</span>}
                   </button>

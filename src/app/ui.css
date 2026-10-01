@@ -570,6 +570,8 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-unit-meta.size { color: var(--warning); margin-top: 0; }
 .nx-unit-meta.blue { color: var(--accent); }
 .nx-unit-meta.green { color: var(--success); }
+.nx-unit-chip-plc { font-size: 10px; font-weight: 700; color: var(--warning); }
+.nx-unit-meta.plc { color: var(--peach-2); }  /* readable on the dark hover card in both themes */
 .nx-hero-chip { font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.12); padding: 3px 10px; border-radius: 20px; }
 .nx-hero-chip.on { color: var(--success); }
 .nx-hero-chip.off { color: var(--border-strong); }
