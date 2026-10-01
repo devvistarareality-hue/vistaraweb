@@ -712,7 +712,7 @@ export default function DistributionPage() {
                   <tr style={{ borderBottom: '1px solid var(--surface-2)' }}>
                     {['Type', 'Leads', 'Triggered By', 'When', 'Details'].map(h => (
                       /* sticky so the columns stay labelled while the rows scroll */
-                      <th key={h} style={{ textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '8px 16px', textTransform: 'uppercase', letterSpacing: 0.5, position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>{h}</th>
+                      <th key={h} className="dist-log-th">{h}</th>
                     ))}
                   </tr>
                 </thead>
