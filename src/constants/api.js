@@ -139,6 +139,8 @@ export const SALES_ENDPOINTS = {
   get metaWebhookConfig(){ return `${BASE_URL}/api/sales/webhooks/meta/config/`; },
   get metaMappings()     { return `${BASE_URL}/api/sales/webhooks/meta/mappings/`; },
   get userProjects()     { return `${BASE_URL}/api/sales/user-projects/`; },
+  get projectApprovers() { return `${BASE_URL}/api/sales/projects/approvers/`; },
+  projectApproval: (id)  => `${BASE_URL}/api/sales/projects/${id}/approval/`,
   get mediaUpload()      { return `${BASE_URL}/api/sales/media/upload/`; },
   get mediaDelete()      { return `${BASE_URL}/api/sales/media/delete/`; },
   get dataReset()        { return `${BASE_URL}/api/sales/admin/reset-trial-data/`; },

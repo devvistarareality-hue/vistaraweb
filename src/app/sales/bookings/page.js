@@ -10,6 +10,7 @@ import BookingDetails from '../../../components/BookingDetails';
 
 
 import Icon from '../../../components/Icon';
+import ProjectApprovals from './_ProjectApprovals';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import LeadTransfers from '../_LeadTransfers';
@@ -379,7 +380,15 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
           className={`nx-btn nx-btn-md nx-toggle${section === 'transfers' ? ' is-on' : ''}`}>
           Lead Transfer Approvals{xfers.length > 0 ? ` · ${xfers.length}` : ''}
         </button>
+        {/* A new project is invisible to everyone until it is approved, so the
+            queue for that lives alongside the other two. */}
+        <button type="button" onClick={() => pickSection('projects')}
+          className={`nx-btn nx-btn-md nx-toggle${section === 'projects' ? ' is-on' : ''}`}>
+          Project Approvals
+        </button>
       </div>
+
+      {section === 'projects' && <ProjectApprovals isAdmin={isAdmin} />}
 
       {section === 'transfers' && (
         <LeadTransfers companyId={companyId} cpOnly={cpOnly} pendingCount={xfers.length} onChanged={loadTransfers} />

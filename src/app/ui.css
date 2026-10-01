@@ -1881,3 +1881,51 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   border-radius: 7px; border: 1.5px solid var(--blue-2); background: var(--surface);
   color: var(--accent); font-size: 11px; font-weight: 700; cursor: pointer; }
 .inv-modal-title { font-size: 16px; font-weight: 800; color: var(--text); }
+
+/* ─── Project approvals ───────────────────────────────────────────────────── */
+.pa-cfg { background: var(--surface); border-radius: 18px; padding: 14px 18px; margin-bottom: 16px; }
+.pa-cfg-toggle { background: none; border: 0; padding: 0; cursor: pointer;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+  display: inline-flex; align-items: center; gap: 6px; }
+.pa-cfg-body { margin-top: 12px; }
+.pa-cfg-hint { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.55; max-width: 720px; }
+
+/* One picker, not one per project — see the hint above it. */
+.pa-picker { position: relative; max-width: 460px; }
+.pa-picker-btn { width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; height: 40px; padding: 0 12px; border-radius: 12px; border: 1.5px solid var(--border);
+  background: var(--surface-2); font-size: 13px; cursor: pointer; }
+.pa-picker-val { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pa-picker-ph { color: var(--muted); }
+.pa-picker-caret { color: var(--muted); flex: 0 0 auto; }
+.pa-picker-menu { position: absolute; z-index: 40; top: 44px; left: 0; right: 0; max-height: 260px;
+  overflow-y: auto; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; box-shadow: 0 12px 40px rgba(var(--ink-rgb), 0.16); padding: 6px; }
+.pa-picker-opt { display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border-radius: 9px; font-size: 13px; color: var(--text); cursor: pointer; }
+.pa-picker-opt:hover { background: var(--surface-2); }
+.pa-picker-opt input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+.pa-picker-role { margin-left: auto; font-size: 11px; color: var(--muted); }
+.pa-picker-empty { padding: 10px; font-size: 13px; color: var(--muted); }
+
+.pa-list { padding: 4px 18px; }
+.pa-row { display: flex; align-items: center; gap: 14px; padding: 14px 0;
+  border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
+.pa-row:last-child { border-bottom: 0; }
+.pa-row-main { flex: 1; min-width: 200px; }
+.pa-row-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.pa-row-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.pa-row-actions { display: flex; gap: 8px; }
+.pa-badge { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 20px; }
+.pa-badge.is-pending { background: var(--warning-soft); color: var(--warning); }
+.pa-badge.is-approved { background: var(--success-soft); color: var(--success); }
+.pa-badge.is-rejected { background: var(--danger-soft); color: var(--danger); }
+.pa-empty { padding: 36px; text-align: center; font-size: 13px; color: var(--muted); }
+
+.pa-modal-back { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
+  justify-content: center; padding: 16px; background: rgba(4, 8, 16, 0.55); }
+.pa-modal { width: 440px; max-width: 100%; background: var(--surface); border-radius: 18px; padding: 22px; }
+.pa-modal-title { font-size: 16px; font-weight: 800; color: var(--text); }
+.pa-modal-hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.55; }
+.pa-modal-input { width: 100%; height: 42px; margin-top: 14px; }
+.pa-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
