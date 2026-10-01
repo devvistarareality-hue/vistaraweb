@@ -388,7 +388,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         </button>
       </div>
 
-      {section === 'projects' && <ProjectApprovals isAdmin={isAdmin} />}
+      {section === 'projects' && <ProjectApprovals isAdmin={isAdmin} companyId={companyId} />}
 
       {section === 'transfers' && (
         <LeadTransfers companyId={companyId} cpOnly={cpOnly} pendingCount={xfers.length} onChanged={loadTransfers} />

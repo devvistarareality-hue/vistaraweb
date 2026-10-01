@@ -559,6 +559,15 @@ function ProjectModal({ project, onClose, onSaved }) {
 
           {err && <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
 
+          {/* Said before the click, not discovered after it: saving an approved
+              project takes it off the floor until it is signed off again. */}
+          {isEdit && project?.approval_status === 'approved' && (
+            <div className="pj-reapprove-note">
+              <Icon name="alert" /> Saving changes sends this project back for approval.
+              It will be hidden from everyone until a Director approves it again.
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
             <button className="nx-btn nx-btn-md nx-btn-primary" type="submit" disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>

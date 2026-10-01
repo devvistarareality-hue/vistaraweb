@@ -19,6 +19,7 @@ import { apiFetch } from '../../../utils/apiFetch';
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import { notify } from '../../../lib/notify';
+import { bustCache } from '../_cache';
 
 const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
 
@@ -107,7 +108,7 @@ function ProjectDetail({ project: p }) {
   );
 }
 
-export default function ProjectApprovals({ isAdmin }) {
+export default function ProjectApprovals({ isAdmin, companyId }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('pending');
@@ -155,6 +156,11 @@ export default function ProjectApprovals({ isAdmin }) {
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { notify(d.detail || 'Could not update the project.', 'error'); return; }
+      // The Projects page serves from a cache and returns early without
+      // refetching, so a decision made here was invisible there until the cache
+      // happened to expire — a project rejected a moment ago still read
+      // "awaiting approval". Approving has the same problem in reverse.
+      bustCache(`projects_${companyId || 'all'}`);
       notify(action === 'approve'
         ? `${project.name} approved — it is now visible to everyone.`
         : `${project.name} rejected.`, action === 'approve' ? 'success' : 'info');
