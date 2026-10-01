@@ -1144,7 +1144,8 @@ function BookingPage() {
             <In type="number" value={plcBothVal ? String(plcBothVal) : ''} placeholder="Set in the Rate Master" disabled readOnly />
           </Row>
         )}
-        {flags.hasPlcFixed && !plcBothOnly && PLC_KINDS.map(([k, label]) => (
+        {/* Only the PLC that applies to the plot is shown — no greyed-out line for the other. */}
+        {flags.hasPlcFixed && !plcBothOnly && PLC_KINDS.filter(([k]) => f[`plc_${k}_on`]).map(([k, label]) => (
           <Row key={k}>
             <L><span className="plc-check">
               <input type="checkbox" checked={!!f[`plc_${k}_on`]} disabled readOnly title="Set on the plot in Manage Plots" />
