@@ -50,6 +50,63 @@ function ApproverPicker({ people, selected, onToggle }) {
   );
 }
 
+function Field({ label, value }) {
+  return (
+    <div className="pa-field">
+      <div className="pa-field-label">{label}</div>
+      <div className="pa-field-value">{value || '—'}</div>
+    </div>
+  );
+}
+
+/** What is actually being approved. Read from the list payload, which already
+ *  carries every field except the floor plans and site-map zones. */
+function ProjectDetail({ project: p }) {
+  const money = (v) => (v ? String(v) : '');
+  const layout = p.floor_wise
+    ? (p.block_industrial ? 'Block-wise industrial' : 'Floor-wise (tower)')
+    : 'Plotted scheme';
+  return (
+    <div className="pa-detail">
+      <div className="pa-detail-grid">
+        <Field label="Project name" value={p.name} />
+        <Field label="Tagline" value={p.tagline} />
+        <Field label="Location" value={p.location} />
+        <Field label="Type" value={p.project_type} />
+        <Field label="Pricing model" value={p.formula_set} />
+        <Field label="Layout" value={layout} />
+        <Field label="RERA number" value={p.rera} />
+        <Field label="Total area" value={p.total_area} />
+        <Field label="Price range" value={money(p.price_range)} />
+        <Field label="Possession" value={p.possession} />
+        <Field label="Units mapped" value={p.plot_counts ? String(p.plot_counts.total ?? 0) : '0'} />
+        <Field label="Kiosk self-booking" value={p.kiosk_enabled ? 'Enabled' : 'Off'} />
+        <Field label="Added by" value={p.created_by_name} />
+        <Field label="Added on" value={p.created_at ? new Date(p.created_at).toLocaleString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''} />
+      </div>
+      {p.description ? (
+        <div className="pa-detail-desc">
+          <div className="pa-field-label">Description</div>
+          <div className="pa-field-value">{p.description}</div>
+        </div>
+      ) : null}
+      {p.approved_by_name ? (
+        <div className="pa-detail-desc">
+          <div className="pa-field-label">
+            {p.approval_status === 'rejected' ? 'Rejected by' : 'Approved by'}
+          </div>
+          <div className="pa-field-value">
+            {p.approved_by_name}
+            {p.approved_at ? ` · ${new Date(p.approved_at).toLocaleString('en-IN', {
+              day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ProjectApprovals({ isAdmin }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +117,9 @@ export default function ProjectApprovals({ isAdmin }) {
   const [people, setPeople] = useState([]);
   // Rejecting asks for a reason first — refusing a project without saying why
   // leaves whoever created it with nothing to act on.
+  // Tapping a row opens what is being approved. Approving a project you cannot
+  // see the details of is a rubber stamp, not a decision.
+  const [openId, setOpenId] = useState(null);
   const [rejecting, setRejecting] = useState(null);
   const [reason, setReason] = useState('');
 
@@ -158,15 +218,22 @@ export default function ProjectApprovals({ isAdmin }) {
         <div className="nx-card pa-list">
           {shown.map((p) => {
             const st = p.approval_status || 'approved';
+            const open = openId === p.id;
             return (
-              <div className="pa-row" key={p.id}>
-                <div className="pa-row-main">
-                  <div className="pa-row-name">{p.name}</div>
+              <div className="pa-row-wrap" key={p.id}>
+              <div className="pa-row">
+                <button type="button" className="pa-row-main pa-row-open"
+                  onClick={() => setOpenId(open ? null : p.id)}
+                  aria-expanded={open}>
+                  <div className="pa-row-name">
+                    <span className="pa-row-caret">{open ? '▾' : '▸'}</span> {p.name}
+                  </div>
                   <div className="pa-row-meta">
                     {p.location || '—'} · {p.project_type}
+                    {p.created_by_name ? ` · added by ${p.created_by_name}` : ''}
                     {st === 'rejected' && p.rejected_reason ? ` · ${p.rejected_reason}` : ''}
                   </div>
-                </div>
+                </button>
                 <span className={`nx-badge pa-badge is-${st}`}>{st.toUpperCase()}</span>
                 {st === 'pending' && (
                   <div className="pa-row-actions">
@@ -180,6 +247,9 @@ export default function ProjectApprovals({ isAdmin }) {
                     </button>
                   </div>
                 )}
+              </div>
+
+              {open && <ProjectDetail project={p} />}
               </div>
             );
           })}

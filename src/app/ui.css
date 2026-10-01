@@ -1951,3 +1951,20 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   box-shadow: 0 1px 6px rgba(0,0,0,0.12); }
 .pl-badge-appr.is-pending { background: var(--warning-2); color: #fff; }
 .pl-badge-appr.is-rejected { background: var(--danger); color: #fff; }
+
+/* Project approvals — the detail that opens under a row. */
+.pa-row-wrap { border-bottom: 1px solid var(--hairline); }
+.pa-row-wrap:last-child { border-bottom: 0; }
+.pa-row-wrap .pa-row { border-bottom: 0; }
+/* The whole left-hand side is the toggle, so the hit area is the row, not a caret. */
+.pa-row-open { flex: 1; min-width: 200px; text-align: left; background: none; border: 0;
+  padding: 0; cursor: pointer; }
+.pa-row-caret { color: var(--muted); font-size: 11px; }
+.pa-detail { padding: 4px 0 16px; }
+.pa-detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px 18px; }
+.pa-field-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--faint); }
+.pa-field-value { font-size: 13px; color: var(--text); margin-top: 2px; word-break: break-word;
+  text-transform: none; }
+.pa-detail-desc { margin-top: 14px; }
