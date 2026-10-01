@@ -137,6 +137,9 @@ function BookingPage() {
   // and don't need to re-upload it unless the rep attaches a replacement.
   const [savedLoiPath, setSavedLoiPath] = useState('');
   const [deedAmtStr, setDeedAmtStr] = useState('');
+  // Kalrav's Sale Deed % / Unit Price box being typed in, so it shows what was typed
+  // (not the recomputed figure) until it loses focus. { k: 'pct' | 'up', t } or null.
+  const [kalEdit, setKalEdit] = useState(null);
   const editingAmtRef = useRef(false);
 
   // Revision mode: load the existing booking and prefill the form.
@@ -545,6 +548,17 @@ function BookingPage() {
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
 
+  // Kalrav: what Sale Deed % is a percentage of, and setting the Unit Price from either
+  // box — keep the Land Sale Deed, put the rest on the Construction Agreement (or, if
+  // the price is below the LSD, all of it on the LSD).
+  const kalBase = (v.plotBasic || 0) + (v.plotDev || 0) + (v.constAmt || 0) + (v.premiumLocation || 0);
+  const setKalravUnitPrice = (up) => setF((s) => {
+    const total = Math.max(0, Math.round(up));
+    const lsd = Math.round(Number(s.land_sale_deed) || 0);
+    return lsd <= total
+      ? { ...s, const_agreement: String(total - lsd) }
+      : { ...s, land_sale_deed: String(total), const_agreement: '0' };
+  });
   useEffect(() => {
     if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));
   }, [v.saleDeed]);
@@ -1160,9 +1174,23 @@ function BookingPage() {
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
         {formulaSet === 'kalrav' && <>
-          {/* Kalrav: Unit Price = Land Sale Deed + Construction Agreement; % derived — both read-only. */}
-          <Row><L>Sale Deed %</L><In type="number" value={v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0'} disabled readOnly /></Row>
-          <Row><L>Unit Price (₹)</L><In type="number" value={Math.round(v.saleDeed) || 0} disabled readOnly /></Row>
+          {/* Kalrav: Unit Price = Land Sale Deed + Construction Agreement, and Sale Deed % =
+              Unit Price / (Plot Basic + Dev + Construction + PLC). Type any of the four:
+              a % or Unit Price keeps the Land Sale Deed and moves the Construction
+              Agreement, so the three always agree and the taxes (stamp duty on LSD, GST
+              on the agreement) stay on the right amounts. */}
+          <Row><L>Sale Deed %</L>
+            <In type="number" value={kalEdit?.k === 'pct' ? kalEdit.t : (v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0')}
+              onFocus={() => setKalEdit({ k: 'pct', t: v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '' })}
+              onBlur={() => setKalEdit(null)}
+              onChange={(e) => { setKalEdit({ k: 'pct', t: e.target.value }); setKalravUnitPrice((Number(e.target.value) || 0) / 100 * kalBase); }} />
+          </Row>
+          <Row><L>Unit Price (₹)</L>
+            <In type="number" value={kalEdit?.k === 'up' ? kalEdit.t : (Math.round(v.saleDeed) || 0)}
+              onFocus={() => setKalEdit({ k: 'up', t: String(Math.round(v.saleDeed) || '') })}
+              onBlur={() => setKalEdit(null)}
+              onChange={(e) => { setKalEdit({ k: 'up', t: e.target.value }); setKalravUnitPrice(Number(e.target.value) || 0); }} />
+          </Row>
         </>}
         {hasSaleDeedSplit && formulaSet !== 'kalrav' && <>
           {/* Editing the % clears the exact Unit Price override so the % drives again. */}
