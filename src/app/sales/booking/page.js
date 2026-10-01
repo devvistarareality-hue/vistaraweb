@@ -1130,7 +1130,8 @@ function BookingPage() {
         {flags.hasPlcRate && <Row><L>PLC Rate (₹/{unit})</L><In type="number" value={f.plc_rate} onChange={(e) => set('plc_rate', e.target.value)} /></Row>}
         {/* PLC: ticked from the plot's own Corner / Common Plot Facing marks in Manage
             Plots — read-only here, so a charge can't be added to or dropped from a plot
-            that isn't marked. The amount comes from the Rate Master and can be changed. */}
+            that isn't marked. The amount comes from the project's Rate Master, also
+            read-only here — change it there. */}
         {/* Every picked plot is both Corner and Common Plot Facing: one combined line,
             not two. It is still saved as the two amounts (split evenly), so the stored
             booking, drafts and revisions are unchanged — only how it reads differs. */}
@@ -1140,12 +1141,7 @@ function BookingPage() {
               <input type="checkbox" checked disabled readOnly title="Set on the plot in Manage Plots" />
               PLC — Corner + Common Plot Facing (₹)
             </span></L>
-            <In type="number" value={plcBothVal ? String(plcBothVal) : ''} placeholder="Amount"
-              onChange={(e) => {
-                const x = Math.round(Number(e.target.value) || 0); const half = Math.round(x / 2);
-                setF((s) => ({ ...s, plc_corner_on: true, plc_clubhouse_on: true,
-                  plc_corner: e.target.value === '' ? '' : String(half), plc_clubhouse: e.target.value === '' ? '' : String(x - half) }));
-              }} />
+            <In type="number" value={plcBothVal ? String(plcBothVal) : ''} placeholder="Set in the Rate Master" disabled readOnly />
           </Row>
         )}
         {flags.hasPlcFixed && !plcBothOnly && PLC_KINDS.map(([k, label]) => (
@@ -1154,8 +1150,7 @@ function BookingPage() {
               <input type="checkbox" checked={!!f[`plc_${k}_on`]} disabled readOnly title="Set on the plot in Manage Plots" />
               PLC — {label} (₹)
             </span></L>
-            <In type="number" value={f[`plc_${k}`]} disabled={!f[`plc_${k}_on`]} placeholder={f[`plc_${k}_on`] ? 'Amount' : 'Not applied'}
-              onChange={(e) => set(`plc_${k}`, e.target.value)} />
+            <In type="number" value={f[`plc_${k}`]} disabled readOnly placeholder={f[`plc_${k}_on`] ? 'Set in the Rate Master' : 'Not applied'} />
           </Row>
         ))}
         {flags.hasSaleDeedRate && <Row><L>Sale Deed Rate (₹/sq.ft)</L><In type="number" value={f.sale_deed_rate} onChange={(e) => set('sale_deed_rate', e.target.value)} /></Row>}
