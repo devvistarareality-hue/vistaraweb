@@ -67,7 +67,8 @@ export default function ProjectApprovals({ isAdmin }) {
     setLoading(true);
     try {
       // ?full=1 is not needed here: the list view already carries approval_status.
-      const res = await apiFetch(SALES_ENDPOINTS.projects, { headers: authHeaders() });
+      // This queue is one of the two screens that act on an unapproved project.
+      const res = await apiFetch(`${SALES_ENDPOINTS.projects}?include_unapproved=1`, { headers: authHeaders() });
       if (res.ok) setProjects(await res.json());
     } catch { /* leave what is on screen */ }
     setLoading(false);

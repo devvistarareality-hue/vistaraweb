@@ -599,7 +599,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     const cached = getCache(cKey);
     if (cached) { setProjects(cached); setLoading(false); return; }
-    fetch(SALES_ENDPOINTS.projects + cq, { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.projects + (cq ? cq + '&' : '?') + 'include_unapproved=1', { headers: authHeaders() })
       .then(r => r.json())
       .then(d => { const list = Array.isArray(d) ? d : []; setCache(cKey, list); setProjects(list); setLoading(false); })
       .catch(() => setLoading(false));
@@ -681,9 +681,17 @@ export default function ProjectsPage() {
                           <Icon name="ban" /> {p.locked_blocks.length} BLOCK{p.locked_blocks.length > 1 ? 'S' : ''} LOCKED
                         </span>
                       )}
-                      <span className={`nx-badge pl-badge-active${p.is_active ? '' : ' is-off'}`}>
-                        {p.is_active ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
+                      {/* Approval outranks is_active on the badge: a project
+                          nobody has signed off is not live, whatever the Active
+                          checkbox says, and showing ACTIVE there was read as the
+                          gate having failed. */}
+                      {(p.approval_status && p.approval_status !== 'approved')
+                        ? <span className={`nx-badge pl-badge-appr is-${p.approval_status}`}>
+                            {p.approval_status === 'pending' ? 'ON HOLD · AWAITING APPROVAL' : 'REJECTED'}
+                          </span>
+                        : <span className={`nx-badge pl-badge-active${p.is_active ? '' : ' is-off'}`}>
+                            {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                          </span>}
                     </span>
                   </div>
                 </div>

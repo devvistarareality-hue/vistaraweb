@@ -1929,3 +1929,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pa-modal-hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.55; }
 .pa-modal-input { width: 100%; height: 42px; margin-top: 14px; }
 .pa-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+/* A project awaiting approval is on hold, whatever its Active checkbox says. */
+.pl-badge-appr { font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12); }
+.pl-badge-appr.is-pending { background: var(--warning-2); color: #fff; }
+.pl-badge-appr.is-rejected { background: var(--danger); color: #fff; }
