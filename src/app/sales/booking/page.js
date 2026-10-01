@@ -980,8 +980,11 @@ function BookingPage() {
                           onChange={(ev) => setFlatEdit(pb, { terraceRate: ev.target.value })} />
                       </Row>
                     )}
+                    {/* Rate or Flat Price, on either plan: enter one and setFlatEdit works
+                        out the other, so a negotiated total (say 40 lakh) needs no rate
+                        back-calculated by hand. */}
                     <Row><L>Flat Price (₹)</L>
-                      <In type="number" disabled={!dp} value={dp ? (e.flatPrice ?? '') : pb.flat_price}
+                      <In type="number" value={e.flatPrice ?? ''}
                         onChange={(ev) => setFlatEdit(pb, { flatPrice: ev.target.value })} />
                     </Row>
                     {/* No token on a Down Payment plan — there is no loan, and the section
@@ -994,7 +997,7 @@ function BookingPage() {
                     <p style={{ fontSize: 11, color: 'var(--muted)', margin: '4px 0 0' }}>
                       {dp
                         ? `${rupee(pb.flat_price)} / ${pb.flat_area} sq.yd = ${rupee(pb.flat_rate)} per sq.yd${pb.terrace_area ? ` · terrace ${pb.terrace_area} sq.yd @ ${rupee(pb.terrace_rate)} = ${rupee(pb.terrace_price)}` : ''}`
-                        : 'Regular plan — priced from the approved price book. Switch to Down Payment to change the rate or token.'}
+                        : 'Regular plan — enter the Rate or the Flat Price and the other follows. Switch to Down Payment to change the token.'}
                     </p>
                   </div>
                 );
