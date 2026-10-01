@@ -40,6 +40,28 @@ export function fieldFlags(formulaSet) {
 
 const num = (v) => parseFloat(v) || 0;
 
+// PLC for the picked plots, from the project's Rate Master. A plot marked Corner is
+// charged plc_corner_price, Common Plot Facing plc_clubhouse_price, and a plot that is
+// both plc_both_price — one combined figure, not the two added up (falls back to the
+// sum when no combined price is set). The combined charge is split across the two
+// lines in proportion to the single prices (equal prices -> half each), so the
+// breakdown still adds up to exactly the combined figure.
+export function plcAmounts(plots = [], rm = {}) {
+  const c = num(rm && rm.plc_corner_price);
+  const k = num(rm && rm.plc_clubhouse_price);
+  const both = num(rm && rm.plc_both_price) || c + k;
+  let corner = 0, club = 0, cornerOn = false, clubOn = false;
+  for (const p of plots) {
+    if (p.is_corner && p.is_clubhouse_facing) {
+      const share = c + k ? Math.round(both * c / (c + k)) : Math.round(both / 2);
+      corner += share; club += both - share;
+      cornerOn = clubOn = true;
+    } else if (p.is_corner) { corner += c; cornerOn = true; }
+    else if (p.is_clubhouse_facing) { club += k; clubOn = true; }
+  }
+  return { corner, club, cornerOn, clubOn };
+}
+
 export function computeFormulas(inp = {}) {
   const formulaSet   = inp.formulaSet || 'kalrav';
   const projectName  = (inp.projectName || '').toString().trim().toLowerCase();

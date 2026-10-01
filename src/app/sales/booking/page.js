@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
-import { computeFormulas, fieldFlags, installmentBase, rupee } from '../../../lib/bookingFormulas';
+import { computeFormulas, fieldFlags, installmentBase, plcAmounts, rupee } from '../../../lib/bookingFormulas';
 import { stripPlotPrefix } from '../../../lib/plotNumber';
 import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
@@ -325,22 +325,20 @@ function BookingPage() {
 
   const formulaSet = project?.formula_set || 'kalrav';
   const flags = useMemo(() => fieldFlags(formulaSet), [formulaSet]);
-  // PLC defaults for a new booking: tick Corner / Common Plot Facing when a picked plot
-  // is marked so, and charge the Rate Master price once per such plot. A resumed
-  // booking keeps what it saved; the rep can still change both here.
+  // PLC defaults for a new booking: Corner / Common Plot Facing are ticked from the
+  // picked plots' own marks (Manage Plots) — never by hand — and priced from the Rate
+  // Master (see plcAmounts). A resumed booking keeps what it saved; the amount can
+  // still be edited for a negotiated price.
   const plcSeeded = useRef(false);
   useEffect(() => {
     if (!flags.hasPlcFixed || plcSeeded.current || reviseId || draftId || convertEoiId) return;
     if (!plots.length || !project) return;
     plcSeeded.current = true;
-    const nCorner = plots.filter((p) => p.is_corner).length;
-    const nClub = plots.filter((p) => p.is_clubhouse_facing).length;
-    const rm = project.rate_master || {};
-    const amt = (price, n) => (n && parseFloat(price) > 0 ? String(parseFloat(price) * n) : '');
+    const p = plcAmounts(plots, project.rate_master);
     setF((s) => ({
       ...s,
-      plc_corner_on: nCorner > 0, plc_corner: s.plc_corner || amt(rm.plc_corner_price, nCorner),
-      plc_clubhouse_on: nClub > 0, plc_clubhouse: s.plc_clubhouse || amt(rm.plc_clubhouse_price, nClub),
+      plc_corner_on: p.cornerOn, plc_corner: s.plc_corner || (p.corner ? String(p.corner) : ''),
+      plc_clubhouse_on: p.clubOn, plc_clubhouse: s.plc_clubhouse || (p.club ? String(p.club) : ''),
     }));
   }, [flags.hasPlcFixed, plots, project, reviseId, draftId, convertEoiId]);
   // All pricing sets share the sale-deed % split (Unit Price + Additional Extra Work Amount).
@@ -1127,12 +1125,13 @@ function BookingPage() {
         {flags.hasConstructionFields && <Row><L>Development Rate (₹/{unit})</L><In type="number" value={f.dev_rate} onChange={(e) => set('dev_rate', e.target.value)} /></Row>}
         {flags.hasConstructionFields && <Row><L>Construction Rate (₹/{unit})</L><In type="number" value={f.const_rate} onChange={(e) => set('const_rate', e.target.value)} /></Row>}
         {flags.hasPlcRate && <Row><L>PLC Rate (₹/{unit})</L><In type="number" value={f.plc_rate} onChange={(e) => set('plc_rate', e.target.value)} /></Row>}
-        {/* PLC: ticked from the plot's own Corner / Common Plot Facing marks; the amount
-            comes from the Rate Master and can be changed (or typed when there is none). */}
+        {/* PLC: ticked from the plot's own Corner / Common Plot Facing marks in Manage
+            Plots — read-only here, so a charge can't be added to or dropped from a plot
+            that isn't marked. The amount comes from the Rate Master and can be changed. */}
         {flags.hasPlcFixed && PLC_KINDS.map(([k, label]) => (
           <Row key={k}>
             <L><span className="plc-check">
-              <input type="checkbox" checked={!!f[`plc_${k}_on`]} onChange={(e) => set(`plc_${k}_on`, e.target.checked)} />
+              <input type="checkbox" checked={!!f[`plc_${k}_on`]} disabled readOnly title="Set on the plot in Manage Plots" />
               PLC — {label} (₹)
             </span></L>
             <In type="number" value={f[`plc_${k}`]} disabled={!f[`plc_${k}_on`]} placeholder={f[`plc_${k}_on`] ? 'Amount' : 'Not applied'}
