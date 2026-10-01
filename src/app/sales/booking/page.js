@@ -330,6 +330,9 @@ function BookingPage() {
   // Master (see plcAmounts). A resumed booking keeps what it saved; the amount can
   // still be edited for a negotiated price.
   const plcSeeded = useRef(false);
+  // Every picked plot is both Corner and Common Plot Facing -> one combined PLC line.
+  const plcBothOnly = plots.length > 0 && plots.every((p) => p.is_corner && p.is_clubhouse_facing);
+  const plcBothVal = (f.plc_corner_on ? Number(f.plc_corner) || 0 : 0) + (f.plc_clubhouse_on ? Number(f.plc_clubhouse) || 0 : 0);
   useEffect(() => {
     if (!flags.hasPlcFixed || plcSeeded.current || reviseId || draftId || convertEoiId) return;
     if (!plots.length || !project) return;
@@ -1128,7 +1131,24 @@ function BookingPage() {
         {/* PLC: ticked from the plot's own Corner / Common Plot Facing marks in Manage
             Plots — read-only here, so a charge can't be added to or dropped from a plot
             that isn't marked. The amount comes from the Rate Master and can be changed. */}
-        {flags.hasPlcFixed && PLC_KINDS.map(([k, label]) => (
+        {/* Every picked plot is both Corner and Common Plot Facing: one combined line,
+            not two. It is still saved as the two amounts (split evenly), so the stored
+            booking, drafts and revisions are unchanged — only how it reads differs. */}
+        {flags.hasPlcFixed && plcBothOnly && (
+          <Row>
+            <L><span className="plc-check">
+              <input type="checkbox" checked disabled readOnly title="Set on the plot in Manage Plots" />
+              PLC — Corner + Common Plot Facing (₹)
+            </span></L>
+            <In type="number" value={plcBothVal ? String(plcBothVal) : ''} placeholder="Amount"
+              onChange={(e) => {
+                const x = Math.round(Number(e.target.value) || 0); const half = Math.round(x / 2);
+                setF((s) => ({ ...s, plc_corner_on: true, plc_clubhouse_on: true,
+                  plc_corner: e.target.value === '' ? '' : String(half), plc_clubhouse: e.target.value === '' ? '' : String(x - half) }));
+              }} />
+          </Row>
+        )}
+        {flags.hasPlcFixed && !plcBothOnly && PLC_KINDS.map(([k, label]) => (
           <Row key={k}>
             <L><span className="plc-check">
               <input type="checkbox" checked={!!f[`plc_${k}_on`]} disabled readOnly title="Set on the plot in Manage Plots" />
@@ -1194,8 +1214,9 @@ function BookingPage() {
         {flags.hasConstructionFields && <T label="Construction Amount" sub="Construction Area × Construction Rate" sub2={`${inr(v.constArea)} × ${inr(v.constRate)}`} val={v.constAmt} />}
         {flags.hasConstructionFields && formulaSet === 'ankhol' && v.premiumLocation > 0 && <T label="Premium Location Charge" val={v.premiumLocation} />}
         {flags.hasPlcRate && v.premiumLocation > 0 && <T label="Premium Location Amount" sub="Plot Area × PLC Rate" sub2={`${inr(v.area)} × ${inr(v.plcRate)}`} val={v.premiumLocation} />}
-        {flags.hasPlcFixed && v.plcCorner > 0 && <T label="PLC — Corner Plot" val={v.plcCorner} />}
-        {flags.hasPlcFixed && v.plcClubhouse > 0 && <T label="PLC — Common Plot Facing" val={v.plcClubhouse} />}
+        {flags.hasPlcFixed && plcBothOnly && v.plcCorner + v.plcClubhouse > 0 && <T label="PLC — Corner + Common Plot Facing" val={v.plcCorner + v.plcClubhouse} />}
+        {flags.hasPlcFixed && !plcBothOnly && v.plcCorner > 0 && <T label="PLC — Corner Plot" val={v.plcCorner} />}
+        {flags.hasPlcFixed && !plcBothOnly && v.plcClubhouse > 0 && <T label="PLC — Common Plot Facing" val={v.plcClubhouse} />}
         {flags.hasConstructionFields && <T
           label="Total Basic Amount"
           sub={formulaSet === 'ankhol' || flags.hasPlcRate ? 'Plot Basic + Plot Dev + Construction + Premium'
