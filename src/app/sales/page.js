@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { SALES_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import DateFilter from './_DateFilter';
+import PartnerPicker from './_PartnerPicker';
 import { fillDates } from './_fillDates';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
@@ -295,6 +296,25 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
   const _des = (user?.designation || '').toLowerCase();
   const isCp = cpOnly || can(user, 'sales.pipeline.cp') || _des.includes('cp cluster head');
 
+  // Filters, on the partner desk only — the Sales dashboard is deliberately left
+  // as it was. Every tile, the funnel and the recent-leads list narrow together,
+  // because a dashboard whose headline and list answer different questions is
+  // worse than one with no filters at all.
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [fProject, setFProject] = useState('');
+  const [fPartner, setFPartner] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [partners, setPartners] = useState([]);
+
+  useEffect(() => {
+    if (!isCp) return;                        // nothing to populate on Sales
+    const cq = companyId ? `?company_id=${companyId}` : '';
+    apiFetch(SALES_ENDPOINTS.projects + cq).then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProjects(Array.isArray(d) ? d : [])).catch(() => {});
+    apiFetch(SALES_ENDPOINTS.channelPartners + cq).then((r) => (r.ok ? r.json() : []))
+      .then((d) => setPartners(Array.isArray(d) ? d : (d?.results || []))).catch(() => {});
+  }, [isCp, companyId]);
+
   useEffect(() => {
     // `adminView` (Admin-section mirror for a Sales Admin-Modules user) always hits
     // the network with admin_view=1 rather than reusing the plain cache key — the
@@ -305,7 +325,9 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
     // user's still-fresh cached payload (2 min TTL, localStorage) short-circuits the
     // fetch below and the Unassigned tile renders undefined. Keep the `stats_`
     // prefix — _cache.js derives the TTL from the first `_`-delimited segment.
-    const cacheKey = `stats_v2_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}`;
+    const filterKey = [range.from, range.to, fProject, fPartner].join('|');
+    const anyFilter = filterKey !== '|||';
+    const cacheKey = `stats_v2_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}${anyFilter ? `_${filterKey}` : ''}`;
     if (!adminView) {
       const { data: cached, fresh } = getCacheWithStatus(cacheKey);
       if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
@@ -314,12 +336,16 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
     if (companyId) params.push(`company_id=${companyId}`);
     if (adminView) params.push('admin_view=1');
     if (isCp) params.push('cp_only=true');
+    if (range.from) params.push(`date_from=${range.from}`);
+    if (range.to) params.push(`date_to=${range.to}`);
+    if (fProject) params.push(`project_id=${fProject}`);
+    if (fPartner) params.push(`channel_partner_id=${fPartner}`);
     const url = params.length ? `${SALES_ENDPOINTS.stats}?${params.join('&')}` : SALES_ENDPOINTS.stats;
     apiFetch(url)
       .then((r) => r.json())
       .then((d) => { if (!adminView) setCache(cacheKey, d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId, adminView, isCp]);
+  }, [companyId, adminView, isCp, range.from, range.to, fProject, fPartner]);
 
   // CP Cluster Heads land on their own Channel Partner section, not the regular
   // Sales/Admin one — every tile has to point at the CP-scoped equivalent page.
@@ -372,6 +398,25 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
         </div>
         {!isCp && <SearchLeadButton />}
       </div>
+
+      {isCp && (
+        <div className="cpf-bar">
+          <DateFilter onChange={setRange} />
+          <div className="cpf-row">
+            <select className="nx-input cpf-sel" value={fProject} onChange={(e) => setFProject(e.target.value)}>
+              <option value="">All projects</option>
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <PartnerPicker partners={partners} value={fPartner} onChange={setFPartner} />
+            {(fProject || fPartner) && (
+              <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft cpf-clear"
+                onClick={() => { setFProject(''); setFPartner(''); }}>
+                <Icon name="x" /> Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {loading ? <SkeletonGrid count={6} /> : (
         <>
