@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { SalesLeadsContent } from '../../../sales/leads/page';
+import { PartnerActivityModal } from '../_PartnerActivity';
 
 import Icon from '../../../../components/Icon';
 import { confirmDialog } from '../../../../lib/notify';
@@ -181,6 +182,7 @@ function CpDetailsTab({ companyId }) {
   const [loading,  setLoading]  = useState(true);
   const [modalCp,  setModalCp]  = useState(undefined); // undefined = closed, null = add, object = edit
   const [search,   setSearch]   = useState('');
+  const [activeCp, setActiveCp] = useState(null);      // whose follow-ups/visits are open
 
   const load = useCallback(() => {
     setLoading(true);
@@ -230,6 +232,7 @@ function CpDetailsTab({ companyId }) {
                 <th style={th}>Area</th>
                 <th style={th}>Status</th>
                 <th style={th}>Leads</th>
+                <th className="cpa-col">Activity</th>
                 <th style={th}></th>
               </tr>
             </thead>
@@ -249,6 +252,13 @@ function CpDetailsTab({ companyId }) {
                     </span>
                   </td>
                   <td style={td}>{cp.lead_count ?? 0}</td>
+                  <td className="cpa-col">
+                    <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setActiveCp(cp)}>
+                      {cp.follow_up_count || cp.site_visit_count
+                        ? `${cp.follow_up_count || 0} FU · ${cp.site_visit_count || 0} SV`
+                        : 'Schedule'}
+                    </button>
+                  </td>
                   <td style={{ ...td, textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setModalCp(cp)} style={{ ...iconBtn, color: BLUE }}>Edit</button>
                     <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => del(cp)} style={{ ...iconBtn, color: RED }}>Delete</button>
@@ -268,6 +278,16 @@ function CpDetailsTab({ companyId }) {
             setCps((prev) => modalCp ? prev.map((c) => (c.id === saved.id ? saved : c)) : [...prev, saved]);
             setModalCp(undefined);
           }}
+        />
+      )}
+
+      {activeCp && (
+        <PartnerActivityModal
+          partner={activeCp}
+          companyId={companyId}
+          // Reload on close rather than per change: the counts in this table are
+          // annotated server-side, so they only move when the list is refetched.
+          onClose={() => { setActiveCp(null); load(); }}
         />
       )}
     </div>

@@ -2042,3 +2042,94 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .arb-retired { margin-left: 8px; }
 .arb-actions { display: flex; gap: 8px; justify-content: flex-end; white-space: nowrap; }
 .arb-empty { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 14px; }
+
+/* ─── Channel Partner · partner follow-ups and site visits ───
+   Activity with the partner themselves, as opposed to with their leads. Used by
+   m/[module]/_PartnerActivity.js in two places: a per-partner modal off CP
+   Details, and the CP Details tab panel on the module's Follow-Ups / Site Visits
+   screens.
+
+   Namespaced cpa-, not pa- — Project Approvals above already owns pa-, and the
+   two overlapped on .pa-empty, .pa-modal and .pa-modal-title, where whichever
+   came last in this file silently restyled the other screen. */
+.cpa-chip { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.cpa-chip-ok   { background: var(--success-soft); color: var(--success); }
+.cpa-chip-warn { background: var(--warning-soft); color: var(--warning); }
+.cpa-chip-info { background: var(--accent-soft);  color: var(--accent); }
+.cpa-chip-mute { background: var(--surface-2);    color: var(--muted); }
+.cpa-chip-bad  { background: var(--danger-soft);  color: var(--danger); }
+
+.cpa-scroll { overflow-x: auto; }
+.cpa-table { min-width: 720px; }
+.cpa-table th, .cpa-table td { padding: 10px 14px; font-size: 13px; text-align: left; vertical-align: top; }
+.cpa-table td { color: var(--text); }
+/* A pending follow-up whose time has passed — the one row that needs chasing. */
+.cpa-table tr.cpa-overdue td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+.cpa-strong { display: block; font-weight: 700; color: var(--text); }
+.cpa-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.cpa-remarks { max-width: 260px; white-space: pre-wrap; color: var(--text-2); }
+.cpa-row-actions { display: flex; gap: 6px; justify-content: flex-end; white-space: nowrap; }
+.cpa-empty { padding: 22px 4px; font-size: 13px; color: var(--muted); }
+
+.cpa-form { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; background: var(--surface-2); }
+.cpa-form-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.cpa-form-row > .cpa-lbl { flex: 1 1 200px; }
+.cpa-lbl { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px; }
+.cpa-lbl > .nx-input, .cpa-lbl > select, .cpa-lbl > textarea { display: block; width: 100%; margin-top: 5px;
+  text-transform: none; letter-spacing: normal; font-weight: 400; }
+.cpa-textarea { min-height: 56px; padding: 8px 10px !important; resize: vertical; }
+.cpa-form-actions { margin-top: 2px; }
+.cpa-err { color: var(--danger); font-size: 12px; margin: 0 0 10px; }
+.cpa-add { margin-bottom: 16px; }
+
+.cpa-backdrop { padding: 16px; }
+.cpa-modal { width: 100%; max-width: 940px; max-height: 88vh; display: flex; flex-direction: column; }
+.cpa-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 18px 22px 14px; border-bottom: 1px solid var(--hairline); }
+.cpa-modal-title { font-size: 17px; font-weight: 800; color: var(--text); }
+.cpa-modal-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.cpa-modal-body { padding: 16px 22px 22px; overflow-y: auto; }
+
+.cpa-tabs { display: flex; gap: 2px; padding: 10px 22px 0; }
+.cpa-tab { display: inline-flex; align-items: baseline; gap: 7px; padding: 9px 16px; border: none; border-bottom: 2px solid transparent;
+  background: none; cursor: pointer; font-size: 13.5px; font-weight: 700; color: var(--muted); transition: color .15s, border-color .15s; }
+.cpa-tab.is-on { color: var(--accent); border-bottom-color: var(--accent); }
+.cpa-tab-count { font-size: 11px; font-weight: 800; color: var(--muted); background: var(--surface-2); padding: 1px 7px; border-radius: 20px; }
+.cpa-tab.is-on .cpa-tab-count { color: var(--accent); background: var(--accent-softer); }
+.cpa-tab-note { font-size: 11px; font-weight: 600; color: var(--warning); }
+
+/* The CP Details half of Follow-Ups / Site Visits — same furniture as the CP
+   Leads half, so flipping the toggle changes the subject, not the layout. */
+.cpa-panel-head { display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.cpa-panel-title { font-size: 22px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.02em; }
+.cpa-panel-sub { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.cpa-panel { padding: 18px 20px; }
+.cpa-lbl-wide { flex: 1 1 100%; }
+.cpa-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.cpa-search { flex: 1 1 260px; }
+.cpa-status { flex: 0 0 160px; }
+
+@media (max-width: 720px) {
+  .cpa-modal-head, .cpa-modal-body { padding-left: 16px; padding-right: 16px; }
+  .cpa-tabs { padding-left: 16px; }
+  .cpa-panel { padding-left: 14px; padding-right: 14px; }
+  .cpa-status { flex: 1 1 140px; }
+}
+
+/* ─── Channel Partner · the CP Leads / CP Details toggle ───
+   The same pill pair All Leads carries, shared by Site Visits and Follow-Ups
+   (m/[module]/_CpTabs.js). */
+.cpt-wrap { padding: 24px 28px 0; }
+.cpt-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px; }
+.cpt-pills { display: inline-flex; gap: 2px; padding: 4px; border-radius: 14px; background: var(--surface-3); }
+.cpt-pill { padding: 8px 20px; border: none; border-radius: 8px; background: transparent; cursor: pointer;
+  font-size: 13px; font-weight: 700; color: var(--muted); transition: background-color .15s, color .15s, box-shadow .15s; }
+.cpt-pill.is-on { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(var(--ink-rgb), 0.15); }
+@media (max-width: 720px) {
+  .cpt-wrap { padding: 18px 16px 0; }
+  .cpt-pill { padding: 8px 14px; }
+}
+.cpa-col { padding: 10px 14px; font-size: 13px; text-align: left; white-space: nowrap; }
