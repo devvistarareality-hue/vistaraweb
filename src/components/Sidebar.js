@@ -1,4 +1,5 @@
 'use client';
+import { groupsFor, groupHref } from '../lib/moduleGroups';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -83,17 +84,11 @@ const NAV_ITEMS = [
   { label: 'Activity Log',       href: '/admin/activity',       icon: <IconActivity /> },
 ];
 
-const PARKED_ITEMS = [
-  { label: 'Sales',              href: '/sales',       icon: <IconTrending />,  live: true },
-  { label: 'Channel Partner',    href: '/m/cp/dashboard', icon: <IconPeople />, live: true },
-  { label: 'HR',                 href: '/m/hr',        icon: <IconPeople />,    live: true },
-  { label: 'Accounts & Finance', href: '/m/accounts',  icon: <IconWallet />,    live: true },
-  { label: 'Accounts Receivable', href: '/m/ar/dashboard', icon: <IconReceivable />, live: true },
-  { label: 'Task Allocation',    href: '/m/execution/dashboard', icon: <IconChecklist />, live: true },
-  { label: 'Purchase',           href: '/m/purchase',  icon: <IconCart />,      live: true },
-  { label: 'Land',               href: '/m/land',      icon: <IconPin />,       live: true },
-  { label: 'Club 1000',          href: '/club1000',    icon: <IconCoins />,     live: true },
-];
+const DEPT_ICONS = {
+  sales: <IconTrending />, finance: <IconWallet />, hr: <IconPeople />,
+  purchase: <IconCart />, land: <IconPin />, club1000: <IconCoins />,
+};
+
 
 const CSS = `
   .nav-link { transition: background 0.14s, color 0.14s; }
@@ -220,13 +215,14 @@ export default function Sidebar({ user, onClose, className }) {
           </div>
         )}
 
-        <div style={{ ...s.sectionLabel, marginTop: 22 }}>MODULES</div>
-        {PARKED_ITEMS.map((item) => (
-          <Link key={item.href} href={item.href} className="nav-link" style={s.navItem}>
-            <span style={{ ...s.iconWrap, color: item.live ? 'rgba(var(--ink-rgb),0.74)' : 'rgba(var(--ink-rgb),0.5)' }}>{item.icon}</span>
-            <span style={{ flex: 1, fontSize: 13, fontWeight: item.live ? 600 : 500 }}>{item.label}</span>
-            {!item.live && <span style={s.soonChip}>SOON</span>}
-            {item.live && <span style={s.liveChip}>LIVE</span>}
+        <div className="sb-dept-label">DEPARTMENTS</div>
+        {/* The same departments as the home screen (lib/moduleGroups): one link each,
+            straight into a single-module department, otherwise to its page. */}
+        {groupsFor(user).filter((g) => g.key !== 'admin').map((g) => (
+          <Link key={g.key} href={groupHref(g, '/admin')} className="nav-link" style={s.navItem}>
+            <span className="sb-dept-icon">{DEPT_ICONS[g.key]}</span>
+            <span className="sb-dept-name">{g.title}</span>
+            {g.modules.length > 1 && <span className="sb-dept-count">{g.modules.length}</span>}
           </Link>
         ))}
       </div>

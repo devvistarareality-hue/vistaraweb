@@ -4,6 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchDesignations, createDesignation, deleteDesignation } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
+import { GROUPS } from '../../../lib/moduleGroups';
+
+// Departments that hold modules (Administration holds pages, not modules).
+const DEPTS = GROUPS.filter((g) => g.parts.some((p) => p.module));
 
 import Icon from '../../../components/Icon';
 import PermissionsModal from './_PermissionsModal';
@@ -71,7 +75,11 @@ export default function DesignationMasterPage() {
             <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Module</label>
             <select className="nx-input" value={form.module} onChange={(e) => setForm((f) => ({ ...f, module: e.target.value }))}
               style={{ width: '100%', height: 40, padding: '0 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, backgroundColor: 'var(--surface-2)', outline: 'none', cursor: 'pointer' }}>
-              {ALL_MODULES.map((m) => <option key={m}>{m}</option>)}
+              {DEPTS.map((g) => (
+                <optgroup key={g.key} label={g.title}>
+                  {g.parts.filter((p) => p.module).map((p) => <option key={p.module} value={p.module}>{p.title}</option>)}
+                </optgroup>
+              ))}
             </select>
           </div>
           <div style={{ flex: 2, minWidth: 200 }}>
@@ -88,44 +96,54 @@ export default function DesignationMasterPage() {
         {error && <div style={{ margin: '0 24px 16px', backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
       </div>
 
-      {/* Designations grouped by module */}
-      <div style={s.grid}>
-        {ALL_MODULES.map((mod) => {
-          const c    = MODULE_COLOR[mod] || { bg: 'var(--surface-2)', text: 'var(--text-3)', dot: 'var(--faint)' };
-          const list = grouped[mod] || [];
-          return (
-            <div className="nx-card" key={mod} style={s.moduleCard}>
-              <div style={s.moduleHeader}>
-                <span style={{ ...s.moduleDot, backgroundColor: c.dot }} />
-                <span style={{ ...s.moduleName, color: c.text }}>{mod}</span>
-                <span style={s.moduleCount}>{list.length}</span>
-              </div>
-              {list.length === 0 ? (
-                <p style={s.emptyHint}>No designations yet. Add one above.</p>
-              ) : (
-                <div style={s.chipList}>
-                  {list.map((d) => (
-                    <div key={d.id} style={{ ...s.chip, backgroundColor: c.bg }}>
-                      <span style={{ ...s.chipText, color: c.text }}>{d.name}</span>
-                      <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost desig-chip-btn"
-                        title="Permissions — what this designation may do"
-                        onClick={() => setPerms(d)} style={{ color: c.text }}>{/* inline-ok: module tone colour */}
-                        <Icon name="shield" />
-                      </button>
-                      <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost"
-                        onClick={() => handleDelete(d)}
-                        style={{ ...s.chipDel, color: c.text }}
-                        title="Remove"
-                      >
-                        <Icon name="x" />
-                      </button>
+      {/* Designations, by department (lib/moduleGroups) then module. Designations
+          still belong to a module — each module keeps its own permissions — the
+          departments only group them the way the home screen does. */}
+      <div className="dm-depts">
+        {DEPTS.map((g) => (
+          <section key={g.key} className="dm-dept">
+            <header className="dm-dept-head">
+              <h2>{g.title}</h2>
+              <span>{g.parts.filter((p) => p.module).reduce((n, p) => n + (grouped[p.module] || []).length, 0)} designations</span>
+            </header>
+            <div className="dm-grid">
+              {g.parts.filter((p) => p.module).map((p) => {
+                const mod = p.module;
+                const c = MODULE_COLOR[mod] || { bg: 'var(--surface-2)', text: 'var(--text-3)', dot: 'var(--faint)' };
+                const list = grouped[mod] || [];
+                return (
+                  <div className="nx-card dm-card" key={mod}>
+                    <div className="dm-card-head">
+                      <span className="dm-dot" style={{ backgroundColor: c.dot }} />{/* inline-ok: module tone colour */}
+                      <span className="dm-card-name" style={{ color: c.text }}>{p.title}</span>{/* inline-ok: module tone colour */}
+                      <span className="dm-count">{list.length}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                    {list.length === 0 ? (
+                      <p className="dm-empty">No designations yet. Add one above.</p>
+                    ) : (
+                      <div className="dm-chips">
+                        {list.map((d) => (
+                          <div key={d.id} className="dm-chip" style={{ backgroundColor: c.bg }}>{/* inline-ok: module tone colour */}
+                            <span className="dm-chip-text" style={{ color: c.text }}>{d.name}</span>{/* inline-ok: module tone colour */}
+                            <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost desig-chip-btn"
+                              title="Permissions — what this designation may do"
+                              onClick={() => setPerms(d)} style={{ color: c.text }}>{/* inline-ok: module tone colour */}
+                              <Icon name="shield" />
+                            </button>
+                            <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost dm-chip-del"
+                              onClick={() => handleDelete(d)} title="Remove" style={{ color: c.text }}>{/* inline-ok: module tone colour */}
+                              <Icon name="x" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </section>
+        ))}
       </div>
 
       {perms && (
