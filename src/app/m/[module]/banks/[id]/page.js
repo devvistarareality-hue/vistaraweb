@@ -1,15 +1,38 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
+import { Landmark, Printer, ArrowDownLeft, CalendarRange, Inbox } from 'lucide-react';
 import { AR_ENDPOINTS } from '../../../../../constants/api';
 import { apiFetch } from '../../../../../utils/apiFetch';
 import Loader from '../../../../../components/Loader';
 import { formatDMY } from '../../../../../lib/dateFormat';
 import { rupee } from '../../_ar';
 
-// A bank's statement, ledger style: opening (or brought-forward) balance, then every
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// Quick ranges — Indian financial year runs April to March.
+function presetRange(key) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  if (key === 'month') return [iso(new Date(y, m, 1)), iso(now)];
+  if (key === 'last') return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
+  if (key === 'fy') return [iso(new Date(m >= 3 ? y : y - 1, 3, 1)), iso(now)];
+  return ['', ''];
+}
+const PRESETS = [['all', 'All time'], ['month', 'This month'], ['last', 'Last month'], ['fy', 'This financial year']];
+
+const initials = (name) => {
+  const p = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return ((p[0]?.[0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() || '—';
+};
+const dayBlock = (isoDate) => {
+  const d = new Date(`${isoDate}T00:00:00`);
+  return { day: d.getDate(), mon: d.toLocaleDateString('en-IN', { month: 'short' }), yr: d.getFullYear() };
+};
+
+// A bank's statement, passbook style: opening (or brought-forward) balance, then every
 // Loan payment received into it in date order with a running balance. The closing
 // figure is the same balance Bank Master shows.
 export default function ARBankStatementPage({ params }) {
@@ -35,74 +58,116 @@ export default function ARBankStatementPage({ params }) {
     return () => { alive = false; };
   }, [params.id, from, to, companyId]);
 
+  const preset = useMemo(() => {
+    const hit = PRESETS.find(([k]) => { const [f, t] = presetRange(k); return f === from && t === to; });
+    return hit ? hit[0] : 'custom';
+  }, [from, to]);
+  const pick = (k) => { const [f, t] = presetRange(k); setFrom(f); setTo(t); };
+
   const bank = data?.bank;
+  const rows = data?.rows || [];
   const ranged = !!(from || to);
+  const periodText = ranged
+    ? `${from ? formatDMY(from) : 'Start'} – ${to ? formatDMY(to) : 'Today'}`
+    : 'All time';
 
   return (
     <div className="nx-page">
       <Link href={`/m/${params.module}/banks`} className="arb-back">← Bank Master</Link>
-      <div className="arb-head">
-        <div>
-          <h1 className="nx-page-title">{bank ? bank.name : 'Bank statement'}</h1>
-          <p className="nx-page-sub">
-            {bank?.account_no ? `A/c ${bank.account_no} · ` : ''}Loan payments received into this bank, with a running balance.
-          </p>
+
+      {err && <div className="nx-note bad">{err}</div>}
+
+      <div className="ard-hero bst-hero">
+        <div className="ard-hero-main">
+          <div className="bst-bank">
+            <span className="bst-bank-icon"><Landmark size={20} /></span>
+            <div>
+              <div className="bst-bank-name">{bank?.name || 'Bank statement'}</div>
+              <div className="bst-bank-sub">{bank?.account_no ? `A/c ${bank.account_no} · ` : ''}{periodText}</div>
+            </div>
+          </div>
+          <div className="ard-hero-label bst-gap">{ranged && to ? `Balance on ${formatDMY(to)}` : 'Closing balance'}</div>
+          <div className="ard-hero-value">{data ? rupee(data.closing_balance) : '—'}</div>
+          <div className="ard-hero-split">
+            <div><span>{ranged && from ? `Brought forward (${formatDMY(from)})` : 'Opening balance'}</span><b>{data ? rupee(data.brought_forward) : '—'}</b></div>
+            <div><span>Received{ranged ? ' in period' : ''}</span><b className="bst-in">+ {data ? rupee(data.total_in) : '—'}</b></div>
+            <div><span>Payments</span><b>{rows.length}</b></div>
+          </div>
         </div>
-        <div className="arb-range">
-          <label className="arb-range-field">From<input type="date" className="nx-input" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></label>
-          <label className="arb-range-field">To<input type="date" className="nx-input" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} /></label>
-          {ranged && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { setFrom(''); setTo(''); }}>Clear</button>}
-          <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => window.print()}>Print</button>
+        <div className="ard-hero-side bst-noprint">
+          <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => window.print()}><Printer size={15} /> Print</button>
         </div>
       </div>
 
-      {err && <div className="nx-note bad">{err}</div>}
+      <div className="nx-card bst-tools bst-noprint">
+        <div className="bst-chips">
+          <CalendarRange size={16} className="bst-tools-icon" />
+          {PRESETS.map(([k, label]) => (
+            <button key={k} className={`bst-chip${preset === k ? ' is-on' : ''}`} onClick={() => pick(k)}>{label}</button>
+          ))}
+        </div>
+        <div className="bst-dates">
+          <label>From<input type="date" className="nx-input" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></label>
+          <label>To<input type="date" className="nx-input" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} /></label>
+        </div>
+      </div>
+
       {data === null ? <Loader label="Loading statement…" /> : !err && (
-        <>
-          <div className="arb-sum">
-            <div className="nx-card arb-sum-card"><span>{ranged && from ? `Balance on ${formatDMY(from)}` : 'Opening balance'}</span><b>{rupee(data.brought_forward)}</b></div>
-            <div className="nx-card arb-sum-card"><span>Received{ranged ? ' in range' : ''}</span><b className="arb-in">+ {rupee(data.total_in)}</b></div>
-            <div className="nx-card arb-sum-card"><span>{ranged && to ? `Balance on ${formatDMY(to)}` : 'Closing balance'}</span><b className="arb-balance">{rupee(data.closing_balance)}</b></div>
+        <div className="nx-card bst-card">
+          <div className="bst-head">
+            <span>Date</span><span>Particulars</span><span>Remarks</span><span className="num">Received</span><span className="num">Balance</span>
           </div>
 
-          <div className="nx-card arb-card">
-            <div className="arb-scroll">
-              <table className="nx-table arb-table">
-                <thead>
-                  <tr><th>Date</th><th>Particulars</th><th>Remarks</th><th className="num">Received</th><th className="num">Balance</th></tr>
-                </thead>
-                <tbody>
-                  <tr className="arb-ob">
-                    <td>{from ? formatDMY(from) : '—'}</td>
-                    <td>{from ? 'Balance brought forward' : 'Opening balance'}</td>
-                    <td />
-                    <td className="num" />
-                    <td className="num arb-balance">{rupee(data.brought_forward)}</td>
-                  </tr>
-                  {(data.rows || []).map((r) => (
-                    <tr key={r.id}>
-                      <td>{formatDMY(r.date)}</td>
-                      <td>
-                        <Link href={`/m/${params.module}/ledger/${r.account_id}`} className="arb-link">{r.client || '—'}</Link>
-                        <div className="arb-sub">{r.project}{r.plots ? ` · Plot ${r.plots}` : ''}{r.recorded_by ? ` · by ${r.recorded_by}` : ''}</div>
-                      </td>
-                      <td className="arb-remarks">{r.remarks || '—'}</td>
-                      <td className="num arb-in">{rupee(r.amount)}</td>
-                      <td className="num arb-balance">{rupee(r.balance)}</td>
-                    </tr>
-                  ))}
-                  {!(data.rows || []).length && (
-                    <tr><td colSpan={5} className="arb-empty">No Loan payments into this bank{ranged ? ' in this range' : ' yet'}.</td></tr>
-                  )}
-                </tbody>
-                <tfoot>
-                  <tr><td colSpan={3}>Closing balance</td><td className="num arb-in">{rupee(data.total_in)}</td><td className="num arb-balance">{rupee(data.closing_balance)}</td></tr>
-                </tfoot>
-              </table>
-            </div>
+          <div className="bst-row bst-row-ob">
+            <div className="bst-date">{from ? <DateBlock iso={from} /> : <span className="bst-dash">—</span>}</div>
+            <div className="bst-part"><b>{from ? 'Balance brought forward' : 'Opening balance'}</b></div>
+            <div className="bst-rem" />
+            <div className="num" />
+            <div className="num bst-bal">{rupee(data.brought_forward)}</div>
           </div>
-        </>
+
+          {rows.length === 0 ? (
+            <div className="bst-empty">
+              <Inbox size={34} />
+              <b>No Loan payments{ranged ? ' in this period' : ' yet'}</b>
+              <span>Record a payment with mode Loan and pick this bank — it will show up here.</span>
+            </div>
+          ) : rows.map((r) => (
+            <div key={r.id} className="bst-row">
+              <div className="bst-date"><DateBlock iso={r.date} /></div>
+              <div className="bst-part">
+                <span className="bst-avatar">{initials(r.client)}</span>
+                <div className="bst-who">
+                  <Link href={`/m/${params.module}/ledger/${r.account_id}`} className="arb-link">{r.client || '—'}</Link>
+                  <div className="bst-tags">
+                    {r.project && <span className="bst-tag">{r.project}</span>}
+                    {r.plots && <span className="bst-tag">Plot {r.plots}</span>}
+                    {r.recorded_by && <span className="bst-by">by {r.recorded_by}</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="bst-rem">{r.remarks || <span className="bst-dash">—</span>}</div>
+              <div className="num"><span className="bst-amt"><ArrowDownLeft size={13} />{rupee(r.amount)}</span></div>
+              <div className="num bst-bal">{rupee(r.balance)}</div>
+            </div>
+          ))}
+
+          <div className="bst-row bst-row-close">
+            <div className="bst-date" />
+            <div className="bst-part"><b>Closing balance</b></div>
+            <div className="bst-rem" />
+            <div className="num bst-in">+ {rupee(data.total_in)}</div>
+            <div className="num bst-bal">{rupee(data.closing_balance)}</div>
+          </div>
+        </div>
       )}
     </div>
+  );
+}
+
+function DateBlock({ iso: d }) {
+  const b = dayBlock(d);
+  return (
+    <span className="bst-dblock"><b>{b.day}</b><span>{b.mon} {b.yr}</span></span>
   );
 }
