@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
@@ -77,7 +78,7 @@ export default function ARBanksPage({ params }) {
       <div className="arb-head">
         <div>
           <h1 className="nx-page-title">Bank Master</h1>
-          <p className="nx-page-sub">Your bank accounts. A Loan payment is recorded into one of these and its balance goes up by that amount.</p>
+          <p className="nx-page-sub">Your bank accounts. A Loan payment is recorded into one of these and its balance goes up by that amount. Click a bank for its statement.</p>
         </div>
         {canManage && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Add bank</button>}
       </div>
@@ -96,13 +97,14 @@ export default function ARBanksPage({ params }) {
                 <tbody>
                   {rows.map((b) => (
                     <tr key={b.id} className={b.is_active ? '' : 'is-retired'}>
-                      <td className="arb-name">{b.name}{!b.is_active && <span className="nx-badge arb-retired">Retired</span>}</td>
+                      <td className="arb-name"><Link href={`/m/${params.module}/banks/${b.id}`} className="arb-link">{b.name}</Link>{!b.is_active && <span className="nx-badge arb-retired">Retired</span>}</td>
                       <td>{b.account_no || '—'}</td>
                       <td className="num">{rupee(b.opening_balance)}</td>
                       <td className="num">{rupee(b.received)}</td>
                       <td className="num arb-balance">{rupee(b.balance)}</td>
                       {canManage && (
                         <td className="arb-actions">
+                          <Link href={`/m/${params.module}/banks/${b.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Statement</Link>
                           <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openEdit(b)}>Edit</button>
                           {b.is_active
                             ? <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => remove(b)}>{b.received > 0 ? 'Retire' : 'Remove'}</button>

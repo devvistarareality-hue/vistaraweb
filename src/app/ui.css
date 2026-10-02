@@ -2042,3 +2042,22 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .arb-retired { margin-left: 8px; }
 .arb-actions { display: flex; gap: 8px; justify-content: flex-end; white-space: nowrap; }
 .arb-empty { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 14px; }
+/* AR · bank statement */
+.arb-link { color: var(--accent); font-weight: 700; text-decoration: none; }
+.arb-link:hover { text-decoration: underline; }
+.arb-back { display: inline-block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; }
+.arb-back:hover { color: var(--text); }
+.arb-range { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.arb-range-field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.arb-range-field .nx-input { height: 36px; min-width: 150px; text-transform: none; }
+.arb-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.arb-sum-card { padding: 16px 18px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px; }
+.arb-sum-card span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.arb-sum-card b { font-size: 22px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.arb-in { color: var(--success); }
+.arb-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.arb-remarks { color: var(--text-3); max-width: 280px; }
+.arb-table tr.arb-ob td { font-weight: 700; background: var(--surface-2); }
+@media print {
+  .arb-range, .arb-back { display: none !important; }
+}
