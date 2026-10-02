@@ -18,6 +18,30 @@ export const RECORD_MODES = MODES.filter((m) => m.value === 'loan' || m.value ==
 export const recordModes = (current) => (RECORD_MODES.some((m) => m.value === current)
   ? RECORD_MODES : [...RECORD_MODES, ...MODES.filter((m) => m.value === current)]);
 
+// Amount typed into a money field: keep only digits and one decimal point (max 2
+// places), and show it with Indian grouping — "5000000" reads "50,00,000". The
+// raw string is what gets saved; only the display is grouped.
+export const cleanAmount = (v) => {
+  const s = String(v ?? '').replace(/[^0-9.]/g, '');
+  const [int, ...rest] = s.split('.');
+  return rest.length ? `${int}.${rest.join('').slice(0, 2)}` : int;
+};
+export const groupINR = (raw) => {
+  if (raw === '' || raw == null) return '';
+  const [int, dec] = String(raw).split('.');
+  const n = int.replace(/^0+(?=\d)/, '');
+  const last3 = n.slice(-3);
+  const head = n.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+  return (head ? `${head},${last3}` : last3) + (dec !== undefined ? `.${dec}` : '');
+};
+// What a bank's balance becomes once this receipt is saved. An edit of a receipt
+// already in that bank takes its old amount out first, so it is not counted twice.
+export const balanceAfter = (bank, form) => {
+  if (!bank) return 0;
+  const same = form.orig_bank && String(form.orig_bank) === String(bank.id);
+  return (bank.balance || 0) - (same ? Number(form.orig_amount) || 0 : 0) + (Number(form.amount) || 0);
+};
+
 export const AGE_LABELS = ['0-15', '16-30', '31-60', '61-90', '91-120', '121-180', '>180'];
 
 export const STATUS = {

@@ -2061,3 +2061,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 @media print {
   .arb-range, .arb-back { display: none !important; }
 }
+/* Record payment: the picked bank's balance, highlighted, with what it becomes */
+.arb-pick { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; padding: 12px 16px;
+  border-radius: 14px; background: var(--success-soft); border: 1px solid var(--success-2); }
+.arb-pick-col { display: flex; flex-direction: column; gap: 2px; }
+.arb-pick-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.arb-pick-now { font-size: 18px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.arb-pick-after { font-size: 18px; font-weight: 800; color: var(--success); font-variant-numeric: tabular-nums; }
+.arb-pick-arrow { font-size: 18px; font-weight: 700; color: var(--muted); }

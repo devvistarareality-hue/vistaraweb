@@ -7,7 +7,7 @@ import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import { notify, confirmDialog } from '../../../../lib/notify';
-import { rupee } from '../_ar';
+import { rupee, cleanAmount, groupINR } from '../_ar';
 
 // Bank Master — the company's own bank accounts. A Loan payment recorded in a ledger
 // names one of these, and its balance is opening balance + those payments (worked
@@ -139,7 +139,7 @@ export default function ARBanksPage({ params }) {
             </div>
             <div className="nx-field">
               <label className="nx-field-label" htmlFor="arb-open">Opening balance (₹)</label>
-              <input id="arb-open" type="number" min="0" inputMode="decimal" className={`nx-input${formErr.opening_balance ? ' is-invalid' : ''}`} value={form.opening_balance} onChange={(e) => setForm({ ...form, opening_balance: e.target.value })} />
+              <input id="arb-open" type="text" inputMode="decimal" autoComplete="off" placeholder="0" className={`nx-input${formErr.opening_balance ? ' is-invalid' : ''}`} value={groupINR(form.opening_balance)} onChange={(e) => setForm({ ...form, opening_balance: cleanAmount(e.target.value) })} />
               {formErr.opening_balance && <span className="nx-note bad">{formErr.opening_balance}</span>}
             </div>
             <div className="ar-modal-foot">

@@ -12,7 +12,7 @@ import Loader from '../../../../../components/Loader';
 import BookingDetails from '../../../../../components/BookingDetails';
 import ActivityHistory from '../../../../../components/ActivityHistory';
 import FollowUpModal from '../../_FollowUpModal';
-import { rupee, MODES, recordModes, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
+import { rupee, MODES, recordModes, cleanAmount, groupINR, balanceAfter, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 
@@ -67,7 +67,8 @@ export default function ARLedgerPage({ params }) {
   const bankName = (bid) => banks.find((b) => String(b.id) === String(bid))?.name || '';
 
   const openNew = () => { setFormErr({}); setForm({ paid_on: today(), amount: '', mode: 'loan', bank: '', remarks: '' }); };
-  const openEdit = (rc) => { setFormErr({}); setForm({ id: rc.id, paid_on: rc.paid_on, amount: String(rc.amount), mode: rc.mode, bank: rc.bank ? String(rc.bank) : '', remarks: rc.remarks }); };
+  const openEdit = (rc) => { setFormErr({}); setForm({ id: rc.id, paid_on: rc.paid_on, amount: String(rc.amount), mode: rc.mode, bank: rc.bank ? String(rc.bank) : '', remarks: rc.remarks,
+    orig_bank: rc.bank ? String(rc.bank) : '', orig_amount: rc.amount }); };
 
   async function saveReceipt() {
     const amt = Number(form.amount);
@@ -334,7 +335,8 @@ export default function ARLedgerPage({ params }) {
             </div>
             <div className="nx-field">
               <label className="nx-field-label" htmlFor="ar-amount">Amount (₹)</label>
-              <input id="ar-amount" type="number" min="1" inputMode="decimal" className={`nx-input${formErr.amount ? ' is-invalid' : ''}`} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              <input id="ar-amount" type="text" inputMode="decimal" autoComplete="off" placeholder="0" className={`nx-input${formErr.amount ? ' is-invalid' : ''}`}
+                value={groupINR(form.amount)} onChange={(e) => setForm({ ...form, amount: cleanAmount(e.target.value) })} />
               {formErr.amount && <span className="nx-note bad">{formErr.amount}</span>}
             </div>
             <div className="nx-field">
@@ -349,11 +351,33 @@ export default function ARLedgerPage({ params }) {
                 {bankOptions(form.bank).length ? (
                   <select id="ar-bank" className={`nx-input${formErr.bank ? ' is-invalid' : ''}`} value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })}>
                     <option value="">Select the bank it was received into</option>
-                    {bankOptions(form.bank).map((b) => <option key={b.id} value={b.id}>{b.name}{b.account_no ? ` · ${b.account_no}` : ''} — balance {rupee(b.balance)}</option>)}
+                    {bankOptions(form.bank).map((b) => <option key={b.id} value={b.id}>{b.name}{b.account_no ? ` · ${b.account_no}` : ''}</option>)}
                   </select>
                 ) : (
                   <div className="nx-note warn">No banks yet — add one in Bank Master first.</div>
                 )}
+                {(() => {
+                  const b = banks.find((x) => String(x.id) === String(form.bank));
+                  if (!b) return null;
+                  const after = balanceAfter(b, form);
+                  return (
+                    <div className="arb-pick">
+                      <div className="arb-pick-col">
+                        <span className="arb-pick-label">Current balance</span>
+                        <b className="arb-pick-now">{rupee(b.balance)}</b>
+                      </div>
+                      {Number(form.amount) > 0 && (
+                        <>
+                          <span className="arb-pick-arrow">→</span>
+                          <div className="arb-pick-col">
+                            <span className="arb-pick-label">After this payment</span>
+                            <b className="arb-pick-after">{rupee(after)}</b>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
                 {formErr.bank && <span className="nx-note bad">{formErr.bank}</span>}
               </div>
             )}
