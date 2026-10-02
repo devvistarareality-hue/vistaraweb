@@ -6,6 +6,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 import Icon from '../../../components/Icon';
+import PartnerPicker from '../_PartnerPicker';
 import { confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
@@ -167,6 +168,10 @@ function cpLabel(cp) { return `${cp.name}${cp.firm_name ? ` · ${cp.firm_name}` 
 // combobox: click it to open, type any part of the name/firm to narrow the list,
 // click a result to pick it — same open/query/onMouseDown pattern as the Club 1000
 // reference-name autocomplete (club1000/_AddInvestorModal.js).
+// Picks the partner for ONE lead, inside a form — so it has no "all" option and
+// no clear, and it takes the form's own inputStyle. The filter bar uses
+// _PartnerPicker instead, which needs both of those plus lead-count ordering.
+// Two components on purpose; they answer different questions.
 function ChannelPartnerPicker({ value, onChange, options, inputStyle, placeholder = 'Search channel partner…' }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -1586,6 +1591,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const [filters, setFilters] = useState({
     search: '', status: '', project_id: [], source_id: '',
     telecaller_id: [], stm_id: [], telecaller_status: '', stm_status: '', disqualify_reason: '',
+    channel_partner_id: '',
     campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
@@ -1749,6 +1755,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.telecaller_status) params.set('telecaller_status', filters.telecaller_status);
     if (filters.stm_status)      params.set('stm_status',       filters.stm_status);
     if (filters.disqualify_reason) params.set('disqualify_reason', filters.disqualify_reason);
+    if (filters.channel_partner_id) params.set('channel_partner_id', filters.channel_partner_id);
     if (filters.campaign)        params.set('campaign',         filters.campaign);
     if (filters.is_duplicate)    params.set('is_duplicate',     'true');
     if (filters.unassigned)      params.set('unassigned',       'true');
@@ -1974,9 +1981,9 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
           || filters.stm_status === 'not_qualified';
         const anyFilter = filters.search || filters.status || filters.project_id.length || filters.source_id ||
           filters.telecaller_id.length || filters.stm_id.length || filters.telecaller_status || filters.stm_status ||
-          filters.disqualify_reason ||
+          filters.disqualify_reason || filters.channel_partner_id ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
-        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
+        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -2078,6 +2085,14 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 <option value="">All Sources</option>
                 {onlyPresent(sources.map((s) => ({ value: String(s.id), label: s.name })), fx('source_ids'), filters.source_id).map((s) => <option key={s.value} value={s.value} className="nx-cap">{s.label}</option>)}
               </select>
+              {/* Which partner firm sent the lead. Only on the partner desk — in
+                  the Sales section the Source filter already answers it, and
+                  every lead there would have an empty partner. A searchable
+                  picker because the directory runs to hundreds of firms. */}
+              {cpOnly && (
+                <PartnerPicker partners={channelPartners} value={filters.channel_partner_id}
+                  onChange={(v) => sf('channel_partner_id', v)} placeholder="All partner firms" />
+              )}
               {showAssignees && !cpOnly && (
               <MultiSelect allLabel="All Telecallers" noun="telecallers" value={filters.telecaller_id} onChange={(v) => sf('telecaller_id', v)}
                 options={onlyPresent(telecallers.map((u) => ({ value: String(u.id), label: u.name })), fx('telecaller_ids'), filters.telecaller_id)} />
