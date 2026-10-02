@@ -30,7 +30,15 @@ export const setAdminCompany = (companyId) => (dispatch) => {
   } catch {}
 };
 
-export const restoreAdminFilter = () => (dispatch) => {
+export const restoreAdminFilter = () => (dispatch, getState) => {
   const saved = loadFromStorage();
-  if (saved !== null) dispatch({ type: SET_ADMIN_COMPANY, payload: saved });
+  if (saved === null) return;
+  // The company list may already be loaded: a saved company that is not in it is
+  // stale (see companiesActions.dropMissingAdminCompany) — forget it, don't apply it.
+  const list = getState?.().companies?.companies;
+  if (Array.isArray(list) && list.length && !list.some((c) => String(c.id) === String(saved))) {
+    dispatch(setAdminCompany(null));
+    return;
+  }
+  dispatch({ type: SET_ADMIN_COMPANY, payload: saved });
 };

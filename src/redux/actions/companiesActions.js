@@ -1,4 +1,5 @@
 import { COMPANY_ENDPOINTS, authHeaders } from '../../constants/api';
+import { setAdminCompany } from '../reducers/adminFilterReducer';
 import {
   COMPANIES_FETCH_REQUEST, COMPANIES_FETCH_SUCCESS, COMPANIES_FETCH_FAILURE,
   COMPANY_UPDATE_REQUEST, COMPANY_UPDATE_SUCCESS, COMPANY_UPDATE_FAILURE, COMPANY_UPDATE_RESET,
@@ -9,6 +10,17 @@ import {
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
+// A saved "Viewing company" that is not in the company list (deleted, or saved in
+// this browser against a different database) filtered every page down to nothing:
+// AR read ₹0 with only a "Filtered" badge to hint why. Once the real list is in,
+// such a choice is dropped back to All Companies.
+export const dropMissingAdminCompany = () => (dispatch, getState) => {
+  const { companyId } = getState().adminFilter || {};
+  const list = getState().companies?.companies;
+  if (companyId == null || !Array.isArray(list) || !list.length) return;
+  if (!list.some((c) => String(c.id) === String(companyId))) dispatch(setAdminCompany(null));
+};
+
 export const fetchCompanies = (force = false) => async (dispatch, getState) => {
   const { lastFetched, companies } = getState().companies;
   if (!force && lastFetched && companies.length > 0 && Date.now() - lastFetched < CACHE_TTL) return;
@@ -18,6 +30,7 @@ export const fetchCompanies = (force = false) => async (dispatch, getState) => {
     const data = await res.json();
     if (res.ok) {
       dispatch({ type: COMPANIES_FETCH_SUCCESS, payload: data });
+      dispatch(dropMissingAdminCompany());
     } else {
       dispatch({ type: COMPANIES_FETCH_FAILURE, payload: data.detail || 'Failed to load companies.' });
     }
