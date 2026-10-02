@@ -12,7 +12,7 @@ import Loader from '../../../../../components/Loader';
 import BookingDetails from '../../../../../components/BookingDetails';
 import ActivityHistory from '../../../../../components/ActivityHistory';
 import FollowUpModal from '../../_FollowUpModal';
-import { rupee, MODES, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
+import { rupee, MODES, recordModes, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 
@@ -56,7 +56,7 @@ export default function ARLedgerPage({ params }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const openNew = () => { setFormErr({}); setForm({ paid_on: today(), amount: '', mode: 'bank', remarks: '' }); };
+  const openNew = () => { setFormErr({}); setForm({ paid_on: today(), amount: '', mode: 'loan', remarks: '' }); };
   const openEdit = (rc) => { setFormErr({}); setForm({ id: rc.id, paid_on: rc.paid_on, amount: String(rc.amount), mode: rc.mode, remarks: rc.remarks }); };
 
   async function saveReceipt() {
@@ -329,7 +329,7 @@ export default function ARLedgerPage({ params }) {
             <div className="nx-field">
               <label className="nx-field-label" htmlFor="ar-mode">Mode</label>
               <select id="ar-mode" className="nx-input" value={form.mode} onChange={(e) => setForm({ ...form, mode: e.target.value })}>
-                {MODES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                {recordModes(form.mode).map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
             <div className="nx-field">

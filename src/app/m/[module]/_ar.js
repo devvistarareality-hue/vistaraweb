@@ -5,11 +5,18 @@ import { rupee, inrShort } from '../../../lib/inr';
 export { rupee, inrShort };
 
 export const MODES = [
-  { value: 'bank', label: 'Bank' },
+  { value: 'loan', label: 'Loan' },
   { value: 'nbfc', label: 'NBFC' },
+  { value: 'bank', label: 'Bank' },
   { value: 'cash', label: 'Cash' },
   { value: 'cheque', label: 'Cheque' },
 ];
+// A payment is recorded as Loan or NBFC only. MODES above keeps Bank / Cash / Cheque so
+// older receipts still read correctly; an edit of one of those keeps its own mode
+// on offer (see recordModes) rather than silently switching it.
+export const RECORD_MODES = MODES.filter((m) => m.value === 'loan' || m.value === 'nbfc');
+export const recordModes = (current) => (RECORD_MODES.some((m) => m.value === current)
+  ? RECORD_MODES : [...RECORD_MODES, ...MODES.filter((m) => m.value === current)]);
 
 export const AGE_LABELS = ['0-15', '16-30', '31-60', '61-90', '91-120', '121-180', '>180'];
 
