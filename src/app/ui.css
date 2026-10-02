@@ -2237,3 +2237,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .dep-switch-label { font-size: 13px; font-weight: 500; }
 .dep-switch-label.is-on { font-weight: 700; }
 @media (max-width: 768px) { .dep-page { padding: 20px 16px 32px; } }
+/* Department tiles: every row as tall as the tallest card, so all cards match in
+   height as well as width; chips / "Open" sit on the same bottom line. */
+.dep-grid { grid-auto-rows: 1fr; }
+.dep-grid .ep-card { height: 100%; }
+.dep-grid .ep-card-desc { flex: 0 0 auto; }
+.dep-grid .dep-parts, .dep-grid .ep-card-open { margin-top: auto; padding-top: 14px; }

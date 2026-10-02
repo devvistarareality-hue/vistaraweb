@@ -17,7 +17,7 @@ const Icon = ({ name, size = 24 }) => { const I = ICONS[name] || Wallet; return 
 // of opens that part directly; otherwise it opens the department page.
 export function DepartmentGrid({ groups, base }) {
   return (
-    <div className="ep-grid">
+    <div className="ep-grid dep-grid">
       {groups.map((g, i) => (
         <Link key={g.key} href={groupHref(g, base)} className={`nx-card ep-card tone-${g.tone}`} style={{ animationDelay: `${i * 50}ms` }}>{/* inline-ok: staggered entrance */}
           <div className="ep-card-top">
@@ -52,7 +52,7 @@ export function DepartmentPage({ group, backHref, backLabel }) {
           <p className="nx-page-sub">{group.desc}</p>
         </div>
       </div>
-      <div className="ep-grid">
+      <div className="ep-grid dep-grid">
         {group.parts.map((p, i) => (p.soon ? (
           <div key={p.key} className={`nx-card ep-card dep-soon tone-${group.tone}`}>
             <div className="ep-card-top"><span className="ep-icon"><Icon name={p.icon} /></span><span className="dep-soon-tag">Coming soon</span></div>
