@@ -1,4 +1,5 @@
 'use client';
+import ModulePicker from '../../../components/ModulePicker';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
@@ -387,38 +388,23 @@ export default function UserManagementPage() {
               </div>
 
               <div style={mSec}>Modules</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
-                {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.modules||[]).includes(mod) ? 'var(--accent)' : 'var(--border)'}`, backgroundColor: (form.modules||[]).includes(mod) ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
-                    <input type="checkbox" checked={(form.modules || []).includes(mod)} onChange={() => toggleModule(mod, 'modules')} style={{ accentColor: 'var(--accent)' }} />
-                    {mod}
-                  </label>
-                ))}
+              <div className="mp-wrap">
+                <ModulePicker selected={form.modules || []} onToggle={(mod) => toggleModule(mod, 'modules')} />
               </div>
 
               <div style={mSec}>
                 Manager Modules
                 {isManagerRole(form) && <span style={{ textTransform: 'none', fontWeight: 500, color: 'var(--faint)', letterSpacing: 0 }}> — auto-matches Modules</span>}
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
-                {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.manager_modules||[]).includes(mod) ? 'var(--accent)' : 'var(--border)'}`, backgroundColor: (form.manager_modules||[]).includes(mod) ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
-                    <input type="checkbox" checked={(form.manager_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'manager_modules')} style={{ accentColor: 'var(--accent)' }} />
-                    {mod}
-                  </label>
-                ))}
+              <div className="mp-wrap">
+                <ModulePicker selected={form.manager_modules || []} onToggle={(mod) => toggleModule(mod, 'manager_modules')} />
               </div>
 
               {isManagerRole(form) && (
                 <>
                   <div style={mSec}>Admin Modules</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 18 }}>
-                    {ALL_MODULES.map((mod) => (
-                      <label key={mod} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${(form.admin_modules||[]).includes(mod) ? 'var(--accent)' : 'var(--border)'}`, backgroundColor: (form.admin_modules||[]).includes(mod) ? 'var(--accent-softer)' : 'var(--surface-2)' }}>
-                        <input type="checkbox" checked={(form.admin_modules || []).includes(mod)} onChange={() => toggleModule(mod, 'admin_modules')} style={{ accentColor: 'var(--accent)' }} />
-                        {mod}
-                      </label>
-                    ))}
+                  <div className="mp-wrap">
+                    <ModulePicker selected={form.admin_modules || []} onToggle={(mod) => toggleModule(mod, 'admin_modules')} />
                   </div>
                 </>
               )}

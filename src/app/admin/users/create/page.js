@@ -1,4 +1,5 @@
 'use client';
+import ModulePicker from '../../../../components/ModulePicker';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
@@ -243,17 +244,8 @@ export default function CreateUserPage() {
 
           <div style={{ marginTop: 24, marginBottom: 20 }}>
             <label style={s.label}>Modules</label>
-            <div style={s.checkGrid}>
-              {ALL_MODULES.map((mod) => (
-                <label key={mod} style={s.checkLabel}>
-                  <input
-                    type="checkbox"
-                    checked={form.modules.includes(mod)}
-                    onChange={() => toggleModule(mod, 'modules')}
-                  />
-                  {mod}
-                </label>
-              ))}
+            <div className="mp-wrap">
+              <ModulePicker selected={form.modules} onToggle={(mod) => toggleModule(mod, 'modules')} />
             </div>
           </div>
 
@@ -334,34 +326,16 @@ export default function CreateUserPage() {
               Manager Modules
               {isManagerRole(form) && <span style={s.hintInline}> — auto-matches Modules</span>}
             </label>
-            <div style={s.checkGrid}>
-              {ALL_MODULES.map((mod) => (
-                <label key={mod} style={s.checkLabel}>
-                  <input
-                    type="checkbox"
-                    checked={form.manager_modules.includes(mod)}
-                    onChange={() => toggleModule(mod, 'manager_modules')}
-                  />
-                  {mod}
-                </label>
-              ))}
+            <div className="mp-wrap">
+              <ModulePicker selected={form.manager_modules} onToggle={(mod) => toggleModule(mod, 'manager_modules')} />
             </div>
           </div>
 
           {isManagerRole(form) && (
             <div style={{ marginBottom: 28 }}>
               <label style={s.label}>Admin Modules</label>
-              <div style={s.checkGrid}>
-                {ALL_MODULES.map((mod) => (
-                  <label key={mod} style={s.checkLabel}>
-                    <input
-                      type="checkbox"
-                      checked={form.admin_modules.includes(mod)}
-                      onChange={() => toggleModule(mod, 'admin_modules')}
-                    />
-                    {mod}
-                  </label>
-                ))}
+              <div className="mp-wrap">
+                <ModulePicker selected={form.admin_modules} onToggle={(mod) => toggleModule(mod, 'admin_modules')} />
               </div>
             </div>
           )}

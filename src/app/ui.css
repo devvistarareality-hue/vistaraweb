@@ -2269,3 +2269,17 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .sb-dept-icon { display: flex; align-items: center; flex-shrink: 0; color: rgba(var(--ink-rgb), .74); }
 .sb-dept-name { flex: 1; font-size: 13px; font-weight: 600; }
 .sb-dept-count { font-size: 10.5px; font-weight: 700; color: var(--muted); background: var(--surface-3); border-radius: 999px; padding: 1px 7px; }
+
+/* ─── User Management: module access, grouped by department ─── */
+.mp-wrap { margin-bottom: 18px; }
+.mp { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.mp-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--hairline); }
+.mp-row:last-child { border-bottom: 0; }
+.mp-row:nth-child(odd) { background: var(--surface-2); }
+.mp-dept { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.mp-mods { display: flex; flex-wrap: wrap; gap: 8px; }
+.mp-mod { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 9px; cursor: pointer; font-size: 13px;
+  color: var(--text); background: var(--surface); border: 1.5px solid var(--border); transition: all .12s; }
+.mp-mod.is-on { border-color: var(--accent); background: var(--accent-softer); font-weight: 600; }
+.mp-mod input { accent-color: var(--accent); margin: 0; }
+@media (max-width: 560px) { .mp-row { grid-template-columns: 1fr; gap: 6px; } }
