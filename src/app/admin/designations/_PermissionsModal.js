@@ -1,4 +1,5 @@
 'use client';
+import { GROUPS } from '../../../lib/moduleGroups';
 import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, X, Check, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye } from 'lucide-react';
 import { DESIGNATION_ENDPOINTS } from '../../../constants/api';
@@ -7,6 +8,10 @@ import { ALL_MODULES } from '../../../lib/moduleAccess';
 
 // Designation Master writes AR's full name; the capability vocabulary uses the
 // short one. One place, so the two cannot drift.
+// Departments that hold modules, and each module's display name (lib/moduleGroups).
+const DEPTS = GROUPS.filter((g) => g.parts.some((p) => p.module));
+const MODULE_TITLE = Object.fromEntries(GROUPS.flatMap((g) => g.parts.filter((p) => p.module).map((p) => [p.module, p.title])));
+
 const ALIAS_MODULE = { 'Accounts Receivable': 'AR' };
 
 // What a designation may do, per company. The vocabulary comes from the server; the
@@ -166,7 +171,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                 return (
                   <section className="perm-card" key={module}>
                     <div className="perm-card-head">
-                      <h3>{module}</h3>
+                      <h3>{MODULE_TITLE[module] || module}</h3>
                       <span className="perm-count">{on} of {items.length}</span>
                       <button type="button" className="perm-all" onClick={() => setCaps((prev) => {
                         const next = new Set(prev);
@@ -199,16 +204,29 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                   <h3>Which modules this menu answers for</h3>
                   <span className="perm-count">{mine.length}</span>
                 </div>
-                <div className="perm-chips">
-                  <button type="button" className="perm-chip is-on" disabled>
-                    <Check size={13} /> {own}
-                  </button>
-                  {otherModules.map((m) => (
-                    <button type="button" key={m} className={`perm-chip${extra.includes(m) ? ' is-on' : ''}`}
-                      onClick={() => toggleModule(m)}>
-                      {extra.includes(m) && <Check size={13} />} {m}
-                    </button>
-                  ))}
+                {/* Grouped by department (lib/moduleGroups), as on the home screen. */}
+                <div className="perm-depts">
+                  {DEPTS.map((g) => {
+                    const mods = g.parts.filter((p) => p.module && (p.module === own || otherModules.includes(p.module)));
+                    if (!mods.length) return null;
+                    return (
+                      <div className="perm-dept" key={g.key}>
+                        <span className="perm-dept-name">{g.title}</span>
+                        <div className="perm-chips">
+                          {mods.map((p) => (p.module === own ? (
+                            <button type="button" key={p.module} className="perm-chip is-on" disabled>
+                              <Check size={13} /> {p.title}
+                            </button>
+                          ) : (
+                            <button type="button" key={p.module} className={`perm-chip${extra.includes(p.module) ? ' is-on' : ''}`}
+                              onClick={() => toggleModule(p.module)}>
+                              {extra.includes(p.module) && <Check size={13} />} {p.title}
+                            </button>
+                          )))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <p className="perm-note">
                   A module not chosen here keeps its default menu for anyone holding it.
@@ -219,7 +237,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
               {screensByModule.map(({ module, items }) => (
                 <section className="perm-card" key={module}>
                   <div className="perm-card-head">
-                    <h3>{module}</h3>
+                    <h3>{MODULE_TITLE[module] || module}</h3>
                     <span className="perm-count">{items.filter((c) => screens.has(c.key)).length} of {items.length}</span>
                   </div>
                   <div className="perm-chips">
@@ -246,7 +264,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                 </div>
                 {dashGroups.map(({ module, items }) => (
                   <div className="perm-dashgroup" key={module || 'any'}>
-                    {module ? <h4>{module}</h4> : null}
+                    {module ? <h4>{MODULE_TITLE[module] || module}</h4> : null}
                     <div className="perm-radios">
                       {items.map((d) => (
                         <label className={`perm-radio${dash === d.value ? ' is-on' : ''}`} key={d.value || 'auto'}>

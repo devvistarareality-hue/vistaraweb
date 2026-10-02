@@ -2283,3 +2283,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .mp-mod.is-on { border-color: var(--accent); background: var(--accent-softer); font-weight: 600; }
 .mp-mod input { accent-color: var(--accent); margin: 0; }
 @media (max-width: 560px) { .mp-row { grid-template-columns: 1fr; gap: 6px; } }
+/* Permissions → Menu: module chips grouped by department */
+.perm-depts { display: flex; flex-direction: column; gap: 10px; }
+.perm-dept { display: grid; grid-template-columns: 140px 1fr; align-items: center; gap: 10px; }
+.perm-dept-name { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 560px) { .perm-dept { grid-template-columns: 1fr; gap: 4px; } }
