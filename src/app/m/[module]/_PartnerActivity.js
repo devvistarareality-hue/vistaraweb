@@ -25,6 +25,8 @@ import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import { confirmDialog, notify } from '../../../lib/notify';
 import PartnerPicker from '../../sales/_PartnerPicker';
+import DateFilter from '../../sales/_DateFilter';
+import MultiSelect from '../../../components/MultiSelect';
 
 // These are the model's own choice lists (FOLLOWUP_STATUS and SV_STATUS in
 // backend/sales/models.py), not a parallel set — the two lists genuinely differ,
@@ -395,18 +397,52 @@ export function PartnerActivityModal({ partner, companyId, onClose }) {
 
 /* --------------------------------------------- whole company: a tab panel */
 
+// The status tabs mirror the CP Leads half of each screen one-for-one, using
+// this side's own statuses. "Today's" and "Overdue" are derived from
+// scheduled_at rather than stored, exactly as they are over there.
+const PANEL_TABS = {
+  fu: [
+    { key: 'today', label: "Today's" },
+    { key: 'overdue', label: 'Overdue' },
+    { key: 'pending', label: 'All Pending' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'all', label: 'All' },
+  ],
+  sv: [
+    { key: 'today', label: "Today's" },
+    { key: 'scheduled', label: 'Scheduled' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'no_show', label: 'No Show' },
+    { key: 'cancelled', label: 'Cancelled' },
+    { key: 'all', label: 'All' },
+  ],
+};
+
+const dayOf = (v) => {
+  if (!v) return '';
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? String(v).slice(0, 10) : d.toLocaleDateString('en-CA');
+};
+const todayKey = () => new Date().toLocaleDateString('en-CA');
+
 /**
  * `kind` is 'fu' or 'sv'. This is the CP Details half of the Follow-Ups and Site
  * Visits screens — the partners themselves, where the CP Leads half shows the
- * work against their leads. Same page furniture as that half (title, count,
- * filters, list) so flipping the toggle changes the subject, not the layout.
+ * work against their leads.
+ *
+ * Laid out to match that half exactly: same title block, same status tabs, same
+ * search bar, the same DateFilter the dashboards use, the same centred empty
+ * state. Flipping the toggle should change the subject, not the furniture. The
+ * one thing missing is the OUTCOME row — a partner has no hot/warm/cold.
  */
 export function PartnerActivityPanel({ kind, companyId }) {
   const { rows, loading, reload } = useActivity({ kind, companyId });
   const [partners, setPartners] = useState([]);
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState(kind === 'fu' ? 'pending' : 'scheduled');
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [proj, setProj] = useState([]);
 
   // Needed to schedule from here, where no partner is preselected.
   useEffect(() => {
@@ -417,70 +453,110 @@ export function PartnerActivityPanel({ kind, companyId }) {
       .catch(() => {});
   }, [companyId]);
 
-  const shown = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (status && r.status !== status) return false;
-      if (!needle) return true;
-      return [r.partner_name, r.partner_firm, r.project_name, r.remarks]
-        .some((v) => String(v || '').toLowerCase().includes(needle));
-    });
-  }, [rows, q, status]);
+  // Project options come from every row, not the filtered set, so picking one
+  // never removes the others from the dropdown.
+  const projOptions = useMemo(() => {
+    if (kind !== 'sv') return [];
+    return [...new Set(rows.map((r) => r.project_name).filter(Boolean))].sort();
+  }, [rows, kind]);
 
-  const title = kind === 'fu' ? 'Partner Follow-Ups' : 'Partner Site Visits';
-  const due = rows.filter((r) => r.status === OPEN_STATUS[kind]).length;
-  const statuses = kind === 'fu' ? FU_STATUS : SV_STATUS;
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const dated = !!(range.from || range.to);
+    const today = todayKey();
+    return rows.filter((r) => {
+      const day = dayOf(r.scheduled_at);
+      if (tab === 'today') { if (day !== today) return false; }
+      else if (tab === 'overdue') {
+        if (r.status !== OPEN_STATUS[kind] || !r.scheduled_at) return false;
+        if (new Date(r.scheduled_at) >= new Date()) return false;
+      } else if (tab === 'pending') { if (r.status !== OPEN_STATUS[kind]) return false; }
+      else if (tab !== 'all' && r.status !== tab) return false;
+
+      if (dated) {
+        if (!day) return false;
+        if (range.from && day < range.from) return false;
+        if (range.to && day > range.to) return false;
+      }
+      if (proj.length && !proj.includes(r.project_name || '—')) return false;
+      if (needle && ![r.partner_name, r.partner_firm, r.project_name, r.remarks]
+        .some((v) => String(v || '').toLowerCase().includes(needle))) return false;
+      return true;
+    });
+  }, [rows, tab, q, range, proj, kind]);
+
+  const narrowed = !!(q.trim() || range.from || range.to || proj.length);
+  const noun = kind === 'fu' ? 'follow-up' : 'site visit';
   const done = () => { setAdding(false); reload(); };
 
   return (
     <div className="nx-page nx-page-center nx-w-md">
-      <div className="cpa-panel-head">
+      <div className="cpa-head">
         <div>
-          <h1 className="cpa-panel-title">{title}</h1>
-          <p className="cpa-panel-sub">
-            {rows.length} scheduled with the partners themselves
-            {due ? ` · ${due} still open` : ''}
+          <h1 className="cpa-title">{kind === 'fu' ? 'Partner Follow-Ups' : 'Partner Site Visits'}</h1>
+          <p className="cpa-sub">
+            {visible.length} {noun}{visible.length === 1 ? '' : 's'}
           </p>
         </div>
         {!adding && (
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setAdding(true)}>
-            + Schedule {kind === 'fu' ? 'Follow-Up' : 'Site Visit'}
+            + Schedule {kind === 'fu' ? 'Follow-Up' : 'Visit'}
           </button>
         )}
       </div>
 
-      <div className="nx-card cpa-panel">
-        {adding && (
-          kind === 'fu'
-            ? <ScheduleFollowUp partners={partners} onDone={done} onCancel={() => setAdding(false)} />
-            : <ScheduleSiteVisit partners={partners} companyId={companyId}
-                onDone={done} onCancel={() => setAdding(false)} />
+      <div className="cpa-tabrow">
+        {PANEL_TABS[kind].map((t) => (
+          <button key={t.key} className={`cpa-tabbtn${tab === t.key ? ' is-on' : ''}`}
+            onClick={() => setTab(t.key)}>{t.label}</button>
+        ))}
+      </div>
+
+      {adding && (
+        kind === 'fu'
+          ? <ScheduleFollowUp partners={partners} onDone={done} onCancel={() => setAdding(false)} />
+          : <ScheduleSiteVisit partners={partners} companyId={companyId}
+              onDone={done} onCancel={() => setAdding(false)} />
+      )}
+
+      <div className="nx-search-wrap nx-mb-14">
+        <span className="nx-search-icon"><Icon name="search" /></span>
+        <input className="nx-input nx-search-input" value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder={kind === 'fu' ? 'Search partner, firm or remarks…' : 'Search partner, firm or project…'} />
+      </div>
+
+      {/* The same date control the dashboards and the CP Leads half use, so its
+          Month / Quarter / FY choices mean the same thing on both sides. */}
+      <DateFilter onChange={setRange} />
+      <div className="cpa-filterrow">
+        {projOptions.length > 1 && (
+          <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={setProj}
+            options={projOptions.map((n) => ({ value: n, label: n }))} />
         )}
-
-        <div className="cpa-filters">
-          <input className="nx-input nx-input-sm cpa-search" value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={kind === 'fu' ? 'Search partner, firm or remarks…' : 'Search partner, firm or project…'} />
-          <select className="nx-input nx-input-sm cpa-status" value={status}
-            onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All statuses</option>
-            {Object.entries(statuses).map(([v, st]) => <option key={v} value={v}>{st.label}</option>)}
-          </select>
-        </div>
-
-        {loading ? (
-          <Loader label="Loading…" />
-        ) : rows.length === 0 ? (
-          <p className="cpa-empty">
-            Nothing scheduled with any partner yet. Use the button above, or open a
-            partner under CP Details on All Leads.
-          </p>
-        ) : shown.length === 0 ? (
-          <p className="cpa-empty">Nothing matches that filter.</p>
-        ) : (
-          <ActivityTable kind={kind} rows={shown} showPartner onChanged={reload} />
+        {narrowed && (
+          <button className="nx-btn nx-btn-sm nx-btn-secondary nx-clear-filters-btn"
+            onClick={() => { setQ(''); setProj([]); }}>
+            <Icon name="x" /> Clear filters
+          </button>
         )}
       </div>
+
+      {loading ? (
+        <Loader label="Loading…" />
+      ) : visible.length === 0 ? (
+        <div className="cpa-blank">
+          <p className="cpa-blank-title">
+            {narrowed ? `No ${noun}s match these filters` : `No partner ${noun}s`}
+          </p>
+          <p className="cpa-blank-sub">
+            {narrowed
+              ? 'Try widening the date range or clearing the search.'
+              : `Schedule one above, or open a partner under CP Details on All Leads.`}
+          </p>
+        </div>
+      ) : (
+        <ActivityTable kind={kind} rows={visible} showPartner onChanged={reload} />
+      )}
     </div>
   );
 }
