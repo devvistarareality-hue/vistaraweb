@@ -18,6 +18,7 @@ import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
 import { useImpersonating } from '../../lib/useImpersonating';
+import { groupsFor } from '../../lib/moduleGroups';
 const ORANGE = 'var(--accent)';
 const NAVY   = 'var(--text)';
 
@@ -118,6 +119,8 @@ export default function SalesLayout({ children }) {
   const dispatch  = useDispatch();
   const router    = useRouter();
   const pathname  = usePathname();
+  const salesDept = groupsFor(user).find((g) => g.key === 'sales');
+  const salesDeptOn = { ...s.navItem, ...s.navActive };
 
   useOneSignal(user?.user_code);
 
@@ -380,6 +383,19 @@ export default function SalesLayout({ children }) {
                 </Link>
               )}
             </>
+          )}
+
+          {/* The Sales department's other part (Channel Partner) — see lib/moduleGroups. */}
+          {salesDept && salesDept.open.length > 1 && (
+            <div className="dep-switch">
+              <div style={s.sectionLabel}>{salesDept.title.toUpperCase()}</div>
+              {salesDept.open.map((p) => (
+                <Link key={p.key} href={p.href} className="s-nav-link" style={p.key === 'sales' ? salesDeptOn : s.navItem}>
+                  <span className="dep-switch-dot" data-on={p.key === 'sales' ? '1' : '0'} />
+                  <span className={p.key === 'sales' ? 'dep-switch-label is-on' : 'dep-switch-label'}>{p.title}</span>
+                </Link>
+              ))}
+            </div>
           )}
 
           {isVRLAdmin && companies.length > 0 && (

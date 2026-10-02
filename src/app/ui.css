@@ -2218,3 +2218,22 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pw-link { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; }
 .pw-link:hover { text-decoration: underline; }
 @media (max-width: 560px) { .pw-grid { grid-template-columns: 1fr; } .pw-stats { grid-template-columns: repeat(2, 1fr); } }
+
+/* ─── Departments (home tiles, department page, sidebar switcher) ─── */
+.dep-parts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.dep-chip { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--surface-3); color: var(--text-2); }
+.dep-chip.is-soon { background: transparent; border: 1px dashed var(--border-strong); color: var(--muted); }
+.dep-page { padding: 28px 32px 40px; max-width: 1200px; }
+.dep-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 14px; }
+.dep-back:hover { color: var(--text); }
+.dep-head { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.dep-head .ep-icon { width: 56px; height: 56px; }
+.dep-soon { opacity: .7; cursor: default; }
+.dep-soon-tag { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  border: 1px dashed var(--border-strong); border-radius: 999px; padding: 3px 9px; }
+.dep-switch { margin-top: 18px; }
+.dep-switch-dot { width: 7px; height: 7px; border-radius: 50%; margin: 0 9px 0 6px; flex-shrink: 0; background: rgba(var(--ink-rgb), .25); }
+.dep-switch-dot[data-on="1"] { background: var(--nav-active-fg); }
+.dep-switch-label { font-size: 13px; font-weight: 500; }
+.dep-switch-label.is-on { font-weight: 700; }
+@media (max-width: 768px) { .dep-page { padding: 20px 16px 32px; } }

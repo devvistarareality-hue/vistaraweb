@@ -8,6 +8,8 @@ import {
   ArrowUpRight, CalendarDays, LayoutGrid, Package,
 } from 'lucide-react';
 import { canAccessChannelPartner } from '../../lib/moduleAccess';
+import { groupsFor } from '../../lib/moduleGroups';
+import { DepartmentGrid } from '../../components/Departments';
 
 // Each module's card: where it goes, what it's for, its icon and accent tone.
 const MODULE_CONFIG = {
@@ -38,10 +40,15 @@ export default function DashboardPage() {
   const showCpTile = !baseModules.includes('Channel Partner') && canAccessChannelPartner(user);
   const userModules = showCpTile ? [...baseModules, 'Channel Partner'] : baseModules;
 
+  // Home shows departments (lib/moduleGroups): Sales, Accounts & Finance, HR… each
+  // holding its modules. Someone with a single part anywhere goes straight into it.
+  const groups = groupsFor(user);
+  const onlyPart = groups.length === 1 && groups[0].modules.length === 1 ? groups[0].modules[0].href : null;
+
   useEffect(() => {
     if (user?.role === 'Kiosk') { router.replace('/kiosk'); return; }
-    if (userModules.length === 1) router.replace(MODULE_CONFIG[userModules[0]].href);
-  }, [userModules.length, user?.role]);
+    if (onlyPart) router.replace(onlyPart);
+  }, [onlyPart, user?.role]);
 
   // Time-of-day greeting and date are set after mount so server and client HTML match.
   useEffect(() => {
@@ -49,7 +56,7 @@ export default function DashboardPage() {
     setToday(new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
   }, []);
 
-  if (userModules.length === 1) return null;
+  if (onlyPart) return null;
   const firstName = String(user?.name || '').split(' ')[0];
 
   return (
@@ -71,33 +78,18 @@ export default function DashboardPage() {
       </section>
 
       <div className="ep-section">
-        <h2>Your modules</h2>
+        <h2>Your departments</h2>
         <span>Pick where you want to work</span>
       </div>
 
-      {userModules.length === 0 ? (
+      {groups.length === 0 ? (
         <div className="nx-card ep-empty">
           <span className="ep-empty-icon"><Package size={30} /></span>
           <b>No modules assigned yet</b>
           <p>Ask your administrator to give you access to a module.</p>
         </div>
       ) : (
-        <div className="ep-grid">
-          {userModules.map((name, i) => {
-            const m = MODULE_CONFIG[name];
-            return (
-              <Link key={name} href={m.href} className={`nx-card ep-card tone-${m.tone}`} style={{ animationDelay: `${i * 50}ms` }}>{/* inline-ok: staggered entrance */}
-                <div className="ep-card-top">
-                  <span className="ep-icon"><m.Icon size={24} strokeWidth={1.8} /></span>
-                  <span className="ep-go"><ArrowUpRight size={18} /></span>
-                </div>
-                <div className="ep-card-title">{m.title}</div>
-                <div className="ep-card-desc">{m.desc}</div>
-                <div className="ep-card-open">Open module</div>
-              </Link>
-            );
-          })}
-        </div>
+        <DepartmentGrid groups={groups} base="/dashboard" />
       )}
     </div>
   );

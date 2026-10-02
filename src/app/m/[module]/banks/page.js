@@ -13,7 +13,9 @@ import { rupee, cleanAmount, groupINR } from '../_ar';
 // names one of these, and its balance is opening balance + those payments (worked
 // out by the server every time, so editing or deleting a payment moves it too).
 export default function ARBanksPage({ params }) {
-  if (params.module !== 'ar') notFound();
+  // Bank Master is shared by the Accounts & Finance department: Receivables now,
+  // Payables next — so it opens under either module.
+  if (params.module !== 'ar' && params.module !== 'accounts') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = companyId ? `?company_id=${companyId}` : '';
   const [rows, setRows] = useState(null);

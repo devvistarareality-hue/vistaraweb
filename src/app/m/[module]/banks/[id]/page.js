@@ -36,7 +36,9 @@ const dayBlock = (isoDate) => {
 // Loan payment received into it in date order with a running balance. The closing
 // figure is the same balance Bank Master shows.
 export default function ARBankStatementPage({ params }) {
-  if (params.module !== 'ar') notFound();
+  // Bank Master is shared by the Accounts & Finance department: Receivables now,
+  // Payables next — so it opens under either module.
+  if (params.module !== 'ar' && params.module !== 'accounts') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -139,7 +141,7 @@ export default function ARBankStatementPage({ params }) {
               <div className="bst-part">
                 <span className="bst-avatar">{initials(r.client)}</span>
                 <div className="bst-who">
-                  <Link href={`/m/${params.module}/ledger/${r.account_id}`} className="arb-link">{r.client || '—'}</Link>
+                  <Link href={`/m/ar/ledger/${r.account_id}`} className="arb-link">{r.client || '—'}</Link>
                   <div className="bst-tags">
                     {r.project && <span className="bst-tag">{r.project}</span>}
                     {r.plots && <span className="bst-tag">Plot {r.plots}</span>}

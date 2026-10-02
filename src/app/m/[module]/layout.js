@@ -7,6 +7,7 @@ import { logout } from '../../../redux/actions/authActions';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adminFilterReducer';
 import { MODULE_META } from './moduleMeta';
+import { groupOfSlug } from '../../../lib/moduleGroups';
 import {SLUG_TO_MODULE, isManagerRole, moduleAccess, canSee} from '../../../lib/moduleAccess';
 import { AUTH_ENDPOINTS } from '../../../constants/api';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
@@ -121,7 +122,6 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Register', href: `${base}/register`, icon: <IconBook />, screen: 'ar.screen.register' },
       { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck />, screen: 'ar.screen.import' },
       { label: 'Cancellations', href: `${base}/cancellations`, icon: <IconCancel />, screen: 'ar.screen.cancellations' },
-      { label: 'Bank Master', href: `${base}/banks`, icon: <IconBank />, screen: 'ar.screen.banks' },
     ] : []),
     // My Team is a management view — only managers and admins see it.
     ...(isManager || isAdmin ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers />,
@@ -145,6 +145,14 @@ export default function ModuleLayout({ children, params }) {
     : null;
   // A company can hide menu items per designation (Designation Master → Permissions).
   const visibleNav = NAV.filter((item) => canSee(user, item.screen));
+  // The department this module belongs to (lib/moduleGroups) — its other parts are
+  // one click away here, e.g. Receivables ↔ Approvals & Bookings ↔ Bank Master.
+  const dept = groupOfSlug(user, slug);
+  const deptLinks = dept && dept.open.length > 1 ? dept.open : [];
+  // The part you are in: its module (the part key is the /m/<slug>), or Bank Master on a bank page.
+  const onBanks = pathname.includes('/banks');
+  const deptOn = (p) => (p.key === 'banks' ? onBanks : p.key === slug && !onBanks);
+  const navItemOn = { ...s.navItem, ...s.navActive };
   // A path only counts as "inside" a nav item when it matches it exactly or
   // continues with a slash: /closures must not light up /closure as well.
   const isActive = (href) => (href === base
@@ -184,6 +192,20 @@ export default function ModuleLayout({ children, params }) {
               </Link>
             );
           })}
+          {deptLinks.length > 0 && (
+            <div className="dep-switch">
+              <div style={s.sectionLabel}>{dept.title.toUpperCase()}</div>
+              {deptLinks.map((p) => {
+                const on = deptOn(p);
+                return (
+                  <Link key={p.key} href={p.href} style={on ? navItemOn : s.navItem}>
+                    <span className="dep-switch-dot" data-on={on ? '1' : '0'} />
+                    <span className={on ? 'dep-switch-label is-on' : 'dep-switch-label'}>{p.title}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
           {isVRLAdmin && companies.length > 0 && (
             <div style={{ marginTop: 18 }}>
               <div style={{ ...s.sectionLabel, marginBottom: 7 }}>VIEWING COMPANY</div>

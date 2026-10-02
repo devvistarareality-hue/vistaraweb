@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
 import { LayoutGrid } from 'lucide-react';
 import { moduleAccess } from '../../lib/moduleAccess';
+import { groupsFor } from '../../lib/moduleGroups';
+import { DepartmentGrid } from '../../components/Departments';
 
 const NAVY   = 'var(--text)';
 const ORANGE = 'var(--warning-2)';
@@ -72,6 +74,8 @@ export default function AdminDashboardPage() {
   // Module-scoped admins only see their own module tiles (User/Company Mgmt are hidden).
   const { superAdmin, isModuleAdmin, allowed } = moduleAccess(user);
   const visibleOpen = (superAdmin || !isModuleAdmin) ? openMods : openMods.filter((m) => allowed.includes(m.name));
+  // Home shows departments (lib/moduleGroups) rather than every module.
+  const groups = groupsFor(user);
 
   useEffect(() => {
     setGreeting(getGreeting());
@@ -105,8 +109,8 @@ export default function AdminDashboardPage() {
             <div className="adm-chip">
               <span className="adm-chip-icon"><LayoutGrid size={17} /></span>
               <div>
-                <div className="adm-chip-num">{visibleOpen.length}</div>
-                <div className="adm-chip-label">Active modules</div>
+                <div className="adm-chip-num">{groups.length}</div>
+                <div className="adm-chip-label">Departments</div>
               </div>
             </div>
             <div className="adm-chip">
@@ -130,33 +134,10 @@ export default function AdminDashboardPage() {
       {/* ═══ QUICK ACCESS ═══ */}
       <div style={s.section} className="admin-section">
         <div style={s.sectionHead}>
-          <div style={s.sectionLabel}>QUICK ACCESS</div>
-          <div style={s.sectionSub}>Your enabled modules</div>
+          <div style={s.sectionLabel}>DEPARTMENTS</div>
+          <div style={s.sectionSub}>Each one holds its modules — open one to see its parts</div>
         </div>
-        <div style={s.openGrid}>
-          {visibleOpen.map((mod, i) => (
-            <Link
-              key={mod.name}
-              href={mod.href}
-              className="mod-card-open"
-              style={{ ...s.openCard, textDecoration: 'none', animationDelay: `${i * 80}ms` }}
-            >
-              {/* Gradient header band */}
-              <div style={{ ...s.openBand, background: `linear-gradient(to bottom, ${mod.accent.gradient} 0%, transparent 100%)` }}>
-                <div style={{ ...s.openIcon, backgroundColor: mod.accent.bg, color: mod.accent.icon }}>
-                  <ModuleIcon type={mod.icon} size={26} />
-                </div>
-              </div>
-              <div style={s.openBody}>
-                <div style={s.openName}>{mod.name}</div>
-                <div style={s.openDesc}>{mod.desc}</div>
-                <div style={{ ...s.openLink, color: mod.accent.icon }}>
-                  Open module <span className="open-arrow" style={{ marginLeft: 4 }}>→</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <DepartmentGrid groups={groups} base="/admin" />
       </div>
 
       {/* ═══ ALL MODULES ═══ */}
