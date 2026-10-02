@@ -2181,3 +2181,40 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ard-hero .bst-out { color: #FFB4AE; }
 .bst-amt-out { background: var(--danger-soft); color: var(--danger); }
 .bst-row.is-out .bst-avatar { background: var(--danger-soft); color: var(--danger); }
+
+/* ─── AR dashboard · Overall / Project-wise ─── */
+.ard-view { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--surface-3); gap: 2px; }
+.ard-view-btn { height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
+.ard-view-btn.is-on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.pw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 18px; }
+.pw-card { border-radius: 20px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.pw-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.pw-name { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.pw-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pw-total { text-align: right; }
+.pw-total span { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.pw-total b { display: block; font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.pw-collected { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
+.pw-track { height: 7px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.pw-fill { height: 100%; border-radius: 999px; background: var(--success); }
+.pw-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.pw-stats span { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.pw-stats b { display: block; font-size: 15px; font-weight: 800; color: var(--text); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.pw-bad { color: var(--danger) !important; }
+.pw-strong { font-weight: 800; color: var(--text); }
+.pw-bar { margin-bottom: 8px; height: 10px; }
+.pw-age-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--text-2); }
+.pw-age-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pw-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pw-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: auto; }
+.pw-table-card { border-radius: 20px; overflow: hidden; }
+.pw-table-title { padding: 16px 20px 4px; font-size: 15px; font-weight: 800; color: var(--text); }
+.pw-table { min-width: 900px; }
+.pw-table th, .pw-table td { padding: 11px 16px; font-size: 13px; text-align: left; }
+.pw-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pw-table tfoot td { font-weight: 800; border-top: 1px solid var(--border); background: var(--surface-2); }
+.pw-muted { color: var(--muted); font-weight: 500; font-size: 11.5px; }
+.pw-link { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; }
+.pw-link:hover { text-decoration: underline; }
+@media (max-width: 560px) { .pw-grid { grid-template-columns: 1fr; } .pw-stats { grid-template-columns: repeat(2, 1fr); } }

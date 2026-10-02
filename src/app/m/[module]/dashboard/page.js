@@ -82,6 +82,10 @@ function ARDashboard() {
   const [asOf, setAsOf] = useState(today());
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
+  // Overall or Project-wise — remembered per browser, a viewing preference only.
+  const [view, setView] = useState('overall');
+  useEffect(() => { try { const v = localStorage.getItem('ar_dash_view'); if (v === 'projects') setView(v); } catch {} }, []);
+  const pickView = (v) => { setView(v); try { localStorage.setItem('ar_dash_view', v); } catch {} };
 
   useEffect(() => {
     let alive = true;
@@ -117,6 +121,11 @@ function ARDashboard() {
           </p>
         </div>
         <div className="ard-filters">
+          <div className="ard-view" role="tablist" aria-label="Dashboard view">
+            {[['overall', 'Overall'], ['projects', 'Project-wise']].map(([k, label]) => (
+              <button key={k} role="tab" aria-selected={view === k} className={`ard-view-btn${view === k ? ' is-on' : ''}`} onClick={() => pickView(k)}>{label}</button>
+            ))}
+          </div>
           <MultiSelect allLabel="All projects" noun="projects" value={project} onChange={setProject} ariaLabel="Project"
             options={projects.map((p) => ({ value: String(p.id), label: p.name }))} />
           <label className="ard-date">
@@ -126,7 +135,9 @@ function ARDashboard() {
         </div>
       </div>
 
-      {data === null ? <Loader label="Calculating the receivables book…" /> : err ? <div className="nx-note bad">{err}</div> : (
+      {data === null ? <Loader label="Calculating the receivables book…" /> : err ? <div className="nx-note bad">{err}</div> : view === 'projects' ? (
+        <ProjectWise data={data} module="ar" onOpen={(id) => { setProject([String(id)]); pickView('overall'); }} />
+      ) : (
         <>
           <div className="ard-top">
             <div className="ard-hero">
@@ -371,3 +382,104 @@ function initials(name) {
   const parts = String(name || '').replace(/^(mr|mrs|ms|dr)\.?\s+/i, '').split(/\s+/).filter(Boolean);
   return ((parts[0]?.[0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() || '—';
 }
+
+// Project-wise: every project's receivables side by side — the same figures as the
+// Overall view, split by project (the API sums both from the same accounts).
+function ProjectWise({ data, module, onOpen }) {
+  const rows = data.by_project || [];
+  if (!rows.length) return <div className="nx-card bst-empty"><b>No active accounts</b></div>;
+  const t = data.totals;
+  return (
+    <>
+      <div className="pw-grid">
+        {rows.map((p) => {
+          const age = p.ageing || {};
+          const ageTotal = AGE_LABELS.reduce((a, k) => a + (age[k] || 0), 0) || 1;
+          const worst = AGE_LABELS.map((k, i) => [k, i, age[k] || 0]).filter((x) => x[2] > 0).slice(-3).reverse();
+          return (
+            <article key={p.id} className="nx-card pw-card">
+              <header className="pw-head">
+                <div>
+                  <div className="pw-name">{p.name}</div>
+                  <div className="pw-sub">{p.accounts} account{p.accounts === 1 ? '' : 's'} · {p.overdue_accounts} overdue</div>
+                </div>
+                <div className="pw-total">
+                  <span>Total receivable</span>
+                  <b title={rupee(p.totals.os_with_interest)}>{inrShort(p.totals.os_with_interest)}</b>
+                </div>
+              </header>
+
+              <div className="pw-collected">
+                <div className="pw-track"><div className="pw-fill" style={{ width: `${Math.min(100, p.pct_realised)}%` }} /></div>{/* inline-ok: collected % from data */}
+                <span>{p.pct_realised}% collected · {inrShort(p.totals.received)} of {inrShort(p.totals.collectable)}</span>
+              </div>
+
+              <div className="pw-stats">
+                <div><span>Overdue</span><b className="pw-bad">{inrShort(p.totals.overdue)}</b></div>
+                <div><span>Not yet due</span><b>{inrShort(p.totals.not_due)}</b></div>
+                <div><span>Interest</span><b>{inrShort(p.totals.net_interest)}</b></div>
+                <div><span>&gt;180 days</span><b className={age['>180'] ? 'pw-bad' : ''}>{age['>180'] ? inrShort(age['>180']) : '—'}</b></div>
+              </div>
+
+              <div className="pw-age">
+                <div className="ard-stack pw-bar">
+                  {AGE_LABELS.map((a, i) => age[a] > 0 && <span key={a} className={`ard-seg a${i}`} title={`${a} days · ${rupee(age[a])}`} style={{ width: `${(age[a] / ageTotal) * 100}%` }} />)}{/* inline-ok: segment width from data */}
+                </div>
+                <div className="pw-age-legend">
+                  {worst.length ? worst.map(([k, i, v]) => (
+                    <span key={k}><i className={`pw-dot a${i}`} />{k} days · {inrShort(v)}</span>
+                  )) : <span>Nothing overdue</span>}
+                </div>
+              </div>
+
+              <footer className="pw-actions">
+                <Link href={`/m/${module}/register?project=${p.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Register</Link>
+                <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => onOpen(p.id)}>Open dashboard</button>
+              </footer>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="nx-card pw-table-card">
+        <div className="pw-table-title">All projects at a glance</div>
+        <div className="arb-scroll">
+          <table className="nx-table pw-table">
+            <thead>
+              <tr>
+                <th>Project</th><th className="num">Accounts</th><th className="num">Collectable</th><th className="num">Received</th>
+                <th className="num">Overdue</th><th className="num">&gt;180 days</th><th className="num">Not yet due</th>
+                <th className="num">Interest</th><th className="num">Total receivable</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((p) => (
+                <tr key={p.id}>
+                  <td><button className="pw-link" onClick={() => onOpen(p.id)}>{p.name}</button></td>
+                  <td className="num">{p.accounts}<span className="pw-muted"> · {p.overdue_accounts} od</span></td>
+                  <td className="num">{inrShort(p.totals.collectable)}</td>
+                  <td className="num">{inrShort(p.totals.received)}<span className="pw-muted"> · {p.pct_realised}%</span></td>
+                  <td className="num pw-bad">{inrShort(p.totals.overdue)}</td>
+                  <td className="num">{p.ageing?.['>180'] ? inrShort(p.ageing['>180']) : '—'}</td>
+                  <td className="num">{inrShort(p.totals.not_due)}</td>
+                  <td className="num">{inrShort(p.totals.net_interest)}</td>
+                  <td className="num pw-strong">{inrShort(p.totals.os_with_interest)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td><td className="num">{data.accounts}</td><td className="num">{inrShort(t.collectable)}</td>
+                <td className="num">{inrShort(t.received)}<span className="pw-muted"> · {data.pct_realised}%</span></td>
+                <td className="num pw-bad">{inrShort(t.overdue)}</td><td className="num">{data.ageing?.['>180'] ? inrShort(data.ageing['>180']) : '—'}</td>
+                <td className="num">{inrShort(t.not_due)}</td><td className="num">{inrShort(t.net_interest)}</td>
+                <td className="num pw-strong">{inrShort(t.os_with_interest)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
