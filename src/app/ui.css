@@ -1946,3 +1946,18 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pa-modal-hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.55; }
 .pa-modal-input { width: 100%; height: 42px; margin-top: 14px; }
 .pa-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+/* ─── AR · Bank Master ─── */
+.arb-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.arb-card { border-radius: 18px; overflow: hidden; }
+.arb-scroll { overflow-x: auto; }
+.arb-table { min-width: 720px; }
+.arb-table th, .arb-table td { padding: 12px 16px; font-size: 13px; text-align: left; }
+.arb-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.arb-table tfoot td { font-weight: 700; border-top: 1px solid var(--border); color: var(--text); }
+.arb-table tr.is-retired td { color: var(--muted); }
+.arb-name { font-weight: 700; color: var(--text); }
+.arb-balance { font-weight: 800; color: var(--success); }
+.arb-retired { margin-left: 8px; }
+.arb-actions { display: flex; gap: 8px; justify-content: flex-end; white-space: nowrap; }
+.arb-empty { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 14px; }

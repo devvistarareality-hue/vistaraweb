@@ -182,6 +182,8 @@ export const AR_ENDPOINTS = {
   get myFollowUps() { return `${BASE_URL}/api/ar/followups/`; },
   followUp: (id)   => `${BASE_URL}/api/ar/followups/${id}/`,
   get assignees()  { return `${BASE_URL}/api/ar/assignees/`; },
+  get banks()      { return `${BASE_URL}/api/ar/banks/`; },
+  bank: (id)       => `${BASE_URL}/api/ar/banks/${id}/`,
 };
 
 export const ACTIVITY_ENDPOINTS = {

@@ -31,6 +31,7 @@ const IconCheck = () => <SvgIcon><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><p
 const IconLog = () => <SvgIcon><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 11.5 4"/><polyline points="3 16 3 11 8 11"/></SvgIcon>;
 const IconBell = () => <SvgIcon><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></SvgIcon>;
 const IconChart = () => <SvgIcon><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></SvgIcon>;
+const IconBank  = () => <SvgIcon><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></SvgIcon>;
 const IconBack  = () => <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>;
 
 export default function ModuleLayout({ children, params }) {
@@ -118,6 +119,7 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Collections', href: `${base}/collections`, icon: <IconBell />, screen: 'ar.screen.collections' },
       { label: 'Register', href: `${base}/register`, icon: <IconBook />, screen: 'ar.screen.register' },
       { label: 'Import receipts', href: `${base}/import`, icon: <IconCheck />, screen: 'ar.screen.import' },
+      { label: 'Bank Master', href: `${base}/banks`, icon: <IconBank />, screen: 'ar.screen.banks' },
     ] : []),
     // My Team is a management view — only managers and admins see it.
     ...(isManager || isAdmin ? [{ label: 'My Team', href: `${base}/team`, icon: <IconUsers />,

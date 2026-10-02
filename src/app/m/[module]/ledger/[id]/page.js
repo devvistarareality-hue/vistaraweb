@@ -56,14 +56,24 @@ export default function ARLedgerPage({ params }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const openNew = () => { setFormErr({}); setForm({ paid_on: today(), amount: '', mode: 'loan', remarks: '' }); };
-  const openEdit = (rc) => { setFormErr({}); setForm({ id: rc.id, paid_on: rc.paid_on, amount: String(rc.amount), mode: rc.mode, remarks: rc.remarks }); };
+  // Bank Master: a Loan payment names the bank it was received into.
+  const [banks, setBanks] = useState([]);
+  useEffect(() => {
+    apiFetch(AR_ENDPOINTS.banks + (companyId ? `?company_id=${companyId}` : ''))
+      .then((r) => (r.ok ? r.json() : { results: [] })).then((d) => setBanks(d.results || [])).catch(() => {});
+  }, [companyId]);
+  // Active banks, plus a retired one this receipt already uses so an edit can keep it.
+  const bankOptions = (current) => banks.filter((b) => b.is_active || String(b.id) === String(current));
+  const bankName = (bid) => banks.find((b) => String(b.id) === String(bid))?.name || '';
+
+  const openNew = () => { setFormErr({}); setForm({ paid_on: today(), amount: '', mode: 'loan', bank: '', remarks: '' }); };
+  const openEdit = (rc) => { setFormErr({}); setForm({ id: rc.id, paid_on: rc.paid_on, amount: String(rc.amount), mode: rc.mode, bank: rc.bank ? String(rc.bank) : '', remarks: rc.remarks }); };
 
   async function saveReceipt() {
     const amt = Number(form.amount);
     const verb = form.id ? 'Update this receipt to' : 'Record';
     const ok = await confirmDialog(
-      `${verb} ${rupee(amt)} from ${data.client_name || 'this client'} on ${formatDMY(form.paid_on)} (${MODE_LABEL[form.mode]})?`,
+      `${verb} ${rupee(amt)} from ${data.client_name || 'this client'} on ${formatDMY(form.paid_on)} (${MODE_LABEL[form.mode]}${form.mode === 'loan' && form.bank ? ` · ${bankName(form.bank)}` : ''})?`,
       { title: form.id ? 'Update receipt?' : 'Record payment?', confirmText: form.id ? 'Update' : 'Record' },
     );
     if (!ok) return;
@@ -72,7 +82,8 @@ export default function ARLedgerPage({ params }) {
       const url = form.id ? AR_ENDPOINTS.receipt(form.id) : AR_ENDPOINTS.receipts(id);
       const r = await apiFetch(url + (companyId ? `?company_id=${companyId}` : ''), {
         method: form.id ? 'PATCH' : 'POST',
-        body: JSON.stringify({ paid_on: form.paid_on, amount: form.amount, mode: form.mode, remarks: form.remarks }),
+        body: JSON.stringify({ paid_on: form.paid_on, amount: form.amount, mode: form.mode,
+          bank: form.mode === 'loan' ? (form.bank || null) : null, remarks: form.remarks }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setFormErr(d.detail ? { _: d.detail } : d); setSaving(false); return; }
@@ -255,7 +266,7 @@ export default function ARLedgerPage({ params }) {
                   <tr key={rc.id}>
                     <td>{formatDMY(rc.paid_on)}</td>
                     <td className="num">{rupee(rc.amount)}</td>
-                    <td>{rc.mode_label}</td>
+                    <td>{rc.mode_label}{rc.bank_name ? ` · ${rc.bank_name}` : ''}</td>
                     <td className="wrap">{rc.remarks || <span className="muted">—</span>}</td>
                     <td className="muted">{rc.source === 'import' ? 'Excel import' : (rc.created_by || '—')}</td>
                     <td>
@@ -328,17 +339,31 @@ export default function ARLedgerPage({ params }) {
             </div>
             <div className="nx-field">
               <label className="nx-field-label" htmlFor="ar-mode">Mode</label>
-              <select id="ar-mode" className="nx-input" value={form.mode} onChange={(e) => setForm({ ...form, mode: e.target.value })}>
+              <select id="ar-mode" className="nx-input" value={form.mode} onChange={(e) => setForm({ ...form, mode: e.target.value, bank: e.target.value === 'loan' ? form.bank : '' })}>
                 {recordModes(form.mode).map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
+            {form.mode === 'loan' && (
+              <div className="nx-field">
+                <label className="nx-field-label" htmlFor="ar-bank">Bank</label>
+                {bankOptions(form.bank).length ? (
+                  <select id="ar-bank" className={`nx-input${formErr.bank ? ' is-invalid' : ''}`} value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })}>
+                    <option value="">Select the bank it was received into</option>
+                    {bankOptions(form.bank).map((b) => <option key={b.id} value={b.id}>{b.name}{b.account_no ? ` · ${b.account_no}` : ''} — balance {rupee(b.balance)}</option>)}
+                  </select>
+                ) : (
+                  <div className="nx-note warn">No banks yet — add one in Bank Master first.</div>
+                )}
+                {formErr.bank && <span className="nx-note bad">{formErr.bank}</span>}
+              </div>
+            )}
             <div className="nx-field">
               <label className="nx-field-label" htmlFor="ar-remarks">Remarks</label>
               <input id="ar-remarks" className="nx-input" placeholder="e.g. REC IN VISTARA HDFC" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} />
             </div>
             <div className="ar-modal-foot">
               <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setForm(null)} disabled={saving}>Cancel</button>
-              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveReceipt} disabled={saving || !form.paid_on || !(Number(form.amount) > 0)}>
+              <button className="nx-btn nx-btn-md nx-btn-primary" onClick={saveReceipt} disabled={saving || !form.paid_on || !(Number(form.amount) > 0) || (form.mode === 'loan' && !form.bank)}>
                 {saving ? 'Saving…' : form.id ? 'Update' : 'Record'}
               </button>
             </div>
@@ -372,8 +397,8 @@ export default function ARLedgerPage({ params }) {
                     <div className="ar-audit-meta">
                       {{ create: 'Created', update: 'Edited', delete: 'Deleted' }[a.action]} by {a.changed_by || '—'} · {new Date(a.changed_at).toLocaleString('en-IN')}
                     </div>
-                    {a.before && <div>Before: {rupee(a.before.amount)} · {formatDMY(a.before.paid_on)} · {MODE_LABEL[a.before.mode] || a.before.mode}{a.before.remarks ? ` · ${a.before.remarks}` : ''}</div>}
-                    {a.after && <div>After: {rupee(a.after.amount)} · {formatDMY(a.after.paid_on)} · {MODE_LABEL[a.after.mode] || a.after.mode}{a.after.remarks ? ` · ${a.after.remarks}` : ''}</div>}
+                    {a.before && <div>Before: {rupee(a.before.amount)} · {formatDMY(a.before.paid_on)} · {MODE_LABEL[a.before.mode] || a.before.mode}{a.before.bank ? ` · ${a.before.bank}` : ''}{a.before.remarks ? ` · ${a.before.remarks}` : ''}</div>}
+                    {a.after && <div>After: {rupee(a.after.amount)} · {formatDMY(a.after.paid_on)} · {MODE_LABEL[a.after.mode] || a.after.mode}{a.after.bank ? ` · ${a.after.bank}` : ''}{a.after.remarks ? ` · ${a.after.remarks}` : ''}</div>}
                   </div>
                 ))}
               </div>
