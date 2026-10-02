@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
-import { Landmark, Printer, ArrowDownLeft, CalendarRange, Inbox } from 'lucide-react';
+import { Landmark, Printer, ArrowDownLeft, ArrowUpRight, CalendarRange, Inbox } from 'lucide-react';
 import { AR_ENDPOINTS } from '../../../../../constants/api';
 import { apiFetch } from '../../../../../utils/apiFetch';
 import Loader from '../../../../../components/Loader';
@@ -91,6 +91,7 @@ export default function ARBankStatementPage({ params }) {
           <div className="ard-hero-split">
             <div><span>{ranged && from ? `Brought forward (${formatDMY(from)})` : 'Opening balance'}</span><b>{data ? rupee(data.brought_forward) : '—'}</b></div>
             <div><span>Received{ranged ? ' in period' : ''}</span><b className="bst-in">+ {data ? rupee(data.total_in) : '—'}</b></div>
+            {data?.total_out > 0 && <div><span>Refunds paid</span><b className="bst-out">− {rupee(data.total_out)}</b></div>}
             <div><span>Payments</span><b>{rows.length}</b></div>
           </div>
         </div>
@@ -115,7 +116,7 @@ export default function ARBankStatementPage({ params }) {
       {data === null ? <Loader label="Loading statement…" /> : !err && (
         <div className="nx-card bst-card">
           <div className="bst-head">
-            <span>Date</span><span>Particulars</span><span>Remarks</span><span className="num">Received</span><span className="num">Balance</span>
+            <span>Date</span><span>Particulars</span><span>Remarks</span><span className="num">Amount</span><span className="num">Balance</span>
           </div>
 
           <div className="bst-row bst-row-ob">
@@ -129,11 +130,11 @@ export default function ARBankStatementPage({ params }) {
           {rows.length === 0 ? (
             <div className="bst-empty">
               <Inbox size={34} />
-              <b>No Loan payments{ranged ? ' in this period' : ' yet'}</b>
+              <b>No entries{ranged ? ' in this period' : ' yet'}</b>
               <span>Record a payment with mode Loan and pick this bank — it will show up here.</span>
             </div>
           ) : rows.map((r) => (
-            <div key={r.id} className="bst-row">
+            <div key={r.id} className={`bst-row${r.kind === 'out' ? ' is-out' : ''}`}>
               <div className="bst-date"><DateBlock iso={r.date} /></div>
               <div className="bst-part">
                 <span className="bst-avatar">{initials(r.client)}</span>
@@ -147,7 +148,11 @@ export default function ARBankStatementPage({ params }) {
                 </div>
               </div>
               <div className="bst-rem">{r.remarks || <span className="bst-dash">—</span>}</div>
-              <div className="num"><span className="bst-amt"><ArrowDownLeft size={13} />{rupee(r.amount)}</span></div>
+              <div className="num">
+                {r.kind === 'out'
+                  ? <span className="bst-amt bst-amt-out"><ArrowUpRight size={13} />{rupee(r.amount)}</span>
+                  : <span className="bst-amt"><ArrowDownLeft size={13} />{rupee(r.amount)}</span>}
+              </div>
               <div className="num bst-bal">{rupee(r.balance)}</div>
             </div>
           ))}
@@ -156,7 +161,7 @@ export default function ARBankStatementPage({ params }) {
             <div className="bst-date" />
             <div className="bst-part"><b>Closing balance</b></div>
             <div className="bst-rem" />
-            <div className="num bst-in">+ {rupee(data.total_in)}</div>
+            <div className="num bst-in">+ {rupee(data.total_in)}{data.total_out > 0 && <div className="bst-out">− {rupee(data.total_out)}</div>}</div>
             <div className="num bst-bal">{rupee(data.closing_balance)}</div>
           </div>
         </div>

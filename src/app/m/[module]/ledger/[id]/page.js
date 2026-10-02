@@ -12,6 +12,7 @@ import Loader from '../../../../../components/Loader';
 import BookingDetails from '../../../../../components/BookingDetails';
 import ActivityHistory from '../../../../../components/ActivityHistory';
 import FollowUpModal from '../../_FollowUpModal';
+import CancelModal from '../../_CancelModal';
 import { rupee, MODES, recordModes, cleanAmount, groupINR, balanceAfter, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
@@ -57,6 +58,7 @@ export default function ARLedgerPage({ params }) {
   useEffect(() => { load(); }, [load]);
 
   // Bank Master: a Loan payment names the bank it was received into.
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [banks, setBanks] = useState([]);
   useEffect(() => {
     apiFetch(AR_ENDPOINTS.banks + (companyId ? `?company_id=${companyId}` : ''))
@@ -168,6 +170,7 @@ export default function ARLedgerPage({ params }) {
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={openLoi}>View {String(data.plots).toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'}</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setFollowUps(true)}>Follow-ups</button>
+          {!frozen && can(user, 'ar.cancel.request') && <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => setCancelOpen(true)}>Cancel plot</button>}
           {!frozen && can(user, 'ar.receipt.record') && <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openNew}>+ Record payment</button>}
         </div>
       </div>
@@ -320,6 +323,7 @@ export default function ARLedgerPage({ params }) {
         <ActivityHistory targetType="ar_account" targetId={data.id} companyId={companyId} title="Account history — receipts, follow-ups, changes" />
       </div>
 
+      {cancelOpen && <CancelModal row={{ id: data.id, client_name: data.client_name, project: data.project, plots: data.plots }} companyId={companyId} onClose={() => setCancelOpen(false)} />}
       {followUps && <FollowUpModal row={data} companyId={companyId} me={me} onClose={() => setFollowUps(false)} />}
 
       {form && (

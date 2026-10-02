@@ -188,6 +188,12 @@ export const AR_ENDPOINTS = {
   get banks()      { return `${BASE_URL}/api/ar/banks/`; },
   bank: (id)       => `${BASE_URL}/api/ar/banks/${id}/`,
   bankStatement: (id) => `${BASE_URL}/api/ar/banks/${id}/statement/`,
+  accountCancellation: (id) => `${BASE_URL}/api/ar/accounts/${id}/cancellation/`,
+  get cancellations() { return `${BASE_URL}/api/ar/cancellations/`; },
+  cancellationDecide: (id) => `${BASE_URL}/api/ar/cancellations/${id}/decide/`,
+  cancellationRefunds: (id) => `${BASE_URL}/api/ar/cancellations/${id}/refunds/`,
+  cancellationLetter: (id) => `${BASE_URL}/api/ar/cancellations/${id}/letter/`,
+  refund: (id) => `${BASE_URL}/api/ar/refunds/${id}/`,
 };
 
 export const ACTIVITY_ENDPOINTS = {

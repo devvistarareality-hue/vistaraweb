@@ -60,10 +60,10 @@ export default function ARBanksPage({ params }) {
 
   async function remove(b) {
     const ok = await confirmDialog(
-      b.received > 0
+      (b.received > 0 || b.paid_out > 0)
         ? `${b.name} has payments recorded against it, so it will be retired (kept for history, not offered for new payments).`
         : `Remove ${b.name}? It has no payments recorded against it.`,
-      { title: b.received > 0 ? 'Retire bank?' : 'Remove bank?', confirmText: b.received > 0 ? 'Retire' : 'Remove', tone: 'danger' },
+      { title: (b.received > 0 || b.paid_out > 0) ? 'Retire bank?' : 'Remove bank?', confirmText: (b.received > 0 || b.paid_out > 0) ? 'Retire' : 'Remove', tone: 'danger' },
     );
     if (!ok) return;
     const r = await apiFetch(AR_ENDPOINTS.bank(b.id) + cq, { method: 'DELETE' });
@@ -92,7 +92,7 @@ export default function ARBanksPage({ params }) {
             <div className="arb-scroll">
               <table className="nx-table arb-table">
                 <thead>
-                  <tr><th>Bank</th><th>Account no.</th><th className="num">Opening balance</th><th className="num">Loan payments received</th><th className="num">Current balance</th>{canManage && <th />}</tr>
+                  <tr><th>Bank</th><th>Account no.</th><th className="num">Opening balance</th><th className="num">Loan payments received</th><th className="num">Refunds paid</th><th className="num">Current balance</th>{canManage && <th />}</tr>
                 </thead>
                 <tbody>
                   {rows.map((b) => (
@@ -101,13 +101,14 @@ export default function ARBanksPage({ params }) {
                       <td>{b.account_no || '—'}</td>
                       <td className="num">{rupee(b.opening_balance)}</td>
                       <td className="num">{rupee(b.received)}</td>
+                      <td className="num">{b.paid_out ? rupee(b.paid_out) : '—'}</td>
                       <td className="num arb-balance">{rupee(b.balance)}</td>
                       {canManage && (
                         <td className="arb-actions">
                           <Link href={`/m/${params.module}/banks/${b.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Statement</Link>
                           <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openEdit(b)}>Edit</button>
                           {b.is_active
-                            ? <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => remove(b)}>{b.received > 0 ? 'Retire' : 'Remove'}</button>
+                            ? <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => remove(b)}>{(b.received > 0 || b.paid_out > 0) ? 'Retire' : 'Remove'}</button>
                             : <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setActive(b, true)}>Reactivate</button>}
                         </td>
                       )}
@@ -115,7 +116,7 @@ export default function ARBanksPage({ params }) {
                   ))}
                 </tbody>
                 {active.length > 1 && (
-                  <tfoot><tr><td colSpan={4}>Total across active banks</td><td className="num arb-balance">{rupee(totalBalance)}</td>{canManage && <td />}</tr></tfoot>
+                  <tfoot><tr><td colSpan={5}>Total across active banks</td><td className="num arb-balance">{rupee(totalBalance)}</td>{canManage && <td />}</tr></tfoot>
                 )}
               </table>
             </div>

@@ -2138,3 +2138,46 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .bst-hero { box-shadow: none; }
   .bst-row:hover { background: none; }
 }
+
+/* ─── AR · plot cancellations ─── */
+.can-modal { max-width: 520px; }
+.can-settle { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin: 6px 0 12px; }
+.can-line { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--hairline); font-size: 13px; color: var(--text-2); }
+.can-line:last-child { border-bottom: 0; }
+.can-line b { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.can-keep b { color: var(--danger); }
+.can-refund { background: var(--accent-soft); font-weight: 700; color: var(--text); }
+.can-refund b { color: var(--accent); font-size: 15px; }
+.can-hint { font-size: 12px; color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+.can-reason { width: 100%; resize: vertical; min-height: 72px; padding: 10px 12px; }
+
+.can-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.can-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.can-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+.can-card { border-radius: 20px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.can-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.can-client { font-size: 16px; font-weight: 800; color: var(--text); }
+.can-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.can-figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.can-figs span { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.can-figs b { display: block; font-size: 14px; font-weight: 800; color: var(--text); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.can-keep-v { color: var(--danger) !important; }
+.can-refund-v { color: var(--accent) !important; }
+.can-progress { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+.can-track { flex: 1; height: 7px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.can-fill { height: 100%; border-radius: 999px; background: var(--success); }
+.can-reason-text { margin: 0; font-size: 13px; color: var(--text-2); font-style: italic; }
+.can-who { font-size: 11.5px; color: var(--muted); }
+.can-refunds { list-style: none; margin: 0; padding: 0; border: 1px solid var(--hairline); border-radius: 12px; }
+.can-refunds li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 12.5px; border-bottom: 1px solid var(--hairline); }
+.can-refunds li:last-child { border-bottom: 0; }
+.can-refunds-bank { flex: 1; color: var(--muted); }
+.can-refunds b { color: var(--danger); font-variant-numeric: tabular-nums; }
+.can-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: auto; }
+.can-pick-out { background: var(--danger-soft); border-color: var(--danger-2); }
+.arb-pick-after.can-out { color: var(--danger); }
+@media (max-width: 560px) { .can-list { grid-template-columns: 1fr; } .can-figs { grid-template-columns: repeat(2, 1fr); } }
+.bst-out { color: var(--danger); }
+.ard-hero .bst-out { color: #FFB4AE; }
+.bst-amt-out { background: var(--danger-soft); color: var(--danger); }
+.bst-row.is-out .bst-avatar { background: var(--danger-soft); color: var(--danger); }

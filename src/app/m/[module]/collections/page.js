@@ -12,6 +12,7 @@ import { DashKpi } from '../../../../components/Dash';
 import { fmtWhen } from '../../../../components/ActivityHistory';
 import { rupee, inrShort } from '../_ar';
 import FollowUpModal from '../_FollowUpModal';
+import CancelModal from '../_CancelModal';
 import MultiSelect from '../../../../components/MultiSelect';
 
 const dmy = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
@@ -32,6 +33,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
   const [open, setOpen] = useState(null);
+  const [cancelRow, setCancelRow] = useState(null);   // account being sent for cancellation
   // Follow-ups tab
   const [fuScope, setFuScope] = useState('mine');
   const [fuWhen, setFuWhen] = useState('open');
@@ -178,6 +180,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
                         <div className="coll-actions">
                           <Link href={`/m/ar/ledger/${r.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Ledger</Link>
                           {can(user, 'ar.followup.manage') && <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setOpen(r)}><BellRing size={13} /> Follow up</button>}
+                          {tab === 'overdue' && can(user, 'ar.cancel.request') && <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => setCancelRow(r)}>Cancel plot</button>}
                         </div>
                       </footer>
                     </article>
@@ -239,6 +242,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
         </>
       )}
 
+      {cancelRow && <CancelModal row={cancelRow} companyId={companyId} onClose={() => setCancelRow(null)} onDone={() => setReload((n) => n + 1)} />}
       {open && <FollowUpModal row={open} companyId={companyId} me={me} onClose={() => setOpen(null)} onChanged={() => setReload((n) => n + 1)} />}
     </div>
   );
