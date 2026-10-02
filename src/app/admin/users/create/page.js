@@ -331,14 +331,6 @@ export default function CreateUserPage() {
             </div>
           </div>
 
-          {isManagerRole(form) && (
-            <div style={{ marginBottom: 28 }}>
-              <label style={s.label}>Admin Modules</label>
-              <div className="mp-wrap">
-                <ModulePicker selected={form.admin_modules} onToggle={(mod) => toggleModule(mod, 'admin_modules')} />
-              </div>
-            </div>
-          )}
 
           <div style={{ marginBottom: 28 }}>
             <label style={s.label}>Data Access</label>

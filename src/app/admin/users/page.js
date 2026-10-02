@@ -400,14 +400,6 @@ export default function UserManagementPage() {
                 <ModulePicker selected={form.manager_modules || []} onToggle={(mod) => toggleModule(mod, 'manager_modules')} />
               </div>
 
-              {isManagerRole(form) && (
-                <>
-                  <div style={mSec}>Admin Modules</div>
-                  <div className="mp-wrap">
-                    <ModulePicker selected={form.admin_modules || []} onToggle={(mod) => toggleModule(mod, 'admin_modules')} />
-                  </div>
-                </>
-              )}
 
               <div style={mSec}>Data Access</div>
               {/* The Sales module's booking export: every approved deal in the company,
