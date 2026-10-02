@@ -101,7 +101,7 @@ export default function DesignationMasterPage() {
           departments only group them the way the home screen does. */}
       <div className="dm-depts">
         {DEPTS.map((g) => (
-          <section key={g.key} className="dm-dept">
+          <section key={g.key} className="nx-card dm-dept">
             <header className="dm-dept-head">
               <h2>{g.title}</h2>
               <span>{g.parts.filter((p) => p.module).reduce((n, p) => n + (grouped[p.module] || []).length, 0)} designations</span>
@@ -112,7 +112,7 @@ export default function DesignationMasterPage() {
                 const c = MODULE_COLOR[mod] || { bg: 'var(--surface-2)', text: 'var(--text-3)', dot: 'var(--faint)' };
                 const list = grouped[mod] || [];
                 return (
-                  <div className="nx-card dm-card" key={mod}>
+                  <div className="dm-card" key={mod}>
                     <div className="dm-card-head">
                       <span className="dm-dot" style={{ backgroundColor: c.dot }} />{/* inline-ok: module tone colour */}
                       <span className="dm-card-name" style={{ color: c.text }}>{p.title}</span>{/* inline-ok: module tone colour */}
