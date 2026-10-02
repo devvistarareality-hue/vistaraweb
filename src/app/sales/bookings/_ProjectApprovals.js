@@ -19,6 +19,7 @@ import { apiFetch } from '../../../utils/apiFetch';
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import { notify } from '../../../lib/notify';
+import { bustCache } from '../_cache';
 
 const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
 
@@ -50,7 +51,64 @@ function ApproverPicker({ people, selected, onToggle }) {
   );
 }
 
-export default function ProjectApprovals({ isAdmin }) {
+function Field({ label, value }) {
+  return (
+    <div className="pa-field">
+      <div className="pa-field-label">{label}</div>
+      <div className="pa-field-value">{value || '—'}</div>
+    </div>
+  );
+}
+
+/** What is actually being approved. Read from the list payload, which already
+ *  carries every field except the floor plans and site-map zones. */
+function ProjectDetail({ project: p }) {
+  const money = (v) => (v ? String(v) : '');
+  const layout = p.floor_wise
+    ? (p.block_industrial ? 'Block-wise industrial' : 'Floor-wise (tower)')
+    : 'Plotted scheme';
+  return (
+    <div className="pa-detail">
+      <div className="pa-detail-grid">
+        <Field label="Project name" value={p.name} />
+        <Field label="Tagline" value={p.tagline} />
+        <Field label="Location" value={p.location} />
+        <Field label="Type" value={p.project_type} />
+        <Field label="Pricing model" value={p.formula_set} />
+        <Field label="Layout" value={layout} />
+        <Field label="RERA number" value={p.rera} />
+        <Field label="Total area" value={p.total_area} />
+        <Field label="Price range" value={money(p.price_range)} />
+        <Field label="Possession" value={p.possession} />
+        <Field label="Units mapped" value={p.plot_counts ? String(p.plot_counts.total ?? 0) : '0'} />
+        <Field label="Kiosk self-booking" value={p.kiosk_enabled ? 'Enabled' : 'Off'} />
+        <Field label="Added by" value={p.created_by_name} />
+        <Field label="Added on" value={p.created_at ? new Date(p.created_at).toLocaleString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''} />
+      </div>
+      {p.description ? (
+        <div className="pa-detail-desc">
+          <div className="pa-field-label">Description</div>
+          <div className="pa-field-value">{p.description}</div>
+        </div>
+      ) : null}
+      {p.approved_by_name ? (
+        <div className="pa-detail-desc">
+          <div className="pa-field-label">
+            {p.approval_status === 'rejected' ? 'Rejected by' : 'Approved by'}
+          </div>
+          <div className="pa-field-value">
+            {p.approved_by_name}
+            {p.approved_at ? ` · ${new Date(p.approved_at).toLocaleString('en-IN', {
+              day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default function ProjectApprovals({ isAdmin, companyId }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('pending');
@@ -60,6 +118,9 @@ export default function ProjectApprovals({ isAdmin }) {
   const [people, setPeople] = useState([]);
   // Rejecting asks for a reason first — refusing a project without saying why
   // leaves whoever created it with nothing to act on.
+  // Tapping a row opens what is being approved. Approving a project you cannot
+  // see the details of is a rubber stamp, not a decision.
+  const [openId, setOpenId] = useState(null);
   const [rejecting, setRejecting] = useState(null);
   const [reason, setReason] = useState('');
 
@@ -67,7 +128,8 @@ export default function ProjectApprovals({ isAdmin }) {
     setLoading(true);
     try {
       // ?full=1 is not needed here: the list view already carries approval_status.
-      const res = await apiFetch(SALES_ENDPOINTS.projects, { headers: authHeaders() });
+      // This queue is one of the two screens that act on an unapproved project.
+      const res = await apiFetch(`${SALES_ENDPOINTS.projects}?include_unapproved=1`, { headers: authHeaders() });
       if (res.ok) setProjects(await res.json());
     } catch { /* leave what is on screen */ }
     setLoading(false);
@@ -94,6 +156,11 @@ export default function ProjectApprovals({ isAdmin }) {
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { notify(d.detail || 'Could not update the project.', 'error'); return; }
+      // The Projects page serves from a cache and returns early without
+      // refetching, so a decision made here was invisible there until the cache
+      // happened to expire — a project rejected a moment ago still read
+      // "awaiting approval". Approving has the same problem in reverse.
+      bustCache(`projects_${companyId || 'all'}`);
       notify(action === 'approve'
         ? `${project.name} approved — it is now visible to everyone.`
         : `${project.name} rejected.`, action === 'approve' ? 'success' : 'info');
@@ -154,31 +221,68 @@ export default function ProjectApprovals({ isAdmin }) {
           {tab === 'pending' ? 'No projects waiting for approval.' : `No ${tab} projects.`}
         </div>
       ) : (
-        <div className="nx-card pa-list">
+        /* Card per project, matching the booking approval cards on the sibling
+           tab — same shape, same button row, so the page reads as one screen
+           rather than three that grew separately. */
+        <div className="pa-cards">
           {shown.map((p) => {
             const st = p.approval_status || 'approved';
+            const open = openId === p.id;
             return (
-              <div className="pa-row" key={p.id}>
-                <div className="pa-row-main">
-                  <div className="pa-row-name">{p.name}</div>
-                  <div className="pa-row-meta">
-                    {p.location || '—'} · {p.project_type}
-                    {st === 'rejected' && p.rejected_reason ? ` · ${p.rejected_reason}` : ''}
+              <div className="nx-card pa-card" key={p.id}>
+                <div className="pa-card-head">
+                  <div className="pa-card-id">
+                    <div className="pa-card-name">{p.name}</div>
+                    <div className="pa-card-sub">
+                      {(p.location || '—')} · {p.project_type}
+                      {p.total_plots ? ` · ${p.total_plots} units` : ''}
+                    </div>
+                    <div className="pa-card-sub2">
+                      Added by {p.created_by_name || '—'}
+                      {p.created_at ? ` · ${new Date(p.created_at).toLocaleDateString('en-IN', {
+                        day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                    </div>
+                    {st === 'rejected' && p.rejected_reason ? (
+                      <div className="pa-card-reason">
+                        <div className="pa-card-reason-title">
+                          Rejected{p.approved_by_name ? ` · ${p.approved_by_name}` : ''}
+                        </div>
+                        <div className="pa-card-reason-body">{p.rejected_reason}</div>
+                      </div>
+                    ) : null}
+                    {st === 'approved' && p.approved_by_name ? (
+                      <div className="pa-card-decided">
+                        Approved by {p.approved_by_name}
+                        {p.approved_at ? ` · ${new Date(p.approved_at).toLocaleDateString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                      </div>
+                    ) : null}
                   </div>
+                  <span className={`nx-badge pa-badge is-${st}`}>
+                    {st === 'pending' ? 'AWAITING APPROVAL' : st.toUpperCase()}
+                  </span>
                 </div>
-                <span className={`nx-badge pa-badge is-${st}`}>{st.toUpperCase()}</span>
-                {st === 'pending' && (
-                  <div className="pa-row-actions">
-                    <button className="nx-btn nx-btn-sm nx-btn-success" disabled={busy === p.id}
-                      onClick={() => act(p, 'approve')}>
-                      <Icon name="check" /> Approve
-                    </button>
-                    <button className="nx-btn nx-btn-sm nx-btn-danger" disabled={busy === p.id}
-                      onClick={() => { setRejecting(p); setReason(''); }}>
-                      <Icon name="x" /> Reject
-                    </button>
-                  </div>
-                )}
+
+                <div className="pa-card-actions">
+                  <button type="button" className="nx-btn nx-btn-md nx-btn-secondary pa-btn-link"
+                    onClick={() => setOpenId(open ? null : p.id)}>
+                    {open ? '▴ Hide Details' : '▾ View Details'}
+                  </button>
+                  {st === 'pending' && (
+                    <>
+                      <button className="nx-btn nx-btn-md nx-btn-success pa-btn-ok" disabled={busy === p.id}
+                        onClick={() => act(p, 'approve')}>
+                        <Icon name="check" /> Approve
+                      </button>
+                      <button className="nx-btn nx-btn-md nx-btn-danger pa-btn-bad" disabled={busy === p.id}
+                        onClick={() => { setRejecting(p); setReason(''); }}>
+                        <Icon name="x" /> Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {open && <ProjectDetail project={p} />}
               </div>
             );
           })}

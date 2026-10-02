@@ -559,6 +559,15 @@ function ProjectModal({ project, onClose, onSaved }) {
 
           {err && <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
 
+          {/* Said before the click, not discovered after it: saving an approved
+              project takes it off the floor until it is signed off again. */}
+          {isEdit && project?.approval_status === 'approved' && (
+            <div className="pj-reapprove-note">
+              <Icon name="alert" /> Saving changes sends this project back for approval.
+              It will be hidden from everyone until a Director approves it again.
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
             <button className="nx-btn nx-btn-md nx-btn-primary" type="submit" disabled={saving} style={{ padding: '10px 24px', background: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1, minWidth: 120 }}>
@@ -599,7 +608,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     const cached = getCache(cKey);
     if (cached) { setProjects(cached); setLoading(false); return; }
-    fetch(SALES_ENDPOINTS.projects + cq, { headers: authHeaders() })
+    fetch(SALES_ENDPOINTS.projects + (cq ? cq + '&' : '?') + 'include_unapproved=1', { headers: authHeaders() })
       .then(r => r.json())
       .then(d => { const list = Array.isArray(d) ? d : []; setCache(cKey, list); setProjects(list); setLoading(false); })
       .catch(() => setLoading(false));
@@ -681,9 +690,17 @@ export default function ProjectsPage() {
                           <Icon name="ban" /> {p.locked_blocks.length} BLOCK{p.locked_blocks.length > 1 ? 'S' : ''} LOCKED
                         </span>
                       )}
-                      <span className={`nx-badge pl-badge-active${p.is_active ? '' : ' is-off'}`}>
-                        {p.is_active ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
+                      {/* Approval outranks is_active on the badge: a project
+                          nobody has signed off is not live, whatever the Active
+                          checkbox says, and showing ACTIVE there was read as the
+                          gate having failed. */}
+                      {(p.approval_status && p.approval_status !== 'approved')
+                        ? <span className={`nx-badge pl-badge-appr is-${p.approval_status}`}>
+                            {p.approval_status === 'pending' ? 'ON HOLD · AWAITING APPROVAL' : 'REJECTED'}
+                          </span>
+                        : <span className={`nx-badge pl-badge-active${p.is_active ? '' : ' is-off'}`}>
+                            {p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                          </span>}
                     </span>
                   </div>
                 </div>

@@ -1925,14 +1925,6 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pa-picker-role { margin-left: auto; font-size: 11px; color: var(--muted); }
 .pa-picker-empty { padding: 10px; font-size: 13px; color: var(--muted); }
 
-.pa-list { padding: 4px 18px; }
-.pa-row { display: flex; align-items: center; gap: 14px; padding: 14px 0;
-  border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
-.pa-row:last-child { border-bottom: 0; }
-.pa-row-main { flex: 1; min-width: 200px; }
-.pa-row-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.pa-row-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
-.pa-row-actions { display: flex; gap: 8px; }
 .pa-badge { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 20px; }
 .pa-badge.is-pending { background: var(--warning-soft); color: var(--warning); }
 .pa-badge.is-approved { background: var(--success-soft); color: var(--success); }
@@ -1946,6 +1938,95 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pa-modal-hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.55; }
 .pa-modal-input { width: 100%; height: 42px; margin-top: 14px; }
 .pa-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+/* A project awaiting approval is on hold, whatever its Active checkbox says. */
+.pl-badge-appr { font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12); }
+.pl-badge-appr.is-pending { background: var(--warning-2); color: #fff; }
+.pl-badge-appr.is-rejected { background: var(--danger); color: #fff; }
+
+/* Project approvals — the detail that opens under a row. */
+.pa-detail { padding: 4px 0 16px; }
+.pa-detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px 18px; }
+.pa-field-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--faint); }
+.pa-field-value { font-size: 13px; color: var(--text); margin-top: 2px; word-break: break-word;
+  text-transform: none; }
+.pa-detail-desc { margin-top: 14px; }
+
+/* Project approval cards — deliberately the same shape, padding and button row
+   as the booking approval cards on the sibling tab, so the Approvals page reads
+   as one screen rather than three that grew separately. */
+.pa-cards { display: flex; flex-direction: column; gap: 12px; }
+.pa-card { background: var(--surface); border-radius: 18px; padding: 16px 18px;
+  box-shadow: 0 2px 8px rgba(140, 148, 160, 0.18); }
+.pa-card-head { display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; }
+.pa-card-id { min-width: 0; }
+.pa-card-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.pa-card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pa-card-sub2 { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.pa-card-decided { font-size: 11.5px; color: var(--success); margin-top: 4px; font-weight: 600; }
+.pa-card-reason { margin-top: 10px; background: var(--danger-soft);
+  border: 1px solid var(--danger-2); border-radius: 14px; padding: 10px 12px; }
+.pa-card-reason-title { font-size: 11px; font-weight: 800; color: var(--danger);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.pa-card-reason-body { font-size: 13px; color: var(--danger-deep); }
+.pa-card-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.pa-btn-link { padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--border-strong);
+  background: var(--surface); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer; }
+.pa-btn-ok { padding: 8px 16px; border-radius: 8px; border: 0; background: var(--success-solid);
+  color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.pa-btn-bad { padding: 8px 16px; border-radius: 8px; border: 0; background: var(--danger-solid);
+  color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.pa-card .pa-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+/* Saving an approved project sends it back for approval — said before the
+   click, not discovered after it. */
+.pj-reapprove-note { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px;
+  padding: 10px 12px; border-radius: 12px; background: var(--warning-soft);
+  border: 1px solid var(--warning-2); color: var(--warning-2);
+  font-size: 12.5px; font-weight: 600; line-height: 1.5; }
+
+/* ─── Channel Partner dashboard filters ───────────────────────────────────── */
+/* Partner desk only — the Sales dashboard is deliberately left as it was. */
+.cpf-bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.cpf-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cpf-sel { height: 36px; min-width: 170px; flex: 0 1 auto; padding: 0 12px;
+  border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 13px; color: var(--text); cursor: pointer; }
+.cpf-clear { display: inline-flex; align-items: center; gap: 5px; height: 36px;
+  padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--danger-2);
+  background: var(--danger-soft); color: var(--danger); font-size: 12px;
+  font-weight: 700; cursor: pointer; }
+
+/* Channel partner picker — 588 partners is too many for a <select>, and only a
+   handful of them have any leads, so this types-to-filter and puts those first. */
+.cpp { position: relative; display: inline-flex; align-items: center; }
+.cpp-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  height: 36px; min-width: 210px; max-width: 280px; padding: 0 12px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface); font-size: 13px; cursor: pointer; }
+.cpp-val { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpp-ph { color: var(--muted); }
+.cpp-caret { color: var(--muted); flex: 0 0 auto; }
+.cpp-clear { margin-left: 4px; width: 24px; height: 24px; border: 0; border-radius: 50%;
+  background: var(--surface-3); color: var(--muted); font-size: 11px; cursor: pointer; }
+.cpp-clear:hover { background: var(--danger-soft); color: var(--danger); }
+.cpp-menu { position: absolute; z-index: 60; top: 42px; left: 0; width: 320px; max-width: 86vw;
+  max-height: 340px; overflow-y: auto; padding: 8px; border-radius: 14px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  box-shadow: 0 16px 48px rgba(var(--ink-rgb), 0.18); }
+.cpp-search { width: 100%; height: 36px; margin-bottom: 6px; }
+.cpp-opt { display: flex; align-items: baseline; gap: 8px; width: 100%; text-align: left;
+  padding: 8px 10px; border: 0; border-radius: 9px; background: none; cursor: pointer; font-size: 13px; }
+.cpp-opt:hover { background: var(--surface-2); }
+.cpp-opt-all { color: var(--muted); font-weight: 600; }
+.cpp-opt-name { color: var(--text); font-weight: 600; }
+.cpp-opt-firm { color: var(--muted); font-size: 11.5px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+/* How many leads this partner has sent — why they are sorted to the top. */
+.cpp-opt-count { margin-left: auto; flex: 0 0 auto; font-size: 11px; font-weight: 800;
+  color: var(--accent); background: var(--accent-softer); padding: 2px 7px; border-radius: 20px; }
+.cpp-empty { padding: 10px; font-size: 12.5px; color: var(--muted); }
 
 /* ─── AR · Bank Master ─── */
 .arb-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }

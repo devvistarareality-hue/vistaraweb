@@ -111,6 +111,9 @@ export const SALES_ENDPOINTS = {
   get stms()       { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=stm`; },
   get cps()        { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp`; },
   get cpModuleUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp_module`; },
+  // Strictly CP-designated people — no Sales fallback, no admins, no STM who
+  // happens to hold a CP lead after a hand-off.
+  get cpOnlyUsers()   { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=cp_only`; },
   get accountsModuleUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=accounts_module`; },
   get salesCpUsers() { return `${BASE_URL}/api/sales/users/telecallers/?crm_role=sales_cp`; },
   get usersSlim()  { return `${BASE_URL}/api/sales/users/slim/`; },
