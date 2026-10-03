@@ -553,6 +553,14 @@ function ProjectCharts({ rows, data, onOpen }) {
                 })}
               </div>
             ))}
+            {/* Column totals across every project, and the grand total beside "Total". */}
+            <div className="pc-heat-row pc-heat-total" role="row">
+              <span role="rowheader" className="pc-total-name">Total<small>{inrShort(rows.reduce((t, p) => t + AGE_LABELS.reduce((u, a) => u + (p.ageing?.[a] || 0), 0), 0))}</small></span>
+              {AGE_LABELS.map((a) => {
+                const v = rows.reduce((t, p) => t + (p.ageing?.[a] || 0), 0);
+                return <span key={a} role="cell" className="pc-cell pc-cell-total">{v ? inrShort(v) : '—'}</span>;
+              })}
+            </div>
           </div>
         </div>
         <div className="pc-scale">
@@ -613,6 +621,10 @@ function ProjectCharts({ rows, data, onOpen }) {
                     })}
                   </div>
                 ))}
+                <div className={`pc-heat-row pc-heat-total pc-n${cN + cLater.length}`} role="row">
+                  <span role="rowheader" className="pc-total-name">Total<small>{inrShort(cMonths.concat(cLater).reduce((t, i) => t + (cTot[i] || 0), 0))}</small></span>
+                  {cMonths.concat(cLater).map((i) => <span key={i} role="cell" className="pc-cell pc-cell-total">{cTot[i] ? inrShort(cTot[i]) : '—'}</span>)}
+                </div>
               </div>
             </div>
           )}

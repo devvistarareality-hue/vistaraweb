@@ -2419,6 +2419,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pc-cell { height: 40px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
   font-variant-numeric: tabular-nums; cursor: default; }
 .pc-cell:hover { outline: 2px solid var(--text); outline-offset: -2px; }
+.pc-heat-total { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border-strong); }
+.pc-total-name { font-size: 14px; font-weight: 800; color: var(--text); display: flex; flex-direction: column; line-height: 1.2; }
+.pc-total-name small { font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pc-cell.pc-cell-total { background: var(--surface-2); color: var(--text); font-weight: 800; }
+.pc-cell.pc-cell-total:hover { outline: 0; }
 .pc-s0 { background: var(--surface-2); color: var(--faint); }
 .pc-s1 { background: var(--viz-seq-1); color: var(--viz-seq-ink-1); } .pc-s2 { background: var(--viz-seq-2); color: var(--viz-seq-ink-2); }
 .pc-s3 { background: var(--viz-seq-3); color: var(--viz-seq-ink-3); } .pc-s4 { background: var(--viz-seq-4); color: var(--viz-seq-ink-4); }
