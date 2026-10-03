@@ -502,18 +502,22 @@ function ProjectCharts({ rows, data, onOpen }) {
               <button className="pc-name" onClick={() => onOpen(p.id)} title="Open this project's dashboard">{p.name}</button>
               {/* The bar is as long as the project's total (relative to the largest);
                   its parts split it; the total is written right where it ends. */}
-              <div className="pc-track">
-                <div className="pc-stack" style={{ width: `calc((100% - 96px) * ${(OWES.reduce((t, o) => t + Math.max(0, p.totals[o.key] || 0), 0) / max).toFixed(4)})` } /* inline-ok: bar length from data */}>
-                  {OWES.map((o) => {
-                    const v = Math.max(0, p.totals[o.key] || 0);
-                    if (!v) return null;
-                    const tot = OWES.reduce((t, x) => t + Math.max(0, p.totals[x.key] || 0), 0) || 1;
-                    return (
-                      <span key={o.key} className={`pc-seg ${o.cls}`} style={{ width: `${(v / tot) * 100}%` } /* inline-ok: part of the bar from data */}
-                        onMouseMove={(e) => show(e, p.name, [[o.label, rupee(v)], ['Share of total', `${Math.round((v / (p.totals.os_with_interest || 1)) * 100)}%`]])} />
-                    );
-                  })}
-                </div>
+              <div className="pc-track"
+                onMouseMove={(e) => show(e, p.name, OWES.map((o) => [o.label, rupee(Math.max(0, p.totals[o.key] || 0))]).concat([['Total receivable', rupee(p.totals.os_with_interest)]]))}>
+                {(() => {
+                  const tot = OWES.reduce((t, o) => t + Math.max(0, p.totals[o.key] || 0), 0);
+                  // A part too small to see (under ~0.5% of the longest bar) is left
+                  // out of the bar — it would only be a sliver; the tooltip still has it.
+                  const parts = OWES.map((o) => [o, Math.max(0, p.totals[o.key] || 0)]).filter(([, v]) => v / max >= 0.005);
+                  const shown = parts.reduce((t, [, v]) => t + v, 0) || 1;
+                  return (
+                    <div className="pc-stack" style={{ width: `calc((100% - 90px) * ${(tot / max).toFixed(4)})` } /* inline-ok: bar length from data */}>
+                      {parts.map(([o, v]) => (
+                        <span key={o.key} className={`pc-seg ${o.cls}`} style={{ flexGrow: v / shown } /* inline-ok: part of the bar from data */} />
+                      ))}
+                    </div>
+                  );
+                })()}
                 <span className="pc-total">{inrShort(p.totals.os_with_interest)}</span>
               </div>
             </div>

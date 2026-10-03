@@ -2394,18 +2394,23 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pc-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .pc-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .pc-v1 { background: var(--viz-1); } .pc-v2 { background: var(--viz-2); } .pc-v3 { background: var(--viz-3); }
-.pc-bars { display: flex; flex-direction: column; gap: 14px; flex: 1; justify-content: space-around; }
-.pc-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 12px; }
+/* Bars: one grid so every name and every bar line up — the name column is as wide
+   as the longest name, bars start on one baseline, rows are evenly spaced. */
+.pc-bars { display: grid; grid-template-columns: minmax(80px, max-content) 1fr; column-gap: 0; align-content: center; flex: 1; }
+.pc-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; height: 44px; border-bottom: 1px solid var(--border); }
+.pc-row:last-child { border-bottom: 0; }
+.pc-row > .pc-name { padding-right: 16px; }
+.pc-row > .pc-track { height: 100%; }
 .pc-name { border: 0; background: none; padding: 0; text-align: left; font-size: 14px; font-weight: 600; color: var(--text);
   cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pc-name:hover { color: var(--accent); text-decoration: underline; }
-.pc-track { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.pc-stack { display: flex; height: 18px; border-radius: 5px; overflow: hidden; flex-shrink: 0; min-width: 4px; }
-.pc-seg { height: 100%; min-width: 3px; transition: filter .12s; }
-.pc-seg + .pc-seg { box-shadow: inset 1px 0 0 var(--surface); }
+.pc-track { display: flex; align-items: center; gap: 10px; min-width: 0; padding-left: 10px; border-left: 1px solid var(--border-strong); cursor: default; }
+.pc-stack { display: flex; gap: 2px; height: 16px; border-radius: 4px; overflow: hidden; flex-shrink: 0; min-width: 6px; }
+.pc-seg { flex: 1 1 0; min-width: 2px; height: 100%; transition: filter .12s; }
 
-.pc-seg:hover { filter: brightness(1.12) saturate(1.1); }
-.pc-total { font-size: 13.5px; font-weight: 800; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pc-track:hover .pc-seg { filter: brightness(1.08) saturate(1.08); }
+.pc-track:hover .pc-total { color: var(--accent); }
+.pc-total { font-size: 13px; font-weight: 800; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pc-heat-scroll { overflow-x: auto; }
 .pc-heat { display: flex; flex-direction: column; gap: 4px; min-width: 640px; }
 .pc-heat-row { display: grid; grid-template-columns: 150px repeat(7, 1fr); gap: 4px; align-items: center; }
@@ -2427,7 +2432,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pc-tip b { display: block; margin-bottom: 6px; font-size: 13px; }
 .pc-tip div { display: flex; justify-content: space-between; gap: 14px; color: var(--text-2); }
 .pc-tip strong { color: var(--text); font-variant-numeric: tabular-nums; }
-@media (max-width: 560px) { .pc-row { grid-template-columns: 90px 1fr 62px; } }
+@media (max-width: 560px) { .pc-row > .pc-name { padding-right: 10px; } .pc-bars .pc-name { max-width: 110px; } }
 /* Coming due — columns per month, then a project × month grid in the blue ramp. */
 .pc-wide { grid-column: 1 / -1; }
 .pc-due-top { display: flex; gap: 22px; align-items: stretch; margin: 4px 0 6px; }
