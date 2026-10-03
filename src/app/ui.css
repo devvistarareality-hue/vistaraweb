@@ -1355,68 +1355,29 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .md-empty h2 { margin: 0; font-size: 16px; font-weight: 800; color: var(--text); }
 .md-empty p { margin: 0; font-size: 13px; color: var(--muted); max-width: 520px; }
 
-/* Accounts & Finance dashboard. States use the status colours: approved, waiting, sent back. */
+/* Accounts & Finance dashboard — built on the AR dashboard's ard-* pieces. States
+   use the status colours: approved, waiting, sent back. */
 .acc-s-ok { background: var(--success-solid); }
 .acc-s-wait { background: var(--warning-solid); }
 .acc-s-bad { background: var(--danger-solid); }
-.acc-hero { padding: 22px 24px; margin: 6px 0 14px; }
-.acc-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-.acc-hero-label { font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.acc-hero-value { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1.1; margin-top: 4px; font-variant-numeric: tabular-nums; }
-.acc-hero-value span { font-size: 16px; font-weight: 700; color: var(--muted); letter-spacing: 0; }
-.acc-hero-sub { font-size: 14px; font-weight: 700; color: var(--text-2); margin-top: 2px; font-variant-numeric: tabular-nums; }
-.acc-hero-cta { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-.acc-bar { display: flex; gap: 2px; height: 14px; border-radius: 4px; overflow: hidden; margin-top: 18px; background: var(--surface-2); }
-.acc-bar-seg { height: 100%; flex-basis: 0; min-width: 3px; }
-.acc-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 12px; font-size: 13px; color: var(--text-2); }
-.acc-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.acc-legend b { color: var(--text); font-variant-numeric: tabular-nums; }
-.acc-legend em { font-style: normal; color: var(--muted); font-size: 12px; }
-.acc-legend-sm { margin-top: 0; font-size: 12px; gap: 12px; }
-.acc-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-.acc-kpi { border-top: 3px solid transparent; }
-.acc-kpi-ok { border-top-color: var(--success-solid); } .acc-kpi-wait { border-top-color: var(--warning-solid); }
-.acc-kpi-bad { border-top-color: var(--danger-solid); } .acc-kpi-info { border-top-color: var(--accent); }
-.acc-kpi-money { font-size: 13px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.acc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr)); gap: 14px; margin-bottom: 14px; }
-.acc-panel { padding: 18px 20px; min-width: 0; }
-.acc-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.acc-panel-head h2 { margin: 0; font-size: 15px; font-weight: 800; color: var(--text); }
-.acc-panel-head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.ard-age.acc-age-row { grid-template-columns: 10px 84px 1fr 44px 76px 38px; }
+.acc-age-money { color: var(--text-2) !important; font-weight: 700 !important; }
+.ard-col-bar.acc-col-ok { background: linear-gradient(180deg, color-mix(in srgb, var(--success-solid) 70%, white), var(--success-solid)); }
+.acc-col-money { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 14px; }
 .acc-link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; }
 .acc-link:hover { text-decoration: underline; }
-.acc-wait { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.acc-wait li { display: grid; grid-template-columns: 62px 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.acc-wait li:last-child { border-bottom: 0; }
-.acc-age { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 8px; border-radius: 999px;
-  font-size: 12px; font-weight: 800; background: var(--surface-2); color: var(--text-2); font-variant-numeric: tabular-nums; }
-.acc-age.is-mid { background: var(--warning-soft); color: var(--warning); }
-.acc-age.is-old { background: var(--danger-soft); color: var(--danger); }
-.acc-wait-main { min-width: 0; display: flex; flex-direction: column; }
-.acc-wait-main b { font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.acc-wait-main span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.acc-wait-amt { font-size: 14px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
-.acc-none { padding: 24px 0; text-align: center; font-size: 13px; color: var(--muted); }
-.acc-trend { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; height: 230px; align-items: stretch; }
-.acc-trend-col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; cursor: default; }
-.acc-trend-val { font-size: 13px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
-.acc-trend-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--border); }
-.acc-trend-bar { width: min(44px, 70%); min-height: 3px; border-radius: 4px 4px 0 0; background: var(--success-solid); }
-.acc-trend-col:hover .acc-trend-bar { filter: brightness(1.1); }
-.acc-trend-label { font-size: 12px; font-weight: 700; color: var(--muted); }
-.acc-trend-label.is-now { color: var(--text); }
-.acc-trend-money { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 14px; }
-.acc-table .acc-proj { font-weight: 700; color: var(--text); white-space: nowrap; }
-.acc-table th, .acc-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); }
-.acc-table tbody tr:last-child td { border-bottom: 0; }
-.acc-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.acc-table tbody tr:hover td { background: var(--surface-2); }
-.acc-table .acc-bar-col { width: 26%; min-width: 140px; padding-right: 28px; }
-.acc-minibar { display: flex; gap: 2px; height: 10px; border-radius: 3px; overflow: hidden; min-width: 6px; }
-.acc-num-wait { color: var(--warning); font-weight: 800; }
-.acc-num-bad { color: var(--danger); font-weight: 800; }
-.acc-strong { font-weight: 800; color: var(--text); }
-@media (max-width: 560px) { .acc-hero-value { font-size: 32px; } .acc-trend { height: 190px; gap: 4px; } .acc-wait li { grid-template-columns: 54px 1fr auto; gap: 8px; } }
+.acc-row-end { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.acc-row-amt { font-size: 14px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.acc-row-amt.is-good { color: var(--success); }
+.acc-row-note { font-size: 11px; font-weight: 700; color: var(--warning); font-variant-numeric: tabular-nums; }
+.acc-days { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); }
+.acc-days.is-mid { background: var(--warning-soft); color: var(--warning); }
+.acc-days.is-old { background: var(--danger-soft); color: var(--danger); }
+.acc-proj-row { cursor: default; }
+.acc-proj-bar { display: flex; gap: 2px; height: 5px; border-radius: 999px; overflow: hidden; margin-top: 4px; background: var(--surface-2); }
+.acc-proj-bar span { display: block; height: 100%; }
+.acc-wait-n { font-style: normal; font-weight: 700; color: var(--warning); }
+@media (max-width: 560px) { .ard-age.acc-age-row { grid-template-columns: 10px 70px 1fr 34px 64px; } .ard-age.acc-age-row .ard-age-pct { display: none; } }
 
 .dbf-copy { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .dbf-copy > span { font-size: 11.5px; font-weight: 700; color: var(--muted); }
