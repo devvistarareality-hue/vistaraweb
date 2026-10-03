@@ -56,6 +56,11 @@ function CategoryBadge({ category }) {
 const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: 'normal', segment: '', city: '', area: '', date_added: '', is_active: true };
 
 function ChannelPartnerModal({ initial, onClose, onSaved }) {
+  // One partner per contact number. Checked while the number is typed rather than
+  // on submit, so nobody fills in the whole form only to be told the broker is
+  // already there. The server enforces it regardless (409) — this is the courtesy.
+  const [dupe, setDupe] = useState(null);
+  const [checking, setChecking] = useState(false);
   const [form, setForm] = useState(initial ? {
     name: initial.name || '', contact_no: initial.contact_no || '',
     firm_name: initial.firm_name || '', category: initial.category || 'normal',
@@ -67,9 +72,29 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
   const [err,    setErr]    = useState('');
   const isEdit = !!initial;
 
+  // Ten digits is the whole of an Indian mobile and also what the server matches
+  // on, so there is nothing to ask about before then.
+  const digits = (form.contact_no || '').replace(/\D/g, '');
+  useEffect(() => {
+    if (digits.length < 10) { setDupe(null); setChecking(false); return; }
+    let dead = false;
+    setChecking(true);
+    // Debounced: typing a number fires this on nearly every keystroke otherwise.
+    const t = setTimeout(() => {
+      const qs = `?contact_no=${encodeURIComponent(form.contact_no)}`
+        + (initial?.id ? `&exclude=${initial.id}` : '');
+      fetch(SALES_ENDPOINTS.partnerLookup(qs), { headers: authHeaders() })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (!dead) { setDupe(d && d.exists ? d : null); setChecking(false); } })
+        .catch(() => { if (!dead) setChecking(false); });
+    }, 350);
+    return () => { dead = true; clearTimeout(t); };
+  }, [digits, form.contact_no, initial?.id]);
+
   async function save() {
     if (!form.name.trim())       { setErr('CP Name is required.');    return; }
     if (!form.contact_no.trim()) { setErr('Contact No is required.'); return; }
+    if (dupe) { setErr(`${dupe.name || 'Another partner'} already has this contact number.`); return; }
     setSaving(true); setErr('');
     try {
       const url = isEdit ? SALES_ENDPOINTS.channelPartner(initial.id) : SALES_ENDPOINTS.channelPartners;
@@ -79,7 +104,14 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
         body: JSON.stringify({ ...form, name: form.name.trim(), contact_no: form.contact_no.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) { setErr(data.detail || JSON.stringify(data)); setSaving(false); return; }
+      if (!res.ok) {
+        // 409 is the duplicate rule — it names who holds the number, so show that
+        // beside the field as well, not only as an error line.
+        if (res.status === 409 && data.existing) setDupe({ ...data.existing, exists: true });
+        setErr(data.detail || JSON.stringify(data));
+        setSaving(false);
+        return;
+      }
       onSaved(data);
     } catch (e) { setErr(e.message); setSaving(false); }
   }
@@ -97,8 +129,20 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
             placeholder="e.g. Ramesh Shah" style={{ ...inp, width: '100%', marginBottom: 14 }} />
 
           <label style={lbl}>Contact No *</label>
-          <input className="nx-input" value={form.contact_no} onChange={(e) => setForm({ ...form, contact_no: e.target.value })}
-            placeholder="e.g. 98765 43210" style={{ ...inp, width: '100%', marginBottom: 14 }} />
+          <input className={`nx-input cpd-input${dupe ? ' cpd-bad' : ''}`} value={form.contact_no}
+            onChange={(e) => setForm({ ...form, contact_no: e.target.value })}
+            placeholder="e.g. 98765 43210" />
+          <div className="cpd-state">
+            {checking && <span className="cpd-checking">Checking…</span>}
+            {dupe && (
+              <span className="cpd-dupe">
+                Already a channel partner:{' '}
+                <strong>{dupe.name || 'Unnamed'}</strong>
+                {dupe.firm_name ? ` · ${dupe.firm_name}` : ''}
+                {dupe.is_active === false ? ' (inactive)' : ''}
+              </span>
+            )}
+          </div>
 
           <label style={lbl}>Firm Name</label>
           <input className="nx-input" value={form.firm_name} onChange={(e) => setForm({ ...form, firm_name: e.target.value })}
@@ -165,7 +209,9 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
           {err && <p style={{ color: RED, fontSize: 12, marginTop: 10 }}>{err}</p>}
 
           <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-            <button className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving} style={{ ...saveBtn, flex: 1, justifyContent: 'center', opacity: saving ? 0.6 : 1 }}>
+            <button className="nx-btn nx-btn-md nx-btn-primary cpd-submit" onClick={save}
+              disabled={saving || !!dupe}
+              title={dupe ? 'This contact number already belongs to a channel partner' : undefined}>
               {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Channel Partner'}
             </button>
             <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} style={cancelBtn}>Cancel</button>

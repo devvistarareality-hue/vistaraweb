@@ -2430,3 +2430,21 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* The caption beside the booking Excel button (sales/bookings ExportBookings),
    which the Accounts & Finance Bookings screen renders. */
 .xb-note { font-size: 12px; color: var(--muted); }
+
+/* ─── Channel Partner · the duplicate-number check on Add / Edit Partner ───
+   One partner per contact number; the form says whose it is while the number is
+   still being typed (m/[module]/leads/page.js ChannelPartnerModal). */
+.cpd-state { min-height: 18px; margin: 5px 0 9px; font-size: 12px; line-height: 1.35; }
+.cpd-checking { color: var(--faint); }
+.cpd-dupe { color: var(--danger); }
+.cpd-dupe strong { font-weight: 800; }
+.nx-input.cpd-bad { border-color: var(--danger) !important; }
+/* The two controls the duplicate check touches, lifted out of the inline styles
+   the rest of this legacy modal still uses. The submit's disabled look is a CSS
+   state rather than a computed opacity, so it covers saving and duplicate alike. */
+.cpd-input { width: 100%; height: 38px; padding: 0 10px; border-radius: 8px;
+  border: 1.5px solid var(--border); font-size: 13px; box-sizing: border-box; outline: none; }
+.cpd-submit { flex: 1; justify-content: center; padding: 9px 16px; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+  background-color: var(--strong); color: #fff; }
+.cpd-submit:disabled { opacity: 0.6; cursor: not-allowed; }
