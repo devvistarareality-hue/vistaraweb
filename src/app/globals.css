@@ -25,6 +25,13 @@
     linear-gradient(180deg, #EAF2FC 0%, #DFEAF8 55%, #D6E4F5 100%);
 
   --surface: #FFFFFF;
+  /* Charts (validated palette — dataviz skill): three categorical series and a
+     one-hue sequential ramp for heatmaps (s1 = least … s7 = most), with the ink
+     that stays readable on each step. */
+  --viz-1: #2a78d6; --viz-2: #eb6834; --viz-3: #1baf7a;
+  --viz-seq-1: #cde2fb; --viz-seq-2: #9ec5f4; --viz-seq-3: #6da7ec; --viz-seq-4: #3987e5;
+  --viz-seq-5: #256abf; --viz-seq-6: #184f95; --viz-seq-7: #0d366b;
+  --viz-seq-ink-lo: #0b0b0b; --viz-seq-ink-hi: #ffffff;
   --surface-2: #F6F9FE;
   --surface-3: #ECF2FA;
   --glass: rgba(255,255,255,0.86);
@@ -107,6 +114,12 @@
     linear-gradient(180deg, #0B0908 0%, #060505 55%, #030303 100%);
 
   --surface: #0A0A0A;
+  /* Charts: dark steps of the same palette; the ramp runs the other way so "near
+     zero" recedes into the dark surface and the largest cells glow. */
+  --viz-1: #3987e5; --viz-2: #d95926; --viz-3: #199e70;
+  --viz-seq-1: #0d366b; --viz-seq-2: #104281; --viz-seq-3: #1c5cab; --viz-seq-4: #2a78d6;
+  --viz-seq-5: #5598e7; --viz-seq-6: #86b6ef; --viz-seq-7: #cde2fb;
+  --viz-seq-ink-lo: #ffffff; --viz-seq-ink-hi: #0b0b0b;
   --surface-2: #0F0E0E;
   --surface-3: #171514;
   --glass: rgba(6,5,5,0.82);

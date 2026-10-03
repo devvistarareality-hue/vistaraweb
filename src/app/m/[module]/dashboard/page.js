@@ -391,6 +391,7 @@ function ProjectWise({ data, module, onOpen }) {
   const t = data.totals;
   return (
     <>
+      <ProjectCharts rows={rows} onOpen={onOpen} />
       <div className="pw-grid">
         {rows.map((p) => {
           const age = p.ageing || {};
@@ -480,6 +481,107 @@ function ProjectWise({ data, module, onOpen }) {
         </div>
       </div>
     </>
+  );
+}
+
+// ── Project-wise charts ──────────────────────────────────────────────────────
+// 1. What each project owes: one horizontal stacked bar per project — Overdue +
+//    Not yet due + Interest = Total receivable — sorted largest first, total
+//    labelled at the bar end. 2. Where the overdue sits: projects × ageing buckets
+//    as a one-hue heatmap. Colours are the validated chart tokens (--viz-*).
+const OWES = [
+  { key: 'not_due', label: 'Not yet due', cls: 'pc-v1' },
+  { key: 'overdue', label: 'Overdue', cls: 'pc-v2' },
+  { key: 'net_interest', label: 'Interest', cls: 'pc-v3' },
+];
+
+function ProjectCharts({ rows, onOpen }) {
+  const [tip, setTip] = useState(null);   // { x, y, title, lines: [[label, value]] }
+  const show = (e, title, lines) => {
+    const box = e.currentTarget.closest('.pc-wrap').getBoundingClientRect();
+    setTip({ x: e.clientX - box.left, y: e.clientY - box.top, title, lines });
+  };
+  const sorted = [...rows].sort((a, b) => b.totals.os_with_interest - a.totals.os_with_interest);
+  const max = Math.max(1, ...sorted.map((p) => OWES.reduce((a, o) => a + Math.max(0, p.totals[o.key] || 0), 0)));
+  const ageMax = Math.max(1, ...rows.flatMap((p) => AGE_LABELS.map((a) => p.ageing?.[a] || 0)));
+  // Square-root scale: one very large bucket (Kalrav's >180 days) would otherwise
+  // push every other cell to the faintest step and hide the differences.
+  const step = (v) => (v > 0 ? Math.min(7, 1 + Math.floor(Math.sqrt(v / ageMax) * 7)) : 0);
+
+  return (
+    <div className="pc-wrap" onMouseLeave={() => setTip(null)}>
+      <div className="nx-card pc-card">
+        <div className="pc-head">
+          <div>
+            <div className="ard-card-title">What each project owes</div>
+            <div className="ard-card-sub">Total receivable = overdue + not yet due + interest</div>
+          </div>
+          <div className="pc-legend">
+            {OWES.map((o) => <span key={o.key}><i className={`pc-swatch ${o.cls}`} />{o.label}</span>)}
+          </div>
+        </div>
+        <div className="pc-bars">
+          {sorted.map((p) => (
+            <div key={p.id} className="pc-row">
+              <button className="pc-name" onClick={() => onOpen(p.id)} title="Open this project's dashboard">{p.name}</button>
+              <div className="pc-track">
+                {OWES.map((o) => {
+                  const v = Math.max(0, p.totals[o.key] || 0);
+                  if (!v) return null;
+                  return (
+                    <span key={o.key} className={`pc-seg ${o.cls}`} style={{ width: `${(v / max) * 100}%` } /* inline-ok: segment width from data */}
+                      onMouseMove={(e) => show(e, p.name, [[o.label, rupee(v)], ['Share of total', `${Math.round((v / (p.totals.os_with_interest || 1)) * 100)}%`]])} />
+                  );
+                })}
+              </div>
+              <span className="pc-total">{inrShort(p.totals.os_with_interest)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="nx-card pc-card">
+        <div className="pc-head">
+          <div>
+            <div className="ard-card-title">Where the overdue sits</div>
+            <div className="ard-card-sub">Overdue amount by project and days past due — stronger colour is more</div>
+          </div>
+        </div>
+        <div className="pc-heat-scroll">
+          <div className="pc-heat" role="table" aria-label="Overdue by project and age">
+            <div className="pc-heat-row pc-heat-headrow" role="row">
+              <span role="columnheader" />
+              {AGE_LABELS.map((a) => <span key={a} role="columnheader" className="pc-heat-col">{a} days</span>)}
+            </div>
+            {sorted.map((p) => (
+              <div key={p.id} className="pc-heat-row" role="row">
+                <button role="rowheader" className="pc-name" onClick={() => onOpen(p.id)}>{p.name}</button>
+                {AGE_LABELS.map((a) => {
+                  const v = p.ageing?.[a] || 0;
+                  const st = step(v);
+                  return (
+                    <span key={a} role="cell" className={`pc-cell pc-s${st}`}
+                      onMouseMove={(e) => show(e, p.name, [[`${a} days overdue`, v ? rupee(v) : 'Nothing'], ['Accounts overdue', String(p.overdue_accounts)]])}>
+                      {v ? inrShort(v) : '—'}
+                    </span>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="pc-scale">
+          <span>Less</span>{[1, 2, 3, 4, 5, 6, 7].map((n) => <i key={n} className={`pc-cell-key pc-s${n}`} />)}<span>More</span>
+        </div>
+      </div>
+
+      {tip && (
+        <div className="pc-tip" style={{ left: tip.x + 14, top: tip.y + 14 }}>{/* inline-ok: tooltip follows the pointer */}
+          <b>{tip.title}</b>
+          {tip.lines.map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}
+        </div>
+      )}
+    </div>
   );
 }
 
