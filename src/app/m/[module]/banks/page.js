@@ -31,6 +31,8 @@ export default function ARBanksPage({ params }) {
       const r = await apiFetch(AR_ENDPOINTS.banks + cq);
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setErr(d.detail || 'Could not load the banks.'); setRows([]); return; }
+      // AR users can read the list (for Record Payment) but Bank Master is its own module.
+      if (d.can_open === false) { setErr('You do not have access to Bank Master. Ask an admin to tick Bank Master for you in User Management.'); setRows([]); return; }
       setRows(d.results || []); setCanManage(!!d.can_manage);
     } catch { setErr('Could not load the banks. Check your connection.'); setRows([]); }
   }, [cq]);

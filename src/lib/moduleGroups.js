@@ -38,8 +38,10 @@ export const GROUPS = [
       { key: 'ar', module: 'AR', title: 'Accounts Receivable', desc: 'Collections, dues, ageing, cancellations', href: '/m/ar/dashboard', icon: 'coins' },
       // Shared by Receivables now and Payables next, so it belongs to the department.
       // Opened inside whichever of the two modules the person has.
-      { key: 'banks', anyOf: ['Accounts & Finance', 'AR'], title: 'Bank Master', desc: 'Your banks, balances and statements', icon: 'bank',
-        href: (mods) => (mods.includes('Accounts & Finance') ? '/m/accounts/banks' : '/m/ar/banks') },
+      // Its own module — ticked per person in User Management; AR users still pick a
+      // bank in Record Payment, but only those ticked open Bank Master.
+      { key: 'banks', module: 'Bank Master', grantOnly: true, title: 'Bank Master', desc: 'Your banks, balances and statements', icon: 'bank',
+        href: (mods) => (!mods.includes('Accounts & Finance') && mods.includes('AR') ? '/m/ar/banks' : '/m/accounts/banks') },
       { key: 'ap', title: 'Accounts Payable', desc: 'Vendor bills and payments', soon: true, icon: 'receipt' },
     ],
   },
@@ -58,6 +60,11 @@ export const GROUPS = [
   { key: 'club1000', title: 'Club 1000', icon: 'coins', tone: 'green', desc: 'Investors, schemes and payouts',
     parts: [{ key: 'club1000', module: 'Club 1000', title: 'Club 1000', desc: 'Investors, schemes and payouts', href: '/club1000', icon: 'coins' }] },
 ];
+
+// Designation Master works per module (its menus, dashboards and permissions).
+// Bank Master is only an access tick — it has none of those — so the designation
+// screens list every module but it.
+export const DESIGNATION_GROUPS = GROUPS.map((g) => ({ ...g, parts: g.parts.filter((p) => !p.grantOnly) }));
 
 // The modules this person can open. Admin side: a full admin sees every module
 // (as the admin home always did); a module admin only theirs. Employee side: their
@@ -86,8 +93,8 @@ export function groupsFor(user) {
       .filter((p) => (g.adminOnly ? fullAdmin : p.soon || (p.module ? mods.includes(p.module) : hasAny(mods, p.anyOf || []))))
       .map((p) => ({ ...p, href: p.soon ? null : partHref(p, mods) }));
     const open = parts.filter((p) => !p.soon);
-    // `modules`: the real modules among them. Shared pages (Bank Master) don't count
-    // when deciding whether a department has one thing to open or several.
+    // `modules`: the real modules among them — what decides whether a department
+    // has one thing to open or several.
     return { ...g, parts, open, modules: g.adminOnly ? open : open.filter((p) => p.module) };
   }).filter((g) => g.open.length);
 }

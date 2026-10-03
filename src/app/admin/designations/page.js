@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchDesignations, createDesignation, deleteDesignation } from '../../../redux/actions/designationActions';
 import Toast from '../../../components/Toast';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
-import { GROUPS } from '../../../lib/moduleGroups';
+import { DESIGNATION_GROUPS as GROUPS } from '../../../lib/moduleGroups';
 
 // Departments that hold modules (Administration holds pages, not modules).
 const DEPTS = GROUPS.filter((g) => g.parts.some((p) => p.module));

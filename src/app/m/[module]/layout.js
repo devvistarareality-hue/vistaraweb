@@ -144,7 +144,10 @@ export default function ModuleLayout({ children, params }) {
     : moduleCount > 1 ? { href: '/dashboard', label: 'Back to Modules' }
     : null;
   // A company can hide menu items per designation (Designation Master → Permissions).
-  const visibleNav = NAV.filter((item) => canSee(user, item.screen));
+  // Someone who only has Bank Master reaches it under /m/accounts or /m/ar: they get
+  // its page and the department links, not that module's own menu.
+  const ownsModule = isAdmin || (user?.modules || []).includes(moduleName);
+  const visibleNav = NAV.filter((item) => canSee(user, item.screen) && (ownsModule || !pathname.includes('/banks')));
   // The department this module belongs to (lib/moduleGroups) — its other parts are
   // one click away here, e.g. Receivables ↔ Approvals & Bookings ↔ Bank Master.
   const dept = groupOfSlug(user, slug);
