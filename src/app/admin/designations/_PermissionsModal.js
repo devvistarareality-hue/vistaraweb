@@ -1,5 +1,5 @@
 'use client';
-import { DESIGNATION_GROUPS as GROUPS } from '../../../lib/moduleGroups';
+import { GROUPS } from '../../../lib/moduleGroups';
 import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, X, Check, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye } from 'lucide-react';
 import { DESIGNATION_ENDPOINTS } from '../../../constants/api';

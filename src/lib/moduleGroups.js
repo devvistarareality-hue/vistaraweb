@@ -40,7 +40,7 @@ export const GROUPS = [
       // Opened inside whichever of the two modules the person has.
       // Its own module — ticked per person in User Management; AR users still pick a
       // bank in Record Payment, but only those ticked open Bank Master.
-      { key: 'banks', module: 'Bank Master', grantOnly: true, title: 'Bank Master', desc: 'Your banks, balances and statements', icon: 'bank',
+      { key: 'banks', module: 'Bank Master', title: 'Bank Master', desc: 'Your banks, balances and statements', icon: 'bank',
         href: (mods) => (!mods.includes('Accounts & Finance') && mods.includes('AR') ? '/m/ar/banks' : '/m/accounts/banks') },
       { key: 'ap', title: 'Accounts Payable', desc: 'Vendor bills and payments', soon: true, icon: 'receipt' },
     ],
@@ -61,10 +61,6 @@ export const GROUPS = [
     parts: [{ key: 'club1000', module: 'Club 1000', title: 'Club 1000', desc: 'Investors, schemes and payouts', href: '/club1000', icon: 'coins' }] },
 ];
 
-// Designation Master works per module (its menus, dashboards and permissions).
-// Bank Master is only an access tick — it has none of those — so the designation
-// screens list every module but it.
-export const DESIGNATION_GROUPS = GROUPS.map((g) => ({ ...g, parts: g.parts.filter((p) => !p.grantOnly) }));
 
 // The modules this person can open. Admin side: a full admin sees every module
 // (as the admin home always did); a module admin only theirs. Employee side: their
