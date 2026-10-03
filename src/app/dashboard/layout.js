@@ -7,12 +7,14 @@ import { logout } from '../../redux/actions/authActions';
 import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
+import { useImpersonating } from '../../lib/useImpersonating';
 
 // Employee portal shell: people with two or more modules land here to pick one.
 export default function DashboardLayout({ children }) {
   const user     = useSelector((s) => s.auth.user);
   const dispatch = useDispatch();
   const router   = useRouter();
+  const viewingAs = useImpersonating();   // hide Sign out while viewing as someone — Exit on the banner is the way back
 
   useEffect(() => {
     if (!user) router.replace('/company');
@@ -45,7 +47,9 @@ export default function DashboardLayout({ children }) {
               <div className="ep-user-role">{user?.role}</div>
             </div>
           </div>
-          <button type="button" className="ep-logout" onClick={handleLogout} aria-label="Sign out"><LogOut size={15} /><span>Sign out</span></button>
+          {!viewingAs && (
+            <button type="button" className="ep-logout" onClick={handleLogout} aria-label="Sign out"><LogOut size={15} /><span>Sign out</span></button>
+          )}
         </div>
       </nav>
       <main className="ep-main">{children}</main>
