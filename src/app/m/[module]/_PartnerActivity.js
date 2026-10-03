@@ -255,15 +255,25 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
   const endpoint = kind === 'fu' ? SALES_ENDPOINTS.partnerFollowUp : SALES_ENDPOINTS.partnerSiteVisit;
   const map = kind === 'fu' ? FU_STATUS : SV_STATUS;
   const [busy, setBusy] = useState(null);
+  // Marking one done asks what happened first. A row closed with no note proves a
+  // call was made and records nothing about it, which is the opposite of the point.
+  const [closing, setClosing] = useState(null);
 
-  async function setStatus(row, status) {
+  async function setStatus(row, status, outcome) {
     setBusy(row.id);
+    const body = { status };
+    if (outcome) body.outcome = outcome;
     const res = await fetch(endpoint(row.id), {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status }),
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
     setBusy(null);
-    if (!res.ok) { notify('Could not update that.', 'error'); return; }
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      notify(d.detail || 'Could not update that.', 'error');
+      return false;
+    }
     onChanged();
+    return true;
   }
 
   async function remove(row) {
@@ -309,7 +319,7 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
               <td className="cpa-row-actions">
                 {row.status !== 'completed' && (
                   <button className="nx-btn nx-btn-sm nx-btn-success-soft" disabled={busy === row.id}
-                    onClick={() => setStatus(row, 'completed')}>Done</button>
+                    onClick={() => setClosing(row)}>Done</button>
                 )}
                 {row.status === OPEN_STATUS[kind] ? (
                   <button className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busy === row.id}
@@ -322,6 +332,64 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
           ))}
         </tbody>
       </table>
+
+      {closing && (
+        <CompleteDialog
+          kind={kind} row={closing}
+          onCancel={() => setClosing(null)}
+          onDone={async (text) => {
+            const ok = await setStatus(closing, 'completed', text);
+            if (ok) setClosing(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * What happened — asked before a follow-up or visit can be marked done.
+ *
+ * Required, and the server requires it too: a row closed with no note is a record
+ * that something was scheduled and nothing about how it went.
+ */
+function CompleteDialog({ kind, row, onCancel, onDone }) {
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const ready = !!text.trim();
+
+  return (
+    <div className="nx-modal-backdrop cpa-dlg-back" onClick={onCancel}>
+      <div className="nx-modal cpa-dlg" onClick={(e) => e.stopPropagation()}>
+        <div className="cpa-dlg-head">
+          <div className="cpa-dlg-title">
+            Mark {kind === 'fu' ? 'follow-up' : 'site visit'} done
+          </div>
+          <div className="cpa-dlg-sub">
+            {row.partner_name || 'Partner'}
+            {row.project_name ? ` · ${row.project_name}` : ''}
+            {row.scheduled_at ? ` · ${fmt(row.scheduled_at)}` : ''}
+          </div>
+        </div>
+        <div className="cpa-dlg-body">
+          <label className="cpa-lbl">
+            Remarks *
+            <textarea className="nx-input cpa-textarea" rows={3} autoFocus
+              value={text} onChange={(e) => setText(e.target.value)}
+              placeholder={kind === 'fu'
+                ? 'What was discussed, and what happens next?'
+                : 'How did the visit go, and what happens next?'} />
+          </label>
+          {!ready && <p className="cpa-dlg-hint">Remarks are required to mark this done.</p>}
+          <div className="nx-actions">
+            <button className="nx-btn nx-btn-md nx-btn-success" disabled={!ready || saving}
+              onClick={async () => { setSaving(true); await onDone(text.trim()); setSaving(false); }}>
+              {saving ? 'Saving…' : 'Mark Done'}
+            </button>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onCancel}>Cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
