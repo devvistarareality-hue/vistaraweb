@@ -576,58 +576,61 @@ function ProjectCharts({ rows, data, onOpen }) {
               <div className="ard-card-sub">Not yet due, by the month it falls due · {inrShort(cSum)} in these {cN} months</div>
             </div>
           </div>
-          <div className="pc-due-top">
-            <div className="pc-cols" role="list" aria-label="Amount falling due by month">
-              {cMonths.map((i) => {
-                const v = cTot[i] || 0;
-                return (
-                  <div key={cLabels[i]} role="listitem" className="pc-col" onMouseMove={(e) => cTip(e, i)}>
-                    <span className="pc-col-val">{v ? inrShort(v) : '—'}</span>
-                    <div className="pc-col-track">
-                      <div className="pc-col-bar" style={{ height: `${(v / cMax) * 100}%` } /* inline-ok: column height from data */} />
+          {/* One grid for the chart and the table: each month's column sits right
+              above that month's column of figures, so they read straight down. */}
+          <div className="pc-heat-scroll">
+            <div className="pc-heat" role="table" aria-label="Coming due by project and month">
+              <div className={`pc-heat-row pc-due-chart pc-n${cN + cLater.length}`} role="row">
+                <span />
+                {cMonths.map((i) => {
+                  const v = cTot[i] || 0;
+                  return (
+                    <div key={i} className="pc-col" onMouseMove={(e) => cTip(e, i)}>
+                      <span className="pc-col-val">{v ? inrShort(v) : '—'}</span>
+                      <div className="pc-col-track">
+                        <div className="pc-col-bar" style={{ height: `${(v / cMax) * 100}%` } /* inline-ok: column height from data */} />
+                      </div>
                     </div>
-                    <span className={`pc-col-label${i === 0 ? ' is-now' : ''}`}>{cLabels[i]}{i === 0 ? ' · now' : ''}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="pc-later">
-              {cLater.map((i) => (
-                <div key={cLabels[i]} className="pc-later-item" onMouseMove={(e) => cTip(e, i)}>
-                  <span className="pc-later-label">{cLabels[i]}</span>
-                  <span className="pc-later-val">{inrShort(cTot[i] || 0)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          {cRows.length > 0 && (
-            <div className="pc-heat-scroll pc-due-grid">
-              <div className="pc-heat" role="table" aria-label="Coming due by project and month">
-                <div className={`pc-heat-row pc-n${cN + cLater.length}`} role="row">
-                  <span role="columnheader" />
-                  {cMonths.concat(cLater).map((i) => <span key={i} role="columnheader" className="pc-heat-col">{cLabels[i]}</span>)}
-                </div>
-                {cRows.map((p) => (
-                  <div key={p.id} className={`pc-heat-row pc-n${cN + cLater.length}`} role="row">
-                    <button role="rowheader" className="pc-name" onClick={() => onOpen(p.id)}>{p.name}</button>
-                    {cMonths.concat(cLater).map((i) => {
-                      const v = p.coming?.[i] || 0;
-                      return (
-                        <span key={i} role="cell" className={`pc-cell ${i >= cN ? 'pc-cell-later' : `pc-d${cStep(v)}`}`}
-                          onMouseMove={(e) => show(e, p.name, [[`Due ${cLabels[i]}`, v ? rupee(v) : 'Nothing']])}>
-                          {v ? inrShort(v) : '—'}
-                        </span>
-                      );
-                    })}
+                  );
+                })}
+                {/* Later amounts as plain totals, so a big far-off sum never flattens the months. */}
+                {cLater.map((i) => (
+                  <div key={i} className="pc-later-col">
+                    <div className="pc-later-item" onMouseMove={(e) => cTip(e, i)}>
+                      <span className="pc-later-label">{i === cN ? 'Later' : 'Undated'}</span>
+                      <span className="pc-later-val">{inrShort(cTot[i] || 0)}</span>
+                    </div>
                   </div>
                 ))}
+              </div>
+              <div className={`pc-heat-row pc-n${cN + cLater.length}`} role="row">
+                <span role="columnheader" />
+                {cMonths.concat(cLater).map((i) => (
+                  <span key={i} role="columnheader" className={`pc-heat-col${i === 0 ? ' is-now' : ''}`}>{cLabels[i]}{i === 0 ? ' · now' : ''}</span>
+                ))}
+              </div>
+              {cRows.map((p) => (
+                <div key={p.id} className={`pc-heat-row pc-n${cN + cLater.length}`} role="row">
+                  <button role="rowheader" className="pc-name" onClick={() => onOpen(p.id)}>{p.name}</button>
+                  {cMonths.concat(cLater).map((i) => {
+                    const v = p.coming?.[i] || 0;
+                    return (
+                      <span key={i} role="cell" className={`pc-cell ${i >= cN ? 'pc-cell-later' : `pc-d${cStep(v)}`}`}
+                        onMouseMove={(e) => show(e, p.name, [[`Due ${cLabels[i]}`, v ? rupee(v) : 'Nothing']])}>
+                        {v ? inrShort(v) : '—'}
+                      </span>
+                    );
+                  })}
+                </div>
+              ))}
+              {cRows.length > 0 && (
                 <div className={`pc-heat-row pc-heat-total pc-n${cN + cLater.length}`} role="row">
                   <span role="rowheader" className="pc-total-name">Total<small>{inrShort(cMonths.concat(cLater).reduce((t, i) => t + (cTot[i] || 0), 0))}</small></span>
                   {cMonths.concat(cLater).map((i) => <span key={i} role="cell" className="pc-cell pc-cell-total">{cTot[i] ? inrShort(cTot[i]) : '—'}</span>)}
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
           <div className="pc-scale">
             <span>Less</span>{[1, 2, 3, 4, 5, 6, 7].map((n) => <i key={n} className={`pc-cell-key pc-d${n}`} />)}<span>More</span>
           </div>
