@@ -392,56 +392,6 @@ function ProjectWise({ data, module, onOpen }) {
   return (
     <>
       <ProjectCharts rows={rows} onOpen={onOpen} />
-      <div className="pw-grid">
-        {rows.map((p) => {
-          const age = p.ageing || {};
-          const ageTotal = AGE_LABELS.reduce((a, k) => a + (age[k] || 0), 0) || 1;
-          const worst = AGE_LABELS.map((k, i) => [k, i, age[k] || 0]).filter((x) => x[2] > 0).slice(-3).reverse();
-          return (
-            <article key={p.id} className="nx-card pw-card">
-              <header className="pw-head">
-                <div>
-                  <div className="pw-name">{p.name}</div>
-                  <div className="pw-sub">{p.accounts} account{p.accounts === 1 ? '' : 's'} · {p.overdue_accounts} overdue</div>
-                </div>
-                <div className="pw-total">
-                  <span>Total receivable</span>
-                  <b title={rupee(p.totals.os_with_interest)}>{inrShort(p.totals.os_with_interest)}</b>
-                </div>
-              </header>
-
-              <div className="pw-collected">
-                <div className="pw-track"><div className="pw-fill" style={{ width: `${Math.min(100, p.pct_realised)}%` }} /></div>{/* inline-ok: collected % from data */}
-                <span>{p.pct_realised}% collected · {inrShort(p.totals.received)} of {inrShort(p.totals.collectable)}</span>
-              </div>
-
-              <div className="pw-stats">
-                <div><span>Overdue</span><b className="pw-bad">{inrShort(p.totals.overdue)}</b></div>
-                <div><span>Not yet due</span><b>{inrShort(p.totals.not_due)}</b></div>
-                <div><span>Interest</span><b>{inrShort(p.totals.net_interest)}</b></div>
-                <div><span>&gt;180 days</span><b className={age['>180'] ? 'pw-bad' : ''}>{age['>180'] ? inrShort(age['>180']) : '—'}</b></div>
-              </div>
-
-              <div className="pw-age">
-                <div className="ard-stack pw-bar">
-                  {AGE_LABELS.map((a, i) => age[a] > 0 && <span key={a} className={`ard-seg a${i}`} title={`${a} days · ${rupee(age[a])}`} style={{ width: `${(age[a] / ageTotal) * 100}%` }} />)}{/* inline-ok: segment width from data */}
-                </div>
-                <div className="pw-age-legend">
-                  {worst.length ? worst.map(([k, i, v]) => (
-                    <span key={k}><i className={`pw-dot a${i}`} />{k} days · {inrShort(v)}</span>
-                  )) : <span>Nothing overdue</span>}
-                </div>
-              </div>
-
-              <footer className="pw-actions">
-                <Link href={`/m/${module}/register?project=${p.id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Register</Link>
-                <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => onOpen(p.id)}>Open dashboard</button>
-              </footer>
-            </article>
-          );
-        })}
-      </div>
-
       <div className="nx-card pw-table-card">
         <div className="pw-table-title">All projects at a glance</div>
         <div className="arb-scroll">
