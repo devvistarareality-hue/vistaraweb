@@ -2277,17 +2277,24 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .mp-row:last-child { border-bottom: 0; }
 .mp-row:nth-child(odd) { background: var(--surface-2); }
 .mp-dept { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.mp-mods { display: flex; flex-wrap: wrap; gap: 8px; }
+.mp-mods { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 8px; }
+.mp-mod { white-space: nowrap; }
 .mp-mod { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 9px; cursor: pointer; font-size: 13px;
   color: var(--text); background: var(--surface); border: 1.5px solid var(--border); transition: all .12s; }
 .mp-mod.is-on { border-color: var(--accent); background: var(--accent-softer); font-weight: 600; }
 .mp-mod input { accent-color: var(--accent); margin: 0; }
 @media (max-width: 560px) { .mp-row { grid-template-columns: 1fr; gap: 6px; } }
 /* Permissions → Menu: module chips grouped by department */
-.perm-depts { display: flex; flex-direction: column; gap: 10px; }
-.perm-dept { display: grid; grid-template-columns: 140px 1fr; align-items: center; gap: 10px; }
+/* Modules by department, as one tidy list: a row per department, its modules in
+   equal columns, so every chip lines up with the ones above it. */
+.perm-depts { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.perm-dept { display: grid; grid-template-columns: 140px 1fr; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--hairline); }
+.perm-dept:last-child { border-bottom: 0; }
+.perm-dept:nth-child(odd) { background: var(--surface-2); }
 .perm-dept-name { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-@media (max-width: 560px) { .perm-dept { grid-template-columns: 1fr; gap: 4px; } }
+.perm-dept .perm-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); padding-bottom: 0; }
+.perm-dept .perm-chip { justify-content: center; white-space: nowrap; }
+@media (max-width: 560px) { .perm-dept { grid-template-columns: 1fr; gap: 6px; } }
 
 /* ─── Channel Partner · partner follow-ups and site visits ───
    Activity with the partner themselves, as opposed to with their leads. Used by
