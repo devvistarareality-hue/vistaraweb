@@ -447,9 +447,12 @@ const OWES = [
 
 function ProjectCharts({ rows, onOpen }) {
   const [tip, setTip] = useState(null);   // { x, y, title, lines: [[label, value]] }
+  // Tooltip beside the pointer, flipped to the left / above near the edges so it
+  // never runs out of the chart area.
   const show = (e, title, lines) => {
     const box = e.currentTarget.closest('.pc-wrap').getBoundingClientRect();
-    setTip({ x: e.clientX - box.left, y: e.clientY - box.top, title, lines });
+    const x = e.clientX - box.left, y = e.clientY - box.top;
+    setTip({ x: x + 250 > box.width ? x - 250 : x + 14, y: y + 110 > box.height ? y - 100 : y + 14, title, lines });
   };
   const sorted = [...rows].sort((a, b) => b.totals.os_with_interest - a.totals.os_with_interest);
   const max = Math.max(1, ...sorted.map((p) => OWES.reduce((a, o) => a + Math.max(0, p.totals[o.key] || 0), 0)));
@@ -474,17 +477,22 @@ function ProjectCharts({ rows, onOpen }) {
           {sorted.map((p) => (
             <div key={p.id} className="pc-row">
               <button className="pc-name" onClick={() => onOpen(p.id)} title="Open this project's dashboard">{p.name}</button>
+              {/* The bar is as long as the project's total (relative to the largest);
+                  its parts split it; the total is written right where it ends. */}
               <div className="pc-track">
-                {OWES.map((o) => {
-                  const v = Math.max(0, p.totals[o.key] || 0);
-                  if (!v) return null;
-                  return (
-                    <span key={o.key} className={`pc-seg ${o.cls}`} style={{ width: `${(v / max) * 100}%` } /* inline-ok: segment width from data */}
-                      onMouseMove={(e) => show(e, p.name, [[o.label, rupee(v)], ['Share of total', `${Math.round((v / (p.totals.os_with_interest || 1)) * 100)}%`]])} />
-                  );
-                })}
+                <div className="pc-stack" style={{ width: `calc((100% - 96px) * ${(OWES.reduce((t, o) => t + Math.max(0, p.totals[o.key] || 0), 0) / max).toFixed(4)})` } /* inline-ok: bar length from data */}>
+                  {OWES.map((o) => {
+                    const v = Math.max(0, p.totals[o.key] || 0);
+                    if (!v) return null;
+                    const tot = OWES.reduce((t, x) => t + Math.max(0, p.totals[x.key] || 0), 0) || 1;
+                    return (
+                      <span key={o.key} className={`pc-seg ${o.cls}`} style={{ width: `${(v / tot) * 100}%` } /* inline-ok: part of the bar from data */}
+                        onMouseMove={(e) => show(e, p.name, [[o.label, rupee(v)], ['Share of total', `${Math.round((v / (p.totals.os_with_interest || 1)) * 100)}%`]])} />
+                    );
+                  })}
+                </div>
+                <span className="pc-total">{inrShort(p.totals.os_with_interest)}</span>
               </div>
-              <span className="pc-total">{inrShort(p.totals.os_with_interest)}</span>
             </div>
           ))}
         </div>
