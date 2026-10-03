@@ -26,12 +26,14 @@
 
   --surface: #FFFFFF;
   /* Charts (validated palette — dataviz skill): three categorical series and a
-     one-hue sequential ramp for heatmaps (s1 = least … s7 = most), with the ink
+     one-hue sequential ramp for heatmaps — red, since it shows overdue money (s1 = least … s7 = most), with the ink
      that stays readable on each step. */
   --viz-1: #2a78d6; --viz-2: #eb6834; --viz-3: #1baf7a;
-  --viz-seq-1: #cde2fb; --viz-seq-2: #9ec5f4; --viz-seq-3: #6da7ec; --viz-seq-4: #3987e5;
-  --viz-seq-5: #256abf; --viz-seq-6: #184f95; --viz-seq-7: #0d366b;
-  --viz-seq-ink-lo: #0b0b0b; --viz-seq-ink-hi: #ffffff;
+  --viz-seq-1: #fde4e1; --viz-seq-2: #f9c3bc; --viz-seq-3: #f29b90; --viz-seq-4: #e86f61;
+  --viz-seq-5: #d64838; --viz-seq-6: #b22f22; --viz-seq-7: #861d14;
+  /* Ink per step — whichever of black/white reads better on it (checked by contrast). */
+  --viz-seq-ink-1: #0b0b0b; --viz-seq-ink-2: #0b0b0b; --viz-seq-ink-3: #0b0b0b; --viz-seq-ink-4: #0b0b0b;
+  --viz-seq-ink-5: #0b0b0b; --viz-seq-ink-6: #ffffff; --viz-seq-ink-7: #ffffff;
   --surface-2: #F6F9FE;
   --surface-3: #ECF2FA;
   --glass: rgba(255,255,255,0.86);
@@ -117,9 +119,10 @@
   /* Charts: dark steps of the same palette; the ramp runs the other way so "near
      zero" recedes into the dark surface and the largest cells glow. */
   --viz-1: #3987e5; --viz-2: #d95926; --viz-3: #199e70;
-  --viz-seq-1: #0d366b; --viz-seq-2: #104281; --viz-seq-3: #1c5cab; --viz-seq-4: #2a78d6;
-  --viz-seq-5: #5598e7; --viz-seq-6: #86b6ef; --viz-seq-7: #cde2fb;
-  --viz-seq-ink-lo: #ffffff; --viz-seq-ink-hi: #0b0b0b;
+  --viz-seq-1: #4a120d; --viz-seq-2: #6e1a12; --viz-seq-3: #94251a; --viz-seq-4: #c03a2b;
+  --viz-seq-5: #e0604f; --viz-seq-6: #f08f82; --viz-seq-7: #fbcbc4;
+  --viz-seq-ink-1: #ffffff; --viz-seq-ink-2: #ffffff; --viz-seq-ink-3: #ffffff; --viz-seq-ink-4: #ffffff;
+  --viz-seq-ink-5: #0b0b0b; --viz-seq-ink-6: #0b0b0b; --viz-seq-ink-7: #0b0b0b;
   --surface-2: #0F0E0E;
   --surface-3: #171514;
   --glass: rgba(6,5,5,0.82);
