@@ -166,6 +166,8 @@ export const SALES_ENDPOINTS = {
   },
   get channelPartners()  { return `${BASE_URL}/api/sales/channel-partners/`; },
   channelPartner: (id)   => `${BASE_URL}/api/sales/channel-partners/${id}/`,
+  // "Is this number already a partner?", asked while the number is being typed.
+  partnerLookup: (qs)    => `${BASE_URL}/api/sales/channel-partners/lookup/${qs}`,
   // Activity with the partner themselves, not with their leads. One flat list
   // each, filtered by ?channel_partner_id= for a single partner's page.
   partnerFollowUps: (qs = '')   => `${BASE_URL}/api/sales/partner-follow-ups/${qs}`,

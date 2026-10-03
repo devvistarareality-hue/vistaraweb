@@ -34,6 +34,8 @@ import MultiSelect from '../../../components/MultiSelect';
 const FU_STATUS = {
   pending:     { label: 'Pending',     cls: 'cpa-chip-warn' },
   completed:   { label: 'Completed',   cls: 'cpa-chip-ok' },
+  // Nothing sets 'missed' any more — an overdue follow-up just reads as overdue.
+  // Kept so rows already carrying it still render with a label.
   missed:      { label: 'Missed',      cls: 'cpa-chip-bad' },
   rescheduled: { label: 'Rescheduled', cls: 'cpa-chip-mute' },
 };
@@ -46,11 +48,16 @@ const SV_STATUS = {
 // What counts as "still owed" differs between the two, so the open state is
 // named once here rather than hard-coded as 'pending' at each use.
 const OPEN_STATUS = { fu: 'pending', sv: 'scheduled' };
-// The second action on an open row: a call that did not happen was missed, a
-// visit that will not happen is cancelled.
-const DROP_STATUS = { fu: ['missed', 'Missed'], sv: ['cancelled', 'Cancel'] };
+// The second action on an open row. A visit that will not happen is cancelled; a
+// follow-up has none — one that did not happen simply reads as overdue until it
+// is done, rather than asking whoever glances at the row to classify it.
+const DROP_STATUS = { sv: ['cancelled', 'Cancel'] };
 
-function StatusChip({ map, value }) {
+// `overdue` is not a status anyone sets — it is a pending row whose time has
+// passed. Showing it as its own chip is the point of the change: "Pending" on
+// something three days late reads as fine, which it is not.
+function StatusChip({ map, value, overdue }) {
+  if (overdue) return <span className="nx-badge cpa-chip cpa-chip-bad">Overdue</span>;
   const s = map[value] || { label: value || '—', cls: 'cpa-chip-mute' };
   return <span className={`nx-badge cpa-chip ${s.cls}`}>{s.label}</span>;
 }
@@ -255,15 +262,25 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
   const endpoint = kind === 'fu' ? SALES_ENDPOINTS.partnerFollowUp : SALES_ENDPOINTS.partnerSiteVisit;
   const map = kind === 'fu' ? FU_STATUS : SV_STATUS;
   const [busy, setBusy] = useState(null);
+  // Marking one done asks what happened first. A row closed with no note proves a
+  // call was made and records nothing about it, which is the opposite of the point.
+  const [closing, setClosing] = useState(null);
 
-  async function setStatus(row, status) {
+  async function setStatus(row, status, outcome) {
     setBusy(row.id);
+    const body = { status };
+    if (outcome) body.outcome = outcome;
     const res = await fetch(endpoint(row.id), {
-      method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status }),
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
     });
     setBusy(null);
-    if (!res.ok) { notify('Could not update that.', 'error'); return; }
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      notify(d.detail || 'Could not update that.', 'error');
+      return false;
+    }
     onChanged();
+    return true;
   }
 
   async function remove(row) {
@@ -305,13 +322,13 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
               <td>{fmt(kind === 'fu' ? row.completed_at : row.visited_at)}</td>
               <td>{(kind === 'fu' ? row.assigned_to_name : row.host_name) || '—'}</td>
               <td className="cpa-remarks">{row.remarks || row.outcome || '—'}</td>
-              <td><StatusChip map={map} value={row.status} /></td>
+              <td><StatusChip map={map} value={row.status} overdue={isOverdue(kind, row)} /></td>
               <td className="cpa-row-actions">
                 {row.status !== 'completed' && (
                   <button className="nx-btn nx-btn-sm nx-btn-success-soft" disabled={busy === row.id}
-                    onClick={() => setStatus(row, 'completed')}>Done</button>
+                    onClick={() => setClosing(row)}>Done</button>
                 )}
-                {row.status === OPEN_STATUS[kind] ? (
+                {row.status === OPEN_STATUS[kind] && DROP_STATUS[kind] ? (
                   <button className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busy === row.id}
                     onClick={() => setStatus(row, DROP_STATUS[kind][0])}>{DROP_STATUS[kind][1]}</button>
                 ) : null}
@@ -322,6 +339,117 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
           ))}
         </tbody>
       </table>
+
+      {closing && (
+        <CompleteDialog
+          kind={kind} row={closing}
+          onCancel={() => setClosing(null)}
+          onDone={async (text, next) => {
+            const ok = await setStatus(closing, 'completed', text);
+            if (!ok) return;
+            // Scheduled after the first call succeeds, so a failure here cannot
+            // leave the old one closed and the new one lost with it.
+            if (next) {
+              await fetch(SALES_ENDPOINTS.partnerFollowUps(), {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({
+                  channel_partner: closing.channel_partner,
+                  scheduled_at: new Date(next.at).toISOString(),
+                  remarks: next.remarks,
+                }),
+              }).then((r) => { if (!r.ok) notify('Marked done, but the next one was not scheduled.', 'error'); })
+                .catch(() => notify('Marked done, but the next one was not scheduled.', 'error'));
+              onChanged();
+            }
+            setClosing(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * What happened — asked before a follow-up or visit can be marked done.
+ *
+ * Required, and the server requires it too: a row closed with no note is a record
+ * that something was scheduled and nothing about how it went.
+ */
+function CompleteDialog({ kind, row, onCancel, onDone }) {
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+  // Closing a follow-up is the moment you know whether another is needed, so the
+  // next one is booked here rather than from a second trip through the list.
+  const [schedNext, setSchedNext] = useState(false);
+  const [nextAt, setNextAt] = useState(inAnHourLocal());
+  const [nextRemarks, setNextRemarks] = useState('');
+  const canChain = kind === 'fu';
+  const ready = !!text.trim() && (!schedNext || !!nextAt);
+
+  return (
+    <div className="nx-modal-backdrop cpa-dlg-back" onClick={onCancel}>
+      <div className="nx-modal cpa-dlg" onClick={(e) => e.stopPropagation()}>
+        <div className="cpa-dlg-head">
+          <div className="cpa-dlg-title">
+            Mark {kind === 'fu' ? 'follow-up' : 'site visit'} done
+          </div>
+          <div className="cpa-dlg-sub">
+            {row.partner_name || 'Partner'}
+            {row.project_name ? ` · ${row.project_name}` : ''}
+            {row.scheduled_at ? ` · ${fmt(row.scheduled_at)}` : ''}
+          </div>
+        </div>
+        <div className="cpa-dlg-body">
+          <label className="cpa-lbl">
+            Remarks *
+            <textarea className="nx-input cpa-textarea" rows={3} autoFocus
+              value={text} onChange={(e) => setText(e.target.value)}
+              placeholder={kind === 'fu'
+                ? 'What was discussed, and what happens next?'
+                : 'How did the visit go, and what happens next?'} />
+          </label>
+          {!text.trim() && <p className="cpa-dlg-hint">Remarks are required to mark this done.</p>}
+
+          {canChain && (
+            <>
+              <label className="cpa-check">
+                <input type="checkbox" checked={schedNext}
+                  onChange={(e) => setSchedNext(e.target.checked)} />
+                Schedule next follow-up
+              </label>
+              {schedNext && (
+                <div className="cpa-next">
+                  <label className="cpa-lbl">
+                    Next follow-up date &amp; time
+                    <input className="nx-input" type="datetime-local" value={nextAt}
+                      onChange={(e) => setNextAt(e.target.value)} />
+                  </label>
+                  <label className="cpa-lbl">
+                    Next follow-up note
+                    <textarea className="nx-input cpa-textarea" rows={2} value={nextRemarks}
+                      onChange={(e) => setNextRemarks(e.target.value)}
+                      placeholder="What to discuss next…" />
+                  </label>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="nx-actions">
+            <button className="nx-btn nx-btn-md nx-btn-success" disabled={!ready || saving}
+              onClick={async () => {
+                setSaving(true);
+                await onDone(text.trim(),
+                  schedNext && nextAt ? { at: nextAt, remarks: nextRemarks.trim() } : null);
+                setSaving(false);
+              }}>
+              {saving ? 'Saving…' : 'Mark Done'}
+            </button>
+            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onCancel}>Cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
