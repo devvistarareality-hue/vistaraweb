@@ -95,9 +95,13 @@ function DecidedBy({ b, style }) {
 }
 
 // Download the approved bookings as a workbook — Sales and Channel Partner together,
-// which is why it lives in Sales and has no counterpart in the CP module. Shown only
-// to someone granted "Download booking Excel" in User Management, and to real admins;
-// the server enforces the same rule, this just avoids offering a button that 403s.
+// which is why there is one button rather than one per module. It is rendered by the
+// Accounts & Finance Bookings screen, which is where the finished, approved deals are
+// read; it is defined here because this is where the booking screens live.
+//
+// Shown only to someone granted "Download booking Excel" in User Management, and to
+// real admins; the server enforces the same rule, this just avoids offering a button
+// that 403s.
 export function ExportBookings({ projects, companyId }) {
   const me = useSelector((s) => s.auth.user);
   const allowed = me?.can_export_bookings || me?.role === 'Admin' || me?.is_staff;
@@ -449,7 +453,6 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
               background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
-        {!cpMode && <ExportBookings projects={projects} companyId={companyId} />}
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
