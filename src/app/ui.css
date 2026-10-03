@@ -2426,3 +2426,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pc-tip div { display: flex; justify-content: space-between; gap: 14px; color: var(--text-2); }
 .pc-tip strong { color: var(--text); font-variant-numeric: tabular-nums; }
 @media (max-width: 560px) { .pc-row { grid-template-columns: 90px 1fr 62px; } }
+
+/* The caption beside the booking Excel button (sales/bookings ExportBookings),
+   which the Accounts & Finance Bookings screen renders. */
+.xb-note { font-size: 12px; color: var(--muted); }

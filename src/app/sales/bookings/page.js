@@ -94,7 +94,9 @@ function DecidedBy({ b, style }) {
   );
 }
 
-// Download the approved bookings as a workbook — Sales and Channel Partner together,
+// Download the Accounts-approved bookings as a workbook — Sales and Channel
+// Partner together, and only deals Accounts has signed off, not everything Sales
+// has approved. See BookingExportView for why that distinction matters.
 // which is why there is one button rather than one per module. It is rendered by the
 // Accounts & Finance Bookings screen, which is where the finished, approved deals are
 // read; it is defined here because this is where the booking screens live.
@@ -145,14 +147,14 @@ export function ExportBookings({ projects, companyId }) {
         <option value="">All projects</option>
         {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
-      <button className="nx-btn nx-btn-md nx-btn-success" onClick={download} disabled={busy} title="Approved bookings, Sales and CP together"
+      <button className="nx-btn nx-btn-md nx-btn-success" onClick={download} disabled={busy} title="Bookings approved by Accounts, Sales and CP together"
         style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
                  cursor: busy ? 'default' : 'pointer', background: 'var(--success-solid)', color: '#fff', opacity: busy ? 0.7 : 1 }}>
         {busy ? 'Preparing…' : '⤓ Excel'}
       </button>
       {/* Says what the sheet holds, because this control also sits above My Bookings
           and the download is emphatically not that list. */}
-      <span style={{ fontSize: 12, color: 'var(--muted)' }}>All approved bookings · Sales + CP</span>
+      <span className="xb-note">Accounts-approved bookings · Sales + CP</span>
       {err && <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600 }}>{err}</span>}
     </div>
   );
