@@ -1435,6 +1435,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .nx-badge.tone-warn  { background: var(--warning-soft); color: var(--warning-2); }
 .nx-badge.tone-bad   { background: var(--danger-soft); color: var(--danger); }
 .nx-badge.tone-muted { background: var(--surface-3); color: var(--text-3); }
+/* Approvals → All at Accounts: where each booking stands at the Accounts gate. */
+.appr-acc-state { margin-top: 6px; }
 /* Board column header label — text colour, not the generic .tone-* solid fill
    (the .tone-* utility sets a background too; reset it back here since both
    rules apply independently per-property, not one-rule-wins-all). */

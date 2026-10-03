@@ -51,7 +51,7 @@ function statusPill(s) {
   return { display: 'inline-block', fontSize: 10, fontWeight: 800, color: c, background: bg, padding: '3px 9px', borderRadius: 20 };
 }
 
-const TABS = [['awaiting_sales', 'Awaiting Sales'], ['awaiting_cp', 'Awaiting CP'], ['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']];
+const TABS = [['awaiting_sales', 'Awaiting Sales'], ['awaiting_cp', 'Awaiting CP'], ['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All at Accounts']];
 const actBtn = { padding: '8px 16px', borderRadius: 8, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 
 // Which project id's Accounts approver list `field` picks — 'accounts_booking_approvers'
@@ -173,7 +173,7 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
 // approved here — Sales/CP approval alone just puts it in the Pending tab. Once
 // approved it also moves to the Bookings ledger; Cancel (undoing that approval, same
 // as Sales' own Cancel Booking) lives here too, in the Approved tab.
-function AccountsApprovals() {
+function AccountsApprovals({ initialTab }) {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
@@ -187,7 +187,8 @@ function AccountsApprovals() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-  const [tab, setTab] = useState('pending');
+  // The dashboard tiles open the tab that matches their number (?tab=…).
+  const [tab, setTab] = useState(TABS.some(([k]) => k === initialTab) ? initialTab : 'pending');
   const [busy, setBusy] = useState(null);
   const [toReject, setToReject] = useState(null);  // booking awaiting reject-with-remarks
   const [toCancel, setToCancel] = useState(null);  // approved booking awaiting cancel confirmation
@@ -315,6 +316,9 @@ function AccountsApprovals() {
     pending:  (b) => b.status === 'sold' && b.accounts_status === 'pending',
     approved: (b) => b.status === 'sold' && b.accounts_status === 'approved' && !isCancelled(b),
     rejected: (b) => b.accounts_status === 'rejected',
+    // Everything that has reached Accounts — waiting, approved or sent back. The
+    // same rule as the dashboard's "All at Accounts" count (server: status='sold').
+    all:      (b) => b.status === 'sold',
   }[tab];
   const tabRows = rows.filter(inTab);
 
@@ -519,6 +523,13 @@ function AccountsApprovals() {
                         {tab === 'approved' && b.accounts_approved_at && <div style={{ fontSize: 11, color: 'var(--success)', marginTop: 4 }}>Accounts approved {fmtDateTime(b.accounts_approved_at)}{b.accounts_approved_by_name ? ` · ${b.accounts_approved_by_name}` : ''}</div>}
                         {tab === 'approved' && !b.accounts_approved_at && b.approved_at && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Approved {fmtDateTime(b.approved_at)}</div>}
                         {tab === 'pending' && b.approved_at && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Sold {fmtDateTime(b.approved_at)}</div>}
+                        {tab === 'all' && (
+                          <div className="appr-acc-state">
+                            {b.accounts_status === 'rejected' ? <span className="nx-badge tone-bad">Sent back</span>
+                              : b.accounts_status === 'pending' ? <span className="nx-badge tone-warn">Waiting for sign-off</span>
+                              : <span className="nx-badge tone-good">Approved by Accounts</span>}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {tab === 'rejected' && (
@@ -633,7 +644,7 @@ function AccountsApprovals() {
 // keeps its own review queue above.
 export default function ModuleApprovalsPage({ params, searchParams }) {
   if (params.module === 'cp') return <ChannelPartnerApprovals initialTab={searchParams?.tab} />;
-  return <AccountsApprovals />;
+  return <AccountsApprovals initialTab={searchParams?.tab} />;
 }
 
 function ChannelPartnerApprovals({ initialTab }) {

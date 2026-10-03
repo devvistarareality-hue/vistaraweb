@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
-import { ClipboardCheck, BookCheck, CircleSlash, Clock3, ArrowRight } from 'lucide-react';
+import { ClipboardCheck, BookCheck, CircleSlash, Layers, ArrowRight } from 'lucide-react';
 import { SALES_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import Loader from '../../../components/Loader';
@@ -41,13 +41,14 @@ export default function ModuleDashboard({ slug }) {
     const n = counts || {};
     return [
       { key: 'pending', icon: ClipboardCheck, label: 'Waiting for sign-off', value: n.pending || 0,
-        sub: 'Bookings at the Accounts gate', href: `/m/${slug}/approvals` },
+        sub: 'Bookings at the Accounts gate', href: `/m/${slug}/approvals?tab=pending` },
       { key: 'approved', icon: BookCheck, label: 'Approved', value: n.approved || 0,
         sub: 'Signed off by Accounts', href: `/m/${slug}/bookings` },
       { key: 'rejected', icon: CircleSlash, label: 'Sent back', value: n.rejected || 0,
-        sub: 'Returned to Sales with remarks', href: `/m/${slug}/approvals` },
-      { key: 'total', icon: Clock3, label: 'Deals on the books', value: n.total || 0,
-        sub: 'Approved by Sales or Channel Partner', href: `/m/${slug}/bookings` },
+        sub: 'Returned to Sales with remarks', href: `/m/${slug}/approvals?tab=rejected` },
+      // Every booking that has reached Accounts: the three tiles before it added up.
+      { key: 'total', icon: Layers, label: 'All at Accounts', value: n.total || 0,
+        sub: 'Waiting + approved + sent back', href: `/m/${slug}/approvals?tab=all` },
     ];
   }, [counts, slug]);
 
