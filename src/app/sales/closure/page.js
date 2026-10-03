@@ -15,8 +15,11 @@ import Icon from '../../../components/Icon';
 export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly = false }) {
   const router    = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
-  const cKey      = `projects_${companyId || 'all'}`;
-  const cq        = companyId ? `?company_id=${companyId}` : '';
+  const userId    = useSelector((s) => s.auth?.user?.id);
+  // Booking lists only the projects this rep is assigned to (for_booking=1), so the
+  // cache is per person — never the shared project list, nor someone else's.
+  const cKey      = `projects_booking_${userId || 'me'}_${companyId || 'all'}`;
+  const cq        = `?for_booking=1${companyId ? `&company_id=${companyId}` : ''}`;
 
   const [projects, setProjects] = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -51,7 +54,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
       .then(r => r.json())
       .then(d => { const list = Array.isArray(d) ? d : []; setCache(cKey, list); setProjects(list); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId]);
+  }, [companyId, userId]);
 
   // Only active projects are bookable.
   const visible = projects.filter(p => p.is_active);

@@ -489,7 +489,9 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       if (held.length !== selectedIds.length) {
         if (held.length) await releasePlots(held); // don't leave a partial hold behind
         const f = (data.failed || [])[0];
-        flash(f?.reason === 'sold'
+        flash(f?.reason === 'not_assigned'
+          ? 'You are not assigned to this project, so you cannot book on it.'
+          : f?.reason === 'sold'
           ? `Plot ${f.number || f.id} was just sold — pick a different unit.`
           : `Plot ${f?.number || f?.id || ''} was just selected by another salesperson — pick a different one.`);
         setSelectedIds([]);
