@@ -34,6 +34,12 @@
   /* Ink per step — whichever of black/white reads better on it (checked by contrast). */
   --viz-seq-ink-1: #0b0b0b; --viz-seq-ink-2: #0b0b0b; --viz-seq-ink-3: #0b0b0b; --viz-seq-ink-4: #0b0b0b;
   --viz-seq-ink-5: #0b0b0b; --viz-seq-ink-6: #ffffff; --viz-seq-ink-7: #ffffff;
+  /* Second ramp — blue — for money still to come (not yet due), so it never reads
+     like the red overdue heatmap. */
+  --viz-due-1: #cde2fb; --viz-due-2: #9ec5f4; --viz-due-3: #6da7ec; --viz-due-4: #3987e5;
+  --viz-due-5: #256abf; --viz-due-6: #184f95; --viz-due-7: #0d366b;
+  --viz-due-ink-1: #0b0b0b; --viz-due-ink-2: #0b0b0b; --viz-due-ink-3: #0b0b0b; --viz-due-ink-4: #0b0b0b;
+  --viz-due-ink-5: #ffffff; --viz-due-ink-6: #ffffff; --viz-due-ink-7: #ffffff;
   --surface-2: #F6F9FE;
   --surface-3: #ECF2FA;
   --glass: rgba(255,255,255,0.86);
@@ -123,6 +129,10 @@
   --viz-seq-5: #e0604f; --viz-seq-6: #f08f82; --viz-seq-7: #fbcbc4;
   --viz-seq-ink-1: #ffffff; --viz-seq-ink-2: #ffffff; --viz-seq-ink-3: #ffffff; --viz-seq-ink-4: #ffffff;
   --viz-seq-ink-5: #0b0b0b; --viz-seq-ink-6: #0b0b0b; --viz-seq-ink-7: #0b0b0b;
+  --viz-due-1: #0d366b; --viz-due-2: #104281; --viz-due-3: #1c5cab; --viz-due-4: #2a78d6;
+  --viz-due-5: #5598e7; --viz-due-6: #86b6ef; --viz-due-7: #cde2fb;
+  --viz-due-ink-1: #ffffff; --viz-due-ink-2: #ffffff; --viz-due-ink-3: #ffffff; --viz-due-ink-4: #0b0b0b;
+  --viz-due-ink-5: #0b0b0b; --viz-due-ink-6: #0b0b0b; --viz-due-ink-7: #0b0b0b;
   --surface-2: #0F0E0E;
   --surface-3: #171514;
   --glass: rgba(6,5,5,0.82);

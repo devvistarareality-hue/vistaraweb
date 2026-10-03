@@ -391,7 +391,7 @@ function ProjectWise({ data, module, onOpen }) {
   const t = data.totals;
   return (
     <>
-      <ProjectCharts rows={rows} onOpen={onOpen} />
+      <ProjectCharts rows={rows} data={data} onOpen={onOpen} />
       <div className="nx-card pw-table-card">
         <div className="pw-table-title">All projects at a glance</div>
         <div className="arb-scroll">
@@ -438,21 +438,24 @@ function ProjectWise({ data, module, onOpen }) {
 // 1. What each project owes: one horizontal stacked bar per project — Overdue +
 //    Not yet due + Interest = Total receivable — sorted largest first, total
 //    labelled at the bar end. 2. Where the overdue sits: projects × ageing buckets
-//    as a one-hue heatmap. Colours are the validated chart tokens (--viz-*).
+//    as a one-hue heatmap. 3. Coming due: what falls due this month, each of the
+//    next three, and after — as columns, then by project in a blue grid (blue so it
+//    never reads like the red overdue). Colours are the validated chart tokens (--viz-*).
 const OWES = [
   { key: 'not_due', label: 'Not yet due', cls: 'pc-v1' },
   { key: 'overdue', label: 'Overdue', cls: 'pc-v2' },
   { key: 'net_interest', label: 'Interest', cls: 'pc-v3' },
 ];
 
-function ProjectCharts({ rows, onOpen }) {
+function ProjectCharts({ rows, data, onOpen }) {
   const [tip, setTip] = useState(null);   // { x, y, title, lines: [[label, value]] }
   // Tooltip beside the pointer, flipped to the left / above near the edges so it
   // never runs out of the chart area.
   const show = (e, title, lines) => {
     const box = e.currentTarget.closest('.pc-wrap').getBoundingClientRect();
     const x = e.clientX - box.left, y = e.clientY - box.top;
-    setTip({ x: x + 250 > box.width ? x - 250 : x + 14, y: y + 110 > box.height ? y - 100 : y + 14, title, lines });
+    const h = 44 + lines.length * 20;
+    setTip({ x: x + 250 > box.width ? x - 250 : x + 14, y: y + h > box.height ? y - h : y + 14, title, lines });
   };
   const sorted = [...rows].sort((a, b) => b.totals.os_with_interest - a.totals.os_with_interest);
   const max = Math.max(1, ...sorted.map((p) => OWES.reduce((a, o) => a + Math.max(0, p.totals[o.key] || 0), 0)));
@@ -460,6 +463,26 @@ function ProjectCharts({ rows, onOpen }) {
   // Square-root scale: one very large bucket (Kalrav's >180 days) would otherwise
   // push every other cell to the faintest step and hide the differences.
   const step = (v) => (v > 0 ? Math.min(7, 1 + Math.floor(Math.sqrt(v / ageMax) * 7)) : 0);
+
+  // Coming due: the API's months (this month + next three), then "After …" and
+  // "No date". The months are charted on their own scale; the later amounts sit to
+  // the side as plain totals, so a big far-off sum never flattens the near months.
+  const cLabels = data?.coming_labels || [];
+  const cTot = data?.coming || [];
+  const cN = Math.max(0, cLabels.length - 2);
+  const cMonths = [...Array(cN).keys()];
+  const cLater = [cN, cN + 1].filter((i) => i < cLabels.length && (i === cN || (cTot[i] || 0) > 0));
+  const cMax = Math.max(1, ...cMonths.map((i) => cTot[i] || 0));
+  const cCellMax = Math.max(1, ...rows.flatMap((p) => cMonths.map((i) => p.coming?.[i] || 0)));
+  const cStep = (v) => (v > 0 ? Math.min(7, 1 + Math.floor(Math.sqrt(v / cCellMax) * 7)) : 0);
+  const cRows = [...rows].filter((p) => (p.coming || []).some((v) => v > 0))
+    .sort((a, b) => (b.coming || []).reduce((t, v) => t + v, 0) - (a.coming || []).reduce((t, v) => t + v, 0));
+  const cSum = cMonths.reduce((t, i) => t + (cTot[i] || 0), 0);
+  const cBy = (i) => rows.map((p) => [p.name, p.coming?.[i] || 0]).filter(([, x]) => x > 0).sort((x, y) => y[1] - x[1]);
+  const cTip = (e, i) => {
+    const by = cBy(i);
+    show(e, `Due ${cLabels[i]}`, by.length ? by.slice(0, 6).map(([n, x]) => [n, rupee(x)]).concat([['Total', rupee(cTot[i] || 0)]]) : [['Nothing falls due', '—']]);
+  };
 
   return (
     <div className="pc-wrap" onMouseLeave={() => setTip(null)}>
@@ -532,6 +555,68 @@ function ProjectCharts({ rows, onOpen }) {
           <span>Less</span>{[1, 2, 3, 4, 5, 6, 7].map((n) => <i key={n} className={`pc-cell-key pc-s${n}`} />)}<span>More</span>
         </div>
       </div>
+
+      {cN > 0 && (
+        <div className="nx-card pc-card pc-wide">
+          <div className="pc-head">
+            <div>
+              <div className="ard-card-title">Coming due — this month and the next three</div>
+              <div className="ard-card-sub">Not yet due, by the month it falls due · {inrShort(cSum)} in these {cN} months</div>
+            </div>
+          </div>
+          <div className="pc-due-top">
+            <div className="pc-cols" role="list" aria-label="Amount falling due by month">
+              {cMonths.map((i) => {
+                const v = cTot[i] || 0;
+                return (
+                  <div key={cLabels[i]} role="listitem" className="pc-col" onMouseMove={(e) => cTip(e, i)}>
+                    <span className="pc-col-val">{v ? inrShort(v) : '—'}</span>
+                    <div className="pc-col-track">
+                      <div className="pc-col-bar" style={{ height: `${(v / cMax) * 100}%` } /* inline-ok: column height from data */} />
+                    </div>
+                    <span className={`pc-col-label${i === 0 ? ' is-now' : ''}`}>{cLabels[i]}{i === 0 ? ' · now' : ''}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="pc-later">
+              {cLater.map((i) => (
+                <div key={cLabels[i]} className="pc-later-item" onMouseMove={(e) => cTip(e, i)}>
+                  <span className="pc-later-label">{cLabels[i]}</span>
+                  <span className="pc-later-val">{inrShort(cTot[i] || 0)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {cRows.length > 0 && (
+            <div className="pc-heat-scroll pc-due-grid">
+              <div className="pc-heat" role="table" aria-label="Coming due by project and month">
+                <div className={`pc-heat-row pc-n${cN + cLater.length}`} role="row">
+                  <span role="columnheader" />
+                  {cMonths.concat(cLater).map((i) => <span key={i} role="columnheader" className="pc-heat-col">{cLabels[i]}</span>)}
+                </div>
+                {cRows.map((p) => (
+                  <div key={p.id} className={`pc-heat-row pc-n${cN + cLater.length}`} role="row">
+                    <button role="rowheader" className="pc-name" onClick={() => onOpen(p.id)}>{p.name}</button>
+                    {cMonths.concat(cLater).map((i) => {
+                      const v = p.coming?.[i] || 0;
+                      return (
+                        <span key={i} role="cell" className={`pc-cell ${i >= cN ? 'pc-cell-later' : `pc-d${cStep(v)}`}`}
+                          onMouseMove={(e) => show(e, p.name, [[`Due ${cLabels[i]}`, v ? rupee(v) : 'Nothing']])}>
+                          {v ? inrShort(v) : '—'}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="pc-scale">
+            <span>Less</span>{[1, 2, 3, 4, 5, 6, 7].map((n) => <i key={n} className={`pc-cell-key pc-d${n}`} />)}<span>More</span>
+          </div>
+        </div>
+      )}
 
       {tip && (
         <div className="pc-tip" style={{ left: tip.x + 14, top: tip.y + 14 }}>{/* inline-ok: tooltip follows the pointer */}
