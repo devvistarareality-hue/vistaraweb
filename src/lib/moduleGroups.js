@@ -6,7 +6,7 @@
 // a handful of departments instead of every module, and a new module (Accounts
 // Payable, say) becomes one more part inside a department rather than one more tile.
 // The app keeps an identical copy (Vistarafront/src/lib/moduleGroups.js).
-import { moduleAccess, canAccessChannelPartner } from './moduleAccess';
+import { moduleAccess, canAccessChannelPartner, canSee } from './moduleAccess';
 
 const hasAny = (mods, list) => list.some((m) => mods.includes(m));
 
@@ -40,7 +40,7 @@ export const GROUPS = [
       // Opened inside whichever of the two modules the person has.
       // Its own module — ticked per person in User Management; AR users still pick a
       // bank in Record Payment, but only those ticked open Bank Master.
-      { key: 'banks', module: 'Bank Master', title: 'Bank Master', desc: 'Your banks, balances and statements', icon: 'bank',
+      { key: 'banks', module: 'Bank Master', screen: 'bank.screen.list', title: 'Bank Master', desc: 'Your banks, balances and statements', icon: 'bank',
         href: (mods) => (!mods.includes('Accounts & Finance') && mods.includes('AR') ? '/m/ar/banks' : '/m/accounts/banks') },
       { key: 'ap', title: 'Accounts Payable', desc: 'Vendor bills and payments', soon: true, icon: 'receipt' },
     ],
@@ -86,7 +86,7 @@ export function groupsFor(user) {
   const fullAdmin = (user?.role === 'Admin' || user?.is_staff) && (superAdmin || !isModuleAdmin);
   return GROUPS.map((g) => {
     const parts = g.parts
-      .filter((p) => (g.adminOnly ? fullAdmin : p.soon || (p.module ? mods.includes(p.module) : hasAny(mods, p.anyOf || []))))
+      .filter((p) => (g.adminOnly ? fullAdmin : p.soon || ((p.module ? mods.includes(p.module) : hasAny(mods, p.anyOf || [])) && canSee(user, p.screen))))
       .map((p) => ({ ...p, href: p.soon ? null : partHref(p, mods) }));
     const open = parts.filter((p) => !p.soon);
     // `modules`: the real modules among them — what decides whether a department

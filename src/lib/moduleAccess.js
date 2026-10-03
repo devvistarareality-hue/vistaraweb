@@ -7,7 +7,10 @@
 // are unaffected and keep full ERP access. Regular employees are also unaffected;
 // the guards only redirect restricted module admins.
 
-export const ALL_MODULES = ['Sales', 'Channel Partner', 'HR', 'Accounts & Finance', 'AR', 'Task Allocation', 'Purchase', 'Land', 'Club 1000'];
+// A new module goes here AND in lib/moduleGroups (its department) — that is what puts
+// it in User Management and Designation Master. Mirrors ALL_MODULES in
+// backend accounts/capabilities.py.
+export const ALL_MODULES = ['Sales', 'Channel Partner', 'HR', 'Accounts & Finance', 'AR', 'Task Allocation', 'Purchase', 'Land', 'Club 1000', 'Bank Master'];
 
 export const MODULE_ROUTES = {
   'Sales':              '/sales',
@@ -19,6 +22,7 @@ export const MODULE_ROUTES = {
   'Purchase':           '/m/purchase',
   'Land':               '/m/land',
   'Club 1000':          '/club1000',
+  'Bank Master':        '/m/accounts/banks',
 };
 
 // /m/[module] slug → module display name (the `execution` slug predates this
@@ -136,6 +140,7 @@ export function canSee(user, key) {
 const SCREEN_PREFIX = {
   sales: 'Sales', cp: 'Channel Partner', hr: 'HR', accounts: 'Accounts & Finance',
   ar: 'AR', execution: 'Task Allocation', purchase: 'Purchase', land: 'Land', club: 'Club 1000',
+  bank: 'Bank Master',
 };
 export function moduleOfScreen(key) {
   return SCREEN_PREFIX[String(key || '').split('.')[0]] || '';
