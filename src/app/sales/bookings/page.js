@@ -94,9 +94,11 @@ function DecidedBy({ b, style }) {
   );
 }
 
-// Download the Accounts-approved bookings as a workbook — Sales and Channel
-// Partner together, and only deals Accounts has signed off, not everything Sales
-// has approved. See BookingExportView for why that distinction matters.
+// Download every booking as a workbook — Sales and Channel Partner together, at
+// whatever stage each has reached. Rendered by the Accounts & Finance Approvals
+// screen, and scoped to match it: a download from a screen full of pending deals
+// that quietly omitted them would be worse than no download. See
+// BookingExportView.
 // which is why there is one button rather than one per module. It is rendered by the
 // Accounts & Finance Bookings screen, which is where the finished, approved deals are
 // read; it is defined here because this is where the booking screens live.
@@ -147,14 +149,14 @@ export function ExportBookings({ projects, companyId }) {
         <option value="">All projects</option>
         {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
-      <button className="nx-btn nx-btn-md nx-btn-success" onClick={download} disabled={busy} title="Bookings approved by Accounts, Sales and CP together"
+      <button className="nx-btn nx-btn-md nx-btn-success" onClick={download} disabled={busy} title="Every booking at every stage, Sales and CP together"
         style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
                  cursor: busy ? 'default' : 'pointer', background: 'var(--success-solid)', color: '#fff', opacity: busy ? 0.7 : 1 }}>
         {busy ? 'Preparing…' : '⤓ Excel'}
       </button>
       {/* Says what the sheet holds, because this control also sits above My Bookings
           and the download is emphatically not that list. */}
-      <span className="xb-note">Accounts-approved bookings · Sales + CP</span>
+      <span className="xb-note">All bookings, every stage · Sales + CP</span>
       {err && <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600 }}>{err}</span>}
     </div>
   );

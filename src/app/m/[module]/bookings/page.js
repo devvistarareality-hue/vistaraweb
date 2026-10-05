@@ -5,7 +5,6 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import DateFilter from '../../../sales/_DateFilter';
 import { unitLabel } from '../../../../lib/bookingUnit';
 import BookingDetails, { fmtDateTime } from '../../../../components/BookingDetails';
-import { ExportBookings } from '../../../sales/bookings/page';
 
 import Icon from '../../../../components/Icon';
 import { notify } from '../../../../lib/notify';
@@ -59,9 +58,6 @@ const TABS = [['approved', 'Approved'], ['cancelled', 'Cancelled']];
 // signed document; approve/reject/cancel all live on the Approvals page.
 export default function ModuleBookingsPage() {
   const companyId = useSelector((s) => s.adminFilter?.companyId);
-  // The Excel export filters by project id, while this screen only ever derives
-  // project *names* from the rows it has — so fetch the real list for that picker.
-  const [exportProjects, setExportProjects] = useState([]);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -107,14 +103,6 @@ export default function ModuleBookingsPage() {
       .catch((s) => { setErr(s === 403 ? 'You do not have access to bookings.' : 'Could not load bookings.'); setLoading(false); });
   }
   useEffect(() => { load(); }, [companyId]);
-
-  useEffect(() => {
-    fetch(SALES_ENDPOINTS.projects + (companyId ? `?company_id=${companyId}` : ''),
-      { headers: authHeaders() })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((d) => setExportProjects(Array.isArray(d) ? d : []))
-      .catch(() => {});
-  }, [companyId]);
 
   // Cancelled sits on approval_status, not accounts_status — cancelling (from the
   // Approvals page) marks the whole booking CANCELLED the same way Sales' own
@@ -190,7 +178,6 @@ export default function ModuleBookingsPage() {
               background: tab === k ? 'var(--success-solid)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
-        <ExportBookings projects={exportProjects} companyId={companyId} />
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
