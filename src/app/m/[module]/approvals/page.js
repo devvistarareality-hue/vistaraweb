@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
-import { BookingsContent } from '../../../sales/bookings/page';
+import { BookingsContent, ExportBookings } from '../../../sales/bookings/page';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import DateFilter from '../../../sales/_DateFilter';
 import { unitLabel } from '../../../../lib/bookingUnit';
@@ -177,6 +177,9 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
 function AccountsApprovals({ initialTab }) {
   const me = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  // The Excel export filters by project id, while this screen only ever derives
+  // project *names* from the rows it has — so fetch the real list for that picker.
+  const [exportProjects, setExportProjects] = useState([]);
   const cq = (sep) => (companyId ? `${sep}company_id=${companyId}` : '');
   // Who may configure the Accounts approver lists — a real admin only. Unlike
   // Sales' own gate (isAdmin in sales/bookings/page.js), an Accounts Admin-Modules
@@ -271,6 +274,14 @@ function AccountsApprovals({ initialTab }) {
       .catch((s) => { setErr(s === 403 ? 'You do not have access to bookings.' : 'Could not load bookings.'); setLoading(false); });
   }
   useEffect(() => { load(); }, [companyId]);
+
+  useEffect(() => {
+    fetch(SALES_ENDPOINTS.projects + (companyId ? `?company_id=${companyId}` : ''),
+      { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setExportProjects(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, [companyId]);
 
   async function act(id, action, reason) {
     setBusy(id);
@@ -431,6 +442,7 @@ function AccountsApprovals({ initialTab }) {
               background: tab === k ? 'var(--success-solid)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
           ))}
         </div>
+        <ExportBookings projects={exportProjects} companyId={companyId} />
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}><Icon name="search" /></span>
           {/* Collapse state is keyed by project, so drop it as the query changes —
