@@ -260,6 +260,10 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
   const cpSource = cpOnly ? sources.find((s) => (s.name || '').toLowerCase() === 'channel partner') : null;
   const [form, setForm] = useState({ name: prefill?.name || '', phone: prefill?.phone || '', alt_phone: '', email: '', project: '', source: '', channel_partner: '', city: '', address: '', purpose: [], budget_bucket: '', telecaller: '', stm: '', telecaller_status: '', telecaller_remarks: '', stm_status: '', stm_remarks: '', disqualify_reason: '', disqualify_note: '', lead_date: '' });
   const isNotQualified = form.telecaller_status === 'not_qualified' || form.stm_status === 'not_qualified';
+  // Source "Channel Partner" (or the CP section itself): the partner is picked from
+  // the CP module's directory and is required (the server refuses it otherwise).
+  const needsPartner = cpOnly || sources.some((s) => String(s.id) === String(form.source)
+    && (s.name || '').trim().toLowerCase() === 'channel partner');
   // Step 1 is the number check (components/LeadNumberCheck): it lists every lead on
   // this number, project by project. Skipped when the number came in prefilled.
   const [step, setStep] = useState(prefill?.phone ? 'form' : 'number');
@@ -348,7 +352,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (_isStm && (!form.stm_status || !(form.stm_remarks || '').trim())) {
       setErr('Pick an STM status and add remarks.'); return;
     }
-    if (cpOnly && !form.channel_partner) { setErr('Channel Partner is required.'); return; }
+    if (needsPartner && !form.channel_partner) { setErr('Pick the Channel Partner this lead came from.'); return; }
     if (isNotQualified && !form.disqualify_reason) { setErr('Pick a reason for Not Qualified.'); return; }
     if (form.disqualify_reason === 'other' && !(form.disqualify_note || '').trim()) { setErr('Add a note for the Other reason.'); return; }
     if (showStm && form.stm_status === 'sv_done' && (!svOutcome || !svVisitedDate)) {
@@ -363,7 +367,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
     if (form.email)     body.email     = form.email;
     if (form.project)   body.project   = form.project;
     if (form.source)    body.source    = form.source;
-    if (form.channel_partner) body.channel_partner = form.channel_partner;
+    if (needsPartner && form.channel_partner) body.channel_partner = form.channel_partner;
     if (form.city)            body.city          = form.city;
     if (form.address)         body.address       = form.address;
     if (form.purpose?.length) body.purpose       = form.purpose;
@@ -564,7 +568,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
                 </div>
               )}
             </div>
-            {cpOnly && (
+            {needsPartner && (
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 5 }}>Channel Partner Name<span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span></label>
                 <ChannelPartnerPicker
@@ -1699,7 +1703,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       // Sales "Add Lead"/"Edit Lead" forms.
       (cpOnly && isCpHead) ? fetch(SALES_ENDPOINTS.cps + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
       // The Channel Partner section's referral-partner directory (CP Details).
-      cpOnly ? fetch(SALES_ENDPOINTS.channelPartners + cq, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
+      // Also in Sales: Add Lead asks for the partner when Source is "Channel Partner".
+      fetch(SALES_ENDPOINTS.channelPartners + cq, { headers: authHeaders() }).then((r) => r.json()).catch(() => null),
       // Who a CP lead can be filtered by — everyone with CP module access, not
       // telecallers/STMs (a CP lead never has either).
       cpOnly ? fetch(SALES_ENDPOINTS.cpModuleUsers + cqUser, { headers: authHeaders() }).then((r) => r.json()) : Promise.resolve(null),
