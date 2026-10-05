@@ -14,6 +14,7 @@ import ActivityHistory from '../../../../../components/ActivityHistory';
 import FollowUpModal from '../../_FollowUpModal';
 import CancelModal from '../../_CancelModal';
 import { rupee, MODES, recordModes, cleanAmount, groupINR, balanceAfter, AGE_LABELS, STATUS, today, printStatement } from '../../_ar';
+import { errText } from '../../../../../lib/apiError';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 
@@ -49,7 +50,7 @@ export default function ARLedgerPage({ params }) {
     try {
       const r = await apiFetch(AR_ENDPOINTS.account(id) + qs());
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.detail || 'Could not load this account.'); return; }
+      if (!r.ok) { setErr(errText(d, 'Could not load this account.')); return; }
       setData(d);
       setLegalDate(d.legal_due_date || '');
     } catch { setErr('Could not load this account. Check your connection.'); }
@@ -137,7 +138,7 @@ export default function ARLedgerPage({ params }) {
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.url) { if (w) w.location.href = d.url; else window.open(d.url, '_blank', 'noopener'); return; }
       if (w) w.close();
-      notify(d.detail || 'Could not open the document.', 'error');
+      notify(errText(d, 'Could not open the document.'), 'error');
     } catch { if (w) w.close(); notify('Could not open the document.', 'error'); }
   }
 

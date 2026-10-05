@@ -8,6 +8,7 @@ import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 import Loader from '../../../components/Loader';
+import { errText } from '../../../lib/apiError';
 
 const TEAL = 'var(--success)';
 const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
@@ -75,7 +76,7 @@ export default function PayoutsPage() {
         load();
       } else {
         const d = await res.json().catch(() => ({}));
-        setErr(d?.detail || 'Could not mark this payout paid.');
+        setErr(errText(d, 'Could not mark this payout paid.'));
       }
     } catch (e) { setErr(e.message); }
     setSaving(false);

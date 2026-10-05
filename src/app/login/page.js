@@ -10,6 +10,7 @@ import { LOGIN_SUCCESS } from '../../redux/types/authTypes';
 import Icon from '../../components/Icon';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
+import { errText } from '../../lib/apiError';
 const ORANGE = '#A2D2FF';
 const NAVY   = 'var(--text)';
 
@@ -95,7 +96,7 @@ export default function LoginScreen() {
           dispatch({ type: LOGIN_SUCCESS, payload: data.user });
         }
       } else {
-        setError(data.detail || 'Invalid credentials.');
+        setError(errText(data, 'Invalid credentials.'));
       }
     } catch {
       setError('Network error. Check your connection.');
@@ -122,7 +123,7 @@ export default function LoginScreen() {
         localStorage.setItem('user',          JSON.stringify(data.user));
         dispatch({ type: LOGIN_SUCCESS, payload: data.user });
       } else {
-        setError(data.detail || 'Invalid OTP.');
+        setError(errText(data, 'Invalid OTP.'));
       }
     } catch {
       setError('Network error. Check your connection.');
@@ -146,7 +147,7 @@ export default function LoginScreen() {
         setOtp('');
         setResendSecs(30);
       } else {
-        setError(data.detail || 'Could not resend OTP.');
+        setError(errText(data, 'Could not resend OTP.'));
       }
     } catch {
       setError('Network error. Check your connection.');

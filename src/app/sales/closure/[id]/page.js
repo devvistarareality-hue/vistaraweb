@@ -11,6 +11,7 @@ import Icon from '../../../../components/Icon';
 import { confirmDialog, notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
 import { mapHex, MAP_SELECTED, MAP_INK, MAP_TIP_BG } from '../../../../lib/mapColors';
+import { errText } from '../../../../lib/apiError';
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
 const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?')[0]);
 
@@ -408,7 +409,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
         method: 'POST', headers: authHeaders(), body: JSON.stringify({ plot_ids: [plotId] }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { notify(data.detail || 'Could not cancel this selection.'); return; }
+      if (!res.ok) { notify(errText(data, 'Could not cancel this selection.')); return; }
       setHoldPanelPlot(null); setDraftPanelPlot(null);
       const pl = await fetch(`${SALES_ENDPOINTS.plots}?project=${id}`, { headers: authHeaders() }).then((r) => r.json());
       setPlots(Array.isArray(pl) ? pl : (pl?.results ?? []));

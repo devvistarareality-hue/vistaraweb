@@ -24,21 +24,25 @@ const FIELD_LABELS = {
   loi_file: 'Signed LOI', loi_document: 'Signed LOI', booking_date: 'Booking date',
   extra_terms: 'Extra terms', unit_type: 'Unit type', non_field_errors: '',
   detail: '',
+  stm: 'STM', stm_status: 'STM status', stm_remarks: 'STM remarks', telecaller: 'Telecaller',
+  telecaller_status: 'TC status', telecaller_remarks: 'TC remarks', sv_outcome: 'Visit outcome',
+  sv_visited_at: 'Visit date', sv_remarks: 'Visit remarks', scheduled_at: 'Date and time',
+  disqualify_reason: 'Not-qualified reason', channel_partner: 'Channel partner', email: 'Email', name: 'Name',
 };
 
 // What a status code means here, when the body did not say.
 const BY_STATUS = {
-  400: 'The server rejected the details on this form but did not say which field. Check the amounts and dates, then try again.',
-  401: 'Your session has expired. Sign in again and resubmit — nothing was saved.',
-  403: 'You do not have permission to submit this. Ask an admin to check your role.',
-  404: 'The lead, project or plot this points at no longer exists. Go back and reopen the closure.',
+  400: 'The server rejected the details on this form but did not say which field. Check what you entered and try again.',
+  401: 'Your session has expired. Sign in again and try once more — nothing was saved.',
+  403: 'You do not have permission to do this. Ask an admin to check your role.',
+  404: 'What this points at no longer exists. Go back, refresh and try again.',
   409: 'Someone else changed this while you were filling it in. Reopen it and check before resubmitting.',
-  413: 'The attached file is too large. Attach a smaller scan of the signed LOI.',
+  413: 'The attached file is too large. Attach a smaller file.',
   429: 'Too many attempts in a short time. Wait a minute and try again.',
-  500: 'The server hit an error handling this booking. Nothing was saved. Report it with the time and the client name.',
+  500: 'The server hit an error handling this. Nothing was saved. Report it with the time and what you were doing.',
   502: 'Could not reach the server. Check your connection and try again — nothing was saved.',
   503: 'The server is temporarily unavailable. Try again in a minute — nothing was saved.',
-  504: 'The server took too long to answer. Your booking may or may not have saved — check My Bookings before resubmitting.',
+  504: 'The server took too long to answer. It may or may not have saved — check before trying again.',
 };
 
 const label = (key) => (key in FIELD_LABELS
@@ -78,7 +82,18 @@ export function explainApiError(res, body, fallback = 'Something went wrong. Not
 export function explainNetworkError(err) {
   const raw = (err && err.message) || '';
   if (/abort|timeout/i.test(raw)) {
-    return 'The request timed out. Check your connection — your booking may not have been saved.';
+    return 'The request timed out. Check your connection — it may not have been saved.';
   }
   return 'Could not reach the server. Check your internet connection and try again — nothing was saved.';
+}
+
+/**
+ * The server's own words for a failed request, from its parsed body — `detail`,
+ * per-field errors ("Phone: This lead already exists") or a bare list — and the
+ * fallback only when it said nothing at all. Use it wherever a screen used to show
+ * `body.detail || 'Could not save.'`, which threw away every per-field reason.
+ */
+export function errText(body, fallback = 'Something went wrong. Nothing was saved.') {
+  const parts = flatten(body);
+  return parts.length ? parts.join('\n') : fallback;
 }

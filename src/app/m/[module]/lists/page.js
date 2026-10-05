@@ -7,6 +7,7 @@ import { TASK_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import { companyParam } from '../_execution';
+import { errText } from '../../../../lib/apiError';
 
 // Manage the containers tasks live in — create, rename, archive/restore, delete
 // (delete is blocked server-side while a list still has tasks in it).
@@ -34,7 +35,7 @@ export default function TaskListsPage({ params }) {
     try {
       const r = await apiFetch(TASK_ENDPOINTS.lists, { method: 'POST', body: JSON.stringify({ name }) });
       const d = await r.json();
-      if (!r.ok) { setErr(d.detail || 'Could not create the list.'); setCreating(false); return; }
+      if (!r.ok) { setErr(errText(d, 'Could not create the list.')); setCreating(false); return; }
       setNewName('');
       load();
     } catch (_) { setErr('Could not create the list.'); }
@@ -51,7 +52,7 @@ export default function TaskListsPage({ params }) {
     const r = await apiFetch(TASK_ENDPOINTS.list(list.id), { method: 'DELETE' });
     if (r.status === 400) {
       const d = await r.json().catch(() => ({}));
-      window.alert(d.detail || 'Could not delete this list.');
+      window.alert(errText(d, 'Could not delete this list.'));
       return;
     }
     load();

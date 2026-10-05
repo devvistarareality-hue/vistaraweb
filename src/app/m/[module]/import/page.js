@@ -12,6 +12,7 @@ import { formatDMY } from '../../../../lib/dateFormat';
 import Loader from '../../../../components/Loader';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, MODES } from '../_ar';
+import { errText } from '../../../../lib/apiError';
 
 const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 
@@ -32,7 +33,7 @@ export default function ARImportPage({ params, searchParams }) {
 
   useEffect(() => {
     apiFetch(AR_ENDPOINTS.accounts + (companyId ? `?company_id=${companyId}` : ''))
-      .then(async (r) => { const d = await r.json().catch(() => ({})); setAccounts(r.ok ? d.results || [] : []); if (!r.ok) setErr(d.detail || ''); })
+      .then(async (r) => { const d = await r.json().catch(() => ({})); setAccounts(r.ok ? d.results || [] : []); if (!r.ok) setErr(errText(d, '')); })
       .catch(() => { setAccounts([]); setErr('Could not load projects. Check your connection.'); });
   }, [companyId]);
 
@@ -72,7 +73,7 @@ export default function ARImportPage({ params, searchParams }) {
         method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` },
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.detail || 'The import failed.'); setBusy(false); return; }
+      if (!r.ok) { setErr(errText(d, 'The import failed.')); setBusy(false); return; }
       setResult(d);
       if (d.committed) notify(`${d.ready} receipts imported`, 'success');
     } catch { setErr('The import failed. Check your connection.'); }

@@ -9,6 +9,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import { errText } from '../../../lib/apiError';
 const PRESET_SOURCES = ['meta', 'google', 'referral', 'walk-in', 'ivr', 'portal', 'other'];
 const NAVY = 'var(--text)';
 const BLUE = 'var(--accent)';
@@ -129,7 +130,7 @@ export default function LeadSetupPage() {
     const res  = await fetch(SALES_ENDPOINTS.sources, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
     const data = await res.json();
     setAdding(false);
-    if (!res.ok) { setSrcErr(data.detail || JSON.stringify(data)); return; }
+    if (!res.ok) { setSrcErr(errText(data, 'Something went wrong — please try again.')); return; }
     bustCache(srcKey); setSources(prev => [...prev, data]); setNewName('');
   }
 

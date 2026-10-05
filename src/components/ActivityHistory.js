@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { History, ChevronDown, ExternalLink } from 'lucide-react';
 import { ACTIVITY_ENDPOINTS } from '../constants/api';
 import { apiFetch } from '../utils/apiFetch';
+import { errText } from '../lib/apiError';
 
 // Who did what to one record (a booking, an AR account…), newest first.
 // Collapsed until opened, so a list of twenty bookings makes no requests.
@@ -90,7 +91,7 @@ export default function ActivityHistory({ targetType, targetId, companyId, title
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load the history.'); setRows([]); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load the history.')); setRows([]); return; }
         setRows(d.results || []);
       })
       .catch(() => { if (alive) { setErr('Could not load the history.'); setRows([]); } });

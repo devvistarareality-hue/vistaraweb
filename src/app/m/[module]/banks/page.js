@@ -8,6 +8,7 @@ import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import { notify, confirmDialog } from '../../../../lib/notify';
 import { rupee, cleanAmount, groupINR } from '../_ar';
+import { errText } from '../../../../lib/apiError';
 
 // Bank Master — the company's own bank accounts. A Loan payment recorded in a ledger
 // names one of these, and its balance is opening balance + those payments (worked
@@ -30,7 +31,7 @@ export default function ARBanksPage({ params }) {
     try {
       const r = await apiFetch(AR_ENDPOINTS.banks + cq);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.detail || 'Could not load the banks.'); setRows([]); return; }
+      if (!r.ok) { setErr(errText(d, 'Could not load the banks.')); setRows([]); return; }
       // AR users can read the list (for Record Payment) but Bank Master is its own module.
       if (d.can_open === false) { setErr('You do not have access to Bank Master. Ask an admin to tick Bank Master for you in User Management.'); setRows([]); return; }
       setRows(d.results || []); setCanManage(!!d.can_manage);

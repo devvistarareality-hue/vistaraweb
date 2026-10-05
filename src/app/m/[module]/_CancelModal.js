@@ -6,6 +6,7 @@ import { apiFetch } from '../../../utils/apiFetch';
 import Loader from '../../../components/Loader';
 import { notify } from '../../../lib/notify';
 import { rupee } from './_ar';
+import { errText } from '../../../lib/apiError';
 
 // Raise a plot cancellation for approval. Shows what it settles to first — we keep
 // 10% of (Total Deal − Stamp Duty − Registration), capped at what was received, and
@@ -21,7 +22,7 @@ export default function CancelModal({ row, companyId, onClose, onDone }) {
     apiFetch(AR_ENDPOINTS.accountCancellation(row.id) + cq)
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
-        if (!r.ok) { setErr(d.detail || 'Could not work out the settlement.'); setPrev({}); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not work out the settlement.')); setPrev({}); return; }
         setPrev(d);
       })
       .catch(() => { setErr('Could not work out the settlement. Check your connection.'); setPrev({}); });

@@ -9,6 +9,7 @@ import { PartnerActivityModal } from '../_PartnerActivity';
 import Icon from '../../../../components/Icon';
 import { confirmDialog } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
+import { errText } from '../../../../lib/apiError';
 const NAVY  = 'var(--text)';
 const BLUE  = 'var(--accent)';
 const RED   = 'var(--danger)';
@@ -108,7 +109,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
         // 409 is the duplicate rule — it names who holds the number, so show that
         // beside the field as well, not only as an error line.
         if (res.status === 409 && data.existing) setDupe({ ...data.existing, exists: true });
-        setErr(data.detail || JSON.stringify(data));
+        setErr(errText(data, 'Something went wrong — please try again.'));
         setSaving(false);
         return;
       }

@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { COMPANY_ENDPOINTS, SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { fetchCompanies } from '../../../redux/actions/companiesActions';
+import { errText } from '../../../lib/apiError';
 
 // Bring a deleted company back from its backup workbook. A restore only goes into
 // the company a file came from, matched by id, so once a company is deleted its
@@ -48,7 +49,7 @@ export default function ReviveCompany() {
       setMsg({ tone: 'bad', title: 'Could not reach the server', detail: 'The connection dropped. Try again.' });
     } else if (!res.ok) {
       setPreview(null);
-      setMsg({ tone: 'bad', title: commit ? 'Not brought back' : 'That file cannot be used', detail: d.detail || `The server returned ${res.status}.` });
+      setMsg({ tone: 'bad', title: commit ? 'Not brought back' : 'That file cannot be used', detail: errText(d, `The server returned ${res.status}.`) });
     } else if (commit) {
       setMsg({ tone: 'ok', title: 'Company brought back',
         detail: `${d.company?.name || 'The company'} (${d.company?.code}) is back with `

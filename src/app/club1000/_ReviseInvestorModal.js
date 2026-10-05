@@ -5,6 +5,7 @@ import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
+import { errText } from '../../lib/apiError';
 
 const TEAL = 'var(--success)';
 const PURPLE = 'var(--accent)';
@@ -203,7 +204,7 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.detail || 'Could not submit the revision.');
+        setError(errText(data, 'Could not submit the revision.'));
         return;
       }
       onSaved(data);

@@ -12,6 +12,7 @@ import Icon from '../../../../components/Icon';
 import { notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
 import MultiSelect from '../../../../components/MultiSelect';
+import { errText } from '../../../../lib/apiError';
 const rupee = (n) => '₹ ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 const isEoi = (b) => String(b.plot_numbers || '').toUpperCase().startsWith('EOI');
 // Project / STM pickers — sized to sit under the date filter in this module's teal.
@@ -278,7 +279,7 @@ function AccountsApprovals({ initialTab }) {
     }).catch(() => null);
     if (!r || !r.ok) {
       const d = r ? await r.json().catch(() => ({})) : {};
-      notify((action === 'approve' ? 'Approve' : 'Reject') + ' failed: ' + (d.detail || 'Network error.'));
+      notify((action === 'approve' ? 'Approve' : 'Reject') + ' failed: ' + (errText(d, 'Network error.')));
     }
     setBusy(null); setToReject(null); load();
   }

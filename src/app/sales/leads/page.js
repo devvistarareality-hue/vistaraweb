@@ -13,6 +13,7 @@ import { can } from '../../../lib/moduleAccess';
 import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
 import LeadNumberCheck from '../../../components/LeadNumberCheck';
+import { errText, explainApiError } from '../../../lib/apiError';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -121,7 +122,7 @@ function TransferLeadModal({ lead, stms, onClose, onDone }) {
         body: JSON.stringify({ lead: lead.id, to_stm: to, reason: reason.trim() }),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.detail || 'Could not request the transfer.'); setBusy(false); return; }
+      if (!r.ok) { setErr(errText(d, 'Could not request the transfer.')); setBusy(false); return; }
       onDone();
     } catch { setErr('Could not request the transfer.'); setBusy(false); }
   }
@@ -397,7 +398,7 @@ function AddLeadModal({ projects, sources, telecallers = [], stms = [], cps = []
       method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (!res.ok) { setSaving(false); setErr(data.detail || JSON.stringify(data)); return; }
+    if (!res.ok) { setSaving(false); setErr(explainApiError(res, data, 'Could not save the lead.')); return; }
 
     // Schedule the first follow-up against the lead we just created. Best-effort: the
     // lead is already saved, so a failure here must not read as "lead not added".

@@ -8,6 +8,7 @@
 import { AUTH_ENDPOINTS } from '../constants/api';
 import { apiFetch } from '../utils/apiFetch';
 import { clearAllCache } from '../app/sales/_cache';
+import { errText } from './apiError';
 
 const OWN = ['access_token', 'refresh_token', 'user', 'company'];
 const key = (k) => `admin_${k}`;
@@ -24,7 +25,7 @@ export async function startImpersonation(userId) {
     body: JSON.stringify({ user_id: userId, platform: 'web' }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.detail || 'Could not open that user’s view.');
+  if (!res.ok) throw new Error(errText(data, 'Could not open that user’s view.'));
 
   // Stash the admin's own session before overwriting it.
   OWN.forEach((k) => {

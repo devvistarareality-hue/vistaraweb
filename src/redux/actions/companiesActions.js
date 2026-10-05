@@ -6,6 +6,7 @@ import {
   COMPANY_CREATE_REQUEST, COMPANY_CREATE_SUCCESS, COMPANY_CREATE_FAILURE, COMPANY_CREATE_RESET,
   COMPANY_DELETE_SUCCESS,
 } from '../types/companiesTypes';
+import { errText } from '../../lib/apiError';
 
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
@@ -32,7 +33,7 @@ export const fetchCompanies = (force = false) => async (dispatch, getState) => {
       dispatch({ type: COMPANIES_FETCH_SUCCESS, payload: data });
       dispatch(dropMissingAdminCompany());
     } else {
-      dispatch({ type: COMPANIES_FETCH_FAILURE, payload: data.detail || 'Failed to load companies.' });
+      dispatch({ type: COMPANIES_FETCH_FAILURE, payload: errText(data, 'Failed to load companies.') });
     }
   } catch {
     dispatch({ type: COMPANIES_FETCH_FAILURE, payload: 'Network error.' });
@@ -51,7 +52,7 @@ export const updateCompany = (id, payload) => async (dispatch) => {
     if (res.ok) {
       dispatch({ type: COMPANY_UPDATE_SUCCESS, payload: data });
     } else {
-      const msg = data.code?.[0] || data.detail || JSON.stringify(data);
+      const msg = data.code?.[0] || errText(data, 'Something went wrong — please try again.');
       dispatch({ type: COMPANY_UPDATE_FAILURE, payload: msg });
     }
   } catch {
@@ -74,7 +75,7 @@ export const createCompany = (payload) => async (dispatch) => {
       dispatch({ type: COMPANY_CREATE_SUCCESS, payload: data });
       dispatch(fetchCompanies());
     } else {
-      const msg = data.code?.[0] || data.detail || JSON.stringify(data);
+      const msg = data.code?.[0] || errText(data, 'Something went wrong — please try again.');
       dispatch({ type: COMPANY_CREATE_FAILURE, payload: msg });
     }
   } catch {

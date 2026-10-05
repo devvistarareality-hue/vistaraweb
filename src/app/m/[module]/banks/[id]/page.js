@@ -9,6 +9,7 @@ import { apiFetch } from '../../../../../utils/apiFetch';
 import Loader from '../../../../../components/Loader';
 import { formatDMY } from '../../../../../lib/dateFormat';
 import { rupee } from '../../_ar';
+import { errText } from '../../../../../lib/apiError';
 
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -53,7 +54,7 @@ export default function ARBankStatementPage({ params }) {
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load the statement.'); setData({}); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load the statement.')); setData({}); return; }
         setData(d);
       })
       .catch(() => { if (alive) { setErr('Could not load the statement. Check your connection.'); setData({}); } });

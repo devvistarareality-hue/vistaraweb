@@ -4,6 +4,7 @@ import {
   COMPANY_VERIFY_REQUEST, COMPANY_VERIFY_SUCCESS, COMPANY_VERIFY_FAILURE,
   LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, CLEAR_COMPANY,
 } from '../types/authTypes';
+import { errText } from '../../lib/apiError';
 
 // localStorage replaces AsyncStorage — synchronous, no await needed
 
@@ -20,7 +21,7 @@ export const verifyCompany = (companyCode) => async (dispatch) => {
       localStorage.setItem('company', JSON.stringify(data.company));
       dispatch({ type: COMPANY_VERIFY_SUCCESS, payload: data.company });
     } else {
-      dispatch({ type: COMPANY_VERIFY_FAILURE, payload: data.detail || 'Invalid company code.' });
+      dispatch({ type: COMPANY_VERIFY_FAILURE, payload: errText(data, 'Invalid company code.') });
     }
   } catch {
     dispatch({ type: COMPANY_VERIFY_FAILURE, payload: 'Network error. Check your connection.' });
@@ -55,7 +56,7 @@ export const login = (companyCode, userCode, password) => async (dispatch) => {
         .then((d) => { if (d) setCache('stats', d); })
         .catch(() => {});
     } else {
-      dispatch({ type: LOGIN_FAILURE, payload: data.detail || 'Invalid credentials.' });
+      dispatch({ type: LOGIN_FAILURE, payload: errText(data, 'Invalid credentials.') });
     }
   } catch {
     dispatch({ type: LOGIN_FAILURE, payload: 'Network error. Check your connection.' });

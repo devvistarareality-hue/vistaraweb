@@ -8,6 +8,7 @@ import { apiFetch } from '../../../utils/apiFetch';
 import { notify } from '../../../lib/notify';
 import { rupee } from './_ar';
 import { fmtWhen } from '../../../components/ActivityHistory';
+import { errText } from '../../../lib/apiError';
 
 export const CHANNELS = [
   { value: 'call', label: 'Call', icon: Phone },
@@ -48,7 +49,7 @@ export default function FollowUpModal({ row, companyId, me, onClose, onChanged }
     const r = await apiFetch(AR_ENDPOINTS.followUps(row.id) + cq);
     const d = await r.json().catch(() => ({}));
     setItems(r.ok ? d.results || [] : []);
-    if (!r.ok) setErr(d.detail || 'Could not load follow-ups.');
+    if (!r.ok) setErr(errText(d, 'Could not load follow-ups.'));
   }
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function FollowUpModal({ row, companyId, me, onClose, onChanged }
     try {
       const r = await apiFetch(url + cq, { method, body: JSON.stringify(body) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.detail || 'Could not save.'); return false; }
+      if (!r.ok) { setErr(errText(d, 'Could not save.')); return false; }
       notify(okMsg, 'success');
       await load();
       onChanged?.();

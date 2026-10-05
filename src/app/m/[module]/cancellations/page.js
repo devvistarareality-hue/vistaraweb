@@ -11,6 +11,7 @@ import { DashKpi } from '../../../../components/Dash';
 import { notify, confirmDialog } from '../../../../lib/notify';
 import { formatDMY } from '../../../../lib/dateFormat';
 import { rupee, today, cleanAmount, groupINR, printStatement } from '../_ar';
+import { errText } from '../../../../lib/apiError';
 
 const STAGES = [
   ['pending', 'Awaiting approval'],
@@ -46,7 +47,7 @@ export default function ARCancellationsPage({ params }) {
     try {
       const r = await apiFetch(AR_ENDPOINTS.cancellations + cq);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.detail || 'Could not load cancellations.'); setRows([]); return; }
+      if (!r.ok) { setErr(errText(d, 'Could not load cancellations.')); setRows([]); return; }
       setRows(d.results || []); setCounts(d.counts || {}); setCanRefund(!!d.can_refund);
     } catch { setErr('Could not load cancellations. Check your connection.'); setRows([]); }
   }, [cq]);
@@ -75,7 +76,7 @@ export default function ARCancellationsPage({ params }) {
     const r = await apiFetch(AR_ENDPOINTS.cancellationDecide(c.id) + cq, { method: 'POST', body: JSON.stringify({ action }) }).catch(() => null);
     const d = r ? await r.json().catch(() => ({})) : {};
     setBusy(false);
-    if (!r?.ok) { notify(d.detail || 'Could not save the decision', 'error'); return; }
+    if (!r?.ok) { notify(errText(d, 'Could not save the decision'), 'error'); return; }
     notify(action === 'approve' ? 'Cancelled — plot released to Sales' : 'Cancellation rejected', 'success');
     load();
   }

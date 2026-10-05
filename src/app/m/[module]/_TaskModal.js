@@ -6,6 +6,7 @@ import { TASK_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import Loader from '../../../components/Loader';
 import { STATUSES, PRIORITIES, companyParam } from './_execution';
+import { errText } from '../../../lib/apiError';
 
 // Task detail / create modal — shared by the List and Board pages. `taskId`
 // null means "create a new task in `defaultListId`"; otherwise it loads and
@@ -82,7 +83,7 @@ export default function TaskModal({ taskId, defaultListId, lists, onClose, onSav
         }),
       });
       const d = await r.json();
-      if (!r.ok) { setErr(d.detail || 'Could not create the task.'); setSaving(false); return; }
+      if (!r.ok) { setErr(errText(d, 'Could not create the task.')); setSaving(false); return; }
       onSaved && onSaved(d);
       onClose();
     } catch (_) { setErr('Could not create the task.'); }

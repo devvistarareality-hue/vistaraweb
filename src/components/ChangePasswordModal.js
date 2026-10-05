@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { AUTH_ENDPOINTS, authHeaders } from '../constants/api';
+import { errText } from '../lib/apiError';
 
 // Self-contained "change my password" modal. Opened from the profile popovers.
 export default function ChangePasswordModal({ open, onClose, onSuccess }) {
@@ -30,7 +31,7 @@ export default function ChangePasswordModal({ open, onClose, onSuccess }) {
         setCur(''); setNw(''); setConf('');
         setTimeout(() => (onSuccess ? onSuccess() : onClose()), 1400);
       }
-      else setMsg({ type: 'err', text: d.detail || 'Could not change password.' });
+      else setMsg({ type: 'err', text: errText(d, 'Could not change password.') });
     } catch { setMsg({ type: 'err', text: 'Could not change password.' }); }
     setBusy(false);
   };

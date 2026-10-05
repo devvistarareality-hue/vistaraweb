@@ -7,6 +7,7 @@ import { fmtMoney } from './_StatCard';
 
 import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
+import { errText } from '../../lib/apiError';
 const TEAL = 'var(--success)';
 
 const TYPE_COLOR = {
@@ -37,7 +38,7 @@ export default function LedgerModal({ investorId, onClose }) {
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (cancelled) return;
-        if (r.ok) setData(d); else setErr(d?.detail || 'Could not load the ledger.');
+        if (r.ok) setData(d); else setErr(errText(d, 'Could not load the ledger.'));
       })
       .catch((e) => !cancelled && setErr(e.message))
       .finally(() => !cancelled && setLoading(false));

@@ -20,6 +20,7 @@ import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import { notify } from '../../../lib/notify';
 import { bustCache } from '../_cache';
+import { errText } from '../../../lib/apiError';
 
 const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
 
@@ -155,7 +156,7 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
         body: JSON.stringify({ action, ...(why ? { reason: why } : {}) }),
       });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) { notify(d.detail || 'Could not update the project.', 'error'); return; }
+      if (!res.ok) { notify(errText(d, 'Could not update the project.'), 'error'); return; }
       // The Projects page serves from a cache and returns early without
       // refetching, so a decision made here was invisible there until the cache
       // happened to expire — a project rejected a moment ago still read

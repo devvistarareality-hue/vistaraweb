@@ -11,6 +11,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
 import { notify } from '../../../lib/notify';
 import LeadHistory from '../../../components/LeadHistory';
+import { errText } from '../../../lib/apiError';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -183,7 +184,7 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
         });
         if (!lr.ok) {
           const d = await lr.json().catch(() => ({}));
-          notify(d.detail || 'The lead status could not be saved.', 'error');
+          notify(errText(d, 'The lead status could not be saved.'), 'error');
         }
       }
       // STM set sv_scheduled -> create the site visit, matching the lead modal.

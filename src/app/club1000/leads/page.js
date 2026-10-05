@@ -10,6 +10,7 @@ import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { onlyPresent } from '../../../lib/presentOptions';
+import { errText } from '../../../lib/apiError';
 const TEAL = 'var(--success)';
 const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
@@ -78,7 +79,7 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
       if (!payload.assigned_to) delete payload.assigned_to;
       const res = await apiFetch(CLUB1000_ENDPOINTS.leads, { method: 'POST', body: JSON.stringify(payload) });
       const data = await res.json();
-      if (!res.ok) { setError(data?.detail || 'Could not add lead.'); return; }
+      if (!res.ok) { setError(errText(data, 'Could not add lead.')); return; }
       onCreated(data);
       onClose();
     } finally {

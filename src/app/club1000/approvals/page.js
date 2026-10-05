@@ -11,6 +11,7 @@ import Icon from '../../../components/Icon';
 import { notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import AddInvestorModal from '../_AddInvestorModal';
+import { errText } from '../../../lib/apiError';
 const TEAL = 'var(--success)';
 const PURPLE = 'var(--accent)';
 const AMBER = 'var(--warning)';
@@ -197,7 +198,7 @@ export default function InvestorApprovalsPage() {
     const res = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(id)}${pending ? '?pending=1' : ''}`);
     const data = await res.json();
     if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-    else notify(data?.detail || 'Could not open the LOI.');
+    else notify(errText(data, 'Could not open the LOI.'));
   }
 
   const FIELD_LABELS = { amount_invested: 'Amount', total_return_pct: 'Return %', interest_payout: 'Payout', security: 'Security', notes: 'Notes', investment_date: 'Renewal Date' };
@@ -213,7 +214,7 @@ export default function InvestorApprovalsPage() {
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorAction(id), { method: 'POST', body: JSON.stringify({ action }) });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        notify(data?.detail || `Could not ${action} this investor.`);
+        notify(errText(data, `Could not ${action} this investor.`));
         return;
       }
       load();

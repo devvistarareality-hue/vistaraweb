@@ -8,6 +8,7 @@ import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { canBackUp, isSuperAdmin } from '../../../lib/moduleAccess';
 
 import Icon from '../../../components/Icon';
+import { errText } from '../../../lib/apiError';
 
 const fmtWhen = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', {
   day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -119,7 +120,7 @@ export default function DataBackupPage() {
       const res = await fetch(SALES_ENDPOINTS.backupExcel(companyId), { headers: authHeaders() });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        setExcelMsg(bad('Could not build the backup', d.detail || `The server returned ${res.status}.`));
+        setExcelMsg(bad('Could not build the backup', errText(d, `The server returned ${res.status}.`)));
       } else {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -237,7 +238,7 @@ export default function DataBackupPage() {
       } else if (!res.ok) {
         setPreview(null);
         setRestoreMsg(bad(commit ? 'Restore failed' : 'That file cannot be restored',
-                          d.detail || `The server returned ${res.status}.`));
+                          errText(d, `The server returned ${res.status}.`)));
       } else if (commit) {
         setPreview(null); setRestoreFile(null);
         if (fileRef.current) fileRef.current.value = '';
@@ -265,7 +266,7 @@ export default function DataBackupPage() {
         body: JSON.stringify({ reset_key: resetKey, confirm: resetConfirm, company_code: resetCode, check_only: true }) });
       if (!chk.ok) {
         const cd = await chk.json().catch(() => ({}));
-        setResetMsg(bad('Reset refused', cd.detail || `The server returned ${chk.status}. Nothing was changed.`));
+        setResetMsg(bad('Reset refused', errText(cd, `The server returned ${chk.status}. Nothing was changed.`)));
         setResetBusy(false); setResetStage(''); return;
       }
       setResetStage('backup');
@@ -274,7 +275,7 @@ export default function DataBackupPage() {
       const bd = await b.json().catch(() => ({}));
       const latest = (bd.history || [])[0];
       if (!b.ok || !latest?.id) {
-        setResetMsg(bad('Reset stopped — the backup failed', bd.detail || 'Nothing was deleted.'));
+        setResetMsg(bad('Reset stopped — the backup failed', errText(bd, 'Nothing was deleted.')));
         setResetBusy(false); setResetStage(''); return;
       }
       setSched(bd);
@@ -306,7 +307,7 @@ export default function DataBackupPage() {
           setResetMsg(bad('Could not confirm the reset',
             'The server may still be working. Refresh this page in a minute to see what is left.'));
         }
-      } else if (!res.ok) setResetMsg(bad('Reset failed', d.detail || `The server returned ${res.status}.`));
+      } else if (!res.ok) setResetMsg(bad('Reset failed', errText(d, `The server returned ${res.status}.`)));
       else {
         setResetMsg(good('Company emptied', d.detail));
         setResetKey(''); setResetConfirm(''); loadSched();

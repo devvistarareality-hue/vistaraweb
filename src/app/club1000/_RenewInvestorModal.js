@@ -5,6 +5,7 @@ import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
+import { errText } from '../../lib/apiError';
 
 const AMBER = 'var(--warning)';
 
@@ -204,7 +205,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.detail || 'Could not submit the renewal.');
+        setError(errText(data, 'Could not submit the renewal.'));
         return;
       }
       onSaved(data);

@@ -1,6 +1,7 @@
 // Uploads/deletes now go through the backend (service-role key) instead of using
 // the public anon key directly — so the Supabase anon INSERT policy can be revoked.
 import { SALES_ENDPOINTS } from '../constants/api';
+import { errText } from '../lib/apiError';
 
 function authToken() {
   return typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
@@ -19,7 +20,7 @@ export async function uploadToSupabase(file, folder = 'erp/media', onProgress) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `Upload failed (${res.status})`);
+    throw new Error(errText(err, `Upload failed (${res.status})`));
   }
   onProgress?.(100);
   const data = await res.json();

@@ -1,4 +1,5 @@
 import { authHeaders } from '../../constants/api';
+import { errText } from '../../lib/apiError';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -31,7 +32,7 @@ export const fetchDesignations = (force = false, companyId = null) => async (dis
     const data = await res.json();
     if (reqId !== latestDesigReq) return; // superseded by a newer fetch — ignore stale response
     if (res.ok) dispatch({ type: DESIG_FETCH_SUCCESS, payload: data });
-    else dispatch({ type: DESIG_ERROR, payload: data.detail || 'Failed to load designations.' });
+    else dispatch({ type: DESIG_ERROR, payload: errText(data, 'Failed to load designations.') });
   } catch {
     if (reqId !== latestDesigReq) return;
     dispatch({ type: DESIG_ERROR, payload: 'Network error.' });
@@ -45,7 +46,7 @@ export const createDesignation = (payload) => async (dispatch) => {
     });
     const data = await res.json();
     if (res.ok) dispatch({ type: DESIG_CREATE_SUCCESS, payload: data });
-    else dispatch({ type: DESIG_ERROR, payload: data.detail || JSON.stringify(data) });
+    else dispatch({ type: DESIG_ERROR, payload: errText(data, 'Something went wrong — please try again.') });
   } catch {
     dispatch({ type: DESIG_ERROR, payload: 'Network error.' });
   }

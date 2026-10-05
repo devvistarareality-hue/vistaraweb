@@ -7,6 +7,7 @@ import { apiFetch } from '../utils/apiFetch';
 import Loader from './Loader';
 import Dropdown from './Dropdown';
 import { ActivityRows } from './ActivityHistory';
+import { errText } from '../lib/apiError';
 
 const ACTIONS = [
   { value: '', label: 'Any action' },
@@ -52,7 +53,7 @@ export default function ActivityLogView({ modules = null, title = 'Activity Log'
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load the log.'); setRows([]); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load the log.')); setRows([]); return; }
         setRows((prev) => (page === 1 ? d.results : [...(prev || []), ...d.results]));
         setMore(!!d.has_more);
         if (page === 1) setMeta({ modules: d.modules || [], actors: d.actors || [], can_see_all: d.can_see_all });

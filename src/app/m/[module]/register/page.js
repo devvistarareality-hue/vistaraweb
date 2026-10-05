@@ -10,6 +10,7 @@ import { DashKpi } from '../../../../components/Dash';
 import Dropdown from '../../../../components/Dropdown';
 import { rupee, inrShort, AGE_LABELS, ISSUES, hasIssue, worstBucket } from '../_ar';
 import MultiSelect from '../../../../components/MultiSelect';
+import { errText } from '../../../../lib/apiError';
 
 // Plot number search: "25" finds plot 25 (not 125 or 250), "Ananda" finds Ananda1…,
 // and "EOI-1" finds EOI-1 — any plot of a multi-plot booking counts.
@@ -49,7 +50,7 @@ export default function ARRegisterPage({ params, searchParams }) {
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load the register.'); setRows([]); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load the register.')); setRows([]); return; }
         setRows(d.results || []); setAsOf(d.as_of || '');
       })
       .catch(() => { if (alive) { setErr('Could not load the register. Check your connection.'); setRows([]); } });

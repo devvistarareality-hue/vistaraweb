@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { COMPANY_ENDPOINTS, SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import Icon from '../../../components/Icon';
 import { downloadInBackground } from '../../../lib/downloadInBackground';
+import { errText } from '../../../lib/apiError';
 
 // Deleting a company takes every module's data with it and leaves nothing to restore
 // into, so it asks for what a reset asks for and more: the reset key, the company's
@@ -21,14 +22,14 @@ async function downloadBackup(companyId) {
     method: 'POST', headers: authHeaders() });
   const bd = await b.json().catch(() => ({}));
   const latest = (bd.history || [])[0];
-  if (!b.ok || !latest?.id) throw new Error(bd.detail || 'The backup could not be taken.');
+  if (!b.ok || !latest?.id) throw new Error(errText(bd, 'The backup could not be taken.'));
   return latest.id;
 }
 
 async function startDownload(backupId, companyId) {
   const r = await fetch(SALES_ENDPOINTS.backupStored(backupId, companyId), { headers: authHeaders() });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok || !d.url) throw new Error(d.detail || 'The backup could not be downloaded.');
+  if (!r.ok || !d.url) throw new Error(errText(d, 'The backup could not be downloaded.'));
   downloadInBackground(d.url);
 }
 
@@ -66,7 +67,7 @@ export default function DeleteCompanyModal({ company, onClose, onDeleted }) {
         body: JSON.stringify({ reset_key: key, confirm: typed.trim(), check_only: true }) });
       if (!chk.ok) {
         const cd = await chk.json().catch(() => ({}));
-        setError(cd.detail || `The server returned ${chk.status}. Nothing was deleted.`);
+        setError(errText(cd, `The server returned ${chk.status}. Nothing was deleted.`));
         setStage(''); return;
       }
       setStage('backup');
@@ -90,7 +91,7 @@ export default function DeleteCompanyModal({ company, onClose, onDeleted }) {
       } else if (res.ok) {
         onDeleted(company); return;
       } else {
-        setError(d.detail || `The server returned ${res.status}. Nothing was deleted.`);
+        setError(errText(d, `The server returned ${res.status}. Nothing was deleted.`));
       }
     } catch (e) {
       setError(`${e.message} Nothing was deleted.`);

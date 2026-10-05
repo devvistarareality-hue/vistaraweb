@@ -4,6 +4,7 @@ import { ArrowRight, Check, X } from 'lucide-react';
 import { SALES_ENDPOINTS, authHeaders } from '../../constants/api';
 import { confirmDialog, notify } from '../../lib/notify';
 import Loader from '../../components/Loader';
+import { errText } from '../../lib/apiError';
 
 // Lead transfer approvals with a status filter: Pending (act on them), Approved,
 // Rejected, Withdrawn, All — decided ones show who approved/rejected and when.
@@ -58,7 +59,7 @@ export default function LeadTransfers({ companyId, cpOnly, pendingCount, onChang
     }).catch(() => null);
     setBusy(null);
     if (r?.ok) notify(approve ? 'Transfer approved' : 'Transfer rejected', 'success');
-    else notify((await r?.json().catch(() => ({})))?.detail || 'Could not update the transfer', 'error');
+    else notify(errText(await r?.json().catch(() => ({})), 'Could not update the transfer'), 'error');
     load();
     onChanged?.();
   }

@@ -14,6 +14,7 @@ import { rupee, inrShort } from '../_ar';
 import FollowUpModal from '../_FollowUpModal';
 import CancelModal from '../_CancelModal';
 import MultiSelect from '../../../../components/MultiSelect';
+import { errText } from '../../../../lib/apiError';
 
 const dmy = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
 const WINDOWS = [0, 7, 30, 60, 90];   // 0 = due today
@@ -51,7 +52,7 @@ export default function ARCollectionsPage({ params, searchParams }) {
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load collections.'); setData({ results: [], counts: {}, projects: [] }); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load collections.')); setData({ results: [], counts: {}, projects: [] }); return; }
         setData(d);
       })
       .catch(() => { if (alive) { setErr('Could not load collections. Check your connection.'); setData({ results: [], counts: {}, projects: [] }); } });

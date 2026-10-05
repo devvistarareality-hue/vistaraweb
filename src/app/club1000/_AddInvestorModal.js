@@ -8,6 +8,7 @@ import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 
 import Icon from '../../components/Icon';
+import { errText } from '../../lib/apiError';
 const TEAL = 'var(--success)';
 
 const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
@@ -317,7 +318,7 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
         method: 'POST', body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(data?.detail || 'Could not save the draft.'); return; }
+      if (!res.ok) { setError(errText(data, 'Could not save the draft.')); return; }
       setDraftId(data.id);
       onCreated?.(data);
       onClose();
@@ -350,7 +351,7 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.amount_invested?.[0] || data?.detail || 'Could not add investor.');
+        setError(data?.amount_invested?.[0] || errText(data, 'Could not add investor.'));
         return;
       }
       onCreated(data);

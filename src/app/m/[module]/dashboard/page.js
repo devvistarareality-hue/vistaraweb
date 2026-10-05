@@ -21,6 +21,7 @@ import DashboardRoleFilter from '../../../../components/DashboardRoleFilter';
 import { dashboardFor } from '../../../../lib/moduleAccess';
 import { DESIGNATION_ENDPOINTS } from '../../../../constants/api';
 import MultiSelect from '../../../../components/MultiSelect';
+import { errText } from '../../../../lib/apiError';
 
 const ISSUE_TEXT = {
   no_schedule: 'Booking has no installment schedule — Sales needs to add one',
@@ -97,7 +98,7 @@ function ARDashboard() {
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load the dashboard.'); setData({}); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load the dashboard.')); setData({}); return; }
         setData(d);
       })
       .catch(() => { if (alive) { setErr('Could not load the dashboard. Check your connection.'); setData({}); } });
@@ -206,7 +207,7 @@ function TaskDashboardPage() {
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
-        if (!r.ok) { setErr(d.detail || 'Could not load the dashboard.'); setData({}); return; }
+        if (!r.ok) { setErr(errText(d, 'Could not load the dashboard.')); setData({}); return; }
         setData(d);
       })
       .catch(() => { if (alive) { setErr('Could not load the dashboard. Check your connection.'); setData({}); } });

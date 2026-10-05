@@ -15,6 +15,7 @@ import LedgerModal from '../_LedgerModal';
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import { errText } from '../../../lib/apiError';
 
 // The Status filter's choices (narrowed to those present, see onlyPresent).
 const INVESTOR_STATUSES = [
@@ -96,7 +97,7 @@ export default function InvestorsPage() {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
     const data = await res.json();
     if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-    else notify(data?.detail || 'Could not open the LOI.');
+    else notify(errText(data, 'Could not open the LOI.'));
   }
 
   async function redeem(id) {
@@ -104,7 +105,7 @@ export default function InvestorsPage() {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeem(id), { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
-      notify(data?.detail || 'Could not redeem.');
+      notify(errText(data, 'Could not redeem.'));
       return;
     }
     load();
@@ -115,7 +116,7 @@ export default function InvestorsPage() {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorMaturePayout(id), { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
-      notify(data?.detail || 'Could not process the payout.');
+      notify(errText(data, 'Could not process the payout.'));
       return;
     }
     load();

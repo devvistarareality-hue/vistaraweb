@@ -16,6 +16,7 @@ import Icon from '../../../../components/Icon';
 import { confirmDialog, notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
 import { mapHex, MAP_INK } from '../../../../lib/mapColors';
+import { errText } from '../../../../lib/apiError';
 const STATUS_CFG = {
   available: { label: 'Available', color: 'var(--success)', bg: 'var(--success-soft)', border: 'var(--success)', zone: 'var(--success)' },
   // Someone is filling the booking form for this unit (a soft pick that expires
@@ -1233,7 +1234,7 @@ export default function ManagePlotsPage() {
       setPlots(prev => prev.map(p => p.id === plotId ? updated : p));
     } else {
       const d = await res.json().catch(() => ({}));
-      notify(d.detail || 'The unit could not be changed.', 'error');
+      notify(errText(d, 'The unit could not be changed.'), 'error');
     }
   }, []);
 
@@ -1477,7 +1478,7 @@ export default function ManagePlotsPage() {
               body: JSON.stringify({ project_id: project.id }),
             });
             if (res.ok) { setPlots([]); }
-            else { const e = await res.json(); notify(e.detail || 'Failed to delete plots'); }
+            else { const e = await res.json(); notify(errText(e, 'Failed to delete plots')); }
           }}
             style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}>
             <Icon name="trash" /> Delete All Plots

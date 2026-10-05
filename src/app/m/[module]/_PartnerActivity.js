@@ -27,6 +27,7 @@ import { confirmDialog, notify } from '../../../lib/notify';
 import PartnerPicker from '../../sales/_PartnerPicker';
 import DateFilter from '../../sales/_DateFilter';
 import MultiSelect from '../../../components/MultiSelect';
+import { errText } from '../../../lib/apiError';
 
 // These are the model's own choice lists (FOLLOWUP_STATUS and SV_STATUS in
 // backend/sales/models.py), not a parallel set — the two lists genuinely differ,
@@ -135,7 +136,7 @@ function ScheduleFollowUp({ partnerId, partners, onDone, onCancel }) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setErr(data.detail || 'Could not schedule that.'); setSaving(false); return; }
+      if (!res.ok) { setErr(errText(data, 'Could not schedule that.')); setSaving(false); return; }
       notify('Follow-up scheduled.', 'success');
       onDone();
     } catch (e) { setErr(e.message); setSaving(false); }
@@ -209,7 +210,7 @@ function ScheduleSiteVisit({ partnerId, partners, companyId, onDone, onCancel })
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setErr(data.detail || 'Could not schedule that.'); setSaving(false); return; }
+      if (!res.ok) { setErr(errText(data, 'Could not schedule that.')); setSaving(false); return; }
       notify('Site visit scheduled.', 'success');
       onDone();
     } catch (e) { setErr(e.message); setSaving(false); }
@@ -276,7 +277,7 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
     setBusy(null);
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      notify(d.detail || 'Could not update that.', 'error');
+      notify(errText(d, 'Could not update that.'), 'error');
       return false;
     }
     onChanged();
