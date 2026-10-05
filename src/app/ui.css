@@ -2541,3 +2541,22 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
   background-color: var(--strong); color: #fff; }
 .cpd-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Site Visits → Edit visit (correct a completed visit's date, outcome, remarks). */
+.sve-open { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; }
+.sve-sub { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+.sve-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-2); margin: 12px 0 6px; }
+.sve-inp { width: 100%; height: 40px; padding: 0 12px; border-radius: 12px; box-sizing: border-box; }
+.sve-area { height: auto; padding: 10px 12px; resize: vertical; }
+.sve-outs { display: flex; gap: 8px; flex-wrap: wrap; }
+.sve-out { flex: 1 1 100px; padding: 10px 8px; border-radius: 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+  background: var(--surface); border: 1.5px solid var(--border-strong); color: var(--text-2); }
+.sve-out[data-out="hot"] { border-color: var(--danger); color: var(--danger); }
+.sve-out[data-out="warm"] { border-color: var(--warning-2); color: var(--warning-2); }
+.sve-out[data-out="cold"] { border-color: var(--accent); color: var(--accent); }
+.sve-out.is-on[data-out="hot"] { background: var(--danger); color: #fff; }
+.sve-out.is-on[data-out="warm"] { background: var(--warning-2); color: #fff; }
+.sve-out.is-on[data-out="cold"] { background: var(--accent); color: #fff; }
+.sve-out.is-on[data-out="not_interested"] { background: var(--text-3); border-color: var(--text-3); color: #fff; }
+.sve-note { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
+.sve-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }

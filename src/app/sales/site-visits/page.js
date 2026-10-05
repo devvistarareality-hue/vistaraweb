@@ -11,6 +11,7 @@ import { can } from '../../../lib/moduleAccess';
 import MultiSelect from '../../../components/MultiSelect';
 import Loader from '../../../components/Loader';
 import BookFilter, { useBook } from '../../../components/BookFilter';
+import { explainApiError, explainNetworkError } from '../../../lib/apiError';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -86,6 +87,12 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const [doneSv,   setDoneSv]   = useState(null);
   const [doneForm, setDoneForm] = useState({ outcome: '', remarks: '', visitedDate: '' });
 
+  // "Edit visit" — correct a completed visit's date, outcome or remarks. Offered when
+  // the server says this person may (sv.can_edit: the STM, their managers, admins).
+  const [editSv,   setEditSv]   = useState(null);
+  const [editForm, setEditForm] = useState({ visitedDate: '', outcome: '', remarks: '', reason: '' });
+  const [editErr,  setEditErr]  = useState('');
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -156,6 +163,34 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       const updated = await res.json();
       setVisits((list) => list.map((v) => (v.id === sv.id ? updated : v)));
     }
+  }
+
+  function openEdit(sv) {
+    const d = sv.visited_at ? new Date(sv.visited_at).toLocaleDateString('en-CA') : '';
+    setEditForm({ visitedDate: d, outcome: sv.outcome || '', remarks: sv.remarks || '', reason: '' });
+    setEditErr(''); setEditSv(sv);
+  }
+
+  async function submitEdit() {
+    if (!editForm.reason.trim()) { setEditErr('Say why the visit is being changed.'); return; }
+    setSaving(true); setEditErr('');
+    try {
+      const res = await fetch(SALES_ENDPOINTS.siteVisitEdit(editSv.id), {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({
+          visited_at: editForm.visitedDate, outcome: editForm.outcome,
+          remarks: editForm.remarks, reason: editForm.reason.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setVisits((list) => list.map((v) => (v.id === data.id ? data : v)));
+        setEditSv(null);
+      } else {
+        setEditErr(explainApiError(res, data, 'Could not save the visit.'));
+      }
+    } catch (e) { setEditErr(explainNetworkError(e)); }
+    setSaving(false);
   }
 
   function openDone(sv) {
@@ -407,6 +442,11 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
                 {sv.status === 'completed' && (
                   <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => startClosure(sv)} style={btnPrimary}>Record Closure</button>
                 )}
+                {sv.status === 'completed' && sv.can_edit && (
+                  <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary sve-open" onClick={() => openEdit(sv)}>
+                    <Icon name="pencil" /> Edit visit
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -487,6 +527,38 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
                 style={{ ...btnPrimary, opacity: (saving || !doneForm.outcome || !doneForm.remarks.trim() || !doneForm.visitedDate) ? 0.5 : 1 }}>
                 {saving ? 'Saving…' : 'Save'}
               </button>
+            </div>
+          </ModalCard>
+        </Overlay>
+      )}
+
+      {/* ── Edit Visit Modal ── */}
+      {editSv && (
+        <Overlay onClose={() => !saving && setEditSv(null)}>
+          <ModalCard title="Edit site visit" onClose={() => !saving && setEditSv(null)}>
+            <p className="sve-sub">{editSv.lead_name} · {editSv.lead_phone}{editSv.stm_name ? ` · ${editSv.stm_name}` : ''}</p>
+            <label className="sve-lbl">Visit date</label>
+            <input className="nx-input sve-inp" type="date" value={editForm.visitedDate} max={new Date().toLocaleDateString('en-CA')}
+              onChange={(e) => setEditForm({ ...editForm, visitedDate: e.target.value })} />
+            <label className="sve-lbl">Outcome</label>
+            <div className="sve-outs">
+              {[['hot', 'Hot'], ['warm', 'Warm'], ['cold', 'Cold'], ['not_interested', 'Not Interested']].map(([val, label]) => (
+                <button key={val} type="button" data-out={val} className={`sve-out${editForm.outcome === val ? ' is-on' : ''}`}
+                  onClick={() => setEditForm({ ...editForm, outcome: val })}>{label}</button>
+              ))}
+            </div>
+            <label className="sve-lbl">Remarks</label>
+            <textarea className="nx-input sve-inp sve-area" rows={3} value={editForm.remarks}
+              onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} />
+            <label className="sve-lbl">Why are you changing it? *</label>
+            <input className="nx-input sve-inp" value={editForm.reason} placeholder="e.g. Picked the wrong date"
+              onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })} />
+            <p className="sve-note">The change and your reason are saved on the lead&apos;s history and the activity log.</p>
+            {editErr && <ErrBox>{editErr}</ErrBox>}
+            <div className="sve-foot">
+              <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setEditSv(null)} disabled={saving}>Cancel</button>
+              <button type="button" className="nx-btn nx-btn-md nx-btn-primary" onClick={submitEdit}
+                disabled={saving || !editForm.reason.trim() || !editForm.visitedDate}>{saving ? 'Saving…' : 'Save changes'}</button>
             </div>
           </ModalCard>
         </Overlay>

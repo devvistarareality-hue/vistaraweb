@@ -93,6 +93,7 @@ export const SALES_ENDPOINTS = {
   followUp: (id)   => `${BASE_URL}/api/sales/follow-ups/${id}/`,
   get siteVisits() { return `${BASE_URL}/api/sales/site-visits/`; },
   siteVisit: (id)  => `${BASE_URL}/api/sales/site-visits/${id}/`,
+  siteVisitEdit: (id) => `${BASE_URL}/api/sales/site-visits/${id}/edit/`,
   get closures()   { return `${BASE_URL}/api/sales/closures/`; },
   closureCancel: (id) => `${BASE_URL}/api/sales/closures/${id}/cancel/`,
   get leadTransfers() { return `${BASE_URL}/api/sales/lead-transfers/`; },
