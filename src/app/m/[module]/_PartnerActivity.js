@@ -259,7 +259,7 @@ function ScheduleSiteVisit({ partnerId, partners, companyId, onDone, onCancel })
 
 /* ------------------------------------------------------------------ tables */
 
-function ActivityTable({ kind, rows, showPartner, onChanged }) {
+function ActivityTable({ kind, rows, showPartner, onChanged, cards = false }) {
   const endpoint = kind === 'fu' ? SALES_ENDPOINTS.partnerFollowUp : SALES_ENDPOINTS.partnerSiteVisit;
   const map = kind === 'fu' ? FU_STATUS : SV_STATUS;
   const [busy, setBusy] = useState(null);
@@ -294,8 +294,56 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
     else notify('Could not remove that.', 'error');
   }
 
+  // The panels (Partner Site Visits / Follow-Ups) show the same cards as the CP Leads
+  // half's Site Visits and Follow-Ups; a partner's own detail keeps the compact table.
+  const actions = (row) => (
+    <>
+      {row.status !== 'completed' && (
+        <button className="nx-btn nx-btn-sm nx-btn-success-soft" disabled={busy === row.id}
+          onClick={() => setClosing(row)}>Done</button>
+      )}
+      {row.status === OPEN_STATUS[kind] && DROP_STATUS[kind] ? (
+        <button className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busy === row.id}
+          onClick={() => setStatus(row, DROP_STATUS[kind][0])}>{DROP_STATUS[kind][1]}</button>
+      ) : null}
+      <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-danger-soft" disabled={busy === row.id}
+        onClick={() => remove(row)} aria-label="Remove"><Icon name="trash" /></button>
+    </>
+  );
+  const list = cards ? (
+    <div className="cpa-cards">
+      {rows.map((row) => {
+        const when = kind === 'fu' ? row.completed_at : row.visited_at;
+        const who = kind === 'fu' ? row.assigned_to_name : row.host_name;
+        return (
+          <div key={row.id} className={`nx-card cpa-card${isOverdue(kind, row) ? ' is-overdue' : ''}`}>
+            <div className="cpa-card-main">
+              <div className="cpa-card-title">
+                <span className="cpa-card-name">{row.partner_name || '—'}</span>
+                <StatusChip map={map} value={row.status} overdue={isOverdue(kind, row)} />
+              </div>
+              <div className="cpa-card-sub">
+                {[row.partner_firm, kind === 'sv' ? row.project_name : null].filter(Boolean).join(' · ') || '—'}
+              </div>
+              <div className="cpa-card-times">
+                <span>Scheduled: {fmt(row.scheduled_at)}</span>
+                {when ? <span>{kind === 'fu' ? 'Completed' : 'Visited'}: {fmt(when)}</span> : null}
+                {who ? <span>{kind === 'fu' ? 'Assigned to' : 'Host'}: {who}</span> : null}
+              </div>
+              {(row.remarks || row.outcome) ? (
+                <div className="cpa-card-remarks">&ldquo;{row.remarks || row.outcome}&rdquo;</div>
+              ) : null}
+            </div>
+            <div className="cpa-card-actions">{actions(row)}</div>
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
+
   return (
-    <div className="cpa-scroll">
+    <div className={cards ? undefined : 'cpa-scroll'}>
+      {cards ? list : (
       <table className="nx-table cpa-table">
         <thead>
           <tr>
@@ -324,22 +372,12 @@ function ActivityTable({ kind, rows, showPartner, onChanged }) {
               <td>{(kind === 'fu' ? row.assigned_to_name : row.host_name) || '—'}</td>
               <td className="cpa-remarks">{row.remarks || row.outcome || '—'}</td>
               <td><StatusChip map={map} value={row.status} overdue={isOverdue(kind, row)} /></td>
-              <td className="cpa-row-actions">
-                {row.status !== 'completed' && (
-                  <button className="nx-btn nx-btn-sm nx-btn-success-soft" disabled={busy === row.id}
-                    onClick={() => setClosing(row)}>Done</button>
-                )}
-                {row.status === OPEN_STATUS[kind] && DROP_STATUS[kind] ? (
-                  <button className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busy === row.id}
-                    onClick={() => setStatus(row, DROP_STATUS[kind][0])}>{DROP_STATUS[kind][1]}</button>
-                ) : null}
-                <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-danger-soft" disabled={busy === row.id}
-                  onClick={() => remove(row)} aria-label="Remove"><Icon name="trash" /></button>
-              </td>
+              <td className="cpa-row-actions">{actions(row)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      )}
 
       {closing && (
         <CompleteDialog
@@ -684,7 +722,7 @@ export function PartnerActivityPanel({ kind, companyId }) {
           </p>
         </div>
       ) : (
-        <ActivityTable kind={kind} rows={visible} showPartner onChanged={reload} />
+        <ActivityTable kind={kind} rows={visible} showPartner onChanged={reload} cards />
       )}
     </div>
   );

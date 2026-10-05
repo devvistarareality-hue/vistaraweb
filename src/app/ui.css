@@ -2361,6 +2361,18 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cpa-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .cpa-remarks { max-width: 260px; white-space: pre-wrap; color: var(--text-2); }
 .cpa-row-actions { display: flex; gap: 6px; justify-content: flex-end; white-space: nowrap; }
+/* Partner Site Visits / Follow-Ups as cards — the CP Leads half's visit cards. */
+.cpa-cards { display: flex; flex-direction: column; gap: 12px; }
+.cpa-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 16px 18px; border-radius: 18px; }
+.cpa-card.is-overdue { box-shadow: inset 3px 0 0 var(--danger), var(--shadow-sm); }
+.cpa-card-main { flex: 1; min-width: 0; }
+.cpa-card-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cpa-card-name { font-size: 15px; font-weight: 800; color: var(--text); }
+.cpa-card-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.cpa-card-times { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--text-2); margin-top: 8px; }
+.cpa-card-remarks { font-size: 13px; font-style: italic; color: var(--text-2); margin-top: 6px; white-space: pre-wrap; }
+.cpa-card-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+@media (max-width: 560px) { .cpa-card { flex-direction: column; } }
 .cpa-empty { padding: 22px 4px; font-size: 13px; color: var(--muted); }
 
 .cpa-form { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; background: var(--surface-2); }
