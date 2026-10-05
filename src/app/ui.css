@@ -1742,7 +1742,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* This used to be a one-line nx-note that could read "Error: {}" — the literal
    output of stringifying an unparseable body. It now sits above the buttons
    that were just pressed and has to carry several field errors legibly. */
-.bkerr { display: flex; align-items: flex-start; gap: 12px; margin: 14px 0;
+/* Only top/bottom margin: the form page centres its children (.nx-page-form > *),
+   and a side margin of 0 here pulled the banner out to the left edge. */
+.bkerr { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; margin-bottom: 14px;
   padding: 14px 16px; border-radius: 14px; border: 1.5px solid transparent;
   animation: bkerr-rise .26s cubic-bezier(.2,.7,.3,1) both; }
 @keyframes bkerr-rise { from { opacity: 0; transform: translateY(6px); } }
