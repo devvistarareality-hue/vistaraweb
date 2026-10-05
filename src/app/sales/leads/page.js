@@ -14,6 +14,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
 import LeadNumberCheck from '../../../components/LeadNumberCheck';
 import { errText, explainApiError } from '../../../lib/apiError';
+import BookFilter, { useBook } from '../../../components/BookFilter';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -1552,6 +1553,8 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
 // ── Main Leads Page ─────────────────────────────────────────────────────────
 export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const user      = useSelector((s) => s.auth.user);
+  // Source filter: Sales / CP / All (components/BookFilter).
+  const [book, setBook] = useBook(cpOnly);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Telecallers & Sales Executives (STM) cannot delete leads — only admins/managers.
   const _desig = (user?.designation || '').toLowerCase();
@@ -1764,6 +1767,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.date_to)         params.set('date_to',          filters.date_to);
     if (adminView)               params.set('admin_view', '1');
     if (cpOnly)                  params.set('cp_only', 'true');
+    params.set('book', book);
     const cacheKey = `leads_${params.toString()}`;
     const cached = getCache(cacheKey);
     if (cached) { setLeads(cached.results); setTotal(cached.count); setLoading(false); return; }
@@ -1774,7 +1778,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     setLeads(data.results ?? []);
     setTotal(data.count ?? 0);
     setLoading(false);
-  }, [page, filters, companyId, isCaller, workTab, adminView, cpOnly]);
+  }, [page, filters, companyId, isCaller, workTab, adminView, cpOnly, book]);
 
   // What the filter pickers may offer: only the projects, people, sources and
   // statuses that occur in the leads this person can see (?facets=1), so no
@@ -1785,13 +1789,14 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (companyId) params.set('company_id', companyId);
     if (adminView) params.set('admin_view', '1');
     if (cpOnly)    params.set('cp_only', 'true');
+    params.set('book', book);
     let alive = true;
     fetch(`${SALES_ENDPOINTS.leads}?${params}`, { headers: authHeaders() })
       // Only a real facets answer counts — a server without ?facets=1 (e.g. mid-deploy)
       // replies with the plain list, and trusting that crashed the whole page.
       .then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && Array.isArray(d?.project_ids)) setFacets(d); }).catch(() => {});
     return () => { alive = false; };
-  }, [companyId, adminView, cpOnly]);
+  }, [companyId, adminView, cpOnly, book]);
   const fx = (key) => facets?.[key] ?? null;
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
@@ -2012,6 +2017,11 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                   placeholder="Search name, phone, email…"
                   style={{ width: '100%', height: 40, padding: '0 16px 0 38px', borderRadius: 14, border: '1.5px solid var(--surface-3)', fontSize: 13, background: 'var(--surface-2)', outline: 'none', boxSizing: 'border-box', color: 'var(--text)' }} />
               </div>
+            </div>
+
+            {/* Source: Sales / CP / All — counts always add up (see BookFilter). */}
+            <div className="book-row">
+              <BookFilter value={book} onChange={(b) => { setBook(b); setPage(1); }} />
             </div>
 
             {/* Row 1: Date range + quick buttons + project + tc/stm status */}

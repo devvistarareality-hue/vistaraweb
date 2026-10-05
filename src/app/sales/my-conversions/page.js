@@ -9,6 +9,7 @@ import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import MultiSelect from '../../../components/MultiSelect';
 import { can } from '../../../lib/moduleAccess';
+import BookFilter, { useBook } from '../../../components/BookFilter';
 function fmtDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -149,10 +150,13 @@ function StatusBadge({ status, kind }) {
 export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  // Source filter: Sales / CP / All (components/BookFilter).
+  const [book, setBook] = useBook(cpOnly);
   const cqParts = [];
   if (companyId) cqParts.push(`company_id=${companyId}`);
   if (adminView) cqParts.push('admin_view=1');
   if (cpOnly) cqParts.push('cp_only=true');
+  cqParts.push(`book=${book}`);
   const cq = cqParts.length ? `?${cqParts.join('&')}` : '';
   // Cancelling a booking lives on Bookings & Approvals — this page is read-only.
   const isStm = can(user, 'sales.pipeline.stm');
@@ -264,6 +268,9 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
       </div>
 
       {/* Tabs */}
+      <div className="book-row-plain">
+        <BookFilter value={book} onChange={setBook} />
+      </div>
       <div className="myconv-tabs">
         {[
           { key: 'sv', label: 'Site Visits' },

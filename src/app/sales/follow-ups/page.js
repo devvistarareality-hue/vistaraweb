@@ -12,6 +12,7 @@ import { onlyPresent } from '../../../lib/presentOptions';
 import { notify } from '../../../lib/notify';
 import LeadHistory from '../../../components/LeadHistory';
 import { errText } from '../../../lib/apiError';
+import BookFilter, { useBook } from '../../../components/BookFilter';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -49,6 +50,8 @@ const TABS = [
 
 export function FollowUpsContent({ adminView = false, cpOnly = false }) {
   const user      = useSelector((s) => s.auth.user);
+  // Source filter: Sales / CP / All (components/BookFilter).
+  const [book, setBook] = useBook(cpOnly);
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Same designation split as the Leads list, so this page offers the same filter
@@ -136,12 +139,13 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
       if (companyId) params.push(`company_id=${companyId}`);
       if (adminView) params.push('admin_view=1');
       if (cpOnly)    params.push('cp_only=true');
+      params.push(`book=${book}`);
       const url = params.length ? `${SALES_ENDPOINTS.followUps}?${params.join('&')}` : SALES_ENDPOINTS.followUps;
       const res = await fetch(url, { headers: authHeaders() });
       if (res.ok) setItems(await res.json());
     } catch (_) {}
     setLoading(false);
-  }, [companyId, adminView, cpOnly]);
+  }, [companyId, adminView, cpOnly, book]);
 
   useEffect(() => { load(); }, [load, companyId]);
 
@@ -307,6 +311,11 @@ export function FollowUpsContent({ adminView = false, cpOnly = false }) {
 
         return (
           <div className="nx-card nx-fu-filterbar">
+
+            {/* Source: Sales / CP / All — counts always add up (see BookFilter). */}
+            <div className="book-row">
+              <BookFilter value={book} onChange={setBook} />
+            </div>
 
             {/* Search bar */}
             <div className="nx-fu-filterbar-search">

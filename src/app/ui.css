@@ -2221,6 +2221,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ard-view-btn { height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
   font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
 .ard-view-btn.is-on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+/* Source filter (Sales | CP | All) — components/BookFilter. */
+.book-filter { display: inline-flex; align-items: center; gap: 8px; }
+.book-filter-label { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.book-row { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--surface-2); }
+.book-row-plain { display: flex; margin-bottom: 12px; }
 .pw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 18px; }
 .pw-card { border-radius: 20px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
 .pw-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }

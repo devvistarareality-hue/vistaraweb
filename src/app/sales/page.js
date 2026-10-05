@@ -17,6 +17,7 @@ import { DashHero, DashAlerts } from '../../components/Dash';
 import { pct } from '../../lib/inr';
 import { can, canSee, dashboardFor, isManagerRole } from '../../lib/moduleAccess';
 import DashboardRoleFilter from '../../components/DashboardRoleFilter';
+import BookFilter, { useBook } from '../../components/BookFilter';
 const TrendCharts = dynamic(() => import('./_TrendCharts').then(m => m.TrendCharts), { ssr: false });
 const SingleChart = dynamic(() => import('./_TrendCharts').then(m => m.SingleChart), { ssr: false });
 
@@ -295,6 +296,8 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
   // section still needs the CP-scoped view, not their own (non-CP) designation.
   const _des = (user?.designation || '').toLowerCase();
   const isCp = cpOnly || can(user, 'sales.pipeline.cp') || _des.includes('cp cluster head');
+  // Source filter: Sales / CP / All — the same choice the lists these tiles open use.
+  const [book, setBook] = useBook(isCp);
 
   // Filters, on the partner desk only — the Sales dashboard is deliberately left
   // as it was. Every tile, the funnel and the recent-leads list narrow together,
@@ -327,7 +330,7 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
     // prefix — _cache.js derives the TTL from the first `_`-delimited segment.
     const filterKey = [range.from, range.to, fProject, fPartner].join('|');
     const anyFilter = filterKey !== '|||';
-    const cacheKey = `stats_v2_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}${anyFilter ? `_${filterKey}` : ''}`;
+    const cacheKey = `stats_v2_${companyId || 'all'}${adminView ? '_admin' : ''}${isCp ? '_cp' : ''}_b${book}${anyFilter ? `_${filterKey}` : ''}`;
     if (!adminView) {
       const { data: cached, fresh } = getCacheWithStatus(cacheKey);
       if (cached) { setStats(cached); setLoading(false); if (fresh) return; }
@@ -336,6 +339,7 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
     if (companyId) params.push(`company_id=${companyId}`);
     if (adminView) params.push('admin_view=1');
     if (isCp) params.push('cp_only=true');
+    params.push(`book=${book}`);
     if (range.from) params.push(`date_from=${range.from}`);
     if (range.to) params.push(`date_to=${range.to}`);
     if (fProject) params.push(`project_id=${fProject}`);
@@ -345,7 +349,7 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
       .then((r) => r.json())
       .then((d) => { if (!adminView) setCache(cacheKey, d); setStats(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId, adminView, isCp, range.from, range.to, fProject, fPartner]);
+  }, [companyId, adminView, isCp, range.from, range.to, fProject, fPartner, book]);
 
   // CP Cluster Heads land on their own Channel Partner section, not the regular
   // Sales/Admin one — every tile has to point at the CP-scoped equivalent page.
@@ -397,6 +401,10 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>{isCp ? 'Overview of Channel Partner activity' : 'Overview of all CRM activity'}</p>
         </div>
         {!isCp && <SearchLeadButton />}
+      </div>
+
+      <div className="book-row-plain">
+        <BookFilter value={book} onChange={setBook} />
       </div>
 
       {isCp && (
@@ -833,6 +841,8 @@ function TelecallerDashboard({ user }) {
 // STM DASHBOARD
 // ─────────────────────────────────────────────
 export function STMDashboard({ user, cpOnly = false }) {
+  // Source filter: Sales / CP / All (components/BookFilter).
+  const [book, setBook] = useBook(cpOnly);
   const [stats,   setStats]   = useState(null);
   const [trend,   setTrend]   = useState(null);
   const [leads,   setLeads]   = useState([]);
@@ -853,10 +863,11 @@ export function STMDashboard({ user, cpOnly = false }) {
     // Inside the Channel Partner module this same view counts partner-sourced
     // records only — the backend does the scoping, as it does for the desk.
     if (cpOnly) params.set('cp_only', 'true');
+    params.set('book', book);
     const qs = params.toString() ? `?${params}` : '';
     Promise.all([
       apiFetch(`${SALES_ENDPOINTS.stats}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      apiFetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100`).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] })),
+      apiFetch(`${SALES_ENDPOINTS.leads}?stm=${user.id}&page_size=100&book=${book}${cpOnly ? '&cp_only=true' : ''}`).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] })),
       apiFetch(`${SALES_ENDPOINTS.statsTrend}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]).then(([s, d, t]) => {
       if (cancelled) return;
@@ -867,7 +878,7 @@ export function STMDashboard({ user, cpOnly = false }) {
       setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [user?.id, eff.from, eff.to]);
+  }, [user?.id, eff.from, eff.to, book]);
 
   const count = (key, val) => leads.filter((l) => l[key] === val).length;
   // Prefer the backend's date-scoped counts (stm_status based); fall back to the
@@ -927,6 +938,9 @@ export function STMDashboard({ user, cpOnly = false }) {
         {!isCp && <SearchLeadButton />}
       </div>
 
+      <div className="book-row-plain">
+        <BookFilter value={book} onChange={setBook} />
+      </div>
       <DateFilter onChange={setEff} />
 
       <DashHero

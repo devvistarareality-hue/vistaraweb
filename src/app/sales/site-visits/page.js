@@ -10,6 +10,7 @@ import Icon from '../../../components/Icon';
 import { can } from '../../../lib/moduleAccess';
 import MultiSelect from '../../../components/MultiSelect';
 import Loader from '../../../components/Loader';
+import BookFilter, { useBook } from '../../../components/BookFilter';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -40,6 +41,8 @@ const smBtn = (bg, color, border) => ({ fontSize: 11, fontWeight: 700, padding: 
 
 export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const router    = useRouter();
+  // Source filter: Sales / CP / All (components/BookFilter).
+  const [book, setBook] = useBook(cpOnly);
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
 
@@ -89,12 +92,13 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
       const params = [];
       if (adminView) params.push('admin_view=1');
       if (cpOnly)    params.push('cp_only=true');
+      params.push(`book=${book}`);
       const url = params.length ? `${SALES_ENDPOINTS.siteVisits}?${params.join('&')}` : SALES_ENDPOINTS.siteVisits;
       const res = await fetch(url, { headers: authHeaders() });
       if (res.ok) setVisits(await res.json());
     } catch (_) {}
     setLoading(false);
-  }, [companyId, adminView, cpOnly]);
+  }, [companyId, adminView, cpOnly, book]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -306,6 +310,11 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
             </button>
           );
         })}
+      </div>
+
+      {/* Source: Sales / CP / All — counts always add up (see BookFilter). */}
+      <div className="book-row-plain">
+        <BookFilter value={book} onChange={setBook} />
       </div>
 
       {/* Search bar */}

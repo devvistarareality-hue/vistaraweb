@@ -12,6 +12,7 @@ import Icon from '../../components/Icon';
 import { confirmDialog, notify } from '../../lib/notify';
 import Loader from '../../components/Loader';
 import MultiSelect from '../../components/MultiSelect';
+import BookFilter, { useBook } from '../../components/BookFilter';
 // Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
 // and a draft has not been. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
@@ -136,6 +137,8 @@ function DecidedBy({ b, style }) {
 
 export function MyBookingsList({ cpOnly = false }) {
   const router = useRouter();
+  // Source filter: Sales / CP / All (components/BookFilter).
+  const [book, setBook] = useBook(cpOnly);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -183,13 +186,13 @@ export function MyBookingsList({ cpOnly = false }) {
     // team work, which is the intended difference between the two.
     // The two modules are two books: Channel Partner keeps the partner-sourced
     // bookings, Sales keeps the rest, so a booking is only ever counted once.
-    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (cpOnly ? '&cp_only=true' : '&source=sales')
+    fetch(SALES_ENDPOINTS.bookings + '?mine=1' + (cpOnly ? '&cp_only=true' : '') + `&book=${book}`
       + (scope === 'visible' && !cpOnly ? '&scope=visible' : '')
       + (companyId ? `&company_id=${companyId}` : ''), { headers: authHeaders() })
       .then((r) => r.json()).then((d) => { setRows(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }
-  useEffect(load, [companyId, cpOnly, scope]);
+  useEffect(load, [companyId, cpOnly, scope, book]);
 
   // The reporting tree, for the 'Booked by' filter. Failing quietly is right here:
   // someone with no reports gets an empty list and simply never sees the dropdown,
@@ -374,6 +377,7 @@ export function MyBookingsList({ cpOnly = false }) {
                 color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
+        <BookFilter value={book} onChange={(b) => { setBook(b); setOpen({}); setWho(''); }} />
         {projOptions.length > 1 && (
           <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={(v) => { setProj(v); setOpen({}); }}
             options={projOptions.map((n) => ({ value: n, label: n }))} />
