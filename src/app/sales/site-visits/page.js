@@ -308,6 +308,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   // screen filters on the device, so they are sent along for the server to apply.
   const [exporting, setExporting] = useState(false);
   const [exportErr, setExportErr] = useState('');
+  const [exportProgress, setExportProgress] = useState('');
   async function exportVisits() {
     setExporting(true); setExportErr('');
     const p = new URLSearchParams({ export: 'xlsx', book });
@@ -320,8 +321,9 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
     if (tcPerson.length) p.set('telecaller_ids', tcPerson.join(','));
     if (outcomeFilter) p.set('outcome', outcomeFilter);
     if (q) p.set('q', q);
-    const err = await downloadExcel(`${SALES_ENDPOINTS.siteVisits}?${p}`, 'Site-Visits.xlsx');
-    setExporting(false);
+    const err = await downloadExcel(`${SALES_ENDPOINTS.siteVisits}?${p}`, 'Site-Visits.xlsx',
+      (done, total) => setExportProgress(`${done.toLocaleString('en-IN')} of ${(total || 0).toLocaleString('en-IN')}`));
+    setExporting(false); setExportProgress('');
     if (err) setExportErr(err);
   }
 
@@ -356,7 +358,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           {canExportLeads(user) && (
             <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={exportVisits} disabled={exporting}
               title="Completed visits, with the filters below, as Excel">
-              <Icon name="download" /> {exporting ? 'Preparing…' : 'Download Excel'}
+              <Icon name="download" /> {exporting ? `Preparing…${exportProgress ? ` ${exportProgress}` : ''}` : 'Download Excel'}
             </button>
           )}
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openSchedule} style={btnPrimary}>+ Schedule Visit</button>

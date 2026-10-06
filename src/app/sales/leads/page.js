@@ -1563,12 +1563,14 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   // Download Excel: exactly the list on screen — the same query, every filter, all pages.
   const lastQuery = useRef('');
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');   // "12,000 of 39,390"
   async function exportLeads() {
-    setExporting(true);
+    setExporting(true); setExportProgress('');
     const q = new URLSearchParams(lastQuery.current);
     q.delete('page'); q.delete('page_size'); q.set('export', 'xlsx');
-    const err = await downloadExcel(`${SALES_ENDPOINTS.leads}?${q}`, 'Leads.xlsx');
-    setExporting(false);
+    const err = await downloadExcel(`${SALES_ENDPOINTS.leads}?${q}`, 'Leads.xlsx',
+      (done, total) => setExportProgress(`${done.toLocaleString('en-IN')} of ${(total || 0).toLocaleString('en-IN')}`));
+    setExporting(false); setExportProgress('');
     if (err) notify(err, 'error');
   }
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -1963,7 +1965,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
           {canExportLeads(user) && (
             <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={exportLeads} disabled={exporting}
               title="The leads on this list, with your filters, as Excel">
-              <Icon name="download" /> {exporting ? 'Preparing…' : 'Download Excel'}
+              <Icon name="download" /> {exporting ? `Preparing…${exportProgress ? ` ${exportProgress}` : ''}` : 'Download Excel'}
             </button>
           )}
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setAddModal(true)} style={saveBtn}>+ Add Lead</button>
