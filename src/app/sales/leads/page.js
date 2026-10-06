@@ -7,7 +7,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 
 import Icon from '../../../components/Icon';
 import PartnerPicker from '../_PartnerPicker';
-import { confirmDialog } from '../../../lib/notify';
+import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
 import MultiSelect from '../../../components/MultiSelect';
@@ -15,6 +15,7 @@ import { onlyPresent } from '../../../lib/presentOptions';
 import LeadNumberCheck from '../../../components/LeadNumberCheck';
 import { errText, explainApiError } from '../../../lib/apiError';
 import BookFilter, { useBook } from '../../../components/BookFilter';
+import { downloadExcel, canExportLeads } from '../../../lib/downloadExcel';
 function bustLeadsCache() {
   // The Sales cache lives in localStorage under the 'sc_' prefix (see _cache.js),
   // so clear the leads_* keys from localStorage — not sessionStorage.
@@ -1559,6 +1560,17 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   const user      = useSelector((s) => s.auth.user);
   // Source filter: Sales / CP / All (components/BookFilter).
   const [book, setBook] = useBook(cpOnly);
+  // Download Excel: exactly the list on screen — the same query, every filter, all pages.
+  const lastQuery = useRef('');
+  const [exporting, setExporting] = useState(false);
+  async function exportLeads() {
+    setExporting(true);
+    const q = new URLSearchParams(lastQuery.current);
+    q.delete('page'); q.delete('page_size'); q.set('export', 'xlsx');
+    const err = await downloadExcel(`${SALES_ENDPOINTS.leads}?${q}`, 'Leads.xlsx');
+    setExporting(false);
+    if (err) notify(err, 'error');
+  }
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   // Telecallers & Sales Executives (STM) cannot delete leads — only admins/managers.
   const _desig = (user?.designation || '').toLowerCase();
@@ -1773,6 +1785,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (adminView)               params.set('admin_view', '1');
     if (cpOnly)                  params.set('cp_only', 'true');
     params.set('book', book);
+    lastQuery.current = params.toString();   // what Download Excel sends
     const cacheKey = `leads_${params.toString()}`;
     const cached = getCache(cacheKey);
     if (cached) { setLeads(cached.results); setTotal(cached.count); setLoading(false); return; }
@@ -1945,6 +1958,12 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
           {canDelete && selectedIds.size > 0 && (
             <button className="nx-btn nx-btn-md nx-btn-danger" onClick={bulkDelete} disabled={deleting} style={{ ...saveBtn, backgroundColor: 'var(--danger-solid)' }}>
               {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
+            </button>
+          )}
+          {canExportLeads(user) && (
+            <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={exportLeads} disabled={exporting}
+              title="The leads on this list, with your filters, as Excel">
+              <Icon name="download" /> {exporting ? 'Preparing…' : 'Download Excel'}
             </button>
           )}
           <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setAddModal(true)} style={saveBtn}>+ Add Lead</button>

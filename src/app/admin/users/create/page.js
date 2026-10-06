@@ -64,6 +64,7 @@ export default function CreateUserPage() {
     manager_modules:      [],
     admin_modules:        [],
     can_export_bookings:  false,
+    can_export_leads:     false,
     reporting_manager_id: null,
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -345,6 +346,11 @@ export default function CreateUserPage() {
                 onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))}
               />
               Download booking Excel — approved bookings, Sales &amp; CP, with totals
+            </label>
+            <label className="um-check-plain">
+              <input type="checkbox" checked={!!form.can_export_leads}
+                onChange={(e) => setForm((f) => ({ ...f, can_export_leads: e.target.checked }))} />
+              Download leads &amp; site visits Excel — their leads and completed visits, as filtered
             </label>
           </div>
 

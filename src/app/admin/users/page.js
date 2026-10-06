@@ -96,6 +96,7 @@ export default function UserManagementPage() {
       manager_modules:      u.manager_modules || [],
       admin_modules:        u.admin_modules   || [],
       can_export_bookings:  !!u.can_export_bookings,
+      can_export_leads:     !!u.can_export_leads,
       is_active:            u.is_active,
       reporting_manager_id: u.reporting_manager?.id ?? null,
     });
@@ -410,6 +411,14 @@ export default function UserManagementPage() {
                 <input type="checkbox" checked={!!form.can_export_bookings} onChange={(e) => setForm((f) => ({ ...f, can_export_bookings: e.target.checked }))} style={{ accentColor: 'var(--success)' }} />
                 <span style={{ fontWeight: 600, color: form.can_export_bookings ? 'var(--success)' : 'var(--text-3)' }}>Download booking Excel</span>
                 <span style={{ fontSize: 12, color: 'var(--muted)' }}>— approved bookings, Sales &amp; CP, with totals</span>
+              </label>
+              {/* Leads and completed Site Visits as Excel — what this person can see,
+                  with the filters they set; Sales and Channel Partner alike. */}
+              <label className={`um-check${form.can_export_leads ? ' is-on' : ''}`}>
+                <input type="checkbox" checked={!!form.can_export_leads}
+                  onChange={(e) => setForm((f) => ({ ...f, can_export_leads: e.target.checked }))} />
+                <span className="um-check-title">Download leads &amp; site visits Excel</span>
+                <span className="um-check-sub">— their leads and completed visits, Sales &amp; CP, as filtered</span>
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? 'var(--success-2)' : 'var(--border)'}`, backgroundColor: form.is_active ? 'var(--success-soft)' : 'var(--surface-2)', marginBottom: 4 }}>

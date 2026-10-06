@@ -12,6 +12,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import Loader from '../../../components/Loader';
 import BookFilter, { useBook } from '../../../components/BookFilter';
 import { explainApiError, explainNetworkError } from '../../../lib/apiError';
+import { downloadExcel, canExportLeads } from '../../../lib/downloadExcel';
 function fmtDateTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -303,6 +304,27 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
   const stmOptions = isAdminMgr ? peopleOf('stm', 'stm_name') : [];
   const narrowed = dated || proj.length > 0 || !!outcomeFilter || !!q || tcPerson.length > 0 || stmPerson.length > 0;
 
+  // Download Excel: the completed visits, with exactly the filters set above. The
+  // screen filters on the device, so they are sent along for the server to apply.
+  const [exporting, setExporting] = useState(false);
+  const [exportErr, setExportErr] = useState('');
+  async function exportVisits() {
+    setExporting(true); setExportErr('');
+    const p = new URLSearchParams({ export: 'xlsx', book });
+    if (cpOnly) p.set('cp_only', 'true');
+    if (adminView) p.set('admin_view', '1');
+    if (range.from) p.set('date_from', range.from);
+    if (range.to) p.set('date_to', range.to);
+    if (proj.length) p.set('projects', proj.join('||'));
+    if (stmPerson.length) p.set('stm_ids', stmPerson.join(','));
+    if (tcPerson.length) p.set('telecaller_ids', tcPerson.join(','));
+    if (outcomeFilter) p.set('outcome', outcomeFilter);
+    if (q) p.set('q', q);
+    const err = await downloadExcel(`${SALES_ENDPOINTS.siteVisits}?${p}`, 'Site-Visits.xlsx');
+    setExporting(false);
+    if (err) setExportErr(err);
+  }
+
   const [shown, setShown] = useState(PAGE_STEP);
   const visible = visits.filter((v) => {
     if (!inRange(v)) return false;
@@ -330,8 +352,17 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Site Visits</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 0' }}>{visible.length} visit{visible.length === 1 ? '' : 's'}</p>
         </div>
-        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openSchedule} style={btnPrimary}>+ Schedule Visit</button>
+        <div className="sv-head-actions">
+          {canExportLeads(user) && (
+            <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={exportVisits} disabled={exporting}
+              title="Completed visits, with the filters below, as Excel">
+              <Icon name="download" /> {exporting ? 'Preparing…' : 'Download Excel'}
+            </button>
+          )}
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={openSchedule} style={btnPrimary}>+ Schedule Visit</button>
+        </div>
       </div>
+      {exportErr && <div className="nx-note bad sv-export-err">{exportErr}</div>}
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--surface-3)', margin: '18px 0 20px', overflowX: 'auto' }}>
