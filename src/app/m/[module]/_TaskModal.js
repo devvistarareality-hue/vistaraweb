@@ -71,14 +71,14 @@ export default function TaskModal({ taskId, defaultListId, lists, onClose, onSav
 
   async function create() {
     if (!title.trim()) { setErr('Title is required.'); return; }
-    if (!taskListId) { setErr('Pick a task list.'); return; }
     setSaving(true); setErr('');
     try {
       const r = await apiFetch(TASK_ENDPOINTS.tasks, {
         method: 'POST',
         body: JSON.stringify({
           title: title.trim(), description: description.trim(), status, priority,
-          due_date: dueDate || null, start_date: startDate || null, task_list: taskListId,
+          due_date: dueDate || null, start_date: startDate || null,
+          ...(taskListId ? { task_list: taskListId } : {}),
           assignee_ids: assignees.map((a) => a.id),
         }),
       });
@@ -171,12 +171,18 @@ export default function TaskModal({ taskId, defaultListId, lists, onClose, onSav
               {err && <div className="nx-note bad">{err}</div>}
 
               <div className="nx-task-row">
-                <div className="nx-field stack">
-                  <span className="nx-field-label">Task list</span>
-                  <select className="nx-input" value={taskListId} onChange={(e) => { setTaskListId(e.target.value); if (!isCreate) patch({ task_list: e.target.value }); }}>
-                    {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </div>
+                {/* Not asked when creating: it was a dropdown with one option, and
+                    the server files a new task on the company's first open list.
+                    Kept when editing, where it is the only way to move a task from
+                    one list to another. */}
+                {!isCreate && (
+                  <div className="nx-field stack">
+                    <span className="nx-field-label">Task list</span>
+                    <select className="nx-input" value={taskListId} onChange={(e) => { setTaskListId(e.target.value); patch({ task_list: e.target.value }); }}>
+                      {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div className="nx-field stack">
                   <span className="nx-field-label">Due date</span>
                   <input className="nx-input" type="date" value={dueDate}
