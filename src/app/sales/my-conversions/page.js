@@ -269,7 +269,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
 
       {/* Tabs */}
       <div className="book-row-plain">
-        <BookFilter value={book} onChange={setBook} />
+        <BookFilter hidden={cpOnly} value={book} onChange={setBook} />
       </div>
       <div className="myconv-tabs">
         {[

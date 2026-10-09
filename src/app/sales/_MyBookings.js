@@ -377,7 +377,7 @@ export function MyBookingsList({ cpOnly = false }) {
                 color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: 4 }}>×</button>
           )}
         </div>
-        <BookFilter value={book} onChange={(b) => { setBook(b); setOpen({}); setWho(''); }} />
+        <BookFilter hidden={cpOnly} value={book} onChange={(b) => { setBook(b); setOpen({}); setWho(''); }} />
         {projOptions.length > 1 && (
           <MultiSelect allLabel="All Projects" noun="projects" value={proj} onChange={(v) => { setProj(v); setOpen({}); }}
             options={projOptions.map((n) => ({ value: n, label: n }))} />

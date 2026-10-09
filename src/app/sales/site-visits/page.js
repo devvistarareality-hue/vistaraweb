@@ -382,7 +382,7 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
 
       {/* Source: Sales / CP / All — counts always add up (see BookFilter). */}
       <div className="book-row-plain">
-        <BookFilter value={book} onChange={setBook} />
+        <BookFilter hidden={cpOnly} value={book} onChange={setBook} />
       </div>
 
       {/* Search bar */}

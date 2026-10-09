@@ -404,7 +404,7 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
       </div>
 
       <div className="book-row-plain">
-        <BookFilter value={book} onChange={setBook} />
+        <BookFilter hidden={isCp} value={book} onChange={setBook} />
       </div>
 
       {isCp && (
@@ -939,7 +939,7 @@ export function STMDashboard({ user, cpOnly = false }) {
       </div>
 
       <div className="book-row-plain">
-        <BookFilter value={book} onChange={setBook} />
+        <BookFilter hidden={cpOnly} value={book} onChange={setBook} />
       </div>
       <DateFilter onChange={setEff} />
 

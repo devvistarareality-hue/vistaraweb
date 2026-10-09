@@ -2047,7 +2047,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
 
             {/* Source: Sales / CP / All — counts always add up (see BookFilter). */}
             <div className="book-row">
-              <BookFilter value={book} onChange={(b) => { setBook(b); setPage(1); }} />
+              <BookFilter hidden={cpOnly} value={book} onChange={(b) => { setBook(b); setPage(1); }} />
             </div>
 
             {/* Row 1: Date range + quick buttons + project + tc/stm status */}

@@ -14,6 +14,8 @@ import { useEffect, useState } from 'react';
 export const BOOK_OPTIONS = [['sales', 'Sales'], ['cp', 'CP'], ['all', 'All']];
 
 export function useBook(cpOnly) {
+  // The Channel Partner module is the partner book, full stop: no switch there, and
+  // the server's own CP rules apply (see backend requested_book).
   const key = cpOnly ? 'nx_book_cp' : 'nx_book_sales';
   const fallback = cpOnly ? 'cp' : 'sales';
   const [book, setBookState] = useState(fallback);
@@ -27,10 +29,12 @@ export function useBook(cpOnly) {
     setBookState(b);
     try { localStorage.setItem(key, b); } catch (_) {}
   };
+  if (cpOnly) return ['cp', () => {}];
   return [book, setBook];
 }
 
-export default function BookFilter({ value, onChange, label = 'Source' }) {
+export default function BookFilter({ value, onChange, label = 'Source', hidden }) {
+  if (hidden) return null;
   return (
     <div className="book-filter" role="radiogroup" aria-label={label}>
       <span className="book-filter-label">{label}</span>
