@@ -2586,3 +2586,13 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .sv-head-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .sv-export-err { margin-top: 10px; }
 
+
+/* ─── Task Allocation · the task reference (TSK-001) ───
+   Shown beside every task title and searchable, so a task can be quoted in a
+   message and found again. Monospaced and tabular so a column of them lines up. */
+.nx-task-titleline { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.nx-task-code { flex: 0 0 auto; font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--muted); background: var(--surface-2); border-radius: 6px; padding: 2px 6px;
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nx-task-code-lg { font-size: 12px; padding: 3px 8px; align-self: center; }
+.nx-task-titleline .nx-task-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

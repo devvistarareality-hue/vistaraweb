@@ -105,7 +105,7 @@ export default function TaskListPage({ params }) {
           <div className="nx-search-wrap">
             <span className="nx-search-icon"><Search size={15} /></span>
             <input className="nx-input nx-search-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search task title…" />
+              placeholder="Search title or task ID…" />
           </div>
         </div>
         <div className="nx-fu-filterbar-row">
@@ -151,7 +151,10 @@ export default function TaskListPage({ params }) {
         <div className="nx-fu-list">
           {tasks.slice(0, shown).map((t) => (
             <div key={t.id} className={`nx-task-card${isOverdue(t) ? ' is-overdue' : ''}`} onClick={() => setOpenTaskId(t.id)}>
-              <div className="nx-task-title">{t.title}</div>
+              <div className="nx-task-titleline">
+                {t.code ? <span className="nx-task-code">{t.code}</span> : null}
+                <span className="nx-task-title">{t.title}</span>
+              </div>
               <div className="nx-task-meta-row">
                 <span className={`nx-status ${t.status === 'done' ? 'ok' : t.status === 'blocked' ? 'off' : 'warn'}`}>{STATUS_LABEL[t.status]}</span>
                 <span className={`tone-${PRIORITIES.find((p) => p.value === t.priority)?.tone || 'info'} nx-badge`}>{PRIORITY_LABEL[t.priority]}</span>
