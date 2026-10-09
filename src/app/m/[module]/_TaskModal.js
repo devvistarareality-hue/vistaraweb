@@ -24,6 +24,7 @@ export default function TaskModal({ taskId, defaultListId, lists, onClose, onSav
   const [dueDate, setDueDate] = useState('');
   const [startDate, setStartDate] = useState('');
   const [taskListId, setTaskListId] = useState(defaultListId || (lists?.[0]?.id ?? ''));
+  const [code, setCode] = useState('');
   const [assignees, setAssignees] = useState([]); // [{id, name}]
   const [people, setPeople] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -53,6 +54,7 @@ export default function TaskModal({ taskId, defaultListId, lists, onClose, onSav
       setDueDate(d.due_date || '');
       setStartDate(d.start_date || '');
       setTaskListId(d.task_list || '');
+      setCode(d.code || '');
       setAssignees(d.assignees || []);
       setChecklist(d.checklist_items || []);
     }).finally(() => alive && setLoading(false));
@@ -154,6 +156,8 @@ export default function TaskModal({ taskId, defaultListId, lists, onClose, onSav
     <div className="nx-modal-backdrop" onClick={onClose}>
       <div className="nx-card nx-modal nx-task-modal" onClick={(e) => e.stopPropagation()}>
         <div className="nx-task-modal-head">
+          {/* The reference, for quoting in a message or pasting into search. */}
+          {code ? <span className="nx-task-code nx-task-code-lg">{code}</span> : null}
           <input className="nx-input nx-page-title-input" value={title}
             placeholder="Task title…" onChange={(e) => setTitle(e.target.value)}
             onBlur={() => !isCreate && title.trim() && patch({ title: title.trim() })} />

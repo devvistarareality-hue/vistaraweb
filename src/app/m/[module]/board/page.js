@@ -83,7 +83,10 @@ export default function TaskBoardPage({ params }) {
                     onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(t.id)); setDraggingId(t.id); }}
                     onDragEnd={() => setDraggingId(null)}
                     onClick={() => setOpenTaskId(t.id)}>
-                    <div className="nx-task-title">{t.title}</div>
+                    <div className="nx-task-titleline">
+                {t.code ? <span className="nx-task-code">{t.code}</span> : null}
+                <span className="nx-task-title">{t.title}</span>
+              </div>
                     <div className="nx-task-meta-row">
                       <span className={`nx-badge tone-${PRIORITIES.find((p) => p.value === t.priority)?.tone || 'info'}`}>{PRIORITY_LABEL[t.priority]}</span>
                       {t.due_date && <span className={`nx-task-due${isOverdue(t) ? ' is-overdue' : ''}`}>{fmtDate(t.due_date)}</span>}
