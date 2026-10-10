@@ -177,13 +177,6 @@ export const SALES_ENDPOINTS = {
   partnerSiteVisit: (id)        => `${BASE_URL}/api/sales/partner-site-visits/${id}/`,
 };
 
-// Plain-language questions about the user's own data. The server answers from
-// scoped aggregates; see backend/ai/tools.py.
-export const AI_ENDPOINTS = {
-  get ask()    { return `${BASE_URL}/api/ai/ask/`; },
-  get status() { return `${BASE_URL}/api/ai/status/`; },
-};
-
 export const AR_ENDPOINTS = {
   get accounts()   { return `${BASE_URL}/api/ar/accounts/`; },
   account: (id)    => `${BASE_URL}/api/ar/accounts/${id}/`,
