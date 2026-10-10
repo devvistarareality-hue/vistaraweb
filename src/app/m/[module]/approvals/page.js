@@ -23,9 +23,9 @@ const modSel = { height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px 
 async function openLoi(id) {
   try {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
-    const d = await r.json();
+    const d = await r.json().catch(() => ({}));
     if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else notify('Could not open the document.');
+    else notify(d?.detail || 'Could not open the document.');
   } catch { notify('Could not open the document.'); }
 }
 
@@ -34,7 +34,7 @@ async function downloadLoi(b) {
   try {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(b.id), { headers: authHeaders() });
     const d = await r.json();
-    if (!r.ok || !d.url) { notify('Could not download the document.'); return; }
+    if (!r.ok || !d.url) { notify(d?.detail || 'Could not download the document.'); return; }
     const name = `${isEoi(b) ? 'EOI' : 'LOI'}_${(b.project_name || '').replace(/\s+/g, '_')}_${(b.plot_numbers || b.plot_number || '').replace(/[\s,]+/g, '')}_${(b.client_name || '').replace(/\s+/g, '_')}.pdf`;
     try {
       const blob = await (await fetch(d.url)).blob();
