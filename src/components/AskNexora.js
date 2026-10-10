@@ -6,18 +6,25 @@ import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 import { explainApiError, explainNetworkError } from '../lib/apiError';
 
 // Ask Nexora — the AI assistant (backend sales/assistant.py). A floating button on
-// the Sales and Channel Partner screens opens a chat: type a question, the server
-// answers from what this person can see. Shown only to people ticked in User
-// Management (Ask Nexora (AI)) and to admins.
+// the dashboards and in every module opens a chat: type a question, the server
+// works out which module it is about and answers from what this person can see.
+// `module` is the screen it was opened from (a hint, and where it is logged).
+// Shown only to people ticked in User Management (Ask Nexora (AI)) and to admins.
 export const canUseAI = (user) => !!(user && (user.can_use_ai || user.role === 'Admin' || user.is_staff));
 
-const EXAMPLES = [
-  "Show today's site visits",
-  'How many Meta leads came this week, project-wise?',
-  'Which STM has the most pending follow-ups?',
-  'Why are closures low this month?',
-  'What should my team focus on this week?',
-];
+const EXAMPLES = {
+  sales: ["Show today's site visits", 'How many Meta leads came this week, project-wise?',
+    'Which STM has the most pending follow-ups?', 'Why are closures low this month?'],
+  cp: ['How many partner leads came this month, partner-wise?', "Show this week's CP site visits",
+    'Which partners brought bookings this quarter?'],
+  ar: ['How much is overdue, project-wise?', 'Which 10 accounts owe the most?',
+    "What collection follow-ups are due today?"],
+  execution: ['How many tasks are overdue, by person?', 'What is due this week?', 'Which tasks are blocked?'],
+  hr: ['Who is on leave this week?', 'How many leave requests are pending?', 'My attendance this month'],
+  club1000: ['How much has been invested this year, scheme-wise?', 'Which payouts are due this month?'],
+  dashboard: ["Today's site visits and bookings", 'How much is overdue in AR, project-wise?',
+    'How many tasks are overdue?', 'Who is on leave this week?', 'Give me a summary of this month'],
+};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // The answer comes as simple Markdown — paragraphs, bullets, **bold** and tables.
@@ -70,7 +77,8 @@ function Markdown({ text }) {
   return <>{out}</>;
 }
 
-export default function AskNexora({ cp = false }) {
+export default function AskNexora({ module = 'dashboard' }) {
+  const examples = EXAMPLES[module] || EXAMPLES.dashboard;
   const user = useSelector((s) => s.auth?.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [open, setOpen] = useState(false);
@@ -92,7 +100,7 @@ export default function AskNexora({ cp = false }) {
     try {
       const res = await fetch(SALES_ENDPOINTS.aiAsk, {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ question: q, history, company_id: companyId || null, module: cp ? 'cp' : 'sales' }),
+        body: JSON.stringify({ question: q, history, company_id: companyId || null, module }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { finish({ err: explainApiError(res, d, 'Ask Nexora could not take that question.') }); return; }
@@ -129,9 +137,9 @@ export default function AskNexora({ cp = false }) {
           <div className="ask-body">
             {turns.length === 0 && (
               <div className="ask-intro">
-                <p>Ask about your leads, site visits, follow-ups, closures and bookings — in plain words. Answers use only what you can see.</p>
+                <p>Ask about anything in your modules — Sales, AR, tasks, HR and more — in plain words. Answers use only what you can see.</p>
                 <div className="ask-examples">
-                  {EXAMPLES.map((ex) => <button key={ex} type="button" className="ask-example" onClick={() => ask(ex)}>{ex}</button>)}
+                  {examples.map((ex) => <button key={ex} type="button" className="ask-example" onClick={() => ask(ex)}>{ex}</button>)}
                 </div>
               </div>
             )}

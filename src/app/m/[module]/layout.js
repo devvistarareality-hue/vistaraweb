@@ -264,7 +264,7 @@ export default function ModuleLayout({ children, params }) {
         ) : children}
       </main>
       {/* Ask Nexora — AI assistant; in the Channel Partner module it reads the partner book. */}
-      {slug === 'cp' && <AskNexora cp />}
+      <AskNexora module={slug} />
 
       {/* ── Profile Modal ── */}
       {profileOpen && (

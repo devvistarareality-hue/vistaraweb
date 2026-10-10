@@ -426,7 +426,7 @@ export default function UserManagementPage() {
                 <input type="checkbox" checked={!!form.can_use_ai}
                   onChange={(e) => setForm((f) => ({ ...f, can_use_ai: e.target.checked }))} />
                 <span className="um-check-title">Ask Nexora (AI)</span>
-                <span className="um-check-sub">— ask questions and get analysis of their own Sales &amp; CP data</span>
+                <span className="um-check-sub">— ask questions and get analysis of their own data in every module they have</span>
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? 'var(--success-2)' : 'var(--border)'}`, backgroundColor: form.is_active ? 'var(--success-soft)' : 'var(--surface-2)', marginBottom: 4 }}>

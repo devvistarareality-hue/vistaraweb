@@ -586,7 +586,7 @@ export default function SalesLayout({ children }) {
         </main>
       </div>
       {/* Ask Nexora — AI assistant, for people ticked for it in User Management. */}
-      <AskNexora />
+      <AskNexora module="sales" />
     </div>
   );
 }
