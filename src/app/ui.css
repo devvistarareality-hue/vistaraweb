@@ -2596,3 +2596,31 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nx-task-code-lg { font-size: 12px; padding: 3px 8px; align-self: center; }
 .nx-task-titleline .nx-task-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ─── Ask the data a question (sales/_AskAi.js) ───
+   A question box on the dashboard. The answer is written by Claude from figures
+   the backend fetched under the asker's own scoping — see backend/ai/tools.py. */
+.ask-card { padding: 14px 16px; margin-bottom: 14px; }
+.ask-row { display: flex; align-items: center; gap: 10px; position: relative; }
+.ask-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 14px; pointer-events: none; }
+.ask-input { flex: 1; height: 40px; padding: 0 14px 0 36px; border-radius: 14px;
+  border: 1.5px solid var(--surface-3); background: var(--surface-2); font-size: 13.5px;
+  color: var(--text); outline: none; box-sizing: border-box; min-width: 0; }
+.ask-go { flex: 0 0 auto; }
+.ask-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ask-chip { border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+  border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+  transition: color .15s, border-color .15s; }
+.ask-chip:hover { color: var(--accent); border-color: var(--accent); }
+.ask-wait { font-size: 12.5px; color: var(--faint); margin: 10px 0 0; }
+.ask-err { font-size: 12.5px; color: var(--danger); margin: 10px 0 0; }
+.ask-answer { margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: var(--accent-softer); border: 1px solid var(--blue-2); }
+.ask-answer-text { font-size: 14px; line-height: 1.5; color: var(--text); margin: 0; white-space: pre-wrap; }
+.ask-note { font-size: 11px; color: var(--faint); margin: 8px 0 0; font-style: italic; }
+@media (max-width: 560px) {
+  .ask-row { flex-wrap: wrap; }
+  .ask-input { flex: 1 1 100%; }
+  .ask-go { width: 100%; justify-content: center; }
+}

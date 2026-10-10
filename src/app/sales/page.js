@@ -8,6 +8,7 @@ import { SALES_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import DateFilter from './_DateFilter';
 import PartnerPicker from './_PartnerPicker';
+import AskAi from './_AskAi';
 import { fillDates } from './_fillDates';
 import { getCache, getCacheWithStatus, setCache } from './_cache';
 
@@ -439,6 +440,8 @@ export function AdminDashboard({ user, adminView = false, adminSection = false, 
             ring={{ pct: pct(stats?.closures || 0, stats?.total_leads || 0), label: 'converted', caption: `${stats?.closures ?? 0} closures of ${stats?.total_leads ?? 0} leads` }}
           />
           {!isCp && <DashAlerts items={[{ tone: 'warn', count: stats?.unassigned_leads ?? 0, label: 'Unassigned leads', text: 'Waiting for an owner', href: `${leadsHref}?unassigned=true` }]} />}
+          {/* Hides itself when the server has no API key. */}
+          <AskAi />
           <div className="ard-kpi-grid">
             {cards.map((c) => <StatCard key={c.label} {...c} loading={loading} />)}
           </div>
