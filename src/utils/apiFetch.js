@@ -1,6 +1,7 @@
 import { LOGOUT } from '../redux/types/authTypes';
 import store from '../redux/store';
 import { clearAllCache } from '../app/sales/_cache';
+import { moduleHeader } from '../constants/api';
 
 const REFRESH_URL = () => {
   // Use the same backend the rest of the app talks to (persisted by discoverServer),
@@ -66,6 +67,7 @@ export async function apiFetch(url, options = {}) {
   const token = localStorage.getItem('access_token');
   const buildHeaders = (t) => ({
     'Content-Type': 'application/json',
+    ...moduleHeader(),
     ...options.headers,
     ...(t ? { Authorization: `Bearer ${t}` } : {}),
   });
