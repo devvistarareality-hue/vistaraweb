@@ -97,6 +97,7 @@ export default function UserManagementPage() {
       admin_modules:        u.admin_modules   || [],
       can_export_bookings:  !!u.can_export_bookings,
       can_export_leads:     !!u.can_export_leads,
+      can_use_ai:           !!u.can_use_ai,
       is_active:            u.is_active,
       reporting_manager_id: u.reporting_manager?.id ?? null,
     });
@@ -419,6 +420,13 @@ export default function UserManagementPage() {
                   onChange={(e) => setForm((f) => ({ ...f, can_export_leads: e.target.checked }))} />
                 <span className="um-check-title">Download leads &amp; site visits Excel</span>
                 <span className="um-check-sub">— their leads and completed visits, Sales &amp; CP, as filtered</span>
+              </label>
+              {/* Ask Nexora — the AI assistant; answers only from what this person can see. */}
+              <label className={`um-check${form.can_use_ai ? ' is-on' : ''}`}>
+                <input type="checkbox" checked={!!form.can_use_ai}
+                  onChange={(e) => setForm((f) => ({ ...f, can_use_ai: e.target.checked }))} />
+                <span className="um-check-title">Ask Nexora (AI)</span>
+                <span className="um-check-sub">— ask questions and get analysis of their own Sales &amp; CP data</span>
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer', padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${form.is_active ? 'var(--success-2)' : 'var(--border)'}`, backgroundColor: form.is_active ? 'var(--success-soft)' : 'var(--surface-2)', marginBottom: 4 }}>

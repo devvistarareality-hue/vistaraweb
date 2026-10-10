@@ -15,6 +15,7 @@ import Loader from '../../../components/Loader';
 import ThemeToggle from '../../../components/ThemeToggle';
 import NexoraLogo from '../../../components/NexoraLogo';
 import { useImpersonating } from '../../../lib/useImpersonating';
+import AskNexora from '../../../components/AskNexora';
 
 const ORANGE = 'var(--accent)';
 const NAVY = 'var(--text)';
@@ -262,6 +263,8 @@ export default function ModuleLayout({ children, params }) {
           </div>
         ) : children}
       </main>
+      {/* Ask Nexora — AI assistant; in the Channel Partner module it reads the partner book. */}
+      {slug === 'cp' && <AskNexora cp />}
 
       {/* ── Profile Modal ── */}
       {profileOpen && (

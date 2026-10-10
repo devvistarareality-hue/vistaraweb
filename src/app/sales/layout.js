@@ -19,6 +19,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
 import { useImpersonating } from '../../lib/useImpersonating';
 import { groupsFor } from '../../lib/moduleGroups';
+import AskNexora from '../../components/AskNexora';
 const ORANGE = 'var(--accent)';
 const NAVY   = 'var(--text)';
 
@@ -584,6 +585,8 @@ export default function SalesLayout({ children }) {
           ) : children}
         </main>
       </div>
+      {/* Ask Nexora — AI assistant, for people ticked for it in User Management. */}
+      <AskNexora />
     </div>
   );
 }
