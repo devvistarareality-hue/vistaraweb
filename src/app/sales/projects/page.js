@@ -8,6 +8,7 @@ import MediaUpload from '../../../components/MediaUpload';
 import TowerFloorBuilder, { unitsForFloor } from '../../../components/TowerFloorBuilder';
 
 import Icon from '../../../components/Icon';
+import UnitTypesEditor, { cleanUnitTypes } from '../../../components/UnitTypesEditor';
 import { confirmDialog } from '../../../lib/notify';
 // A DRF error is JSON, but a 500 (or a proxy timeout) is an HTML page. res.json() on
 // that throws a bare SyntaxError, so read the text first and hand back either the
@@ -114,6 +115,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     logo_url:        project?.logo_url        || '',
     master_plan_url: project?.master_plan_url || '',
     eoi_unit_types:  project?.eoi_unit_types  || [],
+    loi_unit_types:  project?.loi_unit_types  || [],
     kiosk_enabled:   project?.kiosk_enabled   ?? false,
     is_locked:       project?.is_locked       ?? false,
     locked_blocks:   project?.locked_blocks   || [],
@@ -126,10 +128,6 @@ function ProjectModal({ project, onClose, onSaved }) {
   // same place a unit's number prefix comes from. No floor plans, no blocks.
   const blocks = [...new Set((form.floor_plans || []).map((f) => f.block || '').filter(Boolean))].sort();
 
-  // EOI standard unit types (pre-approval sizes) — [{type, plot_area, const_area}].
-  const addEoiType    = () => setForm(f => ({ ...f, eoi_unit_types: [...(f.eoi_unit_types || []), { type: '', plot_area: '', const_area: '' }] }));
-  const removeEoiType = (i) => setForm(f => ({ ...f, eoi_unit_types: f.eoi_unit_types.filter((_, idx) => idx !== i) }));
-  const updateEoiType = (i, k, val) => setForm(f => ({ ...f, eoi_unit_types: f.eoi_unit_types.map((t, idx) => idx === i ? { ...t, [k]: val } : t) }));
 
   // Plot setup state (used for both Add and Edit)
   const [hasTypes,    setHasTypes]    = useState(false);
@@ -225,7 +223,7 @@ function ProjectModal({ project, onClose, onSaved }) {
     setSaving(true); setErr('');
 
     const payload = { ...form, total_plots: isEdit ? totalPlots : 0,
-      eoi_unit_types: (form.eoi_unit_types || []).filter(t => (t.type || '').trim()) };
+      eoi_unit_types: cleanUnitTypes(form.eoi_unit_types), loi_unit_types: cleanUnitTypes(form.loi_unit_types) };
     const url    = isEdit ? SALES_ENDPOINTS.project(project.id) : SALES_ENDPOINTS.projects;
     const method = isEdit ? 'PATCH' : 'POST';
     const res    = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -534,28 +532,14 @@ function ProjectModal({ project, onClose, onSaved }) {
           </>
           )}
 
-          {/* EOI Unit Types — standard pre-approval sizes used to prefill the EOI form */}
-          <div style={mSec}>EOI Unit Types</div>
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 10 }}>Standard sizes shown when creating an EOI (before plots are approved). Plot Area &amp; Construction Area auto-fill from the chosen type.</p>
-            {(form.eoi_unit_types || []).length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 32px', gap: 8, marginBottom: 6 }}>
-                <span style={mLbl}>Type</span><span style={mLbl}>Plot Area</span><span style={mLbl}>Const. Area</span><span />
-              </div>
-            )}
-            {(form.eoi_unit_types || []).map((t, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                <input className="nx-input" value={t.type} onChange={e => updateEoiType(i, 'type', e.target.value)} style={mInp} placeholder="e.g. 2 BHK" />
-                <input className="nx-input" value={t.plot_area} onChange={e => updateEoiType(i, 'plot_area', e.target.value)} style={mInp} placeholder="585" />
-                <input className="nx-input" value={t.const_area} onChange={e => updateEoiType(i, 'const_area', e.target.value)} style={mInp} placeholder="167" />
-                <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" type="button" onClick={() => removeEoiType(i)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 16, padding: 0 }}><Icon name="x" /></button>
-              </div>
-            ))}
-            <button className="nx-btn nx-btn-sm nx-btn-secondary" type="button" onClick={addEoiType}
-              style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning-2)', background: 'none', border: '1.5px dashed var(--warning-2)', borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}>
-              + Add Unit Type
-            </button>
-          </div>
+          {/* Standard sizes: EOI (before plots are approved) and LOI (a new LOI, or an
+              EOI converted to LOI). Picking one on the booking form fills the areas. */}
+          <UnitTypesEditor title="EOI Unit Types" value={form.eoi_unit_types}
+            onChange={(v) => setForm((f) => ({ ...f, eoi_unit_types: v }))}
+            hint="Standard sizes shown when creating an EOI (before plots are approved). Plot Area & Construction Area auto-fill from the chosen type." />
+          <UnitTypesEditor title="LOI Unit Types" value={form.loi_unit_types}
+            onChange={(v) => setForm((f) => ({ ...f, loi_unit_types: v }))} copyFrom={form.eoi_unit_types}
+            hint="Standard sizes for an LOI — a new customer booking directly, or an EOI converted to LOI. Plot Area & Construction Area auto-fill from the chosen type." />
 
           {err && <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
 

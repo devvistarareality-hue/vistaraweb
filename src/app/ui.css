@@ -2644,3 +2644,15 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* Team Users heading (sales/users/page.js), shared by the Sales and Channel
    Partner versions of that screen. */
 .tu-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+
+/* Project unit types — EOI and LOI standard sizes (components/UnitTypesEditor). */
+.ut-box { margin-bottom: 20px; }
+.ut-title { font-size: 10px; font-weight: 700; color: var(--faint); letter-spacing: 1px; text-transform: uppercase; margin: 4px 0 12px; }
+.ut-hint { font-size: 11px; color: var(--faint); margin-bottom: 10px; }
+.ut-row { display: grid; grid-template-columns: 1fr 90px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.ut-head { margin-bottom: 6px; }
+.ut-head span { font-size: 11px; font-weight: 600; color: var(--text-3); }
+.ut-remove { color: var(--danger); }
+.ut-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ut-add { font-size: 12px; font-weight: 700; color: var(--warning-2); background: none; border: 1.5px dashed var(--warning-2); border-radius: 8px; padding: 6px 16px; }
+@media (max-width: 560px) { .ut-row { grid-template-columns: 1fr 70px 70px 28px; } }
