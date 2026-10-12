@@ -123,14 +123,24 @@ function AssignProjectsModal({ member, projects, onClose }) {
   );
 }
 
-export default function SalesUsersPage() {
+/**
+ * The team list, for Sales or for Channel Partner.
+ *
+ * `cpOnly` swaps which desk is listed — the server scopes by department, so a
+ * person who sits in both appears on both screens, which is right: assignments
+ * made from either are the same assignments.
+ */
+export function TeamUsersContent({ cpOnly = false }) {
   const router    = useRouter();
   const user      = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
+  const moduleName = cpOnly ? 'Channel Partner' : 'Sales';
 
   useEffect(() => {
-    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes('Sales')) router.replace('/sales');
-  }, [user]);
+    if (user && user.role !== 'Admin' && !user.is_staff && !(user.admin_modules || []).includes(moduleName)) {
+      router.replace(cpOnly ? '/m/cp/dashboard' : '/sales');
+    }
+  }, [user, moduleName, cpOnly]);
 
   const [members,  setMembers]  = useState([]);
   const [projects, setProjects] = useState([]);
@@ -147,9 +157,12 @@ export default function SalesUsersPage() {
     setApiError('');
     setLoading(true);
     const cq = companyId ? `?company_id=${companyId}` : '';
+    // ?cp=1 lists the Channel Partner desk; the project list is the same either way.
+    const teamQ = [companyId ? `company_id=${companyId}` : '', cpOnly ? 'cp=1' : '']
+      .filter(Boolean).join('&');
     try {
       const [teamRes, projRes] = await Promise.all([
-        fetch(SALES_ENDPOINTS.team     + cq, { headers: authHeaders() }).then(r => r.json()),
+        fetch(SALES_ENDPOINTS.team + (teamQ ? `?${teamQ}` : ''), { headers: authHeaders() }).then(r => r.json()),
         fetch(SALES_ENDPOINTS.projects + cq, { headers: authHeaders() }).then(r => r.json()),
       ]);
       const teamList = Array.isArray(teamRes) ? teamRes : [];
@@ -174,7 +187,7 @@ export default function SalesUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [companyId]);
+  }, [companyId, cpOnly]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -208,7 +221,7 @@ export default function SalesUsersPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>Sales Team</h1>
+            <h1 className="tu-title">{cpOnly ? 'Channel Partner Team' : 'Sales Team'}</h1>
             <p style={{ fontSize: 13, color: 'var(--muted)' }}>{members.length} team members</p>
           </div>
           <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={load} title="Refresh" style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, color: 'var(--muted)' }}>↺</button>
@@ -306,3 +319,7 @@ export default function SalesUsersPage() {
 const th = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '10px 16px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td = { padding: '12px 16px', fontSize: 13 };
 const avatarStyle = { width: 34, height: 34, borderRadius: 9, backgroundColor: 'var(--accent-soft)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 };
+
+export default function SalesUsersPage() {
+  return <TeamUsersContent />;
+}

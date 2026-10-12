@@ -115,6 +115,9 @@ export default function ModuleLayout({ children, params }) {
       { label: 'Follow-Ups',  href: `${base}/follow-ups`,  icon: <IconBell />,  screen: 'cp.screen.followups' },
       { label: 'Booking',     href: `${base}/closure`,     icon: <IconBook />,  screen: 'cp.screen.booking' },
       { label: 'Approvals',   href: `${base}/approvals`,   icon: <IconCheck />, screen: 'cp.screen.approvals' },
+      // The CP desk's own people and their project assignments — the Sales
+      // module has had this and CP had to borrow it.
+      { label: 'Team Users',  href: `${base}/users`,       icon: <IconUsers />, screen: 'cp.screen.users' },
     ] : []),
     // Accounts Receivable: the register of approved bookings (each opening its
     // ledger) and the import of past receipts.

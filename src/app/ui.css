@@ -2640,3 +2640,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ask-send { height: 42px; width: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .ask-foot { margin: 0; padding: 0 14px 10px; font-size: 11px; color: var(--muted); }
 @media (max-width: 560px) { .ask-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); } }
+
+/* Team Users heading (sales/users/page.js), shared by the Sales and Channel
+   Partner versions of that screen. */
+.tu-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
