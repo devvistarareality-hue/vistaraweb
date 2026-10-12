@@ -2596,3 +2596,47 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nx-task-code-lg { font-size: 12px; padding: 3px 8px; align-self: center; }
 .nx-task-titleline .nx-task-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Ask Nexora — the AI assistant (components/AskNexora). */
+.ask-fab { position: fixed; right: 22px; bottom: 22px; z-index: 900; display: inline-flex; align-items: center; gap: 8px;
+  height: 46px; padding: 0 18px; border-radius: 999px; border: 1.5px solid var(--accent); cursor: pointer; font-size: 14px; font-weight: 800;
+  background: var(--accent-soft); color: var(--accent); box-shadow: var(--shadow-lg); backdrop-filter: blur(8px); }
+.ask-fab:hover { filter: brightness(1.08); }
+.ask-panel { position: fixed; right: 22px; bottom: 22px; z-index: 900; width: min(440px, calc(100vw - 32px));
+  height: min(640px, calc(100vh - 44px)); display: flex; flex-direction: column; border-radius: 22px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
+.ask-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px;
+  border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.ask-title { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; color: var(--text); }
+.ask-head-actions { display: flex; align-items: center; gap: 6px; }
+.ask-clear { border: 0; background: none; font-size: 12px; font-weight: 700; color: var(--accent); cursor: pointer; }
+.ask-close { width: 30px; height: 30px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ask-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+.ask-intro p { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.ask-examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-example { text-align: left; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text); font-size: 12.5px; cursor: pointer; }
+.ask-example:hover { border-color: var(--accent); }
+.ask-turn { display: flex; flex-direction: column; gap: 8px; }
+.ask-q { align-self: flex-end; max-width: 85%; padding: 9px 13px; border-radius: 14px 14px 4px 14px; background: var(--accent-soft);
+  border: 1px solid var(--accent); color: var(--text); font-size: 13.5px; white-space: pre-wrap; }
+.ask-a { align-self: flex-start; max-width: 100%; padding: 10px 13px; border-radius: 14px 14px 14px 4px; background: var(--surface-2);
+  color: var(--text); font-size: 13.5px; line-height: 1.55; }
+.ask-err { background: var(--danger-soft); color: var(--danger); }
+.ask-p { margin: 0 0 6px; } .ask-p:last-child { margin-bottom: 0; }
+.ask-h { font-weight: 800; margin: 6px 0 4px; }
+.ask-list { margin: 4px 0 6px; padding-left: 20px; }
+.ask-table-wrap { overflow-x: auto; margin: 6px 0; }
+.ask-table { border-collapse: collapse; font-size: 12.5px; min-width: 100%; }
+.ask-table th, .ask-table td { padding: 6px 9px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.ask-table th { font-weight: 800; color: var(--text-2); }
+.ask-thinking { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.ask-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: ask-blink 1.2s infinite both; }
+.ask-dot:nth-child(2) { animation-delay: .2s; } .ask-dot:nth-child(3) { animation-delay: .4s; margin-right: 6px; }
+@keyframes ask-blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.ask-input { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px; border-top: 1px solid var(--border); }
+.ask-textarea { flex: 1; min-height: 42px; max-height: 120px; resize: none; padding: 10px 12px; border-radius: 14px; font-size: 13.5px; }
+.ask-send { height: 42px; width: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.ask-foot { margin: 0; padding: 0 14px 10px; font-size: 11px; color: var(--muted); }
+@media (max-width: 560px) { .ask-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); } }

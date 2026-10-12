@@ -7,6 +7,7 @@ import { logout } from '../../redux/actions/authActions';
 import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
+import AskNexora from '../../components/AskNexora';
 import { useImpersonating } from '../../lib/useImpersonating';
 
 // Employee portal shell: people with two or more modules land here to pick one.
@@ -53,6 +54,7 @@ export default function DashboardLayout({ children }) {
         </div>
       </nav>
       <main className="ep-main">{children}</main>
+      <AskNexora module="dashboard" />
     </div>
   );
 }

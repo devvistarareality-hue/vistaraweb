@@ -65,6 +65,7 @@ export default function CreateUserPage() {
     admin_modules:        [],
     can_export_bookings:  false,
     can_export_leads:     false,
+    can_use_ai:           false,
     reporting_manager_id: null,
   });
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -351,6 +352,11 @@ export default function CreateUserPage() {
               <input type="checkbox" checked={!!form.can_export_leads}
                 onChange={(e) => setForm((f) => ({ ...f, can_export_leads: e.target.checked }))} />
               Download leads &amp; site visits Excel — their leads and completed visits, as filtered
+            </label>
+            <label className="um-check-plain">
+              <input type="checkbox" checked={!!form.can_use_ai}
+                onChange={(e) => setForm((f) => ({ ...f, can_use_ai: e.target.checked }))} />
+              Ask Nexora (AI) — ask questions and get analysis of their own data
             </label>
           </div>
 

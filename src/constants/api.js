@@ -42,7 +42,15 @@ export const loiHref = (doc) => (!doc ? '' : (/^https?:\/\//.test(doc) ? doc : g
 // lives in one place instead of being redefined in every page/action.
 export function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...moduleHeader() };
+}
+
+// The Channel Partner desk calls the same /api/sales/ endpoints as Sales; this tells
+// the server the call came from a Channel Partner screen, so the change is logged
+// under Channel Partner (backend activity/recorder.py).
+export function moduleHeader() {
+  if (typeof window === 'undefined') return {};
+  return /^\/m\/cp(\/|$)/.test(window.location.pathname) ? { 'X-Nexora-Module': 'cp' } : {};
 }
 
 export const COMPANY_ENDPOINTS = {
@@ -94,6 +102,8 @@ export const SALES_ENDPOINTS = {
   get siteVisits() { return `${BASE_URL}/api/sales/site-visits/`; },
   siteVisit: (id)  => `${BASE_URL}/api/sales/site-visits/${id}/`,
   siteVisitEdit: (id) => `${BASE_URL}/api/sales/site-visits/${id}/edit/`,
+  get aiAsk()     { return `${BASE_URL}/api/sales/ai/ask/`; },
+  aiAskJob: (job) => `${BASE_URL}/api/sales/ai/ask/${job}/`,
   get closures()   { return `${BASE_URL}/api/sales/closures/`; },
   closureCancel: (id) => `${BASE_URL}/api/sales/closures/${id}/cancel/`,
   get leadTransfers() { return `${BASE_URL}/api/sales/lead-transfers/`; },

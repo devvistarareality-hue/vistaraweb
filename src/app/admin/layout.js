@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar';
 import { useOneSignal } from '../../lib/useOneSignal';
 import { moduleAccess } from '../../lib/moduleAccess';
 import Loader from '../../components/Loader';
+import AskNexora from '../../components/AskNexora';
 export default function AdminLayout({ children }) {
   const user     = useSelector((s) => s.auth.user);
   const router   = useRouter();
@@ -84,6 +85,7 @@ export default function AdminLayout({ children }) {
           {children}
         </main>
       </div>
+      <AskNexora module="dashboard" />
     </div>
   );
 }

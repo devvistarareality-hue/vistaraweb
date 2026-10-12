@@ -16,6 +16,7 @@ import Icon from '../../components/Icon';
 import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
+import AskNexora from '../../components/AskNexora';
 import { useImpersonating } from '../../lib/useImpersonating';
 const ORANGE = 'var(--accent)';
 const NAVY   = 'var(--text)';
@@ -445,6 +446,7 @@ export default function Club1000Layout({ children }) {
           ) : children}
         </main>
       </div>
+      <AskNexora module="club1000" />
     </div>
   );
 }
