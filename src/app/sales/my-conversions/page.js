@@ -257,10 +257,14 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   // month you picked. The "Showing N of M matching" counters use it too.
   const narrowed = !!(q || projF.length || stmF.length || range.from || range.to);
 
-  const svRows = tab === 'upcoming'
-    ? filter(upcoming, (r) => r.scheduled_at)
-    : filter(svCompleted, (r) => r.visited_at || r.scheduled_at);
+  // All three pools filtered, not just the open tab's: the cards above count
+  // these, and a headline of 51 sitting over a table narrowed to one week
+  // contradicts itself. Each keeps its own date field — a closure is dated by
+  // its closure date whichever tab happens to be open.
+  const doneRows = filter(svCompleted, (r) => r.visited_at || r.scheduled_at);
+  const upcomingRows = filter(upcoming, (r) => r.scheduled_at);
   const allClosures = filter(closures, (r) => r.closure_date);
+  const svRows = tab === 'upcoming' ? upcomingRows : doneRows;
   const loaderPad = { padding: '28px 0' };
 
   return (
@@ -277,19 +281,19 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
       {/* Stats cards */}
       <div className="myconv-stats">
         <div className="myconv-stat is-sv">
-          <div className="myconv-stat-value">{svCompleted.length}</div>
+          <div className="myconv-stat-value">{doneRows.length}</div>
           <div className="myconv-stat-label">Site Visits Done</div>
         </div>
         <div className="myconv-stat is-closures">
-          {/* The three cards are the totals for this person, so they stay put
-              while a search narrows the table under them — `closures`, not the
-              filtered `allClosures`, which would make the headline number
-              flicker as you type. */}
-          <div className="myconv-stat-value">{closures.length}</div>
+          {/* The cards follow the filters. They used to hold the person's grand
+              totals so they would not flicker while a search was typed, but a
+              date range made that read as a contradiction: 51 Site Visits Done
+              above a table showing one week of them. */}
+          <div className="myconv-stat-value">{allClosures.length}</div>
           <div className="myconv-stat-label">Total Closures</div>
         </div>
         <div className="myconv-stat is-upcoming">
-          <div className="myconv-stat-value">{upcoming.length}</div>
+          <div className="myconv-stat-value">{upcomingRows.length}</div>
           <div className="myconv-stat-label">Upcoming Visits</div>
         </div>
       </div>
