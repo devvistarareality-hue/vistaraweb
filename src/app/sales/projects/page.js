@@ -538,8 +538,8 @@ function ProjectModal({ project, onClose, onSaved }) {
             onChange={(v) => setForm((f) => ({ ...f, eoi_unit_types: v }))}
             hint="Standard sizes shown when creating an EOI (before plots are approved). Plot Area & Construction Area auto-fill from the chosen type." />
           <UnitTypesEditor title="LOI Unit Types" value={form.loi_unit_types}
-            onChange={(v) => setForm((f) => ({ ...f, loi_unit_types: v }))} copyFrom={form.eoi_unit_types}
-            hint="Standard sizes for an LOI — a new customer booking directly, or an EOI converted to LOI. Plot Area & Construction Area auto-fill from the chosen type." />
+            onChange={(v) => setForm((f) => ({ ...f, loi_unit_types: v }))} copyFrom={form.eoi_unit_types} noPlotArea
+            hint="Construction Area for each unit type on an LOI — a new customer booking directly, or an EOI converted to LOI. Plot Area always comes from the plot picked (fixed when the project was mapped)." />
 
           {err && <div style={{ backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 12, fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
 
