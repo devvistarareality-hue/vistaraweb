@@ -8,6 +8,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import MultiSelect from '../../../components/MultiSelect';
+import DateFilter from '../_DateFilter';
 import { can } from '../../../lib/moduleAccess';
 import BookFilter, { useBook } from '../../../components/BookFilter';
 function fmtDate(iso) {
@@ -182,7 +183,8 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   // "Showing 50 of 3" from wherever the last one had been scrolled to.
   const [projF, setProjF] = useState([]);   // project names; empty = all
   const [stmF, setStmF] = useState([]);     // STM names; empty = all
-  useEffect(() => { setShown(PAGE_STEP); }, [search, tab, projF, stmF]);
+  const [range, setRange] = useState({ from: '', to: '' });
+  useEffect(() => { setShown(PAGE_STEP); }, [search, tab, projF, stmF, range.from, range.to]);
   const [visits, setVisits] = useState([]);
   const [closures, setClosures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -217,10 +219,27 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
     row.unit_type, row.unit_no,
   ].some((f) => String(f || '').toLowerCase().includes(needle));
 
+  // Each tab is dated by the column it actually shows — a completed visit by when
+  // it happened, an upcoming one by when it is due, a closure by its closure date.
+  // Filtering all three on one field would quietly drop rows whose other date is
+  // blank, which is most of them.
+  const dayOf = (value) => {
+    if (!value) return '';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? String(value).slice(0, 10) : d.toLocaleDateString('en-CA');
+  };
+  const inRange = (value) => {
+    if (!range.from && !range.to) return true;
+    const d = dayOf(value);
+    if (!d) return false;            // undated rows drop out once a range is set
+    return (!range.from || d >= range.from) && (!range.to || d <= range.to);
+  };
+
   const q = search.trim().toLowerCase();
-  const filter = (rows) => rows.filter((r) => (!q || match(r, q))
+  const filter = (rows, dateOf) => rows.filter((r) => (!q || match(r, q))
     && (!projF.length || projF.includes(r.project_name || '—'))
-    && (!stmF.length || stmF.includes(r.stm_name || '—')));
+    && (!stmF.length || stmF.includes(r.stm_name || '—'))
+    && inRange(dateOf(r)));
 
   // The pickers offer only what this tab's rows hold — no project or STM that
   // would empty the list. A pick made on another tab stays listed so it can be
@@ -232,8 +251,16 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
   const projOptions = present('project_name', projF);
   const stmOptions = present('stm_name', stmF);
 
-  const svRows = filter(tab === 'upcoming' ? upcoming : svCompleted);
-  const allClosures = filter(closures);
+  // Whether anything is narrowing the list. The date range belongs in here with
+  // the rest: without it, a period that matches nothing reads as "no site visits
+  // recorded yet" — which says there is no data at all, rather than none in the
+  // month you picked. The "Showing N of M matching" counters use it too.
+  const narrowed = !!(q || projF.length || stmF.length || range.from || range.to);
+
+  const svRows = tab === 'upcoming'
+    ? filter(upcoming, (r) => r.scheduled_at)
+    : filter(svCompleted, (r) => r.visited_at || r.scheduled_at);
+  const allClosures = filter(closures, (r) => r.closure_date);
   const loaderPad = { padding: '28px 0' };
 
   return (
@@ -283,6 +310,10 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         ))}
       </div>
 
+      {/* Visit / closure date — the same control the dashboards use, so a period
+          picked here means what it means there. */}
+      <DateFilter onChange={setRange} />
+
       {/* Search + filters */}
       <div className="myconv-filters">
       <div className="nx-search-wrap myconv-search">
@@ -305,7 +336,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         <div className="nx-card myconv-card">
           {svRows.length === 0 ? (
             <div className="myconv-empty">
-              {(q || projF.length || stmF.length)
+              {narrowed
                 ? <>Nothing matches {search ? <b>{search}</b> : 'these filters'} in this tab.</>
                 : tab === 'upcoming'
                   ? (isStm ? 'No visits scheduled.' : 'No visits scheduled for your referred leads.')
@@ -342,7 +373,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             </div>
             {svRows.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {svRows.length}{(q || projF.length || stmF.length) ? ' matching' : ''}</span>
+                <span className="nx-more-count">Showing {shown} of {svRows.length}{narrowed ? ' matching' : ''}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}
@@ -352,7 +383,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
         <div className="nx-card myconv-card">
           {allClosures.length === 0 ? (
             <div className="myconv-empty">
-              {(q || projF.length || stmF.length)
+              {narrowed
                 ? <>Nothing matches {search ? <b>{search}</b> : 'these filters'} in this tab.</>
                 : isStm ? 'No closures recorded yet.' : 'No closures from your referred leads yet.'}
             </div>
@@ -392,7 +423,7 @@ export function MyConversionsContent({ adminView = false, cpOnly = false }) {
             </div>
             {allClosures.length > shown && (
               <div className="nx-more">
-                <span className="nx-more-count">Showing {shown} of {allClosures.length}{(q || projF.length || stmF.length) ? ' matching' : ''}</span>
+                <span className="nx-more-count">Showing {shown} of {allClosures.length}{narrowed ? ' matching' : ''}</span>
                 <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setShown((n) => n + PAGE_STEP)}>Show more</button>
               </div>
             )}
