@@ -2085,6 +2085,8 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               <select value={filters.stm_status} onChange={(e) => sf('stm_status', e.target.value)} style={activeSelStyle(filters.stm_status)}>
                 <option value="">{cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'}</option>
                 {onlyPresent(STM_STATUSES, fx('stm_statuses'), filters.stm_status).map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                {/* Passed to an STM who has not set any status on it yet. */}
+                <option value="not_updated">not updated by STM</option>
               </select>
               )}
               {/* Why they were disqualified — only meaningful once a status filter
