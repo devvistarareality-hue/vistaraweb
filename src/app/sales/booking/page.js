@@ -92,7 +92,7 @@ function BookingPage() {
   const [eoiUnits, setEoiUnits] = useState('1'); // no. of units — multiplies the standard area
   // LOI standard unit type (project.loi_unit_types) — a new LOI or an EOI converted to
   // LOI. '' = none picked: the areas come from the plot(s) as before.
-  const [loiType, setLoiType] = useState('');
+  const [loiPick, setLoiPick] = useState({});   // LOI unit type per picked plot: { index: type }
 
   const [project, setProject] = useState(null);
   const [plot,    setPlot]    = useState(null);   // primary (first) plot
@@ -543,22 +543,31 @@ function BookingPage() {
   // separate No. of Units on an LOI). Plot Area is never touched — it is the picked plot's own
   // area, fixed when the project was mapped. Re-applied after the plots load, which
   // would otherwise put the plot's construction area back.
+  // Several plots in one LOI can be different types (A-66 2 BHK, A-67 3 BHK), so each
+  // picked plot has its own type; Construction Area is their total and the villa type
+  // names each plot's type.
   const loiTypes = !eoiMode ? (project?.loi_unit_types || []) : [];
-  const loiUnitCount = Math.max(1, plotIds.length || 1);
+  const loiSlots = Math.max(1, plotIds.length || 1);
+  const loiLabel = (i) => (plots[i] ? stripPlotPrefix(plots[i].number) : `Plot ${i + 1}`);
+  const loiKey = Array.from({ length: loiSlots }, (_, i) => loiPick[i] || '').join('|');
   useEffect(() => {
-    const t = loiTypes.find((x) => x.type === loiType);
-    if (!t) return;
-    setF((s) => ({ ...s, villa_type: t.type,
-      const_area: String(+((+t.const_area || 0) * loiUnitCount).toFixed(2)) }));
+    const chosen = Array.from({ length: loiSlots }, (_, i) => loiTypes.find((x) => x.type === loiPick[i]));
+    if (!chosen.some(Boolean)) return;
+    const total = chosen.reduce((a, t) => a + (t ? (+t.const_area || 0) : 0), 0);
+    const name = loiSlots === 1 ? chosen[0].type
+      : chosen.map((t, i) => (t ? `${t.type} (${loiLabel(i)})` : null)).filter(Boolean).join(' + ');
+    setF((s) => ({ ...s, villa_type: name, const_area: String(+total.toFixed(2)) }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loiType, loiUnitCount, plots, project]);
-  // Converting an EOI: start on the LOI type with the EOI's own type name, if the
-  // project has one by that name.
+  }, [loiKey, loiSlots, plots, project]);
+  // Converting an EOI: start every plot on the LOI type with the EOI's own type name,
+  // if the project has one by that name.
   useEffect(() => {
-    if (!convertEoiId || loiType || !f.villa_type) return;
-    if (loiTypes.some((x) => x.type === f.villa_type)) setLoiType(f.villa_type);
+    if (!convertEoiId || Object.keys(loiPick).length || !f.villa_type) return;
+    if (loiTypes.some((x) => x.type === f.villa_type)) {
+      setLoiPick(Object.fromEntries(Array.from({ length: loiSlots }, (_, i) => [i, f.villa_type])));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convertEoiId, f.villa_type, project]);
+  }, [convertEoiId, f.villa_type, project, loiSlots]);
 
   const v = useMemo(() => computeFormulas({
     formulaSet, projectName: project?.name, loiVariant: project?.loi_variant,
@@ -1155,14 +1164,12 @@ function BookingPage() {
               }} /></Row>
           </>
         )}
-        {loiTypes.length > 0 && (
-          <>
-            <Row><L>Unit Type</L>
-              <Sel value={loiType} onChange={(e) => setLoiType(e.target.value)}
-                opts={['', ...loiTypes.map((x) => x.type)]} />
-            </Row>
-          </>
-        )}
+        {loiTypes.length > 0 && Array.from({ length: loiSlots }, (_, i) => (
+          <Row key={`loi${i}`}><L>{loiSlots > 1 ? `Unit Type — ${loiLabel(i)}` : 'Unit Type'}</L>
+            <Sel value={loiPick[i] || ''} onChange={(e) => { const v = e.target.value; setLoiPick((p) => ({ ...p, [i]: v })); }}
+              opts={['', ...loiTypes.map((x) => x.type)]} />
+          </Row>
+        ))}
         <Row><L>Plot Area ({unit})</L><In value={f.area} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
         {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} onChange={(e) => set('const_area', e.target.value)} /></Row>}
         {flags.bunglowTypeIsDropdown && !eoiMode && !loiTypes.length && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
