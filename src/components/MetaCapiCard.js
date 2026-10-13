@@ -67,14 +67,14 @@ export default function MetaCapiCard({ cfg, companyId, onSaved }) {
       </div>
       <div className="capi-grid">
         <label className="nx-field stack capi-f"><span className="nx-field-label">Dataset ID</span>
-          <input className="nx-input" value={datasetId} onChange={(e) => setDatasetId(e.target.value)} placeholder="e.g. 1602590401463535" inputMode="numeric" />
+          <input className="nx-input" value={datasetId} onChange={(e) => setDatasetId(e.target.value)} placeholder="From Events Manager → dataset" inputMode="numeric" />
         </label>
         <label className="nx-field stack capi-f"><span className="nx-field-label">Access token</span>
           <input className="nx-input" type="password" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off"
-            placeholder={tokenSet ? 'Saved — type a new one to replace it' : 'From the dataset → Settings → Conversions API'} />
+            placeholder={tokenSet ? 'Saved · type to replace' : 'Paste the access token'} />
         </label>
         <label className="nx-field stack capi-f"><span className="nx-field-label">Test event code (optional)</span>
-          <input className="nx-input" value={testCode} onChange={(e) => setTestCode(e.target.value)} placeholder="TEST12345 — clear it once testing is done" />
+          <input className="nx-input" value={testCode} onChange={(e) => setTestCode(e.target.value)} placeholder="e.g. TEST12345" />
         </label>
       </div>
       <div className="capi-actions">
