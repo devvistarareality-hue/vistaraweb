@@ -44,6 +44,14 @@ const GUJARAT_CITIES = [
   'Valsad', 'Vapi', 'Veraval', 'Vijapur', 'Viramgam', 'Visnagar', 'Vyara', 'Wankaner',
 ];
 
+// Date only: the time a partner was keyed in is noise, the day is the fact.
+function fmtAdded(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function CategoryBadge({ category }) {
   const c = CATEGORY_COLOR[category] || { bg: 'var(--surface-2)', color: 'var(--muted)' };
   const label = CATEGORY_OPTIONS.find((o) => o.value === category)?.label || category || '—';
@@ -277,6 +285,7 @@ function CpDetailsTab({ companyId }) {
                 <th style={th}>Segment</th>
                 <th style={th}>City</th>
                 <th style={th}>Area</th>
+                <th className="cpa-col">Date Added</th>
                 <th style={th}>Status</th>
                 <th style={th}>Leads</th>
                 <th className="cpa-col">Activity</th>
@@ -293,6 +302,9 @@ function CpDetailsTab({ companyId }) {
                   <td style={td}>{cp.segment ? SEGMENT_OPTIONS.find((o) => o.value === cp.segment)?.label : '—'}</td>
                   <td style={td}>{cp.city || '—'}</td>
                   <td style={td}>{cp.area || '—'}</td>
+                  {/* When the partnership started. The Add form can backdate this,
+                      so it is not always the row's creation timestamp. */}
+                  <td className="cpa-col">{fmtAdded(cp.created_at)}</td>
                   <td style={td}>
                     <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: cp.is_active ? 'var(--success)' : 'var(--muted)' }}>
                       {cp.is_active ? 'Active' : 'Inactive'}
