@@ -9,7 +9,7 @@ import { errText } from '../lib/apiError';
 // so Meta finds more people who actually visit. Needs the CRM dataset's ID and token.
 const STAGE_HELP = {
   Lead_Received: 'Meta form lead arrives',
-  Qualified: 'Telecaller marks it warm',
+  Qualified: 'TC or STM marks it warm, or a visit is booked',
   Site_Visit_Scheduled: 'Site visit booked',
   Site_Visit_Done: 'Site visit completed',
   Booked: 'Booking approved',
