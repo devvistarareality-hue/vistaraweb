@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
@@ -63,8 +63,14 @@ export default function InvestorsPage() {
   // carry one for exactly that reason. This is the same approach My Conversions
   // takes for its ?tab, and it keeps this page a plain client component.
   const [bucket, setBucket] = useState('');
+  // `ready` gates the first fetch. Without it the list loaded once unfiltered —
+  // bucket is '' on the first render — and again once this effect had read the
+  // URL, and whichever response happened to land last won. That is why the same
+  // link showed 8 sometimes and all 42 others.
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     setBucket(new URLSearchParams(window.location.search).get('bucket') || '');
+    setReady(true);
   }, []);
   // Only the values these rows hold (?facets=1) — see lib/presentOptions.
   const [facets, setFacets] = useState(null);
@@ -85,7 +91,13 @@ export default function InvestorsPage() {
 
   const narrowed = !!(bucket || schemeFilter || statusFilter || search);
 
+  // Every fetch takes a ticket; only the newest one is allowed to write to state.
+  // Filters change faster than the network answers — type in the search box and
+  // an earlier, slower response would otherwise land last and win.
+  const reqRef = useRef(0);
+
   async function load() {
+    const ticket = ++reqRef.current;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -101,14 +113,17 @@ export default function InvestorsPage() {
         apiFetch(`${CLUB1000_ENDPOINTS.investors}${qs}`),
         apiFetch(CLUB1000_ENDPOINTS.schemes),
       ]);
-      if (invRes.ok) setInvestors(await invRes.json());
-      if (schemesRes.ok) setSchemes(await schemesRes.json());
+      const inv = invRes.ok ? await invRes.json() : null;
+      const sch = schemesRes.ok ? await schemesRes.json() : null;
+      if (ticket !== reqRef.current) return;   // a newer request has overtaken this one
+      if (inv) setInvestors(inv);
+      if (sch) setSchemes(sch);
     } finally {
-      setLoading(false);
+      if (ticket === reqRef.current) setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, [schemeFilter, statusFilter, search, bucket]);
+  useEffect(() => { if (ready) load(); }, [ready, schemeFilter, statusFilter, search, bucket]);
 
   async function openLoi(id) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
