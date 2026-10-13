@@ -260,21 +260,25 @@ function CpDetailsTab({ companyId }) {
     [cp.name, cp.contact_no, cp.firm_name].some((v) => (v || '').toLowerCase().includes(needle)));
 
   return (
-    <div className="nx-card" style={card}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Channel Partners {loading ? '' : `(${filteredCps.length})`}</div>
-        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setModalCp(null)} style={saveBtn}>+ Add Channel Partner</button>
+    <div>
+      {/* Same shape as CP Leads: a top card (title, add, search), then the table
+          in its own flush card. */}
+      <div className="nx-card cpd-top">
+        <div className="cpd-head">
+          <div className="cpd-title">Channel Partners {loading ? '' : `(${filteredCps.length})`}</div>
+          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => setModalCp(null)}>+ Add Channel Partner</button>
+        </div>
+        <input className="nx-input cpd-search" value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, contact no or firm name…" />
       </div>
-      <input className="nx-input" value={search} onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search name, contact no or firm name…" style={{ ...inp, width: '100%', marginBottom: 16 }} />
       {loading ? (
-        <Loader label="Loading…" style={{ padding: '28px 0' }} />
+        <div className="nx-card cpd-card cpd-empty"><Loader label="Loading…" /></div>
       ) : cps.length === 0 ? (
-        <p style={{ color: 'var(--muted)', fontSize: 13 }}>No channel partners yet. Add the first one above.</p>
+        <div className="nx-card cpd-card cpd-empty">No channel partners yet. Add the first one above.</div>
       ) : filteredCps.length === 0 ? (
-        <p style={{ color: 'var(--muted)', fontSize: 13 }}>No channel partners match "{search}".</p>
+        <div className="nx-card cpd-card cpd-empty">No channel partners match "{search}".</div>
       ) : (
-        <div className="cpd-wrap">
+        <div className="nx-card cpd-card">
           <table className="nx-table cpd-table">
             <thead>
               <tr>

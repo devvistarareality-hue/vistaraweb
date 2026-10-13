@@ -2685,20 +2685,27 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* Resume / Revise buttons on the booking lists (sales/_MyBookings, sales/bookings). */
 .bk-act { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
 
-/* Channel Partner → CP Details: the partner table, fitted to the page with no
-   sideways scroll (m/[module]/leads). Two-line cells keep it to 9 columns. */
-.cpd-wrap { width: 100%; }
-.cpd-table { width: 100%; border-collapse: collapse; table-layout: auto; }
-.cpd-table th { text-align: left; font-size: 10.5px; font-weight: 700; color: var(--muted); padding: 9px 10px;
+/* Channel Partner → CP Details (m/[module]/leads): same look as the CP Leads table —
+   a top card with title/add/search, then the table in its own flush white card. */
+.cpd-top { background: var(--surface) !important; border-radius: 18px; padding: 18px 20px; margin-bottom: 14px; }
+.cpd-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.cpd-title { font-family: 'Inter Tight', 'Inter', -apple-system, sans-serif; letter-spacing: -0.022em; font-size: 15px; font-weight: 800; color: var(--text); }
+.cpd-search { width: 100%; height: 44px; padding: 0 14px; font-size: 14px; box-sizing: border-box; }
+.cpd-card { background: var(--surface) !important; border-radius: 18px; overflow-x: auto; padding: 0; }
+.cpd-empty { padding: 28px 20px; font-size: 13px; color: var(--muted); }
+.cpd-table { width: 100%; border-collapse: collapse; }
+.cpd-table thead { background: var(--surface-2); }
+.cpd-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); padding: 12px 16px;
   text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
-.cpd-table td { padding: 9px 10px; font-size: 12.5px; color: var(--text); vertical-align: middle; border-top: 1px solid var(--surface-2); }
-.cpd-name { font-weight: 700; color: var(--text); }
-.cpd-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-.cpd-firm { max-width: 200px; }
-.cpd-place { max-width: 160px; color: var(--text-2); }
+.cpd-table td { padding: 14px 16px; font-size: 14px; color: var(--text-2); vertical-align: middle; border-top: 1px solid var(--surface-2); }
+.cpd-table tbody tr:hover td { background: var(--surface-2); }
+.cpd-name { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.cpd-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.cpd-firm { max-width: 220px; color: var(--muted); }
+.cpd-place { max-width: 170px; color: var(--muted); }
 .cpd-nowrap { white-space: nowrap; }
-.cpd-num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.cpd-num { text-align: right !important; font-variant-numeric: tabular-nums; color: var(--text); }
 .cpd-actions { text-align: right; white-space: nowrap; }
 .cpd-edit { color: var(--accent); padding: 4px 8px; }
 .cpd-del { color: var(--danger); padding: 4px 8px; }
-@media (max-width: 900px) { .cpd-wrap { overflow-x: auto; } .cpd-table { min-width: 760px; } }
+@media (max-width: 900px) { .cpd-table { min-width: 820px; } }
