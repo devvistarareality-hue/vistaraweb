@@ -64,7 +64,7 @@ function CategoryBadge({ category }) {
 
 const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: 'normal', segment: '', city: '', area: '', date_added: '', is_active: true };
 
-function ChannelPartnerModal({ initial, onClose, onSaved }) {
+function ChannelPartnerModal({ initial, onClose, onSaved, onDelete }) {
   // One partner per contact number. Checked while the number is typed rather than
   // on submit, so nobody fills in the whole form only to be told the broker is
   // already there. The server enforces it regardless (409) — this is the courtesy.
@@ -126,105 +126,110 @@ function ChannelPartnerModal({ initial, onClose, onSaved }) {
   }
 
   return (
-    <div className="nx-modal-backdrop" style={overlay} onClick={onClose}>
-      <div className="nx-modal" style={modal} onClick={(e) => e.stopPropagation()}>
-        <div style={modalHeader}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isEdit ? 'Edit Channel Partner' : 'Add Channel Partner'}</div>
-          <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" onClick={onClose} style={closeBtn}><Icon name="x" /></button>
+    <div className="nx-modal-backdrop cpm-backdrop" onClick={onClose}>
+      <div className="nx-modal cpm" onClick={(e) => e.stopPropagation()}>
+        {/* Same header as the lead modal: who it is, and their number. */}
+        <div className="nx-modal-head cpm-head">
+          <div>
+            <div className="cpm-title">{isEdit ? (initial.name || 'Channel Partner') : 'Add Channel Partner'}</div>
+            <div className="cpm-sub">{isEdit ? (initial.contact_no || '') : 'Fill in the partner\'s details'}</div>
+          </div>
+          <button type="button" className="cpm-close" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
         </div>
-        <div style={{ padding: '18px 20px' }}>
-          <label style={lbl}>CP Name *</label>
-          <input className="nx-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="e.g. Ramesh Shah" style={{ ...inp, width: '100%', marginBottom: 14 }} />
 
-          <label style={lbl}>Contact No *</label>
-          <input className={`nx-input cpd-input${dupe ? ' cpd-bad' : ''}`} value={form.contact_no}
-            onChange={(e) => setForm({ ...form, contact_no: e.target.value })}
-            placeholder="e.g. 98765 43210" />
-          <div className="cpd-state">
-            {checking && <span className="cpd-checking">Checking…</span>}
-            {dupe && (
-              <span className="cpd-dupe">
-                Already a channel partner:{' '}
-                <strong>{dupe.name || 'Unnamed'}</strong>
-                {dupe.firm_name ? ` · ${dupe.firm_name}` : ''}
-                {dupe.is_active === false ? ' (inactive)' : ''}
-              </span>
+        <div className="cpm-body">
+          <div className="cpm-sec">Contact info</div>
+          <div className="cpm-grid">
+            <label className="cpm-f"><span>CP Name *</span>
+              <input className="nx-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Ramesh Shah" />
+            </label>
+            <label className="cpm-f"><span>Contact No *</span>
+              <input className={`nx-input${dupe ? ' cpd-bad' : ''}`} value={form.contact_no}
+                onChange={(e) => setForm({ ...form, contact_no: e.target.value })} placeholder="e.g. 98765 43210" />
+              <div className="cpd-state">
+                {checking && <span className="cpd-checking">Checking…</span>}
+                {dupe && (
+                  <span className="cpd-dupe">
+                    Already a channel partner:{' '}
+                    <strong>{dupe.name || 'Unnamed'}</strong>
+                    {dupe.firm_name ? ` · ${dupe.firm_name}` : ''}
+                    {dupe.is_active === false ? ' (inactive)' : ''}
+                  </span>
+                )}
+              </div>
+            </label>
+          </div>
+
+          <div className="cpm-sec">Firm</div>
+          <div className="cpm-grid">
+            <label className="cpm-f cpm-wide"><span>Firm Name</span>
+              <input className="nx-input" value={form.firm_name} onChange={(e) => setForm({ ...form, firm_name: e.target.value })} placeholder="e.g. Shah Realty" />
+            </label>
+            <label className="cpm-f"><span>Category</span>
+              <select className="nx-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="cpm-f"><span>Segment</span>
+              <select className="nx-input" value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value })}>
+                {SEGMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="cpm-sec">Location</div>
+          <div className="cpm-grid">
+            <label className="cpm-f"><span>City</span>
+              <select className="nx-input" value={cityOther ? 'Other' : (form.city || '')}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === 'Other') { setCityOther(true); setForm({ ...form, city: '' }); }
+                  else { setCityOther(false); setForm({ ...form, city: v }); }
+                }}>
+                <option value="">— Select —</option>
+                {GUJARAT_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="Other">Other</option>
+              </select>
+              {cityOther && (
+                <input className="nx-input cpm-gap" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Enter city" />
+              )}
+            </label>
+            <label className="cpm-f"><span>Area</span>
+              <input className="nx-input" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="e.g. Vastrapur" />
+            </label>
+          </div>
+
+          <div className="cpm-sec">Status</div>
+          <div className="cpm-grid">
+            {!isEdit && (
+              <label className="cpm-f"><span>Date Added</span>
+                <input className="nx-input" type="date" value={form.date_added} max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setForm({ ...form, date_added: e.target.value })} />
+                <small className="cpm-hint">Leave blank to use today. Set this if the partnership started earlier.</small>
+              </label>
             )}
+            <div className="cpm-f"><span>Partner status</span>
+              <div className="cpm-seg">
+                {[[true, 'Active'], [false, 'Inactive']].map(([val, label]) => (
+                  <button key={label} type="button" className={`nx-btn nx-btn-md nx-toggle${form.is_active === val ? ' is-on' : ''}`}
+                    onClick={() => setForm({ ...form, is_active: val })}>{label}</button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <label style={lbl}>Firm Name</label>
-          <input className="nx-input" value={form.firm_name} onChange={(e) => setForm({ ...form, firm_name: e.target.value })}
-            placeholder="e.g. Shah Realty" style={{ ...inp, width: '100%', marginBottom: 14 }} />
+          {err && <div className="nx-note bad cpm-err">{err}</div>}
+        </div>
 
-          <label style={lbl}>Category</label>
-          <select className="nx-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-            style={{ ...inp, width: '100%', marginBottom: 14, cursor: 'pointer' }}>
-            {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-
-          <label style={lbl}>Segment</label>
-          <select className="nx-input" value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value })}
-            style={{ ...inp, width: '100%', marginBottom: 14, cursor: 'pointer' }}>
-            {SEGMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-
-          <label style={lbl}>City</label>
-          <select className="nx-input" value={cityOther ? 'Other' : (form.city || '')}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === 'Other') { setCityOther(true); setForm({ ...form, city: '' }); }
-              else { setCityOther(false); setForm({ ...form, city: v }); }
-            }}
-            style={{ ...inp, width: '100%', marginBottom: cityOther ? 8 : 14, cursor: 'pointer' }}>
-            <option value="">— Select —</option>
-            {GUJARAT_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            <option value="Other">Other</option>
-          </select>
-          {cityOther && (
-            <input className="nx-input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
-              placeholder="Enter city" style={{ ...inp, width: '100%', marginBottom: 14 }} />
+        <div className="cpm-foot">
+          {isEdit && onDelete && (
+            <button type="button" className="nx-btn nx-btn-md nx-btn-ghost cpd-del cpm-delete" onClick={() => onDelete(initial)}>Delete</button>
           )}
-
-          <label style={lbl}>Area</label>
-          <input className="nx-input" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}
-            placeholder="e.g. Vastrapur, Ahmedabad" style={{ ...inp, width: '100%', marginBottom: 14 }} />
-
-          {!isEdit && (
-            <>
-              <label style={lbl}>Date Added</label>
-              <input className="nx-input" type="date" value={form.date_added} max={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setForm({ ...form, date_added: e.target.value })}
-                style={{ ...inp, maxWidth: 220, marginBottom: 4 }} />
-              <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 14 }}>Leave blank to use today. Set this if the partnership actually started earlier.</p>
-            </>
-          )}
-
-          <label style={lbl}>Status</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[[true, 'Active'], [false, 'Inactive']].map(([val, label]) => {
-              const active = form.is_active === val;
-              const color = val ? 'var(--success)' : 'var(--muted)';
-              return (
-                <button className={`nx-btn nx-btn-md nx-toggle${active ? ' is-on' : ''}`} key={label} type="button" onClick={() => setForm({ ...form, is_active: val })}
-                  style={{ flex: 1, padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    border: `1.5px solid ${active ? color : 'var(--border)'}`, background: active ? color : 'var(--surface)', color: active ? '#fff' : color }}>
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {err && <p style={{ color: RED, fontSize: 12, marginTop: 10 }}>{err}</p>}
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-            <button className="nx-btn nx-btn-md nx-btn-primary cpd-submit" onClick={save}
-              disabled={saving || !!dupe}
-              title={dupe ? 'This contact number already belongs to a channel partner' : undefined}>
-              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Channel Partner'}
-            </button>
-            <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} style={cancelBtn}>Cancel</button>
-          </div>
+          <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="button" className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving || !!dupe}
+            title={dupe ? 'This contact number already belongs to a channel partner' : undefined}>
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Channel Partner'}
+          </button>
         </div>
       </div>
     </div>
@@ -250,9 +255,10 @@ function CpDetailsTab({ companyId }) {
   useEffect(() => { load(); }, [load]);
 
   async function del(cp) {
-    if (!(await confirmDialog(`Remove ${cp.name}? Leads already linked to them keep their history.`))) return;
+    if (!(await confirmDialog(`Remove ${cp.name}? Leads already linked to them keep their history.`))) return false;
     const res = await fetch(SALES_ENDPOINTS.channelPartner(cp.id) + cq, { method: 'DELETE', headers: authHeaders() });
-    if (res.ok || res.status === 204) setCps((prev) => prev.filter((c) => c.id !== cp.id));
+    if (res.ok || res.status === 204) { setCps((prev) => prev.filter((c) => c.id !== cp.id)); return true; }
+    return false;
   }
 
   const needle = search.trim().toLowerCase();
@@ -290,7 +296,6 @@ function CpDetailsTab({ companyId }) {
                 <th>Status</th>
                 <th className="cpd-num">Leads</th>
                 <th>Activity</th>
-                <th />
               </tr>
             </thead>
             <tbody>
@@ -300,11 +305,9 @@ function CpDetailsTab({ companyId }) {
                 const place = [cp.area, cp.city].filter(Boolean)
                   .filter((v, i, a) => a.findIndex((x) => x.toLowerCase() === v.toLowerCase()) === i).join(', ');
                 return (
-                  <tr key={cp.id}>
-                    <td>
-                      <div className="cpd-name">{cp.name}</div>
-                      <div className="cpd-sub">{cp.contact_no}</div>
-                    </td>
+                  <tr key={cp.id} className="cpd-row" onClick={() => setModalCp(cp)}>
+                    {/* The number is not on the list — it shows in the partner's details. */}
+                    <td><div className="cpd-name">{cp.name}</div></td>
                     <td className="cpd-firm">{cp.firm_name || '—'}</td>
                     <td>
                       <CategoryBadge category={cp.category} />
@@ -317,15 +320,11 @@ function CpDetailsTab({ companyId }) {
                     <td><span className={`cpa-chip ${cp.is_active ? 'cpa-chip-ok' : 'cpa-chip-mute'}`}>{cp.is_active ? 'Active' : 'Inactive'}</span></td>
                     <td className="cpd-num">{cp.lead_count ?? 0}</td>
                     <td>
-                      <button className="nx-btn nx-btn-sm nx-btn-soft cpd-nowrap" onClick={() => setActiveCp(cp)}>
+                      <button className="nx-btn nx-btn-sm nx-btn-soft cpd-nowrap" onClick={(e) => { e.stopPropagation(); setActiveCp(cp); }}>
                         {cp.follow_up_count || cp.site_visit_count
                           ? `${cp.follow_up_count || 0} FU · ${cp.site_visit_count || 0} SV`
                           : 'Schedule'}
                       </button>
-                    </td>
-                    <td className="cpd-actions">
-                      <button className="nx-btn nx-btn-sm nx-btn-ghost cpd-edit" onClick={() => setModalCp(cp)}>Edit</button>
-                      <button className="nx-btn nx-btn-sm nx-btn-ghost cpd-del" onClick={() => del(cp)}>Delete</button>
                     </td>
                   </tr>
                 );
@@ -343,6 +342,7 @@ function CpDetailsTab({ companyId }) {
             setCps((prev) => modalCp ? prev.map((c) => (c.id === saved.id ? saved : c)) : [...prev, saved]);
             setModalCp(undefined);
           }}
+          onDelete={async (cp) => { if (await del(cp)) setModalCp(undefined); }}
         />
       )}
 
