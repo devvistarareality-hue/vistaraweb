@@ -1,11 +1,14 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
+import { onlyPresent } from '../../../lib/presentOptions';
+import DateFilter from '../../sales/_DateFilter';
+import Icon from '../../../components/Icon';
 import { fmtMoney } from '../_StatCard';
 import Loader from '../../../components/Loader';
 import { errText } from '../../../lib/apiError';
@@ -17,14 +20,37 @@ const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--mut
 const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Maturity', premature_redemption: 'Premature Redemption' };
+const TYPE_OPTIONS = Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label }));
+const STATUS_OPTIONS = [{ value: 'pending', label: 'Pending' }, { value: 'paid', label: 'Paid' }];
 
 export default function PayoutsPage() {
   const user = useSelector((s) => s.auth.user);
   const router = useRouter();
   const manager = isClub1000Manager(user);
   const [payouts, setPayouts] = useState([]);
+  const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pending');
+  // A payout ledger is read by due date, by what kind of payout it is, and by
+  // which scheme it belongs to — the same cuts the dashboard's payout figures
+  // are made along, so a tile's number has a list that matches it.
+  const [typeFilter, setTypeFilter] = useState('');
+  const [schemeFilter, setSchemeFilter] = useState('');
+  const [range, setRange] = useState({ from: '', to: '' });
+  // The two live questions no stored column answers: what has slipped past its
+  // date, and what lands in the next 30 days. Both mean pending — something
+  // already paid is not late however old it is.
+  const [bucket, setBucket] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchText), 400);
+    return () => clearTimeout(t);
+  }, [searchText]);
+  // Only the values these rows hold (?facets=1) — a picker that lists a choice
+  // returning nothing is worse than no picker.
+  const [facets, setFacets] = useState(null);
+  const fx = (key) => facets?.[key] ?? null;
   const [payingFor, setPayingFor] = useState(null);
   const [payForm, setPayForm] = useState({ amount: '', notes: '' });
   const [saving, setSaving] = useState(false);
@@ -37,6 +63,7 @@ export default function PayoutsPage() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     setStatusFilter(p.get('status') ?? 'pending');
+    setBucket(p.get('bucket') || '');
     setSeeded(true);
   }, []);
 
@@ -44,18 +71,64 @@ export default function PayoutsPage() {
     if (user && !manager) router.replace('/club1000');
   }, [user]);
 
+  useEffect(() => {
+    if (!manager) return;
+    let alive = true;
+    apiFetch(`${CLUB1000_ENDPOINTS.payouts}?facets=1`).then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+    apiFetch(CLUB1000_ENDPOINTS.schemes).then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d) setSchemes(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [manager]);
+
+  // Every fetch takes a ticket; only the newest one writes to state. Filters
+  // change faster than the network answers, and an earlier, slower response
+  // landing last would otherwise win.
+  const reqRef = useRef(0);
+
   async function load() {
+    const ticket = ++reqRef.current;
     setLoading(true);
     try {
-      const qs = statusFilter ? `?status=${statusFilter}` : '';
-      const res = await apiFetch(`${CLUB1000_ENDPOINTS.payouts}${qs}`);
-      if (res.ok) setPayouts(await res.json());
+      const params = new URLSearchParams();
+      if (statusFilter) params.set('status', statusFilter);
+      if (typeFilter) params.set('payout_type', typeFilter);
+      if (schemeFilter) params.set('scheme_id', schemeFilter);
+      if (bucket) params.set('bucket', bucket);
+      if (search) params.set('search', search);
+      if (range.from) params.set('date_from', range.from);
+      if (range.to) params.set('date_to', range.to);
+      const q = params.toString();
+      const res = await apiFetch(`${CLUB1000_ENDPOINTS.payouts}${q ? `?${q}` : ''}`);
+      const rows = res.ok ? await res.json() : null;
+      if (ticket !== reqRef.current) return;   // a newer request has overtaken this one
+      if (rows) setPayouts(rows);
     } finally {
-      setLoading(false);
+      if (ticket === reqRef.current) setLoading(false);
     }
   }
 
-  useEffect(() => { if (manager && seeded) load(); }, [manager, statusFilter, seeded]);
+  useEffect(() => { if (manager && seeded) load(); },
+    [manager, seeded, statusFilter, typeFilter, schemeFilter, bucket, search, range.from, range.to]);
+
+  // "Pending" is this screen's own default rather than a choice anyone made, so
+  // it doesn't count as narrowing — otherwise the header would read as filtered
+  // the moment the page opened.
+  const narrowed = !!(typeFilter || schemeFilter || bucket || search || range.from || range.to
+    || (statusFilter && statusFilter !== 'pending'));
+
+  // DateFilter keeps its own period state and only reports changes, so clearing
+  // `range` alone would leave it showing a period it is no longer applying.
+  // Bumping its key remounts it back to "All".
+  const [dateKey, setDateKey] = useState(0);
+
+  function clearFilters() {
+    setStatusFilter('pending'); setTypeFilter(''); setSchemeFilter('');
+    setBucket(''); setSearchText(''); setSearch(''); setRange({ from: '', to: '' });
+    setDateKey((n) => n + 1);
+  }
+
+  const listedTotal = payouts.reduce((sum, p) => sum + Number(p.amount_due || 0), 0);
 
   function openMarkPaid(p) {
     setErr('');
@@ -87,14 +160,53 @@ export default function PayoutsPage() {
   return (
     <div style={{ padding: '28px 32px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Payouts</h1>
-      <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Interest, maturity, and premature-redemption ledger</p>
+      {/* Says what is on screen, not what the page is for — a stock description
+          over a filtered list is how a working filter looks broken. */}
+      <p className="club-inv-sub">
+        {loading
+          ? 'Interest, maturity, and premature-redemption ledger'
+          : `${payouts.length}${statusFilter ? ` ${statusFilter}` : ''} payout${payouts.length === 1 ? '' : 's'} · ${fmtMoney(listedTotal)}`}
+      </p>
 
-      <div style={{ marginTop: 18 }}>
-        <select className="nx-input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="paid">Paid</option>
+      <div className="club-pay-search">
+        <span className="club-pay-search-ico"><Icon name="search" /></span>
+        <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search investor name or phone…" />
+        {searchText && (
+          <button type="button" className="club-pay-clear" onClick={() => setSearchText('')}><Icon name="x" /></button>
+        )}
+      </div>
+
+      {/* Dated by due date, which is the only date this ledger is read by. */}
+      <div className="club-inv-dates"><DateFilter key={dateKey} onChange={setRange} /></div>
+
+      <div className="club-inv-filters">
+        <select className="nx-input club-inv-sel" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="">All Statuses</option>
+          {onlyPresent(STATUS_OPTIONS, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
+        <select className="nx-input club-inv-sel" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+          <option value="">All Types</option>
+          {onlyPresent(TYPE_OPTIONS, fx('types'), typeFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select className="nx-input club-inv-sel" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)}>
+          <option value="">All Schemes</option>
+          {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), schemeFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+        {/* Toggles rather than another dropdown: these two are what the screen
+            is usually opened to apply. Each implies pending on its own, so
+            picking one also moves the status picker — otherwise "Paid ·
+            Overdue" shows an empty list and reads as a bug rather than as the
+            contradiction it is. */}
+        {[{ value: 'overdue', label: 'Overdue' }, { value: 'due_soon', label: 'Due in 30 days' }].map((b) => (
+          <button key={b.value} type="button" className={`club-pay-pill${bucket === b.value ? ' is-on' : ''}`}
+            onClick={() => { const on = bucket === b.value; setBucket(on ? '' : b.value); if (!on) setStatusFilter('pending'); }}>
+            {b.label}
+          </button>
+        ))}
+        {narrowed && (
+          <button type="button" className="club-pay-reset" onClick={clearFilters}>Clear filters</button>
+        )}
       </div>
 
       <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
@@ -114,7 +226,9 @@ export default function PayoutsPage() {
             {loading ? (
               <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
             ) : payouts.length === 0 ? (
-              <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>No payouts.</td></tr>
+              <tr><td colSpan={7} className="club-pay-empty">
+                {narrowed ? 'No payouts match these filters.' : 'No payouts.'}
+              </td></tr>
             ) : payouts.map((p) => (
               <tr key={p.id}>
                 <td style={td}>{p.investor_name}</td>

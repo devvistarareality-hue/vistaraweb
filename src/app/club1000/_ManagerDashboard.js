@@ -83,8 +83,8 @@ export default function ManagerDashboard() {
           </div>
 
           <DashAlerts items={[
-            { tone: 'warn', icon: AlarmClock, count: breakdown.due_for_renewal ?? 0, label: 'Due for renewal', text: 'Past maturity, awaiting a decision', href: '/club1000/investors' },
-            { tone: 'info', icon: CalendarClock, count: s.upcoming_maturities_count ?? 0, label: 'Maturing in 30 days', text: rupee(s.upcoming_maturities_amount), href: '/club1000/investors' },
+            { tone: 'warn', icon: AlarmClock, count: breakdown.due_for_renewal ?? 0, label: 'Due for renewal', text: 'Past maturity, awaiting a decision', href: '/club1000/investors?bucket=due_for_renewal' },
+            { tone: 'info', icon: CalendarClock, count: s.upcoming_maturities_count ?? 0, label: 'Maturing in 30 days', text: rupee(s.upcoming_maturities_amount), href: '/club1000/investors?bucket=maturing_soon' },
             { tone: 'bad', icon: ClipboardList, count: s.pending_approval_count ?? 0, label: 'Pending approvals', text: 'Investors waiting for your sign-off', href: '/club1000/approvals' },
             { tone: 'bad', icon: Clock, count: s.followups_overdue ?? 0, label: 'Overdue follow-ups', text: 'Leads past their follow-up date', href: '/club1000/follow-ups' },
           ]} />
