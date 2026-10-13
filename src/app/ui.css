@@ -2858,3 +2858,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 
 /* All Leads: what the date range filters by (Received / First called). */
 .lf-basis { height: 36px; padding: 0 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* All Leads filter rows: the date bar, then the rest, Clear all pinned right. */
+.lf-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; }
+.lf-row-date { border-bottom: 1px solid var(--surface-2); }
+.df-bare { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lf-clear { height: 36px; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-left: auto; }

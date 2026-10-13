@@ -10,6 +10,7 @@ import PartnerPicker from '../_PartnerPicker';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { can } from '../../../lib/moduleAccess';
+import DateFilter from '../_DateFilter';
 import MultiSelect from '../../../components/MultiSelect';
 import { onlyPresent } from '../../../lib/presentOptions';
 import LeadNumberCheck from '../../../components/LeadNumberCheck';
@@ -1586,6 +1587,10 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
   // Each scoped role only sees its own status filter; admins/managers see all.
   // CP Cluster Heads use the CP view (no telecaller/STM filters), like CP Execs.
   const isAdminMgr   = !isTelecaller && !isStm && !isCpAny;
+  // Received / First called — for Manager and above (the people who read the dashboard's
+  // Called / MQL across a team).
+  const canPickBasis = !!(user?.is_staff || ['Admin', 'Director', 'General Manager', 'Manager'].includes(user?.role));
+  const [dateKey, setDateKey] = useState(0);   // remounts the date bar on Clear all
   const showTcStatus = isAdminMgr || isTelecaller;          // telecaller working status
   const showStmStatus= isAdminMgr || isStm || isCpAny;      // STM/CP working status
   const showAssignees= isAdminMgr;                          // telecaller/STM picker dropdowns
@@ -1785,7 +1790,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.unassigned)      params.set('unassigned',       'true');
     if (filters.date_from)       params.set('date_from',        filters.date_from);
     if (filters.date_to)         params.set('date_to',          filters.date_to);
-    if (filters.date_basis && (filters.date_from || filters.date_to)) params.set('date_basis', filters.date_basis);
+    if (canPickBasis && filters.date_basis && (filters.date_from || filters.date_to)) params.set('date_basis', filters.date_basis);
     if (adminView)               params.set('admin_view', '1');
     if (cpOnly)                  params.set('cp_only', 'true');
     params.set('book', book);
@@ -2017,7 +2022,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
           filters.telecaller_id.length || filters.stm_id.length || filters.telecaller_status || filters.stm_status ||
           filters.disqualify_reason || filters.channel_partner_id ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
-        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'', date_basis:'' }); };
+        const clearAll = () => { setDateKey((k) => k + 1); setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'', date_basis:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -2052,35 +2057,23 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
               <BookFilter hidden={cpOnly} value={book} onChange={(b) => { setBook(b); setPage(1); }} />
             </div>
 
-            {/* Row 1: Date range + quick buttons + project + tc/stm status */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-2)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
-              {/* What the dates mean: when the lead arrived, or when it was first called
-                  (the dashboard's Called / MQL tile). */}
-              <select className="nx-input lf-basis" value={filters.date_basis || ''} onChange={(e) => sf('date_basis', e.target.value)}
-                title="What the date range filters by">
-                <option value="">Received</option>
-                <option value="called">First called</option>
-              </select>
-              <input className="nx-input" type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
-              <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
-              <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />
-              <div style={divider} />
-              <select className="nx-input nx-input-sm nx-filter-sel"
-                value={(filters.date_from === today && filters.date_to === today) ? 'today'
-                     : (filters.date_from === daysAgo(6) && filters.date_to === today) ? 'week'
-                     : (filters.date_from === daysAgo(29) && filters.date_to === today) ? 'month' : ''}
-                onChange={(e) => {
-                  const k = e.target.value;
-                  sf('date_from', k === 'today' ? today : k === 'week' ? daysAgo(6) : k === 'month' ? daysAgo(29) : '');
-                  sf('date_to', k ? today : '');
-                }}>
-                <option value="">Any date</option>
-                <option value="today">Today</option>
-                <option value="week">Last 7 days</option>
-                <option value="month">Last 30 days</option>
-              </select>
-              <div style={divider} />
+            {/* Row 1: the dashboards' date bar — From/To, quick ranges, Year / Month / Quarter.
+                Managers and above also choose what the dates mean (Received / First called). */}
+            <div className="lf-row lf-row-date">
+              <DateFilter key={`${dateKey}-${seeded}`} bare initial={{ from: filters.date_from, to: filters.date_to }}
+                onChange={(r) => setFilters((f) => (f.date_from === (r.from || '') && f.date_to === (r.to || '') ? f
+                  : { ...f, date_from: r.from || '', date_to: r.to || '' }))}
+                prefix={canPickBasis ? (
+                  <select className="nx-input lf-basis" value={filters.date_basis || ''} onChange={(e) => sf('date_basis', e.target.value)}
+                    title="What the date range filters by">
+                    <option value="">Received</option>
+                    <option value="called">First called</option>
+                  </select>
+                ) : null} />
+            </div>
+
+            {/* Row 2: every other filter, Clear all at the end */}
+            <div className="lf-row">
               <MultiSelect allLabel="All Projects" noun="projects" value={filters.project_id} onChange={(v) => sf('project_id', v)}
                 options={onlyPresent([{ value: 'none', label: 'No project' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))],
                   facets && [...(facets.project_ids || []), ...(facets.has_no_project ? ['none'] : [])], filters.project_id)} />
@@ -2114,15 +2107,6 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                   <option value="other">Other</option>
                 </select>
               )}
-              {anyFilter && (
-                <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={clearAll} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--danger-3)', background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>
-                  <Icon name="x" /> Clear all
-                </button>
-              )}
-            </div>
-
-            {/* Row 2: Status + Source + Telecaller + STM + Campaign + Duplicates */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px' }}>
               {showAssignees && (
               <select value={filters.status} onChange={(e) => sf('status', e.target.value)} style={activeSelStyle(filters.status)}>
                 <option value="">All Statuses</option>
@@ -2164,6 +2148,11 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 <input type="checkbox" checked={filters.unassigned} onChange={(e) => sf('unassigned', e.target.checked)} />
                 Unassigned only
               </label>
+              {anyFilter && (
+                <button className="nx-btn nx-btn-sm nx-btn-danger-soft lf-clear" onClick={clearAll}>
+                  <Icon name="x" /> Clear all
+                </button>
+              )}
             </div>
           </div>
         );

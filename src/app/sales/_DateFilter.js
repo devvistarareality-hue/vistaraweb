@@ -3,13 +3,15 @@ import { useState, useEffect } from 'react';
 
 // Self-contained date filter (Today/Week/Month/All + Year/Month/Quarter dropdowns)
 // used by the dashboards. Calls onChange({ from, to }) whenever the range changes.
-export default function DateFilter({ onChange }) {
+// `initial` seeds the From/To (e.g. a dashboard tile's range); `bare` drops the card
+// (for use inside another filter card); `prefix` renders right after the label.
+export default function DateFilter({ onChange, initial, bare = false, prefix = null }) {
   const toIST = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   const today = toIST(new Date());
   const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toIST(d); };
 
-  const [dateFrom,        setDateFrom]        = useState('');
-  const [dateTo,          setDateTo]          = useState('');
+  const [dateFrom,        setDateFrom]        = useState(initial?.from || '');
+  const [dateTo,          setDateTo]          = useState(initial?.to || '');
   const [selectedMonths,  setSelectedMonths]  = useState([]);
   const [showMonthDrop,   setShowMonthDrop]   = useState(false);
   const [selectedQuarter, setSelectedQuarter] = useState([]);
@@ -76,8 +78,9 @@ export default function DateFilter({ onChange }) {
   const divider = { width: 1, height: 24, background: 'var(--surface-3)', flexShrink: 0 };
 
   return (
-    <div className="nx-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
+    <div className={bare ? 'df-bare' : 'nx-card'} style={bare ? undefined : { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 20, padding: '10px 16px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--surface-2)' }}>
       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+      {prefix}
       <input className="nx-input" type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={{ ...fSel, width: 136 }} />
       <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
       <input className="nx-input" type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setSelectedMonths([]); setSelectedQuarter([]); setSelectedFyYear(null); }} style={{ ...fSel, width: 136 }} />
