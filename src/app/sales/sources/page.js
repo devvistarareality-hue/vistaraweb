@@ -9,6 +9,7 @@ import { getCache, setCache, bustCache } from '../../sales/_cache';
 import Icon from '../../../components/Icon';
 import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import MetaCapiCard from '../../../components/MetaCapiCard';
 import { errText } from '../../../lib/apiError';
 const PRESET_SOURCES = ['meta', 'google', 'referral', 'walk-in', 'ivr', 'portal', 'other'];
 const NAVY = 'var(--text)';
@@ -450,6 +451,10 @@ export default function LeadSetupPage() {
                 <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>Go to <strong>Meta Ads Manager → Lead Ads Forms → your form → Preview</strong>. The ID appears in the URL: <code style={{ backgroundColor: 'var(--accent-soft)', padding: '1px 5px', borderRadius: 4 }}>form_id=XXXXXXXX</code></div>
               </div>
             </div>
+
+            {/* Lead stages sent back to Meta (Conversions API for CRM). */}
+            {cfg && <MetaCapiCard key={cfg.capi_dataset_id || 'capi'} cfg={cfg} companyId={companyId}
+              onSaved={(d) => setCfg((c) => ({ ...c, ...d }))} />}
 
             {/* Connected Pages Cards — always shown so the feature stays discoverable
                 even when Meta hasn't returned pages yet (empty state + refresh). */}
