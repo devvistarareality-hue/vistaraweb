@@ -93,7 +93,6 @@ function BookingPage() {
   // LOI standard unit type (project.loi_unit_types) — a new LOI or an EOI converted to
   // LOI. '' = none picked: the areas come from the plot(s) as before.
   const [loiType, setLoiType] = useState('');
-  const [loiUnits, setLoiUnits] = useState('');  // '' = one per picked plot
 
   const [project, setProject] = useState(null);
   const [plot,    setPlot]    = useState(null);   // primary (first) plot
@@ -540,12 +539,12 @@ function BookingPage() {
       const_area: t ? String((+t.const_area || 0) * n) : s.const_area }));
   };
 
-  // LOI unit type: the chosen type fills Construction Area (× units, one per picked
-  // plot unless changed). Plot Area is never touched — it is the picked plot's own
+  // LOI unit type: the chosen type fills Construction Area (one per picked plot — no
+  // separate No. of Units on an LOI). Plot Area is never touched — it is the picked plot's own
   // area, fixed when the project was mapped. Re-applied after the plots load, which
   // would otherwise put the plot's construction area back.
   const loiTypes = !eoiMode ? (project?.loi_unit_types || []) : [];
-  const loiUnitCount = Math.max(1, parseInt(loiUnits, 10) || plotIds.length || 1);
+  const loiUnitCount = Math.max(1, plotIds.length || 1);
   useEffect(() => {
     const t = loiTypes.find((x) => x.type === loiType);
     if (!t) return;
@@ -1162,8 +1161,6 @@ function BookingPage() {
               <Sel value={loiType} onChange={(e) => setLoiType(e.target.value)}
                 opts={['', ...loiTypes.map((x) => x.type)]} />
             </Row>
-            {loiType && <Row><L>No. of Units</L>
-              <In type="number" value={loiUnits || String(loiUnitCount)} onChange={(e) => setLoiUnits(e.target.value)} /></Row>}
           </>
         )}
         <Row><L>Plot Area ({unit})</L><In value={f.area} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
