@@ -83,6 +83,8 @@ export default function InvestorsPage() {
     return () => clearTimeout(t);
   }, [searchText]);
 
+  const narrowed = !!(bucket || schemeFilter || statusFilter || search);
+
   async function load() {
     setLoading(true);
     try {
@@ -142,8 +144,15 @@ export default function InvestorsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Investors</h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
-            {manager ? 'All approved investors across Club 1000' : 'Your approved investors'}
+          {/* Says what is on screen, not what the page is for. "All approved
+              investors across Club 1000" above eight filtered rows reads as the
+              whole book, which is how a working filter looks broken. */}
+          <p className="club-inv-sub">
+            {narrowed
+              ? `${investors.length} investor${investors.length === 1 ? '' : 's'}`
+                + (bucket === 'due_for_renewal' ? ' due for renewal'
+                  : bucket === 'maturing_soon' ? ' maturing in 30 days' : ' matching')
+              : (manager ? 'All approved investors across Club 1000' : 'Your approved investors')}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
