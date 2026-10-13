@@ -2770,3 +2770,15 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ask-history-meta { font-size: 11.5px; color: var(--muted); }
 .ask-history-del { background: none; border: none; cursor: pointer; color: var(--faint); padding: 8px 10px; }
 .ask-history-del:hover { color: var(--danger); }
+
+/* Ask Nexora full screen: the panel fills the window, the conversation sits in a
+   readable centred column (the layout below the header is unchanged). */
+.ask-panel.is-full { inset: 16px; right: 16px; bottom: 16px; width: auto; height: auto; max-height: none; }
+.ask-panel.is-full .ask-body,
+.ask-panel.is-full .ask-input,
+.ask-panel.is-full .ask-foot { width: 100%; max-width: 920px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+.ask-panel.is-full .ask-input { border-top: none; }
+.ask-panel.is-full .ask-body { padding-top: 24px; }
+.ask-panel.is-full .ask-q, .ask-panel.is-full .ask-a { font-size: 15px; }
+.ask-panel.is-full ~ .ask-backdrop { display: block; }
+@media (max-width: 560px) { .ask-panel.is-full { inset: 0; border-radius: 0; } }

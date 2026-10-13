@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Sparkles, X, Send, Download, History, Trash2 } from 'lucide-react';
+import { Sparkles, X, Send, Download, History, Trash2, Maximize2, Minimize2 } from 'lucide-react';
 import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 import { explainApiError, explainNetworkError } from '../lib/apiError';
 import { downloadExcel } from '../lib/downloadExcel';
@@ -89,6 +89,9 @@ export default function AskNexora({ module = 'dashboard' }) {
   const [text, setText] = useState('');
   const [chatId, setChatId] = useState(null);   // the saved conversation these turns belong to
   const [chats, setChats] = useState(null);     // History list when open, else null
+  // Full screen: remembered per browser (a convenience — falls back to the panel).
+  const [full, setFull] = useState(() => { try { return localStorage.getItem('ask_full') === '1'; } catch { return false; } });
+  const toggleFull = () => setFull((v) => { try { localStorage.setItem('ask_full', v ? '0' : '1'); } catch {} return !v; });
   const busy = turns.some((t) => t.busy);
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [turns, open]);
@@ -151,7 +154,7 @@ export default function AskNexora({ module = 'dashboard' }) {
         </button>
       )}
       {open && (
-        <section className="ask-panel" role="dialog" aria-label="Ask Nexora">
+        <section className={`ask-panel${full ? ' is-full' : ''}`} role="dialog" aria-label="Ask Nexora">
           <header className="ask-head">
             <div className="ask-title"><Sparkles size={16} /> Ask Nexora</div>
             <div className="ask-head-actions">
@@ -162,6 +165,8 @@ export default function AskNexora({ module = 'dashboard' }) {
               {(turns.length > 0 || chats) && !busy && (
                 <button type="button" className="ask-clear" onClick={newChat}>New chat</button>
               )}
+              <button type="button" className="ask-close" onClick={toggleFull} aria-label={full ? 'Exit full screen' : 'Full screen'}
+                title={full ? 'Exit full screen' : 'Full screen'}>{full ? <Minimize2 size={15} /> : <Maximize2 size={15} />}</button>
               <button type="button" className="ask-close" onClick={() => setOpen(false)} aria-label="Close"><X size={16} /></button>
             </div>
           </header>
