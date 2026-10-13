@@ -457,7 +457,11 @@ export function SiteVisitsContent({ adminView = false, cpOnly = false }) {
                 <p style={{ fontSize: 12, color: 'var(--muted)', margin: '4px 0 0' }}>
                   {sv.lead_phone || ''}{sv.project_name ? ` · ${sv.project_name}` : ''}
                 </p>
-                {sv.referred_by_telecaller_name && <p style={{ fontSize: 11, color: 'var(--faint)', margin: '2px 0 0' }}>via TC: {sv.referred_by_telecaller_name}</p>}
+                {/* Who is working the visit: the STM, and the telecaller who set it up. */}
+                <p className="sv-people">
+                  <span>STM: <b>{sv.stm_name || '—'}</b></span>
+                  <span>Telecaller: <b>{sv.referred_by_telecaller_name || '—'}</b></span>
+                </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 16px', marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>
                   <span>Scheduled: {fmtDateTime(sv.scheduled_at)}</span>
                   {sv.visited_at && <span>Visited: {fmtDateTime(sv.visited_at)}</span>}
