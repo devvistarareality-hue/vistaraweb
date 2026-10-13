@@ -2681,3 +2681,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .capi-bad { color: var(--danger); font-weight: 700; }
 .capi-note { margin-top: 10px; font-size: 12px; }
 @media (max-width: 760px) { .capi-grid { grid-template-columns: 1fr; } .capi-num { width: 70px; } }
+
+/* Club 1000 · the dashboard tile a list was opened from, as a removable chip
+   (club1000/investors/page.js). Without a way off it, a filtered list looks
+   like the whole list gone missing. */
+.club-bucket { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px;
+  border-radius: 8px; border: 1.5px solid var(--warning); background: var(--warning-soft);
+  color: var(--warning); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.club-bucket-x { font-size: 15px; line-height: 1; opacity: 0.8; }

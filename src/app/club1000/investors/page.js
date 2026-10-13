@@ -52,6 +52,20 @@ export default function InvestorsPage() {
   const [ledgerFor, setLedgerFor] = useState(null);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // The dashboard's "Due for renewal" and "Maturing in 30 days" count something
+  // no stored status holds — active past maturity, and a 30-day window — so the
+  // tiles arrive with ?bucket=, which the server applies with the same
+  // conditions it counted them by. Shown as a removable chip: landing on a
+  // filtered list with no way to see the rest is its own kind of broken.
+  //
+  // Read from window rather than useSearchParams: that hook forces the page into
+  // a Suspense boundary at build time, and the two other pages here that use it
+  // carry one for exactly that reason. This is the same approach My Conversions
+  // takes for its ?tab, and it keeps this page a plain client component.
+  const [bucket, setBucket] = useState('');
+  useEffect(() => {
+    setBucket(new URLSearchParams(window.location.search).get('bucket') || '');
+  }, []);
   // Only the values these rows hold (?facets=1) — see lib/presentOptions.
   const [facets, setFacets] = useState(null);
   useEffect(() => {
@@ -76,6 +90,7 @@ export default function InvestorsPage() {
       if (schemeFilter) params.set('scheme_id', schemeFilter);
       if (statusFilter) params.set('status', statusFilter);
       if (search) params.set('search', search);
+      if (bucket) params.set('bucket', bucket);
       // The approved portfolio only — pending/rejected submissions live on the
       // dedicated Approvals page (managers) until they're actioned.
       params.set('approval_status', 'approved');
@@ -91,7 +106,7 @@ export default function InvestorsPage() {
     }
   }
 
-  useEffect(() => { load(); }, [schemeFilter, statusFilter, search]);
+  useEffect(() => { load(); }, [schemeFilter, statusFilter, search, bucket]);
 
   async function openLoi(id) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
@@ -158,6 +173,12 @@ export default function InvestorsPage() {
           <option value="">All Statuses</option>
           {onlyPresent(INVESTOR_STATUSES, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
+        {bucket && (
+          <button type="button" className="club-bucket" onClick={() => setBucket('')}>
+            {bucket === 'due_for_renewal' ? 'Due for renewal' : 'Maturing in 30 days'}
+            <span className="club-bucket-x">×</span>
+          </button>
+        )}
       </div>
 
       <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
