@@ -2690,3 +2690,10 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   color: var(--warning); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .club-bucket-x { font-size: 15px; line-height: 1; opacity: 0.8; }
 .club-inv-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+/* Club 1000 · the Investors filter row. Five controls now — scheme, status,
+   payout, who added it, and the dashboard tile it was opened from — so it wraps
+   rather than pushing the table sideways. */
+.club-inv-dates { margin-top: 10px; }
+.club-inv-filters { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.club-inv-sel { height: 36px; padding: 0 10px; border-radius: 8px;
+  border: 1.5px solid var(--border-strong); font-size: 12px; }

@@ -6,6 +6,7 @@ import { apiFetch } from '../../../utils/apiFetch';
 import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { onlyPresent } from '../../../lib/presentOptions';
+import DateFilter from '../../sales/_DateFilter';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import ReviseInvestorModal from '../_ReviseInvestorModal';
@@ -18,6 +19,10 @@ import Loader from '../../../components/Loader';
 import { errText } from '../../../lib/apiError';
 
 // The Status filter's choices (narrowed to those present, see onlyPresent).
+const PAYOUT_OPTIONS = [
+  { value: 'quarterly', label: 'Quarterly' }, { value: 'monthly', label: 'Monthly' },
+  { value: 'yearly', label: 'Yearly' }, { value: 'maturity', label: 'At maturity' },
+];
 const INVESTOR_STATUSES = [
   { value: 'active', label: 'Active' }, { value: 'matured', label: 'Matured' },
   { value: 'redeemed', label: 'Redeemed' }, { value: 'premature_redeemed', label: 'Premature Redeemed' },
@@ -52,6 +57,12 @@ export default function InvestorsPage() {
   const [ledgerFor, setLedgerFor] = useState(null);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // The dashboard narrows its figures by investment date, by who added them and
+  // (through the Payout column) by how interest comes back. Same three here, so
+  // a tile's number has a list that matches it.
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [payoutFilter, setPayoutFilter] = useState('');
+  const [addedByFilter, setAddedByFilter] = useState('');
   // The dashboard's "Due for renewal" and "Maturing in 30 days" count something
   // no stored status holds — active past maturity, and a 30-day window — so the
   // tiles arrive with ?bucket=, which the server applies with the same
@@ -89,7 +100,8 @@ export default function InvestorsPage() {
     return () => clearTimeout(t);
   }, [searchText]);
 
-  const narrowed = !!(bucket || schemeFilter || statusFilter || search);
+  const narrowed = !!(bucket || schemeFilter || statusFilter || search
+    || payoutFilter || addedByFilter || range.from || range.to);
 
   // Every fetch takes a ticket; only the newest one is allowed to write to state.
   // Filters change faster than the network answers — type in the search box and
@@ -105,6 +117,10 @@ export default function InvestorsPage() {
       if (statusFilter) params.set('status', statusFilter);
       if (search) params.set('search', search);
       if (bucket) params.set('bucket', bucket);
+      if (payoutFilter) params.set('interest_payout', payoutFilter);
+      if (addedByFilter) params.set('added_by', addedByFilter);
+      if (range.from) params.set('date_from', range.from);
+      if (range.to) params.set('date_to', range.to);
       // The approved portfolio only — pending/rejected submissions live on the
       // dedicated Approvals page (managers) until they're actioned.
       params.set('approval_status', 'approved');
@@ -123,7 +139,8 @@ export default function InvestorsPage() {
     }
   }
 
-  useEffect(() => { if (ready) load(); }, [ready, schemeFilter, statusFilter, search, bucket]);
+  useEffect(() => { if (ready) load(); },
+    [ready, schemeFilter, statusFilter, search, bucket, payoutFilter, addedByFilter, range.from, range.to]);
 
   async function openLoi(id) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
@@ -188,7 +205,11 @@ export default function InvestorsPage() {
         )}
       </div>
 
-      <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
+      {/* The same date control the dashboard carries, so a period means the
+          same thing on both. Dated by investment date, as the dashboard is. */}
+      <div className="club-inv-dates"><DateFilter onChange={setRange} /></div>
+
+      <div className="club-inv-filters">
         <select className="nx-input" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Schemes</option>
           {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), schemeFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -197,6 +218,16 @@ export default function InvestorsPage() {
           <option value="">All Statuses</option>
           {onlyPresent(INVESTOR_STATUSES, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
+        <select className="nx-input club-inv-sel" value={payoutFilter} onChange={(e) => setPayoutFilter(e.target.value)}>
+          <option value="">All Payouts</option>
+          {onlyPresent(PAYOUT_OPTIONS, fx('payouts'), payoutFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        {(fx('added_by') || []).length > 1 && (
+          <select className="nx-input club-inv-sel" value={addedByFilter} onChange={(e) => setAddedByFilter(e.target.value)}>
+            <option value="">Added by anyone</option>
+            {(fx('added_by') || []).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        )}
         {bucket && (
           <button type="button" className="club-bucket" onClick={() => setBucket('')}>
             {bucket === 'due_for_renewal' ? 'Due for renewal' : 'Maturing in 30 days'}
