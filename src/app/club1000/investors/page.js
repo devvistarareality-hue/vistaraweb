@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { onlyPresent } from '../../../lib/presentOptions';
+import DateFilter from '../../sales/_DateFilter';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import ReviseInvestorModal from '../_ReviseInvestorModal';
@@ -18,6 +19,10 @@ import Loader from '../../../components/Loader';
 import { errText } from '../../../lib/apiError';
 
 // The Status filter's choices (narrowed to those present, see onlyPresent).
+const PAYOUT_OPTIONS = [
+  { value: 'quarterly', label: 'Quarterly' }, { value: 'monthly', label: 'Monthly' },
+  { value: 'yearly', label: 'Yearly' }, { value: 'maturity', label: 'At maturity' },
+];
 const INVESTOR_STATUSES = [
   { value: 'active', label: 'Active' }, { value: 'matured', label: 'Matured' },
   { value: 'redeemed', label: 'Redeemed' }, { value: 'premature_redeemed', label: 'Premature Redeemed' },
@@ -52,6 +57,32 @@ export default function InvestorsPage() {
   const [ledgerFor, setLedgerFor] = useState(null);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // The dashboard narrows its figures by investment date, by who added them and
+  // (through the Payout column) by how interest comes back. Same three here, so
+  // a tile's number has a list that matches it.
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [payoutFilter, setPayoutFilter] = useState('');
+  const [addedByFilter, setAddedByFilter] = useState('');
+  // The dashboard's "Due for renewal" and "Maturing in 30 days" count something
+  // no stored status holds — active past maturity, and a 30-day window — so the
+  // tiles arrive with ?bucket=, which the server applies with the same
+  // conditions it counted them by. Shown as a removable chip: landing on a
+  // filtered list with no way to see the rest is its own kind of broken.
+  //
+  // Read from window rather than useSearchParams: that hook forces the page into
+  // a Suspense boundary at build time, and the two other pages here that use it
+  // carry one for exactly that reason. This is the same approach My Conversions
+  // takes for its ?tab, and it keeps this page a plain client component.
+  const [bucket, setBucket] = useState('');
+  // `ready` gates the first fetch. Without it the list loaded once unfiltered —
+  // bucket is '' on the first render — and again once this effect had read the
+  // URL, and whichever response happened to land last won. That is why the same
+  // link showed 8 sometimes and all 42 others.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setBucket(new URLSearchParams(window.location.search).get('bucket') || '');
+    setReady(true);
+  }, []);
   // Only the values these rows hold (?facets=1) — see lib/presentOptions.
   const [facets, setFacets] = useState(null);
   useEffect(() => {
@@ -69,13 +100,27 @@ export default function InvestorsPage() {
     return () => clearTimeout(t);
   }, [searchText]);
 
+  const narrowed = !!(bucket || schemeFilter || statusFilter || search
+    || payoutFilter || addedByFilter || range.from || range.to);
+
+  // Every fetch takes a ticket; only the newest one is allowed to write to state.
+  // Filters change faster than the network answers — type in the search box and
+  // an earlier, slower response would otherwise land last and win.
+  const reqRef = useRef(0);
+
   async function load() {
+    const ticket = ++reqRef.current;
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (schemeFilter) params.set('scheme_id', schemeFilter);
       if (statusFilter) params.set('status', statusFilter);
       if (search) params.set('search', search);
+      if (bucket) params.set('bucket', bucket);
+      if (payoutFilter) params.set('interest_payout', payoutFilter);
+      if (addedByFilter) params.set('added_by', addedByFilter);
+      if (range.from) params.set('date_from', range.from);
+      if (range.to) params.set('date_to', range.to);
       // The approved portfolio only — pending/rejected submissions live on the
       // dedicated Approvals page (managers) until they're actioned.
       params.set('approval_status', 'approved');
@@ -84,14 +129,18 @@ export default function InvestorsPage() {
         apiFetch(`${CLUB1000_ENDPOINTS.investors}${qs}`),
         apiFetch(CLUB1000_ENDPOINTS.schemes),
       ]);
-      if (invRes.ok) setInvestors(await invRes.json());
-      if (schemesRes.ok) setSchemes(await schemesRes.json());
+      const inv = invRes.ok ? await invRes.json() : null;
+      const sch = schemesRes.ok ? await schemesRes.json() : null;
+      if (ticket !== reqRef.current) return;   // a newer request has overtaken this one
+      if (inv) setInvestors(inv);
+      if (sch) setSchemes(sch);
     } finally {
-      setLoading(false);
+      if (ticket === reqRef.current) setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, [schemeFilter, statusFilter, search]);
+  useEffect(() => { if (ready) load(); },
+    [ready, schemeFilter, statusFilter, search, bucket, payoutFilter, addedByFilter, range.from, range.to]);
 
   async function openLoi(id) {
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
@@ -127,8 +176,15 @@ export default function InvestorsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Investors</h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
-            {manager ? 'All approved investors across Club 1000' : 'Your approved investors'}
+          {/* Says what is on screen, not what the page is for. "All approved
+              investors across Club 1000" above eight filtered rows reads as the
+              whole book, which is how a working filter looks broken. */}
+          <p className="club-inv-sub">
+            {narrowed
+              ? `${investors.length} investor${investors.length === 1 ? '' : 's'}`
+                + (bucket === 'due_for_renewal' ? ' due for renewal'
+                  : bucket === 'maturing_soon' ? ' maturing in 30 days' : ' matching')
+              : (manager ? 'All approved investors across Club 1000' : 'Your approved investors')}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -149,7 +205,11 @@ export default function InvestorsPage() {
         )}
       </div>
 
-      <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
+      {/* The same date control the dashboard carries, so a period means the
+          same thing on both. Dated by investment date, as the dashboard is. */}
+      <div className="club-inv-dates"><DateFilter onChange={setRange} /></div>
+
+      <div className="club-inv-filters">
         <select className="nx-input" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
           <option value="">All Schemes</option>
           {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), schemeFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -158,13 +218,29 @@ export default function InvestorsPage() {
           <option value="">All Statuses</option>
           {onlyPresent(INVESTOR_STATUSES, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
+        <select className="nx-input club-inv-sel" value={payoutFilter} onChange={(e) => setPayoutFilter(e.target.value)}>
+          <option value="">All Payouts</option>
+          {onlyPresent(PAYOUT_OPTIONS, fx('payouts'), payoutFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        {(fx('added_by') || []).length > 1 && (
+          <select className="nx-input club-inv-sel" value={addedByFilter} onChange={(e) => setAddedByFilter(e.target.value)}>
+            <option value="">Added by anyone</option>
+            {(fx('added_by') || []).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        )}
+        {bucket && (
+          <button type="button" className="club-bucket" onClick={() => setBucket('')}>
+            {bucket === 'due_for_renewal' ? 'Due for renewal' : 'Maturing in 30 days'}
+            <span className="club-bucket-x">×</span>
+          </button>
+        )}
       </div>
 
       <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <table className="nx-table club-inv-tbl">
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-              <th style={th}>Name</th>
+              <th style={th} className="club-inv-name">Name</th>
               <th style={th}>Mobile</th>
               <th style={th}>Scheme</th>
               <th style={th}>Reference</th>
@@ -177,7 +253,7 @@ export default function InvestorsPage() {
               <th style={th}>LOI</th>
               <th style={th}>Status</th>
               {manager && <th style={th}>Added By</th>}
-              <th style={th}></th>
+              <th style={th} className="club-inv-act"></th>
             </tr>
           </thead>
           <tbody>
@@ -187,7 +263,7 @@ export default function InvestorsPage() {
               <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
             ) : investors.map((inv) => (
               <tr key={inv.id}>
-                <td style={td}>
+                <td style={td} className="club-inv-name">
                   {inv.name}
                   {inv.revision_no > 0 && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
                   {inv.is_matured && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
@@ -208,7 +284,7 @@ export default function InvestorsPage() {
                 </td>
                 <td style={td}><StatusBadge status={inv.status} /></td>
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
-                <td style={td}>
+                <td style={td} className="club-inv-act">
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
