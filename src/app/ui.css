@@ -2756,3 +2756,17 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .ask-files { display: flex; flex-direction: column; gap: 6px; margin: -2px 0 2px; }
 .ask-file { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; max-width: 100%; font-weight: 700; }
 .ask-file-name { font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 230px; }
+
+/* Ask Nexora: previous chats (History). */
+.ask-clear { display: inline-flex; align-items: center; gap: 5px; }
+.ask-clear.is-on { color: var(--accent); }
+.ask-history { display: flex; flex-direction: column; gap: 6px; }
+.ask-history-title { font-size: 11px; font-weight: 700; color: var(--faint); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.ask-history-empty { font-size: 13px; color: var(--muted); }
+.ask-history-row { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.ask-history-row:hover { border-color: var(--border-strong); }
+.ask-history-open { flex: 1; min-width: 0; text-align: left; background: none; border: none; cursor: pointer; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.ask-history-q { font-size: 13.5px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ask-history-meta { font-size: 11.5px; color: var(--muted); }
+.ask-history-del { background: none; border: none; cursor: pointer; color: var(--faint); padding: 8px 10px; }
+.ask-history-del:hover { color: var(--danger); }

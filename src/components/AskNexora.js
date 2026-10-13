@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Sparkles, X, Send, Download } from 'lucide-react';
+import { Sparkles, X, Send, Download, History, Trash2 } from 'lucide-react';
 import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 import { explainApiError, explainNetworkError } from '../lib/apiError';
 import { downloadExcel } from '../lib/downloadExcel';
@@ -87,11 +87,34 @@ export default function AskNexora({ module = 'dashboard' }) {
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState([]);       // [{ q, a?, err?, busy? }]
   const [text, setText] = useState('');
+  const [chatId, setChatId] = useState(null);   // the saved conversation these turns belong to
+  const [chats, setChats] = useState(null);     // History list when open, else null
   const busy = turns.some((t) => t.busy);
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [turns, open]);
 
   if (!canUseAI(user)) return null;
+
+  // History: the person's own past chats (saved on the server, encrypted).
+  async function openHistory() {
+    setChats([]);
+    const r = await fetch(SALES_ENDPOINTS.aiChats, { headers: authHeaders() }).catch(() => null);
+    const d = r && r.ok ? await r.json() : { results: [] };
+    setChats(d.results || []);
+  }
+  async function openChat(id) {
+    const r = await fetch(SALES_ENDPOINTS.aiChat(id), { headers: authHeaders() }).catch(() => null);
+    if (!r || !r.ok) { notify('That chat could not be opened.', 'error'); return; }
+    const d = await r.json();
+    setTurns((d.turns || []).map((t) => ({ q: t.q, a: t.a, files: t.files || [] })));
+    setChatId(d.id); setChats(null);
+  }
+  async function deleteChat(id) {
+    await fetch(SALES_ENDPOINTS.aiChat(id), { method: 'DELETE', headers: authHeaders() }).catch(() => null);
+    setChats((cs) => (cs || []).filter((c) => c.id !== id));
+    if (chatId === id) { setTurns([]); setChatId(null); }
+  }
+  const newChat = () => { setTurns([]); setChatId(null); setChats(null); };
 
   async function ask(question) {
     const q = question.trim();
@@ -103,10 +126,11 @@ export default function AskNexora({ module = 'dashboard' }) {
     try {
       const res = await fetch(SALES_ENDPOINTS.aiAsk, {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ question: q, history, company_id: companyId || null, module }),
+        body: JSON.stringify({ question: q, history, chat_id: chatId, company_id: companyId || null, module }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { finish({ err: explainApiError(res, d, 'Ask Nexora could not take that question.') }); return; }
+      if (d.chat) setChatId(d.chat);
       for (let n = 0; n < 120; n += 1) {           // up to ~4 minutes
         await sleep(n < 5 ? 1200 : 2000);
         const s = await fetch(SALES_ENDPOINTS.aiAskJob(d.job), { headers: authHeaders() });
@@ -131,14 +155,33 @@ export default function AskNexora({ module = 'dashboard' }) {
           <header className="ask-head">
             <div className="ask-title"><Sparkles size={16} /> Ask Nexora</div>
             <div className="ask-head-actions">
-              {turns.length > 0 && !busy && (
-                <button type="button" className="ask-clear" onClick={() => setTurns([])}>New chat</button>
+              {!busy && (
+                <button type="button" className={`ask-clear${chats ? ' is-on' : ''}`} onClick={() => (chats ? setChats(null) : openHistory())}
+                  aria-label="Previous chats"><History size={14} /> History</button>
+              )}
+              {(turns.length > 0 || chats) && !busy && (
+                <button type="button" className="ask-clear" onClick={newChat}>New chat</button>
               )}
               <button type="button" className="ask-close" onClick={() => setOpen(false)} aria-label="Close"><X size={16} /></button>
             </div>
           </header>
           <div className="ask-body">
-            {turns.length === 0 && (
+            {chats && (
+              <div className="ask-history">
+                <div className="ask-history-title">Previous chats</div>
+                {chats.length === 0 && <p className="ask-history-empty">No saved chats yet.</p>}
+                {chats.map((c) => (
+                  <div key={c.id} className="ask-history-row">
+                    <button type="button" className="ask-history-open" onClick={() => openChat(c.id)}>
+                      <span className="ask-history-q">{c.title}</span>
+                      <span className="ask-history-meta">{c.turns} question{c.turns === 1 ? '' : 's'} · {new Date(c.updated_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                    </button>
+                    <button type="button" className="ask-history-del" onClick={() => deleteChat(c.id)} aria-label="Delete chat"><Trash2 size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!chats && turns.length === 0 && (
               <div className="ask-intro">
                 <p>Ask about anything in your modules — Sales, AR, tasks, HR and more — in plain words. Answers use only what you can see.</p>
                 <div className="ask-examples">
@@ -146,7 +189,7 @@ export default function AskNexora({ module = 'dashboard' }) {
                 </div>
               </div>
             )}
-            {turns.map((t, i) => (
+            {!chats && turns.map((t, i) => (
               <div key={i} className="ask-turn">
                 <div className="ask-q">{t.q}</div>
                 {t.busy && <div className="ask-a ask-thinking"><span className="ask-dot" /><span className="ask-dot" /><span className="ask-dot" /> Looking at your data…</div>}
