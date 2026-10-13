@@ -2177,7 +2177,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                 {['Name', 'Project', 'Source',
                   ...(cpOnly ? ['Channel Partner'] : []),
                   ...(showTcStatus ? ['Telecaller'] : []),
-                  ...(showStmStatus ? [isCpAny ? 'CP' : 'STM'] : []),
+                  ...(showStmStatus ? ['STM'] : []),
                   ...(showTcStatus ? ['TC Status'] : []),
                   ...(showStmStatus ? [cpOnly ? 'Lead Status' : isCpAny ? 'CP Status' : 'STM Status'] : []),
                   'Overall', 'Received', ''].map((h) => (
