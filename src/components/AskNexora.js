@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Sparkles, X, Send, Download, History, Trash2, Maximize2, Minimize2 } from 'lucide-react';
+import { Sparkles, X, Send, Download, History, Trash2, Maximize2, Minimize2, Mic, MicOff } from 'lucide-react';
 import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 import { explainApiError, explainNetworkError } from '../lib/apiError';
 import { downloadExcel } from '../lib/downloadExcel';
@@ -91,6 +91,30 @@ export default function AskNexora({ module = 'dashboard' }) {
   const [chats, setChats] = useState(null);     // History list when open, else null
   // Full screen: remembered per browser (a convenience — falls back to the panel).
   const [full, setFull] = useState(() => { try { return localStorage.getItem('ask_full') === '1'; } catch { return false; } });
+  // Voice typing: the browser's own speech recognition (Chrome, Edge, Safari) —
+  // free, nothing leaves for our server until the question is sent. Indian English,
+  // which also takes Hinglish and Indian names well enough to edit.
+  const [listening, setListening] = useState(false);
+  const recRef = useRef(null);
+  const SpeechRec = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+  function toggleVoice() {
+    if (listening) { recRef.current?.stop(); return; }
+    if (!SpeechRec) return;
+    const rec = new SpeechRec();
+    rec.lang = 'en-IN'; rec.interimResults = true; rec.continuous = false;
+    const before = text ? text.replace(/\s*$/, ' ') : '';
+    rec.onresult = (e) => {
+      const said = Array.from(e.results).map((r) => r[0].transcript).join('');
+      setText(before + said);
+    };
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') notify('Allow the microphone for this site to use voice typing.', 'error');
+      else if (e.error !== 'no-speech' && e.error !== 'aborted') notify('Voice typing stopped — try again.', 'error');
+    };
+    rec.onend = () => setListening(false);
+    recRef.current = rec;
+    try { rec.start(); setListening(true); } catch { setListening(false); }
+  }
   const toggleFull = () => setFull((v) => { try { localStorage.setItem('ask_full', v ? '0' : '1'); } catch {} return !v; });
   const busy = turns.some((t) => t.busy);
   const endRef = useRef(null);
@@ -217,9 +241,16 @@ export default function AskNexora({ module = 'dashboard' }) {
           </div>
           <form className="ask-input" onSubmit={(e) => { e.preventDefault(); ask(text); }}>
             <textarea className="nx-input ask-textarea" rows={1} value={text} disabled={busy}
-              placeholder="Ask a question… e.g. today's site visits"
+              placeholder={listening ? 'Listening… speak your question' : "Ask a question… e.g. today's site visits"}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(text); } }} />
+            {SpeechRec && (
+              <button type="button" className={`nx-btn nx-btn-md nx-btn-secondary ask-mic${listening ? ' is-on' : ''}`}
+                onClick={toggleVoice} disabled={busy} aria-label={listening ? 'Stop voice typing' : 'Voice typing'}
+                title={listening ? 'Listening… click to stop' : 'Speak your question'}>
+                {listening ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
+            )}
             <button type="submit" className="nx-btn nx-btn-md nx-btn-primary ask-send" disabled={busy || !text.trim()} aria-label="Ask">
               <Send size={16} />
             </button>

@@ -2848,3 +2848,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .club-inv-tbl th.club-inv-name, .club-inv-tbl td.club-inv-name {
     position: static; box-shadow: none; }
 }
+
+/* Ask Nexora voice typing: the mic beside Send, red and pulsing while listening. */
+.ask-mic { flex-shrink: 0; }
+.ask-mic.is-on { color: var(--danger) !important; border-color: var(--danger) !important; animation: ask-mic-pulse 1.2s ease-in-out infinite; }
+@keyframes ask-mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 40%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--danger) 0%, transparent); } }
