@@ -15,6 +15,7 @@ import { confirmDialog, notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import LeadTransfers from '../_LeadTransfers';
 import MultiSelect from '../../../components/MultiSelect';
+import { bookingPath } from '../../../lib/bookingPath';
 // Open the confidential LOI via a short-lived signed URL (never a public link).
 async function openLoi(id) {
   try {
@@ -589,7 +590,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                     )}
                     {b.status === 'draft' && (
                       <>
-                        <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
+                        <button className="nx-btn nx-btn-md nx-btn-primary bk-act" onClick={() => router.push(`${bookingPath()}?draft=${b.id}`)}>▸ Resume</button>
                         <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => discardDraft(b.id)} disabled={busy === b.id}
                           style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
                       </>
@@ -610,7 +611,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       return (
                         <>
                           {isEoi && <button className="nx-btn nx-btn-md nx-btn-warning" onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>}
-                          <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
+                          <button className="nx-btn nx-btn-md nx-btn-primary bk-act" onClick={() => router.push(`${bookingPath()}?revise=${b.id}${isEoi ? '&eoi=1' : ''}`)}>↻ {isEoi ? 'Revise EOI' : 'Revise LOI'}</button>
                           {/* Only an approver can cancel, and only once the booking has a
                               closure to cancel through. */}
                           {isApprover && b.closure && (

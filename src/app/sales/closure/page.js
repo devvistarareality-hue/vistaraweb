@@ -9,6 +9,7 @@ import { ExportBookings } from '../bookings/page';
 
 
 import Icon from '../../../components/Icon';
+import { bookingPath } from '../../../lib/bookingPath';
 // Read-only project picker for the Record Closure flow. Looks like the admin
 // Projects grid (screenshot) but with no Add/Edit/Deactivate/Manage-Plots — the
 // STM only selects a project to drill into its unit map.
@@ -113,7 +114,7 @@ export function ClosureProjectsContent({ backHref = '/sales/site-visits', cpOnly
             // a project-wide one (some blocks may be mapped, others not) — always open the
             // block picker rather than short-circuiting a project with zero plots so far.
             const goTo = () => (!p.block_industrial && noPlots)
-              ? router.push(`/sales/booking?project=${p.id}&eoi=1${eoiQuery}`)
+              ? router.push(`${bookingPath()}?project=${p.id}&eoi=1${eoiQuery}`)
               : router.push(cpOnly ? `/m/cp/closure/${p.id}` : `/sales/closure/${p.id}`);
             return (
               <div className="nx-card" key={p.id} onClick={goTo}

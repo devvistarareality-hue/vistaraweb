@@ -12,6 +12,7 @@ import { confirmDialog, notify } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
 import { mapHex, MAP_SELECTED, MAP_INK, MAP_TIP_BG } from '../../../../lib/mapColors';
 import { errText } from '../../../../lib/apiError';
+import { bookingPath } from '../../../../lib/bookingPath';
 const isPdfUrl   = (u) => !!u && u.split('?')[0].toLowerCase().endsWith('.pdf');
 const isImageUrl = (u) => !!u && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.split('?')[0]);
 
@@ -509,7 +510,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
       // Converting an EOI into a plot booking — carry the source EOI id through.
       const convertEoi = new URLSearchParams(window.location.search).get('convertEoi');
       if (convertEoi) q.set('convertEoi', convertEoi);
-      router.push(`/sales/booking?${q.toString()}`);
+      router.push(`${bookingPath()}?${q.toString()}`);
     } finally {
       setHoldingSelection(false);
     }
@@ -854,7 +855,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                 No units are defined here yet — raise an EOI to hold interest until it's surveyed.
               </p>
               <button className="nx-btn nx-btn-md nx-btn-primary"
-                onClick={() => router.push(`/sales/booking?project=${id}&eoi=1&block=${encodeURIComponent([...selectedBlocks][0] || '')}`)}
+                onClick={() => router.push(`${bookingPath()}?project=${id}&eoi=1&block=${encodeURIComponent([...selectedBlocks][0] || '')}`)}
                 style={{ padding: '10px 22px', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, color: '#fff',
                   background: 'var(--strong)', cursor: 'pointer' }}>
                 Raise EOI for Block {[...selectedBlocks][0] || 'this project'}
@@ -945,7 +946,7 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                     "is it mine" left an admin looking at a draft they could discard
                     but not open, which is the wrong way round. */}
                 {canDiscard && (
-                  <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?draft=${p.drafted_booking_id}`)}
+                  <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`${bookingPath()}?draft=${p.drafted_booking_id}`)}
                     style={{ padding: '11px 16px', borderRadius: 14, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                     ▸ {mine ? 'Resume' : 'Open Draft'}
                   </button>
@@ -1052,7 +1053,7 @@ function UnitPanel({ plot, project, sv, user, sources = [], onClose, onClosed })
     }
     const convertEoi = new URLSearchParams(window.location.search).get('convertEoi');
     if (convertEoi) q.set('convertEoi', convertEoi);
-    router.push(`/sales/booking?${q.toString()}`);
+    router.push(`${bookingPath()}?${q.toString()}`);
   }
 
   const typePlans = useMemo(() => {

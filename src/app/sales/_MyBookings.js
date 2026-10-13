@@ -13,6 +13,7 @@ import { confirmDialog, notify } from '../../lib/notify';
 import Loader from '../../components/Loader';
 import MultiSelect from '../../components/MultiSelect';
 import BookFilter, { useBook } from '../../components/BookFilter';
+import { bookingPath } from '../../lib/bookingPath';
 // Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
 // and a draft has not been. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
@@ -491,18 +492,18 @@ export function MyBookingsList({ cpOnly = false }) {
                   {b.loi_document && <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                   {b.status === 'draft' && (
                     <>
-                      <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?draft=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>▸ Resume</button>
+                      <button className="nx-btn nx-btn-md nx-btn-primary bk-act" onClick={() => router.push(`${bookingPath()}?draft=${b.id}`)}>▸ Resume</button>
                       <button className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => discardDraft(b.id)} style={{ ...actBtn, background: 'var(--danger-soft)', color: 'var(--danger)', border: '1.5px solid var(--danger-2)' }}><Icon name="x" /> Discard</button>
                     </>
                   )}
                   {b.status === 'sold' && String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
                     <>
                       <button className="nx-btn nx-btn-md nx-btn-warning" onClick={() => router.push(`/sales/closure/${b.project}?convertEoi=${b.id}`)} style={{ ...actBtn, background: 'var(--warning-solid)' }}>→ Convert to LOI</button>
-                      <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?revise=${b.id}&eoi=1`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise EOI</button>
+                      <button className="nx-btn nx-btn-md nx-btn-primary bk-act" onClick={() => router.push(`${bookingPath()}?revise=${b.id}&eoi=1`)}>↻ Revise EOI</button>
                     </>
                   )}
                   {b.status === 'sold' && !String(b.plot_numbers || '').toUpperCase().startsWith('EOI') && (
-                    <button className="nx-btn nx-btn-md nx-btn-primary" onClick={() => router.push(`/sales/booking?revise=${b.id}`)} style={{ ...actBtn, background: 'var(--primary)' }}>↻ Revise LOI</button>
+                    <button className="nx-btn nx-btn-md nx-btn-primary bk-act" onClick={() => router.push(`${bookingPath()}?revise=${b.id}`)}>↻ Revise LOI</button>
                   )}
                   {b.status === 'pending' && <span style={{ fontSize: 12, color: 'var(--warning)', alignSelf: 'center' }}>Awaiting approval</span>}
                   {/* Every figure of the deal, beside its signed LOI. A revised deal
