@@ -38,8 +38,12 @@ function DesigBadge({ desig }) {
 // the whole company, so offering them an assignment would imply a limit that does
 // not exist. Keep in step with PROJECT_SCOPED_ROLES on the backend.
 const ASSIGN_DESIGS = ['TELECALLER', 'STM'];
+// Employees and interns (any designation — STM, telecaller, CP Executive) take
+// them as well: an assignment confines what they can book to those projects
+// (booking_project_ids / BOOKING_SCOPED_ROLES on the backend).
 const canHoldProjects = (m) =>
-  ASSIGN_DESIGS.includes((m?.designation || '').toUpperCase()) || m?.role === 'Manager';
+  ASSIGN_DESIGS.includes((m?.designation || '').toUpperCase())
+  || ['Manager', 'Employee', 'Intern'].includes(m?.role);
 
 function FilterChip({ label, active, onClick }) {
   return (
