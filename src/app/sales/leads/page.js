@@ -1614,7 +1614,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     search: '', status: '', project_id: [], source_id: '',
     telecaller_id: [], stm_id: [], telecaller_status: '', stm_status: '', disqualify_reason: '',
     channel_partner_id: '',
-    campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '',
+    campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '', date_basis: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
   // filtered view (?status=new, ?date_from=today, ?telecaller_status=hot, …).
@@ -1636,6 +1636,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
       unassigned:        p.get('unassigned') === 'true',
       date_from:         df === 'today' ? today : (df || ''),
       date_to:           df === 'today' ? today : (p.get('date_to') || ''),
+      date_basis:        p.get('date_basis') === 'called' ? 'called' : '',
     }));
     if (p.get('tab') === 'called' || p.get('tab') === 'all') setWorkTab(p.get('tab'));
     setSeeded(true);
@@ -1784,6 +1785,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.unassigned)      params.set('unassigned',       'true');
     if (filters.date_from)       params.set('date_from',        filters.date_from);
     if (filters.date_to)         params.set('date_to',          filters.date_to);
+    if (filters.date_basis && (filters.date_from || filters.date_to)) params.set('date_basis', filters.date_basis);
     if (adminView)               params.set('admin_view', '1');
     if (cpOnly)                  params.set('cp_only', 'true');
     params.set('book', book);
@@ -2015,7 +2017,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
           filters.telecaller_id.length || filters.stm_id.length || filters.telecaller_status || filters.stm_status ||
           filters.disqualify_reason || filters.channel_partner_id ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
-        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'' }); };
+        const clearAll = () => { setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'', date_basis:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -2053,6 +2055,13 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
             {/* Row 1: Date range + quick buttons + project + tc/stm status */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-2)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 0.5, textTransform: 'uppercase', marginRight: 2 }}>Date</span>
+              {/* What the dates mean: when the lead arrived, or when it was first called
+                  (the dashboard's Called / MQL tile). */}
+              <select className="nx-input lf-basis" value={filters.date_basis || ''} onChange={(e) => sf('date_basis', e.target.value)}
+                title="What the date range filters by">
+                <option value="">Received</option>
+                <option value="called">First called</option>
+              </select>
               <input className="nx-input" type="date" value={filters.date_from} onChange={(e) => sf('date_from', e.target.value)} style={{ ...fSel, width: 136 }} />
               <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>→</span>
               <input className="nx-input" type="date" value={filters.date_to} onChange={(e) => sf('date_to', e.target.value)} style={{ ...fSel, width: 136 }} />

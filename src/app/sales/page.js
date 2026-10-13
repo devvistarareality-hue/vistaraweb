@@ -632,7 +632,7 @@ function TelecallerDashboard({ user }) {
       { label: 'To Call',        value: toCall,   icon: <IconPhone />,    color: 'var(--warning-soft)', textColor: 'var(--warning)', href: withDate('/sales/leads') },
     ] },
     { title: 'Calling Activity', cards: [
-      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called') },
+      { label: 'Called/MQL',     value: called,   icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)', href: withDate('/sales/leads?tab=called&date_basis=called') },
       // Follow-ups actually made — the Completed tab, not today's queue.
       { label: 'Follow-up Calls', value: fuCalls, icon: <IconPhone />,    color: 'var(--accent-softer)', textColor: 'var(--accent)', href: withDate('/sales/follow-ups?filter=completed') },
       { label: 'Total Called',   value: totCalls, icon: <IconCheck />,    color: 'var(--success-soft)', textColor: 'var(--success)' },  // view only — a count, not a list,

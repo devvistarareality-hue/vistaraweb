@@ -2855,3 +2855,6 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* Site Visits card: who is working the visit (sales/site-visits). */
 .sv-people { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 4px 0 0; font-size: 12px; color: var(--muted); }
 .sv-people b { font-weight: 700; color: var(--text-2); }
+
+/* All Leads: what the date range filters by (Received / First called). */
+.lf-basis { height: 36px; padding: 0 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
