@@ -274,56 +274,58 @@ function CpDetailsTab({ companyId }) {
       ) : filteredCps.length === 0 ? (
         <p style={{ color: 'var(--muted)', fontSize: 13 }}>No channel partners match "{search}".</p>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="nx-table" style={tbl}>
+        <div className="cpd-wrap">
+          <table className="nx-table cpd-table">
             <thead>
               <tr>
-                <th style={th}>Name</th>
-                <th style={th}>Contact No</th>
-                <th style={th}>Firm Name</th>
-                <th style={th}>Category</th>
-                <th style={th}>Segment</th>
-                <th style={th}>City</th>
-                <th style={th}>Area</th>
-                <th className="cpa-col">Date Added</th>
-                <th style={th}>Status</th>
-                <th style={th}>Leads</th>
-                <th className="cpa-col">Activity</th>
-                <th style={th}></th>
+                <th>Partner</th>
+                <th>Firm</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Added</th>
+                <th>Status</th>
+                <th className="cpd-num">Leads</th>
+                <th>Activity</th>
+                <th />
               </tr>
             </thead>
             <tbody>
-              {filteredCps.map((cp) => (
-                <tr key={cp.id} style={{ borderTop: '1px solid var(--surface-2)' }}>
-                  <td style={{ ...td, fontWeight: 600, color: 'var(--text)' }}>{cp.name}</td>
-                  <td style={td}>{cp.contact_no}</td>
-                  <td style={td}>{cp.firm_name || '—'}</td>
-                  <td style={td}><CategoryBadge category={cp.category} /></td>
-                  <td style={td}>{cp.segment ? SEGMENT_OPTIONS.find((o) => o.value === cp.segment)?.label : '—'}</td>
-                  <td style={td}>{cp.city || '—'}</td>
-                  <td style={td}>{cp.area || '—'}</td>
-                  {/* When the partnership started. The Add form can backdate this,
-                      so it is not always the row's creation timestamp. */}
-                  <td className="cpa-col">{fmtAdded(cp.created_at)}</td>
-                  <td style={td}>
-                    <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: cp.is_active ? 'var(--success-soft)' : 'var(--surface-2)', color: cp.is_active ? 'var(--success)' : 'var(--muted)' }}>
-                      {cp.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={td}>{cp.lead_count ?? 0}</td>
-                  <td className="cpa-col">
-                    <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setActiveCp(cp)}>
-                      {cp.follow_up_count || cp.site_visit_count
-                        ? `${cp.follow_up_count || 0} FU · ${cp.site_visit_count || 0} SV`
-                        : 'Schedule'}
-                    </button>
-                  </td>
-                  <td style={{ ...td, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setModalCp(cp)} style={{ ...iconBtn, color: BLUE }}>Edit</button>
-                    <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => del(cp)} style={{ ...iconBtn, color: RED }}>Delete</button>
-                  </td>
-                </tr>
-              ))}
+              {filteredCps.map((cp) => {
+                const seg = cp.segment ? SEGMENT_OPTIONS.find((o) => o.value === cp.segment)?.label : '';
+                // City and area together; the same place typed in both shows once.
+                const place = [cp.area, cp.city].filter(Boolean)
+                  .filter((v, i, a) => a.findIndex((x) => x.toLowerCase() === v.toLowerCase()) === i).join(', ');
+                return (
+                  <tr key={cp.id}>
+                    <td>
+                      <div className="cpd-name">{cp.name}</div>
+                      <div className="cpd-sub">{cp.contact_no}</div>
+                    </td>
+                    <td className="cpd-firm">{cp.firm_name || '—'}</td>
+                    <td>
+                      <CategoryBadge category={cp.category} />
+                      {seg && <div className="cpd-sub">{seg}</div>}
+                    </td>
+                    <td className="cpd-place">{place || '—'}</td>
+                    {/* When the partnership started. The Add form can backdate this,
+                        so it is not always the row's creation timestamp. */}
+                    <td className="cpd-nowrap">{fmtAdded(cp.created_at)}</td>
+                    <td><span className={`cpa-chip ${cp.is_active ? 'cpa-chip-ok' : 'cpa-chip-mute'}`}>{cp.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td className="cpd-num">{cp.lead_count ?? 0}</td>
+                    <td>
+                      <button className="nx-btn nx-btn-sm nx-btn-soft cpd-nowrap" onClick={() => setActiveCp(cp)}>
+                        {cp.follow_up_count || cp.site_visit_count
+                          ? `${cp.follow_up_count || 0} FU · ${cp.site_visit_count || 0} SV`
+                          : 'Schedule'}
+                      </button>
+                    </td>
+                    <td className="cpd-actions">
+                      <button className="nx-btn nx-btn-sm nx-btn-ghost cpd-edit" onClick={() => setModalCp(cp)}>Edit</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-ghost cpd-del" onClick={() => del(cp)}>Delete</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -397,12 +399,10 @@ export default function ChannelPartnerLeadsPage() {
 const card       = { backgroundColor: 'var(--surface)', borderRadius: 18, padding: '20px', boxShadow: '0 2px 8px rgba(140,148,160,0.18)' };
 const inp        = { height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' };
 const lbl        = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
-const tbl        = { width: '100%', borderCollapse: 'collapse', minWidth: 720 };
 const th         = { textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--muted)', padding: '10px 14px', textTransform: 'uppercase', letterSpacing: 0.5 };
 const td         = { padding: '10px 14px', fontSize: 13, color: 'var(--text)' };
 const saveBtn    = { padding: '9px 16px', backgroundColor: 'var(--strong)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
 const cancelBtn  = { padding: '9px 16px', backgroundColor: 'var(--surface-2)', color: 'var(--muted)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-const iconBtn    = { background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, padding: '4px 8px' };
 const overlay    = { position: 'fixed', inset: 0, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
 const modal      = { backgroundColor: 'var(--surface)', borderRadius: 20, width: '90%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 const modalHeader= { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid var(--surface-2)' };
