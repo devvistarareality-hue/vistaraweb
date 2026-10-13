@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Sparkles, X, Send } from 'lucide-react';
+import { Sparkles, X, Send, Download } from 'lucide-react';
 import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
 import { explainApiError, explainNetworkError } from '../lib/apiError';
+import { downloadExcel } from '../lib/downloadExcel';
+import { notify } from '../lib/notify';
 
 // Ask Nexora — the AI assistant (backend sales/assistant.py). A floating button on
 // the dashboards and in every module opens a chat: type a question, the server
@@ -23,7 +25,8 @@ const EXAMPLES = {
   hr: ['Who is on leave this week?', 'How many leave requests are pending?', 'My attendance this month'],
   club1000: ['How much has been invested this year, scheme-wise?', 'Which payouts are due this month?'],
   dashboard: ["Today's site visits and bookings", 'How much is overdue in AR, project-wise?',
-    'How many tasks are overdue?', 'Who is on leave this week?', 'Give me a summary of this month'],
+    'How many tasks are overdue?', 'Make a PDF report of this month, module-wise',
+    "Make an Excel of this month's bookings"],
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -109,7 +112,7 @@ export default function AskNexora({ module = 'dashboard' }) {
         const s = await fetch(SALES_ENDPOINTS.aiAskJob(d.job), { headers: authHeaders() });
         const st = await s.json().catch(() => ({}));
         if (!s.ok) { finish({ err: explainApiError(s, st, 'Ask Nexora could not answer.') }); return; }
-        if (st.status === 'done') { finish({ a: st.answer }); return; }
+        if (st.status === 'done') { finish({ a: st.answer, files: st.files || [] }); return; }
         if (st.status === 'error') { finish({ err: st.detail || 'Ask Nexora could not answer.' }); return; }
       }
       finish({ err: 'That is taking too long — try a narrower question.' });
@@ -148,6 +151,17 @@ export default function AskNexora({ module = 'dashboard' }) {
                 <div className="ask-q">{t.q}</div>
                 {t.busy && <div className="ask-a ask-thinking"><span className="ask-dot" /><span className="ask-dot" /><span className="ask-dot" /> Looking at your data…</div>}
                 {t.a && <div className="ask-a"><Markdown text={t.a} /></div>}
+                {(t.files || []).length > 0 && (
+                  <div className="ask-files">
+                    {t.files.map((f) => (
+                      <button key={f.id} type="button" className="nx-btn nx-btn-sm nx-btn-soft ask-file"
+                        onClick={async () => { const err = await downloadExcel(SALES_ENDPOINTS.aiFile(f.id), f.name); if (err) notify(err, 'error'); }}>
+                        <Download size={15} /> {f.format === 'pdf' ? 'Download PDF' : 'Download Excel'}
+                        <span className="ask-file-name">{f.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {t.err && <div className="ask-a ask-err">{t.err}</div>}
               </div>
             ))}

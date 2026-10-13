@@ -2751,3 +2751,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cpm-hist-title { font-size: 13px; font-weight: 700; color: var(--text); }
 .cpm-hist-change { font-size: 12px; color: var(--text-2); margin-top: 3px; }
 .cpm-hist-meta { font-size: 11px; color: var(--faint); margin-top: 4px; }
+
+/* Ask Nexora: files it made (Excel / PDF) under the answer. */
+.ask-files { display: flex; flex-direction: column; gap: 6px; margin: -2px 0 2px; }
+.ask-file { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; max-width: 100%; font-weight: 700; }
+.ask-file-name { font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 230px; }
