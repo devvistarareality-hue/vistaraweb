@@ -2715,37 +2715,34 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .club-pay-pill.is-on { border-color: var(--warning); background: var(--warning-soft); color: var(--warning); }
 .club-pay-reset { height: 36px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
   border: none; background: none; color: var(--muted); cursor: pointer; text-decoration: underline; }
-.club-pay-empty { padding: 12px 16px; border-top: 1px solid var(--surface-2);
+.club-empty-cell { padding: 12px 16px; border-top: 1px solid var(--surface-2);
   text-align: center; color: var(--muted); }
 
-/* Club 1000 · Investors — pinned first and last columns.
-   Fourteen columns put Ledger / Revise LOI / Redeem past the right edge, so
-   acting on a row meant scrolling sideways first — and by the time you got
-   there the name had scrolled off, leaving no way to tell whose row you were
-   redeeming. Both ends are pinned instead.
-   The scrolling cells pass underneath, so a pinned cell needs its own opaque
-   background; the hover tint is semi-transparent, so it is layered over that
-   background rather than replacing it (same two-layer trick the sticky
-   distribution-log header uses above). */
-/* width and border-collapse come from .nx-table above. */
+/* Club 1000 · Investors.
+   The row's actions sat past the right edge because the table carried a
+   Document column that was empty on every one of its 183 rows — a dead column
+   wide enough to push Ledger / Revise LOI / Redeem out of view. Dropping it
+   buys the width back, and the KYC link it would have held moved in beside the
+   LOI one, so an upload is still reachable. The table scrolls normally; pinning
+   a column would stop it scrolling, which is not what was wanted.
+   width and border-collapse come from .nx-table above. */
 .club-inv-tbl { font-size: 13px; }
-.club-inv-tbl th.club-inv-name, .club-inv-tbl td.club-inv-name {
-  position: sticky; left: 0; z-index: 2; background: var(--surface); }
-.club-inv-tbl th.club-inv-act, .club-inv-tbl td.club-inv-act {
-  position: sticky; right: 0; z-index: 2; background: var(--surface); }
-.club-inv-tbl thead th.club-inv-name, .club-inv-tbl thead th.club-inv-act {
-  z-index: 3;
-  background: linear-gradient(var(--table-head), var(--table-head)), var(--surface) !important; }
-/* A soft edge, so a pinned column reads as covering the scroll rather than as
-   a column that simply happens to be there. */
-.club-inv-tbl td.club-inv-name { box-shadow: 10px 0 12px -10px rgba(var(--ink-rgb), 0.25); }
-.club-inv-tbl td.club-inv-act { box-shadow: -10px 0 12px -10px rgba(var(--ink-rgb), 0.25); }
-.club-inv-tbl tbody tr:hover td.club-inv-name,
-.club-inv-tbl tbody tr:hover td.club-inv-act {
-  background: linear-gradient(var(--accent-softer), var(--accent-softer)), var(--surface); }
-/* On a narrow screen two pinned columns would leave nothing between them to
-   scroll. The actions stay — they are the point — and the name lets go. */
-@media (max-width: 820px) {
-  .club-inv-tbl th.club-inv-name, .club-inv-tbl td.club-inv-name {
-    position: static; box-shadow: none; }
-}
+/* Club 1000 · Referral Rewards. The per-referrer cards are buttons: each one's
+   figure counts rows the table below was not showing, the same disagreement
+   the dashboard tiles had before they could be opened. */
+.club-ref-cards { margin-top: 18px; display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.club-ref-card { text-align: left; cursor: pointer; padding: 14px 16px; border-radius: 18px;
+  background: var(--surface); border: 1px solid var(--surface-3); font: inherit;
+  transition: border-color .14s, box-shadow .14s; }
+.club-ref-card:hover:not(:disabled) { border-color: var(--accent); }
+.club-ref-card:disabled { cursor: default; }
+.club-ref-card.is-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.club-ref-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.club-ref-phone { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.club-ref-amt { font-size: 18px; font-weight: 800; color: var(--success); margin-top: 8px; }
+.club-ref-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+.club-inv-docs { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.club-inv-doc { background: none; border: none; padding: 0; font-size: 13px; font-weight: 700;
+  color: var(--success); cursor: pointer; text-decoration: none; }
