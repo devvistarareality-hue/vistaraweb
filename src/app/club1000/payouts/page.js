@@ -226,7 +226,7 @@ export default function PayoutsPage() {
             {loading ? (
               <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
             ) : payouts.length === 0 ? (
-              <tr><td colSpan={7} className="club-pay-empty">
+              <tr><td colSpan={7} className="club-empty-cell">
                 {narrowed ? 'No payouts match these filters.' : 'No payouts.'}
               </td></tr>
             ) : payouts.map((p) => (

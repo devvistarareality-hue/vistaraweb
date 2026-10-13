@@ -240,7 +240,7 @@ export default function InvestorsPage() {
         <table className="nx-table club-inv-tbl">
           <thead>
             <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-              <th style={th} className="club-inv-name">Name</th>
+              <th style={th}>Name</th>
               <th style={th}>Mobile</th>
               <th style={th}>Scheme</th>
               <th style={th}>Reference</th>
@@ -249,21 +249,20 @@ export default function InvestorsPage() {
               <th style={th}>Payout</th>
               <th style={th}>Invested</th>
               <th style={th}>Matures</th>
-              <th style={th}>Document</th>
-              <th style={th}>LOI</th>
+              <th style={th}>Documents</th>
               <th style={th}>Status</th>
               {manager && <th style={th}>Added By</th>}
-              <th style={th} className="club-inv-act"></th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
+              <tr><td colSpan={13} className="club-empty-cell"><Loader size="sm" /></td></tr>
             ) : investors.length === 0 ? (
-              <tr><td colSpan={14} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
+              <tr><td colSpan={13} className="club-empty-cell">{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
             ) : investors.map((inv) => (
               <tr key={inv.id}>
-                <td style={td} className="club-inv-name">
+                <td style={td}>
                   {inv.name}
                   {inv.revision_no > 0 && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
                   {inv.is_matured && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
@@ -277,14 +276,15 @@ export default function InvestorsPage() {
                 <td style={td}>{formatDMY(inv.investment_date)}</td>
                 <td style={td}>{formatDMY(inv.maturity_date)}</td>
                 <td style={td}>
-                  {inv.document_url ? <a href={inv.document_url} target="_blank" rel="noreferrer" style={{ color: TEAL, fontWeight: 700, textDecoration: 'none' }}>View</a> : '—'}
-                </td>
-                <td style={td}>
-                  {inv.loi_document_url ? <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>View LOI</button> : '—'}
+                  <div className="club-inv-docs">
+                    {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-ghost club-inv-doc" onClick={() => openLoi(inv.id)}>View LOI</button>}
+                    {inv.document_url && <a className="club-inv-doc" href={inv.document_url} target="_blank" rel="noreferrer">KYC</a>}
+                    {!inv.loi_document_url && !inv.document_url && '—'}
+                  </div>
                 </td>
                 <td style={td}><StatusBadge status={inv.status} /></td>
                 {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
-                <td style={td} className="club-inv-act">
+                <td style={td}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
