@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
+import { SALES_ENDPOINTS, authHeaders, ACTIVITY_ENDPOINTS } from '../../../../constants/api';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { SalesLeadsContent } from '../../../sales/leads/page';
 import { PartnerActivityModal } from '../_PartnerActivity';
@@ -64,7 +64,38 @@ function CategoryBadge({ category }) {
 
 const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: 'normal', segment: '', city: '', area: '', date_added: '', is_active: true };
 
-function ChannelPartnerModal({ initial, onClose, onSaved, onDelete }) {
+// A partner's History tab: their own entries in the activity log (created, edited,
+// follow-ups and visits logged against them), newest first — like a lead's History.
+function PartnerHistory({ partnerId, companyId }) {
+  const [rows, setRows] = useState(null);
+  useEffect(() => {
+    const q = `?target_type=channel-partner&target_id=${partnerId}${companyId ? `&company_id=${companyId}` : ''}`;
+    fetch(ACTIVITY_ENDPOINTS.log + q, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : { results: [] })).then((d) => setRows(d.results || []))
+      .catch(() => setRows([]));
+  }, [partnerId, companyId]);
+  if (!rows) return <Loader variant="inline" size="sm" label="Loading…" />;
+  if (!rows.length) return <p className="cpm-empty">No changes recorded yet.</p>;
+  return (
+    <div className="cpm-hist">
+      {rows.map((r) => (
+        <div key={r.id} className="cpm-hist-row">
+          <div className="cpm-hist-dot"><Icon name={r.action === 'created' ? 'check-circle' : r.action === 'deleted' ? 'trash' : /follow|visit/i.test(r.summary) ? 'calendar' : 'pencil'} size={14} /></div>
+          <div className="cpm-hist-body">
+            <div className="cpm-hist-title">{r.summary}</div>
+            {(r.changes || []).map((c, i) => (
+              <div key={i} className="cpm-hist-change">{c.field}: {c.from || '—'} → <b>{c.to || '—'}</b></div>
+            ))}
+            <div className="cpm-hist-meta">{r.actor?.name || 'System'} · {new Date(r.at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChannelPartnerModal({ initial, onClose, onSaved, onDelete, companyId }) {
+  const [tab, setTab] = useState('detail');
   // One partner per contact number. Checked while the number is typed rather than
   // on submit, so nobody fills in the whole form only to be told the broker is
   // already there. The server enforces it regardless (409) — this is the courtesy.
@@ -137,6 +168,17 @@ function ChannelPartnerModal({ initial, onClose, onSaved, onDelete }) {
           <button type="button" className="cpm-close" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
         </div>
 
+        {isEdit && (
+          <div className="cpm-tabs">
+            {[['detail', 'Detail'], ['history', 'History']].map(([k, label]) => (
+              <button key={k} type="button" className={`cpm-tab${tab === k ? ' is-on' : ''}`} onClick={() => setTab(k)}>{label}</button>
+            ))}
+          </div>
+        )}
+
+        {tab === 'history' ? (
+          <div className="cpm-body"><PartnerHistory partnerId={initial.id} companyId={companyId} /></div>
+        ) : (<>
         <div className="cpm-body">
           <div className="cpm-sec">Contact info</div>
           <div className="cpm-grid">
@@ -231,6 +273,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved, onDelete }) {
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Channel Partner'}
           </button>
         </div>
+        </>)}
       </div>
     </div>
   );
@@ -337,6 +380,7 @@ function CpDetailsTab({ companyId }) {
       {modalCp !== undefined && (
         <ChannelPartnerModal
           initial={modalCp}
+          companyId={companyId}
           onClose={() => setModalCp(undefined)}
           onSaved={(saved) => {
             setCps((prev) => modalCp ? prev.map((c) => (c.id === saved.id ? saved : c)) : [...prev, saved]);
