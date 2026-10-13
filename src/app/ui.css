@@ -2733,7 +2733,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cpm-seg .nx-btn { flex: 1; justify-content: center; }
 .cpm-err { margin: 4px 0 12px; }
 .cpm-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 14px 24px 18px; border-top: 1px solid var(--surface-2); flex-shrink: 0; }
-.cpm-delete { margin-right: auto; }
+.cpm-delete { margin-right: auto; font-weight: 700; border: 1.5px solid var(--danger-2); }
 @media (max-width: 560px) { .cpm-grid { grid-template-columns: 1fr; } }
 
 .cpm-tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--surface-2); background: var(--accent-softer); flex-shrink: 0; }

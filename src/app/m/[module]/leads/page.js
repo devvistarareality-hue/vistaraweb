@@ -265,7 +265,7 @@ function ChannelPartnerModal({ initial, onClose, onSaved, onDelete, companyId })
 
         <div className="cpm-foot">
           {isEdit && onDelete && (
-            <button type="button" className="nx-btn nx-btn-md nx-btn-ghost cpd-del cpm-delete" onClick={() => onDelete(initial)}>Delete</button>
+            <button type="button" className="nx-btn nx-btn-md nx-btn-danger-soft cpm-delete" onClick={() => onDelete(initial)}>Delete</button>
           )}
           <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
           <button type="button" className="nx-btn nx-btn-md nx-btn-primary" onClick={save} disabled={saving || !!dupe}
