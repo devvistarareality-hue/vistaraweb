@@ -60,18 +60,20 @@ export default function MetaCapiCard({ cfg, companyId, onSaved }) {
           <div className="capi-title">Send results back to Meta</div>
           <div className="capi-sub">When a Meta lead is qualified, visits or books, Nexora tells Meta the same day, so your ads find more people who actually visit.</div>
         </div>
-        <button type="button" className={`nx-toggle${enabled ? ' is-on' : ''}`} onClick={() => setEnabled((v) => !v)}
-          aria-pressed={enabled}>{enabled ? 'On' : 'Off'}</button>
+        <button type="button" className={`nx-btn nx-btn-sm nx-toggle capi-switch${enabled ? ' is-on' : ''}`}
+          onClick={() => setEnabled((v) => !v)} aria-pressed={enabled}>
+          <span className="capi-dot" />{enabled ? 'On' : 'Off'}
+        </button>
       </div>
       <div className="capi-grid">
-        <label className="nx-field"><span>Dataset ID</span>
+        <label className="nx-field stack capi-f"><span className="nx-field-label">Dataset ID</span>
           <input className="nx-input" value={datasetId} onChange={(e) => setDatasetId(e.target.value)} placeholder="e.g. 1602590401463535" inputMode="numeric" />
         </label>
-        <label className="nx-field"><span>Access token</span>
+        <label className="nx-field stack capi-f"><span className="nx-field-label">Access token</span>
           <input className="nx-input" type="password" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off"
             placeholder={tokenSet ? 'Saved — type a new one to replace it' : 'From the dataset → Settings → Conversions API'} />
         </label>
-        <label className="nx-field"><span>Test event code (optional)</span>
+        <label className="nx-field stack capi-f"><span className="nx-field-label">Test event code (optional)</span>
           <input className="nx-input" value={testCode} onChange={(e) => setTestCode(e.target.value)} placeholder="TEST12345 — clear it once testing is done" />
         </label>
       </div>
@@ -81,10 +83,10 @@ export default function MetaCapiCard({ cfg, companyId, onSaved }) {
           {busy === 'test' ? 'Sending…' : 'Send a test event'}</button>
       </div>
       <table className="nx-table capi-table">
-        <thead><tr><th>Stage sent to Meta</th><th>When</th><th>Sent (30 days)</th><th>Failed</th></tr></thead>
+        <thead><tr><th>Stage sent to Meta</th><th>When</th><th className="capi-num">Sent (30 days)</th><th className="capi-num">Failed</th></tr></thead>
         <tbody>{stats.map((s) => (
-          <tr key={s.event}><td><code>{s.event}</code></td><td>{STAGE_HELP[s.event]}</td><td>{s.sent}</td>
-            <td className={s.failed ? 'capi-bad' : ''}>{s.failed}</td></tr>
+          <tr key={s.event}><td><code className="capi-code">{s.event}</code></td><td>{STAGE_HELP[s.event]}</td>
+            <td className="capi-num">{s.sent}</td><td className={`capi-num${s.failed ? ' capi-bad' : ''}`}>{s.failed}</td></tr>
         ))}</tbody>
       </table>
       {recent.some((r) => r.status === 'failed') && (
