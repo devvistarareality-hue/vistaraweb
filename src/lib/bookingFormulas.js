@@ -233,4 +233,27 @@ export function installmentBase(v) {
   return v.saleDeed;
 }
 
+// Kalrav Unit Price = Land Sale Deed + Development Agreement + Construction Agreement.
+// Of the three, the two typed in most recently are kept and the third (the "auto" one)
+// takes whatever the Unit Price leaves — so a Sale Deed % or Unit Price change moves
+// only that one. Nothing typed yet: the Construction Agreement is the auto one, as
+// before. Keys: lsd, dev, cag.
+export const KAL_PARTS = ['cag', 'lsd', 'dev'];   // preference order for the auto one
+export function kalravAuto(touched = []) {
+  const kept = touched.slice(-2);
+  return KAL_PARTS.find((k) => !kept.includes(k)) || 'cag';
+}
+// Split `total` across the parts with `auto` taking the remainder. A total below the
+// two kept ones sets auto to 0 and trims those, the Land Sale Deed first.
+export function kalravBalance(parts, total, auto) {
+  const p = { lsd: 0, dev: 0, cag: 0, ...parts };
+  const others = ['lsd', 'dev', 'cag'].filter((k) => k !== auto);
+  const rest = others.reduce((a, k) => a + (p[k] || 0), 0);
+  if (total >= rest) { p[auto] = total - rest; return p; }
+  p[auto] = 0;
+  let over = rest - total;
+  for (const k of others) { const cut = Math.min(p[k] || 0, over); p[k] = (p[k] || 0) - cut; over -= cut; }
+  return p;
+}
+
 export const rupee = (n) => '₹ ' + Math.round(num(n)).toLocaleString('en-IN');
