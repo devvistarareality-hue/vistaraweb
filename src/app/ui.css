@@ -2928,9 +2928,12 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pp-bar-fill { display: block; height: 100%; border-radius: 999px; transition: width .2s; }
 .pp-bar-fill.ok { background: var(--success); }
 .pp-bar-fill.bad { background: var(--danger); }
+/* "No. of Installments" — sets how many rows the section has, as on the booking form. */
+.pp-count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 13px; font-weight: 700; color: var(--text-2); }
+.pp-count-box { width: 110px; }
 .pp-empty { margin: 2px 0 10px; font-size: 12px; color: var(--muted); }
 /* One installment: number · share · due · stage · remove. */
-.pp-item { display: grid; grid-template-columns: 30px 120px 170px 1fr 34px; gap: 10px; align-items: start;
+.pp-item { display: grid; grid-template-columns: 30px 120px 170px 1fr; gap: 10px; align-items: start;
   padding: 10px; margin-bottom: 8px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--hairline); }
 .pp-item-legal { grid-template-columns: 170px 1fr; }
 .pp-no { width: 28px; height: 28px; margin-top: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
@@ -2950,7 +2953,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .pp-add { margin-top: 4px; padding: 8px 14px; border: 1.5px dashed var(--border-strong); border-radius: 999px; background: none; color: var(--accent); font-size: 12.5px; font-weight: 700; cursor: pointer; }
 .pp-add:hover { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 640px) {
-  .pp-item { grid-template-columns: 28px 1fr 1fr 30px; }
+  .pp-item { grid-template-columns: 28px 1fr 1fr; }
   .pp-item .pp-f-stage { grid-column: 2 / 4; }
   .pp-item-legal { grid-template-columns: 1fr; }
   .pp-item-legal .pp-f-stage { grid-column: auto; }

@@ -36,8 +36,12 @@ export default function PaymentPlansModal({ project, onClose, onSaved }) {
   // The last installment takes whatever % the others leave, so a section always adds up
   // to 100 — the same way the booking form fills its last row.
   const setRow = (sec, i, k, v) => setPlan((p) => ({ ...p, [sec]: balance(p[sec].map((r, idx) => (idx === i ? { ...r, [k]: v } : r))) }));
-  const addRow = (sec) => setPlan((p) => ({ ...p, [sec]: balance([...p[sec], { pct: '', days: '', stage: '' }]) }));
-  const dropRow = (sec, i) => setPlan((p) => ({ ...p, [sec]: balance(p[sec].filter((_, idx) => idx !== i)) }));
+  // "No. of Installments", as on the booking form: rows already filled are kept, new
+  // ones start empty, and the last one takes the remaining %.
+  const setCount = (sec, n) => setPlan((p) => {
+    const count = Math.min(24, Math.max(0, parseInt(n, 10) || 0));
+    return { ...p, [sec]: balance(Array.from({ length: count }, (_, i) => p[sec][i] || { pct: '', days: '', stage: '' })) };
+  });
   const setLegal = (k, v) => setPlan((p) => ({ ...p, legal: { ...p.legal, [k]: v } }));
   const copyDirect = () => setPlans((all) => ({ ...all, eoi: JSON.parse(JSON.stringify(all.direct || emptyPlan())) }));
 
@@ -110,10 +114,17 @@ export default function PaymentPlansModal({ project, onClose, onSaved }) {
                   <h3>{label}</h3>
                   {rows.length > 0 && <span className={`pp-total${ok ? ' ok' : ' bad'}`}>{total.toFixed(2)}%</span>}
                 </div>
+                <label className="pp-count">
+                  <span>No. of Installments</span>
+                  <span className="pp-f-box pp-count-box">
+                    <input className="pp-f-input" inputMode="numeric" value={rows.length || ''} placeholder="0"
+                      onChange={(e) => setCount(sec, e.target.value.replace(/[^0-9]/g, ''))} />
+                  </span>
+                </label>
                 {rows.length > 0 && (
                   <div className="pp-bar"><span className={`pp-bar-fill${ok ? ' ok' : ' bad'}`} style={{ width: `${Math.min(100, total)}%` }} /></div> // inline-ok: share of 100% filled
                 )}
-                {rows.length === 0 && <p className="pp-empty">No installments — the booking starts this section blank.</p>}
+                {rows.length === 0 && <p className="pp-empty">0 = no installments; the booking starts this section blank.</p>}
                 {rows.map((r, i) => {
                   const isLast = i === rows.length - 1;
                   return (
@@ -143,11 +154,9 @@ export default function PaymentPlansModal({ project, onClose, onSaved }) {
                             onChange={(e) => setRow(sec, i, 'stage', e.target.value)} />
                         </span>
                       </label>
-                      <button type="button" className="pp-drop" aria-label="Remove installment" onClick={() => dropRow(sec, i)}><Icon name="x" /></button>
                     </div>
                   );
                 })}
-                <button type="button" className="pp-add" onClick={() => addRow(sec)}>+ Add installment</button>
               </section>
             );
           })}
