@@ -66,7 +66,17 @@ const OUTCOME_COLOR = { hot: 'var(--danger)', warm: 'var(--warning-2)', cold: 'v
 // `outcome` (SV Hot/Warm/Cold, only meaningful for sv_done) is shown alongside
 // the stage — "SV DONE · HOT" — rather than replacing it, so the pipeline stage
 // and the visit's outcome are both visible without conflating the two.
-function StatusBadge({ status, outcome }) {
+// A closed lead shows where its booking stands instead of a bare "CLOSED".
+const CLOSED_STAGE = {
+  booking_pending:   { label: 'BOOKING PENDING',   cls: 'is-pending' },
+  booked:            { label: 'BOOKED',            cls: 'is-booked' },
+  booking_rejected:  { label: 'BOOKING REJECTED',  cls: 'is-rejected' },
+  booking_cancelled: { label: 'BOOKING CANCELLED', cls: 'is-cancelled' },
+};
+
+function StatusBadge({ status, outcome, stage }) {
+  const cs = status === 'closed' ? CLOSED_STAGE[stage] : null;
+  if (cs) return <span className={`nx-badge lead-stage ${cs.cls}`}>{cs.label}</span>;
   const color = STATUS_COLOR[status] || 'var(--muted)';
   return (
     <span className="nx-badge" style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`, color }}>
@@ -2218,15 +2228,15 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                   <td style={{ ...td, color: 'var(--muted)' }} onClick={() => loadDetail(l)}>{l.project_name || '—'}</td>
                   <td style={{ ...td, color: 'var(--muted)', textTransform: 'capitalize' }} onClick={() => loadDetail(l)}>{l.source_name || '—'}</td>
                   {cpOnly && <td style={{ ...td, color: 'var(--muted)' }} onClick={() => loadDetail(l)}>{l.channel_partner_name || '—'}</td>}
-                  {showTcStatus && <td style={{ ...td, color: 'var(--text)', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.telecaller_name || <span style={{ color: 'var(--border-strong)' }}>—</span>}</td>}
-                  {showStmStatus && <td style={{ ...td, color: 'var(--text)', fontSize: 12 }} onClick={() => loadDetail(l)}>{l.stm_name || <span style={{ color: 'var(--border-strong)' }}>—</span>}</td>}
+                  {showTcStatus && <td className="lead-td-person" onClick={() => loadDetail(l)}>{l.telecaller_name || <span className="lead-dash">—</span>}</td>}
+                  {showStmStatus && <td className="lead-td-person" onClick={() => loadDetail(l)}>{l.stm_name || <span className="lead-dash">—</span>}</td>}
                   {showTcStatus && <td style={td} onClick={() => loadDetail(l)}>
-                    {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span style={{ color: 'var(--border-strong)' }}>—</span>}
+                    {l.telecaller_status ? <StatusBadge status={l.telecaller_status} /> : <span className="lead-dash">—</span>}
                   </td>}
                   {showStmStatus && <td style={td} onClick={() => loadDetail(l)}>
-                    {l.stm_status ? <StatusBadge status={l.stm_status} outcome={l.sv_outcome} /> : <span style={{ color: 'var(--border-strong)' }}>—</span>}
+                    {l.stm_status ? <StatusBadge status={l.stm_status} outcome={l.sv_outcome} stage={l.closed_stage} /> : <span className="lead-dash">—</span>}
                   </td>}
-                  <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} outcome={l.sv_outcome} /></td>
+                  <td style={td} onClick={() => loadDetail(l)}><StatusBadge status={l.status} outcome={l.sv_outcome} stage={l.closed_stage} /></td>
                   <td style={{ ...td, color: 'var(--muted)', fontSize: 12 }} onClick={() => loadDetail(l)}>
                     {/* An STM cares about when THEY received the lead, not when it first
                         entered the system — fall back to created_at for leads with no

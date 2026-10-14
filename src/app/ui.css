@@ -2864,3 +2864,14 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .lf-row-date { border-bottom: 1px solid var(--surface-2); }
 .df-bare { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .lf-clear { height: 36px; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-left: auto; }
+
+/* Lead status for a closed lead: its booking's stage (sales/leads StatusBadge). */
+.lead-stage { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.lead-stage.is-pending   { color: var(--warning-2); background: color-mix(in srgb, var(--warning-2) 10%, transparent); }
+.lead-stage.is-booked    { color: var(--success);   background: color-mix(in srgb, var(--success) 10%, transparent); }
+.lead-stage.is-rejected  { color: var(--danger);    background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.lead-stage.is-cancelled { color: var(--muted);     background: var(--surface-2); }
+
+.lead-dash { color: var(--border-strong); }
+
+.lead-td-person { padding: 10px 14px; font-size: 12px; color: var(--text); }
