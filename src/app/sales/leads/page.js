@@ -813,7 +813,12 @@ function fmtDateTime(iso) {
     + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
+// The words for a status in the edit form: a closed lead reads as its booking's stage.
+const statusWords = (s, stage) => (s === 'closed' && CLOSED_STAGE[stage] ? CLOSED_STAGE[stage].label.toLowerCase() : (s || '').replace(/_/g, ' '));
+
 function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = false, channelPartners = [], onClose, onUpdated }) {
+  // Where this lead's booking stands (from the list, then the detail fetch).
+  const [leadStage, setLeadStage] = useState(lead?.closed_stage || null);
   const router = useRouter();
   const user = useSelector((s) => s.auth.user);
   const companyId = useSelector((s) => s.adminFilter?.companyId);
@@ -895,7 +900,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
       const res = await fetch(SALES_ENDPOINTS.lead(lead.id), { headers: authHeaders() });
       if (!res.ok) return;
       const data = await res.json();
-      setDetail(data);
+      setDetail(data); if (data.closed_stage !== undefined) setLeadStage(data.closed_stage);
       // The list row this form was seeded from can be stale (fetched before someone
       // else's later update) — every save resends `status`/`stm_status`/`telecaller_status`
       // regardless of whether they were touched, so a stale value silently regresses a
@@ -1201,14 +1206,13 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   <label style={mLbl}>Overall Status</label>
                   {canAssign ? (
                     <select className="nx-input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
-                      {ALL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                      {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusWords(s, leadStage)}</option>)}
                     </select>
                   ) : (
                     // Auto-derived from the workflow — read-only for telecallers / STMs.
-                    <div style={{ ...mInp, display: 'flex', alignItems: 'center', background: 'var(--surface-2)', color: 'var(--text)', textTransform: 'capitalize' }}>
-                      {(form.status || '—').replace(/_/g, ' ')}
-                    </div>
+                    <div className="nx-input lead-ro">{statusWords(form.status, leadStage) || '—'}</div>
                   )}
+                  {form.status === 'closed' && leadStage && <p className="lead-stage-note">Set by the booking — updates on its own as it is approved.</p>}
                 </div>
                 <div>
                   <label style={mLbl}>Project</label>
@@ -1317,7 +1321,7 @@ function LeadDetailModal({ lead, projects, sources, telecallers, stms, cpOnly = 
                   <label style={mLbl}>{cpOnly ? 'Lead Status' : _isCp ? 'CP Status' : 'STM Status'} {_isStm && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
                   <select className="nx-input" value={form.stm_status} onChange={(e) => setForm({ ...form, stm_status: e.target.value })} style={{ ...mInp, cursor: 'pointer' }}>
                     <option value="">— None —</option>
-                    {STM_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                    {STM_STATUSES.map((s) => <option key={s} value={s}>{statusWords(s, leadStage)}</option>)}
                   </select>
                 </div>
               </div>
