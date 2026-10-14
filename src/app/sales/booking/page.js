@@ -592,7 +592,6 @@ function BookingPage() {
   // box — the two parts typed last are kept and the auto one takes the rest.
   const kalBase = (v.plotBasic || 0) + (v.plotDev || 0) + (v.constAmt || 0) + (v.premiumLocation || 0);
   const isKal = formulaSet === 'kalrav';
-  const kalAuto = kalravAuto(kalTouched);
   // The three parts of a Kalrav Unit Price, in rupees. The Development Agreement is kept
   // as a rate (× Plot Area), so it is read and written through that.
   const partsOf = (s) => {
@@ -612,18 +611,25 @@ function BookingPage() {
       dev_agreement_rate: flags.hasDevAgreementInfo && a > 0 ? String(p.dev / a) : s.dev_agreement_rate,
     };
   };
-  const setKalravUnitPrice = (up) => setF((s) => withParts(s, kalravBalance(partsOf(s), Math.max(0, Math.round(up)), kalAuto)));
+  const kalAuto = kalravAuto(kalTouched, partsOf(f));
+  // The auto one is fixed the first time the price moves: the other two count as typed,
+  // so it cannot switch once it is no longer empty (the % arrives one keystroke at a time).
+  const setKalravUnitPrice = (up) => {
+    const auto = kalAuto;
+    if (kalTouched.length < 2) setKalTouched(['lsd', 'dev', 'cag'].filter((k) => k !== auto));
+    setF((s) => withParts(s, kalravBalance(partsOf(s), Math.max(0, Math.round(up)), auto)));
+  };
   // Typing one of the three (its amount, or its rate): it is kept, and once a Unit Price
   // is set the auto one moves so the Unit Price — and the Sale Deed % — stay put. When the
   // auto one would go below zero the Unit Price grows instead.
   const setKalPart = (key, val) => {
     const touched = [...kalTouched.filter((k) => k !== key), key];
     setKalTouched(touched);
-    const auto = kalravAuto(touched);
     setF((s) => {
       const before = partsOf(s);
       const target = before.lsd + before.dev + before.cag;
       const p = { ...before, [key]: Math.round(Number(val) || 0) };
+      const auto = kalravAuto(touched, before);
       if (target > 0 && auto !== key) {
         const rest = Object.keys(p).filter((k) => k !== auto).reduce((t, k) => t + p[k], 0);
         if (target - rest >= 0) p[auto] = target - rest;

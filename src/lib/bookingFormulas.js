@@ -239,9 +239,17 @@ export function installmentBase(v) {
 // only that one. Nothing typed yet: the Construction Agreement is the auto one, as
 // before. Keys: lsd, dev, cag.
 export const KAL_PARTS = ['cag', 'lsd', 'dev'];   // preference order for the auto one
-export function kalravAuto(touched = []) {
+// The auto one: the third once two have been typed; otherwise one left empty (so a
+// draft or revision opened with two filled works the same); otherwise by preference.
+export function kalravAuto(touched = [], parts = {}) {
   const kept = touched.slice(-2);
-  return KAL_PARTS.find((k) => !kept.includes(k)) || 'cag';
+  const free = KAL_PARTS.filter((k) => !kept.includes(k));
+  if (kept.length === 2) return free[0];
+  const filled = (k) => Math.round(Number(parts[k]) || 0) > 0;
+  const empty = free.filter((k) => !filled(k));
+  // Exactly one left empty → that one; nothing typed and none/several empty → preference.
+  if (empty.length === 1 || (kept.length === 1 && empty.length)) return empty[0];
+  return free[0] || 'cag';
 }
 // Split `total` across the parts with `auto` taking the remainder. The two kept ones
 // are never changed: a total below them leaves auto at 0 (the Unit Price cannot go
