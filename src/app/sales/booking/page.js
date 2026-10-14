@@ -637,6 +637,12 @@ function BookingPage() {
       return withParts(s, p, key, val);
     });
   };
+  // Loan Amount box → all three parts to 0 (so the Sale Deed % and Unit Price read 0 too),
+  // and forget which were typed, so the next two filled decide the auto one again.
+  const clearLoan = () => {
+    setKalTouched([]); setRateEdit(null); setKalEdit(null);
+    setF((s) => ({ ...s, land_sale_deed: '0', const_agreement: '0', dev_agreement_rate: '0' }));
+  };
   const autoTag = (k) => (isKal && kalAuto === k ? <span className="bk-auto" title="Worked out from the Unit Price">auto</span> : null);
   useEffect(() => {
     if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));
@@ -1273,7 +1279,12 @@ function BookingPage() {
         {/* Kalrav: the three agreement parts, the Sale Deed % and the Unit Price, in one
             box — together they make up the Loan Amount. */}
         <div className={isKal ? 'bk-loan' : undefined}>
-        {isKal && <div className="bk-loan-title">Loan Amount</div>}
+        {isKal && (
+          <div className="bk-loan-head">
+            <div className="bk-loan-title">Loan Amount</div>
+            <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={clearLoan}>Clear all</button>
+          </div>
+        )}
         {flags.hasLsdRate && (
           <Row><L>Land Sale Deed Rate (₹/{flags.areaUnit})</L>
             <In type="number" {...rateBox('lsd', rateOf(f.land_sale_deed, plotArea))}
