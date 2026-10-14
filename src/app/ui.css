@@ -2695,6 +2695,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* Booking details: payment-schedule header and cells. */
 .bd-th { text-align: left; color: var(--muted); font-weight: 700; font-size: 10px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
 .bd-td { padding: 4px 6px; border-bottom: 1px solid var(--surface-2); }
+/* Booking form: the Kalrav "Loan Amount" box (agreement parts, Sale Deed %, Unit Price). */
+.bk-loan { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px 4px; margin: 6px 0 12px; background: var(--surface-2); }
+.bk-loan-title { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
 /* Booking form: marks the Kalrav part worked out from the Unit Price. */
 .bk-auto { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 800;
   text-transform: uppercase; letter-spacing: .04em; background: var(--accent-soft); color: var(--accent); vertical-align: middle; }

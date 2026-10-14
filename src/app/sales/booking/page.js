@@ -1270,6 +1270,10 @@ function BookingPage() {
         ))}
         {flags.hasSaleDeedRate && <Row><L>Sale Deed Rate (₹/sq.ft)</L><In type="number" value={f.sale_deed_rate} onChange={(e) => set('sale_deed_rate', e.target.value)} /></Row>}
         {flags.hasDevAgreement && <Row><L>Dev Agreement Rate (₹/sq.ft)</L><In type="number" value={f.dev_agreement_rate} onChange={(e) => set('dev_agreement_rate', e.target.value)} /></Row>}
+        {/* Kalrav: the three agreement parts, the Sale Deed % and the Unit Price, in one
+            box — together they make up the Loan Amount. */}
+        <div className={isKal ? 'bk-loan' : undefined}>
+        {isKal && <div className="bk-loan-title">Loan Amount</div>}
         {flags.hasLsdRate && (
           <Row><L>Land Sale Deed Rate (₹/{flags.areaUnit})</L>
             <In type="number" {...rateBox('lsd', rateOf(f.land_sale_deed, plotArea))}
@@ -1316,6 +1320,7 @@ function BookingPage() {
               onChange={(e) => { setKalEdit({ k: 'up', t: e.target.value }); setKalravUnitPrice(Number(e.target.value) || 0); }} />
           </Row>
         </>}
+        </div>
         {hasSaleDeedSplit && formulaSet !== 'kalrav' && <>
           {/* Editing the % clears the exact Unit Price override so the % drives again. */}
           <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => setF((s) => ({ ...s, sale_deed_pct: e.target.value, sale_deed_amount: '' }))} /></Row>
