@@ -166,7 +166,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: devRateOf(b),
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
@@ -213,7 +213,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: devRateOf(b),
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
@@ -246,7 +246,7 @@ function BookingPage() {
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area_unit: b.area_unit || s.area_unit, const_area: b.const_area || '', villa_type: b.villa_type || '',
-        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: b.dev_agreement_rate,
+        land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: devRateOf(b),
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
         discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_months: b.maint_months,
@@ -586,15 +586,16 @@ function BookingPage() {
   }), [f, formulaSet, project, ew, reviseId]);
 
   // Kalrav: what Sale Deed % is a percentage of, and setting the Unit Price from either
-  // box — keep the Land Sale Deed, put the rest on the Construction Agreement (or, if
-  // the price is below the LSD, all of it on the LSD).
+  // box — keep the Land Sale Deed and the Development Agreement, put the rest on the
+  // Construction Agreement (or, if the price is below those two, cut the LSD).
   const kalBase = (v.plotBasic || 0) + (v.plotDev || 0) + (v.constAmt || 0) + (v.premiumLocation || 0);
   const setKalravUnitPrice = (up) => setF((s) => {
     const total = Math.max(0, Math.round(up));
     const lsd = Math.round(Number(s.land_sale_deed) || 0);
-    return lsd <= total
-      ? { ...s, const_agreement: String(total - lsd) }
-      : { ...s, land_sale_deed: String(total), const_agreement: '0' };
+    const dev = flags.hasDevAgreementInfo ? Math.round((Number(s.dev_agreement_rate) || 0) * (Number(s.area) || 0)) : 0;
+    return lsd + dev <= total
+      ? { ...s, const_agreement: String(total - lsd - dev) }
+      : { ...s, land_sale_deed: String(Math.max(0, total - dev)), const_agreement: '0' };
   });
   useEffect(() => {
     if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));
@@ -1233,8 +1234,8 @@ function BookingPage() {
           </Row>
         )}
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
-        {/* Kalrav's Development Agreement is shown for the record only: it is not part of
-            the Unit Price, the taxes or the total, and the LOI does not print it. */}
+        {/* Kalrav's Development Agreement is part of the Unit Price (LSD + Dev Agreement +
+            Construction Agreement); the LOI shows it inside the Unit Price, not as a line. */}
         {flags.hasDevAgreementInfo && <>
           <Row><L>Development Agreement Rate (₹/{flags.areaUnit})</L>
             <In type="number" value={f.dev_agreement_rate} onChange={(e) => set('dev_agreement_rate', e.target.value)} />
@@ -1253,7 +1254,7 @@ function BookingPage() {
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
         {formulaSet === 'kalrav' && <>
-          {/* Kalrav: Unit Price = Land Sale Deed + Construction Agreement, and Sale Deed % =
+          {/* Kalrav: Unit Price = Land Sale Deed + Development + Construction Agreement, and Sale Deed % =
               Unit Price / (Plot Basic + Dev + Construction + PLC). Type any of the four:
               a % or Unit Price keeps the Land Sale Deed and moves the Construction
               Agreement, so the three always agree and the taxes (stamp duty on LSD, GST
@@ -1516,6 +1517,11 @@ const Section = ({ title, children }) => (
 const StageIn = ({ value, onChange }) => (
   <input className="nx-input nx-input-sm bk-stage" value={value || ''} onChange={onChange} placeholder="Optional" />
 );
+// Kalrav's Development Agreement is in the Unit Price, and its rate is saved to only 2
+// decimals — so the rate is read back from the saved amount, and a revision keeps the
+// Unit Price to the rupee.
+const devRateOf = (b) => ((b.formula_set || 'kalrav') === 'kalrav' && Number(b.dev_agreement) > 0 && Number(b.area) > 0
+  ? String(Number(b.dev_agreement) / Number(b.area)) : b.dev_agreement_rate);
 const stageOf = (r) => ((r && String(r.stage || '').trim()) ? { stage: String(r.stage).trim() } : {});
 const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>{children}</div>;
 const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{children}</label>;

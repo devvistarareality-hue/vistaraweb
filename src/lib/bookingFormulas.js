@@ -37,8 +37,8 @@ export function fieldFlags(formulaSet) {
     hasPlcFixed: !formulaSet || formulaSet === 'kalrav',
     // Kalrav rates beside the agreement amounts (LSD = rate × Plot Area, Construction
     // Agreement = rate × Construction Area), and a Development Agreement (rate × Plot
-    // Area) that is recorded only — not in the Unit Price, the taxes, the total or the
-    // LOI. Kalrav-set projects only, as with PLC.
+    // Area) that is part of the Unit Price; the LOI does not print it as its own line.
+    // Kalrav-set projects only, as with PLC.
     hasLsdRate: !formulaSet || formulaSet === 'kalrav',
     hasConstAgreementRate: !formulaSet || formulaSet === 'kalrav',
     hasDevAgreementInfo: !formulaSet || formulaSet === 'kalrav',
@@ -81,7 +81,7 @@ export function computeFormulas(inp = {}) {
   const loiVariant   = (inp.loiVariant || '').toString().trim().toLowerCase();
   const isTundav     = isIndustrial && (loiVariant ? loiVariant === 'tundav' : projectName === 'tundav');
   // Kalrav 3 special case: Stamp Duty, Registration Fee, and GST are computed off the
-  // Unit Price (Land Sale Deed + Construction Agreement) instead of LSD/Const Agreement
+  // Unit Price (Land Sale Deed + Development + Construction Agreement) instead of LSD/Const Agreement
   // separately, and GST is a flat 5% instead of 18%. Other Kalrav-set projects unaffected.
   const isKalrav3    = isKalrav && (loiVariant ? loiVariant === 'kalrav3' : projectName === 'kalrav 3');
 
@@ -159,9 +159,10 @@ export function computeFormulas(inp = {}) {
     gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
     maintDeposit = maintUnit; maintAdvance = maintUnit;
   } else { // kalrav
-    // Kalrav Unit Price = Land Sale Deed + Construction Agreement (entered directly).
-    // The Sale Deed % is derived from this (read-only in the form).
-    saleDeed  = lsd + constAgr;
+    // Kalrav Unit Price = Land Sale Deed + Development Agreement + Construction
+    // Agreement (owner, 14 Oct 2026). The Sale Deed % is derived from this.
+    const kalDev = fieldFlags(formulaSet).hasDevAgreementInfo ? Math.round(devAgreement) : 0;
+    saleDeed  = lsd + kalDev + constAgr;
     if (isKalrav3) {
       // Kalrav 3: Stamp Duty, Registration Fee, and GST are all based on Unit Price.
       stampDuty = saleDeed * 0.049;
@@ -205,7 +206,7 @@ export function computeFormulas(inp = {}) {
   const nonSaleDeed = hasSaleDeedSplit ? (saleDeedBase - saleDeed) : 0;
   const nonSaleDeedDoc = hasSaleDeedSplit ? nonSaleDeed / 100 : 0;
   const docTotal = hasSaleDeedSplit ? saleDeed + nonSaleDeedDoc : 0;
-  // Kalrav's Unit Price is entered (LSD + Const Agreement), so its % is derived for display.
+  // Kalrav's Unit Price is entered (LSD + Dev + Const Agreement), so its % is derived for display.
   const effSaleDeedPct = isKalrav ? (saleDeedBase > 0 ? (saleDeed / saleDeedBase * 100) : 0) : saleDeedPct;
 
   // Final Amount

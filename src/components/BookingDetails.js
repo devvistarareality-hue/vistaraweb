@@ -75,7 +75,7 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
           <Row2 label="Sale Deed %" value={b.sale_deed_pct != null ? b.sale_deed_pct + '%' : '—'} />
           {Number(b.lsd_rate) ? <Row2 label="Land Sale Deed Rate" value={money0(b.lsd_rate)} /> : null}
           {Number(b.land_sale_deed) ? <Row2 label="Land Sale Deed" value={money0(b.land_sale_deed)} /> : null}
-          {/* Kalrav's Development Agreement — recorded only, not part of the price. */}
+          {/* Kalrav's Development Agreement — part of the Unit Price. */}
           {String(b.formula_set || 'kalrav') === 'kalrav' && Number(b.dev_agreement) ? <>
             <Row2 label="Development Agreement Rate" value={money0(b.dev_agreement_rate)} />
             <Row2 label="Development Agreement Value" value={money0(b.dev_agreement)} />
