@@ -386,7 +386,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   } else {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Land Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% LSD' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
-    tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (18% of Construction Agreement)', v.applyGst === 'No' ? 0 : v.gst);
+    tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : (Math.round(v.devAgreement) > 0 ? 'GST (18% of Construction + Development Agreement)' : 'GST (18% of Construction Agreement)'), v.applyGst === 'No' ? 0 : v.gst);
     if (isKalrav3Pdf) { tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); }
     else tRow('Maintenance', v.maint);
     tRow('Legal Documentation charge', v.legal);

@@ -176,7 +176,9 @@ export function computeFormulas(inp = {}) {
       // & Construction Agreement respectively.
       stampDuty = lsd * 0.049;
       regFees   = gender === 'Female' ? pageFee : (lsd * 0.01 + pageFee);
-      gst       = constAgr * 0.18;
+      // GST 18% on the Construction Agreement and, since 14 Oct 2026, the Development
+      // Agreement too (it joined the Unit Price that day).
+      gst       = (constAgr + kalDev) * 0.18;
     }
   }
 

@@ -740,7 +740,7 @@ function BookingPage() {
     : (formulaSet === 'ankhol' ? '5% of Sale Deed'
       : formulaSet === 'industrial' ? (v.isTundav ? '18% of 67% of Sale Deed' : '18% of Development Agreement')
       : v.isKalrav3 ? '5% of Unit Price'
-      : '18% of Construction Agreement');
+      : (Math.round(v.devAgreement) > 0 ? '18% of Construction + Development Agreement' : '18% of Construction Agreement'));
   const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
     : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';
 
