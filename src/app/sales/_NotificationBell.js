@@ -30,7 +30,7 @@ const URL_FOR_TYPE = {
   ar_followup_overdue: '/m/ar/collections?tab=followups',
   ar_collections_digest: '/m/ar/collections',
   ar_due_soon: '/m/ar/collections?tab=upcoming',
-  lead_transfer_requested: '/sales/bookings',
+  lead_transfer_requested: '/sales/bookings?section=transfers',
   lead_transfer_approved: '/sales/leads',
   lead_transfer_rejected: '/sales/leads',
   closure: '/sales/my-conversions',
@@ -40,6 +40,11 @@ const URL_FOR_TYPE = {
   task_assigned: '/m/execution/list?my_tasks=true',
   task_comment: '/m/execution/list?my_tasks=true',
   task_due_soon: '/m/execution/list?my_tasks=true',
+  // A new project waits on the Approvals page's Projects tab; Club 1000 investors on
+  // their own approvals / investors pages.
+  project_pending_approval: '/sales/bookings?section=projects',
+  investor_approval: '/club1000/approvals',
+  investor_approved: '/club1000/investors',
 };
 
 
@@ -70,6 +75,7 @@ function urlFor(type, user, data) {
   if (type === 'closure') {
     return conversions ? '/sales/my-conversions?tab=closures' : booking ? '/sales/closure?view=mybookings&status=sold' : fallback;
   }
+  if (type === 'project_pending_approval') return url;   // sent only to the project approvers
   if (url.startsWith('/sales/bookings')) {
     return approvals ? url : booking ? '/sales/closure?view=mybookings' : conversions ? '/sales/my-conversions?tab=closures' : fallback;
   }

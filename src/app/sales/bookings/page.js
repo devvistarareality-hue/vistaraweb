@@ -367,8 +367,13 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
   // Two jobs live on this page, so they get their own sections rather than one
   // long scroll: lead transfers waiting on this manager, and booking approvals.
-  // It always opens on booking approvals; transfers show their pending count on the tab.
+  // It opens on booking approvals unless a link names a section (?section=transfers /
+  // projects — a notification for that job); transfers show their pending count on the tab.
   const [section, setSection] = useState('bookings');
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('section');
+    if (['transfers', 'projects'].includes(q)) setSection(q);
+  }, []);
   const pickSection = setSection;
 
   return (
