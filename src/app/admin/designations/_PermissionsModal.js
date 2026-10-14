@@ -24,6 +24,17 @@ const TABS = [
   { key: 'view', label: 'Dashboard & records', icon: LayoutDashboard },
 ];
 
+// One plain line at the top of each tab, so it is clear what the tab decides.
+const TAB_HELP = {
+  actions: 'What they can do. For managers and directors leave the "Works …" switches off — those turn their screen into a telecaller\'s or STM\'s work queue.',
+  menu: 'Which tabs appear in their sidebar. Tap a screen to show or hide it.',
+  view: 'Which dashboard opens first, and whose leads, visits and bookings they can see.',
+};
+
+// The personal work queues. A director runs the desk rather than working a queue,
+// so "Full access" leaves these off (a CP-module title keeps the CP desk).
+const WORK_QUEUES = ['sales.pipeline.telecalling', 'sales.pipeline.stm', 'sales.pipeline.cp', 'sales.pipeline.cp_manager'];
+
 export default function PermissionsModal({ designation, onClose, onSaved }) {
   const [catalogue, setCatalogue] = useState(null);
   const [tab, setTab] = useState('actions');
@@ -44,6 +55,8 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   const [dash, setDash] = useState(designation.dashboard || '');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  // Set once "Full access" has filled the form, until it is saved.
+  const [filled, setFilled] = useState(false);
 
   useEffect(() => {
     apiFetch(DESIGNATION_ENDPOINTS.capabilities)
@@ -72,6 +85,21 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
       keys.forEach((k) => (adding ? next.add(k) : next.delete(k)));
       return next;
     });
+  }
+
+  // Director / MD in one click: every action and every menu tab of the modules this
+  // designation decides, except the work queues; the whole company's records; the
+  // dashboard their permissions imply. Nothing is saved until Save.
+  function fullAccess() {
+    const keepCp = own === 'Channel Partner';
+    setCaps(new Set((catalogue?.capabilities || [])
+      .filter((c) => mine.includes(c.module))
+      .filter((c) => !WORK_QUEUES.includes(c.key) || (keepCp && c.key === 'sales.pipeline.cp_manager'))
+      .map((c) => c.key)));
+    setScreens(new Set((catalogue?.screens || []).filter((c) => mine.includes(c.module)).map((c) => c.key)));
+    setScope('company');
+    setDash('');
+    setFilled(true);
   }
 
   async function save() {
@@ -137,6 +165,20 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
         )}
         {err && <div className="nx-note bad">{String(err)}</div>}
 
+        <section className="perm-full">
+          <div className="perm-full-text">
+            <b>Director / MD — full access</b>
+            <small>
+              Every action and menu tab, records of the whole company. Also set their Role
+              to Director in User Management and tick their modules there.
+            </small>
+          </div>
+          <button type="button" className="nx-btn nx-btn-md nx-btn-primary" onClick={fullAccess} disabled={!catalogue}>
+            <ShieldCheck size={15} /> Give full access
+          </button>
+        </section>
+        {filled && <div className="nx-note ok">Filled in for full access — press Save permissions to keep it.</div>}
+
         <nav className="perm-tabs">
           {TABS.map((t) => (
             <button type="button" key={t.key} onClick={() => setTab(t.key)}
@@ -148,6 +190,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
         </nav>
 
         <div className="perm-body">
+          {catalogue && <p className="perm-lead">{TAB_HELP[tab]}</p>}
           {!catalogue ? <div className="act-empty">Loading…</div> : tab === 'actions' ? (
             <>
               <div className="perm-presets">
@@ -195,7 +238,6 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
             </>
           ) : tab === 'menu' ? (
             <>
-              <p className="perm-lead">Tap a screen to show or hide it for this designation.</p>
               {/* A module left off this list keeps its own default menu, so a CFO
                   granted Sales still sees the Sales sidebar. Adding it here is how
                   you take charge of it — including hiding all of it. */}
