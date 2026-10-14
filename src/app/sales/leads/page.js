@@ -1633,7 +1633,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     search: '', status: '', project_id: [], source_id: '',
     telecaller_id: [], stm_id: [], telecaller_status: '', stm_status: '', disqualify_reason: '',
     channel_partner_id: '',
-    campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '', date_basis: '',
+    campaign: '', is_duplicate: false, unassigned: false, date_from: '', date_to: '', date_basis: '', closed_stage: '',
   });
   // Seed filters from the URL so dashboard stat cards can deep-link into a
   // filtered view (?status=new, ?date_from=today, ?telecaller_status=hot, …).
@@ -1804,6 +1804,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
     if (filters.unassigned)      params.set('unassigned',       'true');
     if (filters.date_from)       params.set('date_from',        filters.date_from);
     if (filters.date_to)         params.set('date_to',          filters.date_to);
+    if (filters.closed_stage && (filters.status === 'closed' || filters.stm_status === 'closed')) params.set('closed_stage', filters.closed_stage);
     if (canPickBasis && filters.date_basis && (filters.date_from || filters.date_to)) params.set('date_basis', filters.date_basis);
     if (adminView)               params.set('admin_view', '1');
     if (cpOnly)                  params.set('cp_only', 'true');
@@ -2036,7 +2037,7 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
           filters.telecaller_id.length || filters.stm_id.length || filters.telecaller_status || filters.stm_status ||
           filters.disqualify_reason || filters.channel_partner_id ||
           filters.campaign || filters.is_duplicate || filters.unassigned || filters.date_from || filters.date_to;
-        const clearAll = () => { setDateKey((k) => k + 1); setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'', date_basis:'' }); };
+        const clearAll = () => { setDateKey((k) => k + 1); setSearchText(''); setFilters({ search:'', status:'', project_id:[], source_id:'', telecaller_id:[], stm_id:[], telecaller_status:'', stm_status:'', disqualify_reason:'', channel_partner_id:'', campaign:'', is_duplicate:false, unassigned:false, date_from:'', date_to:'', date_basis:'', closed_stage:'' }); };
 
         const fSel = {
           height: 36, padding: '0 10px', borderRadius: 8,
@@ -2109,6 +2110,17 @@ export function SalesLeadsContent({ adminView = false, cpOnly = false }) {
                   says Not Qualified, so it appears with it rather than sitting
                   there empty. One reason per lead whichever stage set it, so the
                   same dropdown serves the TC and STM filters both. */}
+              {/* A closed lead's booking stage — appears once a status filter says closed. */}
+              {(filters.status === 'closed' || filters.stm_status === 'closed') && (
+                <select value={filters.closed_stage || ''} onChange={(e) => sf('closed_stage', e.target.value)}
+                  className={`nx-input lf-stage${filters.closed_stage ? ' is-on' : ''}`}>
+                  <option value="">Any booking stage</option>
+                  <option value="booking_pending">Booking pending</option>
+                  <option value="booked">Booked</option>
+                  <option value="booking_rejected">Booking rejected</option>
+                  <option value="booking_cancelled">Booking cancelled</option>
+                </select>
+              )}
               {notQualifiedFiltered && (
                 <select value={filters.disqualify_reason}
                   onChange={(e) => sf('disqualify_reason', e.target.value)}

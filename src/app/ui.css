@@ -2878,3 +2878,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 
 .lead-ro { display: flex; align-items: center; background: var(--surface-2) !important; color: var(--text); text-transform: capitalize; }
 .lead-stage-note { font-size: 11px; color: var(--muted); margin: 5px 0 0; }
+
+/* All Leads: booking-stage filter for closed leads. */
+.lf-stage { height: 36px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.lf-stage.is-on { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-softer) !important; }
