@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import Icon from './Icon';
 import { SALES_ENDPOINTS, authHeaders } from '../constants/api';
-import { PLAN_KEYS, emptyPlan, pctTotal } from '../lib/paymentPlans';
+import { PLAN_KEYS, balance, emptyPlan, pctTotal, whenText } from '../lib/paymentPlans';
 
 const SECTIONS = [
   ['extra', 'Extra Work Amount Installments'],
@@ -33,9 +33,11 @@ export default function PaymentPlansModal({ project, onClose, onSaved }) {
   const plan = plans[tab] || emptyPlan();
 
   const setPlan = (fn) => setPlans((all) => ({ ...all, [tab]: fn(all[tab] || emptyPlan()) }));
-  const setRow = (sec, i, k, v) => setPlan((p) => ({ ...p, [sec]: p[sec].map((r, idx) => (idx === i ? { ...r, [k]: v } : r)) }));
-  const addRow = (sec) => setPlan((p) => ({ ...p, [sec]: [...p[sec], { pct: '', days: '', stage: '' }] }));
-  const dropRow = (sec, i) => setPlan((p) => ({ ...p, [sec]: p[sec].filter((_, idx) => idx !== i) }));
+  // The last installment takes whatever % the others leave, so a section always adds up
+  // to 100 — the same way the booking form fills its last row.
+  const setRow = (sec, i, k, v) => setPlan((p) => ({ ...p, [sec]: balance(p[sec].map((r, idx) => (idx === i ? { ...r, [k]: v } : r))) }));
+  const addRow = (sec) => setPlan((p) => ({ ...p, [sec]: balance([...p[sec], { pct: '', days: '', stage: '' }]) }));
+  const dropRow = (sec, i) => setPlan((p) => ({ ...p, [sec]: balance(p[sec].filter((_, idx) => idx !== i)) }));
   const setLegal = (k, v) => setPlan((p) => ({ ...p, legal: { ...p.legal, [k]: v } }));
   const copyDirect = () => setPlans((all) => ({ ...all, eoi: JSON.parse(JSON.stringify(all.direct || emptyPlan())) }));
 
@@ -94,42 +96,81 @@ export default function PaymentPlansModal({ project, onClose, onSaved }) {
         <div className="pp-body">
           <p className="pp-lead">
             {tab === 'direct' ? 'Used when an LOI is booked directly.' : 'Used when an EOI is converted to an LOI.'}
-            {' '}Days count from the booking date (0 = on the booking date). Leave a section empty to start it blank.
+            {' '}Due is in days after the booking date — 0 means on the booking date. The last installment&apos;s share fills itself so each section totals 100%.
           </p>
           {err && <div className="nx-note bad">{String(err)}</div>}
 
           {SECTIONS.map(([sec, label]) => {
             const rows = plan[sec] || [];
             const total = pctTotal(rows);
+            const ok = Math.abs(total - 100) < 0.01;
             return (
               <section className="pp-sec" key={sec}>
                 <div className="pp-sec-head">
                   <h3>{label}</h3>
-                  {rows.length > 0 && <span className={`pp-total${Math.abs(total - 100) < 0.01 ? ' ok' : ' bad'}`}>Total {total.toFixed(2)}%</span>}
+                  {rows.length > 0 && <span className={`pp-total${ok ? ' ok' : ' bad'}`}>{total.toFixed(2)}%</span>}
                 </div>
                 {rows.length > 0 && (
-                  <div className="pp-row pp-row-head"><span>#</span><span>%</span><span>Days after booking</span><span>Stage</span><span /></div>
+                  <div className="pp-bar"><span className={`pp-bar-fill${ok ? ' ok' : ' bad'}`} style={{ width: `${Math.min(100, total)}%` }} /></div> // inline-ok: share of 100% filled
                 )}
-                {rows.map((r, i) => (
-                  <div className="pp-row" key={i}>
-                    <span className="pp-no">{i + 1}</span>
-                    <input className="nx-input" inputMode="decimal" value={r.pct} onChange={(e) => setRow(sec, i, 'pct', e.target.value)} placeholder="%" />
-                    <input className="nx-input" inputMode="numeric" value={r.days} onChange={(e) => setRow(sec, i, 'days', e.target.value)} placeholder="0" />
-                    <input className="nx-input" value={r.stage} onChange={(e) => setRow(sec, i, 'stage', e.target.value)} placeholder="Optional, e.g. On booking" />
-                    <button type="button" className="nx-btn nx-btn-sm nx-icon-btn nx-btn-ghost" aria-label="Remove" onClick={() => dropRow(sec, i)}><Icon name="x" /></button>
-                  </div>
-                ))}
-                <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => addRow(sec)}>+ Add installment</button>
+                {rows.length === 0 && <p className="pp-empty">No installments — the booking starts this section blank.</p>}
+                {rows.map((r, i) => {
+                  const isLast = i === rows.length - 1;
+                  return (
+                    <div className="pp-item" key={i}>
+                      <span className="pp-no">{i + 1}</span>
+                      <label className="pp-field pp-f-pct">
+                        <span className="pp-f-label">Share{isLast && <em className="pp-auto">auto</em>}</span>
+                        <span className="pp-f-box">
+                          <input className="pp-f-input" inputMode="decimal" value={r.pct} placeholder="0"
+                            readOnly={isLast} onChange={(e) => setRow(sec, i, 'pct', e.target.value)} />
+                          <span className="pp-f-unit">%</span>
+                        </span>
+                      </label>
+                      <label className="pp-field pp-f-days">
+                        <span className="pp-f-label">Due</span>
+                        <span className="pp-f-box">
+                          <input className="pp-f-input" inputMode="numeric" value={r.days} placeholder="0"
+                            onChange={(e) => setRow(sec, i, 'days', e.target.value.replace(/[^0-9]/g, ''))} />
+                          <span className="pp-f-unit">days</span>
+                        </span>
+                        <span className="pp-when">{whenText(r.days)}</span>
+                      </label>
+                      <label className="pp-field pp-f-stage">
+                        <span className="pp-f-label">Stage</span>
+                        <span className="pp-f-box">
+                          <input className="pp-f-input" value={r.stage} placeholder="Optional, e.g. On booking"
+                            onChange={(e) => setRow(sec, i, 'stage', e.target.value)} />
+                        </span>
+                      </label>
+                      <button type="button" className="pp-drop" aria-label="Remove installment" onClick={() => dropRow(sec, i)}><Icon name="x" /></button>
+                    </div>
+                  );
+                })}
+                <button type="button" className="pp-add" onClick={() => addRow(sec)}>+ Add installment</button>
               </section>
             );
           })}
 
           <section className="pp-sec">
             <div className="pp-sec-head"><h3>Legal &amp; Other Charges</h3></div>
-            <div className="pp-row pp-row-legal pp-row-head"><span>Days after booking</span><span>Stage</span></div>
-            <div className="pp-row pp-row-legal">
-              <input className="nx-input" inputMode="numeric" value={plan.legal.days} onChange={(e) => setLegal('days', e.target.value)} placeholder="Blank = no date" />
-              <input className="nx-input" value={plan.legal.stage} onChange={(e) => setLegal('stage', e.target.value)} placeholder="Optional, e.g. At sale deed" />
+            <div className="pp-item pp-item-legal">
+              <label className="pp-field pp-f-days">
+                <span className="pp-f-label">Due</span>
+                <span className="pp-f-box">
+                  <input className="pp-f-input" inputMode="numeric" value={plan.legal.days} placeholder="—"
+                    onChange={(e) => setLegal('days', e.target.value.replace(/[^0-9]/g, ''))} />
+                  <span className="pp-f-unit">days</span>
+                </span>
+                <span className="pp-when">{plan.legal.days === '' ? 'No date (sale deed or possession)' : whenText(plan.legal.days)}</span>
+              </label>
+              <label className="pp-field pp-f-stage">
+                <span className="pp-f-label">Stage</span>
+                <span className="pp-f-box">
+                  <input className="pp-f-input" value={plan.legal.stage} placeholder="Optional, e.g. At sale deed"
+                    onChange={(e) => setLegal('stage', e.target.value)} />
+                </span>
+              </label>
             </div>
           </section>
         </div>

@@ -42,3 +42,19 @@ export function planRows(rows, bookingDate) {
 
 // Total % of a plan section, for the setup screen's check.
 export const pctTotal = (rows) => (rows || []).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+
+// The last installment takes whatever % the others leave (never below 0), so a section
+// always adds up to 100 — the way the booking form fills its last row. One row is 100.
+export function balance(rows) {
+  if (!rows.length) return rows;
+  const last = rows.length - 1;
+  const used = rows.slice(0, last).reduce((a, r) => a + (parseFloat(r.pct) || 0), 0);
+  const rem = Math.max(0, Math.round((100 - used) * 100) / 100);
+  return rows.map((r, i) => (i === last ? { ...r, pct: String(rem) } : r));
+}
+
+// "Days after booking" in words: 0 (or blank) is the booking date itself.
+export function whenText(days) {
+  const n = parseInt(days, 10) || 0;
+  return n === 0 ? 'On booking date' : `Booking date + ${n} day${n === 1 ? '' : 's'}`;
+}
