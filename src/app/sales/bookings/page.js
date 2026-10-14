@@ -7,6 +7,8 @@ import DateFilter from '../_DateFilter';
 import { isManagerRole } from '../../../lib/moduleAccess';
 import { unitLabel } from '../../../lib/bookingUnit';
 import BookingDetails from '../../../components/BookingDetails';
+import FocusChip from '../../../components/FocusChip';
+import { useFocusId } from '../../../lib/useFocusId';
 
 
 import Icon from '../../../components/Icon';
@@ -181,6 +183,14 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // My Bookings shows, because an approver deciding on a deal needs the figures in
   // front of them, not a second screen to go and find.
   const [cardDetails, setCardDetails] = useState({});
+  // Opened from a notification (?booking=<id>): the whole list (All tab), narrowed to
+  // that one booking with its details open, until "Show all".
+  const [focusId, clearFocus] = useFocusId('booking');
+  useEffect(() => {
+    if (!focusId) return;
+    setTab('');
+    setCardDetails((o) => ({ ...o, [focusId]: true }));
+  }, [focusId]);
   const [revs, setRevs] = useState({});      // booking id → array of versions
   const [revOpen, setRevOpen] = useState({});
   const [revDetails, setRevDetails] = useState({});
@@ -343,9 +353,9 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(rows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(rows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = !!ql || dated || stm.length > 0 || proj.length > 0 || !!resale;
+  const narrowed = !!focusId || !!ql || dated || stm.length > 0 || proj.length > 0 || !!resale;
   const resaleCount = rows.filter((b) => b.is_resale).length;
-  const visible = rows.filter((b) => matches(b) && inRange(b)
+  const visible = focusId ? rows.filter((b) => String(b.id) === focusId) : rows.filter((b) => matches(b) && inRange(b)
     && (!stm.length || stm.includes(stmName(b))) && (!proj.length || proj.includes(projName(b)))
     && (!resale || b.is_resale));
 
@@ -500,6 +510,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
         )}
       </div>
 
+      {focusId && !loading && <FocusChip what="booking" found={visible.length > 0} onClear={clearFocus} />}
       {!loading && visible.length > 0 && (
         <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
           background: 'var(--banner-grad)', borderRadius: 20, padding: '18px 22px', boxShadow: '0 18px 40px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14)' }}>

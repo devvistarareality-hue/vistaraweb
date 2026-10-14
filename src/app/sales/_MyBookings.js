@@ -7,6 +7,8 @@ import { unitLabel } from './../../lib/bookingUnit';
 import { isManagerRole } from '../../lib/moduleAccess';
 import DateFilter from './_DateFilter';
 import BookingDetails from '../../components/BookingDetails';
+import FocusChip from '../../components/FocusChip';
+import { useFocusId } from '../../lib/useFocusId';
 
 import Icon from '../../components/Icon';
 import { confirmDialog, notify } from '../../lib/notify';
@@ -176,6 +178,17 @@ export function MyBookingsList({ cpOnly = false }) {
   // single map let one toggle open two blocks at once.
   const [revDetails, setRevDetails] = useState({});
   const [cardDetails, setCardDetails] = useState({});
+  // Opened from a notification (?booking=<id>): that one booking, with its project and
+  // details open — looked for in everything this person may see (a manager is told
+  // about a team member's deal), until "Show all".
+  const [focusId, clearFocus] = useFocusId('booking');
+  useEffect(() => { if (focusId && !cpOnly) setScope('visible'); }, [focusId]);
+  useEffect(() => {
+    const b = focusId && rows.find((x) => String(x.id) === focusId);
+    if (!b) return;
+    setOpen({ [b.project_name || '—']: true });
+    setCardDetails((o) => ({ ...o, [b.id]: true }));
+  }, [focusId, rows]);
   const toggleRevDetails = (id) => setRevDetails((o) => ({ ...o, [id]: !o[id] }));
   const me = useSelector((s) => s.auth?.user);
   const [team, setTeam] = useState([]);   // the viewer's reporting subtree
@@ -339,7 +352,7 @@ export function MyBookingsList({ cpOnly = false }) {
     : who === 'firstsale' ? !b.is_resale
     : whoSet.has(bookedById(b)));
 
-  const visible = preWho.filter(byWho);
+  const visible = focusId ? rows.filter((b) => String(b.id) === focusId) : preWho.filter(byWho);
 
   const groups = {};
   visible.forEach((b) => { const k = b.project_name || '—'; (groups[k] = groups[k] || []).push(b); });
@@ -348,6 +361,7 @@ export function MyBookingsList({ cpOnly = false }) {
 
   return (
     <>
+      {focusId && !loading && <FocusChip what="booking" found={visible.length > 0} onClear={clearFocus} />}
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
         {visible.length === rows.length
           ? `${rows.length} booking${rows.length === 1 ? '' : 's'} you submitted · revise the LOI anytime`

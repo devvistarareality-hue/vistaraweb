@@ -48,13 +48,33 @@ const URL_FOR_TYPE = {
 };
 
 
-// Where a notification opens for THIS person. URL_FOR_TYPE is the screen for
-// someone who has it; a role without that screen (a telecaller has no Site Visits
-// or Booking, a non-manager no Approvals) is sent to its own equivalent instead —
-// never to a page its menu doesn't offer. Mirrors the Sales layout's role rules.
-function urlFor(type, user, data) {
-  // A repeat enquiry opens that very lead.
-  if (type === 're_enquiry' && data?.lead_id) return `/sales/leads?open=${data.lead_id}`;
+// Notifications about one lead open that lead (its details, follow-ups and history).
+const LEAD_TYPES = new Set(['new_lead', 're_enquiry', 'followup', 'followup_overdue', 'sv', 'sv_overdue', 'sv_done',
+  'lead_transfer_approved', 'lead_transfer_rejected']);
+
+// Where a notification opens for THIS person — the screen for their role, narrowed to
+// the very record it is about: a lead opens that lead, a booking opens its list showing
+// only that booking (?booking=), a new project only that project, an AR alert that
+// account's ledger, a task that task. URL_FOR_TYPE is the screen for someone who has
+// it; a role without that screen (a telecaller has no Site Visits or Booking, a
+// non-manager no Approvals) goes to its own equivalent — never a page its menu lacks.
+export function urlFor(type, user, data) {
+  const d = data || {};
+  const lead = d.lead_id || d.lead;
+  if (LEAD_TYPES.has(type) && lead) return `/sales/leads?open=${lead}`;
+  if (type === 'project_pending_approval' && d.project) return `/sales/bookings?section=projects&project=${d.project}`;
+  if (type.startsWith('ar_') && d.account_id) return `/m/ar/ledger/${d.account_id}`;
+  if (type.startsWith('task_') && d.task_id) return `/m/execution/list?my_tasks=true&task=${d.task_id}`;
+  if (type === 'investor_approved' && d.investor_id) return `/club1000/investors?investor=${d.investor_id}`;
+  const url = baseUrlFor(type, user);
+  // A booking notification: its list, showing only that booking.
+  if (url && d.booking_id && /^\/(sales\/bookings|sales\/closure|m\/accounts\/(approvals|bookings))/.test(url)) {
+    return `${url}${url.includes('?') ? '&' : '?'}booking=${d.booking_id}`;
+  }
+  return url;
+}
+
+function baseUrlFor(type, user) {
   const url = URL_FOR_TYPE[type];
   if (!url || !user) return url;
   const admin = user.role === 'Admin' || user.is_staff || (user.admin_modules || []).includes('Sales');
@@ -73,7 +93,7 @@ function urlFor(type, user, data) {
     return visits ? '/sales/site-visits?tab=completed' : conversions ? '/sales/my-conversions?tab=sv' : fallback;
   }
   if (type === 'closure') {
-    return conversions ? '/sales/my-conversions?tab=closures' : booking ? '/sales/closure?view=mybookings&status=sold' : fallback;
+    return booking ? '/sales/closure?view=mybookings' : conversions ? '/sales/my-conversions?tab=closures' : fallback;
   }
   if (type === 'project_pending_approval') return url;   // sent only to the project approvers
   if (url.startsWith('/sales/bookings')) {
@@ -150,6 +170,13 @@ export default function NotificationBell({ up = false, align = 'right' }) {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  // Pages read the record to show (?open=, ?booking=…) when they open, so a click
+  // that stays on the same page reloads it; anywhere else is an ordinary navigation.
+  function go(url) {
+    if (url.split('?')[0] === window.location.pathname) window.location.assign(url);
+    else router.push(url);
+  }
+
   async function markAll() {
     setUnread(0); setRows((s) => s.map((n) => ({ ...n, is_read: true })));
     try { await fetch(AUTH_ENDPOINTS.notificationsReadAll, { method: 'POST', headers: authHeaders() }); } catch (_) {}
@@ -181,7 +208,7 @@ export default function NotificationBell({ up = false, align = 'right' }) {
               const url = urlFor(n.type, me, n.data);
               const color = TYPE_COLOR[n.type] || 'var(--accent)';
               return (
-              <div key={n.id} onClick={() => { if (url) { setOpen(false); router.push(url); } }}
+              <div key={n.id} onClick={() => { if (url) { setOpen(false); go(url); } }}
                 style={{ display: 'flex', gap: 11, padding: '12px 14px', borderBottom: '1px solid var(--surface-2)', borderLeft: `3px solid ${n.is_read ? 'transparent' : color}`, background: n.is_read ? 'var(--surface)' : 'var(--accent-softer)', cursor: url ? 'pointer' : 'default' }}>
                 <span style={{ width: 34, height: 34, borderRadius: 17, background: `color-mix(in srgb, ${color} 10%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}><Icon name={ICON[n.type] || 'bell'} size={16} style={{ color }} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}>

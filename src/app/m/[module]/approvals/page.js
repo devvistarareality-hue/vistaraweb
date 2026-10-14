@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { BookingsContent, ExportBookings } from '../../../sales/bookings/page';
+import FocusChip from '../../../../components/FocusChip';
+import { useFocusId } from '../../../../lib/useFocusId';
 import { SALES_ENDPOINTS, authHeaders } from '../../../../constants/api';
 import DateFilter from '../../../sales/_DateFilter';
 import { unitLabel } from '../../../../lib/bookingUnit';
@@ -199,6 +201,13 @@ function AccountsApprovals({ initialTab }) {
   const [open, setOpen] = useState({});
   const toggle = (pn) => setOpen((o) => ({ ...o, [pn]: !o[pn] }));
   const [detailsOpen, setDetailsOpen] = useState({});
+  const [focusId, clearFocus] = useFocusId('booking');
+  useEffect(() => {
+    const b = focusId && rows.find((x) => String(x.id) === focusId);
+    if (!b) return;
+    setOpen({ [b.project_name || '—']: true });
+    setDetailsOpen((o) => ({ ...o, [b.id]: true }));
+  }, [focusId, rows]);
   const toggleDetails = (id) => setDetailsOpen((o) => ({ ...o, [id]: !o[id] }));
   // Revision history, fetched per booking on demand: only a handful of deals are
   // ever revised, so loading every chain up front would be work for nothing.
@@ -332,7 +341,9 @@ function AccountsApprovals({ initialTab }) {
     // same rule as the dashboard's "All at Accounts" count (server: status='sold').
     all:      (b) => b.status === 'sold',
   }[tab];
-  const tabRows = rows.filter(inTab);
+  // Opened from a notification (?booking=<id>): that one booking, whichever tab it is
+  // in, with its project and details open — until "Show all".
+  const tabRows = focusId ? rows.filter((b) => String(b.id) === focusId) : rows.filter(inTab);
 
   // Search across client name, phone and the LOI/unit number — same rules as the
   // Sales approvals search. Phones are stored with spaces ("81408 05999") so digit
@@ -368,7 +379,7 @@ function AccountsApprovals({ initialTab }) {
   const projName = (b) => b.project_name || '—';
   const stmOptions = [...new Set(tabRows.map(stmName))].sort((a, b) => a.localeCompare(b));
   const projOptions = [...new Set(tabRows.map(projName))].sort((a, b) => a.localeCompare(b));
-  const narrowed = !!ql || dated || stm.length > 0 || proj.length > 0;
+  const narrowed = !!focusId || !!ql || dated || stm.length > 0 || proj.length > 0;
 
   const groups = {};
   tabRows
@@ -435,6 +446,7 @@ function AccountsApprovals({ initialTab }) {
         </div>
       )}
 
+      {focusId && !loading && <div className="focus-chip-gap"><FocusChip what="booking" found={tabRows.length > 0} onClear={clearFocus} /></div>}
       <div style={{ display: 'flex', gap: 10, marginTop: 18, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (

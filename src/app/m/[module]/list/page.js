@@ -34,6 +34,11 @@ export default function TaskListPage({ params }) {
   const [overdueOnly, setOverdueOnly] = useState(false);
 
   const [openTaskId, setOpenTaskId] = useState(undefined); // undefined = closed, null = create
+  // Opened from a task notification (?task=<id>): that task, open.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('task');
+    if (id && /^\d+$/.test(id)) setOpenTaskId(Number(id));
+  }, []);
 
   // Deep links from the dashboard KPI tiles.
   useEffect(() => {

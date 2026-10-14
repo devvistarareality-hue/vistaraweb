@@ -55,6 +55,11 @@ export default function InvestorsPage() {
   const [revising, setRevising] = useState(null);
   const [renewing, setRenewing] = useState(null);
   const [ledgerFor, setLedgerFor] = useState(null);
+  // Opened from an investor notification (?investor=<id>): that investor's ledger.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('investor');
+    if (id && /^\d+$/.test(id)) setLedgerFor(Number(id));
+  }, []);
   const [schemeFilter, setSchemeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   // The dashboard narrows its figures by investment date, by who added them and

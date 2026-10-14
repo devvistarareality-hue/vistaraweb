@@ -21,6 +21,8 @@ import Loader from '../../../components/Loader';
 import { notify } from '../../../lib/notify';
 import { bustCache } from '../_cache';
 import { errText } from '../../../lib/apiError';
+import FocusChip from '../../../components/FocusChip';
+import { useFocusId } from '../../../lib/useFocusId';
 
 const TABS = [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
 
@@ -113,6 +115,9 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('pending');
+  // Opened from a "New project needs approval" notification (?project=<id>): just that
+  // project, whatever its status now, until "Show all".
+  const [focusId, clearFocus] = useFocusId('project');
   const [busy, setBusy] = useState(null);
   const [cfgOpen, setCfgOpen] = useState(false);
   const [approvers, setApprovers] = useState([]);
@@ -185,11 +190,13 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
     } catch { loadApprovers(); }
   }
 
-  const shown = tab === 'all' ? projects : projects.filter((p) => (p.approval_status || 'approved') === tab);
+  const shown = focusId ? projects.filter((p) => String(p.id) === focusId)
+    : tab === 'all' ? projects : projects.filter((p) => (p.approval_status || 'approved') === tab);
   const pendingCount = projects.filter((p) => p.approval_status === 'pending').length;
 
   return (
     <>
+      {focusId && !loading && <FocusChip what="project" found={shown.length > 0} onClear={clearFocus} />}
       {isAdmin && (
         <div className="nx-card pa-cfg">
           <button type="button" className="pa-cfg-toggle" onClick={() => setCfgOpen((o) => !o)}>
