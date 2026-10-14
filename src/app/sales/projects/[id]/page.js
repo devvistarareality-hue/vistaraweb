@@ -1107,6 +1107,10 @@ function rateMasterFields(formulaSet) {
     flags.hasSaleDeedRate && { key: 'sale_deed_rate', label: 'Sale Deed Rate', unit: 'sq.ft' },
     flags.hasDevAgreement && { key: 'dev_agreement_rate', label: 'Dev Agreement Rate', unit: 'sq.ft' },
     { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
+    // Months and the legal charge prefill the booking form's fields of the same name.
+    // Industrial charges maintenance as Plot Area × Rate, with no months.
+    flags.hasConstructionFields && { key: 'maint_months', label: 'Maintenance Months', suffix: 'months' },
+    { key: 'legal_charges', label: 'Legal Documentation charge', suffix: '₹' },
   ].filter(Boolean);
 }
 
@@ -1147,7 +1151,7 @@ function RateMasterEditor({ project, onProjectUpdate }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 12, marginBottom: 14 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <label className="rm-label">{f.label} ({f.unit ? `₹/${f.unit}` : '₹ per plot'})</label>
+            <label className="rm-label">{f.label} ({f.suffix || (f.unit ? `₹/${f.unit}` : '₹ per plot')})</label>
             <input className="nx-input" type="number" value={form[f.key] ?? ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
               placeholder="Not set" style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box' }} />
           </div>
