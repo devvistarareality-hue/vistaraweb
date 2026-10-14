@@ -2692,6 +2692,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 @media (max-width: 760px) { .capi-grid { grid-template-columns: 1fr; } .capi-num { width: 70px; } }
 
 /* Resume / Revise buttons on the booking lists (sales/_MyBookings, sales/bookings). */
+/* Booking details: payment-schedule header and cells. */
+.bd-th { text-align: left; color: var(--muted); font-weight: 700; font-size: 10px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.bd-td { padding: 4px 6px; border-bottom: 1px solid var(--surface-2); }
+/* Booking form: the optional Stage box in each payment-schedule row. */
+.bk-stage { min-width: 120px; }
 .bk-act { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
 
 /* Channel Partner → CP Details (m/[module]/leads): same look as the CP Leads table —

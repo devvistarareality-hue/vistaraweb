@@ -126,6 +126,10 @@ function BookingPage() {
   const [insts, setInsts] = useState([]); // [{date,pct,amt}]
   const [nsdInsts, setNsdInsts] = useState([]); // extra work charges installments (ankhol)
   const [extraDate, setExtraDate] = useState(''); // due date for the Extra Charges line
+  const [extraStage, setExtraStage] = useState(''); // its Stage (optional, printed on the LOI when filled)
+  // A rate box being typed in (Kalrav LSD / Dev Agreement / Construction Agreement),
+  // so it shows what was typed rather than the figure worked back from the amount.
+  const [rateEdit, setRateEdit] = useState(null);
   const [ew, setEw] = useState({ desc: '', amt: '' });       // extra work (revise mode)
   const [ewInsts, setEwInsts] = useState([]);                // [{date,pct,amt}]
   const [extraTerms, setExtraTerms] = useState([]);          // [{title,desc}] — appended below default LOI terms
@@ -171,13 +175,13 @@ function BookingPage() {
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
       if (Array.isArray(b.installments)) {
-        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
-        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
+        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
         const ex = b.installments.find((i) => i.isExtra);
-        if (ex) setExtraDate(safeDate(ex.date));
+        if (ex) { setExtraDate(safeDate(ex.date)); setExtraStage(ex.stage || ''); }
       }
       setEw({ desc: b.extra_work_desc || '', amt: b.extra_work_amount ? String(b.extra_work_amount) : '' });
-      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
       if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
     });
   }, [reviseId]);
@@ -218,13 +222,13 @@ function BookingPage() {
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
       if (Array.isArray(b.installments)) {
-        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
-        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
+        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
         const ex = b.installments.find((i) => i.isExtra);
-        if (ex) setExtraDate(safeDate(ex.date));
+        if (ex) { setExtraDate(safeDate(ex.date)); setExtraStage(ex.stage || ''); }
       }
       setEw({ desc: b.extra_work_desc || '', amt: b.extra_work_amount ? String(b.extra_work_amount) : '' });
-      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+      if (Array.isArray(b.extra_work_inst)) setEwInsts(b.extra_work_inst.map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
       if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
     });
   }, [draftId]);
@@ -250,8 +254,8 @@ function BookingPage() {
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
       if (Array.isArray(b.installments)) {
-        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
-        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || '') })));
+        setInsts(b.installments.filter((i) => !i.isExtra && !i.isExtraWork && !i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
+        setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
       }
       if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
     });
@@ -647,8 +651,19 @@ function BookingPage() {
       return next;
     });
   }
-  const ewArr = () => ewInsts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isExtraWork: true }));
+  const ewArr = () => ewInsts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isExtraWork: true, ...stageOf(r) }));
   const inr = (n) => Number(n || 0).toLocaleString('en-IN');
+  // Kalrav rates beside the agreement amounts: the amount is what is kept, the rate
+  // is amount ÷ area — type either and the other follows.
+  const plotArea = Number(f.area) || 0;
+  const constArea = Number(f.const_area) || 0;
+  const rateOf = (amt, a) => (a > 0 && Number(amt) ? (Number(amt) / a).toFixed(2) : '');
+  const amtOf = (rate, a) => String(Math.round((Number(rate) || 0) * a));
+  const rateBox = (k, shown) => ({
+    value: rateEdit?.k === k ? rateEdit.t : shown,
+    onFocus: () => setRateEdit({ k, t: shown }),
+    onBlur: () => setRateEdit(null),
+  });
   const extraSub = formulaSet === 'ankhol' ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal'
     : formulaSet === 'industrial' ? 'Stamp + Reg + GST + Maint Dep + Maint Adv + Legal'
     : 'Stamp + Reg + GST + Maintenance + Legal';
@@ -777,15 +792,15 @@ function BookingPage() {
     });
   }
   function instArr() {
-    const arr = insts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0 }));
+    const arr = insts.map((r, i) => ({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, ...stageOf(r) }));
     if (prat) {
       if (!pratSched) return [];
       // isNsd marks the Extra Work Amount rows — the LOI prints those per hundred.
-      nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true }));
+      nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true, ...stageOf(r) }));
       return arr.concat(pratExtras());
     }
-    nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true }));
-    arr.push({ no: 'Extra', date: extraDate, amt: Math.round(v.totalExtra), isExtra: true });
+    nsdInsts.forEach((r, i) => arr.push({ no: i + 1, date: r.date, pct: parseFloat(r.pct) || 0, amt: parseFloat(r.amt) || 0, isNsd: true, ...stageOf(r) }));
+    arr.push({ no: 'Extra', date: extraDate, amt: Math.round(v.totalExtra), isExtra: true, ...stageOf({ stage: extraStage }) });
     return arr;
   }
   async function doDownloadLOI() {
@@ -850,6 +865,8 @@ function BookingPage() {
       villa_type: flags.bunglowTypeIsDropdown ? f.villa_type : '', bunglow_type: flags.bunglowTypeFixed || '',
       land_rate: f.land_rate || 0, dev_rate: f.dev_rate || 0, const_rate: f.const_rate || 0, plc_rate: f.plc_rate || 0,
       sale_deed_rate: f.sale_deed_rate || 0, dev_agreement_rate: f.dev_agreement_rate || 0,
+      lsd_rate: rateOf(f.land_sale_deed, Number(f.area) || 0) || 0,
+      const_agreement_rate: rateOf(f.const_agreement, Number(f.const_area) || 0) || 0,
       sale_deed_pct: f.sale_deed_pct === '' || f.sale_deed_pct == null ? 60 : f.sale_deed_pct,
       sale_deed_amount: f.sale_deed_amount || 0,
       maint_rate: f.maint_rate || 0, maint_months: f.maint_months || 0,
@@ -1209,7 +1226,30 @@ function BookingPage() {
         ))}
         {flags.hasSaleDeedRate && <Row><L>Sale Deed Rate (₹/sq.ft)</L><In type="number" value={f.sale_deed_rate} onChange={(e) => set('sale_deed_rate', e.target.value)} /></Row>}
         {flags.hasDevAgreement && <Row><L>Dev Agreement Rate (₹/sq.ft)</L><In type="number" value={f.dev_agreement_rate} onChange={(e) => set('dev_agreement_rate', e.target.value)} /></Row>}
+        {flags.hasLsdRate && (
+          <Row><L>Land Sale Deed Rate (₹/{flags.areaUnit})</L>
+            <In type="number" {...rateBox('lsd', rateOf(f.land_sale_deed, plotArea))}
+              onChange={(e) => { setRateEdit({ k: 'lsd', t: e.target.value }); set('land_sale_deed', amtOf(e.target.value, plotArea)); }} />
+          </Row>
+        )}
         {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => set('land_sale_deed', e.target.value)} /></Row>}
+        {/* Kalrav's Development Agreement is shown for the record only: it is not part of
+            the Unit Price, the taxes or the total, and the LOI does not print it. */}
+        {flags.hasDevAgreementInfo && <>
+          <Row><L>Development Agreement Rate (₹/{flags.areaUnit})</L>
+            <In type="number" value={f.dev_agreement_rate} onChange={(e) => set('dev_agreement_rate', e.target.value)} />
+          </Row>
+          <Row><L>Development Agreement Value (₹)</L>
+            <In type="number" {...rateBox('dev', v.devAgreement ? String(Math.round(v.devAgreement)) : '')}
+              onChange={(e) => { setRateEdit({ k: 'dev', t: e.target.value }); set('dev_agreement_rate', plotArea > 0 ? ((Number(e.target.value) || 0) / plotArea).toFixed(4) : ''); }} />
+          </Row>
+        </>}
+        {flags.hasConstAgreementRate && (
+          <Row><L>Construction Agreement Rate (₹/{flags.areaUnit})</L>
+            <In type="number" {...rateBox('cag', rateOf(f.const_agreement, constArea))}
+              onChange={(e) => { setRateEdit({ k: 'cag', t: e.target.value }); set('const_agreement', amtOf(e.target.value, constArea)); }} />
+          </Row>
+        )}
         {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => set('const_agreement', e.target.value)} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
         {formulaSet === 'kalrav' && <>
@@ -1314,7 +1354,7 @@ function BookingPage() {
             <Row><L>No. of Installments (Extra Work Amount)</L><In type="number" value={nsdInsts.length || ''} onChange={(e) => buildNsdInsts(e.target.value)} /></Row>
             {nsdInsts.length > 0 && (
               <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-                <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th className="nx-th" key={h}>{h}</th>)}</tr></thead>
+                <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Stage'].map(h => <th className="nx-th" key={h}>{h}</th>)}</tr></thead>
                 <tbody>
                   {nsdInsts.map((r, i) => (
                     <tr key={i}>
@@ -1322,6 +1362,7 @@ function BookingPage() {
                       <td className="nx-td"><DateFieldDMY className="nx-input-sm" value={safeDate(r.date)} onChange={(e) => setNsdInst(i, 'date', e.target.value)} wrapperStyle={{ flex: 'none' }} /></td>
                       <td className="nx-td"><input className="nx-input nx-input-sm" type="text" inputMode="decimal" value={r.pct} onChange={(e) => setNsdInst(i, 'pct', e.target.value)} style={{ width: 70 }} /></td>
                       <td className="nx-td"><input className="nx-input nx-input-sm" type="text" inputMode="decimal" value={r.amt} onChange={(e) => setNsdInst(i, 'amt', e.target.value)} /></td>
+                      <td className="nx-td"><StageIn value={r.stage} onChange={(e) => setNsdInst(i, 'stage', e.target.value)} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1339,7 +1380,7 @@ function BookingPage() {
         <Row><L>No. of Installments</L><In type="number" value={insts.length || ''} onChange={(e) => buildInsts(e.target.value)} /></Row>
         {insts.length > 0 && (
           <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-            <thead><tr>{['#', 'Due Date', '%', 'Amount'].map(h => <th className="nx-th" key={h}>{h}</th>)}</tr></thead>
+            <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Stage'].map(h => <th className="nx-th" key={h}>{h}</th>)}</tr></thead>
             <tbody>
               {insts.map((r, i) => (
                 <tr key={i}>
@@ -1347,6 +1388,7 @@ function BookingPage() {
                   <td className="nx-td"><DateFieldDMY className="nx-input-sm" value={safeDate(r.date)} onChange={(e) => setInst(i, 'date', e.target.value)} wrapperStyle={{ flex: 'none' }} /></td>
                   <td className="nx-td"><input className="nx-input nx-input-sm" type="text" inputMode="decimal" value={r.pct} onChange={(e) => setInst(i, 'pct', e.target.value)} style={{ width: 70 }} /></td>
                   <td className="nx-td"><input className="nx-input nx-input-sm" type="text" inputMode="decimal" value={r.amt} onChange={(e) => setInst(i, 'amt', e.target.value)} /></td>
+                  <td className="nx-td"><StageIn value={r.stage} onChange={(e) => setInst(i, 'stage', e.target.value)} /></td>
                 </tr>
               ))}
               {/* Pratishtha's three charge lines all fall due on the sale deed or
@@ -1357,6 +1399,7 @@ function BookingPage() {
                   <td className="nx-td" style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--text-3)' }}>Date of Sale Deed or Possession (whichever is earlier)</td>
                   <td className="nx-td" style={{ fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>{x.label}</td>
                   <td className="nx-td"><input className="nx-input nx-input-sm" value={rupee(x.amt)} readOnly style={{ background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
+                  <td className="nx-td" />
                 </tr>
               )) : v.totalExtra > 0 && (
                 <tr style={{ background: 'var(--warning-soft)' }}>
@@ -1364,6 +1407,7 @@ function BookingPage() {
                   <td className="nx-td"><DateFieldDMY className="nx-input-sm" value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} wrapperStyle={{ flex: 'none' }} /></td>
                   <td className="nx-td" style={{ fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Legal & Other Charges</td>
                   <td className="nx-td"><input className="nx-input nx-input-sm" value={rupee(v.totalExtra)} readOnly style={{ background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
+                  <td className="nx-td"><StageIn value={extraStage} onChange={(e) => setExtraStage(e.target.value)} /></td>
                 </tr>
               )}
             </tbody>
@@ -1380,7 +1424,7 @@ function BookingPage() {
           <Row><L>No. of Installments</L><In type="number" value={ewInsts.length || ''} onChange={(e) => buildEw(e.target.value)} /></Row>
           {ewInsts.length > 0 && (
             <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-              <thead><tr>{['#', 'Due Date', '%', 'Amount'].map((h) => <th className="nx-th" key={h}>{h}</th>)}</tr></thead>
+              <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Stage'].map((h) => <th className="nx-th" key={h}>{h}</th>)}</tr></thead>
               <tbody>
                 {ewInsts.map((r, i) => (
                   <tr key={i}>
@@ -1388,6 +1432,7 @@ function BookingPage() {
                     <td className="nx-td"><DateFieldDMY className="nx-input-sm" value={safeDate(r.date)} onChange={(e) => setEwInst(i, 'date', e.target.value)} wrapperStyle={{ flex: 'none' }} /></td>
                     <td className="nx-td"><input className="nx-input nx-input-sm" type="text" inputMode="decimal" value={r.pct} onChange={(e) => setEwInst(i, 'pct', e.target.value)} style={{ width: 70 }} /></td>
                     <td className="nx-td"><input className="nx-input nx-input-sm" type="text" inputMode="decimal" value={r.amt} onChange={(e) => setEwInst(i, 'amt', e.target.value)} /></td>
+                    <td className="nx-td"><StageIn value={r.stage} onChange={(e) => setEwInst(i, 'stage', e.target.value)} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1466,6 +1511,12 @@ const Section = ({ title, children }) => (
     {children}
   </div>
 );
+// An installment's Stage (e.g. "On booking", "Plinth") — optional; the LOI prints the
+// column only when a row has one.
+const StageIn = ({ value, onChange }) => (
+  <input className="nx-input nx-input-sm bk-stage" value={value || ''} onChange={onChange} placeholder="Optional" />
+);
+const stageOf = (r) => ((r && String(r.stage || '').trim()) ? { stage: String(r.stage).trim() } : {});
 const Row = ({ children }) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>{children}</div>;
 const L = ({ children }) => <label style={{ width: 200, minWidth: 200, fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{children}</label>;
 const In = ({ type, invalid, ...p }) => (

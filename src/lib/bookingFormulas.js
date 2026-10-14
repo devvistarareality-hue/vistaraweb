@@ -35,6 +35,13 @@ export function fieldFlags(formulaSet) {
     // Only for a Kalrav-set project: this default branch also answers for sets it
     // doesn't name (e.g. pratishtha), which must not get PLC.
     hasPlcFixed: !formulaSet || formulaSet === 'kalrav',
+    // Kalrav rates beside the agreement amounts (LSD = rate × Plot Area, Construction
+    // Agreement = rate × Construction Area), and a Development Agreement (rate × Plot
+    // Area) that is recorded only — not in the Unit Price, the taxes, the total or the
+    // LOI. Kalrav-set projects only, as with PLC.
+    hasLsdRate: !formulaSet || formulaSet === 'kalrav',
+    hasConstAgreementRate: !formulaSet || formulaSet === 'kalrav',
+    hasDevAgreementInfo: !formulaSet || formulaSet === 'kalrav',
   };
 }
 

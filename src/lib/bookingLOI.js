@@ -401,24 +401,48 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   const unitInstPdf = installments.filter(i => !i.isExtra && !i.isExtraWork && !i.isNsd);
   const ewcRawPdf = [
     ...installments.filter(i => i.isNsd),
-    ...extraWorkInst.map(r => ({ no: 'W' + r.no, date: r.date, pct: r.pct, amt: r.amt, isExtraWork: true, desc: v.extraWorkDesc })),
+    ...extraWorkInst.map(r => ({ no: 'W' + r.no, date: r.date, pct: r.pct, amt: r.amt, isExtraWork: true, desc: v.extraWorkDesc, stage: r.stage })),
   ];
   const legalInstPdf = installments.filter(i => i.isExtra && Math.round(i.amt || 0) > 0);
   const hasSchedule = unitInstPdf.length + ewcRawPdf.length + legalInstPdf.length > 0;
 
   if (hasSchedule) {
-    const DC_NUM = M + 8, DC_DATE = M + 18, DC_PCT = M + 82, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
+    // A Stage column (after Amount) only when some installment has one; otherwise the
+    // schedule prints exactly as before.
+    const hasStage = [...unitInstPdf, ...ewcRawPdf, ...legalInstPdf].some((i) => String(i.stage || '').trim());
+    const DC_NUM = M + 8, DC_DATE = M + 18;
+    const DC_PCT = hasStage ? M + 55 : M + 82;
+    const DC_RS = hasStage ? M + 96 : PW - M - 28;
+    const DC_AMT = hasStage ? M + 118 : PW - M - 3;
+    const DC_STG = M + 124, STG_W = PW - M - DC_STG - 2;
+    const drawStage = (inst) => {
+      const t = String(inst.stage || '').trim();
+      if (!hasStage || !t) return;
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK);
+      let lines = doc.splitTextToSize(t, STG_W);
+      if (lines.length > 2) lines = [lines[0], String(lines[1]).replace(/.{0,2}$/, '') + '…'];
+      if (lines.length === 1) doc.text(lines[0], DC_STG, y);
+      else { doc.text(lines[0], DC_STG, y - 1.6); doc.text(lines[1], DC_STG, y + 1.9); }
+    };
 
     const NO_DATE_PDF = 'Date of Sale Deed or Possession (whichever is earlier)';
     const drawSchedDate = (d) => {
       const txt = fmtDate(d);
       if (txt && txt !== '—') { doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(txt, DC_DATE, y); }
+      else if (hasStage) {
+        // Narrower date column when Stage is printed: wrap the wording onto two lines.
+        doc.setFontSize(6); doc.setFont('helvetica', 'italic'); st(MD);
+        const ls = doc.splitTextToSize(NO_DATE_PDF, DC_PCT - DC_DATE - 2).slice(0, 2);
+        ls.forEach((l, k) => doc.text(l, DC_DATE, y - 1.8 + k * 2.6));
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      }
       else { doc.setFontSize(6); doc.setFont('helvetica', 'italic'); st(MD); doc.text(NO_DATE_PDF, DC_DATE, y - 0.5); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); }
     };
 
     const drawSchedHeader = () => {
       chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
       doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('%', DC_PCT, y); doc.text('Amount (Rs.)', DC_RS, y);
+      if (hasStage) doc.text('Stage', DC_STG, y);
       y += 10;
     };
 
@@ -445,12 +469,14 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
           sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
           doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
           doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + docStr, DC_AMT, y, { align: 'right' });
+          drawStage(inst);
         } else {
           const amt = Math.round(inst.amt || 0); grandEwc += amt; grand += amt;
           if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
           sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(idx + 1), DC_NUM, y + 0.5, { align: 'center' });
           doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
           doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+          drawStage(inst);
         }
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
@@ -469,6 +495,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st([255, 255, 255]); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.text(String(inst.no), DC_NUM, y + 0.5, { align: 'center' });
         doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(inst.date) || '—', DC_DATE, y); doc.text((inst.pct || 0) + '%', DC_PCT, y);
         doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+        drawStage(inst);
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
       drawSubTotal('SUB TOTAL', grandUnit);
@@ -486,6 +513,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
         drawSchedDate(inst.date);
         doc.setFontSize(8); doc.setFont('helvetica', 'normal'); st(DK); doc.text(inst.label || 'Legal & Other Charges', DC_PCT, y);
         doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + rs(amt), DC_AMT, y, { align: 'right' });
+        drawStage(inst);
         sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5); y += 10;
       });
       drawSubTotal('SUB TOTAL', grandLegal);

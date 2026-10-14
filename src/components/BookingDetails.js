@@ -44,6 +44,8 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
   const rawInsts = Array.isArray(b.installments) ? b.installments : [];
   // Sort the payment schedule by due date ascending (yyyy-mm-dd sorts chronologically).
   const insts = [...rawInsts].sort((a, x) => String(a.date || '').localeCompare(String(x.date || '')));
+  // The Stage column only when some installment has one.
+  const hasStage = insts.some((i) => String(i.stage || '').trim());
   return (
     <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--border-strong)' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
@@ -71,7 +73,14 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
           <Row2 label="Construction Rate" value={money0(b.const_rate)} />
           {Number(b.sale_deed_rate) ? <Row2 label="Sale Deed Rate" value={money0(b.sale_deed_rate)} /> : null}
           <Row2 label="Sale Deed %" value={b.sale_deed_pct != null ? b.sale_deed_pct + '%' : '—'} />
+          {Number(b.lsd_rate) ? <Row2 label="Land Sale Deed Rate" value={money0(b.lsd_rate)} /> : null}
           {Number(b.land_sale_deed) ? <Row2 label="Land Sale Deed" value={money0(b.land_sale_deed)} /> : null}
+          {/* Kalrav's Development Agreement — recorded only, not part of the price. */}
+          {String(b.formula_set || 'kalrav') === 'kalrav' && Number(b.dev_agreement) ? <>
+            <Row2 label="Development Agreement Rate" value={money0(b.dev_agreement_rate)} />
+            <Row2 label="Development Agreement Value" value={money0(b.dev_agreement)} />
+          </> : null}
+          {Number(b.const_agreement_rate) ? <Row2 label="Construction Agreement Rate" value={money0(b.const_agreement_rate)} /> : null}
           {Number(b.const_agreement) ? <Row2 label="Construction Agreement" value={money0(b.const_agreement)} /> : null}
           {Number(b.premium_location) ? <Row2 label="Premium Location" value={money0(b.premium_location)} /> : null}
           <Row2 label="Plot Basic" value={money0(b.plot_basic)} />
@@ -104,7 +113,7 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 10, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>Payment Schedule</div>
           <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr>{['#', 'Due Date', '%', 'Amount', 'Type'].map((h) => <th key={h} style={{ textAlign: 'left', color: 'var(--muted)', fontWeight: 700, fontSize: 10, padding: '4px 6px', borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
+            <thead><tr>{['#', 'Due Date', '%', 'Amount', ...(hasStage ? ['Stage'] : []), 'Type'].map((h) => <th key={h} className="bd-th">{h}</th>)}</tr></thead>
             <tbody>
               {insts.map((i, idx) => (
                 <tr key={idx}>
@@ -112,6 +121,7 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid var(--surface-2)' }}>{fmtDate(i.date)}</td>
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid var(--surface-2)' }}>{i.pct != null ? i.pct + '%' : '—'}</td>
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid var(--surface-2)', fontWeight: 700 }}>{money0(i.amt)}</td>
+                  {hasStage ? <td className="bd-td">{i.stage || '—'}</td> : null}
                   <td style={{ padding: '4px 6px', borderBottom: '1px solid var(--surface-2)', color: 'var(--muted)' }}>{i.isNsd ? 'Extra Work' : i.isExtra ? 'Legal & Other' : 'Unit Price'}</td>
                 </tr>
               ))}
