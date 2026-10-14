@@ -12,7 +12,7 @@ const STAGE_HELP = {
   Qualified: 'TC or STM marks it warm, or a visit is booked',
   Site_Visit_Scheduled: 'Site visit booked',
   Site_Visit_Done: 'Site visit completed',
-  Booked: 'Booking approved',
+  Booked: 'Booking approved by Sales and Accounts',
   Disqualified: 'Not qualified / not interested',
 };
 
