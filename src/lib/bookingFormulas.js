@@ -243,16 +243,14 @@ export function kalravAuto(touched = []) {
   const kept = touched.slice(-2);
   return KAL_PARTS.find((k) => !kept.includes(k)) || 'cag';
 }
-// Split `total` across the parts with `auto` taking the remainder. A total below the
-// two kept ones sets auto to 0 and trims those, the Land Sale Deed first.
+// Split `total` across the parts with `auto` taking the remainder. The two kept ones
+// are never changed: a total below them leaves auto at 0 (the Unit Price cannot go
+// under what was typed). This matters while a % is being typed — "80" passes through
+// "8" — which used to trim the kept ones for good (owner, 14 Oct 2026).
 export function kalravBalance(parts, total, auto) {
   const p = { lsd: 0, dev: 0, cag: 0, ...parts };
-  const others = ['lsd', 'dev', 'cag'].filter((k) => k !== auto);
-  const rest = others.reduce((a, k) => a + (p[k] || 0), 0);
-  if (total >= rest) { p[auto] = total - rest; return p; }
-  p[auto] = 0;
-  let over = rest - total;
-  for (const k of others) { const cut = Math.min(p[k] || 0, over); p[k] = (p[k] || 0) - cut; over -= cut; }
+  const rest = ['lsd', 'dev', 'cag'].filter((k) => k !== auto).reduce((a, k) => a + (p[k] || 0), 0);
+  p[auto] = Math.max(0, total - rest);
   return p;
 }
 
