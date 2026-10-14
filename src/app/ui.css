@@ -2902,3 +2902,34 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 /* All Leads: booking-stage filter for closed leads. */
 .lf-stage { height: 36px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .lf-stage.is-on { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-softer) !important; }
+
+/* ── Payment Plans (Projects → Payment Plans): the schedule a new booking starts with ── */
+.pp-open { width: 100%; margin-top: 6px; }
+.pp-modal { width: 100%; max-width: 760px; max-height: min(900px, calc(100vh - 40px)); display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.pp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 6px; }
+.pp-head h2 { margin: 0; font-size: 17px; font-weight: 800; color: var(--text); }
+.pp-head p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+.pp-x { width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--text-3); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+.pp-x:hover { background: var(--surface-3); color: var(--text); }
+.pp-tabs { display: flex; align-items: center; gap: 6px; padding: 10px 20px 0; flex-wrap: wrap; }
+.pp-tab { padding: 8px 14px; border: 1px solid transparent; border-radius: 999px; background: var(--surface-2); color: var(--text-3); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.pp-tab.is-on { background: var(--accent-soft); color: var(--accent); border-color: var(--blue-2); }
+.pp-copy { margin-left: auto; }
+.pp-body { flex: 1; overflow-y: auto; padding: 12px 20px 6px; }
+.pp-body .nx-note { margin: 0 0 12px; }
+.pp-lead { margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+.pp-sec { border: 1px solid var(--hairline); border-radius: 16px; padding: 10px 14px 12px; margin-bottom: 12px; background: var(--surface-2); }
+.pp-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 0 8px; }
+.pp-sec-head h3 { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.pp-total { font-size: 11.5px; font-weight: 800; }
+.pp-total.ok { color: var(--success); }
+.pp-total.bad { color: var(--danger); }
+.pp-row { display: grid; grid-template-columns: 24px 90px 150px 1fr 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.pp-row-legal { grid-template-columns: 150px 1fr; }
+.pp-row-head { margin-bottom: 4px; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.pp-no { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; }
+.pp-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--hairline); }
+@media (max-width: 560px) {
+  .pp-row { grid-template-columns: 20px 64px 80px 1fr 28px; gap: 6px; }
+  .pp-row-legal { grid-template-columns: 90px 1fr; }
+}

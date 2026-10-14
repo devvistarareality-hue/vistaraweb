@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
+import { planFor, planRows, addDays } from '../../../lib/paymentPlans';
 import { computeFormulas, fieldFlags, installmentBase, kalravAuto, kalravBalance, plcAmounts, rupee } from '../../../lib/bookingFormulas';
 import { stripPlotPrefix } from '../../../lib/plotNumber';
 import { downloadLOI } from '../../../lib/bookingLOI';
@@ -127,6 +128,10 @@ function BookingPage() {
   const [nsdInsts, setNsdInsts] = useState([]); // extra work charges installments (ankhol)
   const [extraDate, setExtraDate] = useState(''); // due date for the Extra Charges line
   const [extraStage, setExtraStage] = useState(''); // its Stage (optional, printed on the LOI when filled)
+  // From the project's payment plan: days after the booking date for the Extra line
+  // (null once its date is picked by hand). The EOI being converted has loaded.
+  const [extraDays, setExtraDays] = useState(null);
+  const [eoiLoaded, setEoiLoaded] = useState(false);
   // A rate box being typed in (Kalrav LSD / Dev Agreement / Construction Agreement),
   // so it shows what was typed rather than the figure worked back from the amount.
   const [rateEdit, setRateEdit] = useState(null);
@@ -261,6 +266,7 @@ function BookingPage() {
         setNsdInsts(b.installments.filter((i) => i.isNsd).map((i) => ({ date: safeDate(i.date), pct: String(i.pct || ''), amt: String(i.amt || ''), stage: i.stage || '' })));
       }
       if (Array.isArray(b.extra_terms)) setExtraTerms(b.extra_terms.map((t) => ({ title: t.title || '', desc: t.desc || '' })));
+      setEoiLoaded(true);
     });
   }, [convertEoiId]);
 
@@ -754,6 +760,7 @@ function BookingPage() {
       const next = arr.map((r, idx) => {
         if (idx !== i) return r;
         const nr = { ...r, [k]: val };
+        if (k === 'date') delete nr.days;   // picked by hand: no longer follows the booking date
         if (k === 'pct') nr.amt = val && base ? String(Math.round(base * parseFloat(val) / 100)) : '';
         if (k === 'amt') nr.pct = val && base ? (parseFloat(val) / base * 100).toFixed(2) : '';
         return nr;
@@ -819,12 +826,43 @@ function BookingPage() {
   useRebase(nsdBase, setNsdInsts);
   useRebase(ewBase, setEwInsts);
 
+  // Payment plan prefill — once, on a new LOI (Direct LOI plan) or an EOI being converted
+  // (EOI → LOI plan, after the EOI itself has loaded so its rows don't overwrite the
+  // plan). Drafts, revisions and EOIs keep their own schedule. Amounts come from the %.
+  const planDone = useRef(false);
+  useEffect(() => {
+    if (planDone.current || !project?.id || eoiMode || reviseId || draftId) return;
+    if (convertEoiId && !eoiLoaded) return;
+    planDone.current = true;
+    const plan = planFor(project, !!convertEoiId);
+    if (!plan) return;
+    const day = f.booking_date;
+    if ((plan.extra || []).length) setNsdInsts(rebaseRows(planRows(plan.extra, day), nsdBase));
+    if ((plan.unit || []).length) setInsts(rebaseRows(planRows(plan.unit, day), base));
+    const lg = plan.legal || {};
+    if (lg.days != null && String(lg.days) !== '') { setExtraDays(parseInt(lg.days, 10) || 0); setExtraDate(addDays(day, lg.days)); }
+    if (lg.stage) setExtraStage(lg.stage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, eoiLoaded]);
+
+  // A plan's dates follow the booking date until they are picked by hand.
+  const planDay = useRef(f.booking_date);
+  useEffect(() => {
+    if (planDay.current === f.booking_date) return;
+    planDay.current = f.booking_date;
+    const move = (arr) => arr.map((r) => (r.days != null ? { ...r, date: addDays(f.booking_date, r.days) } : r));
+    setInsts(move); setNsdInsts(move);
+    if (extraDays != null) setExtraDate(addDays(f.booking_date, extraDays));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.booking_date]);
+
   function buildNsdInsts(n) { n = parseInt(n, 10) || 0; setNsdInsts(Array.from({ length: n }, (_, i) => nsdInsts[i] || { date: '', pct: '', amt: '' })); }
   function setNsdInst(i, k, val) {
     setNsdInsts((arr) => {
       const next = arr.map((r, idx) => {
         if (idx !== i) return r;
         const nr = { ...r, [k]: val };
+        if (k === 'date') delete nr.days;   // picked by hand: no longer follows the booking date
         if (k === 'pct') nr.amt = val && nsdBase ? String(Math.round(nsdBase * parseFloat(val) / 100)) : '';
         if (k === 'amt') nr.pct = val && nsdBase ? (parseFloat(val) / nsdBase * 100).toFixed(2) : '';
         return nr;
@@ -1465,7 +1503,7 @@ function BookingPage() {
               )) : v.totalExtra > 0 && (
                 <tr style={{ background: 'var(--warning-soft)' }}>
                   <td className="nx-td" style={{ fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Extra</td>
-                  <td className="nx-td"><DateFieldDMY className="nx-input-sm" value={safeDate(extraDate)} onChange={(e) => setExtraDate(e.target.value)} wrapperStyle={{ flex: 'none' }} /></td>
+                  <td className="nx-td"><DateFieldDMY className="nx-input-sm" value={safeDate(extraDate)} onChange={(e) => { setExtraDate(e.target.value); setExtraDays(null); }} wrapperStyle={{ flex: 'none' }} /></td>
                   <td className="nx-td" style={{ fontWeight: 700, color: 'var(--warning)', fontSize: 11 }}>Legal & Other Charges</td>
                   <td className="nx-td"><input className="nx-input nx-input-sm" value={rupee(v.totalExtra)} readOnly style={{ background: 'var(--accent-softer)', color: 'var(--accent)', fontWeight: 600 }} /></td>
                   <td className="nx-td"><StageIn value={extraStage} onChange={(e) => setExtraStage(e.target.value)} /></td>

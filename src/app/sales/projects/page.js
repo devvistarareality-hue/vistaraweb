@@ -10,6 +10,7 @@ import TowerFloorBuilder, { unitsForFloor } from '../../../components/TowerFloor
 import Icon from '../../../components/Icon';
 import UnitTypesEditor, { cleanUnitTypes } from '../../../components/UnitTypesEditor';
 import { confirmDialog } from '../../../lib/notify';
+import PaymentPlansModal from '../../../components/PaymentPlansModal';
 // A DRF error is JSON, but a 500 (or a proxy timeout) is an HTML page. res.json() on
 // that throws a bare SyntaxError, so read the text first and hand back either the
 // parsed body or a { _raw } snippet the caller can show.
@@ -576,6 +577,8 @@ export default function ProjectsPage() {
   }, [user]);
 
   const [projects, setProjects] = useState([]);
+  // The project whose Payment Plans are open, or null.
+  const [plansFor, setPlansFor] = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [showModal, setShowModal] = useState(null); // null | 'add' | project obj
 
@@ -741,11 +744,18 @@ export default function ProjectsPage() {
                     </button>
                     <button className="nx-btn nx-btn-sm nx-icon-btn nx-btn-secondary" onClick={() => deleteProject(p)} style={{ ...outlineBtn, color: 'var(--danger)', borderColor: '#EF444440', padding: '7px 10px' }}><Icon name="x" /></button>
                   </div>
+                  {/* The installments a new booking here starts with (Direct LOI / EOI → LOI). */}
+                  <button className="nx-btn nx-btn-sm nx-btn-secondary pp-open" onClick={() => setPlansFor(p)}>Payment Plans</button>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {plansFor && (
+        <PaymentPlansModal project={plansFor} onClose={() => setPlansFor(null)}
+          onSaved={(d) => { bustCache(cKey); setProjects((prev) => prev.map((x) => (x.id === d.id ? d : x))); }} />
       )}
 
       {showModal && (
