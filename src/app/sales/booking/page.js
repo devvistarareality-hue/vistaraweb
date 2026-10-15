@@ -4,7 +4,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { planFor, planRows, addDays } from '../../../lib/paymentPlans';
-import { computeFormulas, fieldFlags, installmentBase, kalravAuto, kalravBalance, plcAmounts, rupee } from '../../../lib/bookingFormulas';
+import { computeFormulas, fieldFlags, installmentBase, plcAmounts, rupee } from '../../../lib/bookingFormulas';
 import { stripPlotPrefix } from '../../../lib/plotNumber';
 import { downloadLOI } from '../../../lib/bookingLOI';
 import { computeShop, impliedUnitPct } from '../../../lib/pratishthaShop';
@@ -135,8 +135,8 @@ function BookingPage() {
   // A rate box being typed in (Kalrav LSD / Dev Agreement / Construction Agreement),
   // so it shows what was typed rather than the figure worked back from the amount.
   const [rateEdit, setRateEdit] = useState(null);
-  // Kalrav: which of LSD / Dev Agreement / Construction Agreement were typed in last
-  // (the other one is worked out from the Unit Price — see kalravAuto).
+  // Kalrav: which of LSD / Construction Agreement were typed by hand — the Rate Master's
+  // rates stop refilling those (see the Rate Master effect below).
   const [kalTouched, setKalTouched] = useState([]);
   const [ew, setEw] = useState({ desc: '', amt: '' });       // extra work (revise mode)
   const [ewInsts, setEwInsts] = useState([]);                // [{date,pct,amt}]
@@ -594,9 +594,6 @@ function BookingPage() {
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
 
-  // Kalrav: what Sale Deed % is a percentage of, and setting the Unit Price from either
-  // box — the two parts typed last are kept and the auto one takes the rest.
-  const kalBase = (v.plotBasic || 0) + (v.plotDev || 0) + (v.constAmt || 0) + (v.premiumLocation || 0);
   const isKal = formulaSet === 'kalrav';
   // The three parts of a Kalrav Unit Price, in rupees. The Development Agreement is kept
   // as a rate (× Plot Area), so it is read and written through that.
@@ -617,34 +614,15 @@ function BookingPage() {
       dev_agreement_rate: flags.hasDevAgreementInfo && a > 0 ? String(p.dev / a) : s.dev_agreement_rate,
     };
   };
-  const kalAuto = kalravAuto(kalTouched, partsOf(f));
-  // The auto one is fixed the first time the price moves: the other two count as typed,
-  // so it cannot switch once it is no longer empty (the % arrives one keystroke at a time).
-  const setKalravUnitPrice = (up) => {
-    const auto = kalAuto;
-    if (kalTouched.length < 2) setKalTouched(['lsd', 'dev', 'cag'].filter((k) => k !== auto));
-    setF((s) => withParts(s, kalravBalance(partsOf(s), Math.max(0, Math.round(up)), auto)));
-  };
-  // Typing one of the three (its amount, or its rate): it is kept, and once a Unit Price
-  // is set the auto one moves so the Unit Price — and the Sale Deed % — stay put. When the
-  // auto one would go below zero the Unit Price grows instead.
+  // Each of the three is its own figure (typed, or from its rate); the Unit Price is
+  // their sum and the Sale Deed % follows from it — nothing is worked out backwards
+  // (owner, 15 Oct 2026: the "fill two, the third is auto" rule is gone).
   const setKalPart = (key, val) => {
-    const touched = [...kalTouched.filter((k) => k !== key), key];
-    setKalTouched(touched);
-    setF((s) => {
-      const before = partsOf(s);
-      const target = before.lsd + before.dev + before.cag;
-      const p = { ...before, [key]: Math.round(Number(val) || 0) };
-      const auto = kalravAuto(touched, before);
-      if (target > 0 && auto !== key) {
-        const rest = Object.keys(p).filter((k) => k !== auto).reduce((t, k) => t + p[k], 0);
-        if (target - rest >= 0) p[auto] = target - rest;
-      }
-      return withParts(s, p, key, val);
-    });
+    if (!kalTouched.includes(key)) setKalTouched([...kalTouched, key]);
+    setF((s) => withParts(s, { ...partsOf(s), [key]: Math.round(Number(val) || 0) }, key, val));
   };
   // Loan Amount box → all three parts to 0 (so the Sale Deed % and Unit Price read 0 too),
-  // and forget which were typed, so the next two filled decide the auto one again.
+  // and forget which were typed, so the Rate Master's rates can fill them again.
   const clearLoan = () => {
     setKalTouched([]); setRateEdit(null); setKalEdit(null);
     setF((s) => ({ ...s, land_sale_deed: '0', const_agreement: '0', dev_agreement_rate: '0' }));
@@ -666,7 +644,6 @@ function BookingPage() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, f.area, f.const_area]);
-  const autoTag = (k) => (isKal && kalAuto === k ? <span className="bk-auto" title="Worked out from the Unit Price">auto</span> : null);
   useEffect(() => {
     if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));
   }, [v.saleDeed]);
@@ -1346,7 +1323,7 @@ function BookingPage() {
               onChange={(e) => { setRateEdit({ k: 'lsd', t: e.target.value }); setKalPart('lsd', amtOf(e.target.value, plotArea)); }} />
           </Row>
         )}
-        {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹) {autoTag('lsd')}</L><In type="number" value={f.land_sale_deed} onChange={(e) => (isKal ? setKalPart('lsd', e.target.value) : set('land_sale_deed', e.target.value))} /></Row>}
+        {flags.hasLandSaleDeed && <Row><L>Land Sale Deed (₹)</L><In type="number" value={f.land_sale_deed} onChange={(e) => (isKal ? setKalPart('lsd', e.target.value) : set('land_sale_deed', e.target.value))} /></Row>}
         {/* Kalrav's Development Agreement is part of the Unit Price (LSD + Dev Agreement +
             Construction Agreement); the LOI shows it inside the Unit Price, not as a line. */}
         {flags.hasDevAgreementInfo && <>
@@ -1354,7 +1331,7 @@ function BookingPage() {
             <In type="number" {...rateBox('devr', rateOf(v.devAgreement, plotArea))}
               onChange={(e) => { setRateEdit({ k: 'devr', t: e.target.value }); setKalPart('dev', amtOf(e.target.value, plotArea)); }} />
           </Row>
-          <Row><L>Development Agreement Value (₹) {autoTag('dev')}</L>
+          <Row><L>Development Agreement Value (₹)</L>
             <In type="number" {...rateBox('dev', v.devAgreement ? String(Math.round(v.devAgreement)) : '')}
               onChange={(e) => { setRateEdit({ k: 'dev', t: e.target.value }); setKalPart('dev', e.target.value); }} />
           </Row>
@@ -1365,25 +1342,17 @@ function BookingPage() {
               onChange={(e) => { setRateEdit({ k: 'cag', t: e.target.value }); setKalPart('cag', amtOf(e.target.value, constArea)); }} />
           </Row>
         )}
-        {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹) {autoTag('cag')}</L><In type="number" value={f.const_agreement} onChange={(e) => (isKal ? setKalPart('cag', e.target.value) : set('const_agreement', e.target.value))} /></Row>}
+        {flags.hasConstructionAgreement && <Row><L>Construction Agreement (₹)</L><In type="number" value={f.const_agreement} onChange={(e) => (isKal ? setKalPart('cag', e.target.value) : set('const_agreement', e.target.value))} /></Row>}
         {flags.hasPremiumLocation && <Row><L>Premium Location (₹)</L><In type="number" value={f.premium_location} onChange={(e) => set('premium_location', e.target.value)} /></Row>}
         {formulaSet === 'kalrav' && <>
-          {/* Kalrav: Unit Price = Land Sale Deed + Development + Construction Agreement, and Sale Deed % =
-              Unit Price / (Plot Basic + Dev + Construction + PLC). Type any of the four:
-              a % or Unit Price keeps the Land Sale Deed and moves the Construction
-              Agreement, so the three always agree and the taxes (stamp duty on LSD, GST
-              on the agreement) stay on the right amounts. */}
+          {/* Kalrav: Unit Price = Land Sale Deed + Development + Construction Agreement, and
+              Sale Deed % = Unit Price / (Plot Basic + Dev + Construction + PLC). Both are
+              results here — change one of the three above to change them. */}
           <Row><L>Sale Deed %</L>
-            <In type="number" value={kalEdit?.k === 'pct' ? kalEdit.t : (v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0')}
-              onFocus={() => setKalEdit({ k: 'pct', t: v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '' })}
-              onBlur={() => setKalEdit(null)}
-              onChange={(e) => { setKalEdit({ k: 'pct', t: e.target.value }); setKalravUnitPrice((Number(e.target.value) || 0) / 100 * kalBase); }} />
+            <In type="number" value={v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0'} readOnly />
           </Row>
           <Row><L>Unit Price (₹)</L>
-            <In type="number" value={kalEdit?.k === 'up' ? kalEdit.t : (Math.round(v.saleDeed) || 0)}
-              onFocus={() => setKalEdit({ k: 'up', t: String(Math.round(v.saleDeed) || '') })}
-              onBlur={() => setKalEdit(null)}
-              onChange={(e) => { setKalEdit({ k: 'up', t: e.target.value }); setKalravUnitPrice(Number(e.target.value) || 0); }} />
+            <In type="number" value={Math.round(v.saleDeed) || 0} readOnly />
           </Row>
         </>}
         </div>
