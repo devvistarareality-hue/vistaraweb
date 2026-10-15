@@ -85,6 +85,8 @@ export const AUTH_ENDPOINTS = {
 export const USER_ENDPOINTS = {
   get list()   { return `${BASE_URL}/api/auth/users/`; },
   detail: (id) => `${BASE_URL}/api/auth/users/${id}/`,
+  // One person's notification settings over their designation's.
+  notifications: (id) => `${BASE_URL}/api/auth/users/${id}/notifications/`,
 };
 
 export const SALES_ENDPOINTS = {

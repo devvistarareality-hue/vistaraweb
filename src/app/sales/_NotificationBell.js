@@ -43,6 +43,8 @@ const URL_FOR_TYPE = {
   // A new project waits on the Approvals page's Projects tab; Club 1000 investors on
   // their own approvals / investors pages.
   project_pending_approval: '/sales/bookings?section=projects',
+  // The team morning summary opens the overdue follow-ups.
+  team_digest: '/sales/follow-ups?filter=overdue',
   investor_approval: '/club1000/approvals',
   investor_approved: '/club1000/investors',
 };
@@ -123,7 +125,7 @@ const ICON = {
   lead_transfer_requested: 'user', lead_transfer_approved: 'user', lead_transfer_rejected: 'user',
   closure: 'trophy', overdue: 'clock', mark_available: 'dot', test: 'bell',
   followup_overdue: 'clock', sv_overdue: 'clock', availability_reminder: 'dot',
-  task_assigned: 'note', task_comment: 'phone', task_due_soon: 'clock',
+  task_assigned: 'note', task_comment: 'phone', task_due_soon: 'clock', team_digest: 'clock',
 };
 const TYPE_COLOR = {
   new_lead: 'var(--success)', followup: 'var(--accent)', sv: 'var(--success)', sv_done: 'var(--success)',

@@ -13,6 +13,7 @@ import PasswordInput from '../../../components/PasswordInput';
 import { needsReportingManager } from '../../../lib/orgTree';
 
 import Icon from '../../../components/Icon';
+import UserNotificationsModal from '../../../components/UserNotificationsModal';
 // Seniority order, most senior first. Everything down to Manager carries manager
 // authority (see MANAGER_ROLES in the backend). Kiosk is not a rank -- it's the
 // unattended self-booking account -- so it sits apart at the end.
@@ -53,6 +54,8 @@ export default function UserManagementPage() {
   const [form,              setForm]              = useState({});
   const [toast,             setToast]             = useState({ visible: false, message: '', type: 'success' });
   const [dialog,            setDialog]            = useState({ open: false });
+  // The person whose notification settings are open, or null.
+  const [notifFor,          setNotifFor]          = useState(null);
   const [editManagerSearch, setEditManagerSearch] = useState('');
   const opLabel = useRef('updated');
   const me = useSelector((st) => st.auth?.user);
@@ -201,6 +204,7 @@ export default function UserManagementPage() {
 
   return (
     <div style={s.page}>
+      {notifFor && <UserNotificationsModal user={notifFor} onClose={() => setNotifFor(null)} />}
       <Toast {...toast} onHide={() => setToast((t) => ({ ...t, visible: false }))} />
       <ConfirmModal {...dialog} onCancel={closeDialog} />
 
@@ -261,6 +265,7 @@ export default function UserManagementPage() {
                   <td style={s.td}>
                     <div style={s.rowActions}>
                       <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => openEdit(u)} style={s.editBtn}>Edit</button>
+                      <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setNotifFor(u)} title="Notifications" aria-label={`Notifications for ${u.name}`}><Icon name="bell" /></button>
                       {canViewAs && u.is_active && !u.is_staff && u.id !== me?.id && (
                         <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => handleViewAs(u)} style={s.viewAsBtn}>View as</button>
                       )}
