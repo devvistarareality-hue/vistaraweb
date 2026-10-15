@@ -2976,7 +2976,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .np-group { border: 1px solid var(--hairline); border-radius: 18px; padding: 6px 14px 8px; margin-bottom: 12px; background: var(--surface-2); }
 .np-group h3 { margin: 10px 2px 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
 .np-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 10px 2px; border-top: 1px solid var(--hairline); }
-.np-row:first-of-type { border-top: 0; }
+.np-wrap:first-of-type .np-row, .np-sub + .np-row { border-top: 0; }
+.np-sub { margin: 8px 2px 0; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .np-row.is-off .np-text b { color: var(--muted); }
 .np-text { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .np-text b { font-size: 13.5px; color: var(--text); display: flex; align-items: center; gap: 6px; }

@@ -10,21 +10,29 @@
 // "Default", which follows the designation — the person's value is only kept when it
 // differs on purpose.
 import { useMemo } from 'react';
+import { GROUPS } from '../lib/moduleGroups';
 
 const MODES = [['push', 'Push'], ['inapp', 'In-app'], ['off', 'Off']];
+// Each module's display name, as on the home screen (AR → "Accounts Receivable").
+const MODULE_TITLE = Object.fromEntries(GROUPS.flatMap((g) => g.parts.filter((p) => p.module).map((p) => [p.module, p.title])));
 const LEVELS = [1, 2, 3, 4, 5];
 
-export default function NotificationPrefsEditor({ kinds = [], presets = [], fallback, value, onChange, inherit = null, inheritLabel = 'the designation' }) {
+// `modules`: the modules this designation's menu answers for (or the person's modules);
+// only their notifications are listed, a section per module. Channel Partner shares
+// the Sales notifications. Left out → every module.
+export default function NotificationPrefsEditor({ kinds = [], presets = [], fallback, value, onChange, inherit = null, inheritLabel = 'the designation', modules = null }) {
   const base = fallback || { mode: 'push', levels: 5, digest: false };
   const groups = useMemo(() => {
+    const has = (m) => !modules || modules.includes(m) || (m === 'Sales' && modules.includes('Channel Partner'));
     const out = [];
-    kinds.forEach((k) => {
-      let g = out.find((x) => x.name === k.group);
-      if (!g) { g = { name: k.group, items: [] }; out.push(g); }
+    kinds.filter((k) => has(k.module || 'Sales')).forEach((k) => {
+      const m = k.module || 'Sales';
+      let g = out.find((x) => x.module === m);
+      if (!g) { g = { module: m, name: MODULE_TITLE[m] || m, items: [] }; out.push(g); }
       g.items.push(k);
     });
     return out;
-  }, [kinds]);
+  }, [kinds, modules]);
 
   const personMode = inherit !== null;
   const own = (k) => (value || {})[k];
@@ -37,7 +45,7 @@ export default function NotificationPrefsEditor({ kinds = [], presets = [], fall
 
   return (
     <div className="np">
-      {!personMode && presets.length > 0 && (
+      {!personMode && presets.length > 0 && groups.some((g) => g.items.some((k) => k.team)) && (
         <div className="np-presets">
           <span>Start from</span>
           {presets.map((p) => (
@@ -45,14 +53,19 @@ export default function NotificationPrefsEditor({ kinds = [], presets = [], fall
           ))}
         </div>
       )}
+      {!groups.length && <div className="nx-note info">No notifications belong to the modules in this menu.</div>}
       {groups.map((g) => (
-        <section className="np-group" key={g.name}>
+        <section className="np-group" key={g.module}>
           <h3>{g.name}</h3>
-          {g.items.map((k) => {
+          {g.items.map((k, idx) => {
+            // Sub-headings only where a module has more than one kind of alert (Sales).
+            const newSub = new Set(g.items.map((x) => x.group)).size > 1 && (idx === 0 || g.items[idx - 1].group !== k.group);
             const e = effective(k.key);
             const isDefault = personMode && !own(k.key);
             return (
-              <div className={`np-row${e.mode === 'off' ? ' is-off' : ''}${k.team ? ' has-team' : ''}`} key={k.key}>
+              <div key={k.key} className="np-wrap">
+              {newSub && <div className="np-sub">{k.group}</div>}
+              <div className={`np-row${e.mode === 'off' ? ' is-off' : ''}${k.team ? ' has-team' : ''}`}>
                 <div className="np-text">
                   <b>{k.label}{k.team && <em className="np-team">team</em>}</b>
                   <small>{k.help}</small>
@@ -89,6 +102,7 @@ export default function NotificationPrefsEditor({ kinds = [], presets = [], fall
                       </label>
                     </div>
                   )}
+              </div>
               </div>
             );
           })}

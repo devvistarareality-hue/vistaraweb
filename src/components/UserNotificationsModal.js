@@ -53,7 +53,7 @@ export default function UserNotificationsModal({ user, onClose }) {
           {!ready ? <div className="act-empty">Loading…</div> : (
             <NotificationPrefsEditor kinds={catalogue.notifications || []} fallback={catalogue.notification_default}
               value={value} onChange={setValue} inherit={data.designation || {}}
-              inheritLabel={data.designation_name || 'the designation'} />
+              inheritLabel={data.designation_name || 'the designation'} modules={user.modules || null} />
           )}
         </div>
         <footer className="perm-foot">
