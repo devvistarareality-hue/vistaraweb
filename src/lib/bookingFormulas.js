@@ -235,33 +235,5 @@ export function installmentBase(v) {
   return v.saleDeed;
 }
 
-// Kalrav Unit Price = Land Sale Deed + Development Agreement + Construction Agreement.
-// Of the three, the two typed in most recently are kept and the third (the "auto" one)
-// takes whatever the Unit Price leaves — so a Sale Deed % or Unit Price change moves
-// only that one. Nothing typed yet: the Construction Agreement is the auto one, as
-// before. Keys: lsd, dev, cag.
-export const KAL_PARTS = ['cag', 'lsd', 'dev'];   // preference order for the auto one
-// The auto one: the third once two have been typed; otherwise one left empty (so a
-// draft or revision opened with two filled works the same); otherwise by preference.
-export function kalravAuto(touched = [], parts = {}) {
-  const kept = touched.slice(-2);
-  const free = KAL_PARTS.filter((k) => !kept.includes(k));
-  if (kept.length === 2) return free[0];
-  const filled = (k) => Math.round(Number(parts[k]) || 0) > 0;
-  const empty = free.filter((k) => !filled(k));
-  // Exactly one left empty → that one; nothing typed and none/several empty → preference.
-  if (empty.length === 1 || (kept.length === 1 && empty.length)) return empty[0];
-  return free[0] || 'cag';
-}
-// Split `total` across the parts with `auto` taking the remainder. The two kept ones
-// are never changed: a total below them leaves auto at 0 (the Unit Price cannot go
-// under what was typed). This matters while a % is being typed — "80" passes through
-// "8" — which used to trim the kept ones for good (owner, 14 Oct 2026).
-export function kalravBalance(parts, total, auto) {
-  const p = { lsd: 0, dev: 0, cag: 0, ...parts };
-  const rest = ['lsd', 'dev', 'cag'].filter((k) => k !== auto).reduce((a, k) => a + (p[k] || 0), 0);
-  p[auto] = Math.max(0, total - rest);
-  return p;
-}
 
 export const rupee = (n) => '₹ ' + Math.round(num(n)).toLocaleString('en-IN');

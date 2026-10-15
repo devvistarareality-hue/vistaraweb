@@ -1,7 +1,8 @@
 'use client';
 import { GROUPS } from '../../../lib/moduleGroups';
 import { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, X, Check, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye } from 'lucide-react';
+import { ShieldCheck, X, Check, LayoutDashboard, ListChecks, Menu as MenuIcon, Eye, Bell } from 'lucide-react';
+import NotificationPrefsEditor from '../../../components/NotificationPrefsEditor';
 import { DESIGNATION_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import { ALL_MODULES } from '../../../lib/moduleAccess';
@@ -22,6 +23,7 @@ const TABS = [
   { key: 'actions', label: 'Actions', icon: ListChecks },
   { key: 'menu', label: 'Menu', icon: MenuIcon },
   { key: 'view', label: 'Dashboard & records', icon: LayoutDashboard },
+  { key: 'notify', label: 'Notifications', icon: Bell },
 ];
 
 // One plain line at the top of each tab, so it is clear what the tab decides.
@@ -29,6 +31,7 @@ const TAB_HELP = {
   actions: 'What they can do. For managers and directors leave the "Works …" switches off — those turn their screen into a telecaller\'s or STM\'s work queue.',
   menu: 'Which tabs appear in their sidebar. Tap a screen to show or hide it.',
   view: 'Which dashboard opens first, and whose leads, visits and bookings they can see.',
+  notify: 'Which alerts they get: Push (bell + phone), In-app (bell only) or Off. Team alerts can go only to the direct manager, or come as one morning summary.',
 };
 
 // The personal work queues. A director runs the desk rather than working a queue,
@@ -53,6 +56,8 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
   });
   const [scope, setScope] = useState(designation.data_scope || '');
   const [dash, setDash] = useState(designation.dashboard || '');
+  // Notifications: per kind push / in-app / off (+ levels and summary for team alerts).
+  const [notif, setNotif] = useState(designation.notification_prefs || {});
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   // Set once "Full access" has filled the form, until it is saved.
@@ -108,7 +113,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
       const r = await apiFetch(DESIGNATION_ENDPOINTS.detail(designation.id), {
         method: 'PATCH',
         body: JSON.stringify({ capabilities: [...caps], screens: [...screens],
-          screens_modules: mine, data_scope: scope, dashboard: dash }),
+          screens_modules: mine, data_scope: scope, dashboard: dash, notification_prefs: notif }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setErr(d.detail || d.capabilities || d.screens || 'Could not save.'); return; }
@@ -184,7 +189,7 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
             <button type="button" key={t.key} onClick={() => setTab(t.key)}
               className={`perm-tab${tab === t.key ? ' is-on' : ''}`}>
               <t.icon size={15} /> {t.label}
-              {t.key !== 'view' && <span className="perm-tab-n">{t.key === 'actions' ? caps.size : screens.size}</span>}
+              {t.key !== 'view' && t.key !== 'notify' && <span className="perm-tab-n">{t.key === 'actions' ? caps.size : screens.size}</span>}
             </button>
           ))}
         </nav>
@@ -236,6 +241,9 @@ export default function PermissionsModal({ designation, onClose, onSaved }) {
                 );
               })}
             </>
+          ) : tab === 'notify' ? (
+            <NotificationPrefsEditor kinds={catalogue.notifications || []} presets={catalogue.notification_presets || []}
+              fallback={catalogue.notification_default} value={notif} onChange={setNotif} modules={mine} />
           ) : tab === 'menu' ? (
             <>
               {/* A module left off this list keeps its own default menu, so a CFO
