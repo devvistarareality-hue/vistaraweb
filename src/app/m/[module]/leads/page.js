@@ -5,6 +5,8 @@ import { SALES_ENDPOINTS, authHeaders, ACTIVITY_ENDPOINTS } from '../../../../co
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { SalesLeadsContent } from '../../../sales/leads/page';
 import { PartnerActivityModal } from '../_PartnerActivity';
+import { onlyPresent } from '../../../../lib/presentOptions';
+import DateFilter from '../../../sales/_DateFilter';
 
 import Icon from '../../../../components/Icon';
 import { confirmDialog } from '../../../../lib/notify';
@@ -286,16 +288,58 @@ function CpDetailsTab({ companyId }) {
   const [modalCp,  setModalCp]  = useState(undefined); // undefined = closed, null = add, object = edit
   const [search,   setSearch]   = useState('');
   const [activeCp, setActiveCp] = useState(null);      // whose follow-ups/visits are open
+  // Six hundred partners is a directory, not a list you read. These are the
+  // columns it gets read by, plus the one question no column answers: which of
+  // these has actually produced anything.
+  const [statusF,   setStatusF]   = useState('');
+  const [categoryF, setCategoryF] = useState('');
+  const [segmentF,  setSegmentF]  = useState('');
+  const [locationF, setLocationF] = useState('');
+  const [addedByF,  setAddedByF]  = useState('');
+  const [bucket,    setBucket]    = useState('');
+  const [range,     setRange]     = useState({ from: '', to: '' });
+  const [dateKey,   setDateKey]   = useState(0);
+  const [facets,    setFacets]    = useState(null);
+  const fx = (key) => facets?.[key] ?? null;
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`${SALES_ENDPOINTS.channelPartners}?facets=1${companyId ? `&company_id=${companyId}` : ''}`,
+      { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [companyId]);
 
   const load = useCallback(() => {
     setLoading(true);
-    fetch(SALES_ENDPOINTS.channelPartners + cq, { headers: authHeaders() })
+    const params = new URLSearchParams();
+    if (companyId) params.set('company_id', companyId);
+    if (statusF) params.set('status', statusF);
+    if (categoryF) params.set('category', categoryF);
+    if (segmentF) params.set('segment', segmentF);
+    if (locationF) params.set('location', locationF);
+    if (addedByF) params.set('created_by', addedByF);
+    if (bucket) params.set('bucket', bucket);
+    if (range.from) params.set('date_from', range.from);
+    if (range.to) params.set('date_to', range.to);
+    const q = params.toString();
+    fetch(`${SALES_ENDPOINTS.channelPartners}${q ? `?${q}` : ''}`, { headers: authHeaders() })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => { setCps(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId]);
+  }, [companyId, statusF, categoryF, segmentF, locationF, addedByF, bucket, range.from, range.to]);
 
   useEffect(() => { load(); }, [load]);
+
+  const narrowed = !!(statusF || categoryF || segmentF || locationF || addedByF || bucket
+    || range.from || range.to || search.trim());
+
+  function clearFilters() {
+    setStatusF(''); setCategoryF(''); setSegmentF(''); setLocationF('');
+    setAddedByF(''); setBucket(''); setSearch('');
+    setRange({ from: '', to: '' }); setDateKey((n) => n + 1);
+  }
 
   async function del(cp) {
     if (!(await confirmDialog(`Remove ${cp.name}? Leads already linked to them keep their history.`))) return false;
@@ -319,13 +363,55 @@ function CpDetailsTab({ companyId }) {
         </div>
         <input className="nx-input cpd-search" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, contact no or firm name…" />
+
+        {/* Dated by when the partner was added — the Added column. */}
+        <div className="cpd-dates"><DateFilter key={dateKey} onChange={setRange} /></div>
+
+        <div className="cpd-filters">
+          <select className="nx-input cpd-sel" value={statusF} onChange={(e) => setStatusF(e.target.value)}>
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <select className="nx-input cpd-sel" value={categoryF} onChange={(e) => setCategoryF(e.target.value)}>
+            <option value="">All Types</option>
+            {onlyPresent(CATEGORY_OPTIONS, fx('categories'), categoryF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select className="nx-input cpd-sel" value={segmentF} onChange={(e) => setSegmentF(e.target.value)}>
+            <option value="">All Segments</option>
+            {onlyPresent(SEGMENT_OPTIONS.filter((o) => o.value), fx('segments'), segmentF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select className="nx-input cpd-sel" value={locationF} onChange={(e) => setLocationF(e.target.value)}>
+            <option value="">All Locations</option>
+            {(fx('locations') || []).map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
+          {(fx('created_by') || []).length > 1 && (
+            <select className="nx-input cpd-sel" value={addedByF} onChange={(e) => setAddedByF(e.target.value)}>
+              <option value="">Added by anyone</option>
+              {(fx('created_by') || []).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          )}
+          {/* The question a directory this size is opened with, and the one no
+              column answers: which partners have produced anything, and which
+              has nobody touched at all. Both are counts, not stored fields. */}
+          {[{ value: 'with_leads', label: 'With leads' },
+            { value: 'no_leads', label: 'No leads' },
+            { value: 'untouched', label: 'Never contacted' }].map((b) => (
+            <button key={b.value} type="button"
+              className={`cpd-pill${bucket === b.value ? ' is-on' : ''}`}
+              onClick={() => setBucket(bucket === b.value ? '' : b.value)}>{b.label}</button>
+          ))}
+          {narrowed && <button type="button" className="cpd-reset" onClick={clearFilters}>Clear filters</button>}
+        </div>
       </div>
       {loading ? (
         <div className="nx-card cpd-card cpd-empty"><Loader label="Loading…" /></div>
-      ) : cps.length === 0 ? (
+      ) : cps.length === 0 && !narrowed ? (
         <div className="nx-card cpd-card cpd-empty">No channel partners yet. Add the first one above.</div>
       ) : filteredCps.length === 0 ? (
-        <div className="nx-card cpd-card cpd-empty">No channel partners match "{search}".</div>
+        <div className="nx-card cpd-card cpd-empty">
+          {search.trim() ? `No channel partners match "${search}".` : 'No channel partners match these filters.'}
+        </div>
       ) : (
         <div className="nx-card cpd-card">
           <table className="nx-table cpd-table">

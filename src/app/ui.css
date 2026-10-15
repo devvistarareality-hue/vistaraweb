@@ -2967,6 +2967,20 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .focus-chip.is-missing { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
 .focus-chip-gap { margin-top: 16px; }
 
+/* Channel Partner → CP Details filters. Six hundred partners is a directory
+   rather than a list you read, so it gets the same filter row the Club 1000
+   lists have, plus three engagement toggles for the question no column
+   answers: which of these has produced anything. */
+.cpd-dates { margin-top: 12px; }
+.cpd-filters { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.cpd-sel { height: 36px; padding: 0 10px; border-radius: 8px;
+  border: 1.5px solid var(--border-strong); font-size: 12px; max-width: 220px; }
+.cpd-pill { height: 36px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-3);
+  cursor: pointer; white-space: nowrap; }
+.cpd-pill.is-on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cpd-reset { height: 36px; padding: 0 12px; border: none; background: none; color: var(--muted);
+  font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
 /* ── Notification settings (Designation Master → Notifications, User → Notifications) ── */
 .np-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; }
 .np-presets > span { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-right: 2px; }
