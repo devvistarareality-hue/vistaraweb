@@ -649,6 +649,23 @@ function BookingPage() {
     setKalTouched([]); setRateEdit(null); setKalEdit(null);
     setF((s) => ({ ...s, land_sale_deed: '0', const_agreement: '0', dev_agreement_rate: '0' }));
   };
+  // The Rate Master's Kalrav rates → amounts on a new booking, from this booking's own
+  // areas (the Development Agreement rate is copied as-is with the other rates). They
+  // follow the plot until the amount is typed by hand; the Unit Price and Sale Deed %
+  // then come out of them. Drafts, revisions and EOI conversions keep their own figures.
+  useEffect(() => {
+    if (!isKal || reviseId || draftId || convertEoiId) return;
+    const rm = project?.rate_master || {};
+    const a = Number(f.area) || 0;
+    const c = Number(f.const_area) || 0;
+    setF((s) => {
+      const next = { ...s };
+      if (Number(rm.lsd_rate) > 0 && a > 0 && !kalTouched.includes('lsd')) next.land_sale_deed = String(Math.round(Number(rm.lsd_rate) * a));
+      if (Number(rm.const_agreement_rate) > 0 && c > 0 && !kalTouched.includes('cag')) next.const_agreement = String(Math.round(Number(rm.const_agreement_rate) * c));
+      return next.land_sale_deed === s.land_sale_deed && next.const_agreement === s.const_agreement ? s : next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, f.area, f.const_area]);
   const autoTag = (k) => (isKal && kalAuto === k ? <span className="bk-auto" title="Worked out from the Unit Price">auto</span> : null);
   useEffect(() => {
     if (!editingAmtRef.current) setDeedAmtStr(String(Math.round(v.saleDeed) || ''));

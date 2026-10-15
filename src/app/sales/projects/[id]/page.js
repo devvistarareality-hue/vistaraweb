@@ -1106,6 +1106,12 @@ function rateMasterFields(formulaSet) {
     flags.hasPlcFixed && { key: 'plc_both_price', label: 'PLC — Corner + Common Plot Facing', unit: null },
     flags.hasSaleDeedRate && { key: 'sale_deed_rate', label: 'Sale Deed Rate', unit: 'sq.ft' },
     flags.hasDevAgreement && { key: 'dev_agreement_rate', label: 'Dev Agreement Rate', unit: 'sq.ft' },
+    // Kalrav: the three Loan Amount rates. A new booking turns them into amounts from its
+    // own areas (LSD and Dev × Plot Area, Construction Agreement × Construction Area),
+    // so the Unit Price and Sale Deed % come out of them with nothing typed.
+    flags.hasLsdRate && { key: 'lsd_rate', label: 'Land Sale Deed Rate', unit: flags.areaUnit },
+    flags.hasDevAgreementInfo && { key: 'dev_agreement_rate', label: 'Development Agreement Rate', unit: flags.areaUnit },
+    flags.hasConstAgreementRate && { key: 'const_agreement_rate', label: 'Construction Agreement Rate', unit: flags.areaUnit },
     { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
     // Months and the legal charge prefill the booking form's fields of the same name.
     // Industrial charges maintenance as Plot Area × Rate, with no months.
