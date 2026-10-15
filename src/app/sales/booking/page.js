@@ -594,6 +594,9 @@ function BookingPage() {
     extraWorkAmt: reviseId ? ew.amt : 0, extraWorkDesc: ew.desc,
   }), [f, formulaSet, project, ew, reviseId]);
 
+  // Plot Area comes from the picked plots on an LOI — fixed, not typed (see the field).
+  const plotAreaFixed = !eoiMode && plots.length > 0
+    && plots.every((p) => (parseFloat(String(p.size || '').replace(/[^\d.]/g, '')) || 0) > 0);
   const isKal = formulaSet === 'kalrav';
   // The three parts of a Kalrav Unit Price, in rupees. The Development Agreement is kept
   // as a rate (× Plot Area), so it is read and written through that.
@@ -1269,7 +1272,12 @@ function BookingPage() {
               opts={['', ...loiTypes.map((x) => x.type)]} />
           </Row>
         ))}
-        <Row><L>Plot Area ({unit})</L><In value={f.area} invalid={errs.area} onChange={(e) => set('area', e.target.value)} /></Row>
+        {/* An LOI is on real plots whose area was fixed when the project was mapped, so
+            it is shown, not typed. An EOI (no plot yet), or a plot with no area on
+            record, still takes it by hand. */}
+        <Row><L>Plot Area ({unit}){plotAreaFixed ? ' · from the plot' : ''}</L>
+          <In value={f.area} invalid={errs.area} readOnly={plotAreaFixed} onChange={(e) => set('area', e.target.value)} />
+        </Row>
         {flags.hasConstructionFields && <Row><L>Construction Area ({unit})</L><In value={f.const_area} onChange={(e) => set('const_area', e.target.value)} /></Row>}
         {flags.bunglowTypeIsDropdown && !eoiMode && !loiTypes.length && <Row><L>Villa Type</L><Sel value={f.villa_type} onChange={(e) => set('villa_type', e.target.value)} opts={['', '1BHK', '2BHK', '3BHK', '4BHK', 'Customized Villa']} /></Row>}
         {flags.bunglowTypeFixed && <Row><L>Bunglow Type</L><In value={flags.bunglowTypeFixed} disabled /></Row>}
