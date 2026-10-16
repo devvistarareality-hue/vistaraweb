@@ -4,7 +4,10 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS, SALES_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import {isClub1000Manager, isManagerRole} from '../../../lib/moduleAccess';
+import {isClub1000Manager, isManagerRole, can} from '../../../lib/moduleAccess';
+import DateFilter from '../../sales/_DateFilter';
+import MultiSelect from '../../../components/MultiSelect';
+import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 
 import Icon from '../../../components/Icon';
@@ -13,10 +16,6 @@ import Loader from '../../../components/Loader';
 import AddInvestorModal from '../_AddInvestorModal';
 import { errText } from '../../../lib/apiError';
 const TEAL = 'var(--success)';
-const PURPLE = 'var(--accent)';
-const AMBER = 'var(--warning)';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
 
 const APPROVAL_COLORS = {
   draft: { bg: 'var(--surface-2)', fg: 'var(--text-3)' },
@@ -28,9 +27,10 @@ const APPROVAL_COLORS = {
 // returns your own, so this tab is personal even though the page is shared.
 const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All']];
 
-function ApprovalBadge({ approvalStatus }) {
+// `label` overrides the text (e.g. "Revision R1 pending") but the colour follows the status.
+function ApprovalBadge({ approvalStatus, label }) {
   const c = APPROVAL_COLORS[approvalStatus] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' };
-  return <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: c.bg, color: c.fg, textTransform: 'uppercase' }}>{approvalStatus}</span>;
+  return <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: c.bg, color: c.fg, textTransform: 'uppercase' }}>{label || approvalStatus}</span>;{/* inline-ok: colour per status */}
 }
 
 function ApproverDropdown({ scheme, managers, onToggle }) {
@@ -104,6 +104,14 @@ export default function InvestorApprovalsPage() {
   // A draft is edited from here, because it deliberately does not appear in the
   // Investors list — there is nowhere else to open it from.
   const [editDraft, setEditDraft] = useState(null);
+  // An approved investor opened in Revise LOI — the Add Investor form, prefilled.
+  const [revising, setRevising] = useState(null);
+  // Filters, as on Sales' Booking Approvals: the investment-date range, schemes and
+  // who added them. Applied here, over the tab the server returned.
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [schemeSel, setSchemeSel] = useState([]);
+  const [addedBySel, setAddedBySel] = useState([]);
+  const [openGroup, setOpenGroup] = useState({});
 
   const [managers, setManagers] = useState([]);
   const [cfgOpen, setCfgOpen] = useState(false);
@@ -235,6 +243,27 @@ export default function InvestorApprovalsPage() {
     }
   }
 
+  // Filtered list and its scheme groups, as Sales groups bookings by project.
+  const schemeOptions = [...new Set(investors.map((i) => i.scheme_name).filter(Boolean))].sort();
+  const addedByOptions = [...new Set(investors.map((i) => i.added_by_name).filter(Boolean))].sort();
+  const visible = investors.filter((i) => {
+    const d = String(i.investment_date || '');
+    if (range.from && d < range.from) return false;
+    if (range.to && d > range.to) return false;
+    if (schemeSel.length && !schemeSel.includes(i.scheme_name)) return false;
+    if (addedBySel.length && !addedBySel.includes(i.added_by_name)) return false;
+    return true;
+  });
+  const narrowed = !!(range.from || range.to || schemeSel.length || addedBySel.length || search);
+  const groups = {};
+  visible.forEach((i) => { const k = i.scheme_name || '—'; (groups[k] = groups[k] || []).push(i); });
+  const groupNames = Object.keys(groups).sort();
+  groupNames.forEach((g) => groups[g].sort((a, b) => String(b.investment_date || '').localeCompare(String(a.investment_date || ''))));
+  const grandTotal = visible.reduce((t, i) => t + (Number(i.amount_invested) || 0), 0);
+  const tabLabel = (TABS.find(([k]) => k === tab) || ['', 'All'])[1];
+  // Short lists open by default; a long one starts folded so the scheme totals read first.
+  const isOpen = (g) => (openGroup[g] === undefined ? (narrowed || visible.length <= 12) : openGroup[g]);
+
   if (!manager) return null;
 
   return (
@@ -261,86 +290,102 @@ export default function InvestorApprovalsPage() {
         </div>
       )}
 
-      <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
-        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: 'var(--muted)' }}><Icon name="search" /></span>
-        <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search name, phone, email, investor no.…"
-          style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
-        {searchText && (
-          <button className="nx-btn nx-btn-md nx-icon-btn nx-btn-ghost" onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
+      {/* Investment-date range — the same control as Sales' approvals and the dashboards. */}
+      <div className="c1a-dates"><DateFilter onChange={setRange} /></div>
+
+      <div className="c1a-bar">
+        <div className="c1a-tabs">
+          {TABS.map(([k, label]) => (
+            <button key={k} className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} onClick={() => setTab(k)}>{label}</button>
+          ))}
+        </div>
+        <div className="nx-search-wrap c1a-search">
+          <span className="nx-search-icon"><Icon name="search" /></span>
+          <input className="nx-input nx-search-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Search name, phone, email, investor no.…" />
+        </div>
+        {schemeOptions.length > 1 && (
+          <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
+            options={schemeOptions.map((n) => ({ value: n, label: n }))} />
+        )}
+        {addedByOptions.length > 1 && (
+          <MultiSelect allLabel="All Added By" noun="people" value={addedBySel} onChange={setAddedBySel}
+            options={addedByOptions.map((n) => ({ value: n, label: n }))} />
         )}
       </div>
 
-      <div style={{ marginTop: 14, display: 'flex', gap: 6 }}>
-        {TABS.map(([k, label]) => (
-          <button className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} key={k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            background: tab === k ? 'var(--success-solid)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
-        ))}
-      </div>
+      {!loading && visible.length > 0 && (
+        <div className="c1a-total">
+          <div className="c1a-total-label">
+            {narrowed ? 'Matching' : 'Total'} {tabLabel} · {visible.length} investor{visible.length === 1 ? '' : 's'} · {groupNames.length} scheme{groupNames.length === 1 ? '' : 's'}
+            {(range.from || range.to) && <span className="c1a-total-range"> · invested {range.from ? formatDMY(range.from) : '…'} → {range.to ? formatDMY(range.to) : '…'}</span>}
+          </div>
+          <div className="c1a-total-amt">{fmtMoney(grandTotal)}</div>
+        </div>
+      )}
 
-      {loading ? <Loader label="Loading…" style={{ padding: '28px 0' }} /> : investors.length === 0 ? (
-        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: 40, textAlign: 'center', color: 'var(--muted)', marginTop: 18, border: '1px solid var(--surface-3)' }}>{search ? 'No investors match your search.' : 'No investors here.'}</div>
-      ) : (
-        <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-          <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-                <th style={th}>Name</th>
-                <th style={th}>Mobile</th>
-                <th style={th}>Scheme</th>
-                <th style={th}>Amount</th>
-                <th style={th}>Added By</th>
-                <th style={th}>Submitted</th>
-                <th style={th}>LOI</th>
-                <th style={th}>Approval</th>
-                <th style={th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {investors.map((inv) => {
+      {loading ? <div className="c1a-loading"><Loader label="Loading…" /></div> : visible.length === 0 ? (
+        <div className="nx-card c1a-empty">{search ? 'No investors match your search.' : narrowed ? 'No investors match these filters.' : 'No investors here.'}</div>
+      ) : groupNames.map((gn) => (
+        <div key={gn} className="c1a-group">
+          <div className={`nx-card c1a-group-head${isOpen(gn) ? ' is-open' : ''}`} onClick={() => setOpenGroup((o) => ({ ...o, [gn]: !isOpen(gn) }))}>
+            <div className="c1a-group-name"><Icon name="folder" /> {gn} <span className="c1a-group-count">· {groups[gn].length} investor{groups[gn].length === 1 ? '' : 's'}</span></div>
+            <div className="c1a-group-right">
+              <span className="c1a-group-amt">{fmtMoney(groups[gn].reduce((t, i) => t + (Number(i.amount_invested) || 0), 0))}</span>
+              <span className={`c1a-chev${isOpen(gn) ? ' is-open' : ''}`}>›</span>
+            </div>
+          </div>
+          {isOpen(gn) && (
+            <div className="c1a-cards">
+              {groups[gn].map((inv) => {
                 const isRevision = !!inv.pending_revision;
                 const isRenewal = isRevision && inv.pending_revision_type === 'renew';
-                const accent = isRenewal ? AMBER : PURPLE;
                 return (
-                <tr key={inv.id}>
-                  <td style={{ ...td, fontWeight: 600 }}>
-                    {inv.name}
-                    {inv.revision_no > 0 && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: accent, background: isRenewal ? 'var(--warning-soft)' : 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>{isRenewal ? 'RENEW' : 'R'}{isRenewal ? '' : inv.revision_no}</span>}
-                    {isRevision && <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', marginTop: 3 }}>Proposed: {revisionSummary(inv)}</div>}
-                  </td>
-                  <td style={td}>{inv.phone || '—'}</td>
-                  <td style={td}>{inv.scheme_name}</td>
-                  <td style={td}>{fmtMoney(inv.amount_invested)}</td>
-                  <td style={td}>{inv.added_by_name || '—'}</td>
-                  <td style={td}>{new Date(inv.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                  <td style={td}>
-                    {isRevision
-                      ? (inv.pending_loi_document_url ? <button className="nx-btn nx-btn-sm nx-btn-link" onClick={() => openLoi(inv.id, true)} style={{ background: 'none', border: 'none', color: accent, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}><Icon name="file" /> {isRenewal ? 'Renewed' : 'Revised'} LOI</button> : '—')
-                      : (inv.loi_document_url ? <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => openLoi(inv.id)} style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}><Icon name="file" /> Signed LOI</button> : '—')}
-                  </td>
-                  <td style={td}><ApprovalBadge approvalStatus={inv.approval_status} /></td>
-                  <td style={td}>
-                    {inv.approval_status === 'draft' && (
-                      <button className="nx-btn nx-btn-sm nx-btn-secondary inv-draft-edit"
-                        onClick={() => setEditDraft(inv)}>
-                        <Icon name="pencil" /> Edit &amp; Submit
-                      </button>
-                    )}
-                    {inv.approval_status === 'pending' && (
-                      canApprove(inv) ? (
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="check" /> Approve</button>
-                          <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id} style={{ padding: '5px 10px', background: 'var(--danger-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="x" /> Reject</button>
+                  <div className="nx-card c1a-card" key={inv.id}>
+                    <div className="c1a-card-top">
+                      <div className="c1a-card-main">
+                        <div className="c1a-name">
+                          {inv.name}
+                          {inv.revision_no > 0 && <span className={`c1a-rev${isRenewal ? ' renew' : ''}`}>{isRenewal ? 'RENEW' : `R${inv.revision_no}`}</span>}
                         </div>
-                      ) : <span style={{ fontSize: 11, color: 'var(--faint)' }}>Not an approver</span>
-                    )}
-                  </td>
-                </tr>
+                        <div className="c1a-sub">{inv.phone || '—'}{inv.loi_no ? ` · LOI ${inv.loi_no}` : ''}</div>
+                        <div className="c1a-sub2">Added by {inv.added_by_name || '—'} · Invested {inv.investment_date ? formatDMY(inv.investment_date) : '—'}{inv.maturity_date ? ` · Matures ${formatDMY(inv.maturity_date)}` : ''}</div>
+                        {inv.approval_status === 'approved' && (
+                          <div className="c1a-decided ok">Approved by {inv.approved_by_name || '—'}{inv.approved_at ? ` · ${formatDMY(String(inv.approved_at).slice(0, 10))}` : ''}</div>
+                        )}
+                        {isRevision && <div className="c1a-proposed">Proposed: {revisionSummary(inv)}</div>}
+                      </div>
+                      <div className="c1a-card-side">
+                        <div className="c1a-amt">{fmtMoney(inv.amount_invested)}</div>
+                        <ApprovalBadge approvalStatus={inv.approval_status} label={isRevision && inv.approval_status === 'pending' ? (isRenewal ? 'Renewal pending' : `Revision R${inv.revision_no} pending`) : ''} />
+                      </div>
+                    </div>
+                    <div className="c1a-actions">
+                      {isRevision
+                        ? (inv.pending_loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id, true)}><Icon name="file" /> {isRenewal ? 'Renewed' : 'Revised'} LOI</button>)
+                        : (inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>)}
+                      {inv.approval_status === 'draft' && (
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary inv-draft-edit" onClick={() => setEditDraft(inv)}><Icon name="pencil" /> Edit &amp; Submit</button>
+                      )}
+                      {inv.approval_status === 'approved' && can(user, 'club.investor.manage') && (
+                        <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>
+                      )}
+                      {inv.approval_status === 'pending' && (canApprove(inv) ? <>
+                        <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id}><Icon name="check" /> Approve</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id}><Icon name="x" /> Reject</button>
+                      </> : <span className="c1a-note">Not an approver</span>)}
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
+      ))}
+
+      {revising && (
+        <AddInvestorModal schemes={schemes} revise={revising}
+          onClose={() => setRevising(null)} onCreated={() => { setRevising(null); load(); }} />
       )}
 
       {editDraft && (

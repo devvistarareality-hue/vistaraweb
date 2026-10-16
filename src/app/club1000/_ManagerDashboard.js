@@ -19,33 +19,20 @@ import { STATUS_ROWS } from './_DashboardWidgets';
 // come from the API (see club1000.views._payout_forecast), which builds them
 // from today's date, so they move with the calendar on their own.
 function PayoutForecast({ rows }) {
+  // The same horizontal bars as "By scheme": one line a month — this month, the next
+  // two, then everything later — so every month reads at any card width. (Columns
+  // spread across the full width left most of the card empty and the small months
+  // as slivers next to "After …".)
   const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-  const max = Math.max(1, ...rows.map((r) => Number(r.amount) || 0));
   return (
-    <div className="nx-card ard-card club-due">
-      <div className="ard-card-head">
-        <div>
-          <div className="ard-card-title">Falling due</div>
-          <div className="ard-card-sub">Payouts not yet due, by month</div>
-        </div>
-        <div className="ard-card-total" title={rupee(total)}>{inrShort(total)}</div>
-      </div>
-      <div className="ard-cols">
-        {rows.map((m) => {
-          const amount = Number(m.amount) || 0;
-          return (
-            <div key={m.label} className="ard-col" title={`${m.label} · ${rupee(amount)}`}>
-              <span className="ard-col-value">{amount ? inrShort(amount) : '—'}</span>
-              <span className="ard-col-track">
-                <span className={`ard-col-bar${m.label === 'No date' ? ' muted' : ''}`}
-                  style={{ height: `${Math.max(amount ? 4 : 0, (amount / max) * 100)}%` }} />{/* inline-ok: column height from data */}
-              </span>
-              <span className="ard-col-label">{m.label}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <DashCard title="Falling due" sub="Payouts not yet due, by month" icon={CalendarClock}
+      total={inrShort(total)} totalTitle={rupee(total)}>
+      <DashBars empty="No payouts falling due."
+        rows={rows.map((m) => ({
+          label: m.label, value: Number(m.amount) || 0, display: inrShort(m.amount),
+          title: `${m.label} · ${rupee(m.amount)}`, tone: m.label === 'No date' ? 'muted' : 'info',
+        }))} />
+    </DashCard>
   );
 }
 

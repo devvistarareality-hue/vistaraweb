@@ -777,11 +777,12 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .a5 { background: color-mix(in srgb, var(--danger) 85%, #000); }
 .a6 { background: var(--danger); }
 .ard-ages { display: flex; flex-direction: column; gap: 2px; }
-.ard-age { display: grid; grid-template-columns: 10px 84px 1fr 86px 38px; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 10px; }
+.ard-age { display: grid; grid-template-columns: 10px 140px 1fr 86px 38px; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 10px; }
 .ard-age:hover { background: var(--surface-2); }
 .ard-age.is-zero { opacity: .5; }
 .ard-dot { width: 9px; height: 9px; border-radius: 50%; }
-.ard-age-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.ard-age-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Label column fits "Premature redeemed" / "Due for renewal" (it was 84px and they ran into the bar). */
 .ard-age-track { height: 7px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
 .ard-age-track span { display: block; height: 100%; border-radius: 999px; }
 .ard-age b { font-size: 13.5px; font-weight: 800; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -3042,8 +3043,7 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
    where flex:1 columns drift hundreds of pixels apart and the card reads as
    mostly empty. Same bars, held to a sensible span and centred, and a little
    shorter so it does not tower over the cards above it. */
-.club-due .ard-cols { height: 210px; max-width: 760px; margin: 0 auto; gap: 28px; }
-@media (max-width: 900px) { .club-due .ard-cols { gap: 10px; height: 180px; } }
+@media (max-width: 560px) { .ard-age { grid-template-columns: 10px 96px 1fr 70px 34px; } }
 /* Booking form: the label column; a formula hint sits on its own line under the label
    (it ran into it — "Maintenance DepositPlot Area × Rate"). */
 .bk-label { width: 200px; min-width: 200px; font-size: 13px; font-weight: 600; color: var(--text-2); }
@@ -3062,3 +3062,45 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   vertical-align: middle; color: var(--accent-deep); background: var(--accent-soft); }
 .inv-modal-sub { margin-top: 4px; font-size: 13px; color: var(--muted); }
 .inv-loi-done { font-size: 11px; color: var(--success); margin-top: 6px; }
+
+/* Club 1000 — Investor Approvals, laid out like Sales' Booking Approvals: the date
+   filter, a bar of tabs + search + filters, the total banner, then scheme groups
+   with one card per investor. */
+.c1a-dates { margin-top: 18px; }
+.c1a-bar { display: flex; gap: 10px; margin-bottom: 18px; align-items: center; flex-wrap: wrap; }
+.c1a-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.c1a-search { flex: 1; min-width: 220px; max-width: 420px; }
+.c1a-total { margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--banner-grad); border-radius: 20px; padding: 18px 22px;
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14); }
+.c1a-total-label { color: rgba(255, 255, 255, .82); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+.c1a-total-range { font-weight: 600; text-transform: none; letter-spacing: 0; }
+.c1a-total-amt { color: #fff; font-size: 22px; font-weight: 800; }
+.c1a-empty { padding: 40px; text-align: center; color: var(--muted); border-radius: 18px; }
+.c1a-group { margin-bottom: 12px; }
+.c1a-group-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; border-radius: 16px;
+  padding: 14px 18px; border: 1.5px solid transparent; }
+.c1a-group-head.is-open { border-color: var(--blue-2); }
+.c1a-group-name { font-size: 13px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; }
+.c1a-group-count { color: var(--muted); font-weight: 600; }
+.c1a-group-right { display: flex; align-items: center; gap: 14px; }
+.c1a-group-amt { font-size: 14px; font-weight: 800; color: var(--accent-deep); }
+.c1a-chev { color: var(--muted); font-size: 13px; font-weight: 800; transition: transform .15s; }
+.c1a-chev.is-open { transform: rotate(90deg); }
+.c1a-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.c1a-card { border-radius: 18px; padding: 16px 18px; }
+.c1a-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.c1a-card-main { min-width: 0; flex: 1; }
+.c1a-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.c1a-rev { margin-left: 6px; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 20px; color: var(--accent); background: var(--accent-soft); }
+.c1a-rev.renew { color: var(--warning); background: var(--warning-soft); }
+.c1a-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.c1a-sub2 { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.c1a-decided { font-size: 12px; font-weight: 600; margin-top: 4px; }
+.c1a-decided.ok { color: var(--success); }
+.c1a-proposed { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.c1a-card-side { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.c1a-amt { font-size: 16px; font-weight: 800; color: var(--accent-deep); }
+.c1a-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.c1a-note { font-size: 11px; color: var(--faint); align-self: center; }
+.c1a-loading { padding: 28px 0; }
