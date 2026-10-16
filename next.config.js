@@ -19,6 +19,22 @@ const nextConfig = {
   // resolve on mobile data. Vercel forwards these to Railway server-side.
   // The destination ALWAYS ends in "/" — the rewrite's :path* capture otherwise drops
   // the trailing slash, and Django's APPEND_SLASH then 301-loops through the proxy.
+  // Browser protections on every page: no other site may show the ERP inside a frame
+  // (a hidden frame can trick a user into clicking), files are never second-guessed
+  // into scripts, other sites aren't told which ERP page a link came from, and the
+  // camera / microphone / location are off (nothing on the web uses them).
+  async headers() {
+    return [{
+      source: '/:path*',
+      headers: [
+        { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+        { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+      ],
+    }];
+  },
   async rewrites() {
     return [{ source: '/api/:path*', destination: `${API_PROXY_TARGET}/api/:path*/` }];
   },
