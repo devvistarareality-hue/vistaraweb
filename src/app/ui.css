@@ -3020,3 +3020,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .np-ctrls { align-items: stretch; width: 100%; }
   .np-team-ctrls { justify-content: flex-start; }
 }
+
+/* Booking form: the label column; a formula hint sits on its own line under the label
+   (it ran into it — "Maintenance DepositPlot Area × Rate"). */
+.bk-label { width: 200px; min-width: 200px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.bk-label .nx-hint { display: block; font-size: 11px; font-weight: 400; font-style: italic; color: var(--faint); margin-top: 2px; }

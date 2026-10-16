@@ -93,6 +93,8 @@ export function computeFormulas(inp = {}) {
   const discount   = num(inp.discount);
   const legal      = num(inp.legalCharges);
   const maintRate  = num(inp.maintRate);
+  // Industrial only: the Advance's own rate (maintRate is then the Deposit's).
+  const maintAdvanceRate = num(inp.maintAdvanceRate);
   const maintMonths = num(inp.maintMonths);
   const extraWorkAmt = num(inp.extraWorkAmt);
   const gender     = inp.gender || '';
@@ -159,7 +161,9 @@ export function computeFormulas(inp = {}) {
     stampDuty    = saleDeedTax * 0.049;
     regFees      = gender === 'Female' ? pageFee : (saleDeedTax * 0.01 + pageFee);
     gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
-    maintDeposit = maintUnit; maintAdvance = maintUnit;
+    // Two rates (owner, 16 Oct 2026): Deposit = Plot Area × Deposit Rate, Advance =
+    // Plot Area × Advance Rate. They were one rate charged twice.
+    maintDeposit = area * maintRate; maintAdvance = area * maintAdvanceRate;
   } else { // kalrav
     // Kalrav Unit Price = Land Sale Deed + Development Agreement + Construction
     // Agreement (owner, 14 Oct 2026). The Sale Deed % is derived from this.
@@ -224,7 +228,7 @@ export function computeFormulas(inp = {}) {
     formulaSet, isTundav, isKalrav3, area, landRate, devRate, constArea, constRate, discount,
     plcRate, lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
     saleDeedRate, saleDeedPct: effSaleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
-    maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation, plcCorner, plcClubhouse,
+    maint, maintRate, maintAdvanceRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation, plcCorner, plcClubhouse,
     applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
     nonSaleDeed, nonSaleDeedDoc, docTotal,
     extraWorkDesc: inp.extraWorkDesc || '', finalAmt,

@@ -1112,7 +1112,9 @@ function rateMasterFields(formulaSet) {
     flags.hasLsdRate && { key: 'lsd_rate', label: 'Land Sale Deed Rate', unit: flags.areaUnit },
     flags.hasDevAgreementInfo && { key: 'dev_agreement_rate', label: 'Development Agreement Rate', unit: flags.areaUnit },
     flags.hasConstAgreementRate && { key: 'const_agreement_rate', label: 'Construction Agreement Rate', unit: flags.areaUnit },
-    { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
+    // Industrial charges the Maintenance Deposit and Advance at two rates.
+    { key: 'maint_rate', label: formulaSet === 'industrial' ? 'Maintenance Deposit Rate' : 'Maintenance Rate', unit: flags.areaUnit },
+    formulaSet === 'industrial' && { key: 'maint_advance_rate', label: 'Maintenance Advance Rate', unit: flags.areaUnit },
     // Months and the legal charge prefill the booking form's fields of the same name.
     // Industrial charges maintenance as Plot Area × Rate, with no months.
     flags.hasConstructionFields && { key: 'maint_months', label: 'Maintenance Months', suffix: 'months' },
