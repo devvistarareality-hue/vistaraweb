@@ -1360,7 +1360,7 @@ function BookingPage() {
           {/* Kalrav: Unit Price = Land Sale Deed + Development + Construction Agreement, and
               Sale Deed % = Unit Price / (Plot Basic + Dev + Construction + PLC). Both are
               results here — change one of the three above to change them. */}
-          <Row><L>Sale Deed %</L>
+          <Row><L>Documentation %</L>
             <In type="number" value={v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0'} readOnly />
           </Row>
           <Row><L>Unit Price (₹)</L>
@@ -1371,7 +1371,7 @@ function BookingPage() {
         {formulaSet === 'industrial' && <>
           {/* Industrial: Unit Price = (Sale Deed Rate + Dev Agreement Rate) × Area, and
               Sale Deed % = Unit Price ÷ Plot Basic. Both are results — change a rate above. */}
-          <Row><L>Sale Deed %</L>
+          <Row><L>Documentation %</L>
             <In type="number" value={v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0'} readOnly />
           </Row>
           <Row><L>Unit Price (₹)</L>
@@ -1380,7 +1380,7 @@ function BookingPage() {
         </>}
         {hasSaleDeedSplit && formulaSet !== 'kalrav' && formulaSet !== 'industrial' && <>
           {/* Editing the % clears the exact Unit Price override so the % drives again. */}
-          <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => setF((s) => ({ ...s, sale_deed_pct: e.target.value, sale_deed_amount: '' }))} /></Row>
+          <Row><L>Documentation %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => setF((s) => ({ ...s, sale_deed_pct: e.target.value, sale_deed_amount: '' }))} /></Row>
           <Row>
             <L>Unit Price (₹)</L>
             <In

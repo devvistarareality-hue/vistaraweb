@@ -72,7 +72,7 @@ export default function BookingDetails({ b, accent = 'var(--success)' }) {
           <Row2 label="Development Rate" value={money0(b.dev_rate)} />
           <Row2 label="Construction Rate" value={money0(b.const_rate)} />
           {Number(b.sale_deed_rate) ? <Row2 label="Sale Deed Rate" value={money0(b.sale_deed_rate)} /> : null}
-          <Row2 label="Sale Deed %" value={b.sale_deed_pct != null ? b.sale_deed_pct + '%' : '—'} />
+          <Row2 label="Documentation %" value={b.sale_deed_pct != null ? b.sale_deed_pct + '%' : '—'} />
           {Number(b.lsd_rate) ? <Row2 label="Land Sale Deed Rate" value={money0(b.lsd_rate)} /> : null}
           {Number(b.land_sale_deed) ? <Row2 label="Land Sale Deed" value={money0(b.land_sale_deed)} /> : null}
           {/* Kalrav's Development Agreement — part of the Unit Price. */}
