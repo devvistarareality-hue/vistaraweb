@@ -160,7 +160,8 @@ export default function NotificationBell({ up = false, align = 'right' }) {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 30000);          // poll every 30s
+    // Poll every 30s while the tab is visible; coming back to it loads at once.
+    const id = setInterval(() => { if (!document.hidden) load(); }, 30000);
     const onVis = () => { if (!document.hidden) load(); };
     document.addEventListener('visibilitychange', onVis);
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };

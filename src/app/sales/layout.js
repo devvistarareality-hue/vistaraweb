@@ -160,7 +160,8 @@ export default function SalesLayout({ children }) {
     }
     checkSession();
     window.addEventListener('focus', checkSession);
-    const interval = setInterval(checkSession, 30_000);
+    // A hidden tab doesn't poll — `focus` above catches it up when it's back.
+    const interval = setInterval(() => { if (!document.hidden) checkSession(); }, 30_000);
     return () => {
       window.removeEventListener('focus', checkSession);
       clearInterval(interval);
