@@ -3056,3 +3056,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .bk-mcap { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .bk-mop { font-size: 16px; font-weight: 800; color: var(--muted); padding-bottom: 11px; }
 .bk-mres { min-width: 120px; white-space: nowrap; }
+
+/* Club 1000 — Revise LOI uses the Add Investor form: its R-number and who it is for. */
+.inv-rev-badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 800;
+  vertical-align: middle; color: var(--accent-deep); background: var(--accent-soft); }
+.inv-modal-sub { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.inv-loi-done { font-size: 11px; color: var(--success); margin-top: 6px; }

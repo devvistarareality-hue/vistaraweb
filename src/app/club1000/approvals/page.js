@@ -201,11 +201,23 @@ export default function InvestorApprovalsPage() {
     else notify(errText(data, 'Could not open the LOI.'));
   }
 
-  const FIELD_LABELS = { amount_invested: 'Amount', total_return_pct: 'Return %', interest_payout: 'Payout', security: 'Security', notes: 'Notes', investment_date: 'Renewal Date' };
+  // A revision can change anything on the Add Investor form, so every field it may
+  // carry gets a readable name — and the scheme its name, not its number.
+  const FIELD_LABELS = {
+    amount_invested: 'Amount', total_return_pct: 'Return %', interest_payout: 'Payout', security: 'Security', notes: 'Notes',
+    scheme: 'Scheme', email: 'Email', pan: 'PAN', source: 'Source', reference_name: 'Reference', reference_phone: 'Reference no.',
+    name: 'Name', phone: 'Mobile', revision_date: 'Revision date',
+  };
   function revisionSummary(inv) {
     const pr = inv.pending_revision;
     if (!pr) return null;
-    return Object.entries(pr).filter(([k]) => k !== 'payout_schedule').map(([k, v]) => `${FIELD_LABELS[k] || k}: ${v}`).join(' · ');
+    const isRenew = inv.pending_revision_type === 'renew';
+    return Object.entries(pr).filter(([k]) => k !== 'payout_schedule').map(([k, v]) => {
+      if (k === 'document_name') return 'New KYC scan';
+      if (k === 'investment_date') return `${isRenew ? 'Renewal Date' : 'Investment date'}: ${v}`;
+      if (k === 'scheme') return `Scheme: ${(schemes.find((sc) => String(sc.id) === String(v)) || {}).name || v}`;
+      return `${FIELD_LABELS[k] || k}: ${v === '' ? '—' : v}`;
+    }).join(' · ');
   }
 
   async function act(id, action) {

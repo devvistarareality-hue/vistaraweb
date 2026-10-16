@@ -156,11 +156,22 @@ function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
-export default function AddInvestorModal({ schemes, prefillLead, draft, onClose, onCreated }) {
+// `revise` (an approved investor) turns this into Revise LOI: the same form, prefilled
+// with the investor — or with the revision they saved as a draft — where everything,
+// the scheme and the investment date included, can change. It submits to the revise
+// endpoint and goes for approval; nothing changes on the investor until it's approved.
+export default function AddInvestorModal({ schemes: schemeList, prefillLead, draft: savedDraft, revise, onClose, onCreated }) {
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
-  // Reopening a saved draft: it wins over the lead prefill, because the draft IS
-  // what was last typed.
+  // What the form opens with: a revision's saved draft over the investor itself, or a
+  // saved new-investor draft. Either wins over the lead prefill — it IS what was last typed.
+  const draft = revise ? { ...revise, ...(revise.revision_draft || {}) } : savedDraft;
+  // The investor's own scheme stays selectable even if it is no longer offered.
+  const schemes = revise && revise.scheme && !schemeList.some((sc) => String(sc.id) === String(revise.scheme))
+    ? [...schemeList, { id: revise.scheme, name: revise.scheme_name || 'Current scheme', tenure_months: revise.scheme_tenure_months,
+        min_ticket_size: 0, interest_payout_options: [revise.interest_payout || 'maturity'], payout_rates: {} }]
+    : schemeList;
+  const nextRevisionNo = revise ? (revise.revision_no || 0) + 1 : 0;
   const initialSchemeId = draft?.scheme || prefillLead?.scheme_interest || schemes[0]?.id || '';
   const initialScheme = schemes.find((s) => String(s.id) === String(initialSchemeId));
   const [form, setForm] = useState({
@@ -309,6 +320,12 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
     }
     setLoiDownloading(true);
     try {
+      if (revise) {
+        // The revised LOI keeps the investor's LOI number and carries R1, R2, …
+        await downloadInvestorLOI({ ...revise, ...form }, scheme, { revisionNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
+        setLoiDone(true);
+        return;
+      }
       const noRes = await apiFetch(`${CLUB1000_ENDPOINTS.investorNextLoiNo}?scheme_id=${scheme.id}`);
       const { loi_no } = noRes.ok ? await noRes.json() : { loi_no: '' };
       await downloadInvestorLOI({ ...form, loi_no }, scheme, { schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
@@ -324,7 +341,7 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
   // the whole point is never to lose a long form because one field is missing.
   // The row it writes is the same one submitting later promotes, so saving twice
   // never leaves two investors behind.
-  const [draftId, setDraftId] = useState(draft?.id || null);
+  const [draftId, setDraftId] = useState(revise ? null : (draft?.id || null));
   const [savingDraft, setSavingDraft] = useState(false);
 
   async function saveDraft() {
@@ -334,12 +351,14 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
     try {
       const payload = { ...form, ...(draftId ? { id: draftId } : {}) };
       if (payload.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
-      const res = await apiFetch(CLUB1000_ENDPOINTS.investorDraft, {
+      if (revise && (form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
+      // A revision's draft lives on the investor and leaves it approved and live.
+      const res = await apiFetch(revise ? CLUB1000_ENDPOINTS.investorReviseDraft(revise.id) : CLUB1000_ENDPOINTS.investorDraft, {
         method: 'POST', body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setError(errText(data, 'Could not save the draft.')); return; }
-      setDraftId(data.id);
+      if (!revise) setDraftId(data.id);
       onCreated?.(data);
       onClose();
     } finally {
@@ -364,14 +383,14 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
       if (payload.source !== 'referral') { delete payload.reference_name; delete payload.reference_phone; }
       if (documentFile) payload.document_file = documentFile;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
-      if (prefillLead?.id) payload.lead = prefillLead.id;
-      const res = await apiFetch(CLUB1000_ENDPOINTS.investors, {
+      if (prefillLead?.id && !revise) payload.lead = prefillLead.id;
+      const res = await apiFetch(revise ? CLUB1000_ENDPOINTS.investorRevise(revise.id) : CLUB1000_ENDPOINTS.investors, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.amount_invested?.[0] || errText(data, 'Could not add investor.'));
+        setError(data?.amount_invested?.[0] || errText(data, revise ? 'Could not submit the revision.' : 'Could not add investor.'));
         return;
       }
       onCreated(data);
@@ -385,7 +404,12 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
     <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
-          <div className="inv-modal-title">{draft ? 'Edit Draft Investor' : 'Add Investor'}</div>
+          {revise ? <>
+            <div className="inv-modal-title">Revise LOI <span className="inv-rev-badge">R{nextRevisionNo}</span></div>
+            <div className="inv-modal-sub">{revise.name} · {revise.phone}</div>
+          </> : (
+            <div className="inv-modal-title">{draft ? 'Edit Draft Investor' : 'Add Investor'}</div>
+          )}
         </div>
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -542,14 +566,14 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
           </div>
 
           <div style={{ background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 14, padding: 12 }}>
-            <label style={lbl}>Investment Proposal Form (LOI)</label>
+            <label style={lbl}>{revise ? 'Revised Investment Proposal Form (LOI)' : 'Investment Proposal Form (LOI)'}</label>
             <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={doDownloadLoi} disabled={loiDownloading}
               style={{ width: '100%', padding: '9px 0', background: 'var(--surface)', color: TEAL, border: `1.5px solid ${TEAL}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
-              {loiDownloading ? 'Generating…' : <><Icon name="download" /> Download LOI PDF (Print → Sign → Upload)</>}
+              {loiDownloading ? 'Generating…' : <><Icon name="download" /> {revise ? `Download Revised LOI (R${nextRevisionNo})` : 'Download LOI PDF (Print → Sign → Upload)'}</>}
             </button>
-            {loiDone && <div style={{ fontSize: 11, color: 'var(--success)', marginTop: 6 }}>LOI downloaded — get it signed and upload below.</div>}
+            {loiDone && <div className="inv-loi-done">{revise ? 'Revised LOI' : 'LOI'} downloaded — get it signed and upload below.</div>}
             <div style={{ marginTop: 10 }}>
-              <label style={lbl}>Upload Signed LOI *</label>
+              <label style={lbl}>{revise ? 'Upload Signed Revised LOI *' : 'Upload Signed LOI *'}</label>
               <input type="file" accept="image/*,.pdf" onChange={handleLoiFileChange} style={{ fontSize: 12 }} />
               {loiFile && <div style={{ fontSize: 11, color: 'var(--success)', marginTop: 4 }}>Selected: {loiFile.name}</div>}
             </div>
@@ -563,7 +587,7 @@ export default function AddInvestorModal({ schemes, prefillLead, draft, onClose,
               you do BEFORE you have one. */}
           <button className={`nx-btn nx-btn-md nx-btn-secondary inv-draft-btn${(busy || savingDraft) ? ' is-busy' : ''}`}
             type="button" onClick={saveDraft} disabled={busy || savingDraft}>
-            {savingDraft ? 'Saving…' : draftId ? 'Update Draft' : 'Save Draft'}
+            {savingDraft ? 'Saving…' : (draftId || revise?.revision_draft) ? 'Update Draft' : 'Save Draft'}
           </button>
           <button className="nx-btn nx-btn-md nx-btn-success" type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
             {busy ? 'Submitting…' : 'Submit for Approval'}

@@ -9,7 +9,6 @@ import { onlyPresent } from '../../../lib/presentOptions';
 import DateFilter from '../../sales/_DateFilter';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
-import ReviseInvestorModal from '../_ReviseInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
 import LedgerModal from '../_LedgerModal';
 
@@ -317,12 +316,9 @@ export default function InvestorsPage() {
         <AddInvestorModal schemes={schemes} onClose={() => setShowAdd(false)} onCreated={() => load()} />
       )}
       {revising && (
-        <ReviseInvestorModal
-          investor={revising}
-          scheme={schemes.find((s) => String(s.id) === String(revising.scheme))}
-          onClose={() => setRevising(null)}
-          onSaved={() => load()}
-        />
+        // Revise LOI is the Add Investor form, prefilled — every field can change.
+        <AddInvestorModal schemes={schemes} revise={revising}
+          onClose={() => setRevising(null)} onCreated={() => load()} />
       )}
       {renewing && (
         <RenewInvestorModal
