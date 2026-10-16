@@ -252,16 +252,23 @@ function AccountsApprovals({ initialTab }) {
   }, [isAccountsAdmin, companyId]);
 
   // `field` picks which approver list to edit — mirrors Sales' own toggleApprover.
+  // Sends the ONE id being toggled, never the computed array — PATCHing the
+  // whole list raced two quick ticks against each other and the loser's change
+  // vanished silently. The Accounts lists here survived only by luck; the Sales
+  // and CP ones on the same mechanism were emptied. See
+  // ProjectToggleApproverView, which serializes on the project's row lock.
   async function toggleApprover(projId, uid, field) {
     let prev = [];
-    let next = [];
     setProjects((ps) => ps.map((p) => {
       if (p.id !== projId) return p;
       prev = p[field] || [];
-      next = prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid];
+      const next = prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid];
       return { ...p, [field]: next };
     }));
-    const r = await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => null);
+    const r = await fetch(SALES_ENDPOINTS.projectToggleApprover(projId) + cq('?'), {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ user_id: uid, field }),
+    }).catch(() => null);
     if (!r || !r.ok) {
       // Undo the optimistic tick and say so — a save that never reached the server
       // must not sit there looking checked. Silently swallowing this (the old
@@ -271,6 +278,12 @@ function AccountsApprovals({ initialTab }) {
       setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
       notify('Could not save this approver — please try again.');
       return;
+    }
+    // Take the server's list rather than the optimistic one: with several
+    // toggles in flight it is the only copy that reflects all of them.
+    const saved = await r.json().catch(() => null);
+    if (saved && Array.isArray(saved[field])) {
+      setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: saved[field] } : p)));
     }
     setSavedCfg("Saved"); setTimeout(() => setSavedCfg(''), 1500);
   }
