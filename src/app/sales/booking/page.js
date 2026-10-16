@@ -1421,16 +1421,16 @@ function BookingPage() {
           <div className="bk-loan-head"><div className="bk-loan-title">Maintenance</div></div>
           {formulaSet === 'industrial' ? <>
             {/* Industrial: one line each — Rate = amount (Plot Area × Rate). */}
-            <MaintRow label="Maintenance Deposit" sub={depSub} unit={unit} val={v.maintDeposit}
+            <MaintRow label="Maintenance Deposit" sub={depSub} area={v.area} areaUnit={unit} unit={unit} val={v.maintDeposit}
               rate={f.maint_rate} onRate={(e) => set('maint_rate', e.target.value)} />
-            <MaintRow label="Maintenance Advance" sub={advSub} unit={unit} val={v.maintAdvance}
+            <MaintRow label="Maintenance Advance" sub={advSub} area={v.area} areaUnit={unit} unit={unit} val={v.maintAdvance}
               rate={f.maint_advance_rate} onRate={(e) => set('maint_advance_rate', e.target.value)} />
           </> : formulaSet === 'kalrav' ? <>
             {/* Kalrav: one line each — Rate × Months = amount (Plot Area × Rate × Months). */}
-            <MaintRow label="Maintenance Deposit" sub={depSub} unit={`${unit}/mo`} val={v.maintDeposit}
+            <MaintRow label="Maintenance Deposit" sub={depSub} area={v.area} areaUnit={unit} unit={`${unit}/mo`} val={v.maintDeposit}
               rate={f.maint_rate} onRate={(e) => set('maint_rate', e.target.value)}
               months={f.maint_months} onMonths={(e) => set('maint_months', e.target.value)} />
-            <MaintRow label="Maintenance Advance" sub={advSub} unit={`${unit}/mo`} val={v.maintAdvance}
+            <MaintRow label="Maintenance Advance" sub={advSub} area={v.area} areaUnit={unit} unit={`${unit}/mo`} val={v.maintAdvance}
               rate={f.maint_advance_rate} onRate={(e) => set('maint_advance_rate', e.target.value)}
               months={f.maint_advance_months} onMonths={(e) => set('maint_advance_months', e.target.value)} />
           </> : <>
@@ -1711,10 +1711,13 @@ function advRateOf(b) {
   return b.formula_set === 'industrial' && Number(b.maint_advance) > 0 ? b.maint_rate : '';
 }
 // One maintenance line: [Rate] × [Months] = amount (months left out for Industrial).
-const MaintRow = ({ label, sub, unit, rate, onRate, months, onMonths, val }) => (
+const MaintRow = ({ label, sub, area, areaUnit, unit, rate, onRate, months, onMonths, val }) => (
   <div className="bk-mrow">
     <L>{label}{sub && <span className="nx-hint">{sub}</span>}</L>
     <div className="bk-meq">
+      {/* The plot area it is charged on — shown, not edited here. */}
+      <label className="bk-mbox"><span className="bk-mcap">Area ({areaUnit})</span><In type="number" value={area || 0} readOnly /></label>
+      <span className="bk-mop">×</span>
       <label className="bk-mbox"><span className="bk-mcap">Rate (₹/{unit})</span><In type="number" value={rate} onChange={onRate} /></label>
       {onMonths && <>
         <span className="bk-mop">×</span>
