@@ -178,7 +178,7 @@ function BookingPage() {
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
-        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_advance_rate: advRateOf(b), maint_months: b.maint_months, maint_advance_months: Number(b.maint_advance_months) > 0 ? b.maint_advance_months : '',
+        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_advance_rate: advRateOf(b), maint_months: depMonthsOf(b), maint_advance_months: advMonthsOf(b),
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
@@ -225,7 +225,7 @@ function BookingPage() {
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         sale_deed_amount: b.sale_deed_amount ? String(b.sale_deed_amount) : '',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
-        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_advance_rate: advRateOf(b), maint_months: b.maint_months, maint_advance_months: Number(b.maint_advance_months) > 0 ? b.maint_advance_months : '',
+        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_advance_rate: advRateOf(b), maint_months: depMonthsOf(b), maint_advance_months: advMonthsOf(b),
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
@@ -257,7 +257,7 @@ function BookingPage() {
         land_rate: b.land_rate, dev_rate: b.dev_rate, const_rate: b.const_rate, plc_rate: b.plc_rate, plc_corner: Number(b.plc_corner) > 0 ? String(b.plc_corner) : '', plc_corner_on: Number(b.plc_corner) > 0, plc_clubhouse: Number(b.plc_clubhouse) > 0 ? String(b.plc_clubhouse) : '', plc_clubhouse_on: Number(b.plc_clubhouse) > 0, sale_deed_rate: b.sale_deed_rate, dev_agreement_rate: devRateOf(b),
         sale_deed_pct: b.sale_deed_pct != null ? String(b.sale_deed_pct) : '60',
         land_sale_deed: b.land_sale_deed, const_agreement: b.const_agreement, premium_location: b.premium_location,
-        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_advance_rate: advRateOf(b), maint_months: b.maint_months, maint_advance_months: Number(b.maint_advance_months) > 0 ? b.maint_advance_months : '',
+        discount: b.discount, legal_charges: b.legal_charges, maint_rate: b.maint_rate, maint_advance_rate: advRateOf(b), maint_months: depMonthsOf(b), maint_advance_months: advMonthsOf(b),
         apply_reg_fee: b.apply_reg_fee || 'Yes', apply_page_fee: b.apply_page_fee || 'Yes', apply_stamp_duty: b.apply_stamp_duty || 'Yes', apply_gst: b.apply_gst || 'Yes',
         booking_date: safeDate(b.booking_date) || s.booking_date, cp_name: b.cp_name || '',
       }));
@@ -746,10 +746,8 @@ function BookingPage() {
       : '18% of Construction + Development Agreement');
   const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
     : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';
-  const depSub = formulaSet === 'industrial' ? 'Plot Area × Rate'
-    : formulaSet === 'kalrav' ? 'Plot Area × Rate × Months' : maintSub;
-  const advSub = formulaSet === 'industrial' ? 'Plot Area × Rate'
-    : formulaSet === 'kalrav' ? 'Plot Area × Rate × Months' : maintSub;
+  const depSub = (formulaSet === 'industrial' || formulaSet === 'kalrav') ? 'Plot Area × Rate × Months' : maintSub;
+  const advSub = depSub;
 
 
   function buildInsts(n) {
@@ -964,7 +962,7 @@ function BookingPage() {
       sale_deed_amount: formulaSet === 'industrial' ? 0 : (f.sale_deed_amount || 0),
       maint_rate: f.maint_rate || 0, maint_months: f.maint_months || 0,
       maint_advance_rate: (formulaSet === 'industrial' || formulaSet === 'kalrav') ? (f.maint_advance_rate || 0) : 0,
-      maint_advance_months: formulaSet === 'kalrav' ? (f.maint_advance_months || 0) : 0,
+      maint_advance_months: (formulaSet === 'industrial' || formulaSet === 'kalrav') ? (f.maint_advance_months || 0) : 0,
       plot_basic: Math.round(v.plotBasic), plot_dev: Math.round(v.plotDev), const_amt: Math.round(v.constAmt),
       sale_deed: Math.round(v.saleDeed), dev_agreement: Math.round(v.devAgreement),
       land_sale_deed: f.land_sale_deed || 0, const_agreement: f.const_agreement || 0,
@@ -1419,14 +1417,8 @@ function BookingPage() {
             what they come to, and the Maintenance Amount. */}
         <div className="bk-loan">
           <div className="bk-loan-head"><div className="bk-loan-title">Maintenance</div></div>
-          {formulaSet === 'industrial' ? <>
-            {/* Industrial: one line each — Rate = amount (Plot Area × Rate). */}
-            <MaintRow label="Maintenance Deposit" sub={depSub} unit={unit} val={v.maintDeposit}
-              rate={f.maint_rate} onRate={(e) => set('maint_rate', e.target.value)} />
-            <MaintRow label="Maintenance Advance" sub={advSub} unit={unit} val={v.maintAdvance}
-              rate={f.maint_advance_rate} onRate={(e) => set('maint_advance_rate', e.target.value)} />
-          </> : formulaSet === 'kalrav' ? <>
-            {/* Kalrav: one line each — Rate × Months = amount (Plot Area × Rate × Months). */}
+          {(formulaSet === 'industrial' || formulaSet === 'kalrav') ? <>
+            {/* Industrial and Kalrav: one line each — Rate × Months = amount (Plot Area × Rate × Months). */}
             <MaintRow label="Maintenance Deposit" sub={depSub} unit={`${unit}/mo`} val={v.maintDeposit}
               rate={f.maint_rate} onRate={(e) => set('maint_rate', e.target.value)}
               months={f.maint_months} onMonths={(e) => set('maint_months', e.target.value)} />
@@ -1710,7 +1702,17 @@ function advRateOf(b) {
   if (own > 0) return b.maint_advance_rate;
   return b.formula_set === 'industrial' && Number(b.maint_advance) > 0 ? b.maint_rate : '';
 }
-// One maintenance line: [Rate] × [Months] = amount (months left out for Industrial).
+// Months of a saved booking. Industrial bookings from before months existed were charged
+// Plot Area × Rate, i.e. one month — so they open with 1, not 0, and keep their amount.
+function depMonthsOf(b) {
+  if (Number(b.maint_months) > 0) return b.maint_months;
+  return b.formula_set === 'industrial' && Number(b.maint_deposit) > 0 ? '1' : b.maint_months;
+}
+function advMonthsOf(b) {
+  if (Number(b.maint_advance_months) > 0) return b.maint_advance_months;
+  return b.formula_set === 'industrial' && Number(b.maint_advance) > 0 ? '1' : '';
+}
+// One maintenance line: [Rate] × [Months] = amount.
 const MaintRow = ({ label, sub, unit, rate, onRate, months, onMonths, val }) => (
   <div className="bk-mrow">
     <L>{label}{sub && <span className="nx-hint">{sub}</span>}</L>

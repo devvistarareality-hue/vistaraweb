@@ -93,10 +93,10 @@ export function computeFormulas(inp = {}) {
   const discount   = num(inp.discount);
   const legal      = num(inp.legalCharges);
   const maintRate  = num(inp.maintRate);
-  // Industrial only: the Advance's own rate (maintRate is then the Deposit's).
+  // Industrial and Kalrav: the Advance's own rate (maintRate is then the Deposit's).
   const maintAdvanceRate = num(inp.maintAdvanceRate);
   const maintMonths = num(inp.maintMonths);
-  // Kalrav only: the Advance's own months (maintMonths is then the Deposit's).
+  // Industrial and Kalrav: the Advance's own months (maintMonths is then the Deposit's).
   const maintAdvanceMonths = num(inp.maintAdvanceMonths);
   const extraWorkAmt = num(inp.extraWorkAmt);
   const gender     = inp.gender || '';
@@ -163,9 +163,10 @@ export function computeFormulas(inp = {}) {
     stampDuty    = saleDeedTax * 0.049;
     regFees      = gender === 'Female' ? pageFee : (saleDeedTax * 0.01 + pageFee);
     gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
-    // Two rates (owner, 16 Oct 2026): Deposit = Plot Area × Deposit Rate, Advance =
-    // Plot Area × Advance Rate. They were one rate charged twice.
-    maintDeposit = area * maintRate; maintAdvance = area * maintAdvanceRate;
+    // Deposit and Advance each with their own rate and months (owner, 16 Oct 2026),
+    // as Kalrav: Plot Area × Rate × Months. It was one rate × area, charged twice.
+    maintDeposit = area * maintRate * maintMonths;
+    maintAdvance = area * maintAdvanceRate * maintAdvanceMonths;
   } else { // kalrav
     // Kalrav Unit Price = Land Sale Deed + Development Agreement + Construction
     // Agreement (owner, 14 Oct 2026). The Sale Deed % is derived from this.
