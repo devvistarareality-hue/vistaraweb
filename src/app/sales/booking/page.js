@@ -746,10 +746,10 @@ function BookingPage() {
       : '18% of Construction + Development Agreement');
   const maintSub = formulaSet === 'ankhol' ? 'Construction Area × Rate × Months'
     : formulaSet === 'industrial' ? 'Plot Area × Rate' : 'Plot Area × Rate × Months';
-  const depSub = formulaSet === 'industrial' ? 'Plot Area × Deposit Rate'
-    : formulaSet === 'kalrav' ? 'Plot Area × Deposit Rate × Deposit Months' : maintSub;
-  const advSub = formulaSet === 'industrial' ? 'Plot Area × Advance Rate'
-    : formulaSet === 'kalrav' ? 'Plot Area × Advance Rate × Advance Months' : maintSub;
+  const depSub = formulaSet === 'industrial' ? 'Plot Area × Rate'
+    : formulaSet === 'kalrav' ? 'Plot Area × Rate × Months' : maintSub;
+  const advSub = formulaSet === 'industrial' ? 'Plot Area × Rate'
+    : formulaSet === 'kalrav' ? 'Plot Area × Rate × Months' : maintSub;
 
 
   function buildInsts(n) {
@@ -1420,21 +1420,19 @@ function BookingPage() {
         <div className="bk-loan">
           <div className="bk-loan-head"><div className="bk-loan-title">Maintenance</div></div>
           {formulaSet === 'industrial' ? <>
-            {/* Industrial: each rate sits right above the amount it makes —
-                Deposit Rate → Deposit, Advance Rate → Advance (Plot Area × its rate). */}
-            <Row><L>Maintenance Deposit Rate (₹/{unit})</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
-            <Calc label="Maintenance Deposit" sub={depSub} val={v.maintDeposit} />
-            <Row><L>Maintenance Advance Rate (₹/{unit})</L><In type="number" value={f.maint_advance_rate} onChange={(e) => set('maint_advance_rate', e.target.value)} /></Row>
-            <Calc label="Maintenance Advance" sub={advSub} val={v.maintAdvance} />
+            {/* Industrial: one line each — Rate = amount (Plot Area × Rate). */}
+            <MaintRow label="Maintenance Deposit" sub={depSub} unit={unit} val={v.maintDeposit}
+              rate={f.maint_rate} onRate={(e) => set('maint_rate', e.target.value)} />
+            <MaintRow label="Maintenance Advance" sub={advSub} unit={unit} val={v.maintAdvance}
+              rate={f.maint_advance_rate} onRate={(e) => set('maint_advance_rate', e.target.value)} />
           </> : formulaSet === 'kalrav' ? <>
-            {/* Kalrav: Deposit and Advance each have their own rate and months —
-                Plot Area × Rate × Months — with the amount right under them. */}
-            <Row><L>Maintenance Deposit Rate (₹/{unit}/mo)</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
-            <Row><L>Maintenance Deposit Months</L><In type="number" value={f.maint_months} onChange={(e) => set('maint_months', e.target.value)} /></Row>
-            <Calc label="Maintenance Deposit" sub={depSub} val={v.maintDeposit} />
-            <Row><L>Maintenance Advance Rate (₹/{unit}/mo)</L><In type="number" value={f.maint_advance_rate} onChange={(e) => set('maint_advance_rate', e.target.value)} /></Row>
-            <Row><L>Maintenance Advance Months</L><In type="number" value={f.maint_advance_months} onChange={(e) => set('maint_advance_months', e.target.value)} /></Row>
-            <Calc label="Maintenance Advance" sub={advSub} val={v.maintAdvance} />
+            {/* Kalrav: one line each — Rate × Months = amount (Plot Area × Rate × Months). */}
+            <MaintRow label="Maintenance Deposit" sub={depSub} unit={`${unit}/mo`} val={v.maintDeposit}
+              rate={f.maint_rate} onRate={(e) => set('maint_rate', e.target.value)}
+              months={f.maint_months} onMonths={(e) => set('maint_months', e.target.value)} />
+            <MaintRow label="Maintenance Advance" sub={advSub} unit={`${unit}/mo`} val={v.maintAdvance}
+              rate={f.maint_advance_rate} onRate={(e) => set('maint_advance_rate', e.target.value)}
+              months={f.maint_advance_months} onMonths={(e) => set('maint_advance_months', e.target.value)} />
           </> : <>
             <Row><L>Maintenance Rate (₹/{unit}/mo)</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
             <Row><L>Maintenance Months</L><In type="number" value={f.maint_months} onChange={(e) => set('maint_months', e.target.value)} /></Row>
@@ -1712,6 +1710,21 @@ function advRateOf(b) {
   if (own > 0) return b.maint_advance_rate;
   return b.formula_set === 'industrial' && Number(b.maint_advance) > 0 ? b.maint_rate : '';
 }
+// One maintenance line: [Rate] × [Months] = amount (months left out for Industrial).
+const MaintRow = ({ label, sub, unit, rate, onRate, months, onMonths, val }) => (
+  <div className="bk-mrow">
+    <L>{label}{sub && <span className="nx-hint">{sub}</span>}</L>
+    <div className="bk-meq">
+      <label className="bk-mbox"><span className="bk-mcap">Rate (₹/{unit})</span><In type="number" value={rate} onChange={onRate} /></label>
+      {onMonths && <>
+        <span className="bk-mop">×</span>
+        <label className="bk-mbox"><span className="bk-mcap">Months</span><In type="number" value={months} onChange={onMonths} /></label>
+      </>}
+      <span className="bk-mop">=</span>
+      <div className="nx-calc bk-mres">{rupee(val)}</div>
+    </div>
+  </div>
+);
 // readonly computed value (auto-calculated) shown under its toggle/inputs
 const Calc = ({ label, sub, val }) => (
   <Row>

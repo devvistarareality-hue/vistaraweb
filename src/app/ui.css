@@ -3025,3 +3025,11 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
    (it ran into it — "Maintenance DepositPlot Area × Rate"). */
 .bk-label { width: 200px; min-width: 200px; font-size: 13px; font-weight: 600; color: var(--text-2); }
 .bk-label .nx-hint { display: block; font-size: 11px; font-weight: 400; font-style: italic; color: var(--faint); margin-top: 2px; }
+
+/* Booking form: one maintenance line — [Rate] × [Months] = amount. */
+.bk-mrow { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.bk-meq { flex: 1; display: flex; align-items: flex-end; gap: 8px; min-width: 260px; }
+.bk-mbox { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bk-mcap { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.bk-mop { font-size: 16px; font-weight: 800; color: var(--muted); padding-bottom: 11px; }
+.bk-mres { min-width: 120px; white-space: nowrap; }
