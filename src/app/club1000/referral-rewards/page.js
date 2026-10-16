@@ -12,9 +12,6 @@ import { fmtMoney } from '../_StatCard';
 import { confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 
-const TEAL = 'var(--success)';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
 
 // The rate a reward was locked in at is the only record of what earned it.
 const PCT_OPTIONS = [
@@ -130,8 +127,8 @@ export default function ReferralRewardsPage() {
   const listedTotal = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
   return (
-    <div style={{ padding: '28px 32px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Referral Rewards</h1>
+    <div className="nx-page ard">
+      <h1 className="nx-page-title">Referral Rewards</h1>
       {/* Says what is on screen once loaded. The standing description over a
           filtered list is how a working filter looks broken. */}
       <p className="club-inv-sub">
@@ -200,16 +197,16 @@ export default function ReferralRewardsPage() {
         {narrowed && <button type="button" className="club-pay-reset" onClick={clearFilters}>Clear filters</button>}
       </div>
 
-      <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table className="nx-table club-inv-tbl">
+      <div className="nx-card c1-tablecard c1-gap">
+        <table className="nx-table c1-table">
           <thead>
-            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-              <th style={th}>Reference</th>
-              <th style={th}>Referred Investor</th>
-              <th style={th}>Reward</th>
-              <th style={th}>Earned</th>
-              <th style={th}>Status</th>
-              {manager && <th style={th}></th>}
+            <tr>
+              <th>Reference</th>
+              <th>Referred investor</th>
+              <th>Reward</th>
+              <th>Earned</th>
+              <th>Status</th>
+              {manager && <th></th>}
             </tr>
           </thead>
           <tbody>
@@ -221,19 +218,15 @@ export default function ReferralRewardsPage() {
               </td></tr>
             ) : rows.map((r) => (
               <tr key={r.id}>
-                <td style={td}>{r.reference_name}{r.reference_phone ? ` — ${r.reference_phone}` : ''}</td>
-                <td style={td}>{r.investor_name}</td>
-                <td style={td}>{fmtMoney(r.amount)}</td>
-                <td style={td}>{formatDMY(r.created_at?.slice(0, 10))}</td>
-                <td style={td}>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: r.status === 'paid' ? 'var(--success-soft)' : 'var(--warning-soft)', color: r.status === 'paid' ? 'var(--success)' : 'var(--warning-2)' }}>
-                    {r.status === 'paid' ? 'Paid' : 'Pending'}
-                  </span>
-                </td>
+                <td>{r.reference_name}{r.reference_phone ? ` — ${r.reference_phone}` : ''}</td>
+                <td className="c1-strong">{r.investor_name}</td>
+                <td>{fmtMoney(r.amount)}</td>
+                <td>{formatDMY(r.created_at?.slice(0, 10))}</td>
+                <td><span className={`c1r-status ${r.status === 'paid' ? 'paid' : 'pending'}`}>{r.status === 'paid' ? 'Paid' : 'Pending'}</span></td>
                 {manager && (
-                  <td style={td}>
+                  <td>
                     {r.status === 'pending' && can(user, 'club.payout.mark_paid') && (
-                      <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => markPaid(r.id)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-success" onClick={() => markPaid(r.id)}>Mark Paid</button>
                     )}
                   </td>
                 )}

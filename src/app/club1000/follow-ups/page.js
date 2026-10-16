@@ -5,8 +5,8 @@ import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import Loader from '../../../components/Loader';
 import MultiSelect from '../../../components/MultiSelect';
+import { C1Modal, C1Section, C1Field } from '../_Form';
 
-const TEAL = 'var(--success)';
 
 function fmtDateTime(iso) {
   if (!iso) return '';
@@ -24,7 +24,6 @@ function toDatetimeLocal(d) {
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
-const fuStatusColor = { pending: 'var(--warning-2)', completed: 'var(--success)', missed: 'var(--danger)', rescheduled: 'var(--success)' };
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost'];
 // A lead in one of these has nothing left to follow up on — matches the backend's
 // terminal-status handling in LeadDetailView.patch (clears next_follow_up_date).
@@ -123,77 +122,58 @@ export default function Club1000FollowUpsPage() {
   });
 
   return (
-    <div className="nx-page nx-page-center nx-w-md">
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Follow-Ups</h1>
-      <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 18px' }}>
-        {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}
-      </p>
-      {schemeOptions.length > 1 && (
-        <div className="c1-fu-filters">
-          <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
-            options={schemeOptions.map((n) => ({ value: n, label: n }))} />
+    <div className="nx-page ard">
+      <div className="ard-head">
+        <div>
+          <h1 className="nx-page-title">Follow-Ups</h1>
+          <p className="nx-page-sub">{visible.length} follow-up{visible.length === 1 ? '' : 's'}{user?.name ? ` · ${user.name}` : ''}</p>
         </div>
-      )}
-
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--surface-3)', marginBottom: 20, overflowX: 'auto' }}>
-        {TABS.map((t) => {
-          const active = filter === t.key;
-          return (
-            <button key={t.key} onClick={() => setFilter(t.key)}
-              style={{
-                padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                background: 'none', border: 'none', whiteSpace: 'nowrap',
-                color: active ? TEAL : 'var(--muted)',
-                borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
-              }}>
-              {t.label}
-            </button>
-          );
-        })}
+        <div className="ard-filters">
+          {schemeOptions.length > 1 && (
+            <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
+              options={schemeOptions.map((n) => ({ value: n, label: n }))} />
+          )}
+        </div>
       </div>
 
-      {loading ? (
-        <Loader label="Loading…" style={{ padding: '28px 0' }} />
-      ) : visible.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 0' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-3)', margin: 0 }}>No follow-ups</p>
-          <p style={{ fontSize: 13, color: 'var(--faint)', margin: '4px 0 0' }}>Schedule follow-ups from a lead's details</p>
-        </div>
+      <div className="nx-filters col-tabs">
+        {TABS.map((t) => (
+          <button type="button" key={t.key} className={`nx-btn nx-btn-md nx-toggle${filter === t.key ? ' is-on' : ''}`} onClick={() => setFilter(t.key)}>{t.label}</button>
+        ))}
+      </div>
+
+      {loading ? <Loader label="Loading…" /> : visible.length === 0 ? (
+        <div className="nx-card ar-card"><div className="ar-empty">No follow-ups here. Schedule one from a lead's details.</div></div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="coll-grid">
           {visible.map((fu) => {
             const overdue = fu.status === 'pending' && new Date(fu.scheduled_at) < now;
             return (
-              <div key={fu.id} style={{
-                border: `1.5px solid ${overdue ? 'var(--danger-2)' : 'var(--surface-3)'}`,
-                background: overdue ? 'var(--danger-soft)' : 'var(--surface)',
-                borderRadius: 16, padding: '14px 16px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
-              }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{fu.lead_name || 'Lead'}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 14,
-                      backgroundColor: `color-mix(in srgb, ${(fuStatusColor[fu.status] || 'var(--muted-solid)')} 9%, transparent)`,
-                      color: fuStatusColor[fu.status] || 'var(--muted)' }}>
-                      {fu.status}
-                    </span>
+              <article key={fu.id} className={`nx-card coll-card${overdue ? ' is-late' : ''}`}>
+                <header className="coll-head">
+                  <div className="coll-who">
+                    <h3>{fu.lead_name || 'Lead'}</h3>
+                    <div className="coll-meta">
+                      {fu.lead_scheme_name ? <span className="coll-chip">{fu.lead_scheme_name}</span> : null}
+                      {fu.assigned_to_name ? <span className="coll-chip">{fu.assigned_to_name}</span> : null}
+                    </div>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: overdue ? 'var(--danger)' : 'var(--text)', margin: '6px 0 0' }}>
-                    {fmtDateTime(fu.scheduled_at)}
-                  </p>
-                  {fu.assigned_to_name && <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 0' }}>Assigned to: {fu.assigned_to_name}</p>}
-                  {fu.remarks && <p style={{ fontSize: 12, color: 'var(--text)', margin: '6px 0 0', fontStyle: 'italic' }}>"{fu.remarks}"</p>}
-                  {fu.outcome && <p style={{ fontSize: 12, color: 'var(--success)', margin: '6px 0 0' }}><b>Remarks:</b> {fu.outcome}</p>}
-                </div>
-                {fu.status === 'pending' && (
-                  <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openDone(fu)}
-                    style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 8,
-                      border: '1.5px solid var(--success)', color: 'var(--success)', background: 'var(--surface)', cursor: 'pointer' }}>
-                    Mark Done
-                  </button>
+                  <span className={`coll-age ${overdue ? 'bad' : fu.status === 'pending' ? 'info' : 'warn'}`}><b className="c1f-when">{fmtDateTime(fu.scheduled_at)}</b><span>{overdue ? 'overdue' : fu.status}</span></span>
+                </header>
+                {(fu.remarks || fu.outcome) && (
+                  <div className="c1f-notes">
+                    {fu.remarks && <p className="coll-outcome">“{fu.remarks}”</p>}
+                    {fu.outcome && <p className="coll-promise">Outcome: {fu.outcome}</p>}
+                  </div>
                 )}
-              </div>
+                {fu.status === 'pending' && (
+                  <footer className="coll-foot">
+                    <div className="coll-actions">
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => openDone(fu)}>Mark Done</button>
+                    </div>
+                  </footer>
+                )}
+              </article>
             );
           })}
         </div>
@@ -201,47 +181,34 @@ export default function Club1000FollowUpsPage() {
 
       {/* Complete follow-up: lead status + remarks + optional next follow-up */}
       {done && (
-        <div className="nx-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}
-          onClick={() => !submitting && setDone(null)}>
-          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Complete follow-up</div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, marginBottom: 16 }}>{done.lead_name} · {fmtDateTime(done.scheduled_at)}</div>
-
-            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>Lead Status</label>
-            <select className="nx-input" value={leadStatus} onChange={(e) => setLeadStatus(e.target.value)}
-              style={{ width: '100%', height: 38, marginTop: 6, borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none', padding: '0 10px' }}>
-              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
-            </select>
-
-            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', display: 'block', marginTop: 14 }}>Remarks</label>
-            <textarea className="nx-input" value={outcome} onChange={(e) => setOutcome(e.target.value)} rows={3} placeholder="Outcome of this follow-up…"
-              style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
-
-            {!isTerminal && (
-              <>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={schedNext} onChange={(e) => setSchedNext(e.target.checked)} style={{ accentColor: TEAL }} />
-                  Schedule next follow-up
-                </label>
-                {schedNext && (
-                  <div style={{ marginTop: 12, paddingLeft: 4 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>Next follow-up date &amp; time</label>
-                    <input className="nx-input" type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)}
-                      style={{ width: '100%', marginTop: 6, padding: '10px 12px', borderRadius: 14, border: '1.5px solid var(--border)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
-                  </div>
-                )}
-              </>
-            )}
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setDone(null)} disabled={submitting} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button className="nx-btn nx-btn-md nx-btn-success" onClick={completeFollowUp} disabled={submitting || (schedNext && !isTerminal && !nextAt)}
-                style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitting || (schedNext && !isTerminal && !nextAt)) ? 0.6 : 1 }}>
-                {submitting ? 'Saving…' : 'Mark Done'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <C1Modal title="Complete follow-up" sub={`${done.lead_name} · ${fmtDateTime(done.scheduled_at)}`} onClose={() => !submitting && setDone(null)}
+          footer={<>
+            <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setDone(null)} disabled={submitting}>Cancel</button>
+            <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={completeFollowUp} disabled={submitting || (schedNext && !isTerminal && !nextAt)}>{submitting ? 'Saving…' : 'Mark Done'}</button>
+          </>}>
+          <C1Section title="Outcome">
+            <C1Field label="Lead status">
+              <select className="nx-input" value={leadStatus} onChange={(e) => setLeadStatus(e.target.value)}>
+                {STATUS_OPTIONS.map((st) => <option key={st} value={st}>{st.replace(/_/g, ' ')}</option>)}
+              </select>
+            </C1Field>
+            <C1Field label="Remarks">
+              <textarea className="nx-input c1-textarea" value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Outcome of this follow-up…" />
+            </C1Field>
+          </C1Section>
+          {!isTerminal && (
+            <C1Section title="Next follow-up">
+              <C1Field label="Schedule next">
+                <label className="c1s-opt"><input type="checkbox" checked={schedNext} onChange={(e) => setSchedNext(e.target.checked)} /> Book the next call</label>
+              </C1Field>
+              {schedNext && (
+                <C1Field label="Date & time" required>
+                  <input className="nx-input" type="datetime-local" value={nextAt} onChange={(e) => setNextAt(e.target.value)} />
+                </C1Field>
+              )}
+            </C1Section>
+          )}
+        </C1Modal>
       )}
     </div>
   );

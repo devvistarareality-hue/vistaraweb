@@ -36,7 +36,7 @@ const STATUS_COLORS = {
 
 function StatusBadge({ status }) {
   const c = STATUS_COLORS[status] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' };
-  return <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: c.bg, color: c.fg, textTransform: 'capitalize' }}>{status.replace(/_/g, ' ')}</span>;
+  return <span className="c1l-badge" style={{ background: c.bg, color: c.fg }}>{status.replace(/_/g, ' ')}</span>;{/* inline-ok: colour per status */}
 }
 
 export default function InvestorsPage() {
@@ -179,10 +179,10 @@ export default function InvestorsPage() {
   const isInvOpen = (g) => (openInvGroup[g] === undefined ? true : openInvGroup[g]);
 
   return (
-    <div style={{ padding: '28px 32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+    <div className="nx-page ard">
+      <div className="ard-head">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Investors</h1>
+          <h1 className="nx-page-title">Investors</h1>
           {/* Says what is on screen, not what the page is for. "All approved
               investors across Club 1000" above eight filtered rows reads as the
               whole book, which is how a working filter looks broken. */}
@@ -194,22 +194,17 @@ export default function InvestorsPage() {
                   : narrowed ? ' matching' : (manager ? ' · all approved, across Club 1000' : ' · your approved investors'))}
           </p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+        <div className="c1-head-actions">
           {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add Investor</button>}
           {!loading && !schemes.length && (
-            <div style={{ fontSize: 11, color: 'var(--warning-2)' }}>{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
+            <div className="c1-warn-note">{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
           )}
         </div>
       </div>
 
-      <div style={{ marginTop: 18, position: 'relative', maxWidth: 360 }}>
-        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: 'var(--muted)' }}><Icon name="search" /></span>
-        <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search name, phone, email, investor no.…"
-          style={{ width: '100%', height: 38, padding: '0 12px 0 36px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
-        {searchText && (
-          <button className="nx-btn nx-btn-md nx-icon-btn nx-btn-ghost" onClick={() => setSearchText('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}><Icon name="x" /></button>
-        )}
+      <div className="nx-search-wrap c1-search">
+        <span className="nx-search-icon"><Icon name="search" /></span>
+        <input className="nx-input nx-search-input" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search name, phone, email, investor no.…" />
       </div>
 
       {/* The same date control the dashboard carries, so a period means the
@@ -217,11 +212,11 @@ export default function InvestorsPage() {
       <div className="club-inv-dates"><DateFilter onChange={setRange} /></div>
 
       <div className="club-inv-filters">
-        <select className="nx-input" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
+        <select className={`nx-input club-inv-sel${schemeFilter ? ' is-on' : ''}`} value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)}>
           <option value="">All Schemes</option>
           {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), schemeFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
-        <select className="nx-input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ height: 36, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 12 }}>
+        <select className={`nx-input club-inv-sel${statusFilter ? ' is-on' : ''}`} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">All Statuses</option>
           {onlyPresent(INVESTOR_STATUSES, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>

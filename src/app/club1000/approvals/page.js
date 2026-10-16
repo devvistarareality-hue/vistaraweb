@@ -15,7 +15,6 @@ import { notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import AddInvestorModal from '../_AddInvestorModal';
 import { errText } from '../../../lib/apiError';
-const TEAL = 'var(--success)';
 
 const APPROVAL_COLORS = {
   draft: { bg: 'var(--surface-2)', fg: 'var(--text-3)' },
@@ -30,45 +29,24 @@ const TABS = [['draft', 'Drafts'], ['pending', 'Pending'], ['approved', 'Approve
 // `label` overrides the text (e.g. "Revision R1 pending") but the colour follows the status.
 function ApprovalBadge({ approvalStatus, label }) {
   const c = APPROVAL_COLORS[approvalStatus] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' };
-  return <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: c.bg, color: c.fg, textTransform: 'uppercase' }}>{label || approvalStatus}</span>;{/* inline-ok: colour per status */}
+  return <span className="nx-badge c1a-badge" style={{ background: c.bg, color: c.fg }}>{label || approvalStatus}</span>;{/* inline-ok: colour per status */}
 }
 
+// Who approves investors under one scheme — the shared multi-select; each tick or
+// untick is sent as one atomic toggle (see toggleApprover below).
 function ApproverDropdown({ scheme, managers, onToggle }) {
-  const [open, setOpen] = useState(false);
-  const sel = scheme.investor_approvers || [];
-  const selNames = managers.filter((m) => sel.includes(m.id)).map((m) => m.name);
+  const sel = (scheme.investor_approvers || []).map(String);
+  function change(next) {
+    const now = new Set(next);
+    managers.forEach((m) => {
+      const id = String(m.id);
+      if (now.has(id) !== sel.includes(id)) onToggle(scheme.id, m.id);
+    });
+  }
   return (
-    <div style={{ position: 'relative', flex: 1, maxWidth: 460 }}>
-      <button onClick={() => setOpen((o) => !o)} style={{
-        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-        padding: '9px 12px', borderRadius: 9, border: '1.5px solid var(--border)', background: 'var(--surface)', cursor: 'pointer',
-        fontSize: 13, color: selNames.length ? 'var(--text)' : 'var(--faint)', textAlign: 'left',
-      }}>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: selNames.length ? 600 : 400 }}>
-          {selNames.length ? selNames.join(', ') : 'Select approvers…'}
-        </span>
-        <span style={{ color: 'var(--muted)', flexShrink: 0 }}>{open ? '▴' : '▾'}</span>
-      </button>
-      {open && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
-          <div className="nx-popover" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30, background: 'var(--surface)',
-            border: '1px solid var(--surface-3)', borderRadius: 14, boxShadow: '0 10px 30px rgba(110,114,120,0.18)', maxHeight: 260, overflowY: 'auto', padding: 4 }}>
-            {managers.map((m) => {
-              const on = sel.includes(m.id);
-              return (
-                <div key={m.id} onClick={() => onToggle(scheme.id, m.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 7, cursor: 'pointer' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 800, color: '#fff', background: on ? 'var(--success-solid)' : 'var(--surface)', border: `1.5px solid ${on ? TEAL : 'var(--border-strong)'}` }}>{on ? <Icon name="check" /> : ''}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>{m.name}</span>
-                  {m.designation && <span style={{ fontSize: 11, color: 'var(--muted)' }}>· {m.designation}</span>}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+    <div className="c1a-approvers">
+      <MultiSelect allLabel="Select approvers…" noun="approvers" value={sel} onChange={change}
+        options={managers.map((m) => ({ value: String(m.id), label: m.designation ? `${m.name} · ${m.designation}` : m.name }))} />
     </div>
   );
 }
@@ -267,22 +245,27 @@ export default function InvestorApprovalsPage() {
   if (!manager) return null;
 
   return (
-    <div style={{ padding: '28px 32px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Investor Approvals</h1>
-      <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{investors.length} {tab === 'all' ? 'total' : tab} investor{investors.length === 1 ? '' : 's'}</p>
+    <div className="nx-page ard">
+      <div className="ard-head">
+        <div>
+          <h1 className="nx-page-title">Investor Approvals</h1>
+          <p className="nx-page-sub">{investors.length} {tab === 'all' ? 'total' : tab} investor{investors.length === 1 ? '' : 's'}</p>
+        </div>
+      </div>
 
       {canConfigureApprovers && (
-        <div className="nx-card" style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 18px', marginTop: 18, border: '1px solid var(--surface-3)' }}>
-          <button className="nx-btn nx-btn-sm nx-btn-ghost" onClick={() => setCfgOpen((o) => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: TEAL, padding: 0 }}>
-            <Icon name="settings" /> Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'} {savedCfg && <span style={{ color: savedCfg.startsWith('⚠') ? 'var(--danger)' : 'var(--success)', fontWeight: 700 }}> <Icon name={savedCfg.startsWith('⚠') ? 'alert' : 'check-circle'} /> {savedCfg.replace(/^[^\p{L}\p{N}]+/u, '')}</span>}
+        <div className="nx-card c1a-cfg">
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost c1a-cfg-toggle" onClick={() => setCfgOpen((o) => !o)}>
+            <Icon name="settings" /> Investor Approvers — by scheme {cfgOpen ? '▴' : '▾'}
+            {savedCfg && <span className={savedCfg.startsWith('⚠') ? 'c1a-cfg-bad' : 'c1a-cfg-ok'}> {savedCfg.replace(/^[^\p{L}\p{N}]+/u, '')}</span>}
           </button>
           {cfgOpen && (
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>For each scheme, pick the managers who approve investors added under it. They get a notification on each new submission for that scheme.</div>
-              {managers.length === 0 ? <div style={{ fontSize: 13, color: 'var(--muted)' }}>No managers in this company.</div> : schemes.map((s) => (
-                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: '1px solid var(--surface-2)' }}>
-                  <div style={{ width: 180, minWidth: 180, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{s.name}</div>
-                  <ApproverDropdown scheme={s} managers={managers} onToggle={toggleApprover} />
+            <div className="c1a-cfg-body">
+              <div className="c1-help">For each scheme, pick the managers who approve investors added under it. They get a notification on each new submission for that scheme.</div>
+              {managers.length === 0 ? <div className="c1-help">No managers in this company.</div> : schemes.map((sc) => (
+                <div key={sc.id} className="c1a-cfg-row">
+                  <div className="c1a-cfg-name">{sc.name}</div>
+                  <ApproverDropdown scheme={sc} managers={managers} onToggle={toggleApprover} />
                 </div>
               ))}
             </div>

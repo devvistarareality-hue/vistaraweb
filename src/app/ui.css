@@ -3226,3 +3226,21 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1h-old { color: var(--muted); text-transform: capitalize; }
 .c1h-new { font-weight: 600; text-transform: capitalize; }
 .c1h-new.accent { color: var(--accent); } .c1h-new.deep { color: var(--accent-deep); } .c1h-new.muted { color: var(--text-3); }
+.c1f-when { font-size: 12px !important; white-space: nowrap; }
+.c1f-notes { display: flex; flex-direction: column; gap: 4px; }
+.c1a-cfg { border-radius: 18px; padding: 14px 18px; margin-bottom: 14px; }
+.c1a-cfg-toggle { color: var(--success); font-weight: 700; padding: 0; }
+.c1a-cfg-ok { color: var(--success); } .c1a-cfg-bad { color: var(--danger); }
+.c1a-cfg-body { margin-top: 12px; display: flex; flex-direction: column; }
+.c1a-cfg-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--hairline); flex-wrap: wrap; }
+.c1a-cfg-name { width: 180px; min-width: 180px; font-size: 13px; font-weight: 700; color: var(--text); }
+.c1a-approvers { flex: 1; max-width: 460px; }
+.c1a-badge { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; }
+.c1-gap { margin-top: 18px; }
+.c1r-status { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+.c1r-status.paid { background: var(--success-soft); color: var(--success); }
+.c1r-status.pending { background: var(--warning-soft); color: var(--warning-2); }
+.c1-head-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.c1-warn-note { font-size: 11px; color: var(--warning-2); }
+.c1-search { max-width: 420px; margin-bottom: 12px; }
+.club-inv-sel.is-on { border-color: var(--success) !important; background: var(--success-soft) !important; color: var(--success) !important; }
