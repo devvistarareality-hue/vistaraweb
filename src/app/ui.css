@@ -3275,3 +3275,21 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1-table th:first-child, .c1-table td:first-child { padding-left: 20px !important; }
 .c1-table .c1-check { width: 44px; padding-right: 0 !important; }
 .c1-table .c1-check input { width: 16px; height: 16px; }
+
+/* Club 1000 Pay dialog: one line per payout — target, actual paid, paid on, remarks. */
+.c1p-grid { display: flex; flex-direction: column; margin: 6px 0 4px; }
+.c1p-grid-head, .c1p-grid-row { display: grid; grid-template-columns: 22px minmax(120px, 1.1fr) 100px minmax(120px, 1fr) 150px minmax(130px, 1.1fr); gap: 10px; align-items: center; }
+.c1p-grid-head { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.c1p-grid-row { padding: 10px 0; border-bottom: 1px solid var(--hairline); }
+.c1p-grid-row:last-child { border-bottom: 0; }
+.c1p-grid-row.off .c1p-pay-what, .c1p-grid-row.off .c1p-target { opacity: .55; }
+.c1p-grid .num { text-align: right; }
+.c1p-target { font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.c1p-cell { display: flex; flex-direction: column; gap: 2px; }
+.c1p-diff { font-size: 11px; font-weight: 700; color: var(--warning); }
+.c1p-pay-when.late { color: var(--danger); }
+@media (max-width: 760px) {
+  .c1p-grid-head { display: none; }
+  .c1p-grid-row { grid-template-columns: 22px 1fr 1fr; }
+  .c1p-grid-row > :nth-child(n+3) { grid-column: 2 / -1; }
+}

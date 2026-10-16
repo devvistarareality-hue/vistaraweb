@@ -19,7 +19,7 @@ import Loader from '../../../components/Loader';
 import { notify } from '../../../lib/notify';
 import { errText } from '../../../lib/apiError';
 import LedgerModal from '../_LedgerModal';
-import { C1Modal, C1Section, C1Field, C1Error } from '../_Form';
+import { C1Modal, C1Section, C1Error } from '../_Form';
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Premature redemption' };
 const DUE_SOON_DAYS = 30;
@@ -204,25 +204,31 @@ export default function PayoutsPage() {
   );
 }
 
-// Settle any of one investor's pending payouts: the late ones are ticked to start
-// with, each amount can be adjusted (rounding, a part payment), one note for all.
+// Settle any of one investor's pending payouts. Each row carries its own target
+// (what was due), the amount actually paid (the target unless changed), the date it
+// was paid (today unless changed) and its own remarks. Late ones start ticked.
 function PayModal({ row, today, onClose, onDone }) {
-  const [sel, setSel] = useState(() => Object.fromEntries(row.pending.map((p) => [p.id, p.due_date < today])));
-  const [amounts, setAmounts] = useState(() => Object.fromEntries(row.pending.map((p) => [p.id, String(Number(p.amount_due) || 0)])));
-  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState(() => Object.fromEntries(row.pending.map((p) => [p.id, {
+    on: p.due_date < today, amount: String(Number(p.amount_due) || 0), date: today, notes: '',
+  }])));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const picked = row.pending.filter((p) => sel[p.id]);
-  const total = picked.reduce((t, p) => t + (Number(amounts[p.id]) || 0), 0);
+  const setLine = (id, patch) => setLines((l) => ({ ...l, [id]: { ...l[id], ...patch } }));
+  const picked = row.pending.filter((p) => lines[p.id]?.on);
+  const total = picked.reduce((t, p) => t + (Number(lines[p.id].amount) || 0), 0);
+  const target = picked.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
 
   async function pay(e) {
     e.preventDefault();
     if (!picked.length) { setErr('Tick at least one payout.'); return; }
+    const bad = picked.find((p) => !lines[p.id].date || lines[p.id].date > today);
+    if (bad) { setErr('Each paid date must be today or earlier.'); return; }
     setBusy(true); setErr('');
     let done = 0;
     for (const p of picked) {
+      const l = lines[p.id];
       const res = await apiFetch(CLUB1000_ENDPOINTS.payoutMarkPaid(p.id), {
-        method: 'POST', body: JSON.stringify({ amount: amounts[p.id], notes }),
+        method: 'POST', body: JSON.stringify({ amount: l.amount, paid_date: l.date, notes: l.notes }),
       }).catch(() => null);
       if (!res || !res.ok) {
         const d = res ? await res.json().catch(() => ({})) : {};
@@ -238,7 +244,7 @@ function PayModal({ row, today, onClose, onDone }) {
   }
 
   return (
-    <C1Modal title="Pay investor" sub={`${row.name} · ${row.scheme}${row.loi_no ? ` · ${row.loi_no}` : ''}`} onClose={onClose} onSubmit={pay}
+    <C1Modal wide title="Pay investor" sub={`${row.name} · ${row.scheme}${row.loi_no ? ` · ${row.loi_no}` : ''}`} onClose={onClose} onSubmit={pay}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
         <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy || !picked.length}>
@@ -246,25 +252,44 @@ function PayModal({ row, today, onClose, onDone }) {
         </button>
       </>}>
       <C1Section title="Pending payouts">
-        <div className="c1p-pay-list">
-          {row.pending.map((p) => (
-            <label key={p.id} className={`c1p-pay-row${p.due_date < today ? ' late' : ''}`}>
-              <input type="checkbox" checked={!!sel[p.id]} onChange={(e) => setSel((s) => ({ ...s, [p.id]: e.target.checked }))} />
-              <span className="c1p-pay-what">
-                <b>{TYPE_LABELS[p.payout_type] || p.payout_type}</b>
-                <span className="c1p-pay-when">Due {formatDMY(p.due_date)}{p.due_date < today ? ' · late' : ''}</span>
-              </span>
-              <input className="nx-input" type="text" inputMode="decimal" value={amounts[p.id]}
-                onChange={(e) => setAmounts((a) => ({ ...a, [p.id]: e.target.value }))} disabled={!sel[p.id]} />
-            </label>
-          ))}
+        <div className="c1p-grid">
+          <div className="c1p-grid-head">
+            <span />
+            <span>Payout</span>
+            <span className="num">Target</span>
+            <span>Actual paid (₹)</span>
+            <span>Paid on</span>
+            <span>Remarks</span>
+          </div>
+          {row.pending.map((p) => {
+            const l = lines[p.id];
+            const late = p.due_date < today;
+            const diff = l.on && Number(l.amount) !== Number(p.amount_due);
+            return (
+              <div key={p.id} className={`c1p-grid-row${l.on ? '' : ' off'}`}>
+                <input type="checkbox" checked={l.on} onChange={(e) => setLine(p.id, { on: e.target.checked })} aria-label="Pay this one" />
+                <span className="c1p-pay-what">
+                  <b>{TYPE_LABELS[p.payout_type] || p.payout_type}</b>
+                  <span className={`c1p-pay-when${late ? ' late' : ''}`}>Due {formatDMY(p.due_date)}{late ? ' · late' : ''}</span>
+                </span>
+                <span className="num c1p-target">{rupee(p.amount_due)}</span>
+                <span className="c1p-cell">
+                  <input className="nx-input" type="text" inputMode="decimal" value={l.amount} disabled={!l.on}
+                    onChange={(e) => setLine(p.id, { amount: e.target.value })} />
+                  {diff && <small className="c1p-diff">{Number(l.amount) < Number(p.amount_due) ? 'Short' : 'More'} by {rupee(Math.abs(Number(l.amount) - Number(p.amount_due)))}</small>}
+                </span>
+                <input className="nx-input" type="date" max={today} value={l.date} disabled={!l.on}
+                  onChange={(e) => setLine(p.id, { date: e.target.value })} />
+                <input className="nx-input" value={l.notes} disabled={!l.on} placeholder="UTR / cheque no."
+                  onChange={(e) => setLine(p.id, { notes: e.target.value })} />
+              </div>
+            );
+          })}
         </div>
-        <div className="c1p-total"><span>To pay now</span><span>{rupee(total)}</span></div>
-      </C1Section>
-      <C1Section title="Payment">
-        <C1Field label="Notes" hint="Cheque / UTR no., bank, anything to remember">
-          <input className="nx-input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. NEFT UTR 1234…" />
-        </C1Field>
+        <div className="c1p-total">
+          <span>To pay now{picked.length ? ` · ${picked.length} payout${picked.length === 1 ? '' : 's'}` : ''}</span>
+          <span>{rupee(total)}{total !== target && picked.length ? <small className="c1p-diff"> of {rupee(target)} due</small> : null}</span>
+        </div>
       </C1Section>
       <C1Error>{err}</C1Error>
     </C1Modal>
