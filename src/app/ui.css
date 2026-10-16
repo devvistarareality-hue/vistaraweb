@@ -3244,3 +3244,34 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1-warn-note { font-size: 11px; color: var(--warning-2); }
 .c1-search { max-width: 420px; margin-bottom: 12px; }
 .club-inv-sel.is-on { border-color: var(--success) !important; background: var(--success-soft) !important; color: var(--success) !important; }
+
+/* ── Club 1000 dialogs: sections that read as separate cards. The dialog body is a
+   tinted well; each section is a solid card with a border and a tinted title strip
+   (an accent bar on the left), and the fields inside are divided by hairlines. ── */
+.c1m-body { background: var(--surface-3); padding: 16px; gap: 14px; }
+.c1m .c1-section {
+  background: var(--surface) !important; background-image: none !important;
+  border: 1px solid var(--border-strong) !important;
+  box-shadow: 0 1px 3px rgba(var(--ink-rgb), 0.06) !important;
+  border-radius: 16px; padding: 0 18px 4px; overflow: visible; animation: none;
+}
+.c1m .c1-section > .nx-section-title {
+  margin: 0 -18px 4px; padding: 11px 18px 11px 15px;
+  background: var(--accent-soft); color: var(--accent-deep);
+  border-left: 3px solid var(--accent); border-bottom: 1px solid var(--border);
+  border-radius: 15px 15px 0 0;
+}
+.c1m .c1-section .nx-field { margin: 0; padding: 11px 0; border-bottom: 1px solid var(--hairline); }
+.c1m .c1-section .nx-field:last-child { border-bottom: 0; }
+.c1m .c1-section > .c1-help, .c1m .c1-section > .c1p-pay-list, .c1m .c1-section > .c1p-total, .c1m .c1-section > .c1h-list, .c1m .c1-section > .ar-empty { margin: 10px 0; }
+.c1m-head { background: var(--surface); }
+.c1m-foot { background: var(--surface); }
+.c1m .nx-filters.c1h-tabs { margin-bottom: 0; }
+
+/* Club 1000 tables (Leads, Referral Rewards, Ledger): roomy cells, the first column
+   clear of the card's rounded edge. */
+.c1-table th, .c1l-table .nx-table th { padding: 11px 16px !important; }
+.c1-table td, .c1l-table .nx-table td { padding: 13px 16px !important; vertical-align: middle; }
+.c1-table th:first-child, .c1-table td:first-child { padding-left: 20px !important; }
+.c1-table .c1-check { width: 44px; padding-right: 0 !important; }
+.c1-table .c1-check input { width: 16px; height: 16px; }
