@@ -1,17 +1,17 @@
 'use client';
+// Club 1000 schemes — a card per scheme: its terms, its payout rates and how much of
+// the book sits in it; New / Edit open the Sales-style form (sections of fields).
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { Layers, Users, Wallet } from 'lucide-react';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import { isClub1000Manager } from '../../../lib/moduleAccess';
 import { confirmDialog } from '../../../lib/notify';
+import { rupee, inrShort } from '../../../lib/inr';
+import { errText } from '../../../lib/apiError';
 import Loader from '../../../components/Loader';
-
-const TEAL = 'var(--success)';
-const inp  = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
-const lbl  = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
-const th   = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td   = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
+import { C1Modal, C1Section, C1Field, C1Error } from '../_Form';
 
 const EMPTY_FORM = {
   name: '', tenure_months: 12, min_ticket_size: '',
@@ -37,52 +37,33 @@ function SchemeModal({ scheme, onClose, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  function set(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
-
-  function setRate(key, value) {
-    setForm((f) => ({ ...f, payout_rates: { ...f.payout_rates, [key]: value } }));
-  }
-
-  function toggleInterestPayoutOption(key, checked) {
+  const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+  const setRate = (key, value) => setForm((f) => ({ ...f, payout_rates: { ...f.payout_rates, [key]: value } }));
+  function toggleOption(key, checked) {
     setForm((f) => ({
       ...f,
-      interest_payout_options: checked
-        ? [...f.interest_payout_options, key]
-        : f.interest_payout_options.filter((k) => k !== key),
+      interest_payout_options: checked ? [...f.interest_payout_options, key] : f.interest_payout_options.filter((k) => k !== key),
     }));
   }
 
   async function submit(e) {
     e.preventDefault();
     setError('');
-    if (!form.interest_payout_options.length) {
-      setError('Select at least one interest payout option.');
-      return;
-    }
+    if (!form.interest_payout_options.length) { setError('Select at least one interest payout option.'); return; }
     const missingRate = form.interest_payout_options.find((k) => form.payout_rates[k] === '' || form.payout_rates[k] == null);
-    if (missingRate) {
-      setError(`Enter a return % for ${INTEREST_PAYOUT_LABELS[missingRate] || missingRate}.`);
-      return;
-    }
+    if (missingRate) { setError(`Enter a return % for ${INTEREST_PAYOUT_LABELS[missingRate] || missingRate}.`); return; }
     setBusy(true);
     try {
       const payout_rates = Object.fromEntries(form.interest_payout_options.map((k) => [k, form.payout_rates[k]]));
       // premature_redemption_lock_months is a PositiveIntegerField(null=True) on the
-      // backend — an empty string (the field's default/cleared value, and what's left
-      // over when "Allow premature redemption" is unchecked) fails "a valid integer is
-      // required" instead of being treated as blank, so send null explicitly instead.
+      // backend — an empty string fails "a valid integer is required", so send null.
       const lock_months = form.premature_redemption_lock_months === '' ? null : form.premature_redemption_lock_months;
       const res = await apiFetch(isEdit ? CLUB1000_ENDPOINTS.scheme(scheme.id) : CLUB1000_ENDPOINTS.schemes, {
         method: isEdit ? 'PATCH' : 'POST',
         body: JSON.stringify({ ...form, payout_rates, premature_redemption_lock_months: lock_months }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.detail || Object.values(data || {})[0] || `Could not ${isEdit ? 'save' : 'create'} scheme.`);
-        return;
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(errText(data, `Could not ${isEdit ? 'save' : 'create'} the scheme.`)); return; }
       onSaved(data);
       onClose();
     } finally {
@@ -91,81 +72,57 @@ function SchemeModal({ scheme, onClose, onSaved }) {
   }
 
   return (
-    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{isEdit ? 'Edit Scheme' : 'New Scheme'}</div>
-        </div>
-        <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label style={lbl}>Scheme Name</label>
-            <input className="nx-input" style={inp} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. RISE" required />
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Tenure (months)</label>
-              <input className="nx-input" style={inp} type="number" min="1" value={form.tenure_months} onChange={(e) => set('tenure_months', e.target.value)} required />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Min Ticket Size (₹)</label>
-              <input className="nx-input" style={inp} type="number" min="0" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
-            </div>
-          </div>
-          <div>
-            <label style={lbl}>Interest Payout Options &amp; Return %</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {Object.entries(INTEREST_PAYOUT_LABELS).map(([key, label]) => {
-                const checked = form.interest_payout_options.includes(key);
-                return (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text)', width: 130, flexShrink: 0 }}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => toggleInterestPayoutOption(key, e.target.checked)}
-                      />
-                      {label}
-                    </label>
-                    <input className="nx-input"
-                      style={{ ...inp, flex: 1, opacity: checked ? 1 : 0.4 }}
-                      type="number" step="0.01" min="0" placeholder="Return %"
-                      disabled={!checked}
-                      value={form.payout_rates[key] ?? ''}
-                      onChange={(e) => setRate(key, e.target.value)}
-                    />
-                    <span style={{ fontSize: 12, color: 'var(--muted)', width: 14 }}>%</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 5 }}>Only the checked option(s) will be selectable when adding investors to this scheme — each carries its own annual return %.</div>
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-            <input type="checkbox" checked={form.premature_redemption_allowed} onChange={(e) => set('premature_redemption_allowed', e.target.checked)} />
-            Allow premature redemption
-          </label>
-          {form.premature_redemption_allowed && (
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <label style={lbl}>Lock-in (months)</label>
-                <input className="nx-input" style={inp} type="number" min="0" value={form.premature_redemption_lock_months} onChange={(e) => set('premature_redemption_lock_months', e.target.value)} />
+    <C1Modal title={isEdit ? 'Edit Scheme' : 'New Scheme'} sub={isEdit ? scheme.name : 'An investment plan investors can be added against'}
+      onClose={onClose} onSubmit={submit}
+      footer={<>
+        <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy}>{busy ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Scheme'}</button>
+      </>}>
+      <C1Section title="Scheme">
+        <C1Field label="Scheme name" required>
+          <input className="nx-input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. RISE" required />
+        </C1Field>
+        <C1Field label="Tenure" hint="Months until maturity" required>
+          <input className="nx-input" type="number" min="1" value={form.tenure_months} onChange={(e) => set('tenure_months', e.target.value)} required />
+        </C1Field>
+        <C1Field label="Min ticket size (₹)" required>
+          <input className="nx-input" type="number" min="0" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
+        </C1Field>
+      </C1Section>
+
+      <C1Section title="Interest payout & return">
+        {Object.entries(INTEREST_PAYOUT_LABELS).map(([key, label]) => {
+          const checked = form.interest_payout_options.includes(key);
+          return (
+            <C1Field key={key} label={(
+              <span className="c1s-opt"><input type="checkbox" checked={checked} onChange={(e) => toggleOption(key, e.target.checked)} /> {label}</span>
+            )}>
+              <div className="c1s-rate">
+                <input className="nx-input" type="number" step="0.01" min="0" placeholder="Return %" disabled={!checked}
+                  value={form.payout_rates[key] ?? ''} onChange={(e) => setRate(key, e.target.value)} />
+                <span>%</span>
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={lbl}>Redemption rate %/month</label>
-                <input className="nx-input" style={inp} type="number" step="0.01" min="0" value={form.premature_redemption_rate_pct_per_month} onChange={(e) => set('premature_redemption_rate_pct_per_month', e.target.value)} />
-              </div>
-            </div>
-          )}
-          {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
-        </div>
-        <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button className="nx-btn nx-btn-md nx-btn-success" type="submit" disabled={busy} style={{ padding: '9px 20px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
-            {busy ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Scheme'}
-          </button>
-        </div>
-      </form>
-    </div>
+            </C1Field>
+          );
+        })}
+        <div className="c1-help">Only the ticked options can be picked when adding investors to this scheme — each carries its own total return %.</div>
+      </C1Section>
+
+      <C1Section title="Premature redemption">
+        <C1Field label="Allow it">
+          <label className="c1s-opt"><input type="checkbox" checked={form.premature_redemption_allowed} onChange={(e) => set('premature_redemption_allowed', e.target.checked)} /> Investors may exit before maturity</label>
+        </C1Field>
+        {form.premature_redemption_allowed && <>
+          <C1Field label="Lock-in" hint="Months before an exit is allowed">
+            <input className="nx-input" type="number" min="0" value={form.premature_redemption_lock_months} onChange={(e) => set('premature_redemption_lock_months', e.target.value)} />
+          </C1Field>
+          <C1Field label="Redemption rate" hint="% per month">
+            <input className="nx-input" type="number" step="0.01" min="0" value={form.premature_redemption_rate_pct_per_month} onChange={(e) => set('premature_redemption_rate_pct_per_month', e.target.value)} />
+          </C1Field>
+        </>}
+      </C1Section>
+      <C1Error>{error}</C1Error>
+    </C1Modal>
   );
 }
 
@@ -173,6 +130,7 @@ export default function SchemesPage() {
   const user = useSelector((s) => s.auth.user);
   const manager = isClub1000Manager(user);
   const [schemes, setSchemes] = useState([]);
+  const [book, setBook] = useState({});        // scheme name → {investors, amount}
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -180,8 +138,12 @@ export default function SchemesPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await apiFetch(CLUB1000_ENDPOINTS.schemes);
+      const [res, st] = await Promise.all([apiFetch(CLUB1000_ENDPOINTS.schemes), apiFetch(CLUB1000_ENDPOINTS.stats)]);
       if (res.ok) setSchemes(await res.json());
+      if (st.ok) {
+        const d = await st.json();
+        setBook(Object.fromEntries((d.by_scheme || []).map((r) => [r.scheme, r])));
+      }
     } finally {
       setLoading(false);
     }
@@ -196,71 +158,54 @@ export default function SchemesPage() {
   }
 
   return (
-    <div style={{ padding: '28px 32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="nx-page ard">
+      <div className="ard-head">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Schemes</h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
-            {manager ? 'Define investment plans investors can be added against' : 'Investment plans investors can be added against'}
-          </p>
+          <h1 className="nx-page-title">Schemes</h1>
+          <p className="nx-page-sub">{manager ? 'The investment plans investors are added against' : 'Investment plans investors can be added against'}{schemes.length ? ` · ${schemes.length} scheme${schemes.length === 1 ? '' : 's'}` : ''}</p>
         </div>
-        {manager && (
-          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowNew(true)} style={{ padding: '10px 18px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Scheme</button>
-        )}
+        {manager && <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowNew(true)}>+ New Scheme</button>}
       </div>
 
-      <div className="nx-card" style={{ marginTop: 24, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden' }}>
-        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-              <th style={th}>Name</th>
-              <th style={th}>Tenure</th>
-              <th style={th}>Min Ticket</th>
-              <th style={th}>Payout Rates</th>
-              <th style={th}>Premature Exit</th>
-              {manager && <th style={th}></th>}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
-            ) : schemes.length === 0 ? (
-              <tr><td colSpan={manager ? 6 : 5} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}>No schemes yet — create one to get started.</td></tr>
-            ) : schemes.map((s) => (
-              <tr key={s.id}>
-                <td style={td}>{s.name}</td>
-                <td style={td}>{s.tenure_months}mo</td>
-                <td style={td}>₹{Number(s.min_ticket_size).toLocaleString('en-IN')}</td>
-                <td style={td}>
-                  {(s.interest_payout_options || []).length
-                    ? (s.interest_payout_options || []).map((k) => (
-                        <span key={k} style={{ marginRight: 10 }}>
-                          {INTEREST_PAYOUT_LABELS[k] || k}: <strong style={{ color: TEAL }}>{s.payout_rates?.[k] ?? '—'}%</strong>
-                        </span>
-                      ))
-                    : '—'}
-                </td>
-                <td style={td}>{s.premature_redemption_allowed ? `After ${s.premature_redemption_lock_months || 0}mo` : 'N/A'}</td>
+      {loading ? <Loader label="Loading schemes…" /> : schemes.length === 0 ? (
+        <div className="nx-card ar-card"><div className="ar-empty">No schemes yet — create one to get started.</div></div>
+      ) : (
+        <div className="c1s-grid">
+          {schemes.map((s) => {
+            const b = book[s.name] || { investors: 0, amount: 0 };
+            return (
+              <article key={s.id} className="nx-card c1s-card">
+                <header className="c1s-head">
+                  <div className="c1s-icon"><Layers size={18} /></div>
+                  <div className="c1s-title">
+                    <h3>{s.name}</h3>
+                    <span>{s.tenure_months} months · min ₹{Number(s.min_ticket_size).toLocaleString('en-IN')}</span>
+                  </div>
+                </header>
+                <div className="c1s-rates">
+                  {(s.interest_payout_options || []).length ? (s.interest_payout_options || []).map((k) => (
+                    <span key={k} className="c1s-rate-chip"><span>{INTEREST_PAYOUT_LABELS[k] || k}</span><b>{s.payout_rates?.[k] ?? '—'}%</b></span>
+                  )) : <span className="c1-help">No payout options set</span>}
+                </div>
+                <div className="coll-figs c1s-figs">
+                  <div className="coll-fig"><span><Users size={11} /> Investors</span><b>{b.investors || 0}</b></div>
+                  <div className="coll-fig"><span><Wallet size={11} /> Invested</span><b title={rupee(b.amount)}>{b.amount ? inrShort(b.amount) : '—'}</b></div>
+                  <div className="coll-fig"><span>Premature exit</span><b>{s.premature_redemption_allowed ? `After ${s.premature_redemption_lock_months || 0} mo` : 'Not allowed'}</b></div>
+                </div>
                 {manager && (
-                  <td style={td}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setEditing(s)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
-                      <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => disableScheme(s.id)} style={{ padding: '5px 10px', background: 'var(--danger-soft)', color: 'var(--danger)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Disable</button>
-                    </div>
-                  </td>
+                  <footer className="c1s-foot">
+                    <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setEditing(s)}>Edit</button>
+                    <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => disableScheme(s.id)}>Disable</button>
+                  </footer>
                 )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
-      {showNew && (
-        <SchemeModal onClose={() => setShowNew(false)} onSaved={() => load()} />
-      )}
-      {editing && (
-        <SchemeModal scheme={editing} onClose={() => setEditing(null)} onSaved={() => load()} />
-      )}
+      {showNew && <SchemeModal onClose={() => setShowNew(false)} onSaved={() => load()} />}
+      {editing && <SchemeModal scheme={editing} onClose={() => setEditing(null)} onSaved={() => load()} />}
     </div>
   );
 }

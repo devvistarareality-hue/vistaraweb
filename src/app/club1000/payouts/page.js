@@ -1,296 +1,272 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+// Club 1000 Payouts — AR Collections turned around. AR chases money owed BY
+// clients; here the company owes interest and principal TO investors. So the
+// screen is one card per investor (not one row per payout): what is overdue to
+// them, what falls due next, what they have been paid, and a Pay button that
+// settles any of their pending payouts in one go.
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { AlarmClock, CalendarClock, Wallet, CircleCheckBig, Layers, Phone, FileText } from 'lucide-react';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import {isClub1000Manager, can} from '../../../lib/moduleAccess';
+import { isClub1000Manager, can } from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
-import { onlyPresent } from '../../../lib/presentOptions';
-import DateFilter from '../../sales/_DateFilter';
-import Icon from '../../../components/Icon';
-import { fmtMoney } from '../_StatCard';
+import { rupee, inrShort } from '../../../lib/inr';
+import { DashKpi } from '../../../components/Dash';
+import MultiSelect from '../../../components/MultiSelect';
 import Loader from '../../../components/Loader';
+import { notify } from '../../../lib/notify';
 import { errText } from '../../../lib/apiError';
+import LedgerModal from '../_LedgerModal';
+import { C1Modal, C1Section, C1Field, C1Error } from '../_Form';
 
-const TEAL = 'var(--success)';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
+const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Premature redemption' };
+const DUE_SOON_DAYS = 30;
+const iso = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-const TYPE_LABELS = { interest: 'Interest', maturity: 'Maturity', premature_redemption: 'Premature Redemption' };
-const TYPE_OPTIONS = Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label }));
-const STATUS_OPTIONS = [{ value: 'pending', label: 'Pending' }, { value: 'paid', label: 'Paid' }];
+// One row per investor, built from their payouts.
+function byInvestor(payouts, today, soon) {
+  const map = new Map();
+  for (const p of payouts) {
+    let r = map.get(p.investor);
+    if (!r) {
+      r = { id: p.investor, name: p.investor_name, phone: p.investor_phone, loi_no: p.investor_loi_no,
+        scheme: p.scheme_name, pending: [], paid: [] };
+      map.set(p.investor, r);
+    }
+    (p.status === 'paid' ? r.paid : r.pending).push(p);
+  }
+  for (const r of map.values()) {
+    r.pending.sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+    r.paid.sort((a, b) => String(b.paid_date || '').localeCompare(String(a.paid_date || '')));
+    r.overdue = r.pending.filter((p) => p.due_date < today);
+    r.overdueAmt = r.overdue.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+    r.next = r.pending.find((p) => p.due_date >= today) || null;
+    r.dueSoon = r.pending.filter((p) => p.due_date >= today && p.due_date <= soon);
+    r.dueSoonAmt = r.dueSoon.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+    r.pendingAmt = r.pending.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+    r.paidAmt = r.paid.reduce((t, p) => t + (Number(p.paid_amount ?? p.amount_due) || 0), 0);
+    r.daysLate = r.overdue.length
+      ? Math.round((new Date(`${today}T00:00:00`) - new Date(`${r.overdue[0].due_date}T00:00:00`)) / 86400000) : 0;
+  }
+  return [...map.values()];
+}
 
 export default function PayoutsPage() {
   const user = useSelector((s) => s.auth.user);
   const router = useRouter();
   const manager = isClub1000Manager(user);
-  const [payouts, setPayouts] = useState([]);
+  const canPay = can(user, 'club.payout.mark_paid');
+  const [payouts, setPayouts] = useState(null);
   const [schemes, setSchemes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('pending');
-  // A payout ledger is read by due date, by what kind of payout it is, and by
-  // which scheme it belongs to — the same cuts the dashboard's payout figures
-  // are made along, so a tile's number has a list that matches it.
-  const [typeFilter, setTypeFilter] = useState('');
-  const [schemeFilter, setSchemeFilter] = useState('');
-  const [range, setRange] = useState({ from: '', to: '' });
-  // The two live questions no stored column answers: what has slipped past its
-  // date, and what lands in the next 30 days. Both mean pending — something
-  // already paid is not late however old it is.
-  const [bucket, setBucket] = useState('');
-  const [search, setSearch] = useState('');
-  const [searchText, setSearchText] = useState('');
+  const [tab, setTab] = useState('overdue');
+  const [schemeSel, setSchemeSel] = useState([]);
+  const [q, setQ] = useState('');
+  const [paying, setPaying] = useState(null);     // the investor row being paid
+  const [ledgerFor, setLedgerFor] = useState(null);
+
+  useEffect(() => { if (user && !manager) router.replace('/club1000'); }, [user]);
+  // The dashboard's Pending / Paid tiles deep-link here (?status=pending|paid).
   useEffect(() => {
-    const t = setTimeout(() => setSearch(searchText), 400);
-    return () => clearTimeout(t);
-  }, [searchText]);
-  // Only the values these rows hold (?facets=1) — a picker that lists a choice
-  // returning nothing is worse than no picker.
-  const [facets, setFacets] = useState(null);
-  const fx = (key) => facets?.[key] ?? null;
-  const [payingFor, setPayingFor] = useState(null);
-  const [payForm, setPayForm] = useState({ amount: '', notes: '' });
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState('');
-  // Seed the status filter from the URL so the dashboard's Pending/Paid Payouts
-  // stat cards can deep-link into the matching tab (?status=pending|paid). Done
-  // in an effect, not a lazy initializer, since window.location isn't committed
-  // yet during Next client navigation when the initializer runs.
-  const [seeded, setSeeded] = useState(false);
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    setStatusFilter(p.get('status') ?? 'pending');
-    setBucket(p.get('bucket') || '');
-    setSeeded(true);
+    const s = new URLSearchParams(window.location.search).get('status');
+    if (s === 'paid') setTab('paid');
+    else if (s === 'pending') setTab('pending');
   }, []);
 
-  useEffect(() => {
-    if (user && !manager) router.replace('/club1000');
-  }, [user]);
-
-  useEffect(() => {
-    if (!manager) return;
-    let alive = true;
-    apiFetch(`${CLUB1000_ENDPOINTS.payouts}?facets=1`).then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (alive && d) setFacets(d); }).catch(() => {});
-    apiFetch(CLUB1000_ENDPOINTS.schemes).then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (alive && d) setSchemes(d); }).catch(() => {});
-    return () => { alive = false; };
-  }, [manager]);
-
-  // Every fetch takes a ticket; only the newest one writes to state. Filters
-  // change faster than the network answers, and an earlier, slower response
-  // landing last would otherwise win.
   const reqRef = useRef(0);
-
   async function load() {
     const ticket = ++reqRef.current;
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter) params.set('status', statusFilter);
-      if (typeFilter) params.set('payout_type', typeFilter);
-      if (schemeFilter) params.set('scheme_id', schemeFilter);
-      if (bucket) params.set('bucket', bucket);
-      if (search) params.set('search', search);
-      if (range.from) params.set('date_from', range.from);
-      if (range.to) params.set('date_to', range.to);
-      const q = params.toString();
-      const res = await apiFetch(`${CLUB1000_ENDPOINTS.payouts}${q ? `?${q}` : ''}`);
-      const rows = res.ok ? await res.json() : null;
-      if (ticket !== reqRef.current) return;   // a newer request has overtaken this one
-      if (rows) setPayouts(rows);
-    } finally {
-      if (ticket === reqRef.current) setLoading(false);
-    }
+    const res = await apiFetch(CLUB1000_ENDPOINTS.payouts).catch(() => null);
+    const rows = res && res.ok ? await res.json() : [];
+    if (ticket === reqRef.current) setPayouts(Array.isArray(rows) ? rows : []);
   }
+  useEffect(() => {
+    if (!manager) return;
+    load();
+    apiFetch(CLUB1000_ENDPOINTS.schemes).then((r) => (r.ok ? r.json() : [])).then((d) => setSchemes(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [manager]);
 
-  useEffect(() => { if (manager && seeded) load(); },
-    [manager, seeded, statusFilter, typeFilter, schemeFilter, bucket, search, range.from, range.to]);
-
-  // "Pending" is this screen's own default rather than a choice anyone made, so
-  // it doesn't count as narrowing — otherwise the header would read as filtered
-  // the moment the page opened.
-  const narrowed = !!(typeFilter || schemeFilter || bucket || search || range.from || range.to
-    || (statusFilter && statusFilter !== 'pending'));
-
-  // DateFilter keeps its own period state and only reports changes, so clearing
-  // `range` alone would leave it showing a period it is no longer applying.
-  // Bumping its key remounts it back to "All".
-  const [dateKey, setDateKey] = useState(0);
-
-  function clearFilters() {
-    setStatusFilter('pending'); setTypeFilter(''); setSchemeFilter('');
-    setBucket(''); setSearchText(''); setSearch(''); setRange({ from: '', to: '' });
-    setDateKey((n) => n + 1);
-  }
-
-  const listedTotal = payouts.reduce((sum, p) => sum + Number(p.amount_due || 0), 0);
-
-  function openMarkPaid(p) {
-    setErr('');
-    setPayForm({ amount: String(p.amount_due), notes: '' });
-    setPayingFor(p);
-  }
-
-  async function submitMarkPaid() {
-    if (!payForm.amount) { setErr('Amount is required.'); return; }
-    setSaving(true); setErr('');
-    try {
-      const res = await apiFetch(CLUB1000_ENDPOINTS.payoutMarkPaid(payingFor.id), {
-        method: 'POST',
-        body: JSON.stringify({ amount: payForm.amount, notes: payForm.notes }),
-      });
-      if (res.ok) {
-        setPayingFor(null);
-        load();
-      } else {
-        const d = await res.json().catch(() => ({}));
-        setErr(errText(d, 'Could not mark this payout paid.'));
-      }
-    } catch (e) { setErr(e.message); }
-    setSaving(false);
-  }
+  const today = iso(new Date());
+  const soon = iso(new Date(Date.now() + DUE_SOON_DAYS * 86400000));
+  const investors = useMemo(() => byInvestor(payouts || [], today, soon), [payouts, today, soon]);
+  const scoped = investors.filter((r) => (!schemeSel.length || schemeSel.includes(r.scheme))
+    && (!q.trim() || `${r.name} ${r.phone} ${r.loi_no}`.toLowerCase().includes(q.trim().toLowerCase())));
+  const lists = {
+    overdue: scoped.filter((r) => r.overdue.length).sort((a, b) => b.daysLate - a.daysLate || b.overdueAmt - a.overdueAmt),
+    upcoming: scoped.filter((r) => r.dueSoon.length).sort((a, b) => String(a.dueSoon[0].due_date).localeCompare(String(b.dueSoon[0].due_date))),
+    pending: scoped.filter((r) => r.pending.length).sort((a, b) => b.pendingAmt - a.pendingAmt),
+    paid: scoped.filter((r) => r.paid.length).sort((a, b) => String(b.paid[0].paid_date || '').localeCompare(String(a.paid[0].paid_date || ''))),
+  };
+  const rows = lists[tab];
+  const sum = (list, k) => list.reduce((t, r) => t + r[k], 0);
 
   if (!manager) return null;
 
   return (
-    <div style={{ padding: '28px 32px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)' }}>Payouts</h1>
-      {/* Says what is on screen, not what the page is for — a stock description
-          over a filtered list is how a working filter looks broken. */}
-      <p className="club-inv-sub">
-        {loading
-          ? 'Interest, maturity, and premature-redemption ledger'
-          : `${payouts.length}${statusFilter ? ` ${statusFilter}` : ''} payout${payouts.length === 1 ? '' : 's'} · ${fmtMoney(listedTotal)}`}
-      </p>
-
-      <div className="club-pay-search">
-        <span className="club-pay-search-ico"><Icon name="search" /></span>
-        <input className="nx-input" value={searchText} onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search investor name or phone…" />
-        {searchText && (
-          <button type="button" className="club-pay-clear" onClick={() => setSearchText('')}><Icon name="x" /></button>
-        )}
-      </div>
-
-      {/* Dated by due date, which is the only date this ledger is read by. */}
-      <div className="club-inv-dates"><DateFilter key={dateKey} onChange={setRange} /></div>
-
-      <div className="club-inv-filters">
-        <select className="nx-input club-inv-sel" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
-          {onlyPresent(STATUS_OPTIONS, fx('statuses'), statusFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <select className="nx-input club-inv-sel" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-          <option value="">All Types</option>
-          {onlyPresent(TYPE_OPTIONS, fx('types'), typeFilter).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <select className="nx-input club-inv-sel" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)}>
-          <option value="">All Schemes</option>
-          {onlyPresent(schemes.map((s) => ({ value: String(s.id), label: s.name })), fx('scheme_ids'), schemeFilter).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        {/* Toggles rather than another dropdown: these two are what the screen
-            is usually opened to apply. Each implies pending on its own, so
-            picking one also moves the status picker — otherwise "Paid ·
-            Overdue" shows an empty list and reads as a bug rather than as the
-            contradiction it is. */}
-        {[{ value: 'overdue', label: 'Overdue' }, { value: 'due_soon', label: 'Due in 30 days' }].map((b) => (
-          <button key={b.value} type="button" className={`club-pay-pill${bucket === b.value ? ' is-on' : ''}`}
-            onClick={() => { const on = bucket === b.value; setBucket(on ? '' : b.value); if (!on) setStatusFilter('pending'); }}>
-            {b.label}
-          </button>
-        ))}
-        {narrowed && (
-          <button type="button" className="club-pay-reset" onClick={clearFilters}>Clear filters</button>
-        )}
-      </div>
-
-      <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table className="nx-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-              <th style={th}>Investor</th>
-              <th style={th}>Scheme</th>
-              <th style={th}>Type</th>
-              <th style={th}>Due Date</th>
-              <th style={th}>Amount</th>
-              <th style={th}>Status</th>
-              <th style={th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={7} style={{ ...td, textAlign: 'center', color: 'var(--muted)' }}><Loader size="sm" /></td></tr>
-            ) : payouts.length === 0 ? (
-              <tr><td colSpan={7} className="club-empty-cell">
-                {narrowed ? 'No payouts match these filters.' : 'No payouts.'}
-              </td></tr>
-            ) : payouts.map((p) => (
-              <tr key={p.id}>
-                <td style={td}>{p.investor_name}</td>
-                <td style={td}>{p.scheme_name}</td>
-                <td style={td}>{TYPE_LABELS[p.payout_type] || p.payout_type}</td>
-                <td style={td}>{formatDMY(p.due_date)}</td>
-                <td style={td}>
-                  {fmtMoney(p.amount_due)}
-                  {p.status === 'paid' && p.paid_amount != null && Number(p.paid_amount) !== Number(p.amount_due) && (
-                    <div style={{ fontSize: 11, color: 'var(--warning)', marginTop: 2 }}>Paid {fmtMoney(p.paid_amount)}</div>
-                  )}
-                </td>
-                <td style={td}>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: p.status === 'paid' ? 'var(--success-soft)' : 'var(--warning-soft)', color: p.status === 'paid' ? 'var(--success)' : 'var(--warning-2)' }}>
-                    {p.status === 'paid' ? 'Paid' : 'Pending'}
-                  </span>
-                  {p.status === 'paid' && p.notes && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, fontStyle: 'italic' }}>"{p.notes}"</div>}
-                </td>
-                <td style={td}>
-                  {p.status === 'pending' && can(user, 'club.payout.mark_paid') && (
-                    <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => openMarkPaid(p)} style={{ padding: '5px 10px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Mark Paid</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {payingFor && (
-        <div className="nx-modal-backdrop" onClick={() => setPayingFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div className="nx-modal" onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: '100%', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
-            <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Mark Payout Paid</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                {payingFor.investor_name} · {TYPE_LABELS[payingFor.payout_type] || payingFor.payout_type} · Due {formatDMY(payingFor.due_date)}
-              </div>
-            </div>
-            <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={lbl}>Amount Paid (₹)</label>
-                <input className="nx-input" style={inp} type="number" min="0" step="0.01" value={payForm.amount}
-                  onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Scheduled: {fmtMoney(payingFor.amount_due)}</div>
-              </div>
-              <div>
-                <label style={lbl}>Remarks</label>
-                <textarea className="nx-input" style={{ ...inp, height: 'auto', padding: '10px 12px', resize: 'vertical' }} rows={3}
-                  value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
-                  placeholder="e.g. paid via NEFT, rounded to nearest ₹10…" />
-              </div>
-              {err && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{err}</div>}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setPayingFor(null)} style={{ padding: '9px 16px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button className="nx-btn nx-btn-md nx-btn-success" onClick={submitMarkPaid} disabled={saving} style={{ padding: '9px 16px', background: 'var(--success-solid)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
-                  {saving ? 'Saving…' : 'Mark Paid'}
-                </button>
-              </div>
-            </div>
-          </div>
+    <div className="nx-page ard">
+      <div className="ard-head">
+        <div>
+          <h1 className="nx-page-title">Payouts</h1>
+          <p className="nx-page-sub">Interest and principal owed to investors — who is due, what is late, and what has been paid · as of {formatDMY(today)}</p>
         </div>
+        <div className="ard-filters">
+          {schemes.length > 1 && (
+            <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
+              options={schemes.map((s) => ({ value: s.name, label: s.name }))} />
+          )}
+        </div>
+      </div>
+
+      {payouts === null ? <Loader label="Working out who is owed what…" /> : (
+        <>
+          <div className="col-kpis">
+            <DashKpi icon={AlarmClock} tone="bad" label="Overdue to pay" value={inrShort(sum(lists.overdue, 'overdueAmt'))} valueTitle={rupee(sum(lists.overdue, 'overdueAmt'))} sub={`${lists.overdue.length} investors waiting`} />
+            <DashKpi icon={CalendarClock} tone="warn" label={`Due in ${DUE_SOON_DAYS} days`} value={inrShort(sum(lists.upcoming, 'dueSoonAmt'))} valueTitle={rupee(sum(lists.upcoming, 'dueSoonAmt'))} sub={`${lists.upcoming.length} investors`} />
+            <DashKpi icon={Wallet} tone="info" label="All pending" value={inrShort(sum(lists.pending, 'pendingAmt'))} valueTitle={rupee(sum(lists.pending, 'pendingAmt'))} sub={`${lists.pending.length} investors`} />
+            <DashKpi icon={CircleCheckBig} tone="good" label="Paid out" value={inrShort(sum(lists.paid, 'paidAmt'))} valueTitle={rupee(sum(lists.paid, 'paidAmt'))} sub={`${lists.paid.length} investors`} />
+          </div>
+
+          <div className="nx-filters col-tabs">
+            {[['overdue', `Overdue · ${lists.overdue.length}`], ['upcoming', `Due in ${DUE_SOON_DAYS} days · ${lists.upcoming.length}`],
+              ['pending', `All pending · ${lists.pending.length}`], ['paid', `Paid · ${lists.paid.length}`]].map(([k, label]) => (
+              <button type="button" key={k} className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} onClick={() => setTab(k)}>{label}</button>
+            ))}
+          </div>
+
+          <div className="ar-filters">
+            <input className="nx-input nx-input-sm ar-search" placeholder="Search investor, phone or LOI no…" value={q} onChange={(e) => setQ(e.target.value)} />
+          </div>
+
+          {rows.length === 0 ? (
+            <div className="nx-card ar-card"><div className="ar-empty">
+              {tab === 'overdue' ? 'Nobody is waiting on a late payout.' : tab === 'upcoming' ? `Nothing falls due in the next ${DUE_SOON_DAYS} days.`
+                : tab === 'paid' ? 'No payouts have been made yet.' : 'No payouts pending.'}
+            </div></div>
+          ) : (
+            <div className="coll-grid">
+              {rows.map((r) => (
+                <article key={r.id} className={`nx-card coll-card${tab === 'overdue' && r.daysLate > 90 ? ' is-late' : ''}`}>
+                  <header className="coll-head">
+                    <div className="coll-who">
+                      <h3 title={r.name}>{r.name || '—'}</h3>
+                      <div className="coll-meta">
+                        <span className="coll-chip"><Layers size={12} /> {r.scheme}</span>
+                        {r.loi_no ? <span className="coll-chip"><FileText size={12} /> {r.loi_no}</span> : null}
+                        {r.phone ? <span className="coll-chip"><Phone size={12} /> {r.phone}</span> : null}
+                      </div>
+                    </div>
+                    {r.overdue.length
+                      ? <span className={`coll-age ${r.daysLate > 90 ? 'bad' : 'warn'}`}><b>{r.daysLate}</b><span>days late</span></span>
+                      : r.pending.length
+                        ? <span className="coll-age info"><b>{r.pending.length}</b><span>pending</span></span>
+                        : <span className="coll-age info"><b>{r.paid.length}</b><span>paid</span></span>}
+                  </header>
+
+                  <div className="coll-figs">
+                    <div className={`coll-fig${r.overdueAmt ? ' bad' : ''}`}>
+                      <span>Overdue</span><b title={rupee(r.overdueAmt)}>{r.overdueAmt ? rupee(r.overdueAmt) : '—'}</b>
+                      <small>{r.overdue.length ? `${r.overdue.length} payout${r.overdue.length === 1 ? '' : 's'} · since ${formatDMY(r.overdue[0].due_date)}` : 'Nothing late'}</small>
+                    </div>
+                    <div className="coll-fig">
+                      <span>Next payout</span><b>{r.next ? rupee(r.next.amount_due) : '—'}</b>
+                      <small>{r.next ? `${formatDMY(r.next.due_date)} · ${TYPE_LABELS[r.next.payout_type] || r.next.payout_type}` : 'None scheduled'}</small>
+                    </div>
+                    <div className="coll-fig">
+                      <span>Paid so far</span><b>{r.paidAmt ? rupee(r.paidAmt) : '—'}</b>
+                      <small>{r.paid.length ? `Last ${formatDMY(r.paid[0].paid_date)}` : 'Nothing paid yet'}</small>
+                    </div>
+                  </div>
+
+                  <footer className="coll-foot">
+                    <div className="coll-fu">
+                      <span className={`nx-status ${r.overdue.length ? 'bad' : r.pending.length ? 'ok' : 'off'}`}>
+                        {r.pending.length ? `${rupee(r.pendingAmt)} still to pay · ${r.pending.length} payout${r.pending.length === 1 ? '' : 's'}` : 'All paid'}
+                      </span>
+                    </div>
+                    <div className="coll-actions">
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setLedgerFor(r.id)}>Ledger</button>
+                      {canPay && r.pending.length > 0 && (
+                        <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setPaying(r)}><Wallet size={13} /> Pay</button>
+                      )}
+                    </div>
+                  </footer>
+                </article>
+              ))}
+            </div>
+          )}
+        </>
       )}
+
+      {paying && <PayModal row={paying} today={today} onClose={() => setPaying(null)} onDone={() => { setPaying(null); load(); }} />}
+      {ledgerFor && <LedgerModal investorId={ledgerFor} onClose={() => setLedgerFor(null)} />}
     </div>
+  );
+}
+
+// Settle any of one investor's pending payouts: the late ones are ticked to start
+// with, each amount can be adjusted (rounding, a part payment), one note for all.
+function PayModal({ row, today, onClose, onDone }) {
+  const [sel, setSel] = useState(() => Object.fromEntries(row.pending.map((p) => [p.id, p.due_date < today])));
+  const [amounts, setAmounts] = useState(() => Object.fromEntries(row.pending.map((p) => [p.id, String(Number(p.amount_due) || 0)])));
+  const [notes, setNotes] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const picked = row.pending.filter((p) => sel[p.id]);
+  const total = picked.reduce((t, p) => t + (Number(amounts[p.id]) || 0), 0);
+
+  async function pay(e) {
+    e.preventDefault();
+    if (!picked.length) { setErr('Tick at least one payout.'); return; }
+    setBusy(true); setErr('');
+    let done = 0;
+    for (const p of picked) {
+      const res = await apiFetch(CLUB1000_ENDPOINTS.payoutMarkPaid(p.id), {
+        method: 'POST', body: JSON.stringify({ amount: amounts[p.id], notes }),
+      }).catch(() => null);
+      if (!res || !res.ok) {
+        const d = res ? await res.json().catch(() => ({})) : {};
+        setErr(`${done} of ${picked.length} paid — ${errText(d, 'the next one could not be saved.')}`);
+        setBusy(false);
+        if (done) onDone();
+        return;
+      }
+      done += 1;
+    }
+    notify(`${done} payout${done === 1 ? '' : 's'} marked paid · ${rupee(total)}`, 'success');
+    onDone();
+  }
+
+  return (
+    <C1Modal title="Pay investor" sub={`${row.name} · ${row.scheme}${row.loi_no ? ` · ${row.loi_no}` : ''}`} onClose={onClose} onSubmit={pay}
+      footer={<>
+        <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy || !picked.length}>
+          {busy ? 'Saving…' : `Mark ${picked.length || ''} paid · ${rupee(total)}`}
+        </button>
+      </>}>
+      <C1Section title="Pending payouts">
+        <div className="c1p-pay-list">
+          {row.pending.map((p) => (
+            <label key={p.id} className={`c1p-pay-row${p.due_date < today ? ' late' : ''}`}>
+              <input type="checkbox" checked={!!sel[p.id]} onChange={(e) => setSel((s) => ({ ...s, [p.id]: e.target.checked }))} />
+              <span className="c1p-pay-what">
+                <b>{TYPE_LABELS[p.payout_type] || p.payout_type}</b>
+                <span className="c1p-pay-when">Due {formatDMY(p.due_date)}{p.due_date < today ? ' · late' : ''}</span>
+              </span>
+              <input className="nx-input" type="text" inputMode="decimal" value={amounts[p.id]}
+                onChange={(e) => setAmounts((a) => ({ ...a, [p.id]: e.target.value }))} disabled={!sel[p.id]} />
+            </label>
+          ))}
+        </div>
+        <div className="c1p-total"><span>To pay now</span><span>{rupee(total)}</span></div>
+      </C1Section>
+      <C1Section title="Payment">
+        <C1Field label="Notes" hint="Cheque / UTR no., bank, anything to remember">
+          <input className="nx-input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. NEFT UTR 1234…" />
+        </C1Field>
+      </C1Section>
+      <C1Error>{err}</C1Error>
+    </C1Modal>
   );
 }
