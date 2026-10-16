@@ -572,6 +572,11 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 .nx-unit-meta.green { color: var(--success); }
 .nx-unit-chip-plc { font-size: 10px; font-weight: 700; color: var(--warning); }
 .nx-unit-meta.plc { color: var(--peach-2); }  /* readable on the dark hover card in both themes */
+/* Who is on a unit (Sold by / Booked by / Client) — on the always-dark hover card. */
+.nx-unit-meta.who { color: rgba(255, 255, 255, 0.82); }
+.nx-unit-meta.client { color: #fff; font-weight: 700; }
+/* The same, on a grid chip (no drawn plan). */
+.nx-unit-chip-who { font-size: 10px; font-weight: 600; opacity: 0.8; }
 /* Status pill on a dark hero header (Edit User): solid so it reads on the blue. */
 .nx-hero-chip { font-size: 12px; font-weight: 800; padding: 5px 12px; border-radius: 20px; letter-spacing: .02em; white-space: nowrap; }
 .nx-hero-chip.on { background: var(--success-solid); color: var(--on-hero); box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--success-solid) 70%, transparent); }

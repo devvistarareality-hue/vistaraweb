@@ -54,6 +54,10 @@ const plotCfg = (plot) => (
   isHold(plot) ? STATUS.pending
     : plot.drafted_booking_id ? STATUS.drafted
       : (STATUS[plot.status] || STATUS.available));
+// How the salesperson's name is introduced: Sold by / Booked by (submitted, waiting
+// for approval — "Hold") / In progress by (still being worked on).
+const agentLabel = (plot) => (
+  plot.status === 'sold' ? 'Sold by' : isHold(plot) ? 'Booked by' : 'In progress by');
 // The filter chips and the count tiles key off this, not plot.status, so
 // "In Progress" means only what is still being worked on.
 const plotState = (plot) => (
@@ -813,11 +817,14 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                         Terrace {plot.terrace_area} sq.yd
                       </div>
                     )}
-                    {/* Who is on a booked unit — so the team can see it without opening the plot. */}
+                    {/* Who is on a booked unit, and for whom — so the team can see it
+                        without opening the plot. A submitted booking reads "Booked by";
+                        a unit still being worked on reads "In progress by". */}
                     {plot.agent_name && (
-                      <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 11, fontWeight: 600, marginTop: 3 }}>
-                        {plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}
-                      </div>
+                      <div className="nx-unit-meta who">{agentLabel(plot)} {plot.agent_name}</div>
+                    )}
+                    {plot.client_name && (
+                      <div className="nx-unit-meta client">Client: {plot.client_name}</div>
                     )}
                     {(plot.status === 'available' || plot.status === 'resale') && (
                       <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 5 }}>Click to view details →</div>
@@ -898,7 +905,8 @@ export function ClosureViewerContent({ backHref = '/sales/closure' }) {
                       </span>
                     )}
                     {(plot.terrace_area || '').trim() && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Terrace {plot.terrace_area} sq.yd</span>}
-                    {plot.agent_name && <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>{plot.status === 'hold' ? 'In progress by' : 'Sold by'} {plot.agent_name}</span>}
+                    {plot.agent_name && <span className="nx-unit-chip-who">{agentLabel(plot)} {plot.agent_name}</span>}
+                    {plot.client_name && <span className="nx-unit-chip-who">{plot.client_name}</span>}
                   </button>
                 );
               })}
