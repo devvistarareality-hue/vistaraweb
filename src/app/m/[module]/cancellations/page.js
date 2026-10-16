@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -28,7 +28,9 @@ const dmyTime = (iso) => (iso ? new Date(iso).toLocaleDateString('en-IN', { day:
 
 // Plot cancellations: raised from Collections or a ledger, approved by the project's
 // booking/Accounts approver, then refunded (from a bank) as the money is paid back.
-export default function ARCancellationsPage({ params }) {
+export default function ARCancellationsPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const cq = companyId ? `?company_id=${companyId}` : '';

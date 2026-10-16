@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { use, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { can } from '../../../../lib/moduleAccess';
 import Link from 'next/link';
@@ -19,7 +19,10 @@ const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 // Import receipts in bulk: download the project's template (one row per approved
 // plot), fill it in, upload it. A preview always comes first, and importing the
 // same file twice adds nothing. Single payments are recorded from the ledger.
-export default function ARImportPage({ params, searchParams }) {
+export default function ARImportPage({ params: paramsPromise, searchParams: searchParamsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
+  const searchParams = use(searchParamsPromise);
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const user = useSelector((s) => s.auth.user);

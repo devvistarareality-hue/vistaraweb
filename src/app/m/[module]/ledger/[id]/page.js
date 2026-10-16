@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { can } from '../../../../../lib/moduleAccess';
 import Link from 'next/link';
@@ -21,7 +21,9 @@ const MODE_LABEL = Object.fromEntries(MODES.map((m) => [m.value, m.label]));
 // Account Ledger — the old workbook's "Ledger Format" for one booking, plus the
 // Payment Received Form. Receipts are the only thing typed in; everything else
 // (allocation, status, interest, ageing) comes back computed from the server.
-export default function ARLedgerPage({ params }) {
+export default function ARLedgerPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   if (params.module !== 'ar') notFound();
   const id = params.id;
   const companyId = useSelector((s) => s.adminFilter?.companyId);

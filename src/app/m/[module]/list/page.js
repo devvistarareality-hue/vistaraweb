@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
 import { Plus, Search, X } from 'lucide-react';
@@ -14,7 +14,9 @@ const PAGE_STEP = 50;
 
 // The filterable Task list — same filter-bar shape as the Sales Leads/Follow-Ups
 // lists (search, then a row of dropdowns, then a Clear-all button).
-export default function TaskListPage({ params }) {
+export default function TaskListPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   if (params.module !== 'execution') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
 

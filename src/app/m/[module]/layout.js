@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -37,7 +37,9 @@ const IconCancel = () => <SvgIcon><circle cx="12" cy="12" r="9"/><path d="M5.6 5
 const IconBank  = () => <SvgIcon><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></SvgIcon>;
 const IconBack  = () => <SvgIcon><polyline points="15 18 9 12 15 6"/></SvgIcon>;
 
-export default function ModuleLayout({ children, params }) {
+export default function ModuleLayout({ children, params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   const viewingAs = useImpersonating();   // hide Sign Out while viewing as someone
   const slug = params.module;
   const meta = MODULE_META[slug];

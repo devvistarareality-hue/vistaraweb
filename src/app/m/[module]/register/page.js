@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter, notFound } from 'next/navigation';
 import { AR_ENDPOINTS } from '../../../../constants/api';
@@ -27,7 +27,10 @@ const initials = (name) => {
 };
 
 // AR Register — the old workbook's "Plot Master": one row per approved booking.
-export default function ARRegisterPage({ params, searchParams }) {
+export default function ARRegisterPage({ params: paramsPromise, searchParams: searchParamsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
+  const searchParams = use(searchParamsPromise);
   if (params.module !== 'ar') notFound();
   const router = useRouter();
   const companyId = useSelector((s) => s.adminFilter?.companyId);

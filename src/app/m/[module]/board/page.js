@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
 import { Plus } from 'lucide-react';
@@ -11,7 +11,9 @@ import { STATUSES, PRIORITIES, PRIORITY_LABEL, fmtDate, isOverdue, companyParam 
 
 // Kanban board: one column per status, native HTML5 drag-and-drop to move a
 // task between columns (no new dependency — see the plan's note on this).
-export default function TaskBoardPage({ params }) {
+export default function TaskBoardPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   if (params.module !== 'execution') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
 

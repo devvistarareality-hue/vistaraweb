@@ -1,4 +1,5 @@
 'use client';
+import { use } from 'react';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
@@ -6,7 +7,9 @@ import BookingPageWrapper from '../../../sales/booking/page';
 
 // The booking form inside the Channel Partner module — the same form as Sales
 // (sales/booking), so booking a plot from the CP unit map keeps the CP menu.
-export default function ChannelPartnerBookingFormPage({ params }) {
+export default function ChannelPartnerBookingFormPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   const user = useSelector((s) => s.auth.user);
   if (params.module !== 'cp') notFound();
   if (!user) return null;

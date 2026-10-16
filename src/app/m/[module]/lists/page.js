@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
 import { Plus, Trash2, Archive, ArchiveRestore } from 'lucide-react';
@@ -11,7 +11,9 @@ import { errText } from '../../../../lib/apiError';
 
 // Manage the containers tasks live in — create, rename, archive/restore, delete
 // (delete is blocked server-side while a list still has tasks in it).
-export default function TaskListsPage({ params }) {
+export default function TaskListsPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   if (params.module !== 'execution') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const [lists, setLists] = useState(null);

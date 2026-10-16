@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { can } from '../../../../lib/moduleAccess';
 import { notFound } from 'next/navigation';
@@ -22,7 +22,10 @@ const windowLabel = (w) => (w === 0 ? 'Today' : `${w} days`);
 
 // Collections: who has not paid (overdue), what falls due next (upcoming), and
 // the follow-ups chasing both. Each row opens its follow-ups; the ledger is a click away.
-export default function ARCollectionsPage({ params, searchParams }) {
+export default function ARCollectionsPage({ params: paramsPromise, searchParams: searchParamsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
+  const searchParams = use(searchParamsPromise);
   if (params.module !== 'ar') notFound();
   const companyId = useSelector((s) => s.adminFilter?.companyId);
   const me = useSelector((s) => s.auth.user?.id);

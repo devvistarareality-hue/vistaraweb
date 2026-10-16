@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -13,7 +13,9 @@ import { errText } from '../../../../lib/apiError';
 // Bank Master — the company's own bank accounts. A Loan payment recorded in a ledger
 // names one of these, and its balance is opening balance + those payments (worked
 // out by the server every time, so editing or deleting a payment moves it too).
-export default function ARBanksPage({ params }) {
+export default function ARBanksPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   // Bank Master is shared by the Accounts & Finance department: Receivables now,
   // Payables next — so it opens under either module.
   if (params.module !== 'ar' && params.module !== 'accounts') notFound();

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -33,7 +33,9 @@ const ISSUE_TEXT = {
 // the dashboards built for each role level, and Designation Master → Permissions
 // pins the one a designation opens. AR has its receivables dashboard; the other
 // modules share one dashboard for every role until their own is written.
-export default function ModuleDashboardPage({ params }) {
+export default function ModuleDashboardPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   const slug = params.module;
   const user = useSelector((s) => s.auth.user);
   const isAdmin = user?.role === 'Admin' || user?.is_staff;

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { canAccessChannelPartner } from '../../../../lib/moduleAccess';
 import { BookingsContent, ExportBookings } from '../../../sales/bookings/page';
@@ -680,7 +680,10 @@ function AccountsApprovals({ initialTab }) {
 // Channel Partner's Approvals is the same Drafts/Pending/Approved list, filtered
 // to partner-sourced bookings, with the CP approver panel. Accounts & Finance
 // keeps its own review queue above.
-export default function ModuleApprovalsPage({ params, searchParams }) {
+export default function ModuleApprovalsPage({ params: paramsPromise, searchParams: searchParamsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
+  const searchParams = use(searchParamsPromise);
   if (params.module === 'cp') return <ChannelPartnerApprovals initialTab={searchParams?.tab} />;
   return <AccountsApprovals initialTab={searchParams?.tab} />;
 }

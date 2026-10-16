@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { notFound } from 'next/navigation';
@@ -36,7 +36,9 @@ const dayBlock = (isoDate) => {
 // A bank's statement, passbook style: opening (or brought-forward) balance, then every
 // Loan payment received into it in date order with a running balance. The closing
 // figure is the same balance Bank Master shows.
-export default function ARBankStatementPage({ params }) {
+export default function ARBankStatementPage({ params: paramsPromise }) {
+  // Next 15 hands route params over as a Promise — unwrap it once here.
+  const params = use(paramsPromise);
   // Bank Master is shared by the Accounts & Finance department: Receivables now,
   // Payables next — so it opens under either module.
   if (params.module !== 'ar' && params.module !== 'accounts') notFound();
