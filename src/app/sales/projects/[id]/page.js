@@ -1112,10 +1112,22 @@ function rateMasterFields(formulaSet) {
     flags.hasLsdRate && { key: 'lsd_rate', label: 'Land Sale Deed Rate', unit: flags.areaUnit },
     flags.hasDevAgreementInfo && { key: 'dev_agreement_rate', label: 'Development Agreement Rate', unit: flags.areaUnit },
     flags.hasConstAgreementRate && { key: 'const_agreement_rate', label: 'Construction Agreement Rate', unit: flags.areaUnit },
-    { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
-    // Months and the legal charge prefill the booking form's fields of the same name.
-    // Industrial charges maintenance as Plot Area × Rate, with no months.
-    flags.hasConstructionFields && { key: 'maint_months', label: 'Maintenance Months', suffix: 'months' },
+    // Maintenance in the booking form's order: each rate beside its months. Kalrav —
+    // Deposit Rate, Deposit Months, Advance Rate, Advance Months (Area × Rate × Months);
+    // Industrial — Deposit Rate, Advance Rate (Area × Rate, no months); others — one
+    // Rate (and Months where the set has construction fields).
+    ...(formulaSet === 'kalrav' ? [
+      { key: 'maint_rate', label: 'Maintenance Deposit Rate', unit: flags.areaUnit },
+      { key: 'maint_months', label: 'Maintenance Deposit Months', suffix: 'months' },
+      { key: 'maint_advance_rate', label: 'Maintenance Advance Rate', unit: flags.areaUnit },
+      { key: 'maint_advance_months', label: 'Maintenance Advance Months', suffix: 'months' },
+    ] : formulaSet === 'industrial' ? [
+      { key: 'maint_rate', label: 'Maintenance Deposit Rate', unit: flags.areaUnit },
+      { key: 'maint_advance_rate', label: 'Maintenance Advance Rate', unit: flags.areaUnit },
+    ] : [
+      { key: 'maint_rate', label: 'Maintenance Rate', unit: flags.areaUnit },
+      flags.hasConstructionFields && { key: 'maint_months', label: 'Maintenance Months', suffix: 'months' },
+    ]),
     { key: 'legal_charges', label: 'Legal Documentation charge', suffix: '₹' },
   ].filter(Boolean);
 }

@@ -93,7 +93,11 @@ export function computeFormulas(inp = {}) {
   const discount   = num(inp.discount);
   const legal      = num(inp.legalCharges);
   const maintRate  = num(inp.maintRate);
+  // Industrial only: the Advance's own rate (maintRate is then the Deposit's).
+  const maintAdvanceRate = num(inp.maintAdvanceRate);
   const maintMonths = num(inp.maintMonths);
+  // Kalrav only: the Advance's own months (maintMonths is then the Deposit's).
+  const maintAdvanceMonths = num(inp.maintAdvanceMonths);
   const extraWorkAmt = num(inp.extraWorkAmt);
   const gender     = inp.gender || '';
   const lsd        = num(inp.landSaleDeed);
@@ -150,14 +154,18 @@ export function computeFormulas(inp = {}) {
     gst          = saleDeed * 0.05;
     maintDeposit = maintUnit; maintAdvance = maintUnit;
   } else if (isIndustrial) {
-    // Industrial now uses the sale-deed % split: Unit Price = % of Plot Basic.
-    // Tax is UNCHANGED — still on the Sale Deed value (SD Rate × Area) & Dev Agreement.
+    // Industrial Unit Price = Sale Deed value (SD Rate × Area) + Dev Agreement (Dev
+    // Agreement Rate × Area), and the Sale Deed % follows from it: Unit Price ÷ Plot
+    // Basic, i.e. (SD Rate + Dev Rate) ÷ Land Rate (owner, 16 Oct 2026 — it was a typed
+    // %, 60 by default). Tax is UNCHANGED — still on the Sale Deed value & Dev Agreement.
     const saleDeedTax = saleDeedRate * area;
-    saleDeed     = saleDeedAmount > 0 ? saleDeedAmount : (saleDeedPct / 100) * plotBasic;
+    saleDeed     = saleDeedTax + devAgreement;
     stampDuty    = saleDeedTax * 0.049;
     regFees      = gender === 'Female' ? pageFee : (saleDeedTax * 0.01 + pageFee);
     gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
-    maintDeposit = maintUnit; maintAdvance = maintUnit;
+    // Two rates (owner, 16 Oct 2026): Deposit = Plot Area × Deposit Rate, Advance =
+    // Plot Area × Advance Rate. They were one rate charged twice.
+    maintDeposit = area * maintRate; maintAdvance = area * maintAdvanceRate;
   } else { // kalrav
     // Kalrav Unit Price = Land Sale Deed + Development Agreement + Construction
     // Agreement (owner, 14 Oct 2026). The Sale Deed % is derived from this.
@@ -168,9 +176,6 @@ export function computeFormulas(inp = {}) {
       stampDuty = saleDeed * 0.049;
       regFees   = gender === 'Female' ? pageFee : (saleDeed * 0.01 + pageFee);
       gst       = saleDeed * 0.05;
-      // Kalrav 3 splits the Maintenance Amount into a Deposit and an Advance, each half of
-      // the amount. This is only a breakdown — the total maintenance (maint) is unchanged.
-      maintDeposit = maintUnit / 2; maintAdvance = maintUnit / 2;
     } else {
       // All other Kalrav-set projects: tax is UNCHANGED — still on the Land Sale Deed
       // & Construction Agreement respectively.
@@ -180,11 +185,20 @@ export function computeFormulas(inp = {}) {
       // Agreement too (it joined the Unit Price that day).
       gst       = (constAgr + kalDev) * 0.18;
     }
+    // Every Kalrav project (owner, 16 Oct 2026): a Deposit and an Advance, each with its
+    // own rate and months — Plot Area × Rate × Months. It was one rate × months, which
+    // Kalrav 3 then split half-and-half.
+    // (This branch also answers for sets it doesn't name, e.g. pratishtha — they keep
+    // their single Maintenance line.)
+    if (isKalrav) {
+      maintDeposit = area * maintRate * maintMonths;
+      maintAdvance = area * maintAdvanceRate * maintAdvanceMonths;
+    }
   }
 
-  // Maintenance Amount = Deposit + Advance where both exist (Ankhol/Industrial);
-  // otherwise the standalone unit value (Kalrav has no Deposit/Advance fields).
-  const maint = (isAnkhol || isIndustrial) ? (maintDeposit + maintAdvance) : maintUnit;
+  // Maintenance Amount = Deposit + Advance where both exist (Ankhol/Industrial/Kalrav);
+  // otherwise the standalone unit value.
+  const maint = (isAnkhol || isIndustrial || isKalrav) ? (maintDeposit + maintAdvance) : maintUnit;
 
   if (applyRegFee === 'No') regFees = pageFee; // 1% removed but page fee stays independent
   // All three sets can toggle stamp duty / GST off.
@@ -208,8 +222,8 @@ export function computeFormulas(inp = {}) {
   const nonSaleDeed = hasSaleDeedSplit ? (saleDeedBase - saleDeed) : 0;
   const nonSaleDeedDoc = hasSaleDeedSplit ? nonSaleDeed / 100 : 0;
   const docTotal = hasSaleDeedSplit ? saleDeed + nonSaleDeedDoc : 0;
-  // Kalrav's Unit Price is entered (LSD + Dev + Const Agreement), so its % is derived for display.
-  const effSaleDeedPct = isKalrav ? (saleDeedBase > 0 ? (saleDeed / saleDeedBase * 100) : 0) : saleDeedPct;
+  // Kalrav's and Industrial's Unit Price is built from its parts, so their % is derived.
+  const effSaleDeedPct = (isKalrav || isIndustrial) ? (saleDeedBase > 0 ? (saleDeed / saleDeedBase * 100) : 0) : saleDeedPct;
 
   // Final Amount
   const finalAmt = isIndustrial
@@ -222,7 +236,7 @@ export function computeFormulas(inp = {}) {
     formulaSet, isTundav, isKalrav3, area, landRate, devRate, constArea, constRate, discount,
     plcRate, lsd, constAgr, gender, plotBasic, plotDev, constAmt, saleDeed,
     saleDeedRate, saleDeedPct: effSaleDeedPct, devAgreementRate, devAgreement, stampDuty, regFees, gst,
-    maint, maintRate, maintMonths, maintDeposit, maintAdvance, legal, premiumLocation, plcCorner, plcClubhouse,
+    maint, maintRate, maintAdvanceRate, maintMonths, maintAdvanceMonths, maintDeposit, maintAdvance, legal, premiumLocation, plcCorner, plcClubhouse,
     applyRegFee, applyStampDuty, applyGst, applyPageFee, totalExtra, extraWorkAmt,
     nonSaleDeed, nonSaleDeedDoc, docTotal,
     extraWorkDesc: inp.extraWorkDesc || '', finalAmt,
