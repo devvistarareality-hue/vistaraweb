@@ -191,6 +191,15 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
     setTab('');
     setCardDetails((o) => ({ ...o, [focusId]: true }));
   }, [focusId]);
+  // A Channel Partner booking is on the CP module's Approvals, a Sales one on Sales's —
+  // and a notification does not say which. Not found here → look on the other list,
+  // once (?looked=1 stops it bouncing back when it is on neither).
+  useEffect(() => {
+    if (!focusId || loading || tab !== '' || rows.some((b) => String(b.id) === focusId)) return;
+    if (new URLSearchParams(window.location.search).get('looked')) return;
+    router.replace(cpMode ? `/sales/bookings?booking=${focusId}&looked=1` : `/m/cp/approvals?booking=${focusId}&looked=1`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, loading, tab, rows]);
   const [revs, setRevs] = useState({});      // booking id → array of versions
   const [revOpen, setRevOpen] = useState({});
   const [revDetails, setRevDetails] = useState({});
