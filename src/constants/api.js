@@ -98,6 +98,8 @@ export const SALES_ENDPOINTS = {
   lead: (id)       => `${BASE_URL}/api/sales/leads/${id}/`,
   get projects()   { return `${BASE_URL}/api/sales/projects/`; },
   project: (id)    => `${BASE_URL}/api/sales/projects/${id}/`,
+  // One approver at a time, serialized server-side — see ProjectToggleApproverView.
+  projectToggleApprover: (id) => `${BASE_URL}/api/sales/projects/${id}/toggle-approver/`,
   get sources()    { return `${BASE_URL}/api/sales/sources/`; },
   get followUps()  { return `${BASE_URL}/api/sales/follow-ups/`; },
   followUp: (id)   => `${BASE_URL}/api/sales/follow-ups/${id}/`,

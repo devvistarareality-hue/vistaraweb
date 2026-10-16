@@ -14,13 +14,18 @@ const LABEL = {
   stm: 'STM Assigned', warm_transfer: 'Transferred to STM', site_visit: 'Site Visit', closure: 'Closure',
   follow_up: 'Follow-up Scheduled', follow_up_done: 'Follow-up Done', follow_up_missed: 'Follow-up Missed',
   re_enquiry: 'Enquired Again',
+  transfer_requested: 'Transfer Requested', transfer_approved: 'Transfer Approved',
+  transfer_rejected: 'Transfer Rejected', transfer_cancelled: 'Transfer Withdrawn',
 };
 const TONE = {
   status: 'accent', telecaller_status: 'success', stm_status: 'warn', telecaller_remarks: 'success',
   stm_remarks: 'warn', telecaller: 'accent', stm: 'success', warm_transfer: 'danger', site_visit: 'warn',
   closure: 'success', follow_up: 'accent', follow_up_done: 'success', follow_up_missed: 'danger', re_enquiry: 'warn',
+  transfer_requested: 'accent', transfer_approved: 'success',
+  transfer_rejected: 'danger', transfer_cancelled: 'warn',
 };
-const icon = (f) => (f === 'warm_transfer' ? 'flame' : f === 'telecaller' ? 'user' : f === 'stm' ? 'building'
+const icon = (f) => (f.startsWith('transfer_') ? 'users'
+  : f === 'warm_transfer' ? 'flame' : f === 'telecaller' ? 'user' : f === 'stm' ? 'building'
   : f === 'site_visit' ? 'home' : f === 'closure' ? 'check-circle' : f.startsWith('follow_up') ? 'calendar'
     : f.includes('remarks') ? 'note' : f.includes('status') ? 'refresh' : 'pencil');
 const fmt = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', {

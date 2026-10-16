@@ -243,16 +243,25 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // `field` picks which approver list to edit — 'booking_approvers' (regular) or
   // 'cp_booking_approvers' (Channel-Partner-sourced bookings only — see backend
   // _can_approve_cp_project). Same PATCH endpoint, just a different JSON key.
+  // Sends the ONE id being toggled, never the computed array. PATCHing the
+  // whole list raced: tick two names a moment apart and both requests compute
+  // their array from the same stale copy, so the one that lands last overwrites
+  // the other — a click meaning "remove 5" writing [] over the [5, 3] just
+  // saved, with no error either side. That is not hypothetical, it emptied
+  // every Sales and CP list on this company. The server now serializes toggles
+  // for a project on its row lock and returns the authoritative list.
   async function toggleApprover(projId, mgrId, field = 'booking_approvers') {
     let prev = [];
-    let next = [];
     setProjects((ps) => ps.map((p) => {
       if (p.id !== projId) return p;
       prev = p[field] || [];
-      next = prev.includes(mgrId) ? prev.filter((x) => x !== mgrId) : [...prev, mgrId];
+      const next = prev.includes(mgrId) ? prev.filter((x) => x !== mgrId) : [...prev, mgrId];
       return { ...p, [field]: next };
     }));
-    const r = await fetch(SALES_ENDPOINTS.project(projId) + cq('?'), { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [field]: next }) }).catch(() => null);
+    const r = await fetch(SALES_ENDPOINTS.projectToggleApprover(projId) + cq('?'), {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ user_id: mgrId, field }),
+    }).catch(() => null);
     if (!r || !r.ok) {
       // Undo the optimistic tick and say so — a save that never reached the server
       // must not sit there looking checked, only to silently revert on the next
@@ -260,6 +269,12 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
       setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: prev } : p)));
       notify('Could not save this approver — please try again.');
       return;
+    }
+    // Take the server's list rather than the optimistic one: with several
+    // toggles in flight it is the only copy that reflects all of them.
+    const saved = await r.json().catch(() => null);
+    if (saved && Array.isArray(saved[field])) {
+      setProjects((ps) => ps.map((p) => (p.id === projId ? { ...p, [field]: saved[field] } : p)));
     }
     setSavedCfg("Saved"); setTimeout(() => setSavedCfg(''), 1500);
   }
