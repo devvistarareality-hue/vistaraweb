@@ -150,10 +150,12 @@ export function computeFormulas(inp = {}) {
     gst          = saleDeed * 0.05;
     maintDeposit = maintUnit; maintAdvance = maintUnit;
   } else if (isIndustrial) {
-    // Industrial now uses the sale-deed % split: Unit Price = % of Plot Basic.
-    // Tax is UNCHANGED — still on the Sale Deed value (SD Rate × Area) & Dev Agreement.
+    // Industrial Unit Price = Sale Deed value (SD Rate × Area) + Dev Agreement (Dev
+    // Agreement Rate × Area), and the Sale Deed % follows from it: Unit Price ÷ Plot
+    // Basic, i.e. (SD Rate + Dev Rate) ÷ Land Rate (owner, 16 Oct 2026 — it was a typed
+    // %, 60 by default). Tax is UNCHANGED — still on the Sale Deed value & Dev Agreement.
     const saleDeedTax = saleDeedRate * area;
-    saleDeed     = saleDeedAmount > 0 ? saleDeedAmount : (saleDeedPct / 100) * plotBasic;
+    saleDeed     = saleDeedTax + devAgreement;
     stampDuty    = saleDeedTax * 0.049;
     regFees      = gender === 'Female' ? pageFee : (saleDeedTax * 0.01 + pageFee);
     gst          = isTundav ? (saleDeedTax * 0.67 * 0.18) : (devAgreement * 0.18);
@@ -208,8 +210,8 @@ export function computeFormulas(inp = {}) {
   const nonSaleDeed = hasSaleDeedSplit ? (saleDeedBase - saleDeed) : 0;
   const nonSaleDeedDoc = hasSaleDeedSplit ? nonSaleDeed / 100 : 0;
   const docTotal = hasSaleDeedSplit ? saleDeed + nonSaleDeedDoc : 0;
-  // Kalrav's Unit Price is entered (LSD + Dev + Const Agreement), so its % is derived for display.
-  const effSaleDeedPct = isKalrav ? (saleDeedBase > 0 ? (saleDeed / saleDeedBase * 100) : 0) : saleDeedPct;
+  // Kalrav's and Industrial's Unit Price is built from its parts, so their % is derived.
+  const effSaleDeedPct = (isKalrav || isIndustrial) ? (saleDeedBase > 0 ? (saleDeed / saleDeedBase * 100) : 0) : saleDeedPct;
 
   // Final Amount
   const finalAmt = isIndustrial

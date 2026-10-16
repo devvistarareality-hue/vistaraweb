@@ -952,8 +952,12 @@ function BookingPage() {
       dev_agreement_rate: Math.round((Number(f.dev_agreement_rate) || 0) * 100) / 100,
       lsd_rate: rateOf(f.land_sale_deed, Number(f.area) || 0) || 0,
       const_agreement_rate: rateOf(f.const_agreement, Number(f.const_area) || 0) || 0,
-      sale_deed_pct: f.sale_deed_pct === '' || f.sale_deed_pct == null ? 60 : f.sale_deed_pct,
-      sale_deed_amount: f.sale_deed_amount || 0,
+      // Kalrav and Industrial work the % out from their parts — save that, not the
+      // form's untouched default.
+      sale_deed_pct: (formulaSet === 'kalrav' || formulaSet === 'industrial')
+        ? Math.round((v.saleDeedPct || 0) * 100) / 100
+        : (f.sale_deed_pct === '' || f.sale_deed_pct == null ? 60 : f.sale_deed_pct),
+      sale_deed_amount: formulaSet === 'industrial' ? 0 : (f.sale_deed_amount || 0),
       maint_rate: f.maint_rate || 0, maint_months: f.maint_months || 0,
       plot_basic: Math.round(v.plotBasic), plot_dev: Math.round(v.plotDev), const_amt: Math.round(v.constAmt),
       sale_deed: Math.round(v.saleDeed), dev_agreement: Math.round(v.devAgreement),
@@ -1364,7 +1368,17 @@ function BookingPage() {
           </Row>
         </>}
         </div>
-        {hasSaleDeedSplit && formulaSet !== 'kalrav' && <>
+        {formulaSet === 'industrial' && <>
+          {/* Industrial: Unit Price = (Sale Deed Rate + Dev Agreement Rate) × Area, and
+              Sale Deed % = Unit Price ÷ Plot Basic. Both are results — change a rate above. */}
+          <Row><L>Sale Deed %</L>
+            <In type="number" value={v.saleDeedPct ? v.saleDeedPct.toFixed(2) : '0'} readOnly />
+          </Row>
+          <Row><L>Unit Price (₹)</L>
+            <In type="number" value={Math.round(v.saleDeed) || 0} readOnly />
+          </Row>
+        </>}
+        {hasSaleDeedSplit && formulaSet !== 'kalrav' && formulaSet !== 'industrial' && <>
           {/* Editing the % clears the exact Unit Price override so the % drives again. */}
           <Row><L>Sale Deed %</L><In type="number" value={f.sale_deed_pct} onChange={(e) => setF((s) => ({ ...s, sale_deed_pct: e.target.value, sale_deed_amount: '' }))} /></Row>
           <Row>
