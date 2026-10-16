@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import Loader from '../../../components/Loader';
+import MultiSelect from '../../../components/MultiSelect';
 
 const TEAL = 'var(--success)';
 
@@ -41,6 +42,8 @@ export default function Club1000FollowUpsPage() {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState('today');
+  // Scheme filter — the lead's scheme, as on the other Club 1000 screens.
+  const [schemeSel, setSchemeSel] = useState([]);
 
   // Completion modal: capture the lead's new status + remarks, and optionally
   // schedule the next follow-up — mirrors sales' Follow-Ups completion flow,
@@ -108,8 +111,10 @@ export default function Club1000FollowUpsPage() {
   }
 
   const now = new Date();
+  const schemeOptions = [...new Set(items.map((fu) => fu.lead_scheme_name).filter(Boolean))].sort();
   const visible = items.filter((fu) => {
     const at = new Date(fu.scheduled_at);
+    if (schemeSel.length && !schemeSel.includes(fu.lead_scheme_name)) return false;
     if (filter === 'all')     return true;
     if (filter === 'pending') return fu.status === 'pending';
     if (filter === 'today')   return fu.status === 'pending' && at >= startOfToday() && at <= endOfToday();
@@ -123,6 +128,12 @@ export default function Club1000FollowUpsPage() {
       <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 18px' }}>
         {visible.length} item{visible.length === 1 ? '' : 's'} · {user?.name || ''}
       </p>
+      {schemeOptions.length > 1 && (
+        <div className="c1-fu-filters">
+          <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
+            options={schemeOptions.map((n) => ({ value: n, label: n }))} />
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--surface-3)', marginBottom: 20, overflowX: 'auto' }}>
         {TABS.map((t) => {

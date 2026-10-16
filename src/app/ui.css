@@ -3104,3 +3104,15 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .c1a-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .c1a-note { font-size: 11px; color: var(--faint); align-self: center; }
 .c1a-loading { padding: 28px 0; }
+
+/* Club 1000 dashboard: Falling due columns in a half-width card (as on AR), and the
+   Payouts card's two money pairs, each tile a link to its list. */
+.ard-cols.club-due { height: 214px; }
+.club-ref-pair { margin-top: 10px; }
+a.ard-money { display: block; text-decoration: none; color: inherit; transition: border-color .14s, background .14s; }
+a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
+.c1-fu-filters { display: flex; gap: 10px; margin-bottom: 14px; }
+/* Club 1000 investor card actions that need a decision (Renew, Payout, Redeem). */
+.c1-warn-btn { background: var(--warning-soft) !important; color: var(--warning-2) !important; border: 1px solid transparent; }
+.c1-warn-btn:not(:disabled):hover { border-color: var(--warning-2); }
+.club-inv-filters + .c1a-total, .club-inv-filters ~ .c1a-total { margin-top: 18px; }

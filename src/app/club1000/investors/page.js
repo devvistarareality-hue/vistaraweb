@@ -26,11 +26,6 @@ const INVESTOR_STATUSES = [
   { value: 'active', label: 'Active' }, { value: 'matured', label: 'Matured' },
   { value: 'redeemed', label: 'Redeemed' }, { value: 'premature_redeemed', label: 'Premature Redeemed' },
 ];
-const TEAL = 'var(--success)';
-const PURPLE = 'var(--accent)';
-const AMBER = 'var(--warning)';
-const th = { padding: '10px 16px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 };
-const td = { padding: '12px 16px', borderTop: '1px solid var(--surface-2)', color: 'var(--text)' };
 
 const STATUS_COLORS = {
   active: { bg: 'var(--success-soft)', fg: 'var(--success)' },
@@ -48,6 +43,7 @@ export default function InvestorsPage() {
   const user = useSelector((s) => s.auth.user);
   const manager = isClub1000Manager(user);
   const [investors, setInvestors] = useState([]);
+  const [openInvGroup, setOpenInvGroup] = useState({});
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -175,6 +171,13 @@ export default function InvestorsPage() {
     load();
   }
 
+  // Scheme groups and the total, as on Approvals (and Sales' approvals).
+  const invGroups = {};
+  investors.forEach((i) => { const k = i.scheme_name || '—'; (invGroups[k] = invGroups[k] || []).push(i); });
+  const invGroupNames = Object.keys(invGroups).sort();
+  const invTotal = investors.reduce((t, i) => t + (Number(i.amount_invested) || 0), 0);
+  const isInvOpen = (g) => (openInvGroup[g] === undefined ? true : openInvGroup[g]);
+
   return (
     <div style={{ padding: '28px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
@@ -184,11 +187,11 @@ export default function InvestorsPage() {
               investors across Club 1000" above eight filtered rows reads as the
               whole book, which is how a working filter looks broken. */}
           <p className="club-inv-sub">
-            {narrowed
-              ? `${investors.length} investor${investors.length === 1 ? '' : 's'}`
+            {loading ? (manager ? 'All approved investors across Club 1000' : 'Your approved investors')
+              : `${investors.length} investor${investors.length === 1 ? '' : 's'}`
                 + (bucket === 'due_for_renewal' ? ' due for renewal'
-                  : bucket === 'maturing_soon' ? ' maturing in 30 days' : ' matching')
-              : (manager ? 'All approved investors across Club 1000' : 'Your approved investors')}
+                  : bucket === 'maturing_soon' ? ' maturing in 30 days'
+                  : narrowed ? ' matching' : (manager ? ' · all approved, across Club 1000' : ' · your approved investors'))}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -240,77 +243,68 @@ export default function InvestorsPage() {
         )}
       </div>
 
-      <div className="nx-card" style={{ marginTop: 18, background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--surface-3)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table className="nx-table club-inv-tbl">
-          <thead>
-            <tr style={{ background: 'var(--surface-2)', textAlign: 'left' }}>
-              <th style={th}>Name</th>
-              <th style={th}>Mobile</th>
-              <th style={th}>Scheme</th>
-              <th style={th}>Reference</th>
-              <th style={th}>Amount</th>
-              <th style={th}>Return %</th>
-              <th style={th}>Payout</th>
-              <th style={th}>Invested</th>
-              <th style={th}>Matures</th>
-              <th style={th}>Documents</th>
-              <th style={th}>Status</th>
-              {manager && <th style={th}>Added By</th>}
-              <th style={th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={13} className="club-empty-cell"><Loader size="sm" /></td></tr>
-            ) : investors.length === 0 ? (
-              <tr><td colSpan={13} className="club-empty-cell">{search ? 'No investors match your search.' : 'No investors yet.'}</td></tr>
-            ) : investors.map((inv) => (
-              <tr key={inv.id}>
-                <td style={td}>
-                  {inv.name}
-                  {inv.revision_no > 0 && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: PURPLE, background: 'var(--accent-soft)', padding: '2px 7px', borderRadius: 20 }}>R{inv.revision_no}</span>}
-                  {inv.is_matured && <span className="nx-badge" style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 7px', borderRadius: 20 }}>MATURED</span>}
-                </td>
-                <td style={td}>{inv.phone || '—'}</td>
-                <td style={td}>{inv.scheme_name}</td>
-                <td style={td}>{inv.reference_name ? `${inv.reference_name}${inv.reference_phone ? ` — ${inv.reference_phone}` : ''}` : '—'}</td>
-                <td style={td}>{fmtMoney(inv.amount_invested)}</td>
-                <td style={td}>{inv.total_return_pct}%</td>
-                <td style={td}>{inv.interest_payout === 'monthly' ? 'Monthly' : inv.interest_payout === 'quarterly' ? 'Quarterly' : 'Maturity'}</td>
-                <td style={td}>{formatDMY(inv.investment_date)}</td>
-                <td style={td}>{formatDMY(inv.maturity_date)}</td>
-                <td style={td}>
-                  <div className="club-inv-docs">
-                    {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-ghost club-inv-doc" onClick={() => openLoi(inv.id)}>View LOI</button>}
-                    {inv.document_url && <a className="club-inv-doc" href={inv.document_url} target="_blank" rel="noreferrer">KYC</a>}
-                    {!inv.loi_document_url && !inv.document_url && '—'}
+      {/* The book on screen: how many investors and how much, like the approvals banner. */}
+      {!loading && investors.length > 0 && (
+        <div className="c1a-total">
+          <div className="c1a-total-label">
+            {narrowed ? 'Matching' : 'Total'} · {investors.length} investor{investors.length === 1 ? '' : 's'} · {invGroupNames.length} scheme{invGroupNames.length === 1 ? '' : 's'}
+          </div>
+          <div className="c1a-total-amt">{fmtMoney(invTotal)}</div>
+        </div>
+      )}
+
+      {loading ? <div className="c1a-loading"><Loader label="Loading…" /></div> : investors.length === 0 ? (
+        <div className="nx-card c1a-empty">{search ? 'No investors match your search.' : narrowed ? 'No investors match these filters.' : 'No investors yet.'}</div>
+      ) : invGroupNames.map((gn) => (
+        <div key={gn} className="c1a-group">
+          <div className={`nx-card c1a-group-head${isInvOpen(gn) ? ' is-open' : ''}`} onClick={() => setOpenInvGroup((o) => ({ ...o, [gn]: !isInvOpen(gn) }))}>
+            <div className="c1a-group-name"><Icon name="folder" /> {gn} <span className="c1a-group-count">· {invGroups[gn].length} investor{invGroups[gn].length === 1 ? '' : 's'}</span></div>
+            <div className="c1a-group-right">
+              <span className="c1a-group-amt">{fmtMoney(invGroups[gn].reduce((t, i) => t + (Number(i.amount_invested) || 0), 0))}</span>
+              <span className={`c1a-chev${isInvOpen(gn) ? ' is-open' : ''}`}>›</span>
+            </div>
+          </div>
+          {isInvOpen(gn) && (
+            <div className="c1a-cards">
+              {invGroups[gn].map((inv) => (
+                <div className="nx-card c1a-card" key={inv.id}>
+                  <div className="c1a-card-top">
+                    <div className="c1a-card-main">
+                      <div className="c1a-name">
+                        {inv.name}
+                        {inv.revision_no > 0 && <span className="c1a-rev">R{inv.revision_no}</span>}
+                        {inv.is_matured && <span className="c1a-rev renew">MATURED</span>}
+                      </div>
+                      <div className="c1a-sub">{inv.phone || '—'}{inv.loi_no ? ` · LOI ${inv.loi_no}` : ''}{inv.reference_name ? ` · Ref ${inv.reference_name}${inv.reference_phone ? ` (${inv.reference_phone})` : ''}` : ''}</div>
+                      <div className="c1a-sub2">
+                        {inv.total_return_pct}% · {inv.interest_payout === 'monthly' ? 'Monthly' : inv.interest_payout === 'quarterly' ? 'Quarterly' : 'At maturity'}
+                        {' · '}Invested {formatDMY(inv.investment_date)} → Matures {formatDMY(inv.maturity_date)}
+                        {manager && inv.added_by_name ? ` · Added by ${inv.added_by_name}` : ''}
+                      </div>
+                    </div>
+                    <div className="c1a-card-side">
+                      <div className="c1a-amt">{fmtMoney(inv.amount_invested)}</div>
+                      <StatusBadge status={inv.status} />
+                    </div>
                   </div>
-                </td>
-                <td style={td}><StatusBadge status={inv.status} /></td>
-                {manager && <td style={td}>{inv.added_by_name || '—'}</td>}
-                <td style={td}>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)} style={{ padding: '5px 10px', background: 'var(--success-soft)', color: TEAL, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="book" /> Ledger</button>
+                  <div className="c1a-actions">
+                    <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)}><Icon name="book" /> Ledger</button>
+                    {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>}
+                    {inv.document_url && <a className="nx-btn nx-btn-sm nx-btn-secondary" href={inv.document_url} target="_blank" rel="noreferrer"><Icon name="clip" /> KYC</a>}
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
-                    {inv.is_matured ? (can(user, 'club.investor.manage') && (
-                      <>
-                        <button onClick={() => setRenewing(inv)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: AMBER, border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↻ Renew</button>
-                        {manager && (
-                          <button onClick={() => maturePayout(inv.id)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Payout</button>
-                        )}
-                      </>
-                    )) : (
-                      manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
-                        <button onClick={() => redeem(inv.id)} style={{ padding: '5px 10px', background: 'var(--warning-soft)', color: 'var(--warning-2)', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Redeem</button>
-                      )
-                    )}
+                    {inv.is_matured ? (can(user, 'club.investor.manage') && <>
+                      <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
+                      {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => maturePayout(inv.id)}>Payout</button>}
+                    </>) : (manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
+                      <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => redeem(inv.id)}>Redeem</button>
+                    ))}
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
 
       {showAdd && (
         <AddInvestorModal schemes={schemes} onClose={() => setShowAdd(false)} onCreated={() => load()} />

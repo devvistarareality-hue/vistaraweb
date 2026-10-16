@@ -1,14 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Phone, PartyPopper, Users, Building2, Clock, CircleCheckBig, CalendarClock, ClipboardList, AlarmClock, Gift, Layers, Trophy, Settings2, Plus } from 'lucide-react';
+import { Phone, PartyPopper, Users, Building2, Clock, CalendarClock, ClipboardList, AlarmClock, Gift, Layers, Trophy, Settings2, Plus } from 'lucide-react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { rupee, inrShort, pct } from '../../lib/inr';
-import { DashHero, DashKpi, DashKpiGrid, DashAlerts, DashCard, DashGrid, DashBars, DashRank, DashSectionTitle } from '../../components/Dash';
+import { DashHero, DashKpi, DashAlerts, DashCard, DashGrid, DashBars, DashRank } from '../../components/Dash';
 import AddInvestorModal from './_AddInvestorModal';
 import DateFilter from '../sales/_DateFilter';
 import Loader from '../../components/Loader';
+import MultiSelect from '../../components/MultiSelect';
 import { STATUS_ROWS } from './_DashboardWidgets';
 
 // Club 1000 manager home — same layout as the AR dashboard: the book at a glance,
@@ -19,19 +20,29 @@ import { STATUS_ROWS } from './_DashboardWidgets';
 // come from the API (see club1000.views._payout_forecast), which builds them
 // from today's date, so they move with the calendar on their own.
 function PayoutForecast({ rows }) {
-  // The same horizontal bars as "By scheme": one line a month — this month, the next
-  // two, then everything later — so every month reads at any card width. (Columns
-  // spread across the full width left most of the card empty and the small months
-  // as slivers next to "After …".)
+  // AR's "Falling due" columns, in a half-width card as on the AR dashboard, so the
+  // columns sit close together. A column keeps a small stub when its month has any
+  // money, and its value sits above it, so a ₹15 L month still reads next to ₹19 Cr.
   const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  const max = Math.max(1, ...rows.map((r) => Number(r.amount) || 0));
   return (
     <DashCard title="Falling due" sub="Payouts not yet due, by month" icon={CalendarClock}
       total={inrShort(total)} totalTitle={rupee(total)}>
-      <DashBars empty="No payouts falling due."
-        rows={rows.map((m) => ({
-          label: m.label, value: Number(m.amount) || 0, display: inrShort(m.amount),
-          title: `${m.label} · ${rupee(m.amount)}`, tone: m.label === 'No date' ? 'muted' : 'info',
-        }))} />
+      <div className="ard-cols club-due">
+        {rows.map((m) => {
+          const amount = Number(m.amount) || 0;
+          return (
+            <div key={m.label} className="ard-col" title={`${m.label} · ${rupee(amount)}`}>
+              <span className="ard-col-value">{amount ? inrShort(amount) : '—'}</span>
+              <span className="ard-col-track">
+                <span className={`ard-col-bar${m.label === 'No date' ? ' muted' : ''}`}
+                  style={{ height: `${amount ? Math.max(6, (amount / max) * 100) : 0}%` }} />{/* inline-ok: column height from data */}
+              </span>
+              <span className="ard-col-label">{m.label}</span>
+            </div>
+          );
+        })}
+      </div>
     </DashCard>
   );
 }
@@ -42,6 +53,8 @@ export default function ManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  // Scheme filter: every figure below for just these schemes (names here, ids to the API).
+  const [schemeSel, setSchemeSel] = useState([]);
 
   async function load() {
     setLoading(true);
@@ -49,6 +62,8 @@ export default function ManagerDashboard() {
       const params = new URLSearchParams();
       if (dateRange.from) params.set('date_from', dateRange.from);
       if (dateRange.to) params.set('date_to', dateRange.to);
+      const ids = schemes.filter((sc) => schemeSel.includes(sc.name)).map((sc) => sc.id);
+      if (ids.length) params.set('scheme', ids.join(','));
       const qs = params.toString() ? `?${params.toString()}` : '';
       const [statsRes, schemesRes] = await Promise.all([
         apiFetch(`${CLUB1000_ENDPOINTS.stats}${qs}`),
@@ -61,7 +76,7 @@ export default function ManagerDashboard() {
     }
   }
 
-  useEffect(() => { load(); }, [dateRange.from, dateRange.to]);
+  useEffect(() => { load(); }, [dateRange.from, dateRange.to, schemeSel.join('|')]);
 
   const s = stats || {};
   const breakdown = s.investor_status_breakdown || {};
@@ -74,7 +89,13 @@ export default function ManagerDashboard() {
           <h1 className="nx-page-title">Club 1000</h1>
           <p className="nx-page-sub">Manager view · investment portfolio and returns</p>
         </div>
-        <div className="ard-filters"><DateFilter onChange={setDateRange} /></div>
+        <div className="ard-filters">
+          {schemes.length > 1 && (
+            <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
+              options={schemes.map((sc) => ({ value: sc.name, label: sc.name }))} />
+          )}
+          <DateFilter onChange={setDateRange} />
+        </div>
       </div>
 
       {loading && !stats ? <Loader label="Loading…" /> : (
@@ -112,11 +133,23 @@ export default function ManagerDashboard() {
             { tone: 'bad', icon: Clock, count: s.followups_overdue ?? 0, label: 'Overdue follow-ups', text: 'Leads past their follow-up date', href: '/club1000/follow-ups' },
           ]} />
 
-          <DashSectionTitle sub="Payouts to investors">Payouts</DashSectionTitle>
-          <DashKpiGrid>
-            <DashKpi icon={Clock} tone="warn" label="Pending payouts" value={inrShort(s.pending_payout_amount)} valueTitle={rupee(s.pending_payout_amount)} sub={`${s.pending_payout_count ?? 0} payouts`} href="/club1000/payouts?status=pending" />
-            <DashKpi icon={CircleCheckBig} tone="good" label="Paid payouts" value={inrShort(s.paid_payout_amount)} valueTitle={rupee(s.paid_payout_amount)} sub={`${s.paid_payout_count ?? 0} payouts`} href="/club1000/payouts?status=paid" />
-          </DashKpiGrid>
+          {/* Money going out, side by side: what is owed and paid (payouts and referral
+              rewards), and when the unpaid payouts fall due. */}
+          <DashGrid>
+            <DashCard title="Payouts" sub="To investors and referrers" icon={Gift}>
+              <div className="ard-money-pair">
+                <Link href="/club1000/payouts?status=pending" className="ard-money warn"><span>Pending payouts ({s.pending_payout_count ?? 0})</span><b title={rupee(s.pending_payout_amount)}>{inrShort(s.pending_payout_amount)}</b></Link>
+                <Link href="/club1000/payouts?status=paid" className="ard-money good"><span>Paid payouts ({s.paid_payout_count ?? 0})</span><b title={rupee(s.paid_payout_amount)}>{inrShort(s.paid_payout_amount)}</b></Link>
+              </div>
+              <div className="ard-money-pair club-ref-pair">
+                <Link href="/club1000/referral-rewards" className="ard-money warn"><span>Referral pending ({s.referral_pending_count ?? 0})</span><b title={rupee(s.referral_pending_amount)}>{inrShort(s.referral_pending_amount)}</b></Link>
+                <Link href="/club1000/referral-rewards" className="ard-money good"><span>Referral paid</span><b title={rupee(s.referral_paid_amount)}>{inrShort(s.referral_paid_amount)}</b></Link>
+              </div>
+            </DashCard>
+            {(s.payout_forecast || []).length > 0
+              ? <PayoutForecast rows={s.payout_forecast} />
+              : <DashCard title="Falling due" sub="Payouts not yet due, by month" icon={CalendarClock}><div className="ar-empty">No payouts falling due.</div></DashCard>}
+          </DashGrid>
 
           <DashGrid>
             <DashCard title="Portfolio status" sub="Investors by status" icon={Layers} total={investors}>
@@ -128,22 +161,10 @@ export default function ManagerDashboard() {
             </DashCard>
           </DashGrid>
 
-          {(s.payout_forecast || []).length > 0 && (
-            <PayoutForecast rows={s.payout_forecast} />
-          )}
-
-          <DashGrid>
-            <DashCard title="Top investors" icon={Trophy} action={<Link href="/club1000/investors" className="ard-link">View all →</Link>}>
-              <DashRank tone="good" empty="No investors yet."
-                rows={(s.top_investors || []).map((inv, i) => ({ key: `${inv.name}-${i}`, name: inv.name, sub: `${inv.scheme} · ${inv.status}`, value: Number(inv.amount) || 0, display: inrShort(inv.amount), title: rupee(inv.amount) }))} />
-            </DashCard>
-            <DashCard title="Referral rewards" icon={Gift} action={<Link href="/club1000/referral-rewards" className="ard-link">View all →</Link>}>
-              <div className="ard-money-pair">
-                <div className="ard-money warn"><span>Pending ({s.referral_pending_count ?? 0})</span><b title={rupee(s.referral_pending_amount)}>{inrShort(s.referral_pending_amount)}</b></div>
-                <div className="ard-money good"><span>Paid</span><b title={rupee(s.referral_paid_amount)}>{inrShort(s.referral_paid_amount)}</b></div>
-              </div>
-            </DashCard>
-          </DashGrid>
+          <DashCard title="Top investors" sub="By amount invested" icon={Trophy} action={<Link href="/club1000/investors" className="ard-link">View all →</Link>}>
+            <DashRank tone="good" empty="No investors yet."
+              rows={(s.top_investors || []).map((inv, i) => ({ key: `${inv.name}-${i}`, name: inv.name, sub: `${inv.scheme} · ${inv.status}`, value: Number(inv.amount) || 0, display: inrShort(inv.amount), title: rupee(inv.amount) }))} />
+          </DashCard>
         </>
       )}
 

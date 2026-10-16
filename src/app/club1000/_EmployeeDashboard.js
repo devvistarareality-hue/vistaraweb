@@ -9,6 +9,7 @@ import { DashHero, DashKpi, DashKpiGrid, DashAlerts, DashCard, DashGrid, DashBar
 import AddInvestorModal from './_AddInvestorModal';
 import DateFilter from '../sales/_DateFilter';
 import Loader from '../../components/Loader';
+import MultiSelect from '../../components/MultiSelect';
 import { STATUS_ROWS } from './_DashboardWidgets';
 
 // Club 1000 employee home — the same layout as the manager's, for one person's book.
@@ -19,6 +20,8 @@ export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  // Scheme filter, as on the manager dashboard (names here, ids to the API).
+  const [schemeSel, setSchemeSel] = useState([]);
 
   async function load() {
     setLoading(true);
@@ -26,6 +29,8 @@ export default function EmployeeDashboard() {
       const params = new URLSearchParams();
       if (dateRange.from) params.set('date_from', dateRange.from);
       if (dateRange.to) params.set('date_to', dateRange.to);
+      const ids = schemes.filter((sc) => schemeSel.includes(sc.name)).map((sc) => sc.id);
+      if (ids.length) params.set('scheme', ids.join(','));
       const qs = params.toString() ? `?${params.toString()}` : '';
       const [statsRes, schemesRes, investorsRes] = await Promise.all([
         apiFetch(`${CLUB1000_ENDPOINTS.stats}${qs}`),
@@ -40,7 +45,7 @@ export default function EmployeeDashboard() {
     }
   }
 
-  useEffect(() => { load(); }, [dateRange.from, dateRange.to]);
+  useEffect(() => { load(); }, [dateRange.from, dateRange.to, schemeSel.join('|')]);
 
   const s = stats || {};
   const breakdown = s.investor_status_breakdown || {};
@@ -53,7 +58,13 @@ export default function EmployeeDashboard() {
           <h1 className="nx-page-title">My Club 1000</h1>
           <p className="nx-page-sub">Your investors and personal totals</p>
         </div>
-        <div className="ard-filters"><DateFilter onChange={setDateRange} /></div>
+        <div className="ard-filters">
+          {schemes.length > 1 && (
+            <MultiSelect allLabel="All Schemes" noun="schemes" value={schemeSel} onChange={setSchemeSel}
+              options={schemes.map((sc) => ({ value: sc.name, label: sc.name }))} />
+          )}
+          <DateFilter onChange={setDateRange} />
+        </div>
       </div>
 
       {loading && !stats ? <Loader label="Loading…" /> : (
