@@ -6,11 +6,9 @@ import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 import { errText } from '../../lib/apiError';
+import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
 
-const AMBER = 'var(--warning)';
 
-const inp = { width: '100%', height: 38, padding: '0 10px', borderRadius: 8, border: '1.5px solid var(--border-strong)', fontSize: 13, boxSizing: 'border-box' };
-const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 5 };
 
 function toISODate(d) {
   const y = d.getFullYear();
@@ -236,96 +234,73 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
   }
 
   return (
-    <div className="nx-modal-backdrop" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(4,8,16,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <form className="nx-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit} style={{ width: 460, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--surface)', borderRadius: 18, boxShadow: '0 24px 80px rgba(var(--ink-rgb),0.22)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--surface-2)' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            Renew Investment
-            <span className="nx-badge" style={{ fontSize: 10, fontWeight: 800, color: AMBER, background: 'var(--warning-soft)', padding: '2px 8px', borderRadius: 20 }}>R{nextRevisionNo}</span>
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{investor.name} · {investor.phone} · {scheme?.name}</div>
-        </div>
-        <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 11, color: 'var(--muted)', background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 8, padding: '8px 10px' }}>
-            This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — amount can go up or down. New maturity {maturityPreview ? formatDMY(maturityPreview) : '—'}.
-          </div>
-          <div>
-            <label style={lbl}>Renewal Date</label>
-            <input className="nx-input" style={inp} type="date" value={form.investment_date} onChange={(e) => set('investment_date', e.target.value)} required />
-          </div>
-          <div>
-            <label style={lbl}>Amount Invested (₹)</label>
-            <input className="nx-input" style={inp} type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Interest Payout</label>
-              <select className="nx-input" style={inp} value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
-                {(scheme?.interest_payout_options?.length ? scheme.interest_payout_options : ['maturity']).map((key) => (
-                  <option key={key} value={key}>{INTEREST_PAYOUT_LABELS[key] || key}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={lbl}>Return %</label>
-              <input className="nx-input" style={inp} type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
-            </div>
-          </div>
-          {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ ...lbl, marginBottom: 0 }}>Payout Schedule (confirm or edit)</label>
-                <button className="nx-btn nx-btn-sm nx-btn-ghost" type="button" onClick={resetSchedule} style={{ fontSize: 11, fontWeight: 700, color: AMBER, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset to default</button>
-              </div>
-              <div style={{ border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-                {schedule.map((row, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', borderTop: idx > 0 ? '1px solid var(--surface-2)' : 'none' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: row.payout_type === 'maturity' ? 'var(--accent-deep)' : 'var(--success)', width: 58, flexShrink: 0 }}>
-                      {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{formatDMY(row.due_date)}</span>
-                    <input className="nx-input"
-                      type="number" step="0.01" value={row.amount_due}
-                      onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)}
-                      style={{ ...inp, height: 32, flex: 1 }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div>
-            <label style={lbl}>Security (for LOI — optional)</label>
-            <input className="nx-input" style={inp} value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
-          </div>
-          <div>
-            <label style={lbl}>Notes</label>
-            <input className="nx-input" style={inp} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
-          </div>
+    <C1Modal title="Renew Investment" badge={`R${nextRevisionNo}`} sub={`${investor.name} · ${investor.phone} · ${scheme?.name || ''}`}
+      onClose={onClose} onSubmit={submit}
+      footer={<>
+        <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !loiFile}>{busy ? 'Submitting…' : 'Submit Renewal for Approval'}</button>
+      </>}>
+      <div className="nx-note info c1-error">
+        This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — the amount can go up or down.
+      </div>
 
-          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 14, padding: 12 }}>
-            <label style={lbl}>Renewed Investment Proposal Form (LOI)</label>
-            <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={doDownloadLoi} disabled={loiDownloading}
-              style={{ width: '100%', padding: '9px 0', background: 'var(--surface)', color: AMBER, border: `1.5px solid ${AMBER}`, borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: loiDownloading ? 'default' : 'pointer', opacity: loiDownloading ? 0.7 : 1 }}>
-              {loiDownloading ? 'Generating…' : `Download Renewed LOI (R${nextRevisionNo})`}
-            </button>
-            {loiDone && <div style={{ fontSize: 11, color: 'var(--success)', marginTop: 6 }}>Renewed LOI downloaded — get it signed and upload below.</div>}
-            <div style={{ marginTop: 10 }}>
-              <label style={lbl}>Upload Signed Renewed LOI *</label>
-              <input type="file" accept="image/*,.pdf" onChange={handleLoiFileChange} style={{ fontSize: 12 }} />
-              {loiFile && <div style={{ fontSize: 11, color: 'var(--success)', marginTop: 4 }}>Selected: {loiFile.name}</div>}
+      <C1Section title="Renewal">
+        <C1Field label="Renewal date" required>
+          <input className="nx-input" type="date" value={form.investment_date} onChange={(e) => set('investment_date', e.target.value)} required />
+        </C1Field>
+        <C1Field label="New maturity" hint="From the scheme's tenure">
+          <C1Value>{maturityPreview ? formatDMY(maturityPreview) : '—'}</C1Value>
+        </C1Field>
+        <C1Field label="Amount invested (₹)" required>
+          <input className="nx-input" type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
+        </C1Field>
+        <C1Field label="Interest payout">
+          <select className="nx-input" value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
+            {(scheme?.interest_payout_options?.length ? scheme.interest_payout_options : ['maturity']).map((key) => (
+              <option key={key} value={key}>{INTEREST_PAYOUT_LABELS[key] || key}</option>
+            ))}
+          </select>
+        </C1Field>
+        <C1Field label="Return %" required>
+          <input className="nx-input" type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
+        </C1Field>
+        {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
+          <C1Field label="Payout schedule" hint="Confirm or edit each instalment">
+            <div className="c1i-sched">
+              {schedule.map((row, idx) => (
+                <div key={idx} className="c1i-sched-row">
+                  <span className={`c1i-sched-tag${row.payout_type === 'maturity' ? ' principal' : ''}`}>
+                    {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
+                  </span>
+                  <span className="c1-help">{formatDMY(row.due_date)}</span>
+                  <input className="nx-input" type="number" step="0.01" value={row.amount_due} onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)} />
+                </div>
+              ))}
+              <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost c1i-sched-reset" onClick={resetSchedule}>Reset to default</button>
             </div>
-          </div>
+          </C1Field>
+        )}
+        <C1Field label="Security" hint="Printed on the LOI — optional">
+          <input className="nx-input" value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
+        </C1Field>
+        <C1Field label="Notes">
+          <input className="nx-input" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+        </C1Field>
+      </C1Section>
 
-          {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
-        </div>
-        <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button className="nx-btn nx-btn-md nx-btn-warning" type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--warning-solid)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
-            {busy ? 'Submitting…' : 'Submit Renewal for Approval'}
+      <C1Section title="Renewed investment proposal form (LOI)">
+        <C1Field label="1. Download" hint="Print it and get it signed">
+          <button type="button" className="nx-btn nx-btn-md nx-btn-secondary c1i-loi-btn" onClick={doDownloadLoi} disabled={loiDownloading}>
+            {loiDownloading ? 'Generating…' : `Download Renewed LOI (R${nextRevisionNo})`}
           </button>
-        </div>
-      </form>
-    </div>
+          {loiDone && <span className="c1-help ok">Renewed LOI downloaded — get it signed and upload it below.</span>}
+        </C1Field>
+        <C1Field label="2. Upload signed copy" required>
+          <input className="c1-file" type="file" accept="image/*,.pdf" onChange={handleLoiFileChange} />
+          {loiFile && <span className="c1-help ok">Selected: {loiFile.name}</span>}
+        </C1Field>
+      </C1Section>
+      <C1Error>{error}</C1Error>
+    </C1Modal>
   );
 }

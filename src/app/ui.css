@@ -3167,3 +3167,62 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1s-opt { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); cursor: pointer; }
 .c1s-rate { display: flex; align-items: center; gap: 8px; }
 .c1s-rate span { color: var(--muted); font-size: 12px; }
+
+/* Club 1000 Add Investor / Revise LOI form bits. */
+.c1i-sched { display: flex; flex-direction: column; gap: 6px; }
+.c1i-sched-row { display: grid; grid-template-columns: 64px 1fr 1fr; gap: 8px; align-items: center; }
+.c1i-sched-tag { font-size: 11px; font-weight: 800; color: var(--success); }
+.c1i-sched-tag.principal { color: var(--accent-deep); }
+.c1i-sched-reset { align-self: flex-start; color: var(--success); }
+.c1i-ref { position: relative; }
+.c1i-ref-pop { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; margin-top: 4px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); max-height: 180px; overflow-y: auto; }
+.c1i-ref-opt { padding: 8px 10px; font-size: 13px; cursor: pointer; border-top: 1px solid var(--hairline); }
+.c1i-ref-opt:first-child { border-top: 0; }
+.c1i-ref-opt:hover { background: var(--surface-2); }
+.c1i-ref-opt span { color: var(--muted); }
+.c1i-loi-btn { align-self: flex-start; }
+.c1-file { font-size: 12.5px; }
+
+/* Club 1000 ledger dialog. */
+.c1l-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.c1l-table { padding: 0; overflow: hidden; overflow-x: auto; border-radius: 16px; }
+.c1l-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; text-transform: capitalize; }
+.c1l-amt { font-weight: 700; color: var(--text); }
+.c1l-paid { font-size: 11px; font-weight: 600; color: var(--warning); }
+.c1l-note { font-size: 11px; font-weight: 400; color: var(--muted); font-style: italic; margin-top: 2px; }
+.c1l-muted { color: var(--muted); }
+
+/* Club 1000 list pages: filter card, table card and lead history timeline. */
+.c1-filtercard { padding: 12px 16px; border-radius: 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+.c1-filterrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.c1-filterlabel { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; }
+.c1-date { width: 140px; }
+.c1-arrow { font-size: 12px; color: var(--border-strong); }
+.c1-clear { margin-left: auto; }
+.nx-filter-sel.is-on { border-color: var(--success) !important; background: var(--success-soft) !important; color: var(--success) !important; }
+.c1-sel { color: var(--success); font-weight: 600; }
+.c1-tablecard { padding: 0; border-radius: 20px; overflow: hidden; overflow-x: auto; }
+.c1-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.c1-table th { text-align: left; }
+.c1-check { width: 36px; }
+.c1-row-link { cursor: pointer; }
+.c1-strong { font-weight: 600; }
+.c1-cap { text-transform: capitalize; }
+.c1-late { color: var(--danger) !important; font-weight: 700; }
+.c1-textarea { min-height: 72px; padding: 10px !important; }
+.c1h-tabs { margin: 0; }
+.c1h-list { display: flex; flex-direction: column; gap: 16px; }
+.c1h-item { display: flex; gap: 12px; }
+.c1h-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; background: var(--surface-2); }
+.c1h-dot.accent { color: var(--accent); background: var(--accent-soft); }
+.c1h-dot.deep { color: var(--accent-deep); background: var(--accent-soft); }
+.c1h-dot.muted { color: var(--text-3); }
+.c1h-body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c1h-body b { font-size: 13px; color: var(--text); }
+.c1h-body p { margin: 0; font-size: 12px; color: var(--text); }
+.c1h-body small { font-size: 11px; color: var(--muted); }
+.c1h-body small.faint { color: var(--faint); }
+.c1h-old { color: var(--muted); text-transform: capitalize; }
+.c1h-new { font-weight: 600; text-transform: capitalize; }
+.c1h-new.accent { color: var(--accent); } .c1h-new.deep { color: var(--accent-deep); } .c1h-new.muted { color: var(--text-3); }
