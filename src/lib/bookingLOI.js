@@ -371,7 +371,7 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
 
   // Extra Charges — reserve the full section height so the Total Extra
   // Charges sub-row is never split onto the next page.
-  const nExtra = isAnkholPdf ? 6 : isIndustrialPdf ? 6 : isKalrav3Pdf ? 6 : 5;
+  const nExtra = (isAnkholPdf || isIndustrialPdf || isKalravPdf) ? 6 : 5;   // Deposit + Advance print as two rows
   chk(14 + nExtra * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
   if (isAnkholPdf) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
@@ -387,7 +387,9 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
     tRow(v.applyStampDuty === 'No' ? 'Stamp Duty (Not Applicable)' : 'Stamp Duty (4.9% of Land Sale Deed)', v.applyStampDuty === 'No' ? 0 : v.stampDuty);
     tRow(v.applyRegFee === 'No' ? 'Registration Fees (Not Applicable)' : ('Registration Fees (' + (v.gender === 'Female' ? ('Female - ' + (v.applyPageFee === 'No' ? 'Rs.0' : 'Rs.1,500')) : ('Male - 1% LSD' + (v.applyPageFee === 'No' ? '' : ' + Rs.1,500'))) + ')'), v.applyRegFee === 'No' ? 0 : v.regFees);
     tRow(v.applyGst === 'No' ? 'GST (Not Applicable)' : 'GST (18% of Construction + Development Agreement)', v.applyGst === 'No' ? 0 : v.gst);
-    if (isKalrav3Pdf) { tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); }
+    // Every Kalrav project charges a Deposit and an Advance now, so both are printed;
+    // any other set that lands here keeps its single Maintenance line.
+    if (isKalravPdf) { tRow('Maintenance Deposit', v.maintDeposit); tRow('Maintenance Advance', v.maintAdvance); }
     else tRow('Maintenance', v.maint);
     tRow('Legal Documentation charge', v.legal);
   }
