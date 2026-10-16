@@ -3020,3 +3020,27 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
   .np-ctrls { align-items: stretch; width: 100%; }
   .np-team-ctrls { justify-content: flex-start; }
 }
+
+/* Club 1000 · Revise LOI. A revision waits days for the signed LOI to come
+   back, so it can be saved as a draft first; the footer carries that button
+   beside Submit, and the date names when the terms were agreed. */
+.rev-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+/* Three buttons in a 460px dialog: at full width they came to ~440px inside
+   416px of usable row, so Save Draft was pushed outside the rounded corner.
+   It sits left as the tertiary action, and the row wraps rather than
+   overflowing when the dialog is narrower still. */
+.rev-foot { padding: 14px 22px 20px; display: flex; gap: 10px;
+  justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+.rev-foot-left { margin-right: auto; display: flex; align-items: center; gap: 8px; }
+.rev-saved { font-size: 12px; font-weight: 700; color: var(--success); }
+.rev-draft-btn { padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 700;
+  background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); cursor: pointer; }
+.rev-draft-btn.is-busy { cursor: default; opacity: 0.6; }
+
+/* Club 1000 · "Falling due". AR's chart sits in a two-up grid, so its columns
+   are naturally close together; this one spans the dashboard's full width,
+   where flex:1 columns drift hundreds of pixels apart and the card reads as
+   mostly empty. Same bars, held to a sensible span and centred, and a little
+   shorter so it does not tower over the cards above it. */
+.club-due .ard-cols { height: 210px; max-width: 760px; margin: 0 auto; gap: 28px; }
+@media (max-width: 900px) { .club-due .ard-cols { gap: 10px; height: 180px; } }

@@ -122,14 +122,21 @@ const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', mat
 export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved }) {
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
+  // A revision typed but never submitted comes back here, so the signed-LOI
+  // round trip does not cost the work. It wins over the investor's live values
+  // because the draft IS what was last typed.
+  const draft = investor.revision_draft || null;
   const [form, setForm] = useState({
-    name: investor.name || '',
-    phone: investor.phone || '',
-    amount_invested: String(investor.amount_invested || ''),
-    interest_payout: investor.interest_payout || 'maturity',
-    total_return_pct: String(investor.total_return_pct ?? ''),
-    security: investor.security || '',
-    notes: investor.notes || '',
+    name: draft?.name ?? investor.name ?? '',
+    phone: draft?.phone ?? investor.phone ?? '',
+    amount_invested: String(draft?.amount_invested ?? investor.amount_invested ?? ''),
+    interest_payout: draft?.interest_payout ?? investor.interest_payout ?? 'maturity',
+    total_return_pct: String(draft?.total_return_pct ?? investor.total_return_pct ?? ''),
+    security: draft?.security ?? investor.security ?? '',
+    notes: draft?.notes ?? investor.notes ?? '',
+    // When the revised terms were agreed. Not the investment date, which a
+    // revision never moves — maturity and the payout schedule stay put.
+    revision_date: draft?.revision_date ?? toISODate(new Date()),
   });
   const [schedule, setSchedule] = useState([]);
   const [scheduleDirty, setScheduleDirty] = useState(false);
@@ -138,6 +145,8 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
   const [loiDone, setLoiDone] = useState(false);
   const [loiDownloading, setLoiDownloading] = useState(false);
   const [loiFile, setLoiFile] = useState(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const nextRevisionNo = (investor.revision_no || 0) + 1;
   const maturityPreview = scheme ? computeMaturity(investor.investment_date, scheme.tenure_months) : '';
@@ -203,6 +212,28 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
     }
   }
 
+  async function saveDraft() {
+    setError(''); setSavingDraft(true);
+    try {
+      const payload = { ...form };
+      if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) {
+        payload.payout_schedule = schedule;
+      }
+      const res = await apiFetch(CLUB1000_ENDPOINTS.investorReviseDraft(investor.id), {
+        method: 'POST', body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(errText(data, 'Could not save the draft.')); return; }
+      // The investor is unchanged apart from the draft, but hand the fresh row
+      // back so reopening Revise finds what was just saved.
+      if (data && data.id) onSaved(data);
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2500);
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError('');
@@ -247,6 +278,14 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
         <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ fontSize: 11, color: 'var(--muted)', background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 8, padding: '8px 10px' }}>
             Scheme and investment date stay fixed across a revision — name, mobile number and the terms below can change. Matures {maturityPreview ? formatDMY(maturityPreview) : '—'}.
+          </div>
+          <div>
+            <label style={lbl}>Revision Date</label>
+            <input className="nx-input" style={inp} type="date" value={form.revision_date}
+              onChange={(e) => set('revision_date', e.target.value)} required />
+            <div className="rev-hint">
+              When these revised terms were agreed. The investment date, maturity and the payout dates do not move.
+            </div>
           </div>
           <div>
             <label style={lbl}>Investor Name</label>
@@ -322,10 +361,20 @@ export default function ReviseInvestorModal({ investor, scheme, onClose, onSaved
 
           {error && <div style={{ fontSize: 12, color: 'var(--danger)', background: 'var(--danger-soft)', border: '1px solid var(--danger-2)', borderRadius: 8, padding: '8px 10px' }}>{error}</div>}
         </div>
-        <div style={{ padding: '14px 22px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+        <div className="rev-foot">
+          {/* Saveable without the signed LOI — that file is exactly what a
+              draft is waiting for. Kept at the far left: it neither closes the
+              dialog nor submits, so it should not sit between the two that do. */}
+          <div className="rev-foot-left">
+            <button className={`nx-btn nx-btn-md nx-btn-secondary rev-draft-btn${(busy || savingDraft) ? ' is-busy' : ''}`}
+              type="button" onClick={saveDraft} disabled={busy || savingDraft}>
+              {savingDraft ? 'Saving…' : 'Save Draft'}
+            </button>
+            {draftSaved && <span className="rev-saved">Saved</span>}
+          </div>
           <button className="nx-btn nx-btn-md nx-btn-secondary" type="button" onClick={onClose} style={{ padding: '9px 18px', background: 'var(--surface-2)', color: 'var(--text-3)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
           <button className="nx-btn nx-btn-md nx-btn-primary" type="submit" disabled={busy || !loiFile} style={{ padding: '9px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: (busy || !loiFile) ? 'default' : 'pointer', opacity: (busy || !loiFile) ? 0.5 : 1 }}>
-            {busy ? 'Submitting…' : 'Submit Revision for Approval'}
+            {busy ? 'Submitting…' : 'Submit for Approval'}
           </button>
         </div>
       </form>

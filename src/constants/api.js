@@ -264,6 +264,8 @@ export const CLUB1000_ENDPOINTS = {
   investorLoiUrl: (id)    => `${BASE_URL}/api/club1000/investors/${id}/loi-url/`,
   investorAction: (id)    => `${BASE_URL}/api/club1000/investors/${id}/action/`,
   investorRevise: (id)    => `${BASE_URL}/api/club1000/investors/${id}/revise/`,
+  // Save a revision that has no signed LOI yet — see InvestorReviseDraftView.
+  investorReviseDraft: (id) => `${BASE_URL}/api/club1000/investors/${id}/revise/draft/`,
   investorRenew: (id)     => `${BASE_URL}/api/club1000/investors/${id}/renew/`,
   investorMaturePayout: (id) => `${BASE_URL}/api/club1000/investors/${id}/mature-payout/`,
   get investorNextLoiNo() { return `${BASE_URL}/api/club1000/investors/next-loi-no/`; },

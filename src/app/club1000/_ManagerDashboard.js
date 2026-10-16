@@ -13,6 +13,42 @@ import { STATUS_ROWS } from './_DashboardWidgets';
 
 // Club 1000 manager home — same layout as the AR dashboard: the book at a glance,
 // then what needs a decision, then where the money sits.
+
+// Pending payouts by month — the same chart AR calls "Falling due", reusing its
+// markup and ard-* classes so the two dashboards read identically. The columns
+// come from the API (see club1000.views._payout_forecast), which builds them
+// from today's date, so they move with the calendar on their own.
+function PayoutForecast({ rows }) {
+  const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  const max = Math.max(1, ...rows.map((r) => Number(r.amount) || 0));
+  return (
+    <div className="nx-card ard-card club-due">
+      <div className="ard-card-head">
+        <div>
+          <div className="ard-card-title">Falling due</div>
+          <div className="ard-card-sub">Payouts not yet due, by month</div>
+        </div>
+        <div className="ard-card-total" title={rupee(total)}>{inrShort(total)}</div>
+      </div>
+      <div className="ard-cols">
+        {rows.map((m) => {
+          const amount = Number(m.amount) || 0;
+          return (
+            <div key={m.label} className="ard-col" title={`${m.label} · ${rupee(amount)}`}>
+              <span className="ard-col-value">{amount ? inrShort(amount) : '—'}</span>
+              <span className="ard-col-track">
+                <span className={`ard-col-bar${m.label === 'No date' ? ' muted' : ''}`}
+                  style={{ height: `${Math.max(amount ? 4 : 0, (amount / max) * 100)}%` }} />{/* inline-ok: column height from data */}
+              </span>
+              <span className="ard-col-label">{m.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ManagerDashboard() {
   const [stats, setStats] = useState(null);
   const [schemes, setSchemes] = useState([]);
@@ -104,6 +140,10 @@ export default function ManagerDashboard() {
                 rows={(s.by_scheme || []).map((r) => ({ label: r.scheme, value: Number(r.amount) || 0, display: inrShort(r.amount), title: `${rupee(r.amount)} · ${r.investors} investors`, tone: 'info' }))} />
             </DashCard>
           </DashGrid>
+
+          {(s.payout_forecast || []).length > 0 && (
+            <PayoutForecast rows={s.payout_forecast} />
+          )}
 
           <DashGrid>
             <DashCard title="Top investors" icon={Trophy} action={<Link href="/club1000/investors" className="ard-link">View all →</Link>}>
