@@ -3293,3 +3293,10 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
   .c1p-grid-row { grid-template-columns: 22px 1fr 1fr; }
   .c1p-grid-row > :nth-child(n+3) { grid-column: 2 / -1; }
 }
+
+/* Checkboxes inside label-left fields stay checkboxes (the field rule widens every input). */
+.nx-field input[type="checkbox"], .nx-field input[type="radio"] {
+  width: 16px; height: 16px; min-height: 0; padding: 0; margin: 0; flex: none; accent-color: var(--primary); cursor: pointer;
+}
+.c1s-opt { white-space: normal; line-height: 1.35; }
+.c1-field-ctl > .c1s-opt { display: flex; min-height: 44px; }
