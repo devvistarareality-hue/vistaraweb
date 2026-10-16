@@ -1413,15 +1413,18 @@ function BookingPage() {
         {hasSaleDeedSplit && <Row><L>Apply GST?</L><Sel value={f.apply_gst} onChange={(e) => set('apply_gst', e.target.value)} opts={['Yes', 'No']} /></Row>}
         <Calc label="GST" sub={gstSub} val={v.gst} />
         {formulaSet === 'industrial' ? <>
-          {/* Industrial: the Deposit and the Advance each have their own rate × Plot Area. */}
+          {/* Industrial: each rate sits right above the amount it makes —
+              Deposit Rate → Deposit, Advance Rate → Advance (Plot Area × its rate). */}
           <Row><L>Maintenance Deposit Rate (₹/{unit})</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
+          <Calc label="Maintenance Deposit" sub={depSub} val={v.maintDeposit} />
           <Row><L>Maintenance Advance Rate (₹/{unit})</L><In type="number" value={f.maint_advance_rate} onChange={(e) => set('maint_advance_rate', e.target.value)} /></Row>
-        </> : (
+          <Calc label="Maintenance Advance" sub={advSub} val={v.maintAdvance} />
+        </> : <>
           <Row><L>Maintenance Rate (₹/{unit}/mo)</L><In type="number" value={f.maint_rate} onChange={(e) => set('maint_rate', e.target.value)} /></Row>
-        )}
-        {formulaSet !== 'industrial' && <Row><L>Maintenance Months</L><In type="number" value={f.maint_months} onChange={(e) => set('maint_months', e.target.value)} /></Row>}
-        {(flags.hasMaintDeposit || v.isKalrav3) && <Calc label="Maintenance Deposit" sub={v.isKalrav3 ? '½ × Maintenance Amount' : depSub} val={v.maintDeposit} />}
-        {(flags.hasMaintAdvance || v.isKalrav3) && <Calc label="Maintenance Advance" sub={v.isKalrav3 ? '½ × Maintenance Amount' : advSub} val={v.maintAdvance} />}
+          <Row><L>Maintenance Months</L><In type="number" value={f.maint_months} onChange={(e) => set('maint_months', e.target.value)} /></Row>
+          {(flags.hasMaintDeposit || v.isKalrav3) && <Calc label="Maintenance Deposit" sub={v.isKalrav3 ? '½ × Maintenance Amount' : depSub} val={v.maintDeposit} />}
+          {(flags.hasMaintAdvance || v.isKalrav3) && <Calc label="Maintenance Advance" sub={v.isKalrav3 ? '½ × Maintenance Amount' : advSub} val={v.maintAdvance} />}
+        </>}
         <Calc label="Maintenance Amount" sub={(flags.hasMaintDeposit || flags.hasMaintAdvance || v.isKalrav3) ? '= Maintenance Deposit + Maintenance Advance' : maintSub} val={v.maint} />
         <Row><L>Legal Documentation charge (₹)</L><In type="number" value={f.legal_charges} onChange={(e) => set('legal_charges', e.target.value)} /></Row>
       </Section>
