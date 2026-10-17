@@ -14,7 +14,7 @@ import { RedeemModal, MaturityPayoutModal } from '../_CloseInvestment';
 import LedgerModal from '../_LedgerModal';
 
 import Icon from '../../../components/Icon';
-import { confirmDialog, notify } from '../../../lib/notify';
+import { notify } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { errText } from '../../../lib/apiError';
 
