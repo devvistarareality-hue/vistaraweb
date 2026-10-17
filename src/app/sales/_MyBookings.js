@@ -16,10 +16,10 @@ import Loader from '../../components/Loader';
 import MultiSelect from '../../components/MultiSelect';
 import BookFilter, { useBook } from '../../components/BookFilter';
 import { bookingPath } from '../../lib/bookingPath';
-// Same tabs as Bookings & Approvals, minus Drafts: this list is what you submitted,
-// and a draft has not been. Statuses are the stored ones — 'sold' is an approved
+// Same tabs as Bookings & Approvals. Drafts are your own unfinished bookings —
+// Resume one to finish and submit it. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
-const TABS = [['', 'All'], ['pending', 'Pending'], ['accounts', 'Pending from Accounts'],
+const TABS = [['', 'All'], ['draft', 'Drafts'], ['pending', 'Pending'], ['accounts', 'Pending from Accounts'],
               ['sold', 'Approved'], ['rejected', 'Rejected'], ['cancelled', 'Cancelled']];
 
 // A cancelled booking and a rejected one are both stored at status='rejected'; the
@@ -273,6 +273,8 @@ export function MyBookingsList({ cpOnly = false }) {
   // Counting over all rows instead kept the numbers still as you switched tabs, but
   // on Approved they then summed to the full 244 next to a list of 229 — a filter
   // that misreports its own result is worse than one that moves.
+  // Your unfinished bookings, counted on the Drafts tab so none is forgotten.
+  const draftCount = rows.filter((b) => b.status === 'draft').length;
   const preWho = rows.filter((b) => inTab(b, tab) && matches(b) && inRange(b)
     && (!proj.length || proj.includes(projName(b))));
 
@@ -373,9 +375,10 @@ export function MyBookingsList({ cpOnly = false }) {
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {TABS.map(([k, label]) => (
-            <button className={`nx-btn nx-btn-md nx-toggle${tab === k ? ' is-on' : ''}`} key={k} onClick={() => { setTab(k); setOpen({}); }}
-              style={{ padding: '7px 14px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                background: tab === k ? 'var(--primary)' : 'var(--surface-3)', color: tab === k ? '#fff' : 'var(--muted)' }}>{label}</button>
+            <button className={`nx-btn nx-btn-md nx-toggle mb-tab${tab === k ? ' is-on' : ''}${k === 'draft' && draftCount ? ' has-drafts' : ''}`} key={k}
+              onClick={() => { setTab(k); setOpen({}); }}>
+              {k === 'draft' && draftCount ? `${label} · ${draftCount}` : label}
+            </button>
           ))}
         </div>
         <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 420 }}>
