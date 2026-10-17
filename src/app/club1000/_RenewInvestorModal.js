@@ -7,7 +7,8 @@ import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 import { errText } from '../../lib/apiError';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
-import { schedulePeriods, perDayInterest, tenureDays } from '../../lib/c1Periods';
+import { schedulePeriods } from '../../lib/c1Periods';
+import ScheduleTable from './_ScheduleTable';
 import { RenewalSummary } from './_CloseInvestment';
 
 
@@ -239,7 +240,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
   }
 
   return (
-    <C1Modal title="Renew Investment" badge={`R${nextRevisionNo}`} sub={`${investor.name} · ${investor.phone} · ${scheme?.name || ''}`}
+    <C1Modal wide title="Renew Investment" badge={`R${nextRevisionNo}`} sub={`${investor.name} · ${investor.phone} · ${scheme?.name || ''}`}
       onClose={onClose} onSubmit={submit}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
@@ -271,37 +272,6 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
         <C1Field label="Return %" required>
           <input className="nx-input" type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
         </C1Field>
-        {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
-          <C1Field label="Payout schedule" hint="Confirm or edit each instalment">
-            <div className="c1i-sched">
-              <div className="c1i-sched-basis">
-                Interest per day = ₹{Number(form.amount_invested || 0).toLocaleString('en-IN')} × {Number(form.total_return_pct) || 0}% ÷ {tenureDays(form.investment_date, maturityPreview)} days
-                = <b>₹{perDayInterest(form.amount_invested, form.total_return_pct, form.investment_date, maturityPreview).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</b>
-              </div>
-              {schedule.map((row, idx) => {
-                const per = periods[idx];
-                return (
-                <div key={idx} className="c1i-sched-item">
-                <div className="c1i-sched-row">
-                  <span className={`c1i-sched-tag${row.payout_type === 'maturity' ? ' principal' : ''}`}>
-                    {row.payout_type === 'maturity' ? 'Principal' : per ? per.label : 'Interest'}
-                  </span>
-                  <span className="c1-help">{formatDMY(row.due_date)}</span>
-                  <input className="nx-input" type="number" step="0.01" value={row.amount_due} onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)} />
-                </div>
-                {per && (
-                  <div className="c1i-sched-why">
-                    {formatDMY(per.from)} – {formatDMY(per.to)} · {per.days} days × ₹{per.perDay.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day = ₹{per.computed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                    {Math.abs(Number(row.amount_due) - per.computed) > 0.5 ? <em> · edited from ₹{per.computed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</em> : null}
-                  </div>
-                )}
-                </div>
-                );
-              })}
-              <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost c1i-sched-reset" onClick={resetSchedule}>Reset to default</button>
-            </div>
-          </C1Field>
-        )}
         <C1Field label="Security" hint="Printed on the LOI — optional">
           <input className="nx-input" value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
         </C1Field>
@@ -309,6 +279,15 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
           <input className="nx-input" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
         </C1Field>
       </C1Section>
+
+      {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
+        <C1Section title="Payout schedule — confirm or edit">
+          <ScheduleTable schedule={schedule} periods={periods} principal={form.amount_invested} pct={form.total_return_pct}
+            from={form.investment_date} to={maturityPreview}
+            renderDate={(row) => <span className="c1st-fixed-date">{formatDMY(row.due_date)}</span>}
+            onAmount={(idx, v) => updateScheduleRow(idx, 'amount_due', v)} onReset={resetSchedule} />
+        </C1Section>
+      )}
 
       <C1Section title="Renewed investment proposal form (LOI)">
         <C1Field label="1. Download" hint="Print it and get it signed">

@@ -9,7 +9,8 @@ import { useCurrentCompany } from '../../lib/currentCompany';
 
 import Icon from '../../components/Icon';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
-import { schedulePeriods, perDayInterest, tenureDays } from '../../lib/c1Periods';
+import { schedulePeriods } from '../../lib/c1Periods';
+import ScheduleTable from './_ScheduleTable';
 import { errText } from '../../lib/apiError';
 
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
@@ -404,7 +405,7 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
 
   const busyAny = busy || savingDraft;
   return (
-    <C1Modal
+    <C1Modal wide
       title={revise ? 'Revise LOI' : draft ? 'Edit Draft Investor' : 'Add Investor'}
       badge={revise ? `R${nextRevisionNo}` : null}
       sub={revise ? `${revise.name} · ${revise.phone}` : 'Added investors go for approval before they count'}
@@ -419,6 +420,65 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
         <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy || !loiFile}>{busy ? 'Submitting…' : 'Submit for Approval'}</button>
       </>}>
+
+
+
+
+
+      <C1Section title="Investor">
+        <C1Field label="Investor name" required>
+          <input className="nx-input" value={form.name} onChange={(e) => set('name', e.target.value)} required />
+        </C1Field>
+        <C1Field label="Mobile number" required>
+          <input className="nx-input" value={form.phone} onChange={(e) => set('phone', e.target.value)} required />
+        </C1Field>
+        <C1Field label="Email">
+          <input className="nx-input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+        </C1Field>
+        <C1Field label="PAN">
+          <input className="nx-input" value={form.pan} onChange={(e) => set('pan', e.target.value.toUpperCase())} />
+        </C1Field>
+        <C1Field label="Scan document" hint="KYC / ID proof">
+          <input className="c1-file" type="file" accept="image/*,.pdf" onChange={handleFileChange} />
+          {documentFile && <span className="c1-help ok">Selected: {documentFile.name}</span>}
+          {revise?.document_url && !documentFile && <span className="c1-help">One is on file — choose a file only to replace it.</span>}
+        </C1Field>
+        <C1Field label="Security" hint="Printed on the LOI — optional">
+          <input className="nx-input" value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
+        </C1Field>
+        <C1Field label="Notes">
+          <input className="nx-input" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+        </C1Field>
+      </C1Section>
+
+      <C1Section title="Source">
+        <C1Field label="Source">
+          <select className="nx-input" value={form.source} onChange={(e) => set('source', e.target.value)}>
+            {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </C1Field>
+        {form.source === 'referral' && <>
+          <C1Field label="Reference name">
+            <div className="c1i-ref">
+              <input className="nx-input" value={form.reference_name} autoComplete="off"
+                onChange={(e) => { set('reference_name', e.target.value); setRefDropdownOpen(true); }}
+                onFocus={() => setRefDropdownOpen(true)} onBlur={() => setTimeout(() => setRefDropdownOpen(false), 120)} />
+              {refDropdownOpen && filteredRefSuggestions.length > 0 && (
+                <div className="nx-popover c1i-ref-pop">
+                  {filteredRefSuggestions.map((r, i) => (
+                    <div key={`${r.reference_phone}-${i}`} className="c1i-ref-opt" onMouseDown={() => selectReferenceSuggestion(r)}>
+                      <b>{r.reference_name}</b>{r.reference_phone && <span> — {r.reference_phone}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </C1Field>
+          <C1Field label="Reference number">
+            <input className="nx-input" value={form.reference_phone} onChange={(e) => set('reference_phone', e.target.value)} />
+          </C1Field>
+        </>}
+      </C1Section>
 
       <C1Section title="Scheme & dates">
         <C1Field label="Scheme" required hint={scheme ? `Min ticket ₹${Number(scheme.min_ticket_size).toLocaleString('en-IN')}` : null}>
@@ -453,93 +513,16 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
             <C1Value tone="good">₹{Math.round(maturityValuePreview).toLocaleString('en-IN')}</C1Value>
           </C1Field>
         )}
-        {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
-          <C1Field label="Payout schedule" hint="Confirm or edit each instalment">
-            <div className="c1i-sched">
-              <div className="c1i-sched-basis">
-                Interest per day = ₹{Number(form.amount_invested || 0).toLocaleString('en-IN')} × {Number(form.total_return_pct) || 0}% ÷ {tenureDays(form.investment_date, maturityPreview)} days
-                = <b>₹{perDayInterest(form.amount_invested, form.total_return_pct, form.investment_date, maturityPreview).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</b>
-              </div>
-              {schedule.map((row, idx) => {
-                const per = periods[idx];
-                return (
-                <div key={idx} className="c1i-sched-item">
-                <div className="c1i-sched-row">
-                  <span className={`c1i-sched-tag${row.payout_type === 'maturity' ? ' principal' : ''}`}>
-                    {row.payout_type === 'maturity' ? 'Principal' : per ? per.label : 'Interest'}
-                  </span>
-                  <DateFieldDMY value={row.due_date} onChange={(e) => updateScheduleRow(idx, 'due_date', e.target.value)} />
-                  <input className="nx-input" type="number" step="0.01" value={row.amount_due} onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)} />
-                </div>
-                {per && (
-                  <div className="c1i-sched-why">
-                    {formatDMY(per.from)} – {formatDMY(per.to)} · {per.days} days × ₹{per.perDay.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day = ₹{per.computed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                    {Math.abs(Number(row.amount_due) - per.computed) > 0.5 ? <em> · edited from ₹{per.computed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</em> : null}
-                  </div>
-                )}
-                </div>
-                );
-              })}
-              <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost c1i-sched-reset" onClick={resetSchedule}>Reset to default</button>
-            </div>
-          </C1Field>
-        )}
       </C1Section>
 
-      <C1Section title="Source">
-        <C1Field label="Source">
-          <select className="nx-input" value={form.source} onChange={(e) => set('source', e.target.value)}>
-            {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-        </C1Field>
-        {form.source === 'referral' && <>
-          <C1Field label="Reference name">
-            <div className="c1i-ref">
-              <input className="nx-input" value={form.reference_name} autoComplete="off"
-                onChange={(e) => { set('reference_name', e.target.value); setRefDropdownOpen(true); }}
-                onFocus={() => setRefDropdownOpen(true)} onBlur={() => setTimeout(() => setRefDropdownOpen(false), 120)} />
-              {refDropdownOpen && filteredRefSuggestions.length > 0 && (
-                <div className="nx-popover c1i-ref-pop">
-                  {filteredRefSuggestions.map((r, i) => (
-                    <div key={`${r.reference_phone}-${i}`} className="c1i-ref-opt" onMouseDown={() => selectReferenceSuggestion(r)}>
-                      <b>{r.reference_name}</b>{r.reference_phone && <span> — {r.reference_phone}</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </C1Field>
-          <C1Field label="Reference number">
-            <input className="nx-input" value={form.reference_phone} onChange={(e) => set('reference_phone', e.target.value)} />
-          </C1Field>
-        </>}
-      </C1Section>
-
-      <C1Section title="Investor">
-        <C1Field label="Investor name" required>
-          <input className="nx-input" value={form.name} onChange={(e) => set('name', e.target.value)} required />
-        </C1Field>
-        <C1Field label="Mobile number" required>
-          <input className="nx-input" value={form.phone} onChange={(e) => set('phone', e.target.value)} required />
-        </C1Field>
-        <C1Field label="Email">
-          <input className="nx-input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
-        </C1Field>
-        <C1Field label="PAN">
-          <input className="nx-input" value={form.pan} onChange={(e) => set('pan', e.target.value.toUpperCase())} />
-        </C1Field>
-        <C1Field label="Scan document" hint="KYC / ID proof">
-          <input className="c1-file" type="file" accept="image/*,.pdf" onChange={handleFileChange} />
-          {documentFile && <span className="c1-help ok">Selected: {documentFile.name}</span>}
-          {revise?.document_url && !documentFile && <span className="c1-help">One is on file — choose a file only to replace it.</span>}
-        </C1Field>
-        <C1Field label="Security" hint="Printed on the LOI — optional">
-          <input className="nx-input" value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
-        </C1Field>
-        <C1Field label="Notes">
-          <input className="nx-input" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
-        </C1Field>
-      </C1Section>
+      {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
+        <C1Section title="Payout schedule — confirm or edit">
+          <ScheduleTable schedule={schedule} periods={periods} principal={form.amount_invested} pct={form.total_return_pct}
+            from={form.investment_date} to={maturityPreview}
+            renderDate={(row, idx) => <DateFieldDMY value={row.due_date} onChange={(e) => updateScheduleRow(idx, 'due_date', e.target.value)} />}
+            onAmount={(idx, v) => updateScheduleRow(idx, 'amount_due', v)} onReset={resetSchedule} />
+        </C1Section>
+      )}
 
       <C1Section title={revise ? 'Revised investment proposal form (LOI)' : 'Investment proposal form (LOI)'}>
         <C1Field label="1. Download" hint="Print it and get it signed">
