@@ -18,8 +18,10 @@ const TYPE_COLOR = {
 const STATUS_COLOR = {
   completed: { bg: 'var(--success-soft)', fg: 'var(--success)' },
   paid: { bg: 'var(--success-soft)', fg: 'var(--success)' },
-  pending: { bg: 'var(--warning-soft)', fg: 'var(--warning)' },
-  overdue: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
+  // Due and not yet paid to the investor.
+  pending: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
+  // Not yet due.
+  upcoming: { bg: 'var(--warning-soft)', fg: 'var(--warning)' },
 };
 
 // Type / status pill — the colour comes from the maps above.
@@ -56,7 +58,7 @@ export default function LedgerModal({ investorId, onClose }) {
         <>
           <div className="c1l-cards">
             {[
-              ['Principal', s.principal ?? s.total_invested, ''],
+              ['Principal', s.principal ?? s.total_invested, '', inv?.investment_date ? `invested ${formatDMY(inv.investment_date)}` : ''],
               ['Interest', s.interest, ''],
               ['Total', s.total ?? s.total_payout_due, 'sum', 'principal + interest'],
               ['Due till today', s.due_till_today, 'info'],
@@ -74,11 +76,11 @@ export default function LedgerModal({ investorId, onClose }) {
                 <tr><th>Type</th><th className="num">Amount</th><th>Due date</th><th>Paid date</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {data.entries.map((e, i) => {
-                  const isInv = e.type === 'investment';
-                  const st = !isInv && e.status === 'pending' && (e.due_date || e.date) < today ? 'overdue' : e.status;
+                {data.entries.filter((e) => e.type !== 'investment').map((e, i) => {
+                  // Unpaid: Pending once its date has come, Upcoming before that.
+                  const st = e.status === 'pending' && (e.due_date || e.date) > today ? 'upcoming' : e.status;
                   return (
-                    <tr key={i} className={isInv ? 'c1l-inv' : ''}>
+                    <tr key={i}>
                       <td>
                         <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
                         {e.period && (
