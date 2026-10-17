@@ -255,6 +255,8 @@ export const CLUB1000_ENDPOINTS = {
   investorRedeem: (id) => `${BASE_URL}/api/club1000/investors/${id}/redeem/`,
   investorSettlement: (id, on) => `${BASE_URL}/api/club1000/investors/${id}/settlement/${on ? `?on=${on}` : ''}`,
   investorHistory: (id) => `${BASE_URL}/api/club1000/investors/${id}/history/`,
+  investorPortfolio: (id) => `${BASE_URL}/api/club1000/investors/${id}/portfolio/`,
+  get portfolios() { return `${BASE_URL}/api/club1000/portfolios/`; },
   get payouts()    { return `${BASE_URL}/api/club1000/payouts/`; },
   payoutMarkPaid: (id) => `${BASE_URL}/api/club1000/payouts/${id}/mark-paid/`,
   payoutMarkUnpaid: (id) => `${BASE_URL}/api/club1000/payouts/${id}/mark-unpaid/`,

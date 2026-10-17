@@ -41,6 +41,7 @@ function IconGift()      { return <SvgIcon><polyline points="20 12 20 22 4 22 4 
 function IconAdmin()     { return <SvgIcon><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></SvgIcon>; }
 function IconLeads()     { return <SvgIcon><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></SvgIcon>; }
 function IconCalendar()  { return <SvgIcon><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></SvgIcon>; }
+function IconBriefcase() { return <SvgIcon><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="2" y1="13" x2="22" y2="13"/></SvgIcon>; }
 function IconApprovals() { return <SvgIcon><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></SvgIcon>; }
 
 const NAV = [
@@ -49,6 +50,7 @@ const NAV = [
   { label: 'Follow-Ups', href: '/club1000/follow-ups',  icon: <IconCalendar />, screen: 'club.screen.followups' },
   { label: 'Schemes',    href: '/club1000/schemes',     icon: <IconLayers />, screen: 'club.screen.schemes' },
   { label: 'Investors',  href: '/club1000/investors',   icon: <IconUsers />, screen: 'club.screen.investors' },
+  { label: 'Portfolios', href: '/club1000/portfolios',  icon: <IconBriefcase />, screen: 'club.screen.investors' },
   { label: 'Approvals',  href: '/club1000/approvals',   icon: <IconApprovals />, managerOnly: true, screen: 'club.screen.approvals' },
   { label: 'Payouts',    href: '/club1000/payouts',     icon: <IconWallet />, managerOnly: true, screen: 'club.screen.payouts' },
   { label: 'Referral Rewards', href: '/club1000/referral-rewards', icon: <IconGift />, screen: 'club.screen.rewards' },

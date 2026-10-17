@@ -12,6 +12,7 @@ import AddInvestorModal from '../_AddInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
 import { RedeemModal, MaturityPayoutModal } from '../_CloseInvestment';
 import HistoryModal from '../_HistoryModal';
+import PortfolioModal from '../_PortfolioModal';
 import ImportInvestorsModal from '../_ImportInvestors';
 import LedgerModal from '../_LedgerModal';
 
@@ -55,6 +56,7 @@ export default function InvestorsPage() {
   const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
   const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
+  const [portfolioFor, setPortfolioFor] = useState(null); // the person's whole portfolio
   const [deletingId, setDeletingId] = useState(null);    // investor being deleted
   const [showImport, setShowImport] = useState(false);   // Import from Excel
   const [ledgerFor, setLedgerFor] = useState(null);
@@ -289,6 +291,7 @@ export default function InvestorsPage() {
                   <div className="c1a-actions">
                     <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)}><Icon name="book" /> Ledger</button>
                     <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFor(inv)}><Icon name="clock" /> History</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setPortfolioFor(inv.id)}><Icon name="users" /> Portfolio</button>
                     {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>}
                     {inv.document_url && <a className="nx-btn nx-btn-sm nx-btn-secondary" href={inv.document_url} target="_blank" rel="noreferrer"><Icon name="clip" /> KYC</a>}
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
@@ -321,6 +324,7 @@ export default function InvestorsPage() {
       )}
       {showImport && <ImportInvestorsModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
       {historyFor && <HistoryModal investor={historyFor} onClose={() => setHistoryFor(null)} />}
+      {portfolioFor && <PortfolioModal investorId={portfolioFor} onClose={() => setPortfolioFor(null)} />}
       {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
       {payingOut && <MaturityPayoutModal investor={payingOut} onClose={() => setPayingOut(null)} onDone={() => { setPayingOut(null); load(); }} />}
       {renewing && (
