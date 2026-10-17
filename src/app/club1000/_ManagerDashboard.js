@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Phone, PartyPopper, Users, Building2, Clock, CalendarClock, ClipboardList, AlarmClock, Gift, Layers, Trophy, Settings2, Plus } from 'lucide-react';
+import { Phone, PartyPopper, Users, Building2, Clock, CalendarClock, ClipboardList, AlarmClock, Gift, Layers, Settings2, Plus } from 'lucide-react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { rupee, inrShort, pct } from '../../lib/inr';
-import { DashHero, DashKpi, DashAlerts, DashCard, DashGrid, DashBars, DashRank } from '../../components/Dash';
+import { DashHero, DashKpi, DashAlerts, DashCard, DashGrid, DashBars } from '../../components/Dash';
 import AddInvestorModal from './_AddInvestorModal';
 import DateFilter from '../sales/_DateFilter';
 import Loader from '../../components/Loader';
@@ -162,14 +162,8 @@ export default function ManagerDashboard() {
             </DashCard>
           </DashGrid>
 
-          {/* Who holds the most, beside what has to be paid out and when. */}
-          <DashGrid>
-          <DashCard title="Top investors" sub="By amount invested" icon={Trophy} action={<Link href="/club1000/investors" className="ard-link">View all →</Link>}>
-              <DashRank tone="good" empty="No investors yet."
-                rows={(s.top_investors || []).map((inv, i) => ({ key: `${inv.name}-${i}`, name: inv.name, sub: `${inv.scheme} · ${inv.status}`, value: Number(inv.amount) || 0, display: inrShort(inv.amount), title: rupee(inv.amount) }))} />
-            </DashCard>
-            <PayoutsAhead schemeSel={schemeSel} />
-          </DashGrid>
+          {/* What has to be paid out and when, full width. */}
+          <PayoutsAhead schemeSel={schemeSel} />
         </>
       )}
 

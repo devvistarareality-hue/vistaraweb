@@ -38,6 +38,15 @@ function nextBuckets(grain, n, today) {
   return out;
 }
 
+// A round top for the scale just above the tallest column (quarter steps stay
+// round: ₹12 Cr → ₹3 / 6 / 9 / 12 Cr), so the bars use the height they have.
+function niceMax(v) {
+  const p = 10 ** Math.floor(Math.log10(v));
+  const f = v / p;
+  return ([1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6, 8, 10].find((step) => f <= step) || 10) * p;
+}
+const TICKS = [1, 0.75, 0.5, 0.25, 0];
+
 export default function PayoutsAhead({ schemeSel = [] }) {
   const [payouts, setPayouts] = useState(null);
   const [grain, setGrain] = useState('month');
@@ -54,7 +63,7 @@ export default function PayoutsAhead({ schemeSel = [] }) {
   }, []);
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-  const { columns, schemes, max, total } = useMemo(() => {
+  const { columns, schemes, max, total, stats } = useMemo(() => {
     const rows = (payouts || []).filter((p) => (!schemeSel.length || schemeSel.includes(p.scheme_name))
       && (kind === 'both' || (kind === 'principal' ? p.payout_type !== 'interest' : p.payout_type === 'interest')));
     // Scheme order is fixed by name so a scheme keeps its colour as filters change.
@@ -72,7 +81,18 @@ export default function PayoutsAhead({ schemeSel = [] }) {
       col.by[s] = (col.by[s] || 0) + amt; col.sum += amt;
     }
     const shown = cols.filter((c) => !c.overdue || c.sum > 0);
-    return { columns: shown, schemes: names, max: Math.max(1, ...shown.map((c) => c.sum)), total: shown.reduce((t, c) => t + c.sum, 0) };
+    // The headline split, over the same window and schemes whatever is being drawn.
+    const lastKey = ahead.length ? ahead[ahead.length - 1].key : null;
+    const inWindow = (payouts || []).filter((p) => (!schemeSel.length || schemeSel.includes(p.scheme_name))
+      && (p.due_date < today || (lastKey != null && bucketOf(p.due_date, grain).key <= lastKey)));
+    const sumOf = (f) => inWindow.filter(f).reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+    const stats = {
+      interest: sumOf((p) => p.payout_type === 'interest'),
+      principal: sumOf((p) => p.payout_type !== 'interest'),
+      overdue: sumOf((p) => p.due_date < today && (kind === 'both' || (kind === 'principal' ? p.payout_type !== 'interest' : p.payout_type === 'interest'))),
+    };
+    const peak = Math.max(1, ...shown.map((c) => c.sum));
+    return { columns: shown, schemes: names, max: niceMax(peak), total: shown.reduce((t, c) => t + c.sum, 0), stats };
   }, [payouts, grain, kind, schemeSel.join('|'), today]);
 
   const colorOf = (name) => `c1pa-s${(schemes.indexOf(name) % 6) + 1}`;
@@ -97,32 +117,44 @@ export default function PayoutsAhead({ schemeSel = [] }) {
       {payouts === null ? <div className="ar-empty">Loading…</div> : total === 0 ? (
         <div className="ar-empty">Nothing to pay in this window.</div>
       ) : <>
-        <div className={`c1pa-chart g-${grain}`}>
-          {columns.map((c) => {
-            const h = c.sum ? Math.max(3, (c.sum / max) * 100) : 0;
-            return (
-              <div key={c.key} className={`c1pa-col${c.overdue ? ' overdue' : ''}${hover === c.key ? ' hot' : ''}`}
-                onMouseEnter={() => setHover(c.key)} onMouseLeave={() => setHover(null)}>
-                <span className="c1pa-val" title={rupee(c.sum)}>{c.sum ? inrShort(c.sum) : ''}</span>
-                <div className="c1pa-bar">
-                  <div className="c1pa-stack" style={{ height: `${h}%` }}>{/* inline-ok: the column's share of the tallest */}
-                    {schemes.filter((s) => c.by[s]).map((s) => (
-                      <i key={s} className={colorOf(s)} style={{ flexGrow: c.by[s] }} />/* inline-ok: the scheme's share of the column */
-                    ))}
+        <div className="c1pa-stats">
+          <div><span>Total</span><b title={rupee(total)}>{inrShort(total)}</b></div>
+          <div><span>Interest</span><b title={rupee(stats.interest)}>{inrShort(stats.interest)}</b></div>
+          <div><span>Principal</span><b title={rupee(stats.principal)}>{inrShort(stats.principal)}</b></div>
+          <div className={stats.overdue ? 'bad' : ''}><span>Overdue</span><b title={rupee(stats.overdue)}>{stats.overdue ? inrShort(stats.overdue) : '—'}</b></div>
+        </div>
+        <div className="c1pa-plot">
+          <div className="c1pa-axis">
+            {TICKS.map((t) => <span key={t}>{t ? inrShort(max * t) : '₹0'}</span>)}
+          </div>
+          <div className={`c1pa-chart g-${grain}`}>
+            <div className="c1pa-grid">{TICKS.map((t) => <i key={t} />)}</div>
+            {columns.map((c) => {
+              const h = c.sum ? Math.max(1.5, (c.sum / max) * 100) : 0;
+              return (
+                <div key={c.key} className={`c1pa-col${c.overdue ? ' overdue' : ''}${hover === c.key ? ' hot' : ''}`}
+                  onMouseEnter={() => setHover(c.key)} onMouseLeave={() => setHover(null)}>
+                  <div className="c1pa-bar">
+                    {c.sum > 0 && <span className="c1pa-val" style={{ bottom: `calc(${h}% + 4px)` }} title={rupee(c.sum)}>{inrShort(c.sum)}</span>}{/* inline-ok: the label sits on its bar */}
+                    <div className="c1pa-stack" style={{ height: `${h}%` }}>{/* inline-ok: the column's share of the scale */}
+                      {schemes.filter((sc) => c.by[sc]).map((sc) => (
+                        <i key={sc} className={c.overdue ? 'c1pa-over' : colorOf(sc)} style={{ flexGrow: c.by[sc] }} />/* inline-ok: the scheme's share of the column */
+                      ))}
+                    </div>
                   </div>
+                  <span className="c1pa-lbl">{c.label}</span>
+                  {hover === c.key && c.sum > 0 && (
+                    <div className="c1pa-tip" role="tooltip">
+                      <b>{c.overdue ? 'Overdue (unpaid)' : c.label} · {rupee(c.sum)}</b>
+                      {schemes.filter((sc) => c.by[sc]).map((sc) => (
+                        <span key={sc}><i className={colorOf(sc)} />{sc}<em>{rupee(c.by[sc])}</em></span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="c1pa-lbl">{c.label}</span>
-                {hover === c.key && c.sum > 0 && (
-                  <div className="c1pa-tip" role="tooltip">
-                    <b>{c.overdue ? 'Overdue (unpaid)' : c.label} · {rupee(c.sum)}</b>
-                    {schemes.filter((s) => c.by[s]).map((s) => (
-                      <span key={s}><i className={colorOf(s)} />{s}<em>{rupee(c.by[s])}</em></span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
         <div className="c1pa-legend">
           {schemes.filter((s) => columns.some((c) => c.by[s])).map((s) => (

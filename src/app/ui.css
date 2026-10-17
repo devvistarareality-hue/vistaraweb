@@ -3436,18 +3436,32 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1pa-seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
 .c1pa-seg button { border: 0; background: transparent; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--text-2); cursor: pointer; }
 .c1pa-seg button.on { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-.c1pa-chart { display: flex; align-items: stretch; gap: 6px; height: 230px; padding-top: 4px; }
-.c1pa-col { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: default; }
-.c1pa-val { font-size: 10.5px; font-weight: 800; color: var(--text); white-space: nowrap; min-height: 14px; }
-.c1pa-bar { flex: 1; width: 100%; max-width: 46px; display: flex; align-items: flex-end; border-bottom: 1px solid var(--border); }
-.c1pa-stack { width: 100%; display: flex; flex-direction: column-reverse; gap: 2px; }
+.c1pa-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.c1pa-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.c1pa-stats span { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.c1pa-stats b { font-size: 16px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.c1pa-stats > div.bad b { color: var(--danger); }
+.c1pa-plot { display: flex; gap: 8px; }
+.c1pa-axis { display: flex; flex-direction: column; justify-content: space-between; height: 220px; padding-bottom: 0; font-size: 10px; color: var(--muted); text-align: right; min-width: 44px; font-variant-numeric: tabular-nums; }
+.c1pa-axis span { line-height: 1; transform: translateY(-50%); }
+.c1pa-axis span:last-child { transform: none; }
+.c1pa-chart { position: relative; flex: 1; min-width: 0; display: flex; align-items: stretch; gap: 10px; height: 246px; }
+.c1pa-grid { position: absolute; left: 0; right: 0; top: 0; height: 220px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+.c1pa-grid i { display: block; border-top: 1px dashed var(--hairline); }
+.c1pa-grid i:last-child { border-top: 1px solid var(--border); }
+.c1pa-col { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; cursor: default; }
+.c1pa-bar { position: relative; height: 220px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.c1pa-val { position: absolute; left: 50%; transform: translateX(-50%); font-size: 10.5px; font-weight: 800; color: var(--text); white-space: nowrap; }
+.c1pa-stack { width: min(34px, 70%); display: flex; flex-direction: column-reverse; gap: 2px; }
 .c1pa-stack i { display: block; min-height: 2px; border-radius: 2px; }
-.c1pa-stack i:last-child { border-radius: 4px 4px 2px 2px; }
-.c1pa-col.hot .c1pa-stack { filter: brightness(1.08); }
+.c1pa-stack i:last-child { border-radius: 6px 6px 2px 2px; }
+.c1pa-over { background: color-mix(in srgb, var(--danger) 70%, transparent); }
+.c1pa-col.hot .c1pa-stack { filter: brightness(1.1); }
+.c1pa-col.hot { background: color-mix(in srgb, var(--accent) 5%, transparent); border-radius: 8px; }
 .c1pa-col.overdue .c1pa-lbl { color: var(--danger); font-weight: 800; }
-.c1pa-col.overdue .c1pa-bar { border-bottom-color: var(--danger); }
-.c1pa-lbl { font-size: 10.5px; color: var(--muted); white-space: nowrap; text-align: center; }
+.c1pa-lbl { margin-top: 8px; font-size: 10.5px; color: var(--muted); white-space: nowrap; text-align: center; }
 .c1pa-chart.g-quarter .c1pa-lbl, .c1pa-chart.g-year .c1pa-lbl { font-size: 10px; }
+@media (max-width: 760px) { .c1pa-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .c1pa-chart { gap: 4px; } .c1pa-val { font-size: 9px; } }
 .c1pa-tip { position: absolute; bottom: calc(100% - 6px); left: 50%; transform: translateX(-50%); z-index: 5; min-width: 190px; display: flex; flex-direction: column; gap: 4px;
   padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,.14); font-size: 12px; color: var(--text-2); }
 .c1pa-tip b { color: var(--text); font-size: 12.5px; }
