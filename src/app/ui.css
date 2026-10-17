@@ -3428,3 +3428,32 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
   .c1pp-main > .c1pp-what { grid-column: 1 / -1; }
   .c1pp-acts { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* Club 1000 "Payouts ahead": columns stacked by scheme, month / quarter / year. */
+.c1pa-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.c1pa-seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.c1pa-seg button { border: 0; background: transparent; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--text-2); cursor: pointer; }
+.c1pa-seg button.on { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.c1pa-chart { display: flex; align-items: stretch; gap: 6px; height: 230px; padding-top: 4px; }
+.c1pa-col { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: default; }
+.c1pa-val { font-size: 10.5px; font-weight: 800; color: var(--text); white-space: nowrap; min-height: 14px; }
+.c1pa-bar { flex: 1; width: 100%; max-width: 46px; display: flex; align-items: flex-end; border-bottom: 1px solid var(--border); }
+.c1pa-stack { width: 100%; display: flex; flex-direction: column-reverse; gap: 2px; }
+.c1pa-stack i { display: block; min-height: 2px; border-radius: 2px; }
+.c1pa-stack i:last-child { border-radius: 4px 4px 2px 2px; }
+.c1pa-col.hot .c1pa-stack { filter: brightness(1.08); }
+.c1pa-col.overdue .c1pa-lbl { color: var(--danger); font-weight: 800; }
+.c1pa-col.overdue .c1pa-bar { border-bottom-color: var(--danger); }
+.c1pa-lbl { font-size: 10.5px; color: var(--muted); white-space: nowrap; text-align: center; }
+.c1pa-chart.g-quarter .c1pa-lbl, .c1pa-chart.g-year .c1pa-lbl { font-size: 10px; }
+.c1pa-tip { position: absolute; bottom: calc(100% - 6px); left: 50%; transform: translateX(-50%); z-index: 5; min-width: 190px; display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,.14); font-size: 12px; color: var(--text-2); }
+.c1pa-tip b { color: var(--text); font-size: 12.5px; }
+.c1pa-tip span { display: flex; align-items: center; gap: 6px; }
+.c1pa-tip em { margin-left: auto; font-style: normal; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.c1pa-tip i, .c1pa-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+.c1pa-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 12px; color: var(--text-2); }
+.c1pa-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.c1pa-legend b { color: var(--text); }
+.c1pa-s1 { background: var(--series-1); } .c1pa-s2 { background: var(--series-2); } .c1pa-s3 { background: var(--series-3); }
+.c1pa-s4 { background: var(--series-4); } .c1pa-s5 { background: var(--series-5); } .c1pa-s6 { background: var(--series-6); }

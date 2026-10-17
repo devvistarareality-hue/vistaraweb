@@ -11,6 +11,7 @@ import DateFilter from '../sales/_DateFilter';
 import Loader from '../../components/Loader';
 import MultiSelect from '../../components/MultiSelect';
 import { STATUS_ROWS } from './_DashboardWidgets';
+import PayoutsAhead from './_PayoutsAhead';
 
 // Club 1000 manager home — same layout as the AR dashboard: the book at a glance,
 // then what needs a decision, then where the money sits.
@@ -161,10 +162,14 @@ export default function ManagerDashboard() {
             </DashCard>
           </DashGrid>
 
+          {/* Who holds the most, beside what has to be paid out and when. */}
+          <DashGrid>
           <DashCard title="Top investors" sub="By amount invested" icon={Trophy} action={<Link href="/club1000/investors" className="ard-link">View all →</Link>}>
-            <DashRank tone="good" empty="No investors yet."
-              rows={(s.top_investors || []).map((inv, i) => ({ key: `${inv.name}-${i}`, name: inv.name, sub: `${inv.scheme} · ${inv.status}`, value: Number(inv.amount) || 0, display: inrShort(inv.amount), title: rupee(inv.amount) }))} />
-          </DashCard>
+              <DashRank tone="good" empty="No investors yet."
+                rows={(s.top_investors || []).map((inv, i) => ({ key: `${inv.name}-${i}`, name: inv.name, sub: `${inv.scheme} · ${inv.status}`, value: Number(inv.amount) || 0, display: inrShort(inv.amount), title: rupee(inv.amount) }))} />
+            </DashCard>
+            <PayoutsAhead schemeSel={schemeSel} />
+          </DashGrid>
         </>
       )}
 

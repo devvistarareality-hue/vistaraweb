@@ -68,6 +68,8 @@
   --primary-grad: linear-gradient(180deg, #2F6DB5 0%, #1B4E87 100%);
   --primary-glow: rgba(23,73,127,0.40);
   --accent: #17497F;
+  /* Chart series (Okabe–Ito, colour-blind safe), fixed order — a scheme keeps its colour. */
+  --series-1: #0072B2; --series-2: #E69F00; --series-3: #009E73; --series-4: #CC79A7; --series-5: #D55E00; --series-6: #56B4E9;
   --accent-deep: #0F3862;
   --blue: rgba(47,109,181,0.10);
   --blue-2: rgba(47,109,181,0.18);
@@ -161,6 +163,7 @@
   --primary-grad: linear-gradient(180deg, #FF8A4D 0%, #E04511 100%);
   --primary-glow: rgba(255,92,26,0.55);
   --accent: #FF9264;
+  --series-1: #56B4E9; --series-2: #F0B23E; --series-3: #2EC4A0; --series-4: #E09BC4; --series-5: #F28A4C; --series-6: #9DB4C8;
   --accent-deep: #FFC2A6;
   --blue: rgba(255,122,61,0.12);
   --blue-2: rgba(255,122,61,0.22);
