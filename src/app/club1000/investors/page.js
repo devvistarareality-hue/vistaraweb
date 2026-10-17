@@ -10,6 +10,7 @@ import DateFilter from '../../sales/_DateFilter';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
+import { RedeemModal, MaturityPayoutModal } from '../_CloseInvestment';
 import LedgerModal from '../_LedgerModal';
 
 import Icon from '../../../components/Icon';
@@ -49,6 +50,8 @@ export default function InvestorsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [revising, setRevising] = useState(null);
   const [renewing, setRenewing] = useState(null);
+  const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
+  const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
   const [ledgerFor, setLedgerFor] = useState(null);
   // Opened from an investor notification (?investor=<id>): that investor's ledger.
   useEffect(() => {
@@ -147,28 +150,6 @@ export default function InvestorsPage() {
     const data = await res.json();
     if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
     else notify(errText(data, 'Could not open the LOI.'));
-  }
-
-  async function redeem(id) {
-    if (!(await confirmDialog('Redeem this investment now? This applies the premature-redemption rate for the elapsed period.'))) return;
-    const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeem(id), { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) {
-      notify(errText(data, 'Could not redeem.'));
-      return;
-    }
-    load();
-  }
-
-  async function maturePayout(id) {
-    if (!(await confirmDialog('Pay out this matured investment now? The investor will be marked redeemed — mark the scheduled maturity payout paid separately from the Payouts screen.'))) return;
-    const res = await apiFetch(CLUB1000_ENDPOINTS.investorMaturePayout(id), { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) {
-      notify(errText(data, 'Could not process the payout.'));
-      return;
-    }
-    load();
   }
 
   // Scheme groups and the total, as on Approvals (and Sales' approvals).
@@ -289,9 +270,9 @@ export default function InvestorsPage() {
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
-                      {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => maturePayout(inv.id)}>Payout</button>}
+                      {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setPayingOut(inv)}>Payout</button>}
                     </>) : (manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
-                      <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => redeem(inv.id)}>Redeem</button>
+                      <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRedeeming(inv)}>Redeem</button>
                     ))}
                   </div>
                 </div>
@@ -309,6 +290,8 @@ export default function InvestorsPage() {
         <AddInvestorModal schemes={schemes} revise={revising}
           onClose={() => setRevising(null)} onCreated={() => load()} />
       )}
+      {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
+      {payingOut && <MaturityPayoutModal investor={payingOut} onClose={() => setPayingOut(null)} onDone={() => { setPayingOut(null); load(); }} />}
       {renewing && (
         <RenewInvestorModal
           investor={renewing}

@@ -3308,3 +3308,12 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
   .c1p-grid-row.c1p-paid-cols { grid-template-columns: 1fr 1fr; }
   .c1p-grid-row.c1p-paid-cols > :nth-child(n+3) { grid-column: auto; }
 }
+
+/* Club 1000 Redeem / Payout / Renew: the working, line by line. */
+.c1c-calc { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 4px 0 10px; }
+.c1c-calc > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--hairline); font-size: 13.5px; color: var(--text-2); }
+.c1c-calc > div:last-child { border-bottom: 0; }
+.c1c-calc small { display: block; font-size: 11px; color: var(--muted); }
+.c1c-calc b { color: var(--text); font-variant-numeric: tabular-nums; }
+.c1c-calc > .total { background: var(--accent-softer); font-weight: 800; color: var(--text); }
+.c1c-calc > .total b { font-size: 16px; }

@@ -7,6 +7,7 @@ import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 import { errText } from '../../lib/apiError';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
+import { RenewalSummary } from './_CloseInvestment';
 
 
 
@@ -243,6 +244,8 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       <div className="nx-note info c1-error">
         This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — the amount can go up or down.
       </div>
+
+      <RenewalSummary investorId={investor.id} newAmount={form.amount_invested} />
 
       <C1Section title="Renewal">
         <C1Field label="Renewal date" required>
