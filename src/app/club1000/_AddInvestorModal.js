@@ -9,7 +9,7 @@ import { useCurrentCompany } from '../../lib/currentCompany';
 
 import Icon from '../../components/Icon';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
-import { schedulePeriods } from '../../lib/c1Periods';
+import { schedulePeriods, maturityWorking } from '../../lib/c1Periods';
 import ScheduleTable from './_ScheduleTable';
 import { errText } from '../../lib/apiError';
 
@@ -515,6 +515,15 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
         )}
       </C1Section>
 
+      {form.interest_payout === 'maturity' && maturityPreview && Number(form.amount_invested) > 0 && (() => {
+        const mw = maturityWorking(form.amount_invested, form.total_return_pct, form.investment_date, maturityPreview);
+        return mw.rows.length ? (
+          <C1Section title="Interest working — paid at maturity">
+            <ScheduleTable readOnly schedule={mw.rows} periods={mw.periods} principal={form.amount_invested} pct={form.total_return_pct}
+              from={form.investment_date} to={maturityPreview} renderDate={() => null} onAmount={() => {}} onReset={() => {}} />
+          </C1Section>
+        ) : null;
+      })()}
       {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
         <C1Section title="Payout schedule — confirm or edit">
           <ScheduleTable schedule={schedule} periods={periods} principal={form.amount_invested} pct={form.total_return_pct}

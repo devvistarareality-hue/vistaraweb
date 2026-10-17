@@ -32,7 +32,7 @@ function DateChip({ iso, principal }) {
   );
 }
 
-export default function ScheduleTable({ schedule, periods, principal, pct, from, to, renderDate, onAmount, onReset }) {
+export default function ScheduleTable({ schedule, periods, principal, pct, from, to, renderDate, onAmount, onReset, readOnly = false }) {
   const [editing, setEditing] = useState(null);
   const perDay = perDayInterest(principal, pct, from, to);
   const days = tenureDays(from, to);
@@ -51,7 +51,7 @@ export default function ScheduleTable({ schedule, periods, principal, pct, from,
         <div>
           <span>Total interest</span>
           <b>₹{inr(totalInterest, 0)}</b>
-          <small>{interestRows.length} payout{interestRows.length === 1 ? '' : 's'} · {days} days</small>
+          <small>{readOnly ? 'paid at maturity' : `${interestRows.length} payout${interestRows.length === 1 ? '' : 's'}`} · {days} days</small>
         </div>
         <div className="good">
           <span>At maturity</span>
@@ -88,10 +88,10 @@ export default function ScheduleTable({ schedule, periods, principal, pct, from,
                 <b>₹{inr(row.amount_due)}</b>
                 {per && <small className={edited ? 'edited' : ''}>{edited ? `edited · worked out ₹${inr(per.computed)}` : `${per.days} × ₹${inr(perDay)}`}</small>}
               </div>
-              <button type="button" className={`c1sc-edit${open ? ' on' : ''}`} onClick={() => setEditing(open ? null : idx)}
+              {readOnly ? <span /> : <button type="button" className={`c1sc-edit${open ? ' on' : ''}`} onClick={() => setEditing(open ? null : idx)}
                 aria-label={open ? 'Done' : 'Edit this payout'} title={open ? 'Done' : 'Edit date or amount'}>
                 {open ? '✓' : '✎'}
-              </button>
+              </button>}
               {open && (
                 <div className="c1sc-editor">
                   <label><span>Payout date</span>{renderDate(row, idx)}</label>

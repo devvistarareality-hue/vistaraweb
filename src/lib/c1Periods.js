@@ -69,3 +69,22 @@ export function tenureDays(investmentDate, maturityDate) {
   if (!investmentDate || !maturityDate) return 0;
   return Math.round((d0(maturityDate) - d0(investmentDate)) / DAY);
 }
+
+// An "At Maturity" investment pays once: the whole term's interest and the principal,
+// both on the maturity date. The same working as a schedule, for display only.
+export function maturityWorking(principal, totalReturnPct, investmentDate, maturityDate) {
+  if (!investmentDate || !maturityDate) return { rows: [], periods: [] };
+  const days = tenureDays(investmentDate, maturityDate);
+  if (days <= 0) return { rows: [], periods: [] };
+  const perDay = perDayInterest(principal, totalReturnPct, investmentDate, maturityDate);
+  const interest = +(perDay * days).toFixed(2);
+  const from = iso(new Date(d0(investmentDate).getTime() + DAY));
+  const to = String(maturityDate).slice(0, 10);
+  return {
+    rows: [
+      { due_date: to, payout_type: 'interest', amount_due: interest.toFixed(2) },
+      { due_date: to, payout_type: 'maturity', amount_due: (Number(principal) || 0).toFixed(2) },
+    ],
+    periods: [{ label: 'Interest for the full term', from, to, days, perDay, computed: interest }, null],
+  };
+}
