@@ -9,7 +9,7 @@ import { onlyPresent } from '../../../lib/presentOptions';
 import DateFilter from '../../sales/_DateFilter';
 import Icon from '../../../components/Icon';
 import { fmtMoney } from '../_StatCard';
-import { notify } from '../../../lib/notify';
+import { notify, confirmDialog } from '../../../lib/notify';
 import { errText } from '../../../lib/apiError';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from '../_Form';
 import Loader from '../../../components/Loader';
@@ -170,6 +170,19 @@ export default function ReferralRewardsPage() {
   }
 
 
+  // A reward marked paid by mistake goes back to pending.
+  async function undoPaid(r) {
+    if (!(await confirmDialog(`Undo this payment? The reward for ${r.investor_name} goes back to pending.`))) return;
+    const res = await apiFetch(CLUB1000_ENDPOINTS.referralRewardMarkUnpaid(r.id), { method: 'POST' }).catch(() => null);
+    if (!res || !res.ok) {
+      const d = res ? await res.json().catch(() => ({})) : {};
+      notify(errText(d, 'Could not undo the payment.'), 'error');
+      return;
+    }
+    notify('Payment undone — back to pending', 'success');
+    load();
+  }
+
   // Cards are built from everything the filters allow, before the referrer
   // choice — so they stay the full picture and the chosen one reads as picked
   // out of a set rather than as the only one that exists.
@@ -286,6 +299,9 @@ export default function ReferralRewardsPage() {
                   <td>
                     {r.status === 'pending' && can(user, 'club.payout.mark_paid') && (
                       <button type="button" className="nx-btn nx-btn-sm nx-btn-success" onClick={() => setPaying(r)}>Mark Paid</button>
+                    )}
+                    {r.status === 'paid' && can(user, 'club.payout.mark_paid') && (
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoPaid(r)}>Undo paid</button>
                     )}
                   </td>
                 )}

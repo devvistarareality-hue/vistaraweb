@@ -16,7 +16,7 @@ import { rupee, inrShort } from '../../../lib/inr';
 import { DashKpi } from '../../../components/Dash';
 import MultiSelect from '../../../components/MultiSelect';
 import Loader from '../../../components/Loader';
-import { notify } from '../../../lib/notify';
+import { notify, confirmDialog } from '../../../lib/notify';
 import { errText } from '../../../lib/apiError';
 import LedgerModal from '../_LedgerModal';
 import { C1Modal, C1Section, C1Error } from '../_Form';
@@ -64,6 +64,7 @@ export default function PayoutsPage() {
   const [schemeSel, setSchemeSel] = useState([]);
   const [q, setQ] = useState('');
   const [paying, setPaying] = useState(null);     // the investor row being paid
+  const [paidFor, setPaidFor] = useState(null);   // the investor whose paid payouts are listed
   const [ledgerFor, setLedgerFor] = useState(null);
 
   useEffect(() => { if (user && !manager) router.replace('/club1000'); }, [user]);
@@ -186,6 +187,9 @@ export default function PayoutsPage() {
                     </div>
                     <div className="coll-actions">
                       <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setLedgerFor(r.id)}>Ledger</button>
+                      {r.paid.length > 0 && (
+                        <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setPaidFor(r.id)}>Paid ({r.paid.length})</button>
+                      )}
                       {canPay && r.pending.length > 0 && (
                         <button type="button" className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => setPaying(r)}><Wallet size={13} /> Pay</button>
                       )}
@@ -199,6 +203,9 @@ export default function PayoutsPage() {
       )}
 
       {paying && <PayModal row={paying} today={today} onClose={() => setPaying(null)} onDone={() => { setPaying(null); load(); }} />}
+      {paidFor && investors.find((x) => x.id === paidFor) && (
+        <PaidModal row={investors.find((x) => x.id === paidFor)} canUndo={canPay && manager} onClose={() => setPaidFor(null)} onChanged={load} />
+      )}
       {ledgerFor && <LedgerModal investorId={ledgerFor} onClose={() => setLedgerFor(null)} />}
     </div>
   );
@@ -292,6 +299,61 @@ function PayModal({ row, today, onClose, onDone }) {
         </div>
       </C1Section>
       <C1Error>{err}</C1Error>
+    </C1Modal>
+  );
+}
+
+// What has been paid to one investor, newest first — each with what went out, when
+// and the remarks. A payment marked by mistake can be undone (back to pending).
+function PaidModal({ row, canUndo, onClose, onChanged }) {
+  const [busyId, setBusyId] = useState(null);
+  async function undo(p) {
+    if (!(await confirmDialog(`Undo this payment? ${TYPE_LABELS[p.payout_type] || p.payout_type} due ${formatDMY(p.due_date)} goes back to pending.`))) return;
+    setBusyId(p.id);
+    const res = await apiFetch(CLUB1000_ENDPOINTS.payoutMarkUnpaid(p.id), { method: 'POST' }).catch(() => null);
+    setBusyId(null);
+    if (!res || !res.ok) {
+      const d = res ? await res.json().catch(() => ({})) : {};
+      notify(errText(d, 'Could not undo the payment.'), 'error');
+      return;
+    }
+    notify('Payment undone — back to pending', 'success');
+    onChanged();
+  }
+  return (
+    <C1Modal wide title="Paid payouts" sub={`${row.name} · ${row.scheme}${row.loi_no ? ` · ${row.loi_no}` : ''}`} onClose={onClose}
+      footer={<button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Close</button>}>
+      <C1Section title={`Paid · ${rupee(row.paidAmt)}`}>
+        <div className="c1p-grid">
+          <div className="c1p-grid-head c1p-paid-cols">
+            <span>Payout</span>
+            <span className="num">Target</span>
+            <span className="num">Paid</span>
+            <span>Paid on</span>
+            <span>Remarks</span>
+            <span />
+          </div>
+          {row.paid.map((p) => (
+            <div key={p.id} className="c1p-grid-row c1p-paid-cols">
+              <span className="c1p-pay-what">
+                <b>{TYPE_LABELS[p.payout_type] || p.payout_type}</b>
+                <span className="c1p-pay-when">Due {formatDMY(p.due_date)}</span>
+              </span>
+              <span className="num">{rupee(p.amount_due)}</span>
+              <span className="num c1p-target">{rupee(p.paid_amount ?? p.amount_due)}</span>
+              <span>{p.paid_date ? formatDMY(p.paid_date) : '—'}</span>
+              <span className="c1p-notes">{p.notes || '—'}</span>
+              <span>
+                {canUndo && (
+                  <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" disabled={busyId === p.id} onClick={() => undo(p)}>
+                    {busyId === p.id ? 'Undoing…' : 'Undo'}
+                  </button>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      </C1Section>
     </C1Modal>
   );
 }
