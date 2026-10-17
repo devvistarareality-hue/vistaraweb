@@ -347,48 +347,54 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
     <C1Modal wide title="Paid payouts" sub={`${row.name} · ${row.scheme}${row.loi_no ? ` · ${row.loi_no}` : ''}`} onClose={onClose}
       footer={<button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Close</button>}>
       <C1Section title={`Paid · ${rupee(row.paidAmt)}`}>
-        <div className="c1p-grid">
-          <div className="c1p-grid-head c1p-paid-cols">
+        <div className="c1pp">
+          <div className="c1pp-head">
             <span>Payout</span>
             <span className="num">Target</span>
             <span className="num">Paid</span>
             <span>Paid on</span>
-            <span>Remarks</span>
             <span />
           </div>
           {list.map((p) => {
             const ed = editing && editing.id === p.id ? editing : null;
+            const paidAmt = Number(p.paid_amount ?? p.amount_due) || 0;
+            const short = paidAmt !== (Number(p.amount_due) || 0);
             return (
-            <div key={p.id} className={`c1p-grid-row c1p-paid-cols${ed ? ' editing' : ''}`}>
-              <span className="c1p-pay-what">
-                <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
-                <span className="c1p-pay-when">Due {formatDMY(p.due_date)}</span>
-                {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
-              </span>
-              <span className="num">{rupee(p.amount_due)}</span>
-              {ed ? <>
-                <input className="nx-input" type="text" inputMode="decimal" value={ed.amount} onChange={(e) => setEditing({ ...ed, amount: e.target.value })} />
-                <input className="nx-input" type="date" max={today} value={ed.date} onChange={(e) => setEditing({ ...ed, date: e.target.value })} />
-                <input className="nx-input" value={ed.notes} placeholder="UTR / cheque no." onChange={(e) => setEditing({ ...ed, notes: e.target.value })} />
-                <span className="c1p-row-acts">
-                  <button type="button" className="nx-btn nx-btn-sm nx-btn-success" disabled={busyId === p.id} onClick={save}>{busyId === p.id ? <><span className="nx-spin" aria-hidden="true" /> Saving…</> : 'Save'}</button>
-                  <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busyId === p.id} onClick={() => { setEditing(null); setErr(''); }}>Cancel</button>
-                </span>
-              </> : <>
-                <span className="num c1p-target">{rupee(p.paid_amount ?? p.amount_due)}</span>
-                <span>{p.paid_date ? formatDMY(p.paid_date) : '—'}</span>
-                <span className="c1p-notes">{p.notes || '—'}</span>
-                <span className="c1p-row-acts">
-                  {canUndo && <>
-                    <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" disabled={busyId === p.id || !!editing}
-                      onClick={() => { setErr(''); setEditing({ id: p.id, amount: String(Number(p.paid_amount ?? p.amount_due) || 0), date: p.paid_date || today, notes: p.notes || '' }); }}>Edit</button>
-                    <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" disabled={busyId === p.id || !!editing} onClick={() => remove(p)}>
-                      {busyId === p.id ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : 'Delete'}
-                    </button>
-                  </>}
-                </span>
-              </>}
-            </div>
+              <div key={p.id} className={`c1pp-row${ed ? ' editing' : ''}`}>
+                <div className="c1pp-main">
+                  <div className="c1pp-what">
+                    <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
+                    <small>Due {formatDMY(p.due_date)}{p.period ? ` · ${p.period.days} days × ₹${Number(p.period.per_day).toLocaleString('en-IN')}` : ''}</small>
+                    {p.notes ? <small className="c1pp-notes">Remarks: {p.notes}</small> : null}
+                  </div>
+                  <span className="num c1pp-muted">{rupee(p.amount_due)}</span>
+                  <span className={`num c1pp-paid${short ? ' short' : ''}`}>{rupee(paidAmt)}</span>
+                  <span className="c1pp-date">{p.paid_date ? formatDMY(p.paid_date) : '—'}</span>
+                  <span className="c1pp-acts">
+                    {canUndo && !ed && <>
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" disabled={busyId === p.id || !!editing}
+                        onClick={() => { setErr(''); setEditing({ id: p.id, amount: String(paidAmt), date: p.paid_date || today, notes: p.notes || '' }); }}>Edit</button>
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" disabled={busyId === p.id || !!editing} onClick={() => remove(p)}>
+                        {busyId === p.id ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : 'Delete'}
+                      </button>
+                    </>}
+                  </span>
+                </div>
+                {ed && (
+                  <div className="c1pp-edit">
+                    <label><span>Actual paid (₹)</span>
+                      <input className="nx-input" type="text" inputMode="decimal" value={ed.amount} autoFocus onChange={(e) => setEditing({ ...ed, amount: e.target.value })} /></label>
+                    <label><span>Paid on</span>
+                      <input className="nx-input" type="date" max={today} value={ed.date} onChange={(e) => setEditing({ ...ed, date: e.target.value })} /></label>
+                    <label className="wide"><span>Remarks</span>
+                      <input className="nx-input" value={ed.notes} placeholder="UTR / cheque no." onChange={(e) => setEditing({ ...ed, notes: e.target.value })} /></label>
+                    <span className="c1pp-edit-acts">
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busyId === p.id} onClick={() => { setEditing(null); setErr(''); }}>Cancel</button>
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-success" disabled={busyId === p.id} onClick={save}>{busyId === p.id ? <><span className="nx-spin" aria-hidden="true" /> Saving…</> : 'Save'}</button>
+                    </span>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
