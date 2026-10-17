@@ -18,6 +18,8 @@ const TYPE_COLOR = {
 const STATUS_COLOR = {
   completed: { bg: 'var(--success-soft)', fg: 'var(--success)' },
   paid: { bg: 'var(--success-soft)', fg: 'var(--success)' },
+  // Paid before its due date.
+  'paid early': { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
   // Due and not yet paid to the investor.
   pending: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
   // Not yet due.
@@ -78,7 +80,9 @@ export default function LedgerModal({ investorId, onClose }) {
               <tbody>
                 {data.entries.filter((e) => e.type !== 'investment').map((e, i) => {
                   // Unpaid: Pending once its date has come, Upcoming before that.
-                  const st = e.status === 'pending' && (e.due_date || e.date) > today ? 'upcoming' : e.status;
+                  const due = e.due_date || e.date;
+                  const st = e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
+                    : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
                   return (
                     <tr key={i}>
                       <td>
