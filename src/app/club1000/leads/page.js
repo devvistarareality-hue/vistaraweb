@@ -130,7 +130,8 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
   );
 }
 
-function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatusChange, onScheduleFollowUp, onAssigneeChange }) {
+function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatusChange, onScheduleFollowUp, onAssigneeChange, onDelete }) {
+  const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('detail');
   const [detail, setDetail] = useState(null);
   const [schedOpen, setSchedOpen] = useState(false);
@@ -163,6 +164,12 @@ function LeadDetailModal({ lead, assignees, manager, onClose, onConvert, onStatu
   return (
     <C1Modal title={lead.name} sub={`${lead.phone || ''}${lead.email ? ` · ${lead.email}` : ''}`} onClose={onClose}
       footer={activeTab === 'detail' ? <>
+        {manager && onDelete && (
+          <button type="button" className="nx-btn nx-btn-md nx-btn-danger-soft c1-foot-left" disabled={deleting}
+            onClick={async () => { setDeleting(true); await onDelete(lead); setDeleting(false); }}>
+            {deleting ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : 'Delete lead'}
+          </button>
+        )}
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Close</button>
         {lead.status !== 'converted' && <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={() => onConvert(lead)}>Convert to Investor</button>}
       </> : null}>
@@ -364,6 +371,16 @@ export default function Club1000LeadsPage() {
     }
   }
 
+  // One lead, from its detail — managers only (the server checks too).
+  async function deleteOne(lead) {
+    if (!(await confirmDialog(`Delete the lead ${lead.name}${lead.phone ? ` (${lead.phone})` : ''} permanently? Its follow-ups and history go with it.`,
+      { title: 'Delete lead?', confirmText: 'Delete', tone: 'danger' }))) return;
+    const r = await apiFetch(CLUB1000_ENDPOINTS.lead(lead.id), { method: 'DELETE' }).catch(() => null);
+    if (!r || !(r.ok || r.status === 204)) { notify(errText(r ? await r.json().catch(() => ({})) : {}, 'Could not delete the lead.'), 'error'); return; }
+    notify('Lead deleted', 'success');
+    setSelected(null); loadLeads();
+  }
+
   async function bulkDelete() {
     if (!selectedIds.size) return;
     if (!(await confirmDialog(`Delete ${selectedIds.size} lead${selectedIds.size > 1 ? 's' : ''} permanently?`))) return;
@@ -514,6 +531,7 @@ export default function Club1000LeadsPage() {
           onScheduleFollowUp={scheduleFollowUp}
           onAssigneeChange={changeAssignee}
           onConvert={(lead) => { setConvertLead(lead); setSelected(null); }}
+          onDelete={deleteOne}
         />
       )}
       {convertLead && (

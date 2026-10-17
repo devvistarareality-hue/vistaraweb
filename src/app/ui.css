@@ -3394,3 +3394,4 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .nx-btn.appr-ok { background: var(--success-solid); }
 .nx-btn.appr-bad { background: var(--danger-solid); }
 .nx-btn.appr-ok:disabled, .nx-btn.appr-bad:disabled { opacity: .75; cursor: progress; }
+.c1-foot-left { margin-right: auto; }

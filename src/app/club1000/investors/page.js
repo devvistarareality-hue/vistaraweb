@@ -15,7 +15,7 @@ import HistoryModal from '../_HistoryModal';
 import LedgerModal from '../_LedgerModal';
 
 import Icon from '../../../components/Icon';
-import { notify } from '../../../lib/notify';
+import { notify, confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import { errText } from '../../../lib/apiError';
 
@@ -54,6 +54,7 @@ export default function InvestorsPage() {
   const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
   const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
+  const [deletingId, setDeletingId] = useState(null);    // investor being deleted
   const [ledgerFor, setLedgerFor] = useState(null);
   // Opened from an investor notification (?investor=<id>): that investor's ledger.
   useEffect(() => {
@@ -152,6 +153,18 @@ export default function InvestorsPage() {
     const data = await res.json();
     if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
     else notify(errText(data, 'Could not open the LOI.'));
+  }
+
+  // Delete an investment — managers only; the server refuses once money has moved.
+  async function deleteInvestor(inv) {
+    if (!(await confirmDialog(`Delete ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''} · ${fmtMoney(inv.amount_invested)} permanently? Its payout schedule and referral rewards are deleted with it. This can't be undone.`,
+      { title: 'Delete investor?', confirmText: 'Delete', tone: 'danger' }))) return;
+    setDeletingId(inv.id);
+    const r = await apiFetch(CLUB1000_ENDPOINTS.investor(inv.id), { method: 'DELETE' }).catch(() => null);
+    setDeletingId(null);
+    if (!r || !(r.ok || r.status === 204)) { notify(errText(r ? await r.json().catch(() => ({})) : {}, 'Could not delete the investor.'), 'error'); return; }
+    notify('Investor deleted', 'success');
+    load();
   }
 
   // Scheme groups and the total, as on Approvals (and Sales' approvals).
@@ -278,6 +291,11 @@ export default function InvestorsPage() {
                     </>) : (manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRedeeming(inv)}>Redeem</button>
                     ))}
+                    {manager && (
+                      <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => deleteInvestor(inv)} disabled={deletingId === inv.id}>
+                        {deletingId === inv.id ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : <><Icon name="trash" /> Delete</>}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
