@@ -38,7 +38,11 @@ function byInvestor(payouts, today, soon) {
     (p.status === 'paid' ? r.paid : r.pending).push(p);
   }
   for (const r of map.values()) {
-    r.pending.sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+    // By due date; on the same day interest comes before the principal it is paid with.
+    const order = (a, b) => String(a.due_date).localeCompare(String(b.due_date))
+      || (a.payout_type === 'maturity') - (b.payout_type === 'maturity');
+    r.pending.sort(order);
+    r.schedulePaid = [...r.paid].sort(order);
     r.paid.sort((a, b) => String(b.paid_date || '').localeCompare(String(a.paid_date || '')));
     r.overdue = r.pending.filter((p) => p.due_date < today);
     r.overdueAmt = r.overdue.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
@@ -306,21 +310,39 @@ function PayModal({ row, today, onClose, onDone }) {
 
 // What has been paid to one investor, newest first — each with what went out, when
 // and the remarks. A payment marked by mistake can be undone (back to pending).
+// What has been paid to one investor, in schedule order — each with what went out,
+// when and the remarks. Like an AR receipt, a payment can be edited (amount, date,
+// remarks) or deleted (the payout goes back to pending).
 function PaidModal({ row, canUndo, onClose, onChanged }) {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   const [busyId, setBusyId] = useState(null);
-  async function undo(p) {
-    if (!(await confirmDialog(`Undo this payment? ${TYPE_LABELS[p.payout_type] || p.payout_type} due ${formatDMY(p.due_date)} goes back to pending.`))) return;
-    setBusyId(p.id);
-    const res = await apiFetch(CLUB1000_ENDPOINTS.payoutMarkUnpaid(p.id), { method: 'POST' }).catch(() => null);
+  const [editing, setEditing] = useState(null);   // { id, amount, date, notes }
+  const [err, setErr] = useState('');
+
+  async function save() {
+    const e = editing;
+    if (e.amount === '' || Number.isNaN(Number(e.amount)) || Number(e.amount) < 0) { setErr('Enter the amount paid.'); return; }
+    if (!e.date || e.date > today) { setErr('The paid date must be today or earlier.'); return; }
+    setBusyId(e.id); setErr('');
+    const res = await apiFetch(CLUB1000_ENDPOINTS.payoutPayment(e.id), { method: 'PATCH', body: JSON.stringify({ amount: e.amount, paid_date: e.date, notes: e.notes }) }).catch(() => null);
     setBusyId(null);
-    if (!res || !res.ok) {
-      const d = res ? await res.json().catch(() => ({})) : {};
-      notify(errText(d, 'Could not undo the payment.'), 'error');
-      return;
-    }
-    notify('Payment undone — back to pending', 'success');
+    if (!res || !res.ok) { setErr(errText(res ? await res.json().catch(() => ({})) : {}, 'Could not save the payment.')); return; }
+    notify('Payment updated', 'success');
+    setEditing(null); onChanged();
+  }
+
+  async function remove(p) {
+    if (!(await confirmDialog(`Delete the ${rupee(p.paid_amount ?? p.amount_due)} payment of ${formatDMY(p.paid_date)}? ${TYPE_LABELS[p.payout_type] || p.payout_type}${p.period ? ` · ${p.period.label}` : ''} goes back to pending.`,
+      { title: 'Delete payment?', confirmText: 'Delete', tone: 'danger' }))) return;
+    setBusyId(p.id);
+    const res = await apiFetch(CLUB1000_ENDPOINTS.payoutPayment(p.id), { method: 'DELETE' }).catch(() => null);
+    setBusyId(null);
+    if (!res || !res.ok) { notify(errText(res ? await res.json().catch(() => ({})) : {}, 'Could not delete the payment.'), 'error'); return; }
+    notify('Payment deleted — back to pending', 'success');
     onChanged();
   }
+
+  const list = row.schedulePaid || row.paid;
   return (
     <C1Modal wide title="Paid payouts" sub={`${row.name} · ${row.scheme}${row.loi_no ? ` · ${row.loi_no}` : ''}`} onClose={onClose}
       footer={<button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Close</button>}>
@@ -334,27 +356,43 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
             <span>Remarks</span>
             <span />
           </div>
-          {row.paid.map((p) => (
-            <div key={p.id} className="c1p-grid-row c1p-paid-cols">
+          {list.map((p) => {
+            const ed = editing && editing.id === p.id ? editing : null;
+            return (
+            <div key={p.id} className={`c1p-grid-row c1p-paid-cols${ed ? ' editing' : ''}`}>
               <span className="c1p-pay-what">
                 <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
                 <span className="c1p-pay-when">Due {formatDMY(p.due_date)}</span>
                 {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
               </span>
               <span className="num">{rupee(p.amount_due)}</span>
-              <span className="num c1p-target">{rupee(p.paid_amount ?? p.amount_due)}</span>
-              <span>{p.paid_date ? formatDMY(p.paid_date) : '—'}</span>
-              <span className="c1p-notes">{p.notes || '—'}</span>
-              <span>
-                {canUndo && (
-                  <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" disabled={busyId === p.id} onClick={() => undo(p)}>
-                    {busyId === p.id ? 'Undoing…' : 'Undo'}
-                  </button>
-                )}
-              </span>
+              {ed ? <>
+                <input className="nx-input" type="text" inputMode="decimal" value={ed.amount} onChange={(e) => setEditing({ ...ed, amount: e.target.value })} />
+                <input className="nx-input" type="date" max={today} value={ed.date} onChange={(e) => setEditing({ ...ed, date: e.target.value })} />
+                <input className="nx-input" value={ed.notes} placeholder="UTR / cheque no." onChange={(e) => setEditing({ ...ed, notes: e.target.value })} />
+                <span className="c1p-row-acts">
+                  <button type="button" className="nx-btn nx-btn-sm nx-btn-success" disabled={busyId === p.id} onClick={save}>{busyId === p.id ? <><span className="nx-spin" aria-hidden="true" /> Saving…</> : 'Save'}</button>
+                  <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost" disabled={busyId === p.id} onClick={() => { setEditing(null); setErr(''); }}>Cancel</button>
+                </span>
+              </> : <>
+                <span className="num c1p-target">{rupee(p.paid_amount ?? p.amount_due)}</span>
+                <span>{p.paid_date ? formatDMY(p.paid_date) : '—'}</span>
+                <span className="c1p-notes">{p.notes || '—'}</span>
+                <span className="c1p-row-acts">
+                  {canUndo && <>
+                    <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" disabled={busyId === p.id || !!editing}
+                      onClick={() => { setErr(''); setEditing({ id: p.id, amount: String(Number(p.paid_amount ?? p.amount_due) || 0), date: p.paid_date || today, notes: p.notes || '' }); }}>Edit</button>
+                    <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" disabled={busyId === p.id || !!editing} onClick={() => remove(p)}>
+                      {busyId === p.id ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : 'Delete'}
+                    </button>
+                  </>}
+                </span>
+              </>}
             </div>
-          ))}
+            );
+          })}
         </div>
+        <C1Error>{err}</C1Error>
       </C1Section>
     </C1Modal>
   );

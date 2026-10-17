@@ -3395,3 +3395,6 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .nx-btn.appr-bad { background: var(--danger-solid); }
 .nx-btn.appr-ok:disabled, .nx-btn.appr-bad:disabled { opacity: .75; cursor: progress; }
 .c1-foot-left { margin-right: auto; }
+.c1p-row-acts { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.c1p-grid-row.editing { background: var(--surface-2); border-radius: 10px; padding-left: 6px; padding-right: 6px; }
+.c1p-grid-head.c1p-paid-cols, .c1p-grid-row.c1p-paid-cols { grid-template-columns: minmax(150px, 1.2fr) 96px 110px 130px minmax(120px, 1fr) 150px; }

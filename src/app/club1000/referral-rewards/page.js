@@ -29,11 +29,11 @@ const phoneKey = (v) => String(v || '').replace(/\D/g, '').slice(-10);
 
 // Mark a reward paid: how much went out (the reward unless changed), the day it went
 // out (today unless changed, never later) and remarks (UTR / cheque no.).
-function PayRewardModal({ reward, onClose, onDone }) {
+function PayRewardModal({ reward, onClose, onDone, edit = false }) {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-  const [amount, setAmount] = useState(String(Number(reward.amount) || 0));
-  const [date, setDate] = useState(today);
-  const [notes, setNotes] = useState('');
+  const [amount, setAmount] = useState(String(Number(edit ? (reward.paid_amount ?? reward.amount) : reward.amount) || 0));
+  const [date, setDate] = useState(edit && reward.paid_date ? reward.paid_date : today);
+  const [notes, setNotes] = useState(edit ? (reward.notes || '') : '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const gap = Number(amount) - Number(reward.amount);
@@ -43,8 +43,8 @@ function PayRewardModal({ reward, onClose, onDone }) {
     if (amount === '' || Number.isNaN(Number(amount)) || Number(amount) < 0) { setErr('Enter the amount paid.'); return; }
     if (!date || date > today) { setErr('The paid date must be today or earlier.'); return; }
     setBusy(true); setErr('');
-    const res = await apiFetch(CLUB1000_ENDPOINTS.referralRewardMarkPaid(reward.id), {
-      method: 'POST', body: JSON.stringify({ amount, paid_date: date, notes }),
+    const res = await apiFetch(edit ? CLUB1000_ENDPOINTS.referralRewardPayment(reward.id) : CLUB1000_ENDPOINTS.referralRewardMarkPaid(reward.id), {
+      method: edit ? 'PATCH' : 'POST', body: JSON.stringify({ amount, paid_date: date, notes }),
     }).catch(() => null);
     setBusy(false);
     if (!res || !res.ok) {
@@ -52,16 +52,16 @@ function PayRewardModal({ reward, onClose, onDone }) {
       setErr(errText(d, 'Could not mark it paid.'));
       return;
     }
-    notify(`Referral reward marked paid · ${fmtMoney(amount)}`, 'success');
+    notify(edit ? 'Payment updated' : `Referral reward marked paid · ${fmtMoney(amount)}`, 'success');
     onDone();
   }
 
   return (
-    <C1Modal title="Mark referral reward paid" sub={`${reward.reference_name || 'Referrer'}${reward.reference_phone ? ` · ${reward.reference_phone}` : ''} → ${reward.investor_name}`}
+    <C1Modal title={edit ? 'Edit payment' : 'Mark referral reward paid'} sub={`${reward.reference_name || 'Referrer'}${reward.reference_phone ? ` · ${reward.reference_phone}` : ''} → ${reward.investor_name}`}
       onClose={onClose} onSubmit={pay}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
-        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy}>{busy ? 'Saving…' : `Mark paid · ${fmtMoney(amount)}`}</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy}>{busy ? 'Saving…' : edit ? 'Save payment' : `Mark paid · ${fmtMoney(amount)}`}</button>
       </>}>
       <C1Section title="Payment">
         <C1Field label="Reward (target)"><C1Value>{fmtMoney(reward.amount)}</C1Value></C1Field>
@@ -98,6 +98,7 @@ function groupByReferrer(rewards) {
 
 export default function ReferralRewardsPage() {
   const [paying, setPaying] = useState(null);   // the reward in the Mark Paid dialog
+  const [editingPay, setEditingPay] = useState(null);   // a paid reward whose payment is being edited
   const user = useSelector((s) => s.auth.user);
   const manager = isClub1000Manager(user);
   const [rewards, setRewards] = useState([]);
@@ -172,14 +173,15 @@ export default function ReferralRewardsPage() {
 
   // A reward marked paid by mistake goes back to pending.
   async function undoPaid(r) {
-    if (!(await confirmDialog(`Undo this payment? The reward for ${r.investor_name} goes back to pending.`))) return;
-    const res = await apiFetch(CLUB1000_ENDPOINTS.referralRewardMarkUnpaid(r.id), { method: 'POST' }).catch(() => null);
+    if (!(await confirmDialog(`Delete the ${fmtMoney(r.paid_amount ?? r.amount)} payment of ${formatDMY(r.paid_date)}? The reward for ${r.investor_name} goes back to pending.`,
+      { title: 'Delete payment?', confirmText: 'Delete', tone: 'danger' }))) return;
+    const res = await apiFetch(CLUB1000_ENDPOINTS.referralRewardPayment(r.id), { method: 'DELETE' }).catch(() => null);
     if (!res || !res.ok) {
       const d = res ? await res.json().catch(() => ({})) : {};
-      notify(errText(d, 'Could not undo the payment.'), 'error');
+      notify(errText(d, 'Could not delete the payment.'), 'error');
       return;
     }
-    notify('Payment undone — back to pending', 'success');
+    notify('Payment deleted — back to pending', 'success');
     load();
   }
 
@@ -301,7 +303,10 @@ export default function ReferralRewardsPage() {
                       <button type="button" className="nx-btn nx-btn-sm nx-btn-success" onClick={() => setPaying(r)}>Mark Paid</button>
                     )}
                     {r.status === 'paid' && can(user, 'club.payout.mark_paid') && (
-                      <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoPaid(r)}>Undo paid</button>
+                      <span className="c1p-row-acts">
+                        <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setEditingPay(r)}>Edit</button>
+                        <button type="button" className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoPaid(r)}>Delete</button>
+                      </span>
                     )}
                   </td>
                 )}
@@ -310,6 +315,7 @@ export default function ReferralRewardsPage() {
           </tbody>
         </table>
       </div>
+      {editingPay && <PayRewardModal edit reward={editingPay} onClose={() => setEditingPay(null)} onDone={() => { setEditingPay(null); load(); }} />}
       {paying && <PayRewardModal reward={paying} onClose={() => setPaying(null)} onDone={() => { setPaying(null); load(); }} />}
     </div>
   );

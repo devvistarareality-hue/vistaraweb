@@ -16,14 +16,14 @@ const KIND = {
   added: ['user', 'accent'], approve: ['check', 'good'], reject: ['x', 'bad'],
   revise: ['pencil', 'accent'], 'revise-approve': ['check', 'good'], 'revise-reject': ['x', 'bad'],
   renew: ['refresh', 'warn'], 'renew-approve': ['refresh', 'good'], 'renew-reject': ['x', 'bad'],
-  paid: ['check-circle', 'good'], undo: ['ban', 'bad'], reward: ['trophy', 'accent'], 'reward-paid': ['trophy', 'good'],
+  paid: ['check-circle', 'good'], edit: ['pencil', 'accent'], undo: ['ban', 'bad'], reward: ['trophy', 'accent'], 'reward-paid': ['trophy', 'good'],
   redeem: ['download', 'warn'], closed: ['party', 'deep'],
 };
 
 const FILTERS = [['all', 'Everything'], ['terms', 'Terms'], ['money', 'Payments'], ['rewards', 'Rewards']];
 const IN_FILTER = {
   terms: (k) => /^(added|approve|reject|revise|renew|redeem|closed)/.test(k),
-  money: (k) => k === 'paid' || k === 'undo',
+  money: (k) => k === 'paid' || k === 'undo' || k === 'edit',
   rewards: (k) => k.startsWith('reward'),
 };
 
