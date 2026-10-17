@@ -33,7 +33,7 @@ export function notify(message, type, { duration = 3800 } = {}) {
   setTimeout(close, duration);
 }
 
-function dialog({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', tone = 'info', input = null }) {
+function dialog({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', tone = 'info', input = null, required = false, placeholder = '' }) {
   return new Promise((resolve) => {
     const back = document.createElement('div');
     back.className = 'nx-dialog-backdrop';
@@ -41,14 +41,23 @@ function dialog({ title, message, confirmText = 'Confirm', cancelText = 'Cancel'
     back.innerHTML = `<div class="nx-dialog ${danger ? 'danger' : 'info'}" role="alertdialog" aria-modal="true">
       <div class="nx-dialog-icon">${danger ? ICON.trash : ICON.question}</div>
       <h3>${esc(title)}</h3><p>${esc(message)}</p>
-      ${input !== null ? `<input value="${esc(input)}" />` : ''}
+      ${input !== null ? (required
+        ? `<textarea rows="3" placeholder="${esc(placeholder)}">${esc(input)}</textarea><div class="nx-dialog-need" hidden>Write a reason to continue.</div>`
+        : `<input value="${esc(input)}" />`) : ''}
       <div class="nx-actions">${cancelText ? `<button class="nx-btn ghost" data-a="no">${esc(cancelText)}</button>` : ''}<button class="nx-btn ${danger ? 'danger' : 'primary'}" data-a="yes">${esc(confirmText)}</button></div>
     </div>`;
-    const field = back.querySelector('input');
+    const field = back.querySelector('input, textarea');
     const done = (v) => { document.removeEventListener('keydown', key); back.remove(); resolve(v); };
-    const yes = () => done(input !== null ? field.value : true);
+    const yes = () => {
+      // A required reason keeps the dialog open until something is written.
+      if (required && !field.value.trim()) {
+        field.classList.add('is-invalid'); back.querySelector('.nx-dialog-need').hidden = false; field.focus();
+        return;
+      }
+      done(input !== null ? (required ? field.value.trim() : field.value) : true);
+    };
     const no = () => done(input !== null ? null : false);
-    const key = (e) => { if (e.key === 'Escape') no(); if (e.key === 'Enter') yes(); };
+    const key = (e) => { if (e.key === 'Escape') no(); if (e.key === 'Enter' && !(required && !e.metaKey && !e.ctrlKey)) yes(); };
     back.addEventListener('mousedown', (e) => { if (e.target === back) no(); });
     back.querySelector('[data-a="yes"]').addEventListener('click', yes);
     back.querySelector('[data-a="no"]')?.addEventListener('click', no);
@@ -72,4 +81,14 @@ export function confirmDialog(message, opts = {}) {
 // Drop-in async replacement for window.prompt
 export function promptDialog(message, defaultValue = '', opts = {}) {
   return dialog({ title: opts.title || 'Enter a value', message, confirmText: 'OK', input: defaultValue ?? '' });
+}
+
+// Ask for the reason behind a rejection or cancellation. Resolves to the text, or
+// null if dismissed — the dialog will not close on an empty reason.
+export function reasonDialog(message, opts = {}) {
+  return dialog({
+    title: opts.title || 'Give a reason', message, required: true, input: '',
+    placeholder: opts.placeholder || 'Reason (required)',
+    confirmText: opts.confirmText || 'Confirm', tone: opts.tone || 'danger',
+  });
 }

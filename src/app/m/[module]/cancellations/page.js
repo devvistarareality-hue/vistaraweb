@@ -8,7 +8,7 @@ import { AR_ENDPOINTS } from '../../../../constants/api';
 import { apiFetch } from '../../../../utils/apiFetch';
 import Loader from '../../../../components/Loader';
 import { DashKpi } from '../../../../components/Dash';
-import { notify, confirmDialog } from '../../../../lib/notify';
+import { notify, confirmDialog, reasonDialog } from '../../../../lib/notify';
 import { formatDMY } from '../../../../lib/dateFormat';
 import { rupee, today, cleanAmount, groupINR, printStatement } from '../_ar';
 import { errText } from '../../../../lib/apiError';
@@ -70,13 +70,19 @@ export default function ARCancellationsPage({ params: paramsPromise }) {
   const replace = (c) => setRows((rs) => rs.map((x) => (x.id === c.id ? c : x)));
 
   async function decide(c, action) {
-    const ok = await confirmDialog(action === 'approve'
+    // Rejecting a cancellation request says why (required) — the requester sees it.
+    let note = '';
+    if (action === 'reject') {
+      note = await reasonDialog('Reject this cancellation? The booking stays as it is. Write why.', { title: 'Reject cancellation', confirmText: 'Reject' });
+      if (!note) return;
+    }
+    const ok = action === 'reject' ? true : await confirmDialog(action === 'approve'
       ? `Approve cancelling Plot ${c.plots} (${c.client})? The plot goes back on sale in Sales immediately and the account is frozen. Refund due: ${rupee(c.refund_due)}.`
       : `Reject this cancellation? The booking stays as it is.`,
     { title: action === 'approve' ? 'Approve cancellation?' : 'Reject cancellation?', confirmText: action === 'approve' ? 'Approve' : 'Reject', tone: action === 'approve' ? 'danger' : undefined });
     if (!ok) return;
     setBusy(true); setBusyKey(`${c.id}:${action}`);
-    const r = await apiFetch(AR_ENDPOINTS.cancellationDecide(c.id) + cq, { method: 'POST', body: JSON.stringify({ action }) }).catch(() => null);
+    const r = await apiFetch(AR_ENDPOINTS.cancellationDecide(c.id) + cq, { method: 'POST', body: JSON.stringify(note ? { action, note } : { action }) }).catch(() => null);
     const d = r ? await r.json().catch(() => ({})) : {};
     setBusy(false); setBusyKey('');
     if (!r?.ok) { notify(errText(d, 'Could not save the decision'), 'error'); return; }

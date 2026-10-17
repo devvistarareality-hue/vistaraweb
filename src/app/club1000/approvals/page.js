@@ -11,7 +11,7 @@ import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 
 import Icon from '../../../components/Icon';
-import { notify, confirmDialog } from '../../../lib/notify';
+import { notify, confirmDialog, reasonDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import AddInvestorModal from '../_AddInvestorModal';
 import { errText } from '../../../lib/apiError';
@@ -209,12 +209,19 @@ export default function InvestorApprovalsPage() {
 
   async function act(id, action) {
     const inv = (investors || []).find((x) => x.id === id);
-    const ok = await confirmDialog(`${action === 'approve' ? 'Approve' : 'Reject'} ${inv ? inv.name : 'this investor'}${inv?.scheme_name ? ` · ${inv.scheme_name}` : ''}?`,
-      { title: action === 'approve' ? 'Approve investor?' : 'Reject investor?', confirmText: action === 'approve' ? 'Approve' : 'Reject', tone: action === 'approve' ? undefined : 'danger' });
-    if (!ok) return;
+    const who = `${inv ? inv.name : 'this investor'}${inv?.scheme_name ? ` · ${inv.scheme_name}` : ''}`;
+    // Approve asks to confirm; Reject asks why — required, and sent to whoever added it.
+    let reason = '';
+    if (action === 'approve') {
+      if (!(await confirmDialog(`Approve ${who}?`, { title: 'Approve investor?', confirmText: 'Approve' }))) return;
+    } else {
+      reason = await reasonDialog(`Reject ${who}? Write why — whoever added it sees this.`,
+        { title: 'Reject investor', confirmText: 'Reject', placeholder: 'e.g. Signed LOI missing, KYC unclear' });
+      if (!reason) return;
+    }
     setBusy(id); setBusyAct(action);
     try {
-      const res = await apiFetch(CLUB1000_ENDPOINTS.investorAction(id), { method: 'POST', body: JSON.stringify({ action }) });
+      const res = await apiFetch(CLUB1000_ENDPOINTS.investorAction(id), { method: 'POST', body: JSON.stringify(reason ? { action, reason } : { action }) });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         notify(errText(data, `Could not ${action} this investor.`));
@@ -343,6 +350,9 @@ export default function InvestorApprovalsPage() {
                           <div className="c1a-decided ok">Approved by {inv.approved_by_name || '—'}{inv.approved_at ? ` · ${formatDMY(String(inv.approved_at).slice(0, 10))}` : ''}</div>
                         )}
                         {isRevision && <div className="c1a-proposed">Proposed: {revisionSummary(inv)}</div>}
+                        {inv.approval_status === 'rejected' && inv.rejected_reason && (
+                          <div className="bk-reason"><b>Rejected — reason</b><span>{inv.rejected_reason}</span></div>
+                        )}
                       </div>
                       <div className="c1a-card-side">
                         <div className="c1a-amt">{fmtMoney(inv.amount_invested)}</div>

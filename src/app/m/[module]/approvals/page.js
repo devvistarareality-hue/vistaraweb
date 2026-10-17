@@ -12,6 +12,7 @@ import BookingDetails, { fmtDateTime } from '../../../../components/BookingDetai
 
 import Icon from '../../../../components/Icon';
 import { notify, confirmDialog } from '../../../../lib/notify';
+import BookingReasons from '../../../sales/_ReasonNote';
 import Loader from '../../../../components/Loader';
 import MultiSelect from '../../../../components/MultiSelect';
 import { errText } from '../../../../lib/apiError';
@@ -135,6 +136,7 @@ function RejectModal({ b, busy, onClose, onConfirm }) {
 // exactly which booking is going and what it costs before letting it through. Mirrors
 // Sales' own CancelBookingModal exactly (same endpoint, same consequence).
 function CancelBookingModal({ b, busy, onClose, onConfirm }) {
+  const [reason, setReason] = useState('');
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
@@ -143,8 +145,8 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
-          This frees the unit back to <b>available</b>, permanently deletes the signed
-          {' '}{isEoi(b) ? 'EOI' : 'LOI'} from storage, and removes it from conversions. It will then show under
+          This frees the unit back to <b>available</b>, keeps the signed
+          {' '}{isEoi(b) ? 'EOI' : 'LOI'} on record, and removes it from conversions. It will then show under
           {' '}<b>Cancelled</b> in Bookings. <b>This cannot be undone.</b>
         </p>
         <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 20 }}>
@@ -155,12 +157,17 @@ function CancelBookingModal({ b, busy, onClose, onConfirm }) {
             </div>
           ))}
         </div>
+        <label className="bk-cancel-why">
+          <span>Reason for cancelling *</span>
+          <textarea className="nx-input" rows={3} value={reason} onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Client backed out, payment not received" disabled={busy} autoFocus />
+        </label>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} disabled={busy}
             style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
             Keep Booking
           </button>
-          <button onClick={onConfirm} disabled={busy}
+          <button onClick={() => onConfirm(reason.trim())} disabled={busy || !reason.trim()}
             style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: busy ? 'var(--danger-2)' : 'var(--danger-solid)', color: '#fff', fontSize: 13, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer' }}>
             {busy ? 'Cancelling…' : 'Yes, Cancel Booking'}
           </button>
@@ -328,10 +335,10 @@ function AccountsApprovals({ initialTab }) {
   // plot(s), purges the signed LOI from storage and marks the booking CANCELLED — the
   // same endpoint Sales' own Cancel Booking uses, now also reachable by an Accounts
   // approver for the booking's project (see ClosureCancelView's dual-authority gate).
-  async function cancelBooking(b) {
+  async function cancelBooking(b, reason) {
     setBusy(b.id);
     try {
-      const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders() });
+      const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders(), body: JSON.stringify({ reason }) });
       if (!r.ok) { const d = await r.json().catch(() => ({})); notify('Cancel failed: ' + (d.detail || r.status)); }
     } catch (e) { notify(e.message); }
     setToCancel(null); setBusy(null); load();
@@ -585,6 +592,7 @@ function AccountsApprovals({ initialTab }) {
                         <div style={{ fontSize: 13, color: 'var(--danger-deep)' }}>{b.accounts_rejected_reason || '—'}</div>
                       </div>
                     )}
+                    <BookingReasons b={b} />
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {/* A revised deal gets its Details per version inside the
                           history instead — the current version is one of them, so a
@@ -677,7 +685,7 @@ function AccountsApprovals({ initialTab }) {
       )}
       {toCancel && (
         <CancelBookingModal b={toCancel} busy={busy === toCancel.id}
-          onClose={() => setToCancel(null)} onConfirm={() => cancelBooking(toCancel)} />
+          onClose={() => setToCancel(null)} onConfirm={(reason) => cancelBooking(toCancel, reason)} />
       )}
     </div>
   );

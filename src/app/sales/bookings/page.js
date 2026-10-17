@@ -13,7 +13,8 @@ import { useFocusId } from '../../../lib/useFocusId';
 
 import Icon from '../../../components/Icon';
 import ProjectApprovals from './_ProjectApprovals';
-import { confirmDialog, notify } from '../../../lib/notify';
+import { confirmDialog, notify, reasonDialog } from '../../../lib/notify';
+import BookingReasons from '../_ReasonNote';
 import { errText } from '../../../lib/apiError';
 import Loader from '../../../components/Loader';
 import LeadTransfers from '../_LeadTransfers';
@@ -321,11 +322,17 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   async function act(id, action) {
     const b = rows.find((x) => x.id === id);
     const who = b ? `${b.client_name}${b.plot_numbers || b.plot_number ? ` · Unit ${b.plot_numbers || b.plot_number}` : ''}` : 'this booking';
-    const ok = await confirmDialog(action === 'approve' ? `Approve the booking of ${who}?` : `Reject the booking of ${who}? The unit is released.`,
-      { title: action === 'approve' ? 'Approve booking?' : 'Reject booking?', confirmText: action === 'approve' ? 'Approve' : 'Reject', tone: action === 'approve' ? undefined : 'danger' });
-    if (!ok) return;
+    // Approve asks to confirm; Reject asks why — the reason is required and shown to the STM.
+    let reason = '';
+    if (action === 'approve') {
+      if (!(await confirmDialog(`Approve the booking of ${who}?`, { title: 'Approve booking?', confirmText: 'Approve' }))) return;
+    } else {
+      reason = await reasonDialog(`Reject the booking of ${who}? The unit is released. Write why — the STM sees it.`,
+        { title: 'Reject booking', confirmText: 'Reject', placeholder: 'e.g. LOI uploaded is for a different unit' });
+      if (!reason) return;
+    }
     setBusy(id); setBusyAct(action);
-    const r = await fetch(`${SALES_ENDPOINTS.bookings}${id}/action/${cq('?')}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }) }).catch(() => null);
+    const r = await fetch(`${SALES_ENDPOINTS.bookings}${id}/action/${cq('?')}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(reason ? { action, reason } : { action }) }).catch(() => null);
     if (r && r.ok) notify(action === 'approve' ? 'Booking approved' : 'Booking rejected', 'success');
     else notify(errText(r ? await r.json().catch(() => ({})) : {}, `Could not ${action} the booking.`), 'error');
     setBusy(null); setBusyAct(''); load();
@@ -343,10 +350,10 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // Cancelling an approved booking goes through its closure: that endpoint frees the
   // plot(s), purges the signed LOI from storage and marks the booking CANCELLED.
   // Irreversible, so it always runs behind the confirmation modal below.
-  async function cancelBooking(b) {
+  async function cancelBooking(b, reason) {
     setBusy(b.id);
     try {
-      const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders() });
+      const r = await fetch(SALES_ENDPOINTS.closureCancel(b.closure) + cq('?'), { method: 'POST', headers: authHeaders(), body: JSON.stringify({ reason }) });
       if (!r.ok) { const d = await r.json().catch(() => ({})); notify('Cancel failed: ' + (d.detail || r.status)); }
     } catch (e) { notify(e.message); }
     setToCancel(null); setBusy(null); load();
@@ -621,6 +628,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                       <div style={{ fontSize: 13, color: 'var(--danger-deep)' }}>{b.accounts_rejected_reason || '—'}</div>
                     </div>
                   )}
+                  <BookingReasons b={b} />
                   <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                     {b.loi_document && <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                     {/* A revised deal gets its Details per version inside the history
@@ -725,7 +733,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 
       {toCancel && (
         <CancelBookingModal b={toCancel} rupee={rupee} busy={busy === toCancel.id}
-          onClose={() => setToCancel(null)} onConfirm={() => cancelBooking(toCancel)} />
+          onClose={() => setToCancel(null)} onConfirm={(reason) => cancelBooking(toCancel, reason)} />
       )}
     </div>
   );
@@ -734,6 +742,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
 // Cancelling frees the unit and destroys the signed LOI — irreversible, so spell out
 // exactly which booking is going and what it costs before letting it through.
 function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
+  const [reason, setReason] = useState('');
   const unit = unitLabel(b).isUnit ? `Unit ${unitLabel(b).text}` : unitLabel(b).text;
   return (
     <div className="nx-modal-backdrop" onClick={busy ? undefined : onClose}
@@ -742,8 +751,8 @@ function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
         style={{ background: 'var(--surface)', borderRadius: 20, width: '100%', maxWidth: 460, padding: 24, boxShadow: '0 20px 50px rgba(var(--ink-rgb),0.3)' }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)', marginBottom: 6 }}>Cancel this booking?</div>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
-          This frees the unit back to <b>available</b>, permanently deletes the signed
-          {' '}{String(b.plot_numbers || '').toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'} from storage,
+          This frees the unit back to <b>available</b>, keeps the signed
+          {' '}{String(b.plot_numbers || '').toUpperCase().startsWith('EOI') ? 'EOI' : 'LOI'} on record,
           and removes it from conversions. <b>This cannot be undone.</b>
         </p>
         <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 20 }}>
@@ -754,12 +763,17 @@ function CancelBookingModal({ b, rupee, busy, onClose, onConfirm }) {
             </div>
           ))}
         </div>
+        <label className="bk-cancel-why">
+          <span>Reason for cancelling *</span>
+          <textarea className="nx-input" rows={3} value={reason} onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Client backed out, payment not received" disabled={busy} autoFocus />
+        </label>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose} disabled={busy}
             style={{ padding: '10px 18px', borderRadius: 9, border: '1.5px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
             Keep Booking
           </button>
-          <button onClick={onConfirm} disabled={busy}
+          <button onClick={() => onConfirm(reason.trim())} disabled={busy || !reason.trim()}
             style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: busy ? 'var(--danger-2)' : 'var(--danger-solid)', color: '#fff', fontSize: 13, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer' }}>
             {busy ? 'Cancelling…' : 'Yes, Cancel Booking'}
           </button>

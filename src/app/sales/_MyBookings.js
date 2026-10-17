@@ -16,6 +16,7 @@ import Loader from '../../components/Loader';
 import MultiSelect from '../../components/MultiSelect';
 import BookFilter, { useBook } from '../../components/BookFilter';
 import { bookingPath } from '../../lib/bookingPath';
+import BookingReasons from './_ReasonNote';
 // Same tabs as Bookings & Approvals. Drafts are your own unfinished bookings —
 // Resume one to finish and submit it. Statuses are the stored ones — 'sold' is an approved
 // booking, which is why the label and the value differ.
@@ -505,6 +506,7 @@ export function MyBookingsList({ cpOnly = false }) {
                     })()}
                   </div>
                 </div>
+                <BookingReasons b={b} />
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                   {b.loi_document && <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => openLoi(b.id)} style={{ ...linkBtn, background: 'var(--surface)', cursor: 'pointer' }}><Icon name="file" /> Signed LOI</button>}
                   {b.status === 'draft' && (
