@@ -89,9 +89,11 @@ export default function PortfolioModal({ investorId, onClose }) {
           </div>
 
           <div className="c1pf-money">
-            <div className="c1pf-money-top">
-              <span>Paid out <b>{fmtMoney(paid)}</b><small> · interest {fmtMoney(p.interest_paid)}</small></span>
-              <span>Still to pay <b>{fmtMoney(toPay)}</b></span>
+            <div className="c1pf-pi">
+              <span /><span>Principal</span><span>Interest</span><span>Total</span>
+              <span>Amount</span><b>{fmtMoney(p.principal_total)}</b><b>{fmtMoney(p.interest_total)}</b><b>{fmtMoney(Number(p.principal_total) + Number(p.interest_total))}</b>
+              <span>Paid out</span><b className="ok">{fmtMoney(p.principal_paid)}</b><b className="ok">{fmtMoney(p.interest_paid)}</b><b className="ok">{fmtMoney(paid)}</b>
+              <span>Still to pay</span><b>{fmtMoney(p.principal_pending)}</b><b>{fmtMoney(p.interest_pending)}</b><b>{fmtMoney(toPay)}</b>
             </div>
             <div className="c1pf-split"><i style={{ width: `${paidPct}%` }} /></div>{/* inline-ok: paid share of all payouts */}
             {Number(p.due_now) > 0
@@ -124,9 +126,12 @@ export default function PortfolioModal({ investorId, onClose }) {
                       {h.renewal_count > 0 && h.first_invested_on && h.first_invested_on !== h.investment_date ? ` · first in ${formatDMY(h.first_invested_on)}` : ''}
                     </div>
                     <div className="c1pf-inv-nums">
-                      <span>Amount <b>{fmtMoney(h.amount)}</b></span>
-                      <span>Paid <b>{fmtMoney(h.paid_out)}</b></span>
-                      <span>To pay <b>{fmtMoney(h.pending)}</b></span>
+                      <span>Principal <b>{fmtMoney(h.principal)}</b></span>
+                      <span>Interest <b>{fmtMoney(h.interest)}</b></span>
+                    </div>
+                    <div className="c1pf-inv-nums">
+                      <span>Paid · principal <b>{fmtMoney(h.principal_paid)}</b> · interest <b>{fmtMoney(h.interest_paid)}</b></span>
+                      <span>To pay · principal <b>{fmtMoney(h.principal_pending)}</b> · interest <b>{fmtMoney(h.interest_pending)}</b></span>
                     </div>
                   </div>
                 </div>

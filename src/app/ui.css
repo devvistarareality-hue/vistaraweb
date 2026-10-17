@@ -3412,6 +3412,12 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1pf-big3 b { font-size: 18px; font-weight: 800; color: var(--text); }
 .c1pf-big3 small { font-size: 11px; color: var(--muted); }
 .c1pf-money { margin: 10px 24px 0; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.c1pf-pi { display: grid; grid-template-columns: auto 1fr 1fr 1fr; gap: 7px 14px; align-items: baseline; }
+.c1pf-pi > span { font-size: 12px; color: var(--muted); }
+.c1pf-pi > span:nth-child(-n+4) { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; text-align: right; }
+.c1pf-pi > b { text-align: right; font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+.c1pf-pi > b.ok { color: var(--success); }
+.c1pf-pi > b:nth-of-type(3n) { font-weight: 800; }
 .c1pf-money-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .c1pf-money b { color: var(--text); font-size: 14px; }
 .c1pf-split { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--warning) 28%, transparent); overflow: hidden; }
