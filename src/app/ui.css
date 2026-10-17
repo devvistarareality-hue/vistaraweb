@@ -3455,5 +3455,5 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1pa-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 12px; color: var(--text-2); }
 .c1pa-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .c1pa-legend b { color: var(--text); }
-.c1pa-s1 { background: var(--series-1); } .c1pa-s2 { background: var(--series-2); } .c1pa-s3 { background: var(--series-3); }
-.c1pa-s4 { background: var(--series-4); } .c1pa-s5 { background: var(--series-5); } .c1pa-s6 { background: var(--series-6); }
+.c1pa-s1 { background: var(--viz-1); } .c1pa-s2 { background: var(--viz-2); } .c1pa-s3 { background: var(--viz-3); }
+.c1pa-s4 { background: var(--viz-4); } .c1pa-s5 { background: var(--viz-5); } .c1pa-s6 { background: var(--viz-6); }

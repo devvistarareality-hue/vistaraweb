@@ -29,6 +29,8 @@
      one-hue sequential ramp for heatmaps — red, since it shows overdue money (s1 = least … s7 = most), with the ink
      that stays readable on each step. */
   --viz-1: #2a78d6; --viz-2: #eb6834; --viz-3: #1baf7a;
+  /* Further categorical steps after the validated three, for a 4th–6th series. */
+  --viz-4: #b0479a; --viz-5: #7a5bd1; --viz-6: #6b7785;
   --viz-seq-1: #fde4e1; --viz-seq-2: #f9c3bc; --viz-seq-3: #f29b90; --viz-seq-4: #e86f61;
   --viz-seq-5: #d64838; --viz-seq-6: #b22f22; --viz-seq-7: #861d14;
   /* Ink per step — whichever of black/white reads better on it (checked by contrast). */
@@ -68,8 +70,6 @@
   --primary-grad: linear-gradient(180deg, #2F6DB5 0%, #1B4E87 100%);
   --primary-glow: rgba(23,73,127,0.40);
   --accent: #17497F;
-  /* Chart series (Okabe–Ito, colour-blind safe), fixed order — a scheme keeps its colour. */
-  --series-1: #0072B2; --series-2: #E69F00; --series-3: #009E73; --series-4: #CC79A7; --series-5: #D55E00; --series-6: #56B4E9;
   --accent-deep: #0F3862;
   --blue: rgba(47,109,181,0.10);
   --blue-2: rgba(47,109,181,0.18);
@@ -127,6 +127,7 @@
   /* Charts: dark steps of the same palette; the ramp runs the other way so "near
      zero" recedes into the dark surface and the largest cells glow. */
   --viz-1: #3987e5; --viz-2: #d95926; --viz-3: #199e70;
+  --viz-4: #d071bb; --viz-5: #9b84ea; --viz-6: #9aa6b4;
   --viz-seq-1: #4a120d; --viz-seq-2: #6e1a12; --viz-seq-3: #94251a; --viz-seq-4: #c03a2b;
   --viz-seq-5: #e0604f; --viz-seq-6: #f08f82; --viz-seq-7: #fbcbc4;
   --viz-seq-ink-1: #ffffff; --viz-seq-ink-2: #ffffff; --viz-seq-ink-3: #ffffff; --viz-seq-ink-4: #ffffff;
@@ -163,7 +164,6 @@
   --primary-grad: linear-gradient(180deg, #FF8A4D 0%, #E04511 100%);
   --primary-glow: rgba(255,92,26,0.55);
   --accent: #FF9264;
-  --series-1: #56B4E9; --series-2: #F0B23E; --series-3: #2EC4A0; --series-4: #E09BC4; --series-5: #F28A4C; --series-6: #9DB4C8;
   --accent-deep: #FFC2A6;
   --blue: rgba(255,122,61,0.12);
   --blue-2: rgba(255,122,61,0.22);
