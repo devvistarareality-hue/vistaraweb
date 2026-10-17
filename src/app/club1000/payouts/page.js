@@ -70,6 +70,7 @@ export default function PayoutsPage() {
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });   // Year / Month / Quarter / dates
   const [kind, setKind] = useState('both');   // interest / principal / both
+  const [onlyInv, setOnlyInv] = useState(null);   // ?investor=<id> — one investor, from their card
   const [paying, setPaying] = useState(null);     // the investor row being paid
   const [paidFor, setPaidFor] = useState(null);   // the investor whose paid payouts are listed
   const [ledgerFor, setLedgerFor] = useState(null);
@@ -77,9 +78,12 @@ export default function PayoutsPage() {
   useEffect(() => { if (user && !manager) router.replace('/club1000'); }, [user]);
   // The dashboard's Pending / Paid tiles deep-link here (?status=pending|paid).
   useEffect(() => {
-    const s = new URLSearchParams(window.location.search).get('status');
+    const sp = new URLSearchParams(window.location.search);
+    const s = sp.get('status');
     if (s === 'paid') setTab('paid');
     else if (s === 'pending') setTab('pending');
+    // The Payout button on an investor's card opens here on just that investment.
+    if (sp.get('investor')) { setOnlyInv(Number(sp.get('investor'))); setTab('pending'); }
   }, []);
 
   const reqRef = useRef(0);
@@ -106,7 +110,7 @@ export default function PayoutsPage() {
   };
   const investors = useMemo(() => byInvestor((payouts || []).filter(inPeriod), today, soon),
     [payouts, today, soon, range.from, range.to, kind]);
-  const scoped = investors.filter((r) => (!schemeSel.length || schemeSel.includes(r.scheme))
+  const scoped = investors.filter((r) => (!onlyInv || r.id === onlyInv) && (!schemeSel.length || schemeSel.includes(r.scheme))
     && (!q.trim() || `${r.name} ${r.phone} ${r.loi_no}`.toLowerCase().includes(q.trim().toLowerCase())));
   const lists = {
     overdue: scoped.filter((r) => r.overdue.length).sort((a, b) => b.daysLate - a.daysLate || b.overdueAmt - a.overdueAmt),
@@ -161,6 +165,12 @@ export default function PayoutsPage() {
 
           <div className="ar-filters">
             <input className="nx-input nx-input-sm ar-search" placeholder="Search investor, phone or LOI no…" value={q} onChange={(e) => setQ(e.target.value)} />
+            {onlyInv && (
+              <button type="button" className="club-bucket" onClick={() => { setOnlyInv(null); router.replace('/club1000/payouts'); }}>
+                Only {investors.find((r) => r.id === onlyInv)?.name || 'this investor'}{investors.find((r) => r.id === onlyInv)?.loi_no ? ` · ${investors.find((r) => r.id === onlyInv).loi_no}` : ''}
+                <span className="club-bucket-x">×</span>
+              </button>
+            )}
           </div>
 
           {rows.length === 0 ? (

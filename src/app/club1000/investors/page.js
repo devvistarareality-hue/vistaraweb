@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import {isClub1000Manager, can} from '../../../lib/moduleAccess';
@@ -10,7 +11,7 @@ import DateFilter from '../../sales/_DateFilter';
 import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
-import { RedeemModal, MaturityPayoutModal } from '../_CloseInvestment';
+import { RedeemModal } from '../_CloseInvestment';
 import HistoryModal from '../_HistoryModal';
 import PortfolioModal from '../_PortfolioModal';
 import ImportInvestorsModal from '../_ImportInvestors';
@@ -46,6 +47,7 @@ function StatusBadge({ status }) {
 export default function InvestorsPage() {
   const user = useSelector((s) => s.auth.user);
   const manager = isClub1000Manager(user);
+  const router = useRouter();
   const [investors, setInvestors] = useState([]);
   const [openInvGroup, setOpenInvGroup] = useState({});
   const [schemes, setSchemes] = useState([]);
@@ -54,7 +56,6 @@ export default function InvestorsPage() {
   const [revising, setRevising] = useState(null);
   const [renewing, setRenewing] = useState(null);
   const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
-  const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
   const [portfolioFor, setPortfolioFor] = useState(null); // the person's whole portfolio
   const [selecting, setSelecting] = useState(false);     // pick several to delete at once
@@ -346,7 +347,7 @@ export default function InvestorsPage() {
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
-                      {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setPayingOut(inv)}>Payout</button>}
+                      {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => router.push(`/club1000/payouts?investor=${inv.id}`)}>Payout</button>}
                     </>) : (manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRedeeming(inv)}>Redeem</button>
                     ))}
@@ -386,7 +387,6 @@ export default function InvestorsPage() {
       )}
       {portfolioFor && <PortfolioModal investorId={portfolioFor} onClose={() => setPortfolioFor(null)} />}
       {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
-      {payingOut && <MaturityPayoutModal investor={payingOut} onClose={() => setPayingOut(null)} onDone={() => { setPayingOut(null); load(); }} />}
       {renewing && (
         <RenewInvestorModal
           investor={renewing}
