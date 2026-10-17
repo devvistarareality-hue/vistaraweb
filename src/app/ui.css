@@ -3317,3 +3317,17 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1c-calc b { color: var(--text); font-variant-numeric: tabular-nums; }
 .c1c-calc > .total { background: var(--accent-softer); font-weight: 800; color: var(--text); }
 .c1c-calc > .total b { font-size: 16px; }
+
+/* Club 1000 investor History: headline figures, filter, toned timeline dots. */
+.c1hx-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.c1hx-stats > div { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.c1hx-stats span { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.c1hx-stats b { font-size: 14px; color: var(--text); }
+.c1hx-filter { margin-bottom: 12px; }
+.c1hx-amt { font-weight: 800; color: var(--text); }
+.c1h-dot.c1hx-good { color: var(--success); background: var(--success-soft); }
+.c1h-dot.c1hx-bad { color: var(--danger); background: var(--danger-soft); }
+.c1h-dot.c1hx-warn { color: var(--warning); background: var(--warning-soft); }
+.c1h-dot.c1hx-accent { color: var(--accent); background: var(--accent-soft); }
+.c1h-dot.c1hx-deep { color: var(--accent-deep); background: var(--accent-soft); }
+.c1h-dot.c1hx-muted { color: var(--text-3); }

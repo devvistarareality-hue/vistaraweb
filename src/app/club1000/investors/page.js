@@ -11,6 +11,7 @@ import { fmtMoney } from '../_StatCard';
 import AddInvestorModal from '../_AddInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
 import { RedeemModal, MaturityPayoutModal } from '../_CloseInvestment';
+import HistoryModal from '../_HistoryModal';
 import LedgerModal from '../_LedgerModal';
 
 import Icon from '../../../components/Icon';
@@ -52,6 +53,7 @@ export default function InvestorsPage() {
   const [renewing, setRenewing] = useState(null);
   const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
   const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
+  const [historyFor, setHistoryFor] = useState(null);    // History dialog
   const [ledgerFor, setLedgerFor] = useState(null);
   // Opened from an investor notification (?investor=<id>): that investor's ledger.
   useEffect(() => {
@@ -250,6 +252,7 @@ export default function InvestorsPage() {
                         {inv.name}
                         {inv.revision_no > 0 && <span className="c1a-rev">R{inv.revision_no}</span>}
                         {inv.is_matured && <span className="c1a-rev renew">MATURED</span>}
+                        {inv.renewal_count > 0 && <span className="c1a-rev">RENEWED {inv.renewal_count}×</span>}
                       </div>
                       <div className="c1a-sub">{inv.phone || '—'}{inv.loi_no ? ` · LOI ${inv.loi_no}` : ''}{inv.reference_name ? ` · Ref ${inv.reference_name}${inv.reference_phone ? ` (${inv.reference_phone})` : ''}` : ''}</div>
                       <div className="c1a-sub2">
@@ -265,6 +268,7 @@ export default function InvestorsPage() {
                   </div>
                   <div className="c1a-actions">
                     <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)}><Icon name="book" /> Ledger</button>
+                    <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFor(inv)}><Icon name="clock" /> History</button>
                     {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>}
                     {inv.document_url && <a className="nx-btn nx-btn-sm nx-btn-secondary" href={inv.document_url} target="_blank" rel="noreferrer"><Icon name="clip" /> KYC</a>}
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
@@ -290,6 +294,7 @@ export default function InvestorsPage() {
         <AddInvestorModal schemes={schemes} revise={revising}
           onClose={() => setRevising(null)} onCreated={() => load()} />
       )}
+      {historyFor && <HistoryModal investor={historyFor} onClose={() => setHistoryFor(null)} />}
       {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
       {payingOut && <MaturityPayoutModal investor={payingOut} onClose={() => setPayingOut(null)} onDone={() => { setPayingOut(null); load(); }} />}
       {renewing && (
