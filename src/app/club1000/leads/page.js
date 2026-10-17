@@ -20,6 +20,7 @@ const STATUS_COLORS = {
   not_interested: { bg: 'var(--surface-2)', fg: 'var(--text-3)' },
   converted: { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
   lost: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
+  investor_deleted: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },   // was converted; the investment was deleted
 };
 
 function StatusBadge({ status }) {
@@ -30,10 +31,10 @@ function StatusBadge({ status }) {
 const HISTORY_LABEL = { created: 'Lead Created', status: 'Status', assigned_to: 'Assigned To' };
 
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
-const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost'];
+const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost', 'investor_deleted'];
 // A lead in one of these has nothing left to follow up on — matches the backend's
 // terminal-status handling in LeadDetailView.patch (clears next_follow_up_date).
-const TERMINAL_STATUSES = ['not_interested', 'lost', 'converted'];
+const TERMINAL_STATUSES = ['not_interested', 'lost', 'converted', 'investor_deleted'];
 
 function fmtDateTime(iso) {
   if (!iso) return '';

@@ -75,7 +75,7 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
       </>}>
       <C1Section title="1 · Get the template">
         <div className="c1im-step">
-          <p>One row per investment. Scheme, interest payout and source are dropdowns; the Help sheet explains every column. Rows 2–3 are examples — replace them.</p>
+          <p>One row per investment — reinvested money is still one row: today’s amount, with <b>Times Reinvested</b> filled in. Red columns marked * must be filled; a row missing one is not imported. Scheme, interest payout and source are dropdowns. Rows 2–3 are examples — replace them.</p>
           <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" disabled={busy === 'template'} onClick={template}>
             {busy === 'template' ? <>{SPIN} Preparing…</> : <><Download size={15} /> Download template</>}
           </button>
@@ -108,7 +108,7 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
             {rows.map((r) => (
               <div key={r.row} className={`c1im-row${r.ok ? '' : ' bad'}`}>
                 <span className="c1im-no">{r.row}</span>
-                <span><b>{r.preview.name || '—'}</b><small>{r.preview.phone}</small></span>
+                <span><b>{r.preview.name || '—'}</b><small>{r.preview.phone}{r.preview.renewal_count ? ` · reinvested ${r.preview.renewal_count}×` : ''}</small></span>
                 <span>{r.preview.scheme || '—'}<small>{r.preview.interest_payout}{r.preview.return_pct ? ` · ${Number(r.preview.return_pct)}%` : ''}</small></span>
                 <span className="num">{r.preview.amount ? rupee(r.preview.amount) : '—'}</span>
                 <span>{r.preview.investment_date ? formatDMY(r.preview.investment_date) : '—'}<small>{r.preview.maturity_date ? `→ ${formatDMY(r.preview.maturity_date)}` : ''}</small></span>

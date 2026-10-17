@@ -24,10 +24,10 @@ function toDatetimeLocal(d) {
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const endOfToday   = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 
-const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost'];
+const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'not_interested', 'converted', 'lost', 'investor_deleted'];
 // A lead in one of these has nothing left to follow up on — matches the backend's
 // terminal-status handling in LeadDetailView.patch (clears next_follow_up_date).
-const TERMINAL_STATUSES = ['not_interested', 'lost', 'converted'];
+const TERMINAL_STATUSES = ['not_interested', 'lost', 'converted', 'investor_deleted'];
 
 const TABS = [
   { key: 'today',   label: "Today's" },

@@ -57,6 +57,9 @@ export default function InvestorsPage() {
   const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
   const [portfolioFor, setPortfolioFor] = useState(null); // the person's whole portfolio
+  const [selecting, setSelecting] = useState(false);     // pick several to delete at once
+  const [picked, setPicked] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [deletingId, setDeletingId] = useState(null);    // investor being deleted
   const [showImport, setShowImport] = useState(false);   // Import from Excel
   const [ledgerFor, setLedgerFor] = useState(null);
@@ -171,6 +174,33 @@ export default function InvestorsPage() {
     load();
   }
 
+  const togglePick = (ids, on) => setPicked((prev) => {
+    const next = new Set(prev);
+    ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+    return next;
+  });
+  const stopSelecting = () => { setSelecting(false); setPicked(new Set()); };
+
+  // Delete every picked investment; any with money already paid are kept and named.
+  async function bulkDelete() {
+    const list = investors.filter((i) => picked.has(i.id));
+    if (!list.length) return;
+    const sum = list.reduce((t, i) => t + (Number(i.amount_invested) || 0), 0);
+    if (!(await confirmDialog(`Delete ${list.length} investor${list.length === 1 ? '' : 's'} · ${fmtMoney(sum)} permanently? Their payout schedules and referral rewards go with them, and their leads will read Investor Deleted. Any with a payment already made are kept. This can't be undone.`,
+      { title: `Delete ${list.length} investor${list.length === 1 ? '' : 's'}?`, confirmText: 'Delete', tone: 'danger' }))) return;
+    setBulkBusy(true);
+    const r = await apiFetch(CLUB1000_ENDPOINTS.investorBulkDelete, { method: 'POST', body: JSON.stringify({ ids: list.map((i) => i.id) }) }).catch(() => null);
+    const d = r ? await r.json().catch(() => ({})) : {};
+    setBulkBusy(false);
+    if (!r || !r.ok) { notify(errText(d, 'Could not delete the investors.'), 'error'); return; }
+    const kept = d.refused || [];
+    if (d.deleted?.length) notify(`${d.deleted.length} investor${d.deleted.length === 1 ? '' : 's'} deleted`, 'success');
+    if (kept.length) notify(`${kept.length} not deleted — ${kept.map((k) => k.name || `#${k.id}`).join(', ')}: a payment is already made. Undo it first, or close with Redeem / Payout.`, 'error', { duration: 9000 });
+    setPicked(new Set(kept.map((k) => k.id)));
+    if (!kept.length) setSelecting(false);
+    load();
+  }
+
   // Scheme groups and the total, as on Approvals (and Sales' approvals).
   const invGroups = {};
   investors.forEach((i) => { const k = i.scheme_name || '—'; (invGroups[k] = invGroups[k] || []).push(i); });
@@ -198,6 +228,11 @@ export default function InvestorsPage() {
           <div className="c1-head-acts">
             {manager && can(user, 'club.investor.manage') && (
               <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setShowImport(true)} disabled={!schemes.length}><Icon name="upload" /> Import</button>
+            )}
+            {manager && investors.length > 0 && (
+              <button className={`nx-btn nx-btn-md ${selecting ? 'nx-btn-primary' : 'nx-btn-secondary'}`} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
+                <Icon name={selecting ? 'x' : 'check-circle'} /> {selecting ? 'Cancel' : 'Select'}
+              </button>
             )}
             {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add Investor</button>}
           </div>
@@ -258,7 +293,15 @@ export default function InvestorsPage() {
       ) : invGroupNames.map((gn) => (
         <div key={gn} className="c1a-group">
           <div className={`nx-card c1a-group-head${isInvOpen(gn) ? ' is-open' : ''}`} onClick={() => setOpenInvGroup((o) => ({ ...o, [gn]: !isInvOpen(gn) }))}>
-            <div className="c1a-group-name"><Icon name="folder" /> {gn} <span className="c1a-group-count">· {invGroups[gn].length} investor{invGroups[gn].length === 1 ? '' : 's'}</span></div>
+            <div className="c1a-group-name">
+              {selecting && (
+                <input type="checkbox" className="c1-pick" aria-label={`Select all in ${gn}`}
+                  checked={invGroups[gn].every((i) => picked.has(i.id))}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => togglePick(invGroups[gn].map((i) => i.id), e.target.checked)} />
+              )}
+              <Icon name="folder" /> {gn} <span className="c1a-group-count">· {invGroups[gn].length} investor{invGroups[gn].length === 1 ? '' : 's'}</span>
+            </div>
             <div className="c1a-group-right">
               <span className="c1a-group-amt">{fmtMoney(invGroups[gn].reduce((t, i) => t + (Number(i.amount_invested) || 0), 0))}</span>
               <span className={`c1a-chev${isInvOpen(gn) ? ' is-open' : ''}`}>›</span>
@@ -267,8 +310,12 @@ export default function InvestorsPage() {
           {isInvOpen(gn) && (
             <div className="c1a-cards">
               {invGroups[gn].map((inv) => (
-                <div className="nx-card c1a-card" key={inv.id}>
+                <div className={`nx-card c1a-card${selecting && picked.has(inv.id) ? ' is-picked' : ''}`} key={inv.id}>
                   <div className="c1a-card-top">
+                    {selecting && (
+                      <input type="checkbox" className="c1-pick" aria-label={`Select ${inv.name}`}
+                        checked={picked.has(inv.id)} onChange={(e) => togglePick([inv.id], e.target.checked)} />
+                    )}
                     <div className="c1a-card-main">
                       <div className="c1a-name">
                         {inv.name}
@@ -324,6 +371,17 @@ export default function InvestorsPage() {
       )}
       {showImport && <ImportInvestorsModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
       {historyFor && <HistoryModal investor={historyFor} onClose={() => setHistoryFor(null)} />}
+      {selecting && (
+        <div className="c1-bulkbar">
+          <span><b>{picked.size}</b> selected{picked.size ? ` · ${fmtMoney(investors.filter((i) => picked.has(i.id)).reduce((t, i) => t + (Number(i.amount_invested) || 0), 0))}` : ''}</span>
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => togglePick(investors.map((i) => i.id), picked.size !== investors.length)}>
+            {picked.size === investors.length ? 'Clear all' : `Select all ${investors.length}`}
+          </button>
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-danger" onClick={bulkDelete} disabled={!picked.size || bulkBusy}>
+            {bulkBusy ? <span className="nx-spin" /> : <Icon name="trash" />} Delete {picked.size || ''}
+          </button>
+        </div>
+      )}
       {portfolioFor && <PortfolioModal investorId={portfolioFor} onClose={() => setPortfolioFor(null)} />}
       {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
       {payingOut && <MaturityPayoutModal investor={payingOut} onClose={() => setPayingOut(null)} onDone={() => { setPayingOut(null); load(); }} />}

@@ -247,6 +247,7 @@ export const CLUB1000_ENDPOINTS = {
   schemeToggleApprover: (id) => `${BASE_URL}/api/club1000/schemes/${id}/toggle-approver/`,
   get investors()  { return `${BASE_URL}/api/club1000/investors/`; },
   get investorDraft(){ return `${BASE_URL}/api/club1000/investors/draft/`; },
+  get investorBulkDelete() { return `${BASE_URL}/api/club1000/investors/bulk-delete/`; },
   get investorImport() { return `${BASE_URL}/api/club1000/investors/import/`; },
   get investorImportTemplate() { return `${BASE_URL}/api/club1000/investors/import-template/`; },
   get investorReferences() { return `${BASE_URL}/api/club1000/investors/references/`; },
