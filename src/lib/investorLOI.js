@@ -186,6 +186,16 @@ function spanLabel(from, to) {
 // The ERP is company-wise — Vistara Group is one tenant of several — so a hardcoded
 // name would put the wrong seller on another company's signed instrument. Callers
 // pass `companyName`; an empty one prints nothing rather than someone else's name.
+// Term 1 — the premature-exit rule for this LOI's scheme only (wording from Vistara).
+function exitTerm(scheme) {
+  const n = String(scheme?.name || '').toUpperCase();
+  const none = 'No premature redemption can be made during the tenure of the investment.';
+  const after1y = 'Premature redemption can be made after completion of 1 year from the date of investment. In that case the ROI is set to 1% per month, receivable by the investor from the date of investment till the date of early redemption.';
+  if (/BUY\s*-?\s*BACK|GROWTH/.test(n)) return after1y;
+  if (/RISE|EQUITY|FORTUNE|LEGACY/.test(n)) return none;
+  return scheme?.premature_redemption_allowed ? after1y : none;
+}
+
 export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   const sellerName = (opts.companyName || '').toString().trim();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -265,7 +275,6 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   const prematureExit = scheme.premature_redemption_allowed
     ? `AFTER ${scheme.premature_redemption_lock_months || 0} MONTHS (${scheme.premature_redemption_rate_pct_per_month}%/MONTH)`
     : 'NA';
-  const security = investor.security || 'NA';
   const loiDate = fmtDate(new Date().toISOString().slice(0, 10));
 
   // ── Minimalist letterhead — matte-blue → white fade, with a small orange accent ──
@@ -329,8 +338,8 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   });
   y += 30;
 
-  // Investment Amount — highlighted total bar.
-  secHead('Investment Value'); rowAlt = false;
+  // Investment Amount — one highlighted bar (no separate section header above it).
+  rowAlt = false; y += 6;
   chk(11); sf(MB); doc.roundedRect(M, y - 5.5, CW, 11, 2.2, 2.2, 'F'); sf(ORG); doc.roundedRect(M + 1.4, y - 3.5, 1.7, 7, 0.85, 0.85, 'F');
   { const amountBaseline = centerBaseline(y - 5.5, 11, 10);
     st(WHT); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('Investment Amount', M + 7, amountBaseline);
@@ -346,7 +355,6 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
     ['Return Pay Out Frequency³', returnFreq],
     ['Lock-in Period²', tenureLabel(scheme.premature_redemption_lock_months)],
     ['Premature Exit Option¹', prematureExit],
-    ['Security', security],
   ]);
 
   // ── Payout Schedule — same "#/Due Date/Amount" table format as the sales
@@ -396,10 +404,9 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
 
   // ── Terms & Conditions — same styled rows as the sales LOI's terms section ──
   const terms = [
-    ['1. Premature Exit Option', 'Rise - No premature redumption can be made during tenure of investment. BuyBack - Premature redumption can be made after completion of 1 year from date of innvestment*. Equity - No premature redumption can be made during tenure of investment. *Wherever premature redemption is applicable & client excercised the same then ROI is set to 1% per month receivable to investor from the date of investment till the date of early redumption.'],
+    ['1. Premature Exit Option', `${scheme.name ? `${scheme.name} — ` : ''}${exitTerm(scheme)}`],
     ['2. Tenure and Lock-in Period', 'The tenure of investment shall be as mentioned above from the date of receipt of funds. The Investment shall be subject to a lock-in period as mentioned above, during which the Investor shall not withdraw the Investment Amount. Upon completion of tenure as mentioned above, investment may be renewed on mutually agreed terms through written consent of both Parties.'],
-    ['3. Interest and Payout Terms', 'The Borrower agrees to pay interest at the rate as mentioned above on the Investment Amount. Interest shall be payable at a frequency as mentioned above. Interest shall be paid within 7 days from the end of frequency period of interest amount as mentioned above. Principal amount shall be paid within 7 days from the end of frequency period of principal amount as mentioned above.'],
-    ['4. Default', 'In case of Failure to pay interest, or Failure to repay principal upon maturity, the Investor shall have the right to Present the Post-Dated Cheque (PDC) for encashment.'],
+    ['3. Interest and Payout Terms', 'The Borrower agrees to pay interest at the rate as mentioned above on the Investment Amount. Interest shall be payable at a frequency as mentioned above. Interest shall be paid within 10 days from the end of frequency period of interest amount as mentioned above. Principal amount shall be paid within 10 days from the end of frequency period of principal amount as mentioned above.'],
   ];
   // Title sits on its own line, full-width description wraps below it — a
   // side-by-side title/description layout (title at M+7, description at M+48)
