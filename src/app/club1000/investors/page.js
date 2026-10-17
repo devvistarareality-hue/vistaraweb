@@ -12,6 +12,7 @@ import AddInvestorModal from '../_AddInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
 import { RedeemModal, MaturityPayoutModal } from '../_CloseInvestment';
 import HistoryModal from '../_HistoryModal';
+import ImportInvestorsModal from '../_ImportInvestors';
 import LedgerModal from '../_LedgerModal';
 
 import Icon from '../../../components/Icon';
@@ -55,6 +56,7 @@ export default function InvestorsPage() {
   const [payingOut, setPayingOut] = useState(null);      // Payout dialog (at maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
   const [deletingId, setDeletingId] = useState(null);    // investor being deleted
+  const [showImport, setShowImport] = useState(false);   // Import from Excel
   const [ledgerFor, setLedgerFor] = useState(null);
   // Opened from an investor notification (?investor=<id>): that investor's ledger.
   useEffect(() => {
@@ -191,7 +193,12 @@ export default function InvestorsPage() {
           </p>
         </div>
         <div className="c1-head-actions">
-          {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add Investor</button>}
+          <div className="c1-head-acts">
+            {manager && can(user, 'club.investor.manage') && (
+              <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setShowImport(true)} disabled={!schemes.length}><Icon name="upload" /> Import</button>
+            )}
+            {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => setShowAdd(true)} disabled={!schemes.length}>+ Add Investor</button>}
+          </div>
           {!loading && !schemes.length && (
             <div className="c1-warn-note">{manager ? 'Create a scheme first.' : 'No schemes yet — ask your manager to create one.'}</div>
           )}
@@ -312,6 +319,7 @@ export default function InvestorsPage() {
         <AddInvestorModal schemes={schemes} revise={revising}
           onClose={() => setRevising(null)} onCreated={() => load()} />
       )}
+      {showImport && <ImportInvestorsModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
       {historyFor && <HistoryModal investor={historyFor} onClose={() => setHistoryFor(null)} />}
       {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
       {payingOut && <MaturityPayoutModal investor={payingOut} onClose={() => setPayingOut(null)} onDone={() => { setPayingOut(null); load(); }} />}

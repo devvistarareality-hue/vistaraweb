@@ -3457,3 +3457,23 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1pa-legend b { color: var(--text); }
 .c1pa-s1 { background: var(--viz-1); } .c1pa-s2 { background: var(--viz-2); } .c1pa-s3 { background: var(--viz-3); }
 .c1pa-s4 { background: var(--viz-4); } .c1pa-s5 { background: var(--viz-5); } .c1pa-s6 { background: var(--viz-6); }
+
+/* Club 1000 Import investors: steps, summary and the row-by-row check. */
+.c1-head-acts { display: inline-flex; gap: 8px; align-items: center; }
+.c1im-step { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.c1im-step p { margin: 0; font-size: 13px; color: var(--text-2); }
+.c1im-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 10px; font-size: 13px; }
+.c1im-sum span { display: inline-flex; align-items: center; gap: 6px; }
+.c1im-sum .ok { color: var(--success); } .c1im-sum .bad { color: var(--danger); }
+.c1im-sum b { color: var(--text); }
+.c1im-table { border: 1px solid var(--border); border-radius: 12px; overflow: auto; max-height: 360px; background: var(--surface); }
+.c1im-head, .c1im-row { display: grid; grid-template-columns: 44px minmax(140px, 1.2fr) minmax(110px, 1fr) 110px 130px minmax(170px, 1.4fr); gap: 10px; align-items: start; padding: 8px 12px; }
+.c1im-head { position: sticky; top: 0; background: var(--surface-2); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); z-index: 1; }
+.c1im-row { border-top: 1px solid var(--hairline); font-size: 12.5px; color: var(--text); }
+.c1im-row.bad { background: color-mix(in srgb, var(--danger) 5%, transparent); }
+.c1im-row > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.c1im-row small { font-size: 11px; color: var(--muted); }
+.c1im-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+.c1im-no { color: var(--muted); font-variant-numeric: tabular-nums; }
+.c1im-check em { font-style: normal; font-size: 11.5px; font-weight: 700; }
+.c1im-check em.ok { color: var(--success); } .c1im-check em.bad { color: var(--danger); } .c1im-check em.warn { color: var(--warning); }
