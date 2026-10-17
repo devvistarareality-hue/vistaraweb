@@ -3,6 +3,7 @@
 // headers, info grid, terms layout, signature blocks, footer). Content is the
 // Club 1000 investment terms; presentation mirrors bookingLOI.buildLOIPdf.
 import { ensureJsPDF, loadLogo } from './bookingLOI';
+import { schedulePeriods, maturityWorking, perDayInterest, tenureDays } from './c1Periods';
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -127,22 +128,58 @@ function buildScheduleRows(investor, scheme, providedSchedule) {
     const dates = investor.interest_payout === 'quarterly'
       ? computeQuarterlyDates(investor.investment_date, scheme.tenure_months)
       : computeMonthlyDates(investor.investment_date, scheme.tenure_months);
-    const amounts = prorateInstalments(dates, investor.investment_date, maturityDateStr, principal, pct);
-    entries = dates.map((due_date, i) => ({ due_date, amount_due: amounts[i], payout_type: 'interest' }));
+    // Same day-count working the forms and the server use (c1Periods / services.py).
+    const draft = dates.map((due_date) => ({ due_date, payout_type: 'interest' }));
+    const pers = schedulePeriods(draft, investor.investment_date, maturityDateStr, principal, pct, investor.interest_payout);
+    entries = draft.map((e, i) => ({ ...e, amount_due: pers[i] ? pers[i].computed : 0 })).filter((e) => e.amount_due > 0);
     entries.push({ due_date: maturityDateStr, amount_due: principal, payout_type: 'maturity' });
   } else {
     // Maturity cadence — a single lump-sum instalment (principal + full return).
     entries = [{ due_date: maturityDateStr, amount_due: totalValue, payout_type: 'maturity' }];
   }
 
+  // The working behind each row: the period it pays for, its days, interest a day.
+  const periods = isRecurring
+    ? schedulePeriods(entries, investor.investment_date, maturityDateStr, principal, pct, investor.interest_payout)
+    : entries.map(() => maturityWorking(principal, pct, investor.investment_date, maturityDateStr).periods[0] || null);
   let n = 0;
-  return entries.map((e) => {
+  return entries.map((e, i) => {
     const amt = Number(e.amount_due) || 0;
     const isPrincipalRow = e.payout_type === 'maturity' && isRecurring;
     if (!isPrincipalRow) n += 1;
-    return { no: isPrincipalRow ? 'P' : n, date: e.due_date, amt };
+    const per = periods[i];
+    return {
+      no: isPrincipalRow ? 'P' : n, date: e.due_date, amt,
+      title: isPrincipalRow ? 'Principal returned' : per ? per.label : (isRecurring ? 'Interest' : 'Principal + interest'),
+      working: per ? `${spanLabel(per.from, per.to)} · ${per.days} days × Rs. ${per.perDay.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '',
+    };
   });
 }
+
+// The headline of the working: interest a day and the total interest.
+function interestBasis(investor, scheme) {
+  const principal = Number(investor.amount_invested) || 0;
+  const pct = Number(investor.total_return_pct) || 0;
+  const maturityDateStr = investor.maturity_date || addMonthsISO(investor.investment_date, scheme.tenure_months);
+  const days = tenureDays(investor.investment_date, maturityDateStr);
+  const perDay = perDayInterest(principal, pct, investor.investment_date, maturityDateStr);
+  const f2 = (v) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const f0 = (v) => Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  return {
+    line: `Interest a day: Rs. ${f2(perDay)}  (Rs. ${f0(principal)} × ${pct}% ÷ ${days} days)`,
+    total: `Total interest: Rs. ${f0(perDay * days)}`,
+  };
+}
+
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// "18 Oct – 31 Dec 2026" (or with both years when the period crosses one).
+function spanLabel(from, to) {
+  const [ay, am, ad] = String(from).split('-').map(Number);
+  const [by, bm, bd] = String(to).split('-').map(Number);
+  if (!ay || !by) return '';
+  return ay === by ? `${ad} ${MON[am - 1]} – ${bd} ${MON[bm - 1]} ${by}` : `${ad} ${MON[am - 1]} ${ay} – ${bd} ${MON[bm - 1]} ${by}`;
+}
+
 
 // investor: InvestorListSerializer shape. scheme: SchemeSerializer shape.
 // The seller on this document is the company the booking belongs to, not a constant.
@@ -322,29 +359,38 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   {
     const rows = buildScheduleRows(investor, scheme, opts.schedule);
     const totalValue = computeMaturityValue(investor, scheme);
-    const DC_NUM = M + 8, DC_DATE = M + 18, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
-    const rowH = 10;
-    chk(4 + 12 + 3 + 10 + rows.length * rowH + 16);
+    const basis = interestBasis(investor, scheme);
+    const DC_NUM = M + 8, DC_PER = M + 18, DC_DATE = PW - M - 72, DC_RS = PW - M - 28, DC_AMT = PW - M - 3;
+    const rowH = 12;
+    chk(4 + 12 + 10 + 3 + 10 + rows.length * rowH + 16);
     y += 4; secHead('Payout Schedule'); y += 3; rowAlt = false;
 
+    // The working's headline: interest a day (principal × rate ÷ days) and the total.
+    chk(10); sf(WASH); doc.roundedRect(M, y - 5, CW, 9, 2, 2, 'F');
+    st(MB); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.text(basis.line, M + 4, y + 0.5);
+    doc.text(basis.total, PW - M - 4, y + 0.5, { align: 'right' });
+    y += 11;
+
     chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
-    doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Due Date', DC_DATE, y); doc.text('Amount (Rs.)', DC_RS, y);
+    doc.text('#', DC_NUM, y, { align: 'center' }); doc.text('Period · working', DC_PER, y); doc.text('Due Date', DC_DATE, y); doc.text('Amount (Rs.)', DC_RS, y);
     y += 10;
 
     rows.forEach((r, idx) => {
       chk(rowH);
-      if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 9, 'F'); }
-      sf(MB); doc.circle(DC_NUM, y - 1, 3.5, 'F'); st(WHT); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
-      doc.text(String(r.no), DC_NUM, y + 0.5, { align: 'center' });
-      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); st(DK); doc.text(fmtDate(r.date) || '—', DC_DATE, y);
-      doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + money(r.amt), DC_AMT, y, { align: 'right' });
-      sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 3.5, PW - M, y + 3.5);
+      if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 5.5, CW, 11, 'F'); }
+      sf(MB); doc.circle(DC_NUM, y + 0.2, 3.5, 'F'); st(WHT); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+      doc.text(String(r.no), DC_NUM, y + 1.6, { align: 'center' });
+      st(DK); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text(r.title || '', DC_PER, y - 0.6);
+      if (r.working) { doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); st([100, 112, 130]); doc.text(r.working, DC_PER, y + 3.4); }
+      st(DK); doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.text(fmtDate(r.date) || '—', DC_DATE, y + 1.2);
+      doc.setFont('helvetica', 'bold'); doc.text('Rs. ' + money(r.amt), DC_AMT, y + 1.2, { align: 'right' });
+      sd(LN); doc.setLineWidth(0.2); doc.line(M, y + 5.5, PW - M, y + 5.5);
       y += rowH;
     });
 
     chk(12); sf(WASH); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'F'); sd(MB2); doc.setLineWidth(0.5); doc.roundedRect(M, y - 5, CW, 10, 1.5, 1.5, 'S');
     sf(ORG); doc.roundedRect(M + 1.2, y - 3, 1.7, 6, 0.85, 0.85, 'F');
-    st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('MATURITY VALUE', DC_DATE, y + 1); doc.text('Rs. ' + money(totalValue), DC_AMT, y + 1, { align: 'right' });
+    st(MB); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('MATURITY VALUE', DC_PER, y + 1); doc.text('Rs. ' + money(totalValue), DC_AMT, y + 1, { align: 'right' });
     y += 16;
   }
 
