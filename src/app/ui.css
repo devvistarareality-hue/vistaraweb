@@ -3522,4 +3522,4 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .bk-reason span { font-size: 13.5px; color: var(--text); }
 .bk-reason.cancel { background: var(--surface-2); border-color: var(--border); }
 .bk-reason.cancel b { color: var(--text-2); }
-.c1-datebar { margin-bottom: 14px; }
+.c1-datebar { margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }

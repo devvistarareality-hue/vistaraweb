@@ -69,6 +69,7 @@ export default function PayoutsPage() {
   const [schemeSel, setSchemeSel] = useState([]);
   const [q, setQ] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });   // Year / Month / Quarter / dates
+  const [kind, setKind] = useState('both');   // interest / principal / both
   const [paying, setPaying] = useState(null);     // the investor row being paid
   const [paidFor, setPaidFor] = useState(null);   // the investor whose paid payouts are listed
   const [ledgerFor, setLedgerFor] = useState(null);
@@ -100,10 +101,11 @@ export default function PayoutsPage() {
   // they were paid. Every figure, tab and card below follows it.
   const inPeriod = (p) => {
     const d = String((p.status === 'paid' ? p.paid_date : p.due_date) || '').slice(0, 10);
-    return (!range.from || d >= range.from) && (!range.to || d <= range.to);
+    return (!range.from || d >= range.from) && (!range.to || d <= range.to)
+      && (kind === 'both' || (kind === 'interest' ? p.payout_type === 'interest' : p.payout_type !== 'interest'));
   };
   const investors = useMemo(() => byInvestor((payouts || []).filter(inPeriod), today, soon),
-    [payouts, today, soon, range.from, range.to]);
+    [payouts, today, soon, range.from, range.to, kind]);
   const scoped = investors.filter((r) => (!schemeSel.length || schemeSel.includes(r.scheme))
     && (!q.trim() || `${r.name} ${r.phone} ${r.loi_no}`.toLowerCase().includes(q.trim().toLowerCase())));
   const lists = {
@@ -132,7 +134,14 @@ export default function PayoutsPage() {
         </div>
       </div>
 
-      <div className="c1-datebar"><DateFilter onChange={setRange} /></div>
+      <div className="c1-datebar">
+        <DateFilter onChange={setRange} />
+        <div className="c1pa-seg" role="tablist" aria-label="What to show">
+          {[['both', 'Interest + Principal'], ['interest', 'Interest'], ['principal', 'Principal']].map(([k, label]) => (
+            <button key={k} type="button" className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>{label}</button>
+          ))}
+        </div>
+      </div>
 
       {payouts === null ? <Loader label="Working out who is owed what…" /> : (
         <>
