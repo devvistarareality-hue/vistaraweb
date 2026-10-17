@@ -296,6 +296,8 @@ th, .nx-badge, .nx-theme { letter-spacing: 0.04em; }
 /* single-column form, centred on the page */
 .nx-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 .nx-page-form > * { max-width: 1040px; margin-left: auto; margin-right: auto; }
+/* …except overlays (the Submitting… screen, dialogs): they cover the whole window. */
+.nx-page-form > .nx-modal-backdrop, .nx-page-form > .nx-busy { max-width: none; margin: 0; }
 .nx-page-form > .nx-page-title, .nx-page-form > .nx-page-sub { width: 100%; }
 .nx-form-grid > .nx-span-all { grid-column: 1 / -1; }
 /* inside a section, pair fields two-up on wide screens */
