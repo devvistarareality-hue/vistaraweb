@@ -11,7 +11,7 @@ import { unitLabel } from '../../../../lib/bookingUnit';
 import BookingDetails, { fmtDateTime } from '../../../../components/BookingDetails';
 
 import Icon from '../../../../components/Icon';
-import { notify } from '../../../../lib/notify';
+import { notify, confirmDialog } from '../../../../lib/notify';
 import Loader from '../../../../components/Loader';
 import MultiSelect from '../../../../components/MultiSelect';
 import { errText } from '../../../../lib/apiError';
@@ -196,6 +196,7 @@ function AccountsApprovals({ initialTab }) {
   // The dashboard tiles open the tab that matches their number (?tab=…).
   const [tab, setTab] = useState(TABS.some(([k]) => k === initialTab) ? initialTab : 'pending');
   const [busy, setBusy] = useState(null);
+  const [busyAct, setBusyAct] = useState('');   // which action the busy row is running
   const [toReject, setToReject] = useState(null);  // booking awaiting reject-with-remarks
   const [toCancel, setToCancel] = useState(null);  // approved booking awaiting cancel confirmation
   const [open, setOpen] = useState({});
@@ -306,7 +307,13 @@ function AccountsApprovals({ initialTab }) {
   }, [companyId]);
 
   async function act(id, action, reason) {
-    setBusy(id);
+    if (action === 'approve') {
+      const b = rows.find((x) => x.id === id);
+      const ok = await confirmDialog(`Approve the booking${b ? ` of ${b.client_name}` : ''}? It moves on to AR.`,
+        { title: 'Approve booking?', confirmText: 'Approve' });
+      if (!ok) return;
+    }
+    setBusy(id); setBusyAct(action);
     const r = await fetch(SALES_ENDPOINTS.bookingAccountsAction(id) + cq('?'), {
       method: 'POST', headers: authHeaders(), body: JSON.stringify(reason ? { action, reason } : { action }),
     }).catch(() => null);
@@ -314,7 +321,7 @@ function AccountsApprovals({ initialTab }) {
       const d = r ? await r.json().catch(() => ({})) : {};
       notify((action === 'approve' ? 'Approve' : 'Reject') + ' failed: ' + (errText(d, 'Network error.')));
     }
-    setBusy(null); setToReject(null); load();
+    setBusy(null); setBusyAct(''); setToReject(null); load();
   }
 
   // Cancelling an approved booking goes through its closure: that endpoint frees the
@@ -606,8 +613,8 @@ function AccountsApprovals({ initialTab }) {
                           is never the only gate — AccountsBookingActionView re-checks). */}
                       {tab === 'pending' && b.can_accounts_approve && (
                         <>
-                          <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
-                          <button className="nx-btn nx-btn-md nx-btn-danger" onClick={() => setToReject(b)} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
+                          <button className="nx-btn nx-btn-md nx-btn-success appr-ok" onClick={() => act(b.id, 'approve')} disabled={busy === b.id}>{busy === b.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> Approve</>}</button>
+                          <button className="nx-btn nx-btn-md nx-btn-danger appr-bad" onClick={() => setToReject(b)} disabled={busy === b.id}>{busy === b.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
                         </>
                       )}
                       {/* Undoing an Accounts approval — same authority, same server-computed

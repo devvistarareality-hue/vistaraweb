@@ -11,7 +11,7 @@ import { formatDMY } from '../../../lib/dateFormat';
 import { fmtMoney } from '../_StatCard';
 
 import Icon from '../../../components/Icon';
-import { notify } from '../../../lib/notify';
+import { notify, confirmDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import AddInvestorModal from '../_AddInvestorModal';
 import { errText } from '../../../lib/apiError';
@@ -79,6 +79,7 @@ export default function InvestorApprovalsPage() {
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  const [busyAct, setBusyAct] = useState('');   // which action the busy row is running
   // A draft is edited from here, because it deliberately does not appear in the
   // Investors list — there is nowhere else to open it from.
   const [editDraft, setEditDraft] = useState(null);
@@ -207,7 +208,11 @@ export default function InvestorApprovalsPage() {
   }
 
   async function act(id, action) {
-    setBusy(id);
+    const inv = (investors || []).find((x) => x.id === id);
+    const ok = await confirmDialog(`${action === 'approve' ? 'Approve' : 'Reject'} ${inv ? inv.name : 'this investor'}${inv?.scheme_name ? ` · ${inv.scheme_name}` : ''}?`,
+      { title: action === 'approve' ? 'Approve investor?' : 'Reject investor?', confirmText: action === 'approve' ? 'Approve' : 'Reject', tone: action === 'approve' ? undefined : 'danger' });
+    if (!ok) return;
+    setBusy(id); setBusyAct(action);
     try {
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorAction(id), { method: 'POST', body: JSON.stringify({ action }) });
       if (!res.ok) {
@@ -215,9 +220,10 @@ export default function InvestorApprovalsPage() {
         notify(errText(data, `Could not ${action} this investor.`));
         return;
       }
+      notify(action === 'approve' ? 'Investor approved' : 'Investor rejected', 'success');
       load();
     } finally {
-      setBusy(null);
+      setBusy(null); setBusyAct('');
     }
   }
 
@@ -354,8 +360,8 @@ export default function InvestorApprovalsPage() {
                         <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>
                       )}
                       {inv.approval_status === 'pending' && (canApprove(inv) ? <>
-                        <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id}><Icon name="check" /> Approve</button>
-                        <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id}><Icon name="x" /> Reject</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> Approve</>}</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
                       </> : <span className="c1a-note">Not an approver</span>)}
                     </div>
                   </div>

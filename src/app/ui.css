@@ -3385,3 +3385,12 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
   .c1sc-edit { grid-row: 1; grid-column: 3; }
   .c1sc-editor { grid-column: 1 / -1; }
 }
+
+/* A small spinner inside a button while its action runs (Approving… / Rejecting…). */
+.nx-spin { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; vertical-align: -2px; animation: nx-spin-rot .7s linear infinite; }
+@keyframes nx-spin-rot { to { transform: rotate(360deg); } }
+/* Approve / Reject on the booking approval cards. */
+.nx-btn.appr-ok, .nx-btn.appr-bad { padding: 8px 16px; border-radius: 8px; border: none; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.nx-btn.appr-ok { background: var(--success-solid); }
+.nx-btn.appr-bad { background: var(--danger-solid); }
+.nx-btn.appr-ok:disabled, .nx-btn.appr-bad:disabled { opacity: .75; cursor: progress; }

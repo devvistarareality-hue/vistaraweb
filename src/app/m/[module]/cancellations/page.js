@@ -43,6 +43,7 @@ export default function ARCancellationsPage({ params: paramsPromise }) {
   const [refund, setRefund] = useState(null);   // { c, paid_on, amount, bank, reference, remarks }
   const [refundErr, setRefundErr] = useState({});
   const [busy, setBusy] = useState(false);
+  const [busyKey, setBusyKey] = useState('');   // `${id}:${action}` while it runs
 
   const load = useCallback(async () => {
     setErr('');
@@ -74,10 +75,10 @@ export default function ARCancellationsPage({ params: paramsPromise }) {
       : `Reject this cancellation? The booking stays as it is.`,
     { title: action === 'approve' ? 'Approve cancellation?' : 'Reject cancellation?', confirmText: action === 'approve' ? 'Approve' : 'Reject', tone: action === 'approve' ? 'danger' : undefined });
     if (!ok) return;
-    setBusy(true);
+    setBusy(true); setBusyKey(`${c.id}:${action}`);
     const r = await apiFetch(AR_ENDPOINTS.cancellationDecide(c.id) + cq, { method: 'POST', body: JSON.stringify({ action }) }).catch(() => null);
     const d = r ? await r.json().catch(() => ({})) : {};
-    setBusy(false);
+    setBusy(false); setBusyKey('');
     if (!r?.ok) { notify(errText(d, 'Could not save the decision'), 'error'); return; }
     notify(action === 'approve' ? 'Cancelled — plot released to Sales' : 'Cancellation rejected', 'success');
     load();
@@ -190,8 +191,8 @@ export default function ARCancellationsPage({ params: paramsPromise }) {
                 <footer className="can-actions">
                   <Link href={`/m/${params.module}/ledger/${c.account_id}`} className="nx-btn nx-btn-sm nx-btn-secondary">Ledger</Link>
                   {c.status === 'approved' && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => letter(c)}><FileText size={13} /> Letter</button>}
-                  {c.can_decide && <button className="nx-btn nx-btn-sm nx-btn-secondary" disabled={busy} onClick={() => decide(c, 'reject')}>Reject</button>}
-                  {c.can_decide && <button className="nx-btn nx-btn-sm nx-btn-danger" disabled={busy} onClick={() => decide(c, 'approve')}>Approve cancellation</button>}
+                  {c.can_decide && <button className="nx-btn nx-btn-sm nx-btn-secondary" disabled={busy} onClick={() => decide(c, 'reject')}>{busyKey === `${c.id}:reject` ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : 'Reject'}</button>}
+                  {c.can_decide && <button className="nx-btn nx-btn-sm nx-btn-danger" disabled={busy} onClick={() => decide(c, 'approve')}>{busyKey === `${c.id}:approve` ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : 'Approve cancellation'}</button>}
                   {c.stage === 'refund_pending' && canRefund && (
                     <button className="nx-btn nx-btn-sm nx-btn-primary" onClick={() => { setRefundErr({}); setRefund({ c, paid_on: today(), amount: String(c.refund_balance), bank: '', reference: '', remarks: '' }); }}>
                       Record refund

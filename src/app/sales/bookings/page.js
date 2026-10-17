@@ -14,6 +14,7 @@ import { useFocusId } from '../../../lib/useFocusId';
 import Icon from '../../../components/Icon';
 import ProjectApprovals from './_ProjectApprovals';
 import { confirmDialog, notify } from '../../../lib/notify';
+import { errText } from '../../../lib/apiError';
 import Loader from '../../../components/Loader';
 import LeadTransfers from '../_LeadTransfers';
 import MultiSelect from '../../../components/MultiSelect';
@@ -179,6 +180,7 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  const [busyAct, setBusyAct] = useState('');   // which action the busy row is running
   // Details on the card, and the revision history loaded on demand — the same record
   // My Bookings shows, because an approver deciding on a deal needs the figures in
   // front of them, not a second screen to go and find.
@@ -315,10 +317,18 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
   // Collapse state is per project name, so reset it whenever the visible set changes.
   useEffect(() => { load(); setOpenProj({}); }, [tab, companyId, adminView, cpOnly]);
 
+  // Approve / Reject: asked first, then the button spins until the server answers.
   async function act(id, action) {
-    setBusy(id);
-    await fetch(`${SALES_ENDPOINTS.bookings}${id}/action/${cq('?')}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }) }).catch(() => {});
-    setBusy(null); load();
+    const b = rows.find((x) => x.id === id);
+    const who = b ? `${b.client_name}${b.plot_numbers || b.plot_number ? ` · Unit ${b.plot_numbers || b.plot_number}` : ''}` : 'this booking';
+    const ok = await confirmDialog(action === 'approve' ? `Approve the booking of ${who}?` : `Reject the booking of ${who}? The unit is released.`,
+      { title: action === 'approve' ? 'Approve booking?' : 'Reject booking?', confirmText: action === 'approve' ? 'Approve' : 'Reject', tone: action === 'approve' ? undefined : 'danger' });
+    if (!ok) return;
+    setBusy(id); setBusyAct(action);
+    const r = await fetch(`${SALES_ENDPOINTS.bookings}${id}/action/${cq('?')}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }) }).catch(() => null);
+    if (r && r.ok) notify(action === 'approve' ? 'Booking approved' : 'Booking rejected', 'success');
+    else notify(errText(r ? await r.json().catch(() => ({})) : {}, `Could not ${action} the booking.`), 'error');
+    setBusy(null); setBusyAct(''); load();
   }
 
   // Discarding a draft releases whatever plot(s) it still holds and deletes the row —
@@ -642,8 +652,8 @@ export function BookingsContent({ adminView = false, cpOnly = false, cpMode = fa
                         buttons anyway made the click fail silently. */}
                     {b.status === 'pending' && isApprover && b.can_approve && (
                       <>
-                        <button className="nx-btn nx-btn-md nx-btn-success" onClick={() => act(b.id, 'approve')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--success-solid)' }}><Icon name="check" /> Approve</button>
-                        <button className="nx-btn nx-btn-md nx-btn-danger" onClick={() => act(b.id, 'reject')} disabled={busy === b.id} style={{ ...actBtn, background: 'var(--danger-solid)' }}><Icon name="x" /> Reject</button>
+                        <button className="nx-btn nx-btn-md nx-btn-success appr-ok" onClick={() => act(b.id, 'approve')} disabled={busy === b.id}>{busy === b.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> Approve</>}</button>
+                        <button className="nx-btn nx-btn-md nx-btn-danger appr-bad" onClick={() => act(b.id, 'reject')} disabled={busy === b.id}>{busy === b.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
                       </>
                     )}
                     {b.status === 'sold' && (() => {

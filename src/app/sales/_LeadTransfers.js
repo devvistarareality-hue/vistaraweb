@@ -35,6 +35,7 @@ export default function LeadTransfers({ companyId, cpOnly, pendingCount, onChang
   const [status, setStatus] = useState('pending');
   const [rows, setRows] = useState(null);
   const [busy, setBusy] = useState(null);
+  const [busyAct, setBusyAct] = useState('');   // which action the busy row is running
 
   function load() {
     setRows(null);
@@ -53,7 +54,7 @@ export default function LeadTransfers({ companyId, cpOnly, pendingCount, onChang
       { title: approve ? 'Approve transfer?' : 'Reject transfer?', confirmText: approve ? 'Approve' : 'Reject', tone: approve ? undefined : 'danger' },
     );
     if (!ok) return;
-    setBusy(x.id);
+    setBusy(x.id); setBusyAct(action);
     const r = await fetch(SALES_ENDPOINTS.leadTransferAction(x.id), {
       method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }),
     }).catch(() => null);
@@ -111,8 +112,8 @@ export default function LeadTransfers({ companyId, cpOnly, pendingCount, onChang
                 </div>
                 {x.status === 'pending' && (
                   <div className="lx-actions">
-                    <button type="button" className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => act(x, 'reject')} disabled={busy === x.id}><X size={15} /> Reject</button>
-                    <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={() => act(x, 'approve')} disabled={busy === x.id}><Check size={15} /> {busy === x.id ? '…' : 'Approve'}</button>
+                    <button type="button" className="nx-btn nx-btn-md nx-btn-danger-soft" onClick={() => act(x, 'reject')} disabled={busy === x.id}>{busy === x.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><X size={15} /> Reject</>}</button>
+                    <button type="button" className="nx-btn nx-btn-md nx-btn-success" onClick={() => act(x, 'approve')} disabled={busy === x.id}>{busy === x.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Check size={15} /> Approve</>}</button>
                   </div>
                 )}
               </div>

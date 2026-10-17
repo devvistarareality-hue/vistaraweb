@@ -18,7 +18,7 @@ import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
 import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
-import { notify } from '../../../lib/notify';
+import { notify, confirmDialog } from '../../../lib/notify';
 import { bustCache } from '../_cache';
 import { errText } from '../../../lib/apiError';
 import FocusChip from '../../../components/FocusChip';
@@ -119,6 +119,7 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
   // project, whatever its status now, until "Show all".
   const [focusId, clearFocus] = useFocusId('project');
   const [busy, setBusy] = useState(null);
+  const [busyAct, setBusyAct] = useState('');   // which action the busy row is running
   const [cfgOpen, setCfgOpen] = useState(false);
   const [approvers, setApprovers] = useState([]);
   const [people, setPeople] = useState([]);
@@ -154,7 +155,9 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
   useEffect(() => { load(); loadApprovers(); }, [load, loadApprovers]);
 
   async function act(project, action, why = '') {
-    setBusy(project.id);
+    if (action === 'approve' && !(await confirmDialog(`Approve the project ${project.name}? It becomes visible to the team.`,
+      { title: 'Approve project?', confirmText: 'Approve' }))) return;
+    setBusy(project.id); setBusyAct(action);
     try {
       const res = await apiFetch(SALES_ENDPOINTS.projectApproval(project.id), {
         method: 'POST',
@@ -280,7 +283,7 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
                     <>
                       <button className="nx-btn nx-btn-md nx-btn-success pa-btn-ok" disabled={busy === p.id}
                         onClick={() => act(p, 'approve')}>
-                        <Icon name="check" /> Approve
+                        {busy === p.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> Approve</>}
                       </button>
                       <button className="nx-btn nx-btn-md nx-btn-danger pa-btn-bad" disabled={busy === p.id}
                         onClick={() => { setRejecting(p); setReason(''); }}>
@@ -312,7 +315,7 @@ export default function ProjectApprovals({ isAdmin, companyId }) {
               <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setRejecting(null)}>Cancel</button>
               <button className="nx-btn nx-btn-md nx-btn-danger" disabled={!reason.trim() || busy === rejecting.id}
                 onClick={() => act(rejecting, 'reject', reason.trim())}>
-                Reject project
+                {busy === rejecting.id ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : 'Reject project'}
               </button>
             </div>
           </div>
