@@ -19,6 +19,7 @@ const STATUS_COLOR = {
   completed: { bg: 'var(--success-soft)', fg: 'var(--success)' },
   paid: { bg: 'var(--success-soft)', fg: 'var(--success)' },
   pending: { bg: 'var(--warning-soft)', fg: 'var(--warning)' },
+  overdue: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
 };
 
 // Type / status pill — the colour comes from the maps above.
@@ -47,47 +48,54 @@ export default function LedgerModal({ investorId, onClose }) {
 
   const inv = data?.investor;
   const s = data?.summary;
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
   return (
     <C1Modal wide title={`Ledger${inv ? ` — ${inv.name}` : ''}`} sub={inv ? `${inv.phone} · ${inv.scheme_name}` : null} onClose={onClose}>
       {loading ? <Loader label="Loading…" /> : err ? <C1Error>{err}</C1Error> : (
         <>
-          <div className="c1l-sum">
+          <div className="c1l-cards">
             {[
-              ['Invested', s.total_invested, ''],
-              ['Total scheduled', s.total_payout_due, ''],
-              ['Paid out', s.total_paid, 'good'],
-              ['Pending', s.total_pending, 'warn'],
-            ].map(([label, val, tone]) => (
-              <div key={label} className={`ard-money ${tone}`}><span>{label}</span><b>{fmtMoney(val)}</b></div>
+              ['Principal', s.principal ?? s.total_invested, ''],
+              ['Interest', s.interest, ''],
+              ['Total', s.total ?? s.total_payout_due, 'sum', 'principal + interest'],
+              ['Due till today', s.due_till_today, 'info'],
+              ['Paid out', s.paid_out ?? s.total_paid, 'good'],
+              ['Pending', s.pending ?? s.total_pending, 'warn'],
+            ].map(([label, val, tone, hint]) => (
+              <div key={label} className={`c1l-card ${tone}`}>
+                <span>{label}</span><b>{fmtMoney(val)}</b>{hint ? <small>{hint}</small> : null}
+              </div>
             ))}
           </div>
           <div className="nx-card c1l-table">
             <table className="nx-table">
               <thead>
-                <tr>{['Date', 'Type', 'Amount', 'Status', 'Paid on'].map((h) => <th key={h}>{h}</th>)}</tr>
+                <tr><th>Type</th><th className="num">Amount</th><th>Due date</th><th>Paid date</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {data.entries.map((e, i) => (
-                  <tr key={i}>
-                    <td>{formatDMY(e.date)}</td>
-                    <td>
-                      <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
-                      {e.period && (
-                        <div className="c1p-why">
-                          <b>{e.period.label}</b> · {formatDMY(e.period.from)} – {formatDMY(e.period.to)} · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}/day
-                        </div>
-                      )}
-                    </td>
-                    <td className="c1l-amt">
-                      {fmtMoney(e.amount)}
-                      {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && <div className="c1l-paid">Paid {fmtMoney(e.paid_amount)}</div>}
-                      {!!e.notes && <div className="c1l-note">“{e.notes}”</div>}
-                    </td>
-                    <td><Badge label={e.status} color={STATUS_COLOR[e.status] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
-                    <td className="c1l-muted">{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
-                  </tr>
-                ))}
+                {data.entries.map((e, i) => {
+                  const isInv = e.type === 'investment';
+                  const st = !isInv && e.status === 'pending' && (e.due_date || e.date) < today ? 'overdue' : e.status;
+                  return (
+                    <tr key={i} className={isInv ? 'c1l-inv' : ''}>
+                      <td>
+                        <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
+                        {e.period && (
+                          <div className="c1p-why"><b>{e.period.label}</b> · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}</div>
+                        )}
+                        {!!e.notes && !e.is_balance && <div className="c1l-note">{e.notes}</div>}
+                      </td>
+                      <td className="num c1l-amt">
+                        {fmtMoney(e.amount)}
+                        {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && <div className="c1l-paid">Paid {fmtMoney(e.paid_amount)}</div>}
+                      </td>
+                      <td>{formatDMY(e.due_date || e.date)}</td>
+                      <td className="c1l-muted">{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
+                      <td><Badge label={st} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

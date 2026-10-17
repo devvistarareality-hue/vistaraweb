@@ -3477,3 +3477,18 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1im-no { color: var(--muted); font-variant-numeric: tabular-nums; }
 .c1im-check em { font-style: normal; font-size: 11.5px; font-weight: 700; }
 .c1im-check em.ok { color: var(--success); } .c1im-check em.bad { color: var(--danger); } .c1im-check em.warn { color: var(--warning); }
+
+/* Club 1000 Ledger: six figures, then Type · Amount · Due date · Paid date · Status. */
+.c1l-cards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.c1l-card { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); min-width: 0; }
+.c1l-card span { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.c1l-card b { font-size: 16px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c1l-card small { font-size: 10.5px; color: var(--muted); }
+.c1l-card.sum { background: var(--accent-softer); }
+.c1l-card.info b { color: var(--accent); }
+.c1l-card.good b { color: var(--success); }
+.c1l-card.warn b { color: var(--warning); }
+.c1l-table .num { text-align: right; }
+.c1l-table tr.c1l-inv td { background: var(--accent-softer); }
+@media (max-width: 900px) { .c1l-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .c1l-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
