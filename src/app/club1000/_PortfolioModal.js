@@ -1,6 +1,6 @@
 'use client';
 // One mobile number's whole relationship with the club, in a side panel: every
-// investment under it (each reinvestment counted), the schemes, what is active and
+// investment under it (each renewal counted), the schemes, what is active and
 // was ever put in, payouts made and still due, and the people it brought in.
 import { useEffect, useState } from 'react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
@@ -80,7 +80,7 @@ export default function PortfolioModal({ investorId, onClose }) {
             <div><span>Active now</span><b>{fmtMoney(p.active_amount)}</b></div>
             <div><span>Ever invested</span><b>{fmtMoney(p.total_invested)}</b></div>
             <div><span>Times invested</span><b>{p.times_invested}×</b>
-              <small>{p.investments} investment{p.investments === 1 ? '' : 's'}{p.renewals ? ` + ${p.renewals} reinvested` : ''}</small></div>
+              <small>{p.investments} investment{p.investments === 1 ? '' : 's'}{p.renewals ? ` + ${p.renewals} renewed` : ''}</small></div>
           </div>
 
           <div className="c1pf-money">
@@ -110,7 +110,7 @@ export default function PortfolioModal({ investorId, onClose }) {
                   <div className="c1pf-inv-body">
                     <div className="c1pf-inv-top">
                       <b>{h.scheme}</b>
-                      {h.renewal_count > 0 && <em className="c1pf-tag">Reinvested {h.renewal_count}×</em>}
+                      {h.renewal_count > 0 && <em className="c1pf-tag">Renewed {h.renewal_count}×</em>}
                       <span className={`c1pf-st ${wait ? 'wait' : h.status}`}>{wait ? 'Awaiting approval' : (STATUS[h.status] || h.status)}</span>
                     </div>
                     <div className="c1pf-inv-sub">

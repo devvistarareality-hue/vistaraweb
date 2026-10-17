@@ -1,6 +1,6 @@
 'use client';
 // Investor Portfolios — one row per mobile number, ranked: everything invested under
-// it (each reinvestment counted), the schemes, what is active and due, and the people
+// it (each renewal counted), the schemes, what is active and due, and the people
 // brought in. A row opens the full portfolio in a side panel.
 import { useEffect, useMemo, useState } from 'react';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
@@ -57,7 +57,7 @@ export default function PortfoliosPage() {
   return (
     <div className="nx-page ard">
       <h1 className="nx-page-title">Investor Portfolios</h1>
-      <p className="club-inv-sub">One line per mobile number — every investment and reinvestment under it, its schemes, and the people it brought in.</p>
+      <p className="club-inv-sub">One line per mobile number — every investment and renewal under it, its schemes, and the people it brought in.</p>
 
       {rows && rows.length > 0 && (
         <div className="nx-card c1pf-band">
@@ -103,7 +103,7 @@ export default function PortfoliosPage() {
               </span>
               <span className="c1pf-times" data-label="Invested">
                 <b>{r.times_invested}×</b>
-                <small>{r.renewals ? `${r.investments} + ${r.renewals} reinvested` : `${r.investments} investment${r.investments === 1 ? '' : 's'}`}</small>
+                <small>{r.renewals ? `${r.investments} + ${r.renewals} renewed` : `${r.investments} investment${r.investments === 1 ? '' : 's'}`}</small>
               </span>
               <span className="c1pf-schips" data-label="Schemes">
                 {r.schemes.map((s) => <em key={s.scheme}>{s.scheme}{s.count > 1 ? ` ×${s.count}` : ''}</em>)}
