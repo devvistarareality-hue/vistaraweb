@@ -20,6 +20,7 @@ import { notify, confirmDialog } from '../../../lib/notify';
 import { errText } from '../../../lib/apiError';
 import LedgerModal from '../_LedgerModal';
 import { C1Modal, C1Section, C1Error } from '../_Form';
+import DateFilter from '../../sales/_DateFilter';
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Premature redemption' };
 const DUE_SOON_DAYS = 30;
@@ -67,6 +68,7 @@ export default function PayoutsPage() {
   const [tab, setTab] = useState('overdue');
   const [schemeSel, setSchemeSel] = useState([]);
   const [q, setQ] = useState('');
+  const [range, setRange] = useState({ from: '', to: '' });   // Year / Month / Quarter / dates
   const [paying, setPaying] = useState(null);     // the investor row being paid
   const [paidFor, setPaidFor] = useState(null);   // the investor whose paid payouts are listed
   const [ledgerFor, setLedgerFor] = useState(null);
@@ -94,7 +96,14 @@ export default function PayoutsPage() {
 
   const today = iso(new Date());
   const soon = iso(new Date(Date.now() + DUE_SOON_DAYS * 86400000));
-  const investors = useMemo(() => byInvestor(payouts || [], today, soon), [payouts, today, soon]);
+  // The period picked above: unpaid payouts by their due date, paid ones by the day
+  // they were paid. Every figure, tab and card below follows it.
+  const inPeriod = (p) => {
+    const d = String((p.status === 'paid' ? p.paid_date : p.due_date) || '').slice(0, 10);
+    return (!range.from || d >= range.from) && (!range.to || d <= range.to);
+  };
+  const investors = useMemo(() => byInvestor((payouts || []).filter(inPeriod), today, soon),
+    [payouts, today, soon, range.from, range.to]);
   const scoped = investors.filter((r) => (!schemeSel.length || schemeSel.includes(r.scheme))
     && (!q.trim() || `${r.name} ${r.phone} ${r.loi_no}`.toLowerCase().includes(q.trim().toLowerCase())));
   const lists = {
@@ -122,6 +131,8 @@ export default function PayoutsPage() {
           )}
         </div>
       </div>
+
+      <div className="c1-datebar"><DateFilter onChange={setRange} /></div>
 
       {payouts === null ? <Loader label="Working out who is owed what…" /> : (
         <>
