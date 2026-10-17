@@ -3300,3 +3300,4 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 }
 .c1s-opt { white-space: normal; line-height: 1.35; }
 .c1-field-ctl > .c1s-opt { display: flex; min-height: 44px; }
+.c1r-paid { margin-top: 4px; font-size: 11.5px; color: var(--muted); }

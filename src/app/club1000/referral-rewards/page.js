@@ -9,7 +9,9 @@ import { onlyPresent } from '../../../lib/presentOptions';
 import DateFilter from '../../sales/_DateFilter';
 import Icon from '../../../components/Icon';
 import { fmtMoney } from '../_StatCard';
-import { confirmDialog } from '../../../lib/notify';
+import { notify } from '../../../lib/notify';
+import { errText } from '../../../lib/apiError';
+import { C1Modal, C1Section, C1Field, C1Value, C1Error } from '../_Form';
 import Loader from '../../../components/Loader';
 
 
@@ -25,6 +27,59 @@ const STATUS_OPTIONS = [{ value: 'pending', label: 'Pending' }, { value: 'paid',
 // else and the same person appears twice.
 const phoneKey = (v) => String(v || '').replace(/\D/g, '').slice(-10);
 
+// Mark a reward paid: how much went out (the reward unless changed), the day it went
+// out (today unless changed, never later) and remarks (UTR / cheque no.).
+function PayRewardModal({ reward, onClose, onDone }) {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const [amount, setAmount] = useState(String(Number(reward.amount) || 0));
+  const [date, setDate] = useState(today);
+  const [notes, setNotes] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const gap = Number(amount) - Number(reward.amount);
+
+  async function pay(e) {
+    e.preventDefault();
+    if (amount === '' || Number.isNaN(Number(amount)) || Number(amount) < 0) { setErr('Enter the amount paid.'); return; }
+    if (!date || date > today) { setErr('The paid date must be today or earlier.'); return; }
+    setBusy(true); setErr('');
+    const res = await apiFetch(CLUB1000_ENDPOINTS.referralRewardMarkPaid(reward.id), {
+      method: 'POST', body: JSON.stringify({ amount, paid_date: date, notes }),
+    }).catch(() => null);
+    setBusy(false);
+    if (!res || !res.ok) {
+      const d = res ? await res.json().catch(() => ({})) : {};
+      setErr(errText(d, 'Could not mark it paid.'));
+      return;
+    }
+    notify(`Referral reward marked paid · ${fmtMoney(amount)}`, 'success');
+    onDone();
+  }
+
+  return (
+    <C1Modal title="Mark referral reward paid" sub={`${reward.reference_name || 'Referrer'}${reward.reference_phone ? ` · ${reward.reference_phone}` : ''} → ${reward.investor_name}`}
+      onClose={onClose} onSubmit={pay}
+      footer={<>
+        <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy}>{busy ? 'Saving…' : `Mark paid · ${fmtMoney(amount)}`}</button>
+      </>}>
+      <C1Section title="Payment">
+        <C1Field label="Reward (target)"><C1Value>{fmtMoney(reward.amount)}</C1Value></C1Field>
+        <C1Field label="Actual paid (₹)" required hint={gap && !Number.isNaN(gap) ? `${gap < 0 ? 'Short' : 'More'} by ${fmtMoney(Math.abs(gap))}` : ''}>
+          <input className="nx-input" type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+        </C1Field>
+        <C1Field label="Paid on" required>
+          <input className="nx-input" type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} required />
+        </C1Field>
+        <C1Field label="Remarks">
+          <input className="nx-input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="UTR / cheque no." />
+        </C1Field>
+      </C1Section>
+      <C1Error>{err}</C1Error>
+    </C1Modal>
+  );
+}
+
 function groupByReferrer(rewards) {
   const groups = new Map();
   for (const r of rewards) {
@@ -36,12 +91,13 @@ function groupByReferrer(rewards) {
     const amount = Number(r.amount) || 0;
     g.total += amount;
     g.count += 1;
-    if (r.status === 'paid') g.paid += amount; else g.pending += amount;
+    if (r.status === 'paid') g.paid += Number(r.paid_amount ?? r.amount) || 0; else g.pending += amount;
   }
   return Array.from(groups.values()).sort((a, b) => b.total - a.total);
 }
 
 export default function ReferralRewardsPage() {
+  const [paying, setPaying] = useState(null);   // the reward in the Mark Paid dialog
   const user = useSelector((s) => s.auth.user);
   const manager = isClub1000Manager(user);
   const [rewards, setRewards] = useState([]);
@@ -113,11 +169,6 @@ export default function ReferralRewardsPage() {
     setSearchText(''); setSearch(''); setRange({ from: '', to: '' }); setDateKey((n) => n + 1);
   }
 
-  async function markPaid(id) {
-    if (!(await confirmDialog('Mark this referral reward as paid?'))) return;
-    const res = await apiFetch(CLUB1000_ENDPOINTS.referralRewardMarkPaid(id), { method: 'POST' });
-    if (res.ok) load();
-  }
 
   // Cards are built from everything the filters allow, before the referrer
   // choice — so they stay the full picture and the chosen one reads as picked
@@ -222,11 +273,19 @@ export default function ReferralRewardsPage() {
                 <td className="c1-strong">{r.investor_name}</td>
                 <td>{fmtMoney(r.amount)}</td>
                 <td>{formatDMY(r.created_at?.slice(0, 10))}</td>
-                <td><span className={`c1r-status ${r.status === 'paid' ? 'paid' : 'pending'}`}>{r.status === 'paid' ? 'Paid' : 'Pending'}</span></td>
+                <td>
+                  <span className={`c1r-status ${r.status === 'paid' ? 'paid' : 'pending'}`}>{r.status === 'paid' ? 'Paid' : 'Pending'}</span>
+                  {r.status === 'paid' && (
+                    <div className="c1r-paid">
+                      {fmtMoney(r.paid_amount ?? r.amount)}{r.paid_date ? ` on ${formatDMY(r.paid_date)}` : ''}
+                      {r.notes ? <span> · {r.notes}</span> : null}
+                    </div>
+                  )}
+                </td>
                 {manager && (
                   <td>
                     {r.status === 'pending' && can(user, 'club.payout.mark_paid') && (
-                      <button type="button" className="nx-btn nx-btn-sm nx-btn-success" onClick={() => markPaid(r.id)}>Mark Paid</button>
+                      <button type="button" className="nx-btn nx-btn-sm nx-btn-success" onClick={() => setPaying(r)}>Mark Paid</button>
                     )}
                   </td>
                 )}
@@ -235,6 +294,7 @@ export default function ReferralRewardsPage() {
           </tbody>
         </table>
       </div>
+      {paying && <PayRewardModal reward={paying} onClose={() => setPaying(null)} onDone={() => { setPaying(null); load(); }} />}
     </div>
   );
 }
