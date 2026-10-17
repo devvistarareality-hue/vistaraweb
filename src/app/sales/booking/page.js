@@ -28,7 +28,7 @@ async function openLoi(id) {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
     const d = await r.json();
     if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else notify('Could not open the LOI.');
+    else notify(d.detail || 'Could not open the LOI.');
   } catch { notify('Could not open the LOI.'); }
 }
 
@@ -1009,6 +1009,8 @@ function BookingPage() {
     try {
       const res = await fetch(SALES_ENDPOINTS.bookings + cq('?'), { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
       if (res.ok) {
+        const saved = await res.clone().json().catch(() => ({}));
+        if (saved.warning) notify(saved.warning, 'error');
         setMsg('✅ Booking submitted — sent for approval.');
         try { sessionStorage.setItem('booking_flash', 'Your booking has been submitted and sent for approval.'); } catch {}
         // Leave the button disabled (saving stays true) — we're navigating away
