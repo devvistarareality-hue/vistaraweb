@@ -238,8 +238,8 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
     const principal = Number(form.amount_invested) || 0;
     const totalReturn = Number(form.total_return_pct) || 0;
     const amounts = prorateInstalments(dates, form.investment_date, maturityPreview, principal, totalReturn);
-    const rows = dates.map((due_date, i) => ({ due_date, amount_due: amounts[i], payout_type: 'interest' }));
-    rows.push({ due_date: maturityPreview, amount_due: principal, payout_type: 'maturity' });
+    const rows = dates.map((due_date, i) => ({ due_date, amount_due: Number(amounts[i]).toFixed(2), payout_type: 'interest' }));
+    rows.push({ due_date: maturityPreview, amount_due: Number(principal).toFixed(2), payout_type: 'maturity' });
     return rows;
   }
 

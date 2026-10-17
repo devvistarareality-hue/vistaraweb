@@ -27,10 +27,10 @@ export default function ScheduleTable({ schedule, periods, principal, pct, from,
       <div className="c1st-table">
         <div className="c1st-head">
           <span>Period</span>
-          <span>Covers</span>
-          <span className="num">Days</span>
+          <span>Covers · working</span>
+          <span className="mid">Days</span>
           <span>Payout date</span>
-          <span className="num">Amount (₹)</span>
+          <span className="num">Amount</span>
         </div>
         {schedule.map((row, idx) => {
           const per = periods[idx];
@@ -38,33 +38,44 @@ export default function ScheduleTable({ schedule, periods, principal, pct, from,
           const edited = per && Math.abs(Number(row.amount_due) - per.computed) > 0.5;
           const [q, part] = per ? per.label.split(' (') : [];
           return (
-            <div key={idx} className={`c1st-row${principalRow ? ' principal' : ''}`}>
+            <div key={idx} className={`c1st-row${principalRow ? ' principal' : ''}${edited ? ' edited' : ''}`}>
               <span className="c1st-period">
                 <b>{principalRow ? 'Principal' : q || 'Interest'}</b>
-                {part ? <em>part</em> : null}
+                {part ? <em>Part</em> : null}
               </span>
               <span className="c1st-covers">
-                {principalRow ? 'Returned at maturity' : per ? <>{formatDMY(per.from)} – {formatDMY(per.to)}</> : '—'}
+                {principalRow ? <span>Returned at maturity</span> : per ? <>
+                  <span>{formatDMY(per.from)} – {formatDMY(per.to)}</span>
+                  <small className={edited ? 'edited' : ''}>
+                    {edited ? `Edited · worked out ₹${inr(per.computed)}` : `${per.days} × ₹${inr(perDay)} = ₹${inr(per.computed)}`}
+                  </small>
+                </> : '—'}
               </span>
-              <span className="num c1st-days">
-                {per ? per.days : '—'}
-              </span>
+              <span className="mid">{per ? <span className="c1st-days">{per.days}</span> : <span className="c1st-dash">—</span>}</span>
               <span className="c1st-date">{renderDate(row, idx)}</span>
               <span className="c1st-amt">
-                <input className="nx-input" type="number" step="0.01" value={row.amount_due} onChange={(e) => onAmount(idx, e.target.value)} />
-                {per && <small className={edited ? 'edited' : ''}>{edited ? `edited · worked out ₹${inr(per.computed)}` : `${per.days} × ₹${inr(perDay)}`}</small>}
+                <i>₹</i>
+                <input className="nx-input" type="number" step="0.01" value={row.amount_due}
+                  onChange={(e) => onAmount(idx, e.target.value)}
+                  onBlur={(e) => { const v = Number(e.target.value); if (e.target.value !== '' && !Number.isNaN(v)) onAmount(idx, v.toFixed(2)); }} />
               </span>
             </div>
           );
         })}
         <div className="c1st-foot">
           <span>Total interest</span>
-          <span className="num">{totalDays || ''}</span>
-          <span />
+          <span className="mid"><span className="c1st-days total">{totalDays || 0}</span></span>
           <span className="num"><b>₹{inr(totalInterest)}</b></span>
         </div>
+        <div className="c1st-foot grand">
+          <span>Principal + interest at the end</span>
+          <span />
+          <span className="num"><b>₹{inr(totalInterest + (Number(principal) || 0))}</b></span>
+        </div>
       </div>
-      <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost c1i-sched-reset" onClick={onReset}>Reset to default</button>
+      <div className="c1st-actions">
+        <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={onReset}>↺ Reset to worked-out amounts</button>
+      </div>
     </div>
   );
 }
