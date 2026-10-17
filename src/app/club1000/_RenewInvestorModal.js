@@ -7,6 +7,7 @@ import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 import { errText } from '../../lib/apiError';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
+import { schedulePeriods, perDayInterest, tenureDays } from '../../lib/c1Periods';
 import { RenewalSummary } from './_CloseInvestment';
 
 
@@ -169,6 +170,9 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.interest_payout, form.total_return_pct, form.amount_invested, form.investment_date]);
 
+  // The working behind each interest row (period, days, interest per day).
+  const periods = schedulePeriods(schedule, form?.investment_date, maturityPreview, form?.amount_invested, form?.total_return_pct, form?.interest_payout);
+
   function updateScheduleRow(idx, field, value) {
     setScheduleDirty(true);
     setSchedule((rows) => rows.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
@@ -270,15 +274,30 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
         {(form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length > 0 && (
           <C1Field label="Payout schedule" hint="Confirm or edit each instalment">
             <div className="c1i-sched">
-              {schedule.map((row, idx) => (
-                <div key={idx} className="c1i-sched-row">
+              <div className="c1i-sched-basis">
+                Interest per day = ₹{Number(form.amount_invested || 0).toLocaleString('en-IN')} × {Number(form.total_return_pct) || 0}% ÷ {tenureDays(form.investment_date, maturityPreview)} days
+                = <b>₹{perDayInterest(form.amount_invested, form.total_return_pct, form.investment_date, maturityPreview).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</b>
+              </div>
+              {schedule.map((row, idx) => {
+                const per = periods[idx];
+                return (
+                <div key={idx} className="c1i-sched-item">
+                <div className="c1i-sched-row">
                   <span className={`c1i-sched-tag${row.payout_type === 'maturity' ? ' principal' : ''}`}>
-                    {row.payout_type === 'maturity' ? 'Principal' : form.interest_payout === 'monthly' ? `M${idx + 1}` : `Q${idx + 1}`}
+                    {row.payout_type === 'maturity' ? 'Principal' : per ? per.label : 'Interest'}
                   </span>
                   <span className="c1-help">{formatDMY(row.due_date)}</span>
                   <input className="nx-input" type="number" step="0.01" value={row.amount_due} onChange={(e) => updateScheduleRow(idx, 'amount_due', e.target.value)} />
                 </div>
-              ))}
+                {per && (
+                  <div className="c1i-sched-why">
+                    {formatDMY(per.from)} – {formatDMY(per.to)} · {per.days} days × ₹{per.perDay.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day = ₹{per.computed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                    {Math.abs(Number(row.amount_due) - per.computed) > 0.5 ? <em> · edited from ₹{per.computed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</em> : null}
+                  </div>
+                )}
+                </div>
+                );
+              })}
               <button type="button" className="nx-btn nx-btn-sm nx-btn-ghost c1i-sched-reset" onClick={resetSchedule}>Reset to default</button>
             </div>
           </C1Field>

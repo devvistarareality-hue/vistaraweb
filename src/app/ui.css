@@ -3331,3 +3331,19 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1h-dot.c1hx-accent { color: var(--accent); background: var(--accent-soft); }
 .c1h-dot.c1hx-deep { color: var(--accent-deep); background: var(--accent-soft); }
 .c1h-dot.c1hx-muted { color: var(--text-3); }
+
+/* Club 1000 interest working: the period an instalment pays for, its days and per-day interest. */
+.c1i-sched-row { grid-template-columns: 128px 1fr 1fr; }
+.c1i-sched-item { display: flex; flex-direction: column; gap: 3px; padding-bottom: 6px; border-bottom: 1px dashed var(--hairline); }
+.c1i-sched-item:last-of-type { border-bottom: 0; }
+.c1i-sched-why { font-size: 11.5px; color: var(--muted); padding-left: 136px; }
+.c1i-sched-why em { color: var(--warning); font-style: normal; font-weight: 700; }
+.c1i-sched-basis { font-size: 12px; color: var(--text-2); background: var(--accent-softer); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 4px; }
+.c1i-sched-basis b { color: var(--text); }
+.c1p-why { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.c1p-why b { color: var(--text-2); }
+@media (max-width: 640px) {
+  .c1i-sched-row { grid-template-columns: 1fr 1fr; }
+  .c1i-sched-row > .c1i-sched-tag { grid-column: 1 / -1; }
+  .c1i-sched-why { padding-left: 0; }
+}

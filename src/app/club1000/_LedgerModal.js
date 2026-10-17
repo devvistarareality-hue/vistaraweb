@@ -71,7 +71,14 @@ export default function LedgerModal({ investorId, onClose }) {
                 {data.entries.map((e, i) => (
                   <tr key={i}>
                     <td>{formatDMY(e.date)}</td>
-                    <td><Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
+                    <td>
+                      <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
+                      {e.period && (
+                        <div className="c1p-why">
+                          <b>{e.period.label}</b> · {formatDMY(e.period.from)} – {formatDMY(e.period.to)} · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}/day
+                        </div>
+                      )}
+                    </td>
                     <td className="c1l-amt">
                       {fmtMoney(e.amount)}
                       {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && <div className="c1l-paid">Paid {fmtMoney(e.paid_amount)}</div>}

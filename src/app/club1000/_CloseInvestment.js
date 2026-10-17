@@ -202,8 +202,9 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
                   <div key={p.id} className={`c1p-grid-row${l.on ? '' : ' off'}`}>
                     <input type="checkbox" checked={l.on} onChange={(e) => setLine(p.id, { on: e.target.checked })} aria-label="Pay this one now" />
                     <span className="c1p-pay-what">
-                      <b>{TYPE_LABELS[p.payout_type] || p.payout_type}</b>
+                      <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
                       <span className={`c1p-pay-when${late ? ' late' : ''}`}>Due {formatDMY(p.due_date)}{late ? ' · late' : ''}</span>
+                      {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
                     </span>
                     <span className="num c1p-target">{rupee(p.amount_due)}</span>
                     <input className="nx-input" type="text" inputMode="decimal" value={l.amount} disabled={!l.on} onChange={(e) => setLine(p.id, { amount: e.target.value })} />
