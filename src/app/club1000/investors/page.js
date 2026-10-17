@@ -341,6 +341,8 @@ export default function InvestorsPage() {
                     <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setPortfolioFor(inv.id)}><Icon name="users" /> Portfolio</button>
                     {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>}
                     {inv.document_url && <a className="nx-btn nx-btn-sm nx-btn-secondary" href={inv.document_url} target="_blank" rel="noreferrer"><Icon name="clip" /> KYC</a>}
+                    {/* Viewing on the left; what changes the investment on the right. */}
+                    <span className="c1a-actions-gap" />
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
