@@ -32,6 +32,7 @@ export default function PortfolioModal({ investorId, onClose }) {
   const [p, setP] = useState(null);
   const [err, setErr] = useState('');
   const [tab, setTab] = useState('investments');
+  const [allNames, setAllNames] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -70,7 +71,11 @@ export default function PortfolioModal({ investorId, onClose }) {
               <div>{p.phone}{p.email ? ` · ${p.email}` : ''}</div>
               {p.since && <div>Investing since {formatDMY(p.since)} · {yearsSince(p.since)}</div>}
               {p.names?.length > 1 && (
-                <div className="c1pf-names">Also under this number: {p.names.slice(1).map((n) => <em key={n}>{n}</em>)}</div>
+                <div className="c1pf-names">Also under this number: {p.names.slice(1, allNames ? undefined : 5).map((n) => <em key={n}>{n}</em>)}
+                  {p.names.length > 5 && (
+                    <button type="button" className="c1pf-morebtn" onClick={() => setAllNames((v) => !v)}>{allNames ? 'Show less' : `+${p.names.length - 5} more`}</button>
+                  )}
+                </div>
               )}
               {p.awaiting_approval > 0 && <div className="c1pf-await">{p.awaiting_approval} investment{p.awaiting_approval === 1 ? '' : 's'} awaiting approval</div>}
             </div>

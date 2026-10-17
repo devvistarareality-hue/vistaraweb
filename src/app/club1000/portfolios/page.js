@@ -60,11 +60,23 @@ export default function PortfoliosPage() {
       <p className="club-inv-sub">One line per mobile number — every investment and renewal under it, its schemes, and the people it brought in.</p>
 
       {rows && rows.length > 0 && (
-        <div className="nx-card c1pf-band">
-          <div className="c1pf-band-hero"><span>Active with the club</span><b>{fmtMoney(t.active)}</b><small>Ever invested {fmtMoney(t.ever)}</small></div>
-          <div><span>Portfolios</span><b>{t.people}</b><small>{t.repeat} invested more than once</small></div>
-          <div><span>Brought in by investors</span><b>{t.referred}</b><small>people referred</small></div>
-          <div className={t.due > 0 ? 'is-due' : ''}><span>Due now</span><b>{fmtMoney(t.due)}</b><small>payouts past their date</small></div>
+        <div className="c1pf-band">
+          <div className="nx-card c1pf-tile tone-blue">
+            <span className="c1pf-tile-ico"><Icon name="chart" /></span>
+            <div><span>Active with the club</span><b>{fmtMoney(t.active)}</b><small>Ever invested {fmtMoney(t.ever)}</small></div>
+          </div>
+          <div className="nx-card c1pf-tile tone-green">
+            <span className="c1pf-tile-ico"><Icon name="users" /></span>
+            <div><span>Portfolios</span><b>{t.people}</b><small>{t.repeat} invested more than once</small></div>
+          </div>
+          <div className="nx-card c1pf-tile tone-violet">
+            <span className="c1pf-tile-ico"><Icon name="link" /></span>
+            <div><span>Brought in by investors</span><b>{t.referred}</b><small>people referred</small></div>
+          </div>
+          <div className={`nx-card c1pf-tile tone-amber${t.due > 0 ? ' is-due' : ''}`}>
+            <span className="c1pf-tile-ico"><Icon name="clock" /></span>
+            <div><span>Due now</span><b>{fmtMoney(t.due)}</b><small>payouts past their date</small></div>
+          </div>
         </div>
       )}
 
