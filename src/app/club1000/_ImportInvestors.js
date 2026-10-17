@@ -75,7 +75,7 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
       </>}>
       <C1Section title="1 · Get the template">
         <div className="c1im-step">
-          <p>One row per investment — a renewed investment is still one row: today’s amount, with <b>Times Renewed</b> filled in. Red columns marked * must be filled; a row missing one is not imported. Scheme, interest payout and source are dropdowns. Rows 2–3 are examples — replace them.</p>
+          <p>One row per investment — a renewed investment is still one row with today’s principal; its finished terms go on the <b>Past Terms</b> sheet (type Mobile, Name and each term’s Principal — the rest fills itself). Red columns marked * must be filled; a row missing one is not imported. Scheme, interest payout and source are dropdowns. Rows 2–3 are examples — replace them.</p>
           <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" disabled={busy === 'template'} onClick={template}>
             {busy === 'template' ? <>{SPIN} Preparing…</> : <><Download size={15} /> Download template</>}
           </button>
@@ -106,12 +106,13 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
           <div className="c1im-table">
             <div className="c1im-head"><span>Row</span><span>Investor</span><span>Scheme · payout</span><span className="num">Amount</span><span>Invested → matures</span><span>Check</span></div>
             {rows.map((r) => (
-              <div key={r.row} className={`c1im-row${r.ok ? '' : ' bad'}`}>
-                <span className="c1im-no">{r.row}</span>
+              <div key={`${r.sheet || 'i'}-${r.row}`} className={`c1im-row${r.ok ? '' : ' bad'}`}>
+                <span className="c1im-no">{r.sheet ? <small>{r.sheet}</small> : null}{r.row}</span>
                 <span><b>{r.preview.name || '—'}</b><small>{r.preview.phone}{r.preview.renewal_count ? ` · renewed ${r.preview.renewal_count}×` : ''}</small></span>
                 <span>{r.preview.scheme || '—'}<small>{r.preview.interest_payout}{r.preview.return_pct ? ` · ${Number(r.preview.return_pct)}%` : ''}</small></span>
                 <span className="num">{r.preview.amount ? rupee(r.preview.amount) : '—'}</span>
-                <span>{r.preview.investment_date ? formatDMY(r.preview.investment_date) : '—'}<small>{r.preview.maturity_date ? `→ ${formatDMY(r.preview.maturity_date)}` : ''}</small></span>
+                <span>{r.preview.investment_date ? formatDMY(r.preview.investment_date) : '—'}<small>{r.preview.maturity_date ? `→ ${formatDMY(r.preview.maturity_date)}` : ''}</small>
+                  {r.preview.past_terms?.length > 0 && <small className="c1im-past">Past: {r.preview.past_terms.map((t) => `${rupee(t.principal)} (${formatDMY(t.start)})`).join(' → ')}</small>}</span>
                 <span className="c1im-check">
                   {r.ok ? <em className="ok">Ready</em> : r.errors.map((e) => <em key={e} className="bad">{e}</em>)}
                   {r.warnings.map((w) => <em key={w} className="warn">{w}</em>)}

@@ -125,6 +125,15 @@ export default function PortfolioModal({ investorId, onClose }) {
                         `matures ${formatDMY(h.maturity_date)}`].filter(Boolean).join(' · ')}
                       {h.renewal_count > 0 && h.first_invested_on && h.first_invested_on !== h.investment_date ? ` · first in ${formatDMY(h.first_invested_on)}` : ''}
                     </div>
+                    {h.past_terms?.length > 0 && (
+                      <div className="c1pf-terms">
+                        {h.past_terms.map((t, n) => (
+                          <span key={t.start}>Term {n + 1} · {formatDMY(t.start)} · <b>{fmtMoney(t.principal)}</b> → renewed with {fmtMoney(t.renewed_with)}
+                            {Number(t.taken_out) > 0 ? ` · ${fmtMoney(t.taken_out)} taken out` : Number(t.taken_out) < 0 ? ` · ${fmtMoney(-Number(t.taken_out))} added` : ''}</span>
+                        ))}
+                        <span>Now · {formatDMY(h.investment_date)} · <b>{fmtMoney(h.amount)}</b></span>
+                      </div>
+                    )}
                     <div className="c1pf-inv-nums">
                       <span>Principal <b>{fmtMoney(h.principal)}</b></span>
                       <span>Interest <b>{fmtMoney(h.interest)}</b></span>
