@@ -123,7 +123,7 @@ function RejectModal({ b, busy, onClose, onConfirm }) {
           </button>
           <button onClick={() => reason.trim() && onConfirm(reason.trim())} disabled={busy || !reason.trim()}
             style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: (busy || !reason.trim()) ? 'var(--danger-2)' : 'var(--danger-solid)', color: '#fff', fontSize: 13, fontWeight: 800, cursor: (busy || !reason.trim()) ? 'not-allowed' : 'pointer' }}>
-            {busy ? 'Rejecting…' : 'Yes, Reject'}
+            {busy ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : 'Yes, Reject'}
           </button>
         </div>
       </div>
