@@ -288,7 +288,9 @@ function PayModal({ row, today, onClose, onDone }) {
                 <span className="c1p-cell">
                   <input className="nx-input" type="text" inputMode="decimal" value={l.amount} disabled={!l.on}
                     onChange={(e) => setLine(p.id, { amount: e.target.value })} />
-                  {diff && <small className="c1p-diff">{Number(l.amount) < Number(p.amount_due) ? 'Short' : 'More'} by {rupee(Math.abs(Number(l.amount) - Number(p.amount_due)))}</small>}
+                  {diff && <small className="c1p-diff">{Number(l.amount) < Number(p.amount_due)
+                    ? `₹${(Number(p.amount_due) - Number(l.amount)).toLocaleString('en-IN', { maximumFractionDigits: 2 })} stays due as a balance`
+                    : `More by ${rupee(Number(l.amount) - Number(p.amount_due))}`}</small>}
                 </span>
                 <input className="nx-input" type="date" max={today} value={l.date} disabled={!l.on}
                   onChange={(e) => setLine(p.id, { date: e.target.value })} />

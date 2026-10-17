@@ -207,7 +207,10 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
                       {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
                     </span>
                     <span className="num c1p-target">{rupee(p.amount_due)}</span>
-                    <input className="nx-input" type="text" inputMode="decimal" value={l.amount} disabled={!l.on} onChange={(e) => setLine(p.id, { amount: e.target.value })} />
+                    <span className="c1p-cell">
+                      <input className="nx-input" type="text" inputMode="decimal" value={l.amount} disabled={!l.on} onChange={(e) => setLine(p.id, { amount: e.target.value })} />
+                      {l.on && Number(l.amount) < Number(p.amount_due) - 0.5 && <small className="c1p-diff">₹{(Number(p.amount_due) - Number(l.amount)).toLocaleString('en-IN', { maximumFractionDigits: 2 })} stays due as a balance</small>}
+                    </span>
                     <input className="nx-input" type="date" max={today} value={l.date} disabled={!l.on} onChange={(e) => setLine(p.id, { date: e.target.value })} />
                     <input className="nx-input" value={l.notes} disabled={!l.on} placeholder="UTR / cheque no." onChange={(e) => setLine(p.id, { notes: e.target.value })} />
                   </div>
