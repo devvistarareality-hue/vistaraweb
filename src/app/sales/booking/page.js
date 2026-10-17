@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { loiOpenFailed } from '../../../lib/loiReupload';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { SALES_ENDPOINTS, authHeaders } from '../../../constants/api';
@@ -28,7 +29,7 @@ async function openLoi(id) {
     const r = await fetch(SALES_ENDPOINTS.bookingLoiUrl(id), { headers: authHeaders() });
     const d = await r.json();
     if (r.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else notify(d.detail || 'Could not open the LOI.');
+    else loiOpenFailed(id, d, 'Could not open the LOI.');
   } catch { notify('Could not open the LOI.'); }
 }
 
