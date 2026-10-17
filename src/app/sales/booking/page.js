@@ -84,7 +84,10 @@ function BookingPage() {
   // EOI (Expression of Interest): a booking on a project with no plots yet. No plot is
   // selected; a sequential per-project EOI code (EOI-1, EOI-2…) stands in for the plot no.
   // EOI mode applies when creating an EOI (?eoi=1) OR revising an existing EOI (?revise=..&eoi=1).
-  const eoiMode   = qp.get('eoi') === '1' || qp.get('eoi') === 'true';
+  // A resumed draft with no unit picked is an EOI too (the Resume link carries no
+  // ?eoi=) — without this it reopened as a plot booking and its LOI read "Plot No: —".
+  const [eoiDraft, setEoiDraft] = useState(false);
+  const eoiMode   = qp.get('eoi') === '1' || qp.get('eoi') === 'true' || eoiDraft;
   // Block-wise industrial: which block this EOI is against — drives the block-prefixed
   // EOI code (e.g. Block E → E1, E2…) instead of the default EOI-<n>.
   const eoiBlock  = qp.get('block') || '';
@@ -218,6 +221,9 @@ function BookingPage() {
       setProjectId(String(b.project));
       setPlotIds(((b.plot_ids && b.plot_ids.length ? b.plot_ids : [b.plot]).filter(Boolean)).map(String));
       if (String(b.plot_numbers || '').toUpperCase().startsWith('EOI')) setEoiNo(b.plot_numbers);
+      // No unit on the draft: it is an EOI. Its number is the next free one now
+      // (fetched below) — numbers are only taken when an EOI is submitted.
+      if (!b.plot && !(b.plot_ids || []).length) setEoiDraft(true);
       setF((s) => ({
         ...s, client_name: b.client_name || '', gender: b.gender || '', phone: b.phone || '', address: b.address || '', source: srcDisplay(b.source || ''),
         area: b.area || '', area_unit: b.area_unit || 'sq.yd', const_area: b.const_area || '', villa_type: b.villa_type || '',
