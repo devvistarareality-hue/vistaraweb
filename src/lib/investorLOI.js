@@ -404,7 +404,7 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
 
   // ── Terms & Conditions — same styled rows as the sales LOI's terms section ──
   const terms = [
-    ['1. Premature Exit Option', `${scheme.name ? `${scheme.name} — ` : ''}${exitTerm(scheme)}`],
+    ['1. Premature Exit Option', exitTerm(scheme)],
     ['2. Tenure and Lock-in Period', 'The tenure of investment shall be as mentioned above from the date of receipt of funds. The Investment shall be subject to a lock-in period as mentioned above, during which the Investor shall not withdraw the Investment Amount. Upon completion of tenure as mentioned above, investment may be renewed on mutually agreed terms through written consent of both Parties.'],
     ['3. Interest and Payout Terms', 'The Borrower agrees to pay interest at the rate as mentioned above on the Investment Amount. Interest shall be payable at a frequency as mentioned above. Interest shall be paid within 10 days from the end of frequency period of interest amount as mentioned above. Principal amount shall be paid within 10 days from the end of frequency period of principal amount as mentioned above.'],
   ];
