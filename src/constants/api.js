@@ -253,6 +253,7 @@ export const CLUB1000_ENDPOINTS = {
   get investorReferences() { return `${BASE_URL}/api/club1000/investors/references/`; },
   investor: (id)   => `${BASE_URL}/api/club1000/investors/${id}/`,
   investorLedger: (id) => `${BASE_URL}/api/club1000/investors/${id}/ledger/`,
+  investorStatement: (id) => `${BASE_URL}/api/club1000/investors/${id}/statement/`,
   investorRedeem: (id) => `${BASE_URL}/api/club1000/investors/${id}/redeem/`,
   investorSettlement: (id, on) => `${BASE_URL}/api/club1000/investors/${id}/settlement/${on ? `?on=${on}` : ''}`,
   investorHistory: (id) => `${BASE_URL}/api/club1000/investors/${id}/history/`,

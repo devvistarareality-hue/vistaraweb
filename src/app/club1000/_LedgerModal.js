@@ -6,6 +6,7 @@ import { formatDMY } from '../../lib/dateFormat';
 import { fmtMoney } from './_StatCard';
 import { notify } from '../../lib/notify';
 import { settledTo, settledRemark } from '../../lib/c1Settled';
+import { printStatement } from '../m/[module]/_ar';
 
 import Loader from '../../components/Loader';
 import { errText } from '../../lib/apiError';
@@ -72,11 +73,20 @@ export default function LedgerModal({ investorId, onClose }) {
   }
   const rows = (data?.entries || []).filter((e) => e.type !== 'investment' && (termSel === 'all' || (e.term ?? 0) === termSel));
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  // The statement to give the investor — the server's page, printed to PDF.
+  async function statement() {
+    const e = await printStatement(CLUB1000_ENDPOINTS.investorStatement(investorId), apiFetch);
+    if (e) notify(e, 'error');
+  }
 
   return (
     <C1Modal wide title={`Ledger${inv ? ` — ${inv.name}` : ''}`} sub={inv ? `${inv.phone} · ${inv.scheme_name}` : null} onClose={onClose}>
       {loading ? <Loader label="Loading…" /> : err ? <C1Error>{err}</C1Error> : (
         <>
+          <div className="c1l-actions">
+            <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
+            <span>to give the investor — every term, payout and payment</span>
+          </div>
           {terms.length > 1 && (
             <div className="c1l-terms" role="tablist">
               <button type="button" role="tab" aria-selected={termSel === 'all'} className={termSel === 'all' ? 'is-on' : ''} onClick={() => setTermSel('all')}>All terms</button>

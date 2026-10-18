@@ -3724,5 +3724,8 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 /* Notifications list grouped by module (when it holds more than one) */
 .nx-notif-group { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; background: var(--surface-2); border-bottom: 1px solid var(--surface-3); font-size: 11px; font-weight: 800; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
 .nx-notif-group-count { font-weight: 700; color: var(--muted); text-transform: none; letter-spacing: 0; }
+/* Club 1000 Ledger: Statement PDF button row */
+.c1l-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.c1l-actions > span { font-size: 12px; color: var(--muted); }
 .nx-notif-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .nx-notif-row > span { font-size: 11px; font-weight: 700; color: rgba(var(--ink-rgb), 0.62); text-transform: uppercase; letter-spacing: .5px; }

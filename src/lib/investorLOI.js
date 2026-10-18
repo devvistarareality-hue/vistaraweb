@@ -493,15 +493,20 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   return doc;
 }
 
-function loiFilename(investor) {
-  return `LOI_${(investor.loi_no || investor.name || 'investor').replace(/[\\/:*?"<>|]+/g, '_')}.pdf`;
+// LOI_RISE-043_Prince_Test_2_Renewal_2.pdf — the investor, and what this LOI is for:
+// the renewal it starts, a revision, or a new investment.
+function loiFilename(investor, opts = {}) {
+  const what = opts.nextTerm?.label || (opts.renewalNo ? `Renewal R${opts.renewalNo}`
+    : opts.revisionNo ? `Revision R${opts.revisionNo}` : 'New investment');
+  const name = [investor.loi_no, investor.name, what].filter(Boolean).map((x) => String(x).trim()).join('_');
+  return `LOI_${name.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '_')}.pdf`;
 }
 
 export async function downloadInvestorLOI(investor, scheme, opts = {}) {
   const jsPDF = await ensureJsPDF();
   const companyLogo = await loadLogo(opts.companyLogoUrl || '/vistara-logo.png');
   const doc = buildInvestorLOIPdf(jsPDF, investor, scheme, { companyLogo, ...opts });
-  doc.save(loiFilename(investor));
+  doc.save(loiFilename(investor, opts));
   return true;
 }
 
@@ -512,5 +517,5 @@ export async function generateInvestorLOIBase64(investor, scheme, opts = {}) {
   const doc = buildInvestorLOIPdf(jsPDF, investor, scheme, { companyLogo, ...opts });
   const dataUri = doc.output('datauristring');
   const base64 = dataUri.split(',')[1];
-  return { name: loiFilename(investor), type: 'application/pdf', data: base64 };
+  return { name: loiFilename(investor, opts), type: 'application/pdf', data: base64 };
 }
