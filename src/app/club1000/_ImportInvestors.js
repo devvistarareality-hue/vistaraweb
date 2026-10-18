@@ -1,7 +1,7 @@
 'use client';
 // Import investors from Excel, in three steps: download the template, upload the
 // filled file to have every row checked (errors by Excel row number), then import
-// the rows that passed. Each becomes a pending investor in Approvals — exactly as
+// the rows that passed. Each becomes a DRAFT in Approvals → Drafts — exactly as
 // if it had been added by hand.
 import { useState } from 'react';
 import { Download, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
@@ -50,7 +50,7 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
     const d = r ? await r.json().catch(() => ({})) : {};
     if (!r || !r.ok) { setErr(errText(d, 'Could not read the file.')); return; }
     if (commit) {
-      notify(`${d.created} investor${d.created === 1 ? '' : 's'} imported — waiting in Approvals`, 'success');
+      notify(`${d.created} investor${d.created === 1 ? '' : 's'} imported as drafts — attach each signed LOI in Approvals → Drafts → Edit & Submit`, 'success');
       onDone();
       return;
     }
@@ -59,7 +59,7 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
 
   const rows = check ? check.rows.filter((r) => !onlyBad || !r.ok) : [];
   return (
-    <C1Modal wide title="Import investors from Excel" sub="Each imported investor waits in Approvals, like one added by hand"
+    <C1Modal wide title="Import investors from Excel" sub="Each imported investor is saved as a draft — attach its signed LOI and submit it from Approvals → Drafts"
       onClose={onClose}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
