@@ -352,32 +352,43 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   // with. The term ending now is the last row; this LOI is the term after it.
   if (opts.history && opts.history.length) {
     const H = opts.history;
-    const cols = [['Term', 22], ['Period', 26], ['Principal', 26], ['Interest', 24], ['Interest went', 30], ['Principal went', 28], ['Renewed with', 24]];
+    const cols = [['Term', 42], ['Principal', 27], ['Interest earned', 27], ['What happened', 60], ['Renewed with', 24]];
     const X = []; let cx = M; cols.forEach(([, w]) => { X.push(cx); cx += w; });
-    chk(12 + 12 + H.length * 11 + 14);
+    const R = (n) => Math.round(Number(n) || 0);
+    chk(12 + 12 + H.length * 14 + 14);
     secHead(`Investment History · ${H.length} earlier term${H.length === 1 ? '' : 's'}`);
-    chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(7.2); doc.setFont('helvetica', 'bold');
+    chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(7.6); doc.setFont('helvetica', 'bold');
     cols.forEach(([h, w], i) => {
-      const right = i >= 2;
+      const right = i === 1 || i === 2 || i === 4;
       doc.text(h, right ? X[i] + w - 2 : X[i] + 2, y, right ? { align: 'right' } : undefined);
     });
     y += 9;
     H.forEach((t, idx) => {
-      const intWent = [Number(t.interest_to_investor) > 0 ? `Paid ${money(t.interest_to_investor)}` : '',
-        Number(t.interest_added) > 0 ? `Added ${money(t.interest_added)}` : ''].filter(Boolean);
-      const prinWent = Number(t.principal_returned) > 0 ? [`Back ${money(t.principal_returned)}`]
-        : Number(t.fresh_money) > 0 ? [`+${money(t.fresh_money)} new`] : ['Rolled over'];
-      const cells = [[String(t.label || '').split(' · ')[0]], [fmtDate(t.start), 'to ' + fmtDate(t.maturity)],
-        [money(t.principal)], [money(t.interest_earned)], intWent.length ? intWent : ['—'], prinWent, [money(t.renewed_with)]];
-      const lines = Math.max(...cells.map((c) => c.length));
-      const rowH = 6 + lines * 3.6;
+      const toHim = R(t.interest_to_investor), added = R(t.interest_added), back = R(t.principal_returned), fresh = R(t.fresh_money);
+      const what = [];
+      if (toHim && added) what.push(`Interest: Rs. ${money(toHim)} paid, Rs. ${money(added)} added`);
+      else if (added) what.push(`Interest Rs. ${money(added)} added to the renewal`);
+      else if (toHim) what.push(`Interest Rs. ${money(toHim)} paid to him`);
+      if (back) what.push(`Rs. ${money(back)} principal taken back`);
+      else if (fresh) what.push(`Rs. ${money(fresh)} new money added`);
+      else what.push('Principal rolled over');
+      const term = [String(t.label || '').split(' · ')[0], `${fmtDate(t.start)} to ${fmtDate(t.maturity)}`];
+      const lines = Math.max(term.length, what.length);
+      const rowH = 6 + lines * 3.8;
       chk(rowH + 1);
       if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 4.5, CW, rowH, 'F'); }
-      cells.forEach((c, i) => {
-        const right = i >= 2;
-        doc.setFontSize(i === 0 ? 7.8 : 7.4); doc.setFont('helvetica', i === 0 || i === 6 ? 'bold' : 'normal'); st(i === 0 ? MB : DK);
-        c.forEach((line, k) => doc.text(String(line), right ? X[i] + cols[i][1] - 2 : X[i] + 2, y + 0.5 + k * 3.6, right ? { align: 'right' } : undefined));
-      });
+      // Term + its period
+      doc.setFontSize(8.2); doc.setFont('helvetica', 'bold'); st(MB); doc.text(term[0], X[0] + 2, y + 0.5);
+      doc.setFontSize(7.2); doc.setFont('helvetica', 'normal'); st(MD); doc.text(term[1], X[0] + 2, y + 4.3);
+      // Amounts
+      doc.setFontSize(8.2); doc.setFont('helvetica', 'normal'); st(DK);
+      doc.text(money(t.principal), X[1] + cols[1][1] - 2, y + 0.5, { align: 'right' });
+      doc.text(money(t.interest_earned), X[2] + cols[2][1] - 2, y + 0.5, { align: 'right' });
+      // What happened, one line each
+      doc.setFontSize(7.6); st(DK);
+      what.forEach((w, k) => doc.text(w, X[3] + 4, y + 0.5 + k * 3.8));
+      doc.setFontSize(8.4); doc.setFont('helvetica', 'bold'); st(MB);
+      doc.text(money(t.renewed_with), X[4] + cols[4][1] - 2, y + 0.5, { align: 'right' });
       sd(LN); doc.setLineWidth(0.2); doc.line(M, y - 4.5 + rowH, PW - M, y - 4.5 + rowH);
       y += rowH;
     });
