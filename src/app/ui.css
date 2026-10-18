@@ -3130,6 +3130,8 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1m-sub { margin-top: 3px; font-size: 13px; color: var(--muted); }
 .c1m-x { flex: 0 0 auto; }
 .c1m-body { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: var(--surface-2); }
+/* Its blocks keep their full height — squeezed, a long table scrolled inside the dialog's own scroll. */
+.c1m-body > * { flex-shrink: 0; }
 .c1m-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; padding: 14px 22px; border-top: 1px solid var(--hairline); }
 .c1m-foot .c1m-foot-left { margin-right: auto; display: flex; align-items: center; gap: 8px; }
 .c1-section { margin: 0; }
@@ -3684,3 +3686,15 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1p-term { align-self: flex-start; display: inline-block; margin: 2px 0; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-deep); }
 .c1-more-note { margin: 0 0 12px; }
 .c1pf-addmore { margin-top: 8px; align-self: flex-start; }
+.c1p-termhead { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-deep); font-size: 12.5px; cursor: pointer; }
+.c1p-termhead.is-static { cursor: default; }
+.c1p-termhead b { font-weight: 800; }
+.c1p-termhead span { margin-left: auto; font-weight: 700; color: var(--text-2); }
+.c1p-termhead input { width: 16px; height: 16px; accent-color: var(--accent); }
+.c1r-choice { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 0; }
+.c1r-choice > span { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.c1r-choice label { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; }
+.c1r-choice label.is-on { border-color: var(--accent); background: var(--accent-soft); }
+.c1r-choice small { font-weight: 500; color: var(--muted); }
+.c1r-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.c1r-out { margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 8px; }

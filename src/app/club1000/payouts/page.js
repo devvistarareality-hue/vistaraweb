@@ -4,7 +4,7 @@
 // screen is one card per investor (not one row per payout): what is overdue to
 // them, what falls due next, what they have been paid, and a Pay button that
 // settles any of their pending payouts in one go.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { AlarmClock, CalendarClock, Wallet, CircleCheckBig, Layers, Phone, FileText } from 'lucide-react';
@@ -302,8 +302,35 @@ function PayModal({ row, today, onClose, onDone }) {
             <span>Paid on</span>
             <span>Remarks</span>
           </div>
-          {row.pending.map((p) => {
+          {row.pending.map((p, i) => {
             const l = lines[p.id];
+            const head = p.term_label && (i === 0 || row.pending[i - 1].term_label !== p.term_label);
+            const inTerm = head ? row.pending.filter((x) => x.term_label === p.term_label) : [];
+            return (
+              <Fragment key={p.id}>
+                {head && (
+                  <label className="c1p-termhead">
+                    <input type="checkbox" checked={inTerm.every((x) => lines[x.id]?.on)} aria-label={`Pay all of ${p.term_label}`}
+                      onChange={(e) => inTerm.forEach((x) => setLine(x.id, { on: e.target.checked }))} />
+                    <b>{p.term_label}</b>
+                    <span>{inTerm.length} payout{inTerm.length === 1 ? '' : 's'} · {rupee(inTerm.reduce((t, x) => t + (Number(x.amount_due) || 0), 0))}</span>
+                  </label>
+                )}
+                {payRow(p, l)}
+              </Fragment>
+            );
+          })}
+        </div>
+        <div className="c1p-total">
+          <span>To pay now{picked.length ? ` · ${picked.length} payout${picked.length === 1 ? '' : 's'}` : ''}</span>
+          <span>{rupee(total)}{total !== target && picked.length ? <small className="c1p-diff"> of {rupee(target)} due</small> : null}</span>
+        </div>
+      </C1Section>
+      <C1Error>{err}</C1Error>
+    </C1Modal>
+  );
+
+  function payRow(p, l) {
             const late = p.due_date < today;
             const diff = l.on && Number(l.amount) !== Number(p.amount_due);
             return (
@@ -311,7 +338,6 @@ function PayModal({ row, today, onClose, onDone }) {
                 <input type="checkbox" checked={l.on} onChange={(e) => setLine(p.id, { on: e.target.checked })} aria-label="Pay this one" />
                 <span className="c1p-pay-what">
                   <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
-                  {p.term_label ? <span className="c1p-term">{p.term_label}</span> : null}
                   <span className={`c1p-pay-when${late ? ' late' : ''}`}>Due {formatDMY(p.due_date)}{late ? ' · late' : ''}</span>
                   {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
                 </span>
@@ -329,20 +355,9 @@ function PayModal({ row, today, onClose, onDone }) {
                   onChange={(e) => setLine(p.id, { notes: e.target.value })} />
               </div>
             );
-          })}
-        </div>
-        <div className="c1p-total">
-          <span>To pay now{picked.length ? ` · ${picked.length} payout${picked.length === 1 ? '' : 's'}` : ''}</span>
-          <span>{rupee(total)}{total !== target && picked.length ? <small className="c1p-diff"> of {rupee(target)} due</small> : null}</span>
-        </div>
-      </C1Section>
-      <C1Error>{err}</C1Error>
-    </C1Modal>
-  );
+  }
 }
 
-// What has been paid to one investor, newest first — each with what went out, when
-// and the remarks. A payment marked by mistake can be undone (back to pending).
 // What has been paid to one investor, in schedule order — each with what went out,
 // when and the remarks. Like an AR receipt, a payment can be edited (amount, date,
 // remarks) or deleted (the payout goes back to pending).
@@ -388,12 +403,21 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
             <span>Paid on</span>
             <span />
           </div>
-          {list.map((p) => {
+          {list.map((p, i) => {
             const ed = editing && editing.id === p.id ? editing : null;
+            const head = p.term_label && (i === 0 || list[i - 1].term_label !== p.term_label);
+            const inTerm = head ? list.filter((x) => x.term_label === p.term_label) : [];
             const paidAmt = Number(p.paid_amount ?? p.amount_due) || 0;
             const short = paidAmt !== (Number(p.amount_due) || 0);
             return (
-              <div key={p.id} className={`c1pp-row${ed ? ' editing' : ''}`}>
+              <Fragment key={p.id}>
+              {head && (
+                <div className="c1p-termhead is-static">
+                  <b>{p.term_label}</b>
+                  <span>{inTerm.length} paid · {rupee(inTerm.reduce((t, x) => t + (Number(x.paid_amount ?? x.amount_due) || 0), 0))}</span>
+                </div>
+              )}
+              <div className={`c1pp-row${ed ? ' editing' : ''}`}>
                 <div className="c1pp-main">
                   <div className="c1pp-what">
                     <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
@@ -429,6 +453,7 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
                   </div>
                 )}
               </div>
+              </Fragment>
             );
           })}
         </div>

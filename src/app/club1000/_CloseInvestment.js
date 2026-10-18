@@ -232,26 +232,64 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
 
 // The old term's position, shown at the top of the Renew dialog: what rolls over,
 // what is paid out, what is fresh money — and unpaid interest that stays owed.
-export function RenewalSummary({ investorId, newAmount }) {
+// What becomes of the term that ended, as the renewal is filled in. Its unpaid
+// interest (quarterly instalments still due, or an at-maturity scheme's interest
+// inside the maturity payout) is either paid to the investor — it stays due on
+// Payouts — or added to the renewal, settled into the new principal.
+export function RenewalSummary({ investorId, newAmount, choice, onChoice, onAmount }) {
   const [st] = useSettlement(investorId);
   if (!st) return null;
   const principal = Number(st.principal) || 0;
   const next = Number(newAmount) || 0;
-  const unpaidInterest = st.pending.filter((p) => p.payout_type === 'interest');
-  const unpaidTotal = unpaidInterest.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+  const unpaidRows = st.pending.filter((p) => p.payout_type === 'interest');
+  const atMaturity = st.pending.filter((p) => p.payout_type === 'maturity').reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+  const unpaid = unpaidRows.reduce((t, p) => t + (Number(p.amount_due) || 0), 0) + Math.max(atMaturity - principal, 0);
+  const mode = choice || (next > principal ? 'reinvest' : 'pay');
+  const rolled = mode === 'reinvest' ? Math.min(unpaid, Math.max(next - principal, 0)) : 0;
+  const lines = [
+    ['Principal of the term', rupee(principal)],
+    ['Interest paid so far', rupee(st.interest_paid)],
+    ['Interest still unpaid', rupee(unpaid)],
+  ];
+  const out = [];
+  out.push(['Principal renewed', rupee(Math.min(next, principal))]);
+  if (rolled > 0) out.push(['Interest added to the renewal', rupee(rolled)]);
+  if (next > principal + rolled) out.push(['Fresh money added', rupee(next - principal - rolled)]);
+  if (next > 0 && next < principal) out.push(['Principal paid back to him', rupee(principal - next)]);
+  if (unpaid - rolled > 0) out.push(['Interest paid to him', rupee(unpaid - rolled)]);
   return (
-    <C1Section title="The term that matured">
+    <C1Section title="The term that ended">
       <div className="c1c-calc">
-        <div><span>Principal</span><b>{rupee(principal)}</b></div>
-        <div><span>Interest paid so far</span><b>{rupee(st.interest_paid)}</b></div>
-        {next > 0 && next <= principal && <div><span>Rolls over</span><b>{rupee(next)}</b></div>}
-        {next > 0 && next < principal && <div className="total"><span>Paid out on renewal</span><b>{rupee(principal - next)}</b></div>}
-        {next > principal && <div><span>Rolls over</span><b>{rupee(principal)}</b></div>}
-        {next > principal && <div className="total"><span>Fresh money added</span><b>{rupee(next - principal)}</b></div>}
+        {lines.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}
       </div>
-      {unpaidInterest.length > 0 && (
-        <div className="nx-note warn c1-error">
-          {unpaidInterest.length} interest payout{unpaidInterest.length === 1 ? '' : 's'} from this term ({rupee(unpaidTotal)}) {unpaidInterest.length === 1 ? 'is' : 'are'} still unpaid — {unpaidInterest.length === 1 ? 'it stays' : 'they stay'} owed on Payouts after renewing.
+      {unpaid > 0 && onChoice && (
+        <div className="c1r-choice">
+          <span>Its unpaid interest ({rupee(unpaid)})</span>
+          <label className={mode === 'pay' ? 'is-on' : ''}>
+            <input type="radio" name="int-choice" checked={mode === 'pay'} onChange={() => onChoice('pay')} />
+            Pay it to him <small>— stays due on Payouts</small>
+          </label>
+          <label className={mode === 'reinvest' ? 'is-on' : ''}>
+            <input type="radio" name="int-choice" checked={mode === 'reinvest'} onChange={() => onChoice('reinvest')} />
+            Add it to the renewal <small>— settled into the new principal</small>
+          </label>
+        </div>
+      )}
+      {onAmount && (
+        <div className="c1r-quick">
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { onAmount(principal); onChoice && onChoice('pay'); }}>
+            Principal only · {rupee(principal)}
+          </button>
+          {unpaid > 0 && (
+            <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => { onAmount(Math.round((principal + unpaid) * 100) / 100); onChoice && onChoice('reinvest'); }}>
+              Principal + interest · {rupee(principal + unpaid)}
+            </button>
+          )}
+        </div>
+      )}
+      {next > 0 && (
+        <div className="c1c-calc c1r-out">
+          {out.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}
         </div>
       )}
     </C1Section>

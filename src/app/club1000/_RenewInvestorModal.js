@@ -127,6 +127,8 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     // term's maturity date (editable), not on the day the form is opened.
     investment_date: investor.maturity_date || toISODate(new Date()),
     amount_invested: String(investor.amount_invested || ''),
+    // The finished term's unpaid interest: '' (decided by the amount), 'pay' or 'reinvest'.
+    interest_choice: '',
     interest_payout: investor.interest_payout || 'maturity',
     total_return_pct: String(investor.total_return_pct ?? ''),
     security: investor.security || '',
@@ -224,6 +226,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     setBusy(true);
     try {
       const payload = { ...form, loi_file: loiFile };
+      if (!payload.interest_choice) delete payload.interest_choice;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorRenew(investor.id), {
         method: 'POST',
@@ -252,7 +255,8 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
         This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — the amount can go up or down.
       </div>
 
-      <RenewalSummary investorId={investor.id} newAmount={form.amount_invested} />
+      <RenewalSummary investorId={investor.id} newAmount={form.amount_invested}
+        choice={form.interest_choice} onChoice={(v) => set('interest_choice', v)} onAmount={(v) => set('amount_invested', String(v))} />
 
       <C1Section title="Renewal">
         <C1Field label="Renewal date" required hint="The day the previous term ended — change it only if the renewal started later">
