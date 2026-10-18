@@ -119,6 +119,29 @@ function computeMaturity(investmentDateStr, tenureMonths) {
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
+// Every earlier term for the renewal LOI's history, from the Ledger's own term figures,
+// with the term ending now as the last row — what this renewal does with it.
+async function renewalHistory(investor, form) {
+  try {
+    const r = await apiFetch(CLUB1000_ENDPOINTS.investorLedger(investor.id));
+    const d = r.ok ? await r.json() : null;
+    const terms = d?.terms || [];
+    const rows = terms.filter((t) => !t.current);
+    const cur = terms.find((t) => t.current);
+    if (cur) {
+      const principal = Number(cur.principal) || 0;
+      const next = Number(form.amount_invested) || 0;
+      const earned = Number(cur.summary?.interest) || 0;
+      const unpaid = Math.max((Number(cur.summary?.pending) || 0) - principal, 0);
+      const reinvest = (form.interest_choice || (next > principal ? 'reinvest' : 'pay')) === 'reinvest';
+      const added = reinvest ? Math.min(unpaid, Math.max(next - principal, 0)) : 0;
+      rows.push({ ...cur, interest_earned: earned, interest_added: added, interest_to_investor: Math.max(earned - added, 0),
+        principal_returned: Math.max(principal - next, 0), fresh_money: Math.max(next - principal - added, 0), renewed_with: next });
+    }
+    return rows;
+  } catch { return []; }
+}
+
 export default function RenewInvestorModal({ investor, scheme, onClose, onSaved }) {
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
@@ -203,7 +226,11 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       // maturity_date is explicitly overridden (not just spread from `investor`)
       // because renewing changes investment_date — the OLD investor.maturity_date
       // would otherwise leak through and understate/misdate the schedule's totals.
-      await downloadInvestorLOI({ ...investor, ...form, maturity_date: maturityPreview || null }, scheme, { renewalNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
+      await downloadInvestorLOI({ ...investor, ...form, maturity_date: maturityPreview || null }, scheme, {
+        renewalNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl,
+        history: await renewalHistory(investor, form), nextTerm: { label: `Renewal ${(investor.renewal_count || 0) + 1}`,
+          start: form.investment_date, maturity: maturityPreview, principal: form.amount_invested },
+      });
       setLoiDone(true);
     } catch (_) {
       setError('Could not generate the LOI. Please try again.');

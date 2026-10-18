@@ -346,6 +346,51 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
     doc.text('Rs. ' + money(investor.amount_invested), PW - M - 3, amountBaseline, { align: 'right' }); }
   y += 15;
 
+  // ── Investment History (renewal LOIs) — every earlier term and what became of
+  // it: principal, interest earned, the interest paid to the investor or added to
+  // the renewal, principal paid back or fresh money added, and what it renewed
+  // with. The term ending now is the last row; this LOI is the term after it.
+  if (opts.history && opts.history.length) {
+    const H = opts.history;
+    const cols = [['Term', 22], ['Period', 26], ['Principal', 26], ['Interest', 24], ['Interest went', 30], ['Principal went', 28], ['Renewed with', 24]];
+    const X = []; let cx = M; cols.forEach(([, w]) => { X.push(cx); cx += w; });
+    chk(12 + 12 + H.length * 11 + 14);
+    secHead(`Investment History · ${H.length} earlier term${H.length === 1 ? '' : 's'}`);
+    chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(7.2); doc.setFont('helvetica', 'bold');
+    cols.forEach(([h, w], i) => {
+      const right = i >= 2;
+      doc.text(h, right ? X[i] + w - 2 : X[i] + 2, y, right ? { align: 'right' } : undefined);
+    });
+    y += 9;
+    H.forEach((t, idx) => {
+      const intWent = [Number(t.interest_to_investor) > 0 ? `Paid ${money(t.interest_to_investor)}` : '',
+        Number(t.interest_added) > 0 ? `Added ${money(t.interest_added)}` : ''].filter(Boolean);
+      const prinWent = Number(t.principal_returned) > 0 ? [`Back ${money(t.principal_returned)}`]
+        : Number(t.fresh_money) > 0 ? [`+${money(t.fresh_money)} new`] : ['Rolled over'];
+      const cells = [[String(t.label || '').split(' · ')[0]], [fmtDate(t.start), 'to ' + fmtDate(t.maturity)],
+        [money(t.principal)], [money(t.interest_earned)], intWent.length ? intWent : ['—'], prinWent, [money(t.renewed_with)]];
+      const lines = Math.max(...cells.map((c) => c.length));
+      const rowH = 6 + lines * 3.6;
+      chk(rowH + 1);
+      if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 4.5, CW, rowH, 'F'); }
+      cells.forEach((c, i) => {
+        const right = i >= 2;
+        doc.setFontSize(i === 0 ? 7.8 : 7.4); doc.setFont('helvetica', i === 0 || i === 6 ? 'bold' : 'normal'); st(i === 0 ? MB : DK);
+        c.forEach((line, k) => doc.text(String(line), right ? X[i] + cols[i][1] - 2 : X[i] + 2, y + 0.5 + k * 3.6, right ? { align: 'right' } : undefined));
+      });
+      sd(LN); doc.setLineWidth(0.2); doc.line(M, y - 4.5 + rowH, PW - M, y - 4.5 + rowH);
+      y += rowH;
+    });
+    if (opts.nextTerm) {
+      chk(12); sf(WASH); doc.roundedRect(M, y - 4, CW, 9, 1.5, 1.5, 'F'); sf(ORG); doc.roundedRect(M + 1.2, y - 2.5, 1.7, 6, 0.85, 0.85, 'F');
+      st(MB); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      doc.text(`This LOI: ${opts.nextTerm.label} · ${fmtDate(opts.nextTerm.start)} – ${fmtDate(opts.nextTerm.maturity)}`, M + 6, y + 1.5);
+      doc.text('Rs. ' + money(opts.nextTerm.principal), PW - M - 3, y + 1.5, { align: 'right' });
+      y += 12;
+    }
+    y += 4;
+  }
+
   // Investment terms — mirrors the "Details" info grid.
   secHead('Investment Terms');
   infoGrid([
