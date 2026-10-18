@@ -3676,7 +3676,7 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1-pick { width: 18px; height: 18px; flex-shrink: 0; margin: 3px 0 0; accent-color: var(--danger); cursor: pointer; }
 .c1a-group-name .c1-pick { margin: 0 6px 0 0; }
 .c1a-card.is-picked { border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft); }
-.c1-bulkbar { position: sticky; bottom: 16px; z-index: 30; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px auto 0; width: fit-content; max-width: 100%; padding: 10px 12px 10px 18px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); box-shadow: var(--shadow-lg); color: var(--text); font-size: 13.5px; }
+.c1-bulkbar { position: sticky; top: 12px; z-index: 30; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 auto 14px; width: fit-content; max-width: 100%; padding: 10px 12px 10px 18px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); box-shadow: var(--shadow-lg); color: var(--text); font-size: 13.5px; }
 .c1-bulkbar b { font-size: 15px; }
 
 .c1im-no small { display: block; font-size: 9.5px; color: var(--muted); }

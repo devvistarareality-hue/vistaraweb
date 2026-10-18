@@ -223,6 +223,15 @@ export default function InvestorsPage() {
     return next;
   });
   const stopSelecting = () => { setSelecting(false); setPicked(new Set()); };
+  // Only what is on screen stays picked — a search, filter or reload that hides an
+  // investor drops it, so the count, the amount and Delete never act on a hidden one.
+  useEffect(() => {
+    setPicked((prev) => {
+      const shown = new Set(investors.map((i) => i.id));
+      const next = new Set([...prev].filter((id) => shown.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [investors]);
 
   // Delete every picked investment; any with money already paid are kept and named.
   async function bulkDelete() {
@@ -345,6 +354,19 @@ export default function InvestorsPage() {
         </div>
       )}
 
+      {/* Above the list, so what is picked and Delete stay in view while scrolling. */}
+      {selecting && (
+        <div className="c1-bulkbar">
+          <span><b>{picked.size}</b> selected{picked.size ? ` · ${fmtMoney(investors.filter((i) => picked.has(i.id)).reduce((t, i) => t + (Number(i.amount_invested) || 0), 0))}` : ''}</span>
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => togglePick(investors.map((i) => i.id), picked.size !== investors.length)}>
+            {picked.size === investors.length ? 'Clear all' : `Select all ${investors.length}`}
+          </button>
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-danger" onClick={bulkDelete} disabled={!picked.size || bulkBusy}>
+            {bulkBusy ? <span className="nx-spin" /> : <Icon name="trash" />} Delete {picked.size || ''}
+          </button>
+        </div>
+      )}
+
       {loading ? <div className="c1a-loading"><Loader label="Loading…" /></div> : investors.length === 0 ? (
         <div className="nx-card c1a-empty">{search ? 'No investors match your search.' : narrowed ? 'No investors match these filters.' : 'No investors yet.'}</div>
       ) : invGroupNames.map((gn) => (
@@ -434,17 +456,6 @@ export default function InvestorsPage() {
       {showImport && <ImportInvestorsModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
       {historyFor && <HistoryModal investor={historyFor} onClose={() => setHistoryFor(null)} />}
       {working && <div className="nx-modal-backdrop nx-busy"><Loader /><div>{working}</div></div>}
-      {selecting && (
-        <div className="c1-bulkbar">
-          <span><b>{picked.size}</b> selected{picked.size ? ` · ${fmtMoney(investors.filter((i) => picked.has(i.id)).reduce((t, i) => t + (Number(i.amount_invested) || 0), 0))}` : ''}</span>
-          <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => togglePick(investors.map((i) => i.id), picked.size !== investors.length)}>
-            {picked.size === investors.length ? 'Clear all' : `Select all ${investors.length}`}
-          </button>
-          <button type="button" className="nx-btn nx-btn-sm nx-btn-danger" onClick={bulkDelete} disabled={!picked.size || bulkBusy}>
-            {bulkBusy ? <span className="nx-spin" /> : <Icon name="trash" />} Delete {picked.size || ''}
-          </button>
-        </div>
-      )}
       {addMoreFor && (
         <AddInvestorModal schemes={schemes} prefillLead={morePrefill(addMoreFor)}
           onClose={() => setAddMoreFor(null)} onCreated={() => { setAddMoreFor(null); load(); }} />
