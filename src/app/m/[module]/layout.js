@@ -183,7 +183,7 @@ export default function ModuleLayout({ children, params: paramsPromise }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <div className="nx-sidebar" style={s.sidebar}>
+      <div className="nx-sidebar nx-sidebar-top" style={s.sidebar}>
         <div style={s.logoRow}>
           <div style={s.logoCircle}><NexoraLogo alt="" /></div>
           <div>

@@ -222,7 +222,7 @@ export default function Club1000Layout({ children }) {
 
       <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
 
-      <div style={s.sidebar} className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <div style={s.sidebar} className={`app-sidebar nx-sidebar-top ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div style={{ ...s.logoRow, justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={s.logoCircle}>
