@@ -242,7 +242,8 @@ export function RenewalSummary({ investorId, newAmount, onRenewal }) {
   const [how, setHow] = useState('');        // all | interest_out | take | more — '' = amount typed by hand
   const [take, setTake] = useState('');
   const [extra, setExtra] = useState('');
-  if (!st) return null;
+  // Hold its place while the figures load — appearing late it pushed the form down.
+  if (!st) return <C1Section title="The term that ended"><div className="c1r-wait"><Loader size="sm" /></div></C1Section>;
   const principal = Number(st.principal) || 0;
   const atMaturity = st.pending.filter((p) => p.payout_type === 'maturity').reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
   const unpaid = Math.round((st.pending.filter((p) => p.payout_type === 'interest').reduce((t, p) => t + (Number(p.amount_due) || 0), 0)
