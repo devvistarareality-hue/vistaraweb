@@ -134,7 +134,8 @@ async function renewalHistory(investor, form) {
       const earned = Number(cur.summary?.interest) || 0;
       const unpaid = Math.max((Number(cur.summary?.pending) || 0) - principal, 0);
       const reinvest = (form.interest_choice || (next > principal ? 'reinvest' : 'pay')) === 'reinvest';
-      const added = reinvest ? Math.min(unpaid, Math.max(next - principal, 0)) : 0;
+      const added = form.interest_added !== '' && form.interest_added != null ? Math.min(Number(form.interest_added) || 0, unpaid)
+        : reinvest ? Math.min(unpaid, Math.max(next - principal, 0)) : 0;
       rows.push({ ...cur, interest_earned: earned, interest_added: added, interest_to_investor: Math.max(earned - added, 0),
         principal_returned: Math.max(principal - next, 0), fresh_money: Math.max(next - principal - added, 0), renewed_with: next });
     }
@@ -152,6 +153,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     amount_invested: String(investor.amount_invested || ''),
     // The finished term's unpaid interest: '' (decided by the amount), 'pay' or 'reinvest'.
     interest_choice: '',
+    interest_added: '',
     interest_payout: investor.interest_payout || 'maturity',
     total_return_pct: String(investor.total_return_pct ?? ''),
     security: investor.security || '',
@@ -254,6 +256,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     try {
       const payload = { ...form, loi_file: loiFile };
       if (!payload.interest_choice) delete payload.interest_choice;
+      if (payload.interest_added === '') delete payload.interest_added;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorRenew(investor.id), {
         method: 'POST',
@@ -283,7 +286,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       </div>
 
       <RenewalSummary investorId={investor.id} newAmount={form.amount_invested}
-        choice={form.interest_choice} onChoice={(v) => set('interest_choice', v)} onAmount={(v) => set('amount_invested', String(v))} />
+        onRenewal={(r) => setForm((f) => ({ ...f, amount_invested: String(r.amount), interest_choice: r.interest_choice, interest_added: String(r.interest_added) }))} />
 
       <C1Section title="Renewal">
         <C1Field label="Renewal date" required hint="The day the previous term ended — change it only if the renewal started later">
@@ -293,7 +296,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
           <C1Value>{maturityPreview ? formatDMY(maturityPreview) : '—'}</C1Value>
         </C1Field>
         <C1Field label="Amount invested (₹)" required>
-          <input className="nx-input" type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
+          <input className="nx-input" type="number" min="0" value={form.amount_invested} onChange={(e) => setForm((f) => ({ ...f, amount_invested: e.target.value, interest_choice: '', interest_added: '' }))} required />
         </C1Field>
         <C1Field label="Interest payout">
           <select className="nx-input" value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
