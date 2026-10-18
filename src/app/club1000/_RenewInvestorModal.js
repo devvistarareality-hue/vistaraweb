@@ -123,7 +123,9 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
   const [form, setForm] = useState({
-    investment_date: toISODate(new Date()),
+    // A renewal carries straight on from the term that ended: it starts on that
+    // term's maturity date (editable), not on the day the form is opened.
+    investment_date: investor.maturity_date || toISODate(new Date()),
     amount_invested: String(investor.amount_invested || ''),
     interest_payout: investor.interest_payout || 'maturity',
     total_return_pct: String(investor.total_return_pct ?? ''),
@@ -253,7 +255,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       <RenewalSummary investorId={investor.id} newAmount={form.amount_invested} />
 
       <C1Section title="Renewal">
-        <C1Field label="Renewal date" required>
+        <C1Field label="Renewal date" required hint="The day the previous term ended — change it only if the renewal started later">
           <input className="nx-input" type="date" value={form.investment_date} onChange={(e) => set('investment_date', e.target.value)} required />
         </C1Field>
         <C1Field label="New maturity" hint="From the scheme's tenure">
