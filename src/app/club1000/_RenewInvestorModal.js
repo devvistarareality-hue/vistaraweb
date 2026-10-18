@@ -6,6 +6,7 @@ import { formatDMY } from '../../lib/dateFormat';
 import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 import { errText } from '../../lib/apiError';
+import Loader from '../../components/Loader';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
 import { schedulePeriods, maturityWorking } from '../../lib/c1Periods';
 import ScheduleTable from './_ScheduleTable';
@@ -279,8 +280,9 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       onClose={onClose} onSubmit={submit}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
-        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !loiFile}>{busy ? 'Submitting…' : 'Submit Renewal for Approval'}</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !loiFile}>{busy ? <><span className="nx-spin" aria-hidden="true" /> Submitting…</> : 'Submit Renewal for Approval'}</button>
       </>}>
+      {busy && <div className="nx-modal-backdrop nx-busy"><Loader /><div>Submitting the renewal…</div></div>}
       <div className="nx-note info c1-error">
         This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — the amount can go up or down.
       </div>

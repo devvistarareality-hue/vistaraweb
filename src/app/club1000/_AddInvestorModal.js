@@ -8,6 +8,7 @@ import { downloadInvestorLOI } from '../../lib/investorLOI';
 import { useCurrentCompany } from '../../lib/currentCompany';
 
 import Icon from '../../components/Icon';
+import Loader from '../../components/Loader';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
 import { schedulePeriods, maturityWorking } from '../../lib/c1Periods';
 import ScheduleTable from './_ScheduleTable';
@@ -425,8 +426,9 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
           </button>
         </div>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
-        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy || !loiFile}>{busy ? 'Submitting…' : 'Submit for Approval'}</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-success" disabled={busy || !loiFile}>{busy ? <><span className="nx-spin" aria-hidden="true" /> Submitting…</> : 'Submit for Approval'}</button>
       </>}>
+      {busy && <div className="nx-modal-backdrop nx-busy"><Loader /><div>{revise ? 'Submitting the revision…' : 'Submitting for approval…'}</div></div>}
 
 
 
