@@ -458,9 +458,6 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
           {documentFile && <span className="c1-help ok">Selected: {documentFile.name}</span>}
           {revise?.document_url && !documentFile && <span className="c1-help">One is on file — choose a file only to replace it.</span>}
         </C1Field>
-        <C1Field label="Security" hint="Printed on the LOI — optional">
-          <input className="nx-input" value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
-        </C1Field>
         <C1Field label="Notes">
           <input className="nx-input" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
         </C1Field>

@@ -314,9 +314,6 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
         <C1Field label="Return %" required>
           <input className="nx-input" type="number" step="0.01" min="0" value={form.total_return_pct} onChange={(e) => set('total_return_pct', e.target.value)} required />
         </C1Field>
-        <C1Field label="Security" hint="Printed on the LOI — optional">
-          <input className="nx-input" value={form.security} onChange={(e) => set('security', e.target.value)} placeholder="NA" />
-        </C1Field>
         <C1Field label="Notes">
           <input className="nx-input" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
         </C1Field>
