@@ -75,7 +75,7 @@ export default function ImportInvestorsModal({ onClose, onDone }) {
       </>}>
       <C1Section title="1 · Get the template">
         <div className="c1im-step">
-          <p>One row per investment — a renewed investment is still one row with today’s principal; its finished terms go on the <b>Past Terms</b> sheet (type Mobile, Name and each term’s Principal — the rest fills itself). Red columns marked * must be filled; a row missing one is not imported. Scheme, interest payout and source are dropdowns. Rows 2–3 are examples — replace them.</p>
+          <p>One row per investment that is <b>active today</b>: today’s amount, and the date the investor <b>first</b> invested. <b>Past Terms</b> fills itself — every year since that date, from the scheme’s tenure — so type only a <b>Principal (if different)</b> for a year when the amount was not today’s. Red columns marked * must be filled; a row missing one is not imported.</p>
           <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" disabled={busy === 'template'} onClick={template}>
             {busy === 'template' ? <>{SPIN} Preparing…</> : <><Download size={15} /> Download template</>}
           </button>
