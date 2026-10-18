@@ -278,6 +278,7 @@ export const CLUB1000_ENDPOINTS = {
   // Save a revision that has no signed LOI yet — see InvestorReviseDraftView.
   investorReviseDraft: (id) => `${BASE_URL}/api/club1000/investors/${id}/revise/draft/`,
   investorRenew: (id)     => `${BASE_URL}/api/club1000/investors/${id}/renew/`,
+  investorUndoRenewal: (id) => `${BASE_URL}/api/club1000/investors/${id}/undo-renewal/`,
   investorMaturePayout: (id) => `${BASE_URL}/api/club1000/investors/${id}/mature-payout/`,
   get investorNextLoiNo() { return `${BASE_URL}/api/club1000/investors/next-loi-no/`; },
 };

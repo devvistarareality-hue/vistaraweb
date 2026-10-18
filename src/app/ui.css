@@ -3698,3 +3698,5 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1r-choice small { font-weight: 500; color: var(--muted); }
 .c1r-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .c1r-out { margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 8px; }
+.c1l-termloi { margin-left: 10px; }
+.c1l-noloi { color: var(--muted); font-style: italic; }

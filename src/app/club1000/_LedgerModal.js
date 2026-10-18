@@ -4,6 +4,7 @@ import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { fmtMoney } from './_StatCard';
+import { notify } from '../../lib/notify';
 
 import Loader from '../../components/Loader';
 import { errText } from '../../lib/apiError';
@@ -59,6 +60,13 @@ export default function LedgerModal({ investorId, onClose }) {
   const principalHint = term ? `${term.no === 0 ? 'invested' : 'renewed'} ${formatDMY(term.start)}`
     : first ? `${terms.length > 1 ? 'first invested' : 'invested'} ${formatDMY(first.start)}`
     : inv?.investment_date ? `invested ${formatDMY(inv.investment_date)}` : '';
+  // A term's own signed LOI — the running one, or an earlier term's kept copy.
+  async function openTermLoi(t) {
+    const r = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(investorId)}${t.current ? '' : `?term=${t.no}`}`).catch(() => null);
+    const d = r ? await r.json().catch(() => ({})) : {};
+    if (r?.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
+    else notify(errText(d, 'Could not open the LOI.'), 'error');
+  }
   const rows = (data?.entries || []).filter((e) => e.type !== 'investment' && (termSel === 'all' || (e.term ?? 0) === termSel));
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
@@ -77,7 +85,12 @@ export default function LedgerModal({ investorId, onClose }) {
             </div>
           )}
           {term && (
-            <div className="c1l-termline">{formatDMY(term.start)} → {formatDMY(term.maturity)} · principal {fmtMoney(term.principal)}</div>
+            <div className="c1l-termline">
+              {formatDMY(term.start)} → {formatDMY(term.maturity)} · principal {fmtMoney(term.principal)}
+              {term.has_loi
+                ? <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary c1l-termloi" onClick={() => openTermLoi(term)}>Open this term's signed LOI</button>
+                : !term.current && <span className="c1l-noloi"> · its signed LOI was not kept (renewed before LOIs were kept)</span>}
+            </div>
           )}
           <div className="c1l-cards">
             {[

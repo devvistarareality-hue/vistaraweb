@@ -164,6 +164,25 @@ export default function InvestorsPage() {
     else notify(errText(data, 'Could not open the LOI.'));
   }
 
+  // Undo the latest renewal — managers only. Payments already made in the renewed term
+  // are named and asked about first.
+  async function undoRenewal(inv) {
+    if (!(await confirmDialog(`Undo the latest renewal of ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''}? The investment goes back to the term before it: the renewed term's payouts and its renewal reward are removed, interest that was added to the renewal is due again, and the earlier term's LOI comes back if it was kept.`,
+      { title: 'Undo renewal?', confirmText: 'Undo renewal', tone: 'danger' }))) return;
+    let r = await apiFetch(CLUB1000_ENDPOINTS.investorUndoRenewal(inv.id), { method: 'POST', body: JSON.stringify({}) }).catch(() => null);
+    let d = r ? await r.json().catch(() => ({})) : {};
+    if (r && r.status === 409 && d.code === 'has_paid') {
+      const ok = await confirmDialog(`${d.detail} Undoing deletes ${d.paid_payouts === 1 ? 'that payment' : 'those payments'} too — the log keeps a note. This can't be undone.`,
+        { title: 'Delete the payments too?', confirmText: 'Undo renewal and delete payments', tone: 'danger' });
+      if (!ok) return;
+      r = await apiFetch(CLUB1000_ENDPOINTS.investorUndoRenewal(inv.id), { method: 'POST', body: JSON.stringify({ confirm_paid: true }) }).catch(() => null);
+      d = r ? await r.json().catch(() => ({})) : {};
+    }
+    if (!r || !r.ok) { notify(errText(d, 'Could not undo the renewal.'), 'error'); return; }
+    notify('Renewal undone', 'success');
+    load();
+  }
+
   // Delete an investment — managers only; the server refuses once money has moved.
   async function deleteInvestor(inv) {
     if (!(await confirmDialog(`Delete ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''} · ${fmtMoney(inv.amount_invested)} permanently? Its payout schedule and referral rewards are deleted with it. This can't be undone.`,
@@ -373,6 +392,7 @@ export default function InvestorsPage() {
                     <span className="c1a-actions-gap" />
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setAddMoreFor(inv)} disabled={!schemes.length}>+ Add more</button>}
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
+                    {manager && inv.renewal_count > 0 && <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoRenewal(inv)}>↶ Undo renewal</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
                       {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => router.push(`/club1000/payouts?investor=${inv.id}`)}>Payout</button>}
