@@ -351,46 +351,41 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   // the renewal, principal paid back or fresh money added, and what it renewed
   // with. The term ending now is the last row; this LOI is the term after it.
   if (opts.history && opts.history.length) {
+    // Each earlier term as a short statement that adds up on the page: what was
+    // invested, the interest it earned, what was paid to the investor, what stayed,
+    // money added or taken back, and what it renewed with.
     const H = opts.history;
-    const cols = [['Term', 42], ['Principal', 27], ['Interest earned', 27], ['What happened', 60], ['Renewed with', 24]];
-    const X = []; let cx = M; cols.forEach(([, w]) => { X.push(cx); cx += w; });
     const R = (n) => Math.round(Number(n) || 0);
-    chk(12 + 12 + H.length * 14 + 14);
     secHead(`Investment History · ${H.length} earlier term${H.length === 1 ? '' : 's'}`);
-    chk(10); sf(MB); doc.roundedRect(M, y - 5.5, CW, 9, 2.2, 2.2, 'F'); st(WHT); doc.setFontSize(7.6); doc.setFont('helvetica', 'bold');
-    cols.forEach(([h, w], i) => {
-      const right = i === 1 || i === 2 || i === 4;
-      doc.text(h, right ? X[i] + w - 2 : X[i] + 2, y, right ? { align: 'right' } : undefined);
-    });
-    y += 9;
-    H.forEach((t, idx) => {
-      const toHim = R(t.interest_to_investor), added = R(t.interest_added), back = R(t.principal_returned), fresh = R(t.fresh_money);
-      const what = [];
-      if (toHim && added) what.push(`Interest: Rs. ${money(toHim)} paid, Rs. ${money(added)} added`);
-      else if (added) what.push(`Interest Rs. ${money(added)} added to the renewal`);
-      else if (toHim) what.push(`Interest Rs. ${money(toHim)} paid to him`);
-      if (back) what.push(`Rs. ${money(back)} principal taken back`);
-      else if (fresh) what.push(`Rs. ${money(fresh)} new money added`);
-      else what.push('Principal rolled over');
-      const term = [String(t.label || '').split(' · ')[0], `${fmtDate(t.start)} to ${fmtDate(t.maturity)}`];
-      const lines = Math.max(term.length, what.length);
-      const rowH = 6 + lines * 3.8;
-      chk(rowH + 1);
-      if (idx % 2 === 0) { sf([248, 250, 254]); doc.rect(M, y - 4.5, CW, rowH, 'F'); }
-      // Term + its period
-      doc.setFontSize(8.2); doc.setFont('helvetica', 'bold'); st(MB); doc.text(term[0], X[0] + 2, y + 0.5);
-      doc.setFontSize(7.2); doc.setFont('helvetica', 'normal'); st(MD); doc.text(term[1], X[0] + 2, y + 4.3);
-      // Amounts
-      doc.setFontSize(8.2); doc.setFont('helvetica', 'normal'); st(DK);
-      doc.text(money(t.principal), X[1] + cols[1][1] - 2, y + 0.5, { align: 'right' });
-      doc.text(money(t.interest_earned), X[2] + cols[2][1] - 2, y + 0.5, { align: 'right' });
-      // What happened, one line each
-      doc.setFontSize(7.6); st(DK);
-      what.forEach((w, k) => doc.text(w, X[3] + 4, y + 0.5 + k * 3.8));
-      doc.setFontSize(8.4); doc.setFont('helvetica', 'bold'); st(MB);
-      doc.text(money(t.renewed_with), X[4] + cols[4][1] - 2, y + 0.5, { align: 'right' });
-      sd(LN); doc.setLineWidth(0.2); doc.line(M, y - 4.5 + rowH, PW - M, y - 4.5 + rowH);
-      y += rowH;
+    H.forEach((t) => {
+      const principal = R(t.principal), earned = R(t.interest_earned), toHim = Math.max(R(t.interest_to_investor), 0);
+      const back = R(t.principal_returned), fresh = R(t.fresh_money), renewed = R(t.renewed_with);
+      const stayed = principal + earned - toHim;
+      const lines = [['', 'Principal invested', principal]];
+      if (earned) lines.push(['+', 'Interest earned', earned]);
+      if (toHim) lines.push(['−', 'Interest paid / payable to him', toHim]);
+      if ((earned || toHim) && (fresh || back)) lines.push(['=', 'With us at the end of the term', stayed, 'sub']);
+      if (fresh) lines.push(['+', 'New money added', fresh]);
+      if (back) lines.push(['−', 'Principal taken back', back]);
+      lines.push(['=', 'Renewed with', renewed, 'total']);
+      const boxH = 9 + lines.length * 5.2 + 3;
+      chk(boxH + 4);
+      // term title bar
+      sf(WASH); doc.roundedRect(M, y - 4.5, CW, boxH, 2, 2, 'F'); sd([206, 217, 235]); doc.setLineWidth(0.3); doc.roundedRect(M, y - 4.5, CW, boxH, 2, 2, 'S');
+      sf(ORG); doc.roundedRect(M, y - 4.5, 2.2, boxH, 1, 1, 'F');
+      st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(`${String(t.label || '').split(' · ')[0].toUpperCase()}  ·  ${fmtDate(t.start)} to ${fmtDate(t.maturity)}`, M + 6, y + 0.5);
+      y += 6;
+      const LX = M + 10, SX = M + 6, VX = PW - M - 6;
+      lines.forEach(([sign, label, val, kind]) => {
+        if (kind) { sd(kind === 'total' ? MB2 : LN); doc.setLineWidth(kind === 'total' ? 0.4 : 0.25); doc.line(LX, y - 3.4, VX, y - 3.4); }
+        doc.setFontSize(kind === 'total' ? 9 : 8.4); doc.setFont('helvetica', kind ? 'bold' : 'normal'); st(kind === 'total' ? MB : DK);
+        if (sign) { st(sign === '−' ? [190, 60, 60] : sign === '+' ? [27, 122, 69] : MB); doc.text(sign === '−' ? '-' : sign, SX, y + 0.4); st(kind === 'total' ? MB : DK); }
+        doc.text(label, LX, y + 0.4);
+        doc.text('Rs. ' + money(val), VX, y + 0.4, { align: 'right' });
+        y += 5.2;
+      });
+      y += 9;
     });
     if (opts.nextTerm) {
       chk(12); sf(WASH); doc.roundedRect(M, y - 4, CW, 9, 1.5, 1.5, 'F'); sf(ORG); doc.roundedRect(M + 1.2, y - 2.5, 1.7, 6, 0.85, 0.85, 'F');
