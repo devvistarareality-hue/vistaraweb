@@ -229,12 +229,18 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
   secHead('Details', P);
   if (isPratishthaPdf && pb) {
     const isShop = pb.kind === 'shop';
+    // Several units on one booking → the Details block states the total area of
+    // them all (each unit's own area is in its section below).
+    const shops = pbs.filter((b) => b.kind === 'shop'), flats = pbs.filter((b) => b.kind !== 'shop');
+    const sumOf = (list, k) => list.reduce((s2, b) => s2 + (Number(b[k]) || 0), 0);
+    const facingOf = (b) => (b.facing === 'road' ? 'Road Facing' : b.facing === 'garden' ? 'Garden Facing' : '—');
+    const shopArea = shops.length ? [[shops.length > 1 ? `Total Shop Area (${shops.length} shops)` : 'Shop Area', num(sumOf(shops, 'sq_feet')) + ' sq.ft.']] : [];
+    const flatArea = flats.length ? [
+      [flats.length > 1 ? `Total Flat Area (${flats.length} flats)` : 'Flat Area', num(sumOf(flats, 'flat_area')) + ' sq.yd.'],
+      [flats.length > 1 ? 'Total Terrace Area' : 'Terrace Area', sumOf(flats, 'terrace_area') ? num(sumOf(flats, 'terrace_area')) + ' sq.yd.' : 'Not applicable'],
+      ['Facing', [...new Set(flats.map(facingOf))].join(', ')]] : [];
     infoGrid([
-      ...(isShop
-        ? [['Shop Area', num(pb.sq_feet) + ' sq.ft.']]
-        : [['Flat Area', num(pb.flat_area) + ' sq.yd.'],
-           ['Terrace Area', pb.terrace_area ? num(pb.terrace_area) + ' sq.yd.' : 'Not applicable'],
-           ['Facing', pb.facing === 'road' ? 'Road Facing' : pb.facing === 'garden' ? 'Garden Facing' : '—']]),
+      ...(isShop ? [...shopArea, ...flatArea] : [...flatArea, ...shopArea]),
       ...(showCp ? [[cpLabel, meta.cpName || '—']] : []),
       ['STM Name', meta.loggedInUser || '—'],
       ['Source of Inquiry', meta.source || '—'], ['Address', meta.address || '—'],
@@ -282,11 +288,12 @@ export function buildLOIPdf(jsPDF, meta, v, installments, opts = {}) {
       // extra work amount. Rate and Shop Amount are working figures, not contract terms,
       // so they stay on the booking form and off the document.
       secHead(multi ? unitTitle(pb) : 'Deal Value', [71, 85, 105]);
-      // Extra Work Amount prints per hundred on this document. Shop Area is already
-      // stated in the Details block above, so Deal Value carries the two money figures.
+      // Extra Work Amount prints per hundred on this document. One shop: its area is
+      // in the Details block above; several: each section states its own area.
       const ewDisp = (Number(pb.extra_work_amount) || 0) / 100;
       const ewStr = ewDisp.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      infoGrid([['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)], ['Extra Work Amount', 'Rs. ' + ewStr]]);
+      infoGrid([...(multi ? [['Shop Area', num(pb.sq_feet) + ' sq.ft.']] : []),
+        ['Final Unit Price', 'Rs. ' + rs(pb.loan_amount)], ['Extra Work Amount', 'Rs. ' + ewStr]]);
       chk(14 + 6 * 7.5 + 12); secHead('Legal & Other Charges', [124, 58, 237]); rowAlt = false;
       tRow('Stamp Duty & Registration (6% of Final Unit Price)', pb.stamp_duty_reg);
       tRow('GST (5% of Final Unit Price)', pb.gst);
