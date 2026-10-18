@@ -169,7 +169,19 @@ export default function InvestorsPage() {
     if (!(await confirmDialog(`Delete ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''} · ${fmtMoney(inv.amount_invested)} permanently? Its payout schedule and referral rewards are deleted with it. This can't be undone.`,
       { title: 'Delete investor?', confirmText: 'Delete', tone: 'danger' }))) return;
     setDeletingId(inv.id);
-    const r = await apiFetch(CLUB1000_ENDPOINTS.investor(inv.id), { method: 'DELETE' }).catch(() => null);
+    let r = await apiFetch(CLUB1000_ENDPOINTS.investor(inv.id), { method: 'DELETE' }).catch(() => null);
+    if (r && r.status === 409) {
+      // Payments already made on it: say exactly what goes with it, and ask again.
+      const d = await r.json().catch(() => ({}));
+      if (d.code === 'has_paid') {
+        const what = [d.paid_payouts ? `${d.paid_payouts} paid payout${d.paid_payouts === 1 ? '' : 's'} (${fmtMoney(d.paid_amount)})` : '',
+          d.paid_rewards ? `${d.paid_rewards} paid referral reward${d.paid_rewards === 1 ? '' : 's'} (${fmtMoney(d.paid_rewards_amount)})` : ''].filter(Boolean).join(' and ');
+        const ok = await confirmDialog(`${inv.name} already has ${what} recorded. Deleting the investor deletes these payments too — the money stays paid in real life, but Nexora will no longer show it anywhere. The log keeps a note of what was deleted. This can't be undone.`,
+          { title: 'Delete the payments too?', confirmText: 'Delete investor and payments', tone: 'danger' });
+        if (!ok) { setDeletingId(null); return; }
+        r = await apiFetch(`${CLUB1000_ENDPOINTS.investor(inv.id)}?include_paid=1`, { method: 'DELETE' }).catch(() => null);
+      } else { setDeletingId(null); notify(errText(d, 'Could not delete the investor.'), 'error'); return; }
+    }
     setDeletingId(null);
     if (!r || !(r.ok || r.status === 204)) { notify(errText(r ? await r.json().catch(() => ({})) : {}, 'Could not delete the investor.'), 'error'); return; }
     notify('Investor deleted', 'success');
@@ -188,16 +200,30 @@ export default function InvestorsPage() {
     const list = investors.filter((i) => picked.has(i.id));
     if (!list.length) return;
     const sum = list.reduce((t, i) => t + (Number(i.amount_invested) || 0), 0);
-    if (!(await confirmDialog(`Delete ${list.length} investor${list.length === 1 ? '' : 's'} · ${fmtMoney(sum)} permanently? Their payout schedules and referral rewards go with them, and their leads will read Investor Deleted. Any with a payment already made are kept. This can't be undone.`,
+    if (!(await confirmDialog(`Delete ${list.length} investor${list.length === 1 ? '' : 's'} · ${fmtMoney(sum)} permanently? Their payout schedules and referral rewards go with them, and their leads will read Investor Deleted. Any with a payment already made are asked about next. This can't be undone.`,
       { title: `Delete ${list.length} investor${list.length === 1 ? '' : 's'}?`, confirmText: 'Delete', tone: 'danger' }))) return;
     setBulkBusy(true);
     const r = await apiFetch(CLUB1000_ENDPOINTS.investorBulkDelete, { method: 'POST', body: JSON.stringify({ ids: list.map((i) => i.id) }) }).catch(() => null);
     const d = r ? await r.json().catch(() => ({})) : {};
     setBulkBusy(false);
     if (!r || !r.ok) { notify(errText(d, 'Could not delete the investors.'), 'error'); return; }
-    const kept = d.refused || [];
-    if (d.deleted?.length) notify(`${d.deleted.length} investor${d.deleted.length === 1 ? '' : 's'} deleted`, 'success');
-    if (kept.length) notify(`${kept.length} not deleted — ${kept.map((k) => k.name || `#${k.id}`).join(', ')}: a payment is already made. Undo it first, or close with Redeem / Payout.`, 'error', { duration: 9000 });
+    let kept = d.refused || [];
+    let gone = d.deleted?.length || 0;
+    const paidOnes = kept.filter((k) => k.paid_payouts || k.paid_rewards);
+    if (paidOnes.length) {
+      const sumPaid = paidOnes.reduce((t, k) => t + Number(k.paid_amount || 0) + Number(k.paid_rewards_amount || 0), 0);
+      const ok = await confirmDialog(`${paidOnes.length} of them already ha${paidOnes.length === 1 ? 's' : 've'} payments recorded (${fmtMoney(sumPaid)} in all) — ${paidOnes.map((k) => k.name).join(', ')}. Delete ${paidOnes.length === 1 ? 'it' : 'them'} and those payments too? The log keeps a note; this can't be undone.`,
+        { title: 'Delete the payments too?', confirmText: 'Delete with payments', tone: 'danger' });
+      if (ok) {
+        setBulkBusy(true);
+        const r2 = await apiFetch(CLUB1000_ENDPOINTS.investorBulkDelete, { method: 'POST', body: JSON.stringify({ ids: paidOnes.map((k) => k.id), include_paid: true }) }).catch(() => null);
+        const d2 = r2 ? await r2.json().catch(() => ({})) : {};
+        setBulkBusy(false);
+        if (r2 && r2.ok) { gone += d2.deleted?.length || 0; kept = kept.filter((k) => !(d2.deleted || []).includes(k.id)); }
+      }
+    }
+    if (gone) notify(`${gone} investor${gone === 1 ? '' : 's'} deleted`, 'success');
+    if (kept.length) notify(`${kept.length} kept — ${kept.map((k) => k.name || `#${k.id}`).join(', ')}`, 'error', { duration: 9000 });
     setPicked(new Set(kept.map((k) => k.id)));
     if (!kept.length) setSelecting(false);
     load();
