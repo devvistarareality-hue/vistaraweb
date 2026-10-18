@@ -156,6 +156,13 @@ function prorateInstalments(dates, investmentDateStr, maturityDateStr, principal
 
 const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', maturity: 'At Maturity' };
 
+// Add more: a new investment for someone who already has one — their details carried
+// over, the scheme, amount and date left to choose. Not linked to their lead.
+export function morePrefill(inv) {
+  return { more: true, name: inv.name, phone: inv.phone, email: inv.email || '', pan: inv.pan || '',
+    source: inv.source || 'referral', reference_name: inv.reference_name || '', reference_phone: inv.reference_phone || '' };
+}
+
 // `revise` (an approved investor) turns this into Revise LOI: the same form, prefilled
 // with the investor — or with the revision they saved as a draft — where everything,
 // the scheme and the investment date included, can change. It submits to the revise
@@ -176,13 +183,13 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
   const initialScheme = schemes.find((s) => String(s.id) === String(initialSchemeId));
   const [form, setForm] = useState({
     scheme: initialSchemeId,
-    source: draft?.source || 'referral',
+    source: draft?.source || prefillLead?.source || 'referral',
     reference_name: draft?.reference_name || prefillLead?.reference_name || '',
     reference_phone: draft?.reference_phone || prefillLead?.reference_phone || '',
     name: draft?.name || prefillLead?.name || '',
     phone: draft?.phone || prefillLead?.phone || '',
     email: draft?.email || prefillLead?.email || '',
-    pan: draft?.pan || '',
+    pan: draft?.pan || prefillLead?.pan || '',
     // A draft's amount may legitimately be 0 — that is "not said yet", and the
     // field should read empty rather than showing a figure nobody typed.
     amount_invested: (draft && Number(draft.amount_invested) > 0)
@@ -406,7 +413,7 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
   const busyAny = busy || savingDraft;
   return (
     <C1Modal wide
-      title={revise ? 'Revise LOI' : draft ? 'Edit Draft Investor' : 'Add Investor'}
+      title={revise ? 'Revise LOI' : draft ? 'Edit Draft Investor' : prefillLead?.more ? `Add more — ${prefillLead.name}` : 'Add Investor'}
       badge={revise ? `R${nextRevisionNo}` : null}
       sub={revise ? `${revise.name} · ${revise.phone}` : 'Added investors go for approval before they count'}
       onClose={onClose} onSubmit={submit}
@@ -425,6 +432,12 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
 
 
 
+      {prefillLead?.more && !draft && !revise && (
+        <div className="nx-note info c1-more-note">
+          A new investment for {prefillLead.name} — same or another scheme, with its own LOI, dates and payouts. It joins
+          their portfolio (same mobile); the investments they already hold are not changed.
+        </div>
+      )}
       <C1Section title="Investor">
         <C1Field label="Investor name" required>
           <input className="nx-input" value={form.name} onChange={(e) => set('name', e.target.value)} required />

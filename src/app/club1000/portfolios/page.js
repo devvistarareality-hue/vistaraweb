@@ -10,6 +10,9 @@ import Icon from '../../../components/Icon';
 import Loader from '../../../components/Loader';
 import { fmtMoney } from '../_StatCard';
 import PortfolioModal, { Avatar } from '../_PortfolioModal';
+import AddInvestorModal, { morePrefill } from '../_AddInvestorModal';
+import { useSelector } from 'react-redux';
+import { can } from '../../../lib/moduleAccess';
 
 const SORTS = [
   ['active', 'Biggest active holding', (r) => -Number(r.active_amount)],
@@ -26,15 +29,22 @@ export default function PortfoliosPage() {
   const [scheme, setScheme] = useState('');
   const [sort, setSort] = useState('active');
   const [open, setOpen] = useState(null);
+  const [addMore, setAddMore] = useState(null);
+  const [schemeList, setSchemeList] = useState([]);
+  const user = useSelector((st) => st.auth.user);
+  const canAdd = can(user, 'club.investor.manage');
 
   useEffect(() => {
-    apiFetch(CLUB1000_ENDPOINTS.portfolios)
+    if (canAdd) apiFetch(CLUB1000_ENDPOINTS.schemes).then((r) => (r.ok ? r.json() : [])).then((d) => setSchemeList(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [canAdd]);
+
+  const load = () => apiFetch(CLUB1000_ENDPOINTS.portfolios)
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (r.ok) setRows(d); else { setErr(errText(d, 'Could not load portfolios.')); setRows([]); }
       })
       .catch(() => { setErr('Could not reach the server.'); setRows([]); });
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const schemes = useMemo(() => [...new Set((rows || []).flatMap((r) => r.schemes.map((s) => s.scheme)))].sort(), [rows]);
   const shown = useMemo(() => {
@@ -137,7 +147,12 @@ export default function PortfoliosPage() {
         </div>
       )}
 
-      {open && <PortfolioModal investorId={open} onClose={() => setOpen(null)} />}
+      {open && <PortfolioModal investorId={open} onClose={() => setOpen(null)}
+        onAddMore={canAdd && schemeList.length ? (pf) => { setOpen(null); setAddMore(pf); } : null} />}
+      {addMore && (
+        <AddInvestorModal schemes={schemeList} prefillLead={morePrefill(addMore)}
+          onClose={() => setAddMore(null)} onCreated={() => { setAddMore(null); load(); }} />
+      )}
     </div>
   );
 }

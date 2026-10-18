@@ -28,7 +28,7 @@ const yearsSince = (d) => {
   return y >= 1 ? `${Math.floor(y)} yr${Math.floor(y) === 1 ? '' : 's'}` : `${Math.max(1, Math.floor(y * 12))} mo`;
 };
 
-export default function PortfolioModal({ investorId, onClose }) {
+export default function PortfolioModal({ investorId, onClose, onAddMore }) {
   const [p, setP] = useState(null);
   const [err, setErr] = useState('');
   const [tab, setTab] = useState('investments');
@@ -76,6 +76,9 @@ export default function PortfolioModal({ investorId, onClose }) {
                     <button type="button" className="c1pf-morebtn" onClick={() => setAllNames((v) => !v)}>{allNames ? 'Show less' : `+${p.names.length - 5} more`}</button>
                   )}
                 </div>
+              )}
+              {onAddMore && p.prefill && (
+                <button type="button" className="nx-btn nx-btn-sm nx-btn-success-soft c1pf-addmore" onClick={() => onAddMore(p.prefill)}>+ Add more</button>
               )}
               {p.awaiting_approval > 0 && <div className="c1pf-await">{p.awaiting_approval} investment{p.awaiting_approval === 1 ? '' : 's'} awaiting approval</div>}
             </div>

@@ -9,7 +9,7 @@ import { formatDMY } from '../../../lib/dateFormat';
 import { onlyPresent } from '../../../lib/presentOptions';
 import DateFilter from '../../sales/_DateFilter';
 import { fmtMoney } from '../_StatCard';
-import AddInvestorModal from '../_AddInvestorModal';
+import AddInvestorModal, { morePrefill } from '../_AddInvestorModal';
 import RenewInvestorModal from '../_RenewInvestorModal';
 import { RedeemModal } from '../_CloseInvestment';
 import HistoryModal from '../_HistoryModal';
@@ -58,6 +58,7 @@ export default function InvestorsPage() {
   const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
   const [portfolioFor, setPortfolioFor] = useState(null); // the person's whole portfolio
+  const [addMoreFor, setAddMoreFor] = useState(null);     // a new investment for the same person
   const [selecting, setSelecting] = useState(false);     // pick several to delete at once
   const [picked, setPicked] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -344,6 +345,7 @@ export default function InvestorsPage() {
                     {inv.document_url && <a className="nx-btn nx-btn-sm nx-btn-secondary" href={inv.document_url} target="_blank" rel="noreferrer"><Icon name="clip" /> KYC</a>}
                     {/* Viewing on the left; what changes the investment on the right. */}
                     <span className="c1a-actions-gap" />
+                    {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setAddMoreFor(inv)} disabled={!schemes.length}>+ Add more</button>}
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
@@ -385,7 +387,12 @@ export default function InvestorsPage() {
           </button>
         </div>
       )}
-      {portfolioFor && <PortfolioModal investorId={portfolioFor} onClose={() => setPortfolioFor(null)} />}
+      {addMoreFor && (
+        <AddInvestorModal schemes={schemes} prefillLead={morePrefill(addMoreFor)}
+          onClose={() => setAddMoreFor(null)} onCreated={() => { setAddMoreFor(null); load(); }} />
+      )}
+      {portfolioFor && <PortfolioModal investorId={portfolioFor} onClose={() => setPortfolioFor(null)}
+        onAddMore={can(user, 'club.investor.manage') && schemes.length ? (pf) => { setPortfolioFor(null); setAddMoreFor(pf); } : null} />}
       {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
       {renewing && (
         <RenewInvestorModal
