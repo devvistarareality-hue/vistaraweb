@@ -3714,3 +3714,4 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1r-settle { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--success-soft); font-size: 13px; color: var(--text-2); }
 .c1r-settle .nx-input { max-width: 300px; }
 .c1pp-settled { display: block; font-size: 10.5px; font-weight: 800; color: var(--accent-deep); }
+.c1-request { border-color: var(--warning) !important; }

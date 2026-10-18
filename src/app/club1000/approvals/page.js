@@ -234,6 +234,27 @@ export default function InvestorApprovalsPage() {
     }
   }
 
+  // A requested delete / undo-renewal: approve carries it out, reject says why.
+  async function actRequest(inv, action) {
+    const what = inv.pending_action?.type === 'delete' ? 'delete' : 'undo the renewal of';
+    let reason = '';
+    if (action === 'approve') {
+      if (!(await confirmDialog(`Approve: ${what} ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''}? ${inv.pending_action?.type === 'delete' ? 'The investment, its payouts and rewards are deleted.' : 'It goes back to the term before.'} This can't be undone.`,
+        { title: 'Approve request?', confirmText: 'Approve', tone: 'danger' }))) return;
+    } else {
+      reason = await reasonDialog(`Reject the request to ${what} ${inv.name}? Write why — whoever asked sees this.`,
+        { title: 'Reject request', confirmText: 'Reject', placeholder: 'e.g. Keep it — payment is genuine' });
+      if (!reason) return;
+    }
+    setBusy(inv.id); setBusyAct(action);
+    try {
+      const res = await apiFetch(CLUB1000_ENDPOINTS.investorPendingAction(inv.id), { method: 'POST', body: JSON.stringify(reason ? { action, reason } : { action }) });
+      if (!res.ok) { notify(errText(await res.json().catch(() => ({})), 'Could not complete it.'), 'error'); return; }
+      notify(action === 'approve' ? (inv.pending_action?.type === 'delete' ? 'Investor deleted' : 'Renewal undone') : 'Request rejected', 'success');
+      load();
+    } finally { setBusy(null); setBusyAct(''); }
+  }
+
   // Filtered list and its scheme groups, as Sales groups bookings by project.
   const schemeOptions = [...new Set(investors.map((i) => i.scheme_name).filter(Boolean))].sort();
   const addedByOptions = [...new Set(investors.map((i) => i.added_by_name).filter(Boolean))].sort();
@@ -354,9 +375,15 @@ export default function InvestorApprovalsPage() {
                           <div className="bk-reason"><b>Rejected — reason</b><span>{inv.rejected_reason}</span></div>
                         )}
                         {/* Revisions / renewals turned down — the investment stays on its old terms. */}
+                        {inv.pending_action && (
+                          <div className="bk-reason c1-request">
+                            <b>{inv.pending_action.type === 'delete' ? 'Delete requested' : 'Undo renewal requested'} by {inv.pending_action.by_name || '—'}{inv.pending_action.at ? ` · ${formatDMY(String(inv.pending_action.at).slice(0, 10))}` : ''}{inv.pending_action.include_paid ? ' · payments already made go with it' : ''}</b>
+                            <span>{inv.pending_action.reason}</span>
+                          </div>
+                        )}
                         {(inv.rejections || []).slice().reverse().map((rj, k) => (
                           <div key={k} className="bk-reason">
-                            <b>{rj.kind === 'renewal' ? 'Renewal' : 'Revision'} R{rj.no} rejected{rj.by ? ` by ${rj.by}` : ''}{rj.at ? ` · ${formatDMY(String(rj.at).slice(0, 10))}` : ''}{Number(rj.amount) ? ` · proposed ${fmtMoney(rj.amount)}` : ''}</b>
+                            <b>{rj.kind === 'renewal' ? 'Renewal' : rj.kind === 'delete' ? 'Delete request' : rj.kind === 'undo-renewal' ? 'Undo-renewal request' : rj.kind === 'undone-renewal' ? 'Renewal' : 'Revision'} {rj.kind === 'delete' || rj.kind === 'undo-renewal' ? '' : `R${rj.no} `}{rj.kind === 'undone-renewal' ? 'undone' : 'rejected'}{rj.by ? ` by ${rj.by}` : ''}{rj.at ? ` · ${formatDMY(String(rj.at).slice(0, 10))}` : ''}{Number(rj.amount) ? ` · proposed ${fmtMoney(rj.amount)}` : ''}</b>
                             <span>{rj.reason}</span>
                           </div>
                         ))}
@@ -376,6 +403,10 @@ export default function InvestorApprovalsPage() {
                       {inv.approval_status === 'approved' && can(user, 'club.investor.manage') && (
                         <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>
                       )}
+                      {inv.pending_action && (canApprove(inv) ? <>
+                        <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => actRequest(inv, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Working…</> : <><Icon name="check" /> Approve {inv.pending_action.type === 'delete' ? 'delete' : 'undo'}</>}</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => actRequest(inv, 'reject')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
+                      </> : <span className="c1a-note">Not an approver</span>)}
                       {inv.approval_status === 'pending' && (canApprove(inv) ? <>
                         <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> Approve</>}</button>
                         <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
