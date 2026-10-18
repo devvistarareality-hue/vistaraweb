@@ -191,28 +191,30 @@ export default function InvestorsPage() {
   }
 
   // Delete an investment — managers only; the server refuses once money has moved.
+  // Delete an investment — Club 1000 managers only. Payments already made are named
+  // and confirmed before they go with it.
   async function deleteInvestor(inv) {
-    const reason = await reasonDialog(`Ask to delete ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''} · ${fmtMoney(inv.amount_invested)}? It goes to the scheme's approvers; once approved its payout schedule and referral rewards are deleted with it. Write why.`,
-      { title: 'Delete investor — send for approval', confirmText: 'Send for approval', placeholder: 'e.g. Entered twice by mistake' });
-    if (!reason) return;
-    setDeletingId(inv.id);
+    if (!(await confirmDialog(`Delete ${inv.name}${inv.loi_no ? ` (LOI ${inv.loi_no})` : ''} · ${fmtMoney(inv.amount_invested)} permanently? Its payout schedule and referral rewards are deleted with it. This can't be undone.`,
+      { title: 'Delete investor?', confirmText: 'Delete', tone: 'danger' }))) return;
+    setDeletingId(inv.id); setWorking('Deleting…');
     try {
-      const url = (paid) => `${CLUB1000_ENDPOINTS.investor(inv.id)}?reason=${encodeURIComponent(reason)}${paid ? '&include_paid=1' : ''}`;
-      let r = await apiFetch(url(false), { method: 'DELETE' }).catch(() => null);
+      let r = await apiFetch(CLUB1000_ENDPOINTS.investor(inv.id), { method: 'DELETE' }).catch(() => null);
       if (r && r.status === 409) {
         const d = await r.json().catch(() => ({}));
-        if (d.code !== 'has_paid') { notify(errText(d, 'Could not send the request.'), 'error'); return; }
+        if (d.code !== 'has_paid') { notify(errText(d, 'Could not delete the investor.'), 'error'); return; }
+        setWorking('');
         const what = [d.paid_payouts ? `${d.paid_payouts} paid payout${d.paid_payouts === 1 ? '' : 's'} (${fmtMoney(d.paid_amount)})` : '',
           d.paid_rewards ? `${d.paid_rewards} paid referral reward${d.paid_rewards === 1 ? '' : 's'} (${fmtMoney(d.paid_rewards_amount)})` : ''].filter(Boolean).join(' and ');
-        const ok = await confirmDialog(`${inv.name} already has ${what} recorded. Once approved, these payments are deleted with the investor — the log keeps a note.`,
-          { title: 'Delete the payments too?', confirmText: 'Send for approval', tone: 'danger' });
+        const ok = await confirmDialog(`${inv.name} already has ${what} recorded. Deleting the investor deletes these payments too — the money stays paid in real life, but Nexora will no longer show it. The log keeps a note. This can't be undone.`,
+          { title: 'Delete the payments too?', confirmText: 'Delete investor and payments', tone: 'danger' });
         if (!ok) return;
-        r = await apiFetch(url(true), { method: 'DELETE' }).catch(() => null);
+        setWorking('Deleting…');
+        r = await apiFetch(`${CLUB1000_ENDPOINTS.investor(inv.id)}?include_paid=1`, { method: 'DELETE' }).catch(() => null);
       }
-      if (!r || !r.ok) { notify(errText(r ? await r.json().catch(() => ({})) : {}, 'Could not send the request.'), 'error'); return; }
-      notify('Sent to the approvers — deleted once approved', 'success');
+      if (!r || !(r.ok || r.status === 204)) { notify(errText(r ? await r.json().catch(() => ({})) : {}, 'Could not delete the investor.'), 'error'); return; }
+      notify('Investor deleted', 'success');
       load();
-    } finally { setDeletingId(null); }
+    } finally { setDeletingId(null); setWorking(''); }
   }
 
   const togglePick = (ids, on) => setPicked((prev) => {
@@ -227,32 +229,33 @@ export default function InvestorsPage() {
     const list = investors.filter((i) => picked.has(i.id));
     if (!list.length) return;
     const sum = list.reduce((t, i) => t + (Number(i.amount_invested) || 0), 0);
-    const reason = await reasonDialog(`Ask to delete ${list.length} investor${list.length === 1 ? '' : 's'} · ${fmtMoney(sum)}? It goes to the approvers; each is deleted once approved. Write why.`,
-      { title: `Delete ${list.length} — send for approval`, confirmText: 'Send for approval', placeholder: 'e.g. Test entries' });
-    if (!reason) return;
-    setBulkBusy(true);
+    if (!(await confirmDialog(`Delete ${list.length} investor${list.length === 1 ? '' : 's'} · ${fmtMoney(sum)} permanently? Their payout schedules and referral rewards go with them, and their leads will read Investor Deleted. Any with a payment already made are asked about next. This can't be undone.`,
+      { title: `Delete ${list.length} investor${list.length === 1 ? '' : 's'}?`, confirmText: 'Delete', tone: 'danger' }))) return;
+    setBulkBusy(true); setWorking('Deleting…');
     try {
-      const send = (ids, paid) => apiFetch(CLUB1000_ENDPOINTS.investorBulkDelete, { method: 'POST', body: JSON.stringify({ ids, reason, include_paid: paid }) })
+      const send = (ids, paid) => apiFetch(CLUB1000_ENDPOINTS.investorBulkDelete, { method: 'POST', body: JSON.stringify({ ids, include_paid: paid }) })
         .then(async (r) => ({ ok: r.ok, d: await r.json().catch(() => ({})) })).catch(() => ({ ok: false, d: {} }));
       const first = await send(list.map((i) => i.id), false);
-      if (!first.ok) { notify(errText(first.d, 'Could not send the request.'), 'error'); return; }
-      let sent = (first.d.requested || []).length;
+      if (!first.ok) { notify(errText(first.d, 'Could not delete the investors.'), 'error'); return; }
+      let gone = (first.d.deleted || []).length;
       let kept = first.d.refused || [];
       const paidOnes = kept.filter((k) => k.paid_payouts || k.paid_rewards);
       if (paidOnes.length) {
-        const ok = await confirmDialog(`${paidOnes.map((k) => k.name).join(', ')} already ha${paidOnes.length === 1 ? 's' : 've'} payments recorded. Ask to delete ${paidOnes.length === 1 ? 'it' : 'them'} and those payments too?`,
-          { title: 'Delete the payments too?', confirmText: 'Send for approval', tone: 'danger' });
+        setWorking('');
+        const ok = await confirmDialog(`${paidOnes.map((k) => k.name).join(', ')} already ha${paidOnes.length === 1 ? 's' : 've'} payments recorded. Delete ${paidOnes.length === 1 ? 'it' : 'them'} and those payments too? The log keeps a note; this can't be undone.`,
+          { title: 'Delete the payments too?', confirmText: 'Delete with payments', tone: 'danger' });
         if (ok) {
+          setWorking('Deleting…');
           const again = await send(paidOnes.map((k) => k.id), true);
-          if (again.ok) { sent += (again.d.requested || []).length; kept = kept.filter((k) => !(again.d.requested || []).includes(k.id)); }
+          if (again.ok) { gone += (again.d.deleted || []).length; kept = kept.filter((k) => !(again.d.deleted || []).includes(k.id)); }
         }
       }
-      if (sent) notify(`${sent} sent to the approvers — deleted once approved`, 'success');
-      if (kept.length) notify(`${kept.length} not sent — ${kept.map((k) => k.name || `#${k.id}`).join(', ')}`, 'error', { duration: 9000 });
+      if (gone) notify(`${gone} investor${gone === 1 ? '' : 's'} deleted`, 'success');
+      if (kept.length) notify(`${kept.length} kept — ${kept.map((k) => k.name || `#${k.id}`).join(', ')}`, 'error', { duration: 9000 });
       setPicked(new Set(kept.map((k) => k.id)));
       if (!kept.length) setSelecting(false);
       load();
-    } finally { setBulkBusy(false); }
+    } finally { setBulkBusy(false); setWorking(''); }
   }
 
   // Scheme groups and the total, as on Approvals (and Sales' approvals).
@@ -376,7 +379,7 @@ export default function InvestorsPage() {
                         {inv.revision_no > 0 && <span className="c1a-rev">R{inv.revision_no}</span>}
                         {inv.is_matured && <span className="c1a-rev renew">MATURED</span>}
                         {inv.renewal_count > 0 && <span className="c1a-rev">RENEWED {inv.renewal_count}×</span>}
-                        {inv.pending_action && <span className="c1a-rev renew">{inv.pending_action.type === 'delete' ? 'DELETE REQUESTED' : 'UNDO REQUESTED'}</span>}
+                        {inv.pending_action && <span className="c1a-rev renew">UNDO REQUESTED</span>}
                       </div>
                       <div className="c1a-sub">{inv.phone || '—'}{inv.loi_no ? ` · LOI ${inv.loi_no}` : ''}{inv.reference_name ? ` · Ref ${inv.reference_name}${inv.reference_phone ? ` (${inv.reference_phone})` : ''}` : ''}</div>
                       <div className="c1a-sub2">
@@ -409,7 +412,7 @@ export default function InvestorsPage() {
                     ))}
                     {manager && (
                       <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => deleteInvestor(inv)} disabled={deletingId === inv.id || !!inv.pending_action}>
-                        {deletingId === inv.id ? <><span className="nx-spin" aria-hidden="true" /> Sending…</> : <><Icon name="trash" /> Delete</>}
+                        {deletingId === inv.id ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : <><Icon name="trash" /> Delete</>}
                       </button>
                     )}
                   </div>
