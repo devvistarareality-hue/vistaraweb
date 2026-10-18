@@ -34,18 +34,19 @@ function ApprovalBadge({ approvalStatus, label }) {
 
 // Who approves investors under one scheme — the shared multi-select; each tick or
 // untick is sent as one atomic toggle (see toggleApprover below).
-function ApproverDropdown({ scheme, managers, onToggle }) {
-  const sel = (scheme.investor_approvers || []).map(String);
+function ApproverDropdown({ scheme, managers, onToggle, level = 1 }) {
+  const key = level === 2 ? 'investor_approvers_l2' : 'investor_approvers';
+  const sel = (scheme[key] || []).map(String);
   function change(next) {
     const now = new Set(next);
     managers.forEach((m) => {
       const id = String(m.id);
-      if (now.has(id) !== sel.includes(id)) onToggle(scheme.id, m.id);
+      if (now.has(id) !== sel.includes(id)) onToggle(scheme.id, m.id, level);
     });
   }
   return (
     <div className="c1a-approvers">
-      <MultiSelect allLabel="Select approvers…" noun="approvers" value={sel} onChange={change}
+      <MultiSelect allLabel={level === 2 ? 'Level 2 (final) — none' : 'Level 1 approvers…'} noun={level === 2 ? 'level 2' : 'approvers'} value={sel} onChange={change}
         options={managers.map((m) => ({ value: String(m.id), label: m.designation ? `${m.name} · ${m.designation}` : m.name }))} />
     </div>
   );
@@ -68,10 +69,20 @@ export default function InvestorApprovalsPage() {
   // approves each scheme, same as Sales' "Booking Approvers — by project"
   // panel restricts to isAdmin rather than every booking-approving manager.
   const canConfigureApprovers = isRealAdmin || user?.role === 'Director';
+  // Two-level schemes: level 1 approvers act first; once level 1 is done only
+  // level 2 approvers can finish it (mirrors backend approval_gate).
   function canApprove(inv) {
-    if (isRealAdmin) return true;
     const scheme = schemes.find((s) => s.id === inv.scheme);
-    return !!scheme && (scheme.investor_approvers || []).includes(user?.id);
+    const l2 = (scheme?.investor_approvers_l2 || []);
+    const inL1 = isRealAdmin || (!!scheme && (scheme.investor_approvers || []).includes(user?.id));
+    const inL2 = isRealAdmin || l2.includes(user?.id);
+    if (!l2.length) return inL1;
+    return inv.approval_step ? inL2 : inL1;
+  }
+  function approveLabel(inv) {
+    const scheme = schemes.find((s) => s.id === inv.scheme);
+    if (!(scheme?.investor_approvers_l2 || []).length) return 'Approve';
+    return inv.approval_step ? 'Final approve' : 'Approve (level 1)';
   }
 
   const [tab, setTab] = useState('pending');
@@ -128,13 +139,14 @@ export default function InvestorApprovalsPage() {
   // nothing is lost no matter how the requests interleave.
   const approverPatchSeq = useRef({});
 
-  async function toggleApprover(schemeId, mgrId) {
+  async function toggleApprover(schemeId, mgrId, level = 1) {
+    const key = level === 2 ? 'investor_approvers_l2' : 'investor_approvers';
     // Optimistic instant feedback — the atomic call below reconciles this
     // with the server's authoritative result once it returns.
     setSchemes((ss) => ss.map((s) => {
       if (s.id !== schemeId) return s;
-      const cur = s.investor_approvers || [];
-      return { ...s, investor_approvers: cur.includes(mgrId) ? cur.filter((x) => x !== mgrId) : [...cur, mgrId] };
+      const cur = s[key] || [];
+      return { ...s, [key]: cur.includes(mgrId) ? cur.filter((x) => x !== mgrId) : [...cur, mgrId] };
     }));
 
     const seq = (approverPatchSeq.current[schemeId] || 0) + 1;
@@ -142,22 +154,22 @@ export default function InvestorApprovalsPage() {
 
     let result = null;
     try {
-      const res = await apiFetch(CLUB1000_ENDPOINTS.schemeToggleApprover(schemeId), { method: 'POST', body: JSON.stringify({ manager_id: mgrId }) });
+      const res = await apiFetch(CLUB1000_ENDPOINTS.schemeToggleApprover(schemeId), { method: 'POST', body: JSON.stringify({ manager_id: mgrId, level }) });
       if (res.ok) result = await res.json();
     } catch { /* result stays null */ }
 
     if (approverPatchSeq.current[schemeId] !== seq) return;
 
     if (result) {
-      setSchemes((ss) => ss.map((s) => (s.id === schemeId ? { ...s, investor_approvers: result.investor_approvers } : s)));
+      setSchemes((ss) => ss.map((s) => (s.id === schemeId ? { ...s, investor_approvers: result.investor_approvers, investor_approvers_l2: result.investor_approvers_l2 } : s)));
       setSavedCfg('Saved'); setTimeout(() => setSavedCfg(''), 1500);
     } else {
       // Undo the optimistic toggle — it never actually reached the DB, so the
       // UI shouldn't keep showing it as selected.
       setSchemes((ss) => ss.map((s) => {
         if (s.id !== schemeId) return s;
-        const cur = s.investor_approvers || [];
-        return { ...s, investor_approvers: cur.includes(mgrId) ? cur.filter((x) => x !== mgrId) : [...cur, mgrId] };
+        const cur = s[key] || [];
+        return { ...s, [key]: cur.includes(mgrId) ? cur.filter((x) => x !== mgrId) : [...cur, mgrId] };
       }));
       setSavedCfg('⚠ Could not save — try again'); setTimeout(() => setSavedCfg(''), 3000);
     }
@@ -227,7 +239,8 @@ export default function InvestorApprovalsPage() {
         notify(errText(data, `Could not ${action} this investor.`));
         return;
       }
-      notify(action === 'approve' ? 'Investor approved' : 'Investor rejected', 'success');
+      const out = await res.json().catch(() => ({}));
+      notify(action === 'approve' ? (out.level === 1 ? 'Approved at level 1 — sent to level 2' : 'Investor approved') : 'Investor rejected', 'success');
       load();
     } finally {
       setBusy(null); setBusyAct('');
@@ -250,7 +263,8 @@ export default function InvestorApprovalsPage() {
     try {
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorPendingAction(inv.id), { method: 'POST', body: JSON.stringify(reason ? { action, reason } : { action }) });
       if (!res.ok) { notify(errText(await res.json().catch(() => ({})), 'Could not complete it.'), 'error'); return; }
-      notify(action === 'approve' ? (inv.pending_action?.type === 'delete' ? 'Investor deleted' : 'Renewal undone') : 'Request rejected', 'success');
+      const out = await res.json().catch(() => ({}));
+      notify(action === 'approve' ? (out.level === 1 ? 'Approved at level 1 — sent to level 2' : (inv.pending_action?.type === 'delete' ? 'Investor deleted' : 'Renewal undone')) : 'Request rejected', 'success');
       load();
     } finally { setBusy(null); setBusyAct(''); }
   }
@@ -295,11 +309,13 @@ export default function InvestorApprovalsPage() {
           </button>
           {cfgOpen && (
             <div className="c1a-cfg-body">
-              <div className="c1-help">For each scheme, pick the managers who approve investors added under it. They get a notification on each new submission for that scheme.</div>
+              <div className="c1-help">For each scheme, pick who approves investors added under it. <b>Level 1</b> approves first; if <b>Level 2</b> is set, their approval is the final one (a level 1 approval only passes it on). Leave Level 2 empty for single-step approval.</div>
+              <div className="c1a-cfg-row c1a-cfg-head"><div className="c1a-cfg-name">Scheme</div><span>Level 1</span><span>Level 2 · final</span></div>
               {managers.length === 0 ? <div className="c1-help">No managers in this company.</div> : schemes.map((sc) => (
                 <div key={sc.id} className="c1a-cfg-row">
                   <div className="c1a-cfg-name">{sc.name}</div>
                   <ApproverDropdown scheme={sc} managers={managers} onToggle={toggleApprover} />
+                  <ApproverDropdown scheme={sc} managers={managers} onToggle={toggleApprover} level={2} />
                 </div>
               ))}
             </div>
@@ -375,6 +391,9 @@ export default function InvestorApprovalsPage() {
                           <div className="bk-reason"><b>Rejected — reason</b><span>{inv.rejected_reason}</span></div>
                         )}
                         {/* Revisions / renewals turned down — the investment stays on its old terms. */}
+                        {inv.approval_step && (
+                          <div className="c1a-decided ok">Level 1 approved by {inv.approval_step.by_name || '—'}{inv.approval_step.at ? ` · ${formatDMY(String(inv.approval_step.at).slice(0, 10))}` : ''} — waiting for level 2</div>
+                        )}
                         {inv.pending_action && (
                           <div className="bk-reason c1-request">
                             <b>{inv.pending_action.type === 'delete' ? 'Delete requested' : 'Undo renewal requested'} by {inv.pending_action.by_name || '—'}{inv.pending_action.at ? ` · ${formatDMY(String(inv.pending_action.at).slice(0, 10))}` : ''}{inv.pending_action.include_paid ? ' · payments already made go with it' : ''}</b>
@@ -404,11 +423,11 @@ export default function InvestorApprovalsPage() {
                         <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>
                       )}
                       {inv.pending_action && (canApprove(inv) ? <>
-                        <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => actRequest(inv, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Working…</> : <><Icon name="check" /> Approve {inv.pending_action.type === 'delete' ? 'delete' : 'undo'}</>}</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => actRequest(inv, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Working…</> : <><Icon name="check" /> {approveLabel(inv) === 'Approve' ? 'Approve' : approveLabel(inv)} {inv.pending_action.type === 'delete' ? 'delete' : 'undo'}</>}</button>
                         <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => actRequest(inv, 'reject')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
                       </> : <span className="c1a-note">Not an approver</span>)}
                       {inv.approval_status === 'pending' && (canApprove(inv) ? <>
-                        <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> Approve</>}</button>
+                        <button className="nx-btn nx-btn-sm nx-btn-success" onClick={() => act(inv.id, 'approve')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'approve' ? <><span className="nx-spin" aria-hidden="true" /> Approving…</> : <><Icon name="check" /> {approveLabel(inv)}</>}</button>
                         <button className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => act(inv.id, 'reject')} disabled={busy === inv.id}>{busy === inv.id && busyAct === 'reject' ? <><span className="nx-spin" aria-hidden="true" /> Rejecting…</> : <><Icon name="x" /> Reject</>}</button>
                       </> : <span className="c1a-note">Not an approver</span>)}
                     </div>
