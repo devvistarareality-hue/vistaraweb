@@ -138,7 +138,8 @@ async function renewalHistory(investor, form) {
       const added = form.interest_added !== '' && form.interest_added != null ? Math.min(Number(form.interest_added) || 0, unpaid)
         : reinvest ? Math.min(unpaid, Math.max(next - principal, 0)) : 0;
       rows.push({ ...cur, interest_earned: earned, interest_added: added, interest_to_investor: Math.max(earned - added, 0),
-        principal_returned: Math.max(principal - next, 0), fresh_money: Math.max(next - principal - added, 0), renewed_with: next });
+        principal_returned: Math.max(principal - next, 0), fresh_money: Math.max(next - principal - added, 0), renewed_with: next,
+        paid_at_renewal: form.pay_now?.paid_date || '' });
     }
     return rows;
   } catch { return []; }
@@ -155,6 +156,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     // The finished term's unpaid interest: '' (decided by the amount), 'pay' or 'reinvest'.
     interest_choice: '',
     interest_added: '',
+    pay_now: null,      // {paid_date, notes} — the money going to him was handed over now
     interest_payout: investor.interest_payout || 'maturity',
     total_return_pct: String(investor.total_return_pct ?? ''),
     security: investor.security || '',
@@ -258,6 +260,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       const payload = { ...form, loi_file: loiFile };
       if (!payload.interest_choice) delete payload.interest_choice;
       if (payload.interest_added === '') delete payload.interest_added;
+      if (!payload.pay_now) delete payload.pay_now;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorRenew(investor.id), {
         method: 'POST',
@@ -288,7 +291,8 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       </div>
 
       <RenewalSummary investorId={investor.id} newAmount={form.amount_invested}
-        onRenewal={(r) => setForm((f) => ({ ...f, amount_invested: String(r.amount), interest_choice: r.interest_choice, interest_added: String(r.interest_added) }))} />
+        onRenewal={(r) => setForm((f) => ({ ...f, amount_invested: String(r.amount), interest_choice: r.interest_choice, interest_added: String(r.interest_added) }))}
+        payNow={form.pay_now} onPayNow={(v) => setForm((f) => ({ ...f, pay_now: v }))} />
 
       <C1Section title="Renewal">
         <C1Field label="Renewal date" required hint="The day the previous term ended — change it only if the renewal started later">

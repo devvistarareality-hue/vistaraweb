@@ -237,7 +237,7 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
 // at-maturity scheme's interest inside the maturity payout) is paid to him or goes
 // into the renewal; money he takes beyond the interest is principal paid back;
 // money he adds is fresh money.
-export function RenewalSummary({ investorId, newAmount, onRenewal }) {
+export function RenewalSummary({ investorId, newAmount, onRenewal, payNow, onPayNow }) {
   const [st] = useSettlement(investorId);
   const [how, setHow] = useState('');        // all | interest_out | take | more — '' = amount typed by hand
   const [take, setTake] = useState('');
@@ -310,6 +310,30 @@ export function RenewalSummary({ investorId, newAmount, onRenewal }) {
           {fresh > 0 && <div><span>Fresh money he adds</span><b>{rupee(fresh)}</b></div>}
           {toHim > 0 && <div><span>Interest paid to him</span><b>{rupee(toHim)}</b></div>}
           {back > 0 && <div><span>Principal paid back to him</span><b>{rupee(back)}</b></div>}
+        </div>
+      )}
+      {next > 0 && (toHim + back) > 0 && onPayNow && (
+        <div className="c1r-how">
+          <span className="c1r-how-q">Did he receive this {rupee(toHim + back)} now?</span>
+          <div className={`c1r-opt${payNow ? ' is-on' : ''}`}>
+            <label>
+              <input type="radio" name="pay-now" checked={!!payNow} onChange={() => onPayNow({ paid_date: payNow?.paid_date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }), notes: payNow?.notes || '' })} />
+              <b>Yes, it was paid to him</b><small>marked paid when the renewal is approved</small>
+            </label>
+            {payNow && (
+              <div className="c1r-paynow">
+                <input className="nx-input" type="date" max={new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })} value={payNow.paid_date}
+                  onChange={(e) => onPayNow({ ...payNow, paid_date: e.target.value })} />
+                <input className="nx-input" placeholder="UTR / cheque no." value={payNow.notes} onChange={(e) => onPayNow({ ...payNow, notes: e.target.value })} />
+              </div>
+            )}
+          </div>
+          <div className={`c1r-opt${!payNow ? ' is-on' : ''}`}>
+            <label>
+              <input type="radio" name="pay-now" checked={!payNow} onChange={() => onPayNow(null)} />
+              <b>No, pay him later</b><small>stays due on Payouts</small>
+            </label>
+          </div>
         </div>
       )}
     </C1Section>

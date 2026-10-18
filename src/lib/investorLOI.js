@@ -363,10 +363,11 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
       const stayed = principal + earned - toHim;
       const lines = [['', 'Principal invested', principal]];
       if (earned) lines.push(['+', 'Interest earned', earned]);
-      if (toHim) lines.push(['−', 'Interest paid / payable to him', toHim]);
+      const paidOn = t.paid_at_renewal ? ` (paid ${fmtDate(t.paid_at_renewal)})` : '';
+      if (toHim) lines.push(['−', (t.paid_at_renewal ? 'Interest paid to him' : 'Interest to be paid to him') + paidOn, toHim]);
       if ((earned || toHim) && (fresh || back)) lines.push(['=', 'With us at the end of the term', stayed, 'sub']);
       if (fresh) lines.push(['+', 'New money added', fresh]);
-      if (back) lines.push(['−', 'Principal taken back', back]);
+      if (back) lines.push(['−', (t.paid_at_renewal ? 'Principal paid back to him' : 'Principal to be paid back to him') + (t.paid_at_renewal ? ` (paid ${fmtDate(t.paid_at_renewal)})` : ''), back]);
       lines.push(['=', 'Renewed with', renewed, 'total']);
       const boxH = 9 + lines.length * 5.2 + 3;
       chk(boxH + 4);
