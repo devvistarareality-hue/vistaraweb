@@ -115,7 +115,7 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
             {schemes.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
           </select>
         </C1Field>
-        <C1Field label="Amount interested (₹)"><input className="nx-input" type="number" value={form.amount_interested} onChange={upd('amount_interested')} /></C1Field>
+        <C1Field label="Amount interested (₹)"><input className="nx-input" type="number" step="0.01" value={form.amount_interested} onChange={upd('amount_interested')} /></C1Field>
         {manager && (
           <C1Field label="Assigned to">
             <select className="nx-input" value={form.assigned_to} onChange={upd('assigned_to')}>

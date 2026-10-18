@@ -86,7 +86,7 @@ function SchemeModal({ scheme, onClose, onSaved }) {
           <input className="nx-input" type="number" min="1" value={form.tenure_months} onChange={(e) => set('tenure_months', e.target.value)} required />
         </C1Field>
         <C1Field label="Min ticket size (₹)" required>
-          <input className="nx-input" type="number" min="0" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
+          <input className="nx-input" type="number" min="0" step="0.01" value={form.min_ticket_size} onChange={(e) => set('min_ticket_size', e.target.value)} required />
         </C1Field>
       </C1Section>
 

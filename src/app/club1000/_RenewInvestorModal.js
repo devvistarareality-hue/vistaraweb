@@ -296,7 +296,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
           <C1Value>{maturityPreview ? formatDMY(maturityPreview) : '—'}</C1Value>
         </C1Field>
         <C1Field label="Amount invested (₹)" required>
-          <input className="nx-input" type="number" min="0" value={form.amount_invested} onChange={(e) => setForm((f) => ({ ...f, amount_invested: e.target.value, interest_choice: '', interest_added: '' }))} required />
+          <input className="nx-input" type="number" min="0" step="0.01" value={form.amount_invested} onChange={(e) => setForm((f) => ({ ...f, amount_invested: e.target.value, interest_choice: '', interest_added: '' }))} required />
         </C1Field>
         <C1Field label="Interest payout">
           <select className="nx-input" value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>

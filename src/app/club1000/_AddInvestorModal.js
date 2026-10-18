@@ -509,7 +509,7 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
 
       <C1Section title="Investment">
         <C1Field label="Amount invested (₹)" required>
-          <input className="nx-input" type="number" min="0" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
+          <input className="nx-input" type="number" min="0" step="0.01" value={form.amount_invested} onChange={(e) => set('amount_invested', e.target.value)} required />
         </C1Field>
         <C1Field label="Interest payout">
           <select className="nx-input" value={form.interest_payout} onChange={(e) => selectInterestPayout(e.target.value)}>
