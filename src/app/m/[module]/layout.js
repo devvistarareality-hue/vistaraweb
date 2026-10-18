@@ -8,7 +8,8 @@ import { fetchCompanies } from '../../../redux/actions/companiesActions';
 import { restoreAdminFilter, setAdminCompany } from '../../../redux/reducers/adminFilterReducer';
 import { MODULE_META } from './moduleMeta';
 import { groupOfSlug } from '../../../lib/moduleGroups';
-import {SLUG_TO_MODULE, isManagerRole, moduleAccess, canSee} from '../../../lib/moduleAccess';
+import {SLUG_TO_MODULE, isManagerRole, moduleAccess, canSee, isSuperAdmin} from '../../../lib/moduleAccess';
+import NotificationBell from '../../sales/_NotificationBell';
 import { AUTH_ENDPOINTS } from '../../../constants/api';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
 import Loader from '../../../components/Loader';
@@ -246,6 +247,13 @@ export default function ModuleLayout({ children, params: paramsPromise }) {
           </>}
         </div>
         <div style={{ padding: '0 10px 18px' }}>
+          {/* Super admins get notifications in the admin dashboard sidebar instead. */}
+          {!isSuperAdmin(user) && (
+            <div className="nx-notif-row">
+              <span>Notifications</span>
+              <NotificationBell up align="left" />
+            </div>
+          )}
           <ThemeToggle style={{ marginBottom: 12 }} />
           <div style={{ height: 1, background: 'var(--border)', marginBottom: 14 }} />
           <button onClick={openProfile} style={{ ...s.userRow, width: '100%', border: '1px solid rgba(var(--ink-rgb),0.04)', cursor: 'pointer', textAlign: 'left' }}>

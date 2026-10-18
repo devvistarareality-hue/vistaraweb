@@ -13,6 +13,7 @@ import ChangePasswordModal from '../../components/ChangePasswordModal';
 import {moduleAccess, isSuperAdmin, canAccessModule, isClub1000Manager, canSee} from '../../lib/moduleAccess';
 
 import Icon from '../../components/Icon';
+import NotificationBell from '../sales/_NotificationBell';
 import Loader from '../../components/Loader';
 import ThemeToggle from '../../components/ThemeToggle';
 import NexoraLogo from '../../components/NexoraLogo';
@@ -331,6 +332,13 @@ export default function Club1000Layout({ children }) {
         </div>
 
         <div style={s.bottomArea}>
+          {/* Super admins get notifications in the admin dashboard sidebar instead. */}
+          {!isSuperAdmin(user) && (
+            <div className="nx-notif-row">
+              <span>Notifications</span>
+              <NotificationBell up align="left" />
+            </div>
+          )}
           <ThemeToggle style={{ marginBottom: 12 }} />
           <div style={s.divider} />
           <button onClick={openProfile} className="c1k-profile-btn" style={s.userRow}>
