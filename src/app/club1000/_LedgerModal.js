@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
@@ -35,6 +35,7 @@ export default function LedgerModal({ investorId, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+  const [termSel, setTermSel] = useState('all');   // 'all', or a term's number (0 = the original)
 
   useEffect(() => {
     let cancelled = false;
@@ -51,16 +52,36 @@ export default function LedgerModal({ investorId, onClose }) {
   }, [investorId]);
 
   const inv = data?.investor;
-  const s = data?.summary;
+  const terms = data?.terms || [];
+  const term = termSel === 'all' ? null : terms.find((t) => t.no === termSel);
+  const s = term ? term.summary : data?.summary;
+  const first = terms[0];
+  const principalHint = term ? `${term.no === 0 ? 'invested' : 'renewed'} ${formatDMY(term.start)}`
+    : first ? `${terms.length > 1 ? 'first invested' : 'invested'} ${formatDMY(first.start)}`
+    : inv?.investment_date ? `invested ${formatDMY(inv.investment_date)}` : '';
+  const rows = (data?.entries || []).filter((e) => e.type !== 'investment' && (termSel === 'all' || (e.term ?? 0) === termSel));
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
   return (
     <C1Modal wide title={`Ledger${inv ? ` — ${inv.name}` : ''}`} sub={inv ? `${inv.phone} · ${inv.scheme_name}` : null} onClose={onClose}>
       {loading ? <Loader label="Loading…" /> : err ? <C1Error>{err}</C1Error> : (
         <>
+          {terms.length > 1 && (
+            <div className="c1l-terms" role="tablist">
+              <button type="button" role="tab" aria-selected={termSel === 'all'} className={termSel === 'all' ? 'is-on' : ''} onClick={() => setTermSel('all')}>All terms</button>
+              {terms.map((t) => (
+                <button key={t.no} type="button" role="tab" aria-selected={termSel === t.no} className={termSel === t.no ? 'is-on' : ''} onClick={() => setTermSel(t.no)}>
+                  {t.label}{t.current ? <em>current</em> : null}
+                </button>
+              ))}
+            </div>
+          )}
+          {term && (
+            <div className="c1l-termline">{formatDMY(term.start)} → {formatDMY(term.maturity)} · principal {fmtMoney(term.principal)}</div>
+          )}
           <div className="c1l-cards">
             {[
-              ['Principal', s.principal ?? s.total_invested, '', inv?.investment_date ? `invested ${formatDMY(inv.investment_date)}` : ''],
+              ['Principal', s.principal ?? s.total_invested, '', principalHint],
               ['Interest', s.interest, ''],
               ['Total', s.total ?? s.total_payout_due, 'sum', 'principal + interest'],
               ['Due till today', s.due_till_today, 'info'],
@@ -78,13 +99,22 @@ export default function LedgerModal({ investorId, onClose }) {
                 <tr><th>Type</th><th className="num">Amount</th><th>Due date</th><th>Paid date</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {data.entries.filter((e) => e.type !== 'investment').map((e, i) => {
+                {rows.length === 0 && (
+                  <tr><td colSpan={5} className="c1l-muted">No payouts in this term.</td></tr>
+                )}
+                {rows.map((e, i) => {
                   // Unpaid: Pending once its date has come, Upcoming before that.
                   const due = e.due_date || e.date;
                   const st = e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
                     : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
+                  const head = termSel === 'all' && terms.length > 1 && (i === 0 || (rows[i - 1].term ?? 0) !== (e.term ?? 0))
+                    ? terms.find((t) => t.no === (e.term ?? 0)) : null;
                   return (
-                    <tr key={i}>
+                    <Fragment key={i}>
+                    {head && (
+                      <tr className="c1l-termrow"><td colSpan={5}>{head.label} · {formatDMY(head.start)} → {formatDMY(head.maturity)} · {fmtMoney(head.principal)}</td></tr>
+                    )}
+                    <tr>
                       <td>
                         <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
                         {e.period && (
@@ -100,6 +130,7 @@ export default function LedgerModal({ investorId, onClose }) {
                       <td className="c1l-muted">{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
                       <td><Badge label={st} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
                     </tr>
+                    </Fragment>
                   );
                 })}
               </tbody>

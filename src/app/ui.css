@@ -3635,10 +3635,10 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1im-check em.ok { color: var(--success); } .c1im-check em.bad { color: var(--danger); } .c1im-check em.warn { color: var(--warning); }
 
 /* Club 1000 Ledger: six figures, then Type · Amount · Due date · Paid date · Status. */
-.c1l-cards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.c1l-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
 .c1l-card { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); min-width: 0; }
 .c1l-card span { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.c1l-card b { font-size: 16px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c1l-card b { font-size: 19px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .c1l-card small { font-size: 10.5px; color: var(--muted); }
 .c1l-card.sum { background: var(--accent-softer); }
 .c1l-card.info b { color: var(--accent); }
@@ -3646,8 +3646,14 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1l-card.warn b { color: var(--warning); }
 .c1l-table .num { text-align: right; }
 .c1l-table tr.c1l-inv td { background: var(--accent-softer); }
-@media (max-width: 900px) { .c1l-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .c1l-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .c1l-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.c1l-terms { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.c1l-terms button { border: 1px solid var(--border); background: var(--surface); font: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-2); padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.c1l-terms button.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.c1l-terms em { font-style: normal; margin-left: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; opacity: .75; }
+.c1l-termline { font-size: 12.5px; color: var(--muted); margin: -2px 0 10px; }
+.c1l-table tr.c1l-termrow td { background: var(--surface-2); font-size: 11.5px; font-weight: 800; letter-spacing: .03em; color: var(--text-2); }
+@media (max-width: 520px) { .c1l-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .c1l-card b { font-size: 16px; } }
 
 /* My Bookings tabs; Drafts is outlined while it has any, so none is forgotten. */
 .nx-btn.mb-tab.has-drafts:not(.is-on) { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); }
@@ -3675,3 +3681,4 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1im-no small { display: block; font-size: 9.5px; color: var(--muted); }
 .c1pf-terms { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 2px; padding: 8px 10px; border-left: 3px solid var(--accent-soft); border-radius: 0 8px 8px 0; background: var(--surface-2); font-size: 12px; color: var(--muted); }
 .c1pf-terms b { color: var(--text); }
+.c1p-term { align-self: flex-start; display: inline-block; margin: 2px 0; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-deep); }

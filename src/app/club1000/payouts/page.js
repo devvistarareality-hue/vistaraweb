@@ -311,6 +311,7 @@ function PayModal({ row, today, onClose, onDone }) {
                 <input type="checkbox" checked={l.on} onChange={(e) => setLine(p.id, { on: e.target.checked })} aria-label="Pay this one" />
                 <span className="c1p-pay-what">
                   <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
+                  {p.term_label ? <span className="c1p-term">{p.term_label}</span> : null}
                   <span className={`c1p-pay-when${late ? ' late' : ''}`}>Due {formatDMY(p.due_date)}{late ? ' · late' : ''}</span>
                   {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
                 </span>
@@ -396,6 +397,7 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
                 <div className="c1pp-main">
                   <div className="c1pp-what">
                     <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
+                    {p.term_label ? <span className="c1p-term">{p.term_label}</span> : null}
                     <small>Due {formatDMY(p.due_date)}{p.period ? ` · ${p.period.days} days × ₹${Number(p.period.per_day).toLocaleString('en-IN')}` : ''}</small>
                     {p.notes ? <small className="c1pp-notes">Remarks: {p.notes}</small> : null}
                   </div>
