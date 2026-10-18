@@ -5,6 +5,7 @@ import { apiFetch } from '../../utils/apiFetch';
 import { formatDMY } from '../../lib/dateFormat';
 import { fmtMoney } from './_StatCard';
 import { notify } from '../../lib/notify';
+import { settledTo, settledRemark } from '../../lib/c1Settled';
 
 import Loader from '../../components/Loader';
 import { errText } from '../../lib/apiError';
@@ -21,6 +22,8 @@ const STATUS_COLOR = {
   paid: { bg: 'var(--success-soft)', fg: 'var(--success)' },
   // Paid before its due date.
   'paid early': { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
+  // Closed by a renewal — settled into / at that renewal, not paid on its own.
+  settled: { bg: 'var(--surface-2)', fg: 'var(--accent-deep)' },
   // Due and not yet paid to the investor.
   pending: { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
   // Not yet due.
@@ -118,7 +121,9 @@ export default function LedgerModal({ investorId, onClose }) {
                 {rows.map((e, i) => {
                   // Unpaid: Pending once its date has come, Upcoming before that.
                   const due = e.due_date || e.date;
-                  const st = e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
+                  const settled = e.status === 'paid' ? settledTo(e.notes) : '';
+                  const st = settled ? 'settled'
+                    : e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
                     : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
                   const head = termSel === 'all' && terms.length > 1 && (i === 0 || (rows[i - 1].term ?? 0) !== (e.term ?? 0))
                     ? terms.find((t) => t.no === (e.term ?? 0)) : null;
@@ -133,7 +138,8 @@ export default function LedgerModal({ investorId, onClose }) {
                         {e.period && (
                           <div className="c1p-why"><b>{e.period.label}</b> · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}</div>
                         )}
-                        {!!e.notes && !e.is_balance && <div className="c1l-note">{e.notes}</div>}
+                        {!!e.notes && !e.is_balance && (settled ? (settledRemark(e.notes) && <div className="c1l-note">{settledRemark(e.notes)}</div>)
+                          : <div className="c1l-note">{e.notes}</div>)}
                       </td>
                       <td className="num c1l-amt">
                         {fmtMoney(e.amount)}
@@ -141,7 +147,7 @@ export default function LedgerModal({ investorId, onClose }) {
                       </td>
                       <td>{formatDMY(e.due_date || e.date)}</td>
                       <td className="c1l-muted">{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
-                      <td><Badge label={st} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
+                      <td><Badge label={settled || st} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
                     </tr>
                     </Fragment>
                   );

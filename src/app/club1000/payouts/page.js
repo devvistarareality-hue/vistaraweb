@@ -4,6 +4,7 @@
 // screen is one card per investor (not one row per payout): what is overdue to
 // them, what falls due next, what they have been paid, and a Pay button that
 // settles any of their pending payouts in one go.
+import { settledTo, settledRemark } from '../../../lib/c1Settled';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
@@ -423,11 +424,11 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
                     <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
                     {p.term_label ? <span className="c1p-term">{p.term_label}</span> : null}
                     <small>Due {formatDMY(p.due_date)}{p.period ? ` · ${p.period.days} days × ₹${Number(p.period.per_day).toLocaleString('en-IN')}` : ''}</small>
-                    {p.notes ? <small className="c1pp-notes">Remarks: {p.notes}</small> : null}
+                    {(settledTo(p.notes) ? settledRemark(p.notes) : p.notes) ? <small className="c1pp-notes">Remarks: {settledTo(p.notes) ? settledRemark(p.notes) : p.notes}</small> : null}
                   </div>
                   <span className="num c1pp-muted">{rupee(p.amount_due)}</span>
                   <span className={`num c1pp-paid${short ? ' short' : ''}`}>{rupee(paidAmt)}</span>
-                  <span className="c1pp-date">{p.paid_date ? formatDMY(p.paid_date) : '—'}</span>
+                  <span className="c1pp-date">{p.paid_date ? formatDMY(p.paid_date) : '—'}{settledTo(p.notes) ? <small className="c1pp-settled">{settledTo(p.notes)}</small> : null}</span>
                   <span className="c1pp-acts">
                     {canUndo && !ed && <>
                       <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" disabled={busyId === p.id || !!editing}
