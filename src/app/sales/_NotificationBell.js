@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { can, canSee, isManagerRole } from '../../lib/moduleAccess';
@@ -180,6 +180,19 @@ export default function NotificationBell({ up = false, align = 'right' }) {
     else router.push(url);
   }
 
+  // More than one module in the list → group them under a heading per module
+  // (in the order each module last had something), newest first inside each.
+  const modules = [...new Set(rows.map((n) => n.module || 'Other'))];
+  const grouped = modules.length > 1;
+  const ordered = grouped ? modules.flatMap((m) => rows.filter((n) => (n.module || 'Other') === m)) : rows;
+  const heads = {};
+  if (grouped) {
+    modules.forEach((m) => {
+      const list = rows.filter((n) => (n.module || 'Other') === m);
+      heads[list[0].id] = { name: m, count: list.length, unread: list.filter((n) => !n.is_read).length };
+    });
+  }
+
   async function markAll() {
     setUnread(0); setRows((s) => s.map((n) => ({ ...n, is_read: true })));
     try { await fetch(AUTH_ENDPOINTS.notificationsReadAll, { method: 'POST', headers: authHeaders() }); } catch (_) {}
@@ -207,10 +220,18 @@ export default function NotificationBell({ up = false, align = 'right' }) {
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             {rows.length === 0 ? (
               <div style={{ padding: 30, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>You're all caught up <Icon name="party" /></div>
-            ) : rows.map((n) => {
+            ) : ordered.map((n) => {
               const url = urlFor(n.type, me, n.data);
               const color = TYPE_COLOR[n.type] || 'var(--accent)';
+              const head = heads[n.id];
               return (
+              <Fragment key={n.id}>
+              {head && (
+                <div className="nx-notif-group">
+                  <span>{head.name}</span>
+                  <span className="nx-notif-group-count">{head.unread ? `${head.unread} new · ` : ''}{head.count}</span>
+                </div>
+              )}
               <div key={n.id} onClick={() => { if (url) { setOpen(false); go(url); } }}
                 style={{ display: 'flex', gap: 11, padding: '12px 14px', borderBottom: '1px solid var(--surface-2)', borderLeft: `3px solid ${n.is_read ? 'transparent' : color}`, background: n.is_read ? 'var(--surface)' : 'var(--accent-softer)', cursor: url ? 'pointer' : 'default' }}>
                 <span style={{ width: 34, height: 34, borderRadius: 17, background: `color-mix(in srgb, ${color} 10%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}><Icon name={ICON[n.type] || 'bell'} size={16} style={{ color }} /></span>
@@ -221,6 +242,7 @@ export default function NotificationBell({ up = false, align = 'right' }) {
                 </div>
                 {!n.is_read && <span style={{ width: 8, height: 8, borderRadius: 4, background: color, flexShrink: 0, marginTop: 6 }} />}
               </div>
+              </Fragment>
               );
             })}
           </div>
