@@ -353,6 +353,13 @@ export default function InvestorApprovalsPage() {
                         {inv.approval_status === 'rejected' && inv.rejected_reason && (
                           <div className="bk-reason"><b>Rejected — reason</b><span>{inv.rejected_reason}</span></div>
                         )}
+                        {/* Revisions / renewals turned down — the investment stays on its old terms. */}
+                        {(inv.rejections || []).slice().reverse().map((rj, k) => (
+                          <div key={k} className="bk-reason">
+                            <b>{rj.kind === 'renewal' ? 'Renewal' : 'Revision'} R{rj.no} rejected{rj.by ? ` by ${rj.by}` : ''}{rj.at ? ` · ${formatDMY(String(rj.at).slice(0, 10))}` : ''}{Number(rj.amount) ? ` · proposed ${fmtMoney(rj.amount)}` : ''}</b>
+                            <span>{rj.reason}</span>
+                          </div>
+                        ))}
                       </div>
                       <div className="c1a-card-side">
                         <div className="c1a-amt">{fmtMoney(inv.amount_invested)}</div>
