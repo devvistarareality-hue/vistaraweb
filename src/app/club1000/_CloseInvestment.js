@@ -313,27 +313,10 @@ export function RenewalSummary({ investorId, newAmount, onRenewal, payNow, onPay
         </div>
       )}
       {next > 0 && (toHim + back) > 0 && onPayNow && (
-        <div className="c1r-how">
-          <span className="c1r-how-q">Did he receive this {rupee(toHim + back)} now?</span>
-          <div className={`c1r-opt${payNow ? ' is-on' : ''}`}>
-            <label>
-              <input type="radio" name="pay-now" checked={!!payNow} onChange={() => onPayNow({ paid_date: payNow?.paid_date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }), notes: payNow?.notes || '' })} />
-              <b>Yes, it was paid to him</b><small>marked paid when the renewal is approved</small>
-            </label>
-            {payNow && (
-              <div className="c1r-paynow">
-                <input className="nx-input" type="date" max={new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })} value={payNow.paid_date}
-                  onChange={(e) => onPayNow({ ...payNow, paid_date: e.target.value })} />
-                <input className="nx-input" placeholder="UTR / cheque no." value={payNow.notes} onChange={(e) => onPayNow({ ...payNow, notes: e.target.value })} />
-              </div>
-            )}
-          </div>
-          <div className={`c1r-opt${!payNow ? ' is-on' : ''}`}>
-            <label>
-              <input type="radio" name="pay-now" checked={!payNow} onChange={() => onPayNow(null)} />
-              <b>No, pay him later</b><small>stays due on Payouts</small>
-            </label>
-          </div>
+        <div className="c1r-settle">
+          <span>The {rupee(toHim + back)} he takes is <b>paid to him at the renewal</b> — this term is settled and nothing from it stays due.</span>
+          <input className="nx-input" placeholder="UTR / cheque no. (optional)" value={payNow?.notes || ''}
+            onChange={(e) => onPayNow({ notes: e.target.value })} />
         </div>
       )}
     </C1Section>

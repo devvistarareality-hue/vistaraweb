@@ -139,7 +139,7 @@ async function renewalHistory(investor, form) {
         : reinvest ? Math.min(unpaid, Math.max(next - principal, 0)) : 0;
       rows.push({ ...cur, interest_earned: earned, interest_added: added, interest_to_investor: Math.max(earned - added, 0),
         principal_returned: Math.max(principal - next, 0), fresh_money: Math.max(next - principal - added, 0), renewed_with: next,
-        paid_at_renewal: form.pay_now?.paid_date || '' });
+        paid_at_renewal: form.investment_date || '' });
     }
     return rows;
   } catch { return []; }
@@ -260,7 +260,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       const payload = { ...form, loi_file: loiFile };
       if (!payload.interest_choice) delete payload.interest_choice;
       if (payload.interest_added === '') delete payload.interest_added;
-      if (!payload.pay_now) delete payload.pay_now;
+      if (!payload.pay_now?.notes) delete payload.pay_now;
       if ((form.interest_payout === 'quarterly' || form.interest_payout === 'monthly') && schedule.length) payload.payout_schedule = schedule;
       const res = await apiFetch(CLUB1000_ENDPOINTS.investorRenew(investor.id), {
         method: 'POST',

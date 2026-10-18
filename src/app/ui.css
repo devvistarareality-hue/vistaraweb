@@ -3711,3 +3711,5 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1r-wait { min-height: 420px; display: flex; align-items: center; justify-content: center; }
 .c1r-paynow { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 0 26px; }
 .c1r-paynow .nx-input { max-width: 220px; }
+.c1r-settle { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--success-soft); font-size: 13px; color: var(--text-2); }
+.c1r-settle .nx-input { max-width: 300px; }
