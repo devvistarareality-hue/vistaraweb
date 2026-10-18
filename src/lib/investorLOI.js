@@ -305,12 +305,9 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   // Revision/renewal watermark — this LOI proposes changed terms on an
   // already-approved investor, either a plain edit (revisionNo) or a
   // maturity rollover (renewalNo).
-  if (opts.renewalNo) {
+  if (loiBadge(opts)) {
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(ORG);
-    doc.text(`RENEWED LOI · R${opts.renewalNo}`, PW - M, 11, { align: 'right' });
-  } else if (opts.revisionNo) {
-    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); st(ORG);
-    doc.text(`REVISED LOI · R${opts.revisionNo}`, PW - M, 11, { align: 'right' });
+    doc.text(loiBadge(opts), PW - M, 11, { align: 'right' });
   }
 
   const half = (PW - 2 * M) / 2;
@@ -493,12 +490,28 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
   return doc;
 }
 
+// The stamp at the top right: which renewal this LOI starts ("RENEWAL 2 LOI"), or which
+// revision of which term it is ("RENEWAL 2 · REVISION 1" — counted within that term).
+export function loiBadge(opts = {}) {
+  if (opts.renewalNo) return `${(opts.nextTerm?.label || `Renewal ${opts.renewalNo}`).toUpperCase()} LOI`;
+  if (opts.revisionNo) {
+    const n = opts.termRevision || opts.revisionNo;
+    return opts.termLabel ? `${opts.termLabel.toUpperCase()} · REVISION ${n}` : `REVISED LOI · REVISION ${n}`;
+  }
+  return '';
+}
+
+// What this LOI is for, for its file name.
+export function loiPurpose(opts = {}) {
+  if (opts.renewalNo) return opts.nextTerm?.label || `Renewal ${opts.renewalNo}`;
+  if (opts.revisionNo) return `${opts.termLabel ? `${opts.termLabel} ` : ''}Revision ${opts.termRevision || opts.revisionNo}`;
+  return 'New investment';
+}
+
 // LOI_RISE-043_Prince_Test_2_Renewal_2.pdf — the investor, and what this LOI is for:
 // the renewal it starts, a revision, or a new investment.
 function loiFilename(investor, opts = {}) {
-  const what = opts.nextTerm?.label || (opts.renewalNo ? `Renewal R${opts.renewalNo}`
-    : opts.revisionNo ? `Revision R${opts.revisionNo}` : 'New investment');
-  const name = [investor.loi_no, investor.name, what].filter(Boolean).map((x) => String(x).trim()).join('_');
+  const name = [investor.loi_no, investor.name, loiPurpose(opts)].filter(Boolean).map((x) => String(x).trim()).join('_');
   return `LOI_${name.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '_')}.pdf`;
 }
 

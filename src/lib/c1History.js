@@ -9,8 +9,9 @@ export async function earlierTerms(investorId) {
     const r = await apiFetch(CLUB1000_ENDPOINTS.investorLedger(investorId));
     const d = r.ok ? await r.json() : null;
     const terms = d?.terms || [];
-    return { history: terms.filter((t) => !t.current), current: terms.find((t) => t.current) || null };
+    return { history: terms.filter((t) => !t.current), current: terms.find((t) => t.current) || null,
+             revisions: Number(d?.current_term_revisions) || 0 };   // revisions of the running term so far
   } catch (_) {
-    return { history: [], current: null };
+    return { history: [], current: null, revisions: 0 };
   }
 }

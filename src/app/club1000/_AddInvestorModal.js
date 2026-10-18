@@ -335,11 +335,14 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
       if (revise) {
         // The revised LOI keeps the investor's LOI number and carries R1, R2, … A renewed
         // investment's LOI also states its earlier terms, as the renewal LOI does.
-        const past = revise.renewal_count ? await earlierTerms(revise.id) : { history: [] };
+        // Its stamp names the term and counts revisions within it: "Renewal 2 · Revision 1".
+        const past = revise.renewal_count ? await earlierTerms(revise.id) : { history: [], revisions: 0 };
+        const termLabel = revise.renewal_count ? (past.current?.label || `Renewal ${revise.renewal_count}`).split(' · ')[0] : '';
+        const termRevision = revise.renewal_count ? past.revisions + 1 : nextRevisionNo;
         await downloadInvestorLOI({ ...revise, ...form }, scheme, {
-          revisionNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl,
+          revisionNo: nextRevisionNo, termLabel, termRevision, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl,
           ...(past.history.length ? { history: past.history, nextTerm: {
-            label: `${(past.current?.label || `Renewal ${revise.renewal_count}`).split(' · ')[0]} (revised R${nextRevisionNo})`,
+            label: `${termLabel} · Revision ${termRevision}`,
             start: form.investment_date, maturity: maturityPreview, principal: form.amount_invested } } : {}),
         });
         setLoiDone(true);
