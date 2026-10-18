@@ -2,9 +2,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { CLUB1000_ENDPOINTS, SALES_ENDPOINTS } from '../../../constants/api';
+import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import {isClub1000Manager, isManagerRole, can} from '../../../lib/moduleAccess';
+import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import DateFilter from '../../sales/_DateFilter';
 import MultiSelect from '../../../components/MultiSelect';
 import { formatDMY } from '../../../lib/dateFormat';
@@ -121,8 +121,9 @@ export default function InvestorApprovalsPage() {
 
   useEffect(() => {
     if (!manager) return;
-    apiFetch(SALES_ENDPOINTS.usersSlim).then((r) => (r.ok ? r.json() : []))
-      .then((d) => setManagers(Array.isArray(d) ? d.filter((u) => isManagerRole(u) || u.role === 'Admin') : []))
+    // Only people with Club 1000 access — and manager-level access, which approving needs.
+    apiFetch(CLUB1000_ENDPOINTS.users).then((r) => (r.ok ? r.json() : []))
+      .then((d) => setManagers(Array.isArray(d) ? d.filter((u) => u.club_manager || u.role === 'Admin') : []))
       .catch(() => {});
   }, [manager]);
 
