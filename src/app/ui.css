@@ -3679,7 +3679,6 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1-bulkbar { position: sticky; bottom: 16px; z-index: 30; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px auto 0; width: fit-content; max-width: 100%; padding: 10px 12px 10px 18px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); box-shadow: var(--shadow-lg); color: var(--text); font-size: 13.5px; }
 .c1-bulkbar b { font-size: 15px; }
 
-.c1im-past { color: var(--accent-deep) !important; }
 .c1im-no small { display: block; font-size: 9.5px; color: var(--muted); }
 .c1pf-terms { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 2px; padding: 8px 10px; border-left: 3px solid var(--accent-soft); border-radius: 0 8px 8px 0; background: var(--surface-2); font-size: 12px; color: var(--muted); }
 .c1pf-terms b { color: var(--text); }
