@@ -13,6 +13,7 @@ import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
 import { schedulePeriods, maturityWorking } from '../../lib/c1Periods';
 import ScheduleTable from './_ScheduleTable';
 import { errText } from '../../lib/apiError';
+import { earlierTerms } from '../../lib/c1History';
 
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
 
@@ -332,8 +333,15 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
     setLoiDownloading(true);
     try {
       if (revise) {
-        // The revised LOI keeps the investor's LOI number and carries R1, R2, …
-        await downloadInvestorLOI({ ...revise, ...form }, scheme, { revisionNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl });
+        // The revised LOI keeps the investor's LOI number and carries R1, R2, … A renewed
+        // investment's LOI also states its earlier terms, as the renewal LOI does.
+        const past = revise.renewal_count ? await earlierTerms(revise.id) : { history: [] };
+        await downloadInvestorLOI({ ...revise, ...form }, scheme, {
+          revisionNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl,
+          ...(past.history.length ? { history: past.history, nextTerm: {
+            label: `${(past.current?.label || `Renewal ${revise.renewal_count}`).split(' · ')[0]} (revised R${nextRevisionNo})`,
+            start: form.investment_date, maturity: maturityPreview, principal: form.amount_invested } } : {}),
+        });
         setLoiDone(true);
         return;
       }
