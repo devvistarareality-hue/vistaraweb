@@ -10,6 +10,7 @@ import { printStatement } from '../m/[module]/_ar';
 
 import Loader from '../../components/Loader';
 import { errText } from '../../lib/apiError';
+import { openPendingUrl } from '../../lib/openSignedUrl';
 import { C1Modal, C1Error } from './_Form';
 
 const TYPE_COLOR = {
@@ -40,7 +41,15 @@ export default function LedgerModal({ investorId, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-  const [termSel, setTermSel] = useState('all');   // 'all', or a term's number (0 = the original)
+  // 'all' | 'original' | 'renewals' | 'redemptions'. Grouped rather than one
+  // chip per term: a five-times-renewed investment had six chips to read
+  // through, and what anyone actually asks is "the original", "the renewals"
+  // or "what has been taken out".
+  const [termSel, setTermSel] = useState('all');
+  // Which renewal is open inside the Renewals tab. Defaults to the first one
+  // through `openRenewal` below rather than an effect, so it is right on the
+  // very first render instead of after a flicker.
+  const [renewalSel, setRenewalSel] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,20 +67,51 @@ export default function LedgerModal({ investorId, onClose }) {
 
   const inv = data?.investor;
   const terms = data?.terms || [];
-  const term = termSel === 'all' ? null : terms.find((t) => t.no === termSel);
+  const originalTerm = terms.find((t) => t.no === 0) || null;
+  const renewals = terms.filter((t) => t.no > 0);
+  const hasRenewals = renewals.length > 0;
+  // The renewal being shown: the one picked, else the first — "Renewal 1" is
+  // open by default rather than an empty tab.
+  const openRenewal = renewals.find((t) => t.no === renewalSel) || renewals[0] || null;
+  const hasRedemptions = (data?.entries || []).some((e) => e.type === 'premature_redemption');
+  // Original and each renewal are single terms, so each has a summary of its
+  // own. "All terms" and "Redemptions" span several, and adding their
+  // principals would double-count money that rolled from one into the next —
+  // they show the whole investment's figures rather than an invented total.
+  const term = termSel === 'original' ? originalTerm
+    : termSel === 'renewals' ? openRenewal
+    : null;
   const s = term ? term.summary : data?.summary;
   const first = terms[0];
   const principalHint = term ? `${term.no === 0 ? 'invested' : 'renewed'} ${formatDMY(term.start)}`
     : first ? `${terms.length > 1 ? 'first invested' : 'invested'} ${formatDMY(first.start)}`
     : inv?.investment_date ? `invested ${formatDMY(inv.investment_date)}` : '';
   // A term's own signed LOI — the running one, or an earlier term's kept copy.
-  async function openTermLoi(t) {
-    const r = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(investorId)}${t.current ? '' : `?term=${t.no}`}`).catch(() => null);
+  async function openLoiAt(query) {
+    // The tab is opened before the fetch, not after it: a pop-up created once
+    // the signed URL has arrived is no longer tied to the click and the browser
+    // blocks it — which is why these buttons did nothing at all.
+    const tab = openPendingUrl();
+    const r = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(investorId)}${query}`).catch(() => null);
     const d = r ? await r.json().catch(() => ({})) : {};
-    if (r?.ok && d.url) window.open(d.url, '_blank', 'noopener,noreferrer');
-    else notify(errText(d, 'Could not open the LOI.'), 'error');
+    if (r?.ok && d.url) tab.show(d.url);
+    else { tab.cancel(); notify(errText(d, 'Could not open the LOI.'), 'error'); }
   }
-  const rows = (data?.entries || []).filter((e) => e.type !== 'investment' && (termSel === 'all' || (e.term ?? 0) === termSel));
+  const openTermLoi = (t) => openLoiAt(t.current ? '' : `?term=${t.no}`);
+  // A redemption keeps its own signed LOI on the payout — the investor's copy
+  // is replaced by whatever is signed after it.
+  const openPayoutLoi = (e) => openLoiAt(`?payout=${e.payout_id}`);
+  const currentTerm = terms.find((t) => t.current) || null;
+  // Whether this investment has had a redemption approved — the current signed
+  // LOI is then the one signed for it.
+  const redeemed = Number(inv?.redemption_count || 0) > 0;
+  const rows = (data?.entries || []).filter((e) => {
+    if (e.type === 'investment') return false;
+    if (termSel === 'original') return (e.term ?? 0) === 0;
+    if (termSel === 'renewals') return openRenewal ? (e.term ?? 0) === openRenewal.no : false;
+    if (termSel === 'redemptions') return e.type === 'premature_redemption';
+    return true;
+  });
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   // The statement to give the investor — the server's page, printed to PDF.
   async function statement() {
@@ -85,24 +125,83 @@ export default function LedgerModal({ investorId, onClose }) {
         <>
           <div className="c1l-actions">
             <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
+            {/* The running term's signed LOI, reachable whatever term is
+                selected. An approved redemption replaces the investment's LOI
+                with the one signed for it, so after a redemption this IS the
+                redemption LOI — which is why it is named for the last thing
+                signed rather than generically. Previously it could only be
+                opened by first picking a single term, so on "All terms" there
+                was no way to it at all. */}
+            {currentTerm?.has_loi && (
+              <button type="button" className="nx-btn nx-btn-md nx-btn-secondary"
+                onClick={() => openTermLoi(currentTerm)}>
+                {redeemed ? 'Redemption LOI' : 'Signed LOI'}
+              </button>
+            )}
             <span>to give the investor — every term, payout and payment</span>
           </div>
-          {terms.length > 1 && (
+          {/* A redemption on a never-renewed investment still needs its tab, so
+              the strip is not gated on the term count alone. */}
+          {(terms.length > 1 || hasRedemptions) && (
             <div className="c1l-terms" role="tablist">
-              <button type="button" role="tab" aria-selected={termSel === 'all'} className={termSel === 'all' ? 'is-on' : ''} onClick={() => setTermSel('all')}>All terms</button>
-              {terms.map((t) => (
-                <button key={t.no} type="button" role="tab" aria-selected={termSel === t.no} className={termSel === t.no ? 'is-on' : ''} onClick={() => setTermSel(t.no)}>
-                  {t.label}{t.current ? <em>current</em> : null}
+              {/* Renewals and Redemptions appear only once there are any — an
+                  investment that has simply run its course shows neither. */}
+              {[
+                ['all', 'All terms', true],
+                ['original', 'Original', true],
+                ['renewals', `Renewals (${terms.filter((t) => t.no > 0).length})`, hasRenewals],
+                ['redemptions', 'Redemptions', hasRedemptions],
+              ].filter(([, , show]) => show).map(([key, label]) => (
+                <button key={key} type="button" role="tab" aria-selected={termSel === key}
+                  className={termSel === key ? 'is-on' : ''} onClick={() => setTermSel(key)}>
+                  {label}
                 </button>
               ))}
             </div>
           )}
-          {term && (
+          {/* The signed paper for whatever the tab is showing: the original
+              term, each renewal, or each redemption. Previously only the one
+              selected term had a button, so there was no way to reach an
+              earlier renewal's LOI without hunting for it. */}
+          {termSel === 'original' && originalTerm && (
             <div className="c1l-termline">
-              {formatDMY(term.start)} → {formatDMY(term.maturity)} · principal {fmtMoney(term.principal)}
-              {term.has_loi
-                ? <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary c1l-termloi" onClick={() => openTermLoi(term)}>Open this term's signed LOI</button>
-                : !term.current && <span className="c1l-noloi"> · its signed LOI was not kept (renewed before LOIs were kept)</span>}
+              {formatDMY(originalTerm.start)} → {formatDMY(originalTerm.maturity)} · principal {fmtMoney(originalTerm.principal)}
+              {originalTerm.has_loi
+                ? <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary c1l-termloi" onClick={() => openTermLoi(originalTerm)}>Original LOI</button>
+                : <span className="c1l-noloi"> · its signed LOI was not kept (renewed before LOIs were kept)</span>}
+            </div>
+          )}
+          {termSel === 'renewals' && openRenewal && (
+            <>
+              {/* Picking a renewal opens that renewal — its figures and its
+                  payouts below. Its signed LOI is a button on its own line,
+                  rather than the chip itself firing a download. */}
+              <div className="c1l-loirow" role="tablist">
+                {renewals.map((t) => (
+                  <button key={t.no} type="button" role="tab"
+                    aria-selected={t.no === openRenewal.no}
+                    className={`nx-btn nx-btn-sm ${t.no === openRenewal.no ? 'nx-btn-primary' : 'nx-btn-secondary'}`}
+                    onClick={() => setRenewalSel(t.no)}>{t.label}</button>
+                ))}
+              </div>
+              <div className="c1l-termline">
+                {formatDMY(openRenewal.start)} → {formatDMY(openRenewal.maturity)} · principal {fmtMoney(openRenewal.principal)}
+                {openRenewal.has_loi
+                  ? <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary c1l-termloi" onClick={() => openTermLoi(openRenewal)}>Signed LOI</button>
+                  : <span className="c1l-noloi"> · its signed LOI was not kept (renewed before LOIs were kept)</span>}
+              </div>
+            </>
+          )}
+          {termSel === 'redemptions' && (
+            <div className="c1l-loirow">
+              {rows.filter((e) => e.type === 'premature_redemption').map((e, i) => (e.has_loi ? (
+                <button key={e.payout_id} type="button" className="nx-btn nx-btn-sm nx-btn-secondary"
+                  onClick={() => openPayoutLoi(e)}>Redemption {i + 1} LOI · {formatDMY(e.due_date || e.date)}</button>
+              ) : (
+                <span key={e.payout_id} className="c1l-noloi">
+                  Redemption {i + 1} · {formatDMY(e.due_date || e.date)} · LOI not kept
+                </span>
+              )))}
             </div>
           )}
           <div className="c1l-cards">
@@ -126,7 +225,12 @@ export default function LedgerModal({ investorId, onClose }) {
               </thead>
               <tbody>
                 {rows.length === 0 && (
-                  <tr><td colSpan={5} className="c1l-muted">No payouts in this term.</td></tr>
+                  <tr><td colSpan={5} className="c1l-muted">
+                    {termSel === 'redemptions' ? 'Nothing has been redeemed early.'
+                      : termSel === 'renewals' ? 'No payouts in this renewal.'
+                      : termSel === 'original' ? 'No payouts in the original term.'
+                      : 'No payouts yet.'}
+                  </td></tr>
                 )}
                 {rows.map((e, i) => {
                   // Unpaid: Pending once its date has come, Upcoming before that.
@@ -135,7 +239,8 @@ export default function LedgerModal({ investorId, onClose }) {
                   const st = settled ? 'settled'
                     : e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
                     : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
-                  const head = termSel === 'all' && terms.length > 1 && (i === 0 || (rows[i - 1].term ?? 0) !== (e.term ?? 0))
+                  const grouped = termSel === 'all' || termSel === 'redemptions';
+                  const head = grouped && terms.length > 1 && (i === 0 || (rows[i - 1].term ?? 0) !== (e.term ?? 0))
                     ? terms.find((t) => t.no === (e.term ?? 0)) : null;
                   return (
                     <Fragment key={i}>

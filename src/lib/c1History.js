@@ -10,7 +10,10 @@ export async function earlierTerms(investorId) {
     const d = r.ok ? await r.json() : null;
     const terms = d?.terms || [];
     return { history: terms.filter((t) => !t.current), current: terms.find((t) => t.current) || null,
-             revisions: Number(d?.current_term_revisions) || 0 };   // revisions of the running term so far
+             revisions: Number(d?.current_term_revisions) || 0,   // revisions of the running term so far
+             // Redemptions already made, oldest first — the LOI lists them
+             // above the one being signed so the paper shows the whole story.
+             redemptions: (d?.entries || []).filter((e) => e.type === 'premature_redemption') };
   } catch (_) {
     return { history: [], current: null, revisions: 0 };
   }

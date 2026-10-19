@@ -395,6 +395,86 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
     y += 4;
   }
 
+  // ── Premature Redemption — the working, in the same adding-up box the
+  // Investment History terms use above: a title bar, then sign / label / value
+  // rows that total on the page. The payable chain is kept on its own so the
+  // column genuinely adds up; what stays invested follows as a footer bar,
+  // exactly like the "This LOI:" bar, because it is not part of that sum.
+  if (opts.redemption) {
+    const R = (n) => Math.round(Number(n) || 0);
+    // Every redemption on this investment, oldest first, each shown the same
+    // way — a one-line "already paid out" told the reader a total and nothing
+    // about how it was arrived at. The earlier ones come from the working kept
+    // on their payout; one approved before that was kept has no breakdown to
+    // show, and says so rather than inventing figures.
+    const earlier = (opts.pastRedemptions || []).map((e) => ({
+      ...(e.redemption || {}),
+      payable: e.redemption?.payable ?? e.amount,
+      as_of: e.redemption?.redemption_date || e.due_date || e.date,
+      bare: !e.redemption,
+    }));
+    const all = [...earlier, { ...opts.redemption, as_of: opts.redemption.as_of }];
+
+    secHead('Premature Redemption');
+    all.forEach((rd, idx) => {
+      const last = idx === all.length - 1;
+      if (rd.bare) {
+        // Approved before the working was kept — the total is all there is.
+        chk(10);
+        sf(WASH); doc.roundedRect(M, y - 4, CW, 9, 1.5, 1.5, 'F');
+        sf(ORG); doc.roundedRect(M + 1.2, y - 2.5, 1.7, 6, 0.85, 0.85, 'F');
+        st(MB); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text(`REDEMPTION ${idx + 1} · ${fmtDate(rd.as_of)} — paid out`, M + 6, y + 1.5);
+        doc.text('Rs. ' + money(rd.payable), PW - M - 3, y + 1.5, { align: 'right' });
+        y += 13;
+        return;
+      }
+      const perDay = Number(rd.daily_interest || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const lines = [
+        ['', 'Principal redeemed', R(rd.redeem_amount)],
+        ['+', `Premature interest  (${rd.days_held} days x Rs. ${perDay})`, R(rd.premature_interest)],
+        ['=', last ? 'Total payable to the investor' : 'Paid out', R(rd.payable), 'total'],
+      ];
+      const boxH = 9 + lines.length * 5.2 + 3;
+      chk(boxH + 16);
+      sf(WASH); doc.roundedRect(M, y - 4.5, CW, boxH, 2, 2, 'F');
+      sd([206, 217, 235]); doc.setLineWidth(0.3); doc.roundedRect(M, y - 4.5, CW, boxH, 2, 2, 'S');
+      sf(ORG); doc.roundedRect(M, y - 4.5, 2.2, boxH, 1, 1, 'F');
+      st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(`REDEMPTION ${idx + 1}  ·  ${fmtDate(rd.as_of)}  ·  HELD ${rd.days_held} DAYS AT ${Number(rd.rate_per_month)}% A MONTH, BY THE DAY`, M + 6, y + 0.5);
+      y += 6;
+      const LX = M + 10, SX = M + 6, VX = PW - M - 6;
+      lines.forEach(([sign, label, val, kind]) => {
+        if (kind) { sd(kind === 'total' ? MB2 : LN); doc.setLineWidth(kind === 'total' ? 0.4 : 0.25); doc.line(LX, y - 3.4, VX, y - 3.4); }
+        doc.setFontSize(kind === 'total' ? 9 : 8.4); doc.setFont('helvetica', kind ? 'bold' : 'normal'); st(kind === 'total' ? MB : DK);
+        if (sign) { st(sign === '+' ? [27, 122, 69] : MB); doc.text(sign, SX, y + 0.4); st(kind === 'total' ? MB : DK); }
+        doc.text(label, LX, y + 0.4);
+        doc.text('Rs. ' + money(val), VX, y + 0.4, { align: 'right' });
+        y += 5.2;
+      });
+      y += 9;
+
+      // What was left after it — stated for each, so the chain reads down the
+      // page: 40 lakh, redeem 10, 30 left; redeem 20, 10 left.
+      const full = Number(rd.remaining_principal) <= 0;
+      chk(12); sf(WASH); doc.roundedRect(M, y - 4, CW, 9, 1.5, 1.5, 'F'); sf(ORG); doc.roundedRect(M + 1.2, y - 2.5, 1.7, 6, 0.85, 0.85, 'F');
+      st(MB); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      doc.text(full
+        ? (last ? 'Nothing stays invested — this redemption closes the investment' : 'Nothing stayed invested')
+        : (last ? `Stays invested at ${Number(rd.normal_return_pct || investor.total_return_pct)}% to ${fmtDate(rd.maturity_date || investor.maturity_date)}`
+                : 'Stayed invested'), M + 6, y + 1.5);
+      if (!full) doc.text('Rs. ' + money(rd.remaining_principal), PW - M - 3, y + 1.5, { align: 'right' });
+      y += 12;
+
+      if (last && Number(rd.interest_paid_share) > 0) {
+        chk(8); st(DK); doc.setFontSize(7.6); doc.setFont('helvetica', 'normal');
+        doc.text(`Interest already paid on the redeemed share at the normal rate: Rs. ${money(rd.interest_paid_share)} (not deducted above).`, M + 2, y);
+        y += 8;
+      }
+    });
+    y += 4;
+  }
+
   // Investment terms — mirrors the "Details" info grid.
   secHead('Investment Terms');
   infoGrid([
@@ -493,6 +573,9 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
 // The stamp at the top right: which renewal this LOI starts ("RENEWAL 2 LOI"), or which
 // revision of which term it is ("RENEWAL 2 · REVISION 1" — counted within that term).
 export function loiBadge(opts = {}) {
+  if (opts.redemption) {
+    return opts.redemption.is_full ? 'REDEMPTION LOI' : 'PARTIAL REDEMPTION LOI';
+  }
   if (opts.renewalNo) return `${(opts.nextTerm?.label || `Renewal ${opts.renewalNo}`).toUpperCase()} LOI`;
   if (opts.revisionNo) {
     const n = opts.termRevision || opts.revisionNo;
@@ -503,6 +586,7 @@ export function loiBadge(opts = {}) {
 
 // What this LOI is for, for its file name.
 export function loiPurpose(opts = {}) {
+  if (opts.redemption) return opts.redemption.is_full ? 'Redemption' : 'Partial redemption';
   if (opts.renewalNo) return opts.nextTerm?.label || `Renewal ${opts.renewalNo}`;
   if (opts.revisionNo) return `${opts.termLabel ? `${opts.termLabel} ` : ''}Revision ${opts.termRevision || opts.revisionNo}`;
   return 'New investment';

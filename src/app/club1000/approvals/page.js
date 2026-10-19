@@ -8,12 +8,14 @@ import {isClub1000Manager, can} from '../../../lib/moduleAccess';
 import DateFilter from '../../sales/_DateFilter';
 import MultiSelect from '../../../components/MultiSelect';
 import { formatDMY } from '../../../lib/dateFormat';
+import { rupee } from '../../../lib/inr';
 import { fmtMoney } from '../_StatCard';
 
 import Icon from '../../../components/Icon';
 import { notify, confirmDialog, reasonDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
 import AddInvestorModal from '../_AddInvestorModal';
+import { openPendingUrl } from '../../../lib/openSignedUrl';
 import { errText } from '../../../lib/apiError';
 
 const APPROVAL_COLORS = {
@@ -195,10 +197,13 @@ export default function InvestorApprovalsPage() {
   useEffect(() => { if (manager) load(); }, [manager, tab, search]);
 
   async function openLoi(id, pending) {
+    // Opened before the fetch: a pop-up created after an await is no longer
+    // tied to the click and the browser blocks it silently.
+    const tab = openPendingUrl();
     const res = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(id)}${pending ? '?pending=1' : ''}`);
     const data = await res.json();
-    if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-    else notify(errText(data, 'Could not open the LOI.'));
+    if (res.ok && data.url) tab.show(data.url);
+    else { tab.cancel(); notify(errText(data, 'Could not open the LOI.')); }
   }
 
   // A revision can change anything on the Add Investor form, so every field it may
@@ -211,6 +216,26 @@ export default function InvestorApprovalsPage() {
   function revisionSummary(inv) {
     const pr = inv.pending_revision;
     if (!pr) return null;
+    // A redemption stores its whole working, so the generic field-by-field dump
+    // read as "payable: 1095671.23 · days_held: 291 · redeem_amount: …" — every
+    // figure, in the order they happen to be stored, none of it a sentence.
+    // Said properly instead, in the order someone approving would read it.
+    if (inv.pending_revision_type === 'redeem') {
+      const money = (v) => rupee(Number(v) || 0);
+      const full = Number(pr.remaining_principal) <= 0;
+      const bits = [
+        `Redeeming ${money(pr.redeem_amount)} of ${money(inv.amount_invested)}`,
+        `${pr.days_held} days at ${Number(pr.rate_per_month)}% a month = ${money(pr.premature_interest)} interest`,
+        `${money(pr.payable)} payable on ${formatDMY(pr.redemption_date)}`,
+        full ? 'Nothing stays invested — the investment closes'
+             : `${money(pr.remaining_principal)} stays invested at ${Number(inv.total_return_pct)}%`,
+      ];
+      if (Number(pr.interest_paid_share) > 0) {
+        bits.push(`${money(pr.interest_paid_share)} already paid on that share (not deducted)`);
+      }
+      if (pr.notes) bits.push(String(pr.notes));
+      return bits.join(' · ');
+    }
     const isRenew = inv.pending_revision_type === 'renew';
     return Object.entries(pr).filter(([k]) => k !== 'payout_schedule').map(([k, v]) => {
       if (k === 'document_name') return 'New KYC scan';
@@ -374,20 +399,34 @@ export default function InvestorApprovalsPage() {
               {groups[gn].map((inv) => {
                 const isRevision = !!inv.pending_revision;
                 const isRenewal = isRevision && inv.pending_revision_type === 'renew';
+                const isRedemption = isRevision && inv.pending_revision_type === 'redeem';
                 return (
                   <div className="nx-card c1a-card" key={inv.id}>
                     <div className="c1a-card-top">
                       <div className="c1a-card-main">
                         <div className="c1a-name">
                           {inv.name}
-                          {inv.revision_no > 0 && <span className={`c1a-rev${isRenewal ? ' renew' : ''}`}>{isRenewal ? 'RENEW' : `R${inv.revision_no}`}</span>}
+                          {/* A redemption is numbered among redemptions, not
+                              among revisions — "R5" told an approver nothing
+                              about what they were being asked to sign. The
+                              pending one is the next after those approved. */}
+                          {(inv.revision_no > 0 || isRedemption) && (
+                            <span className={`c1a-rev${isRenewal ? ' renew' : ''}${isRedemption ? ' redeem' : ''}`}>
+                              {isRedemption ? `REDEMPTION ${(inv.redemption_count || 0) + 1}`
+                                : isRenewal ? 'RENEW' : `R${inv.revision_no}`}
+                            </span>
+                          )}
                         </div>
                         <div className="c1a-sub">{inv.phone || '—'}{inv.loi_no ? ` · LOI ${inv.loi_no}` : ''}</div>
                         <div className="c1a-sub2">Added by {inv.added_by_name || '—'} · Invested {inv.investment_date ? formatDMY(inv.investment_date) : '—'}{inv.maturity_date ? ` · Matures ${formatDMY(inv.maturity_date)}` : ''}</div>
                         {inv.approval_status === 'approved' && (
                           <div className="c1a-decided ok">Approved by {inv.approved_by_name || '—'}{inv.approved_at ? ` · ${formatDMY(String(inv.approved_at).slice(0, 10))}` : ''}</div>
                         )}
-                        {isRevision && <div className="c1a-proposed">Proposed: {revisionSummary(inv)}</div>}
+                        {isRevision && (
+                          <div className="c1a-proposed">
+                            {isRedemption ? '' : 'Proposed: '}{revisionSummary(inv)}
+                          </div>
+                        )}
                         {inv.approval_status === 'rejected' && inv.rejected_reason && (
                           <div className="bk-reason"><b>Rejected — reason</b><span>{inv.rejected_reason}</span></div>
                         )}
@@ -410,12 +449,15 @@ export default function InvestorApprovalsPage() {
                       </div>
                       <div className="c1a-card-side">
                         <div className="c1a-amt">{fmtMoney(inv.amount_invested)}</div>
-                        <ApprovalBadge approvalStatus={inv.approval_status} label={isRevision && inv.approval_status === 'pending' ? (isRenewal ? 'Renewal pending' : `Revision R${inv.revision_no} pending`) : ''} />
+                        <ApprovalBadge approvalStatus={inv.approval_status} label={isRevision && inv.approval_status === 'pending'
+                        ? (isRedemption ? `Redemption ${(inv.redemption_count || 0) + 1} pending`
+                          : isRenewal ? 'Renewal pending' : `Revision R${inv.revision_no} pending`)
+                        : ''} />
                       </div>
                     </div>
                     <div className="c1a-actions">
                       {isRevision
-                        ? (inv.pending_loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id, true)}><Icon name="file" /> {isRenewal ? 'Renewed' : 'Revised'} LOI</button>)
+                        ? (inv.pending_loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id, true)}><Icon name="file" /> {isRedemption ? 'Redemption' : isRenewal ? 'Renewed' : 'Revised'} LOI</button>)
                         : (inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>)}
                       {inv.approval_status === 'draft' && (
                         <button className="nx-btn nx-btn-sm nx-btn-secondary inv-draft-edit" onClick={() => setEditDraft(inv)}><Icon name="pencil" /> Edit &amp; Submit</button>

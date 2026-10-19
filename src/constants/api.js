@@ -255,6 +255,10 @@ export const CLUB1000_ENDPOINTS = {
   investorLedger: (id) => `${BASE_URL}/api/club1000/investors/${id}/ledger/`,
   investorStatement: (id) => `${BASE_URL}/api/club1000/investors/${id}/statement/`,
   investorRedeem: (id) => `${BASE_URL}/api/club1000/investors/${id}/redeem/`,
+  // Partial redemption: the working, and the request that goes for approval.
+  investorRedeemQuote: (id, amount, on) =>
+    `${BASE_URL}/api/club1000/investors/${id}/redeem/quote/?amount=${encodeURIComponent(amount)}&redemption_date=${on}`,
+  investorRedeemRequest: (id) => `${BASE_URL}/api/club1000/investors/${id}/redeem/request/`,
   investorSettlement: (id, on) => `${BASE_URL}/api/club1000/investors/${id}/settlement/${on ? `?on=${on}` : ''}`,
   investorHistory: (id) => `${BASE_URL}/api/club1000/investors/${id}/history/`,
   investorPortfolio: (id) => `${BASE_URL}/api/club1000/investors/${id}/portfolio/`,

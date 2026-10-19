@@ -20,6 +20,7 @@ import LedgerModal from '../_LedgerModal';
 import Icon from '../../../components/Icon';
 import { notify, confirmDialog, reasonDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
+import { openPendingUrl } from '../../../lib/openSignedUrl';
 import { errText } from '../../../lib/apiError';
 
 // The Status filter's choices (narrowed to those present, see onlyPresent).
@@ -159,10 +160,13 @@ export default function InvestorsPage() {
     [ready, schemeFilter, statusFilter, search, bucket, payoutFilter, addedByFilter, range.from, range.to]);
 
   async function openLoi(id) {
+    // Opened before the fetch: a pop-up created after an await is no longer
+    // tied to the click and the browser blocks it silently.
+    const tab = openPendingUrl();
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
     const data = await res.json();
-    if (res.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-    else notify(errText(data, 'Could not open the LOI.'));
+    if (res.ok && data.url) tab.show(data.url);
+    else { tab.cancel(); notify(errText(data, 'Could not open the LOI.')); }
   }
 
   // Undo the latest renewal — managers only. Payments already made in the renewed term
@@ -462,7 +466,12 @@ export default function InvestorsPage() {
       )}
       {portfolioFor && <PortfolioModal investorId={portfolioFor} onClose={() => setPortfolioFor(null)}
         onAddMore={can(user, 'club.investor.manage') && schemes.length ? (pf) => { setPortfolioFor(null); setAddMoreFor(pf); } : null} />}
-      {redeeming && <RedeemModal investor={redeeming} onClose={() => setRedeeming(null)} onDone={() => { setRedeeming(null); load(); }} />}
+      {redeeming && (
+        <RedeemModal investor={redeeming}
+          scheme={schemes.find((sc) => String(sc.id) === String(redeeming.scheme))}
+          onClose={() => setRedeeming(null)}
+          onDone={() => { setRedeeming(null); load(); }} />
+      )}
       {renewing && (
         <RenewInvestorModal
           investor={renewing}

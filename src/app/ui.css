@@ -3096,6 +3096,9 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .c1a-name { font-size: 15px; font-weight: 700; color: var(--text); }
 .c1a-rev { margin-left: 6px; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 20px; color: var(--accent); background: var(--accent-soft); }
 .c1a-rev.renew { color: var(--warning); background: var(--warning-soft); }
+/* A redemption reads as money leaving, so it takes the warning tone rather
+   than the accent one a revision uses. */
+.c1a-rev.redeem { color: var(--warning-2); background: var(--warning-soft); }
 .c1a-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .c1a-sub2 { font-size: 12px; color: var(--text-3); margin-top: 4px; }
 .c1a-decided { font-size: 12px; font-weight: 600; margin-top: 4px; }
@@ -3729,3 +3732,11 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1l-actions > span { font-size: 12px; color: var(--muted); }
 .nx-notif-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .nx-notif-row > span { font-size: 11px; font-weight: 700; color: rgba(var(--ink-rgb), 0.62); text-transform: uppercase; letter-spacing: .5px; }
+
+/* Club 1000 · partial redemption. The LOI button sits full width above the
+   upload, the way the Add Investor form's does. */
+.c1c-loi-btn { width: 100%; margin-bottom: 8px; }
+
+/* Club 1000 Ledger — the signed LOIs for whatever the tab is showing: one per
+   renewal, one per redemption. Wraps rather than pushing the modal wider. */
+.c1l-loirow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 2px; }

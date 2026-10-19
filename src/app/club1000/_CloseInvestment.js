@@ -1,7 +1,11 @@
 'use client';
 // Closing an investment, step by step — the figures first, then what to save.
-//   RedeemModal         before maturity: principal + redemption interest − interest
-//                       already paid = payable; date, amount, remarks, pay now or later.
+//   RedeemModal         before maturity: how much is coming out decides the rest.
+//                       The withdrawn part earns the scheme's premature rate for the
+//                       months held; anything left behind keeps its normal return and
+//                       maturity date. Enter the full principal and the investment
+//                       closes. Either way it goes for approval with a signed LOI —
+//                       one button, one dialog, the figure decides.
 //   MaturityPayoutModal at maturity: every pending payout (principal and any unpaid
 //                       interest) with target / actual paid / paid on / remarks;
 //                       the ticked ones are paid and the investment is closed.
@@ -14,6 +18,9 @@ import { notify } from '../../lib/notify';
 import { errText } from '../../lib/apiError';
 import Loader from '../../components/Loader';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from './_Form';
+import { downloadInvestorLOI } from '../../lib/investorLOI';
+import { earlierTerms } from '../../lib/c1History';
+import { useCurrentCompany } from '../../lib/currentCompany';
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Redemption' };
 const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -36,100 +43,179 @@ function useSettlement(investorId, on) {
   return [data, err];
 }
 
-export function RedeemModal({ investor, onClose, onDone }) {
+// The working for a proposed partial redemption, as of a date and an amount.
+function useRedeemQuote(investorId, amount, on) {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    if (!amount || Number(amount) <= 0) { setData(null); return undefined; }
+    let alive = true;
+    const t = setTimeout(() => {
+      apiFetch(CLUB1000_ENDPOINTS.investorRedeemQuote(investorId, amount, on))
+        .then(async (r) => {
+          const d = await r.json().catch(() => ({}));
+          if (!alive) return;
+          if (r.ok) { setData(d); setErr(''); } else setErr(errText(d, 'Could not work out the figures.'));
+        })
+        .catch(() => alive && setErr('Could not reach the server.'));
+    }, 300);                                   // typing an amount should not spam the API
+    return () => { alive = false; clearTimeout(t); };
+  }, [investorId, amount, on]);
+  return [data, err];
+}
+
+export function RedeemModal({ investor, scheme, onClose, onDone }) {
+  const issuer = useCurrentCompany();
   const today = todayIST();
   const [on, setOn] = useState(today);
-  const [st, loadErr] = useSettlement(investor.id, on);
-  const [amount, setAmount] = useState('');
-  const [touched, setTouched] = useState(false);
+  const [amount, setAmount] = useState(String(Number(investor.amount_invested) || ''));
   const [notes, setNotes] = useState('');
-  const [payNow, setPayNow] = useState(false);
-  const [paidOn, setPaidOn] = useState(today);
-  const [payRemarks, setPayRemarks] = useState('');
+  const [q, loadErr] = useRedeemQuote(investor.id, amount, on);
+  const [loiDone, setLoiDone] = useState(false);
+  const [loiBusy, setLoiBusy] = useState(false);
+  const [loiFile, setLoiFile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  // The payable follows the working until someone types their own figure.
-  useEffect(() => { if (st && !touched) setAmount(String(Number(st.payable) || 0)); }, [st, touched]);
+  function pickLoi(e) {
+    const file = e.target.files?.[0];
+    if (!file) { setLoiFile(null); return; }
+    const reader = new FileReader();
+    reader.onload = () => setLoiFile({ name: file.name, type: file.type, data: reader.result.split(',')[1] });
+    reader.readAsDataURL(file);
+  }
+
+  // The LOI carries the whole working, so what is signed and what is saved are
+  // the same figures.
+  async function getLoi() {
+    setErr(''); setLoiBusy(true);
+    try {
+      // The schedule, maturity value and "interest a day" basis are all read
+      // off amount_invested, so the LOI is built against what STAYS invested.
+      // Handing it the investor unchanged printed the pre-redemption principal
+      // and a schedule for money that is being taken out.
+      const continuing = { ...investor, amount_invested: q.remaining_principal };
+      // Earlier terms, the way the renewal LOI shows them — a redemption is a
+      // point in this investment's history and the paper should show the rest
+      // of it.
+      // Always fetched now, not only for renewed investments: a first-term
+      // investment can still have earlier redemptions to list.
+      const past = await earlierTerms(investor.id);
+      await downloadInvestorLOI(continuing, scheme, {
+        companyName: issuer.name, companyLogoUrl: issuer.logoUrl, redemption: q,
+        ...(past.history?.length ? { history: past.history } : {}),
+        ...(past.redemptions?.length ? { pastRedemptions: past.redemptions } : {}),
+      });
+      setLoiDone(true);
+    } catch (_) {
+      setErr('Could not generate the LOI. Please try again.');
+    } finally {
+      setLoiBusy(false);
+    }
+  }
 
   async function submit(e) {
     e.preventDefault();
-    if (amount === '' || Number.isNaN(Number(amount)) || Number(amount) < 0) { setErr('Enter the amount payable.'); return; }
-    if (payNow && (!paidOn || paidOn > today)) { setErr('The paid date must be today or earlier.'); return; }
+    if (!q || !q.can_redeem) return;
+    if (!loiFile) { setErr('Download the redemption LOI, get it signed, and upload it before submitting.'); return; }
     setBusy(true); setErr('');
-    const body = { redemption_date: on, amount, notes };
-    if (payNow) body.pay_now = { paid_date: paidOn, amount, notes: payRemarks };
-    const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeem(investor.id), { method: 'POST', body: JSON.stringify(body) }).catch(() => null);
+    const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeemRequest(investor.id), {
+      method: 'POST',
+      body: JSON.stringify({ amount, redemption_date: on, notes, loi_file: loiFile }),
+    }).catch(() => null);
     setBusy(false);
     if (!res || !res.ok) {
       const d = res ? await res.json().catch(() => ({})) : {};
-      setErr(errText(d, 'Could not redeem.'));
+      setErr(errText(d, 'Could not submit the redemption.'));
       return;
     }
-    notify(payNow ? `Redeemed and paid · ${rupee(amount)}` : `Redeemed · ${rupee(amount)} is now due on Payouts`, 'success');
+    notify(`Redemption of ${rupee(amount)} sent for approval`, 'success');
     onDone();
   }
 
-  const blocked = st && !st.can_redeem;
+  const blocked = q && !q.can_redeem;
   return (
-    <C1Modal title="Redeem before maturity" sub={`${investor.name} · ${investor.scheme_name || ''}${investor.loi_no ? ` · ${investor.loi_no}` : ''}`}
+    <C1Modal title="Redeem part of this investment"
+      sub={`${investor.name} · ${investor.scheme_name || ''}${investor.loi_no ? ` · ${investor.loi_no}` : ''}`}
       onClose={onClose} onSubmit={submit}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
-        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !st || blocked}>
-          {busy ? 'Saving…' : payNow ? `Redeem and pay · ${rupee(amount)}` : `Redeem · ${rupee(amount)}`}
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !q || blocked || !loiFile}>
+          {busy ? 'Submitting…' : 'Submit for approval'}
         </button>
       </>}>
-      {!st && !loadErr ? <Loader size="sm" /> : null}
       <C1Error>{loadErr}</C1Error>
-      {st && <>
-        <C1Section title="1 · The investment">
-          <C1Field label="Principal"><C1Value>{rupee(st.principal)}</C1Value></C1Field>
-          <C1Field label="Invested on"><C1Value>{formatDMY(st.investment_date)} · matures {formatDMY(st.maturity_date)}</C1Value></C1Field>
-          <C1Field label="Redemption date" required hint="Today or earlier">
-            <input className="nx-input" type="date" max={today} min={st.investment_date} value={on} onChange={(e) => { setOn(e.target.value || today); setTouched(false); }} />
-          </C1Field>
-          <C1Field label="Held for"><C1Value>{st.months_elapsed} month{st.months_elapsed === 1 ? '' : 's'} · lock-in {st.lock_months} month{st.lock_months === 1 ? '' : 's'}{st.lock_until ? ` (free from ${formatDMY(st.lock_until)})` : ''}</C1Value></C1Field>
-        </C1Section>
 
-        {blocked ? (
-          <div className="nx-note warn c1-error">{st.redeem_blocked_reason}</div>
-        ) : <>
+      <C1Section title="1 · How much is coming out">
+        <C1Field label="Currently invested"><C1Value>{rupee(investor.amount_invested)}</C1Value></C1Field>
+        <C1Field label="Amount to redeem (₹)" required hint="The principal being taken out — the rest stays invested">
+          <input className="nx-input" type="text" inputMode="decimal" value={amount}
+            onChange={(e) => setAmount(e.target.value)} />
+        </C1Field>
+        <C1Field label="Redemption date" required hint="Today or earlier">
+          <input className="nx-input" type="date" max={today} min={investor.investment_date}
+            value={on} onChange={(e) => setOn(e.target.value || today)} />
+        </C1Field>
+      </C1Section>
+
+      {!q && !loadErr ? <Loader size="sm" /> : null}
+      {blocked ? <div className="nx-note warn c1-error">{q.blocked_reason}</div> : null}
+
+      {q && !blocked && (
+        <>
           <C1Section title="2 · The working">
             <div className="c1c-calc">
-              <div><span>Principal</span><b>{rupee(st.principal)}</b></div>
-              <div><span>+ Redemption interest <small>{st.months_elapsed} mo × {Number(st.rate_per_month)}% a month</small></span><b>{rupee(st.redemption_interest)}</b></div>
-              <div><span>− Interest already paid</span><b>{rupee(st.interest_paid)}</b></div>
-              <div className="total"><span>Payable</span><b>{rupee(st.payable)}</b></div>
+              <div><span>Principal redeemed</span><b>{rupee(q.redeem_amount)}</b></div>
+              <div>
+                <span>+ Premature interest <small>{q.days_held} days × {rupee(q.daily_interest)} a day
+                  — {Number(q.rate_per_month)}% a month on the redeemed amount, by the day</small></span>
+                <b>{rupee(q.premature_interest)}</b>
+              </div>
+              <div className="total"><span>Payable</span><b>{rupee(q.payable)}</b></div>
             </div>
-            {st.pending.length > 0 && (
+            {Number(q.interest_paid_share) > 0 && (
               <div className="c1-help">
-                The {st.pending.length} payout{st.pending.length === 1 ? '' : 's'} still scheduled ({rupee(st.pending_total)}) are replaced by this one redemption, so nothing is paid twice.
+                {rupee(q.interest_paid_share)} of interest has already been paid on this share at the
+                normal rate. It is not deducted here — the payable above is principal plus premature interest.
               </div>
             )}
           </C1Section>
 
-          <C1Section title="3 · Settle">
-            <C1Field label="Amount payable (₹)" required hint={touched && Number(amount) !== Number(st.payable) ? `Working says ${rupee(st.payable)}` : ''}>
-              <input className="nx-input" type="text" inputMode="decimal" value={amount} onChange={(e) => { setAmount(e.target.value); setTouched(true); }} />
-            </C1Field>
-            <C1Field label="Reason / remarks">
-              <input className="nx-input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Why the investor is leaving early" />
-            </C1Field>
-            <C1Field label="Paid now?">
-              <label className="c1s-opt"><input type="checkbox" checked={payNow} onChange={(e) => setPayNow(e.target.checked)} /> The money is paid out today — otherwise it waits on Payouts</label>
-            </C1Field>
-            {payNow && <>
-              <C1Field label="Paid on" required>
-                <input className="nx-input" type="date" max={today} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
-              </C1Field>
-              <C1Field label="Payment remarks">
-                <input className="nx-input" value={payRemarks} onChange={(e) => setPayRemarks(e.target.value)} placeholder="UTR / cheque no." />
-              </C1Field>
-            </>}
+          <C1Section title={q.is_full ? '3 · Nothing stays invested' : '3 · What stays invested'}>
+            {q.is_full ? (
+              <div className="c1-help">The whole investment is being redeemed, so it will be closed once approved.</div>
+            ) : (
+              <>
+                <C1Field label="Remaining principal"><C1Value>{rupee(q.remaining_principal)}</C1Value></C1Field>
+                <C1Field label="Carries on at"><C1Value>{Number(q.normal_return_pct)}% · matures {formatDMY(q.maturity_date)}</C1Value></C1Field>
+                <div className="c1-help">
+                  The part left behind is not penalised: it keeps the scheme&apos;s normal return and its
+                  original maturity date. Only its payout schedule is resized to the smaller principal.
+                </div>
+              </>
+            )}
           </C1Section>
-        </>}
-      </>}
+
+          <C1Section title="4 · Sign off">
+            <C1Field label="Reason / remarks">
+              <input className="nx-input" value={notes} onChange={(e) => setNotes(e.target.value)}
+                placeholder="Why the investor is taking money out early" />
+            </C1Field>
+            <button type="button" className="nx-btn nx-btn-md nx-btn-secondary c1c-loi-btn"
+              onClick={getLoi} disabled={loiBusy}>
+              {loiBusy ? 'Generating…' : 'Download redemption LOI'}
+            </button>
+            {loiDone && <div className="c1-help ok">LOI downloaded — get it signed and upload it below.</div>}
+            <C1Field label="Upload signed LOI" required>
+              <input type="file" accept="image/*,.pdf" onChange={pickLoi} />
+            </C1Field>
+            {loiFile && <div className="c1-help ok">Selected: {loiFile.name}</div>}
+            <div className="c1-help">
+              A redemption changes what is owed, so it goes to an approver. Nothing moves until it is approved.
+            </div>
+          </C1Section>
+        </>
+      )}
       <C1Error>{err}</C1Error>
     </C1Modal>
   );
