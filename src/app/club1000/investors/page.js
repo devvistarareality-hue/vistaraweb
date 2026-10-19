@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { CLUB1000_ENDPOINTS } from '../../../constants/api';
 import { apiFetch } from '../../../utils/apiFetch';
-import {isClub1000Manager, can} from '../../../lib/moduleAccess';
+import {isClub1000Manager, can, isManagerRole} from '../../../lib/moduleAccess';
 import { formatDMY } from '../../../lib/dateFormat';
 import { onlyPresent } from '../../../lib/presentOptions';
 import DateFilter from '../../sales/_DateFilter';
@@ -48,6 +48,8 @@ function StatusBadge({ status }) {
 export default function InvestorsPage() {
   const user = useSelector((s) => s.auth.user);
   const manager = isClub1000Manager(user);
+  // Delete goes by role — Manager and above (or an admin); manager-level module access is not enough.
+  const canDelete = isManagerRole(user) || user?.role === 'Admin' || !!user?.is_staff;
   const router = useRouter();
   const [investors, setInvestors] = useState([]);
   const [openInvGroup, setOpenInvGroup] = useState({});
@@ -299,7 +301,7 @@ export default function InvestorsPage() {
             {manager && can(user, 'club.investor.manage') && (
               <button className="nx-btn nx-btn-md nx-btn-secondary" onClick={() => setShowImport(true)} disabled={!schemes.length}><Icon name="upload" /> Import</button>
             )}
-            {manager && investors.length > 0 && (
+            {canDelete && investors.length > 0 && (
               <button className={`nx-btn nx-btn-md ${selecting ? 'nx-btn-primary' : 'nx-btn-secondary'}`} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
                 <Icon name={selecting ? 'x' : 'check-circle'} /> {selecting ? 'Cancel' : 'Select'}
               </button>
@@ -436,7 +438,7 @@ export default function InvestorsPage() {
                     </>) : (manager && inv.status === 'active' && can(user, 'club.investor.manage') && (
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRedeeming(inv)}>Redeem</button>
                     ))}
-                    {manager && (
+                    {canDelete && (
                       <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => deleteInvestor(inv)} disabled={deletingId === inv.id || !!inv.pending_action}>
                         {deletingId === inv.id ? <><span className="nx-spin" aria-hidden="true" /> Deleting…</> : <><Icon name="trash" /> Delete</>}
                       </button>

@@ -93,6 +93,7 @@ export default function InvestorApprovalsPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
   const [busyAct, setBusyAct] = useState('');   // which action the busy row is running
+  const [deleting, setDeleting] = useState('');   // full-screen "Deleting…" while drafts go
   // A draft is edited from here, because it deliberately does not appear in the
   // Investors list — there is nowhere else to open it from.
   const [editDraft, setEditDraft] = useState(null);
@@ -316,6 +317,27 @@ export default function InvestorApprovalsPage() {
   // Short lists open by default; a long one starts folded so the scheme totals read first.
   const isOpen = (g) => (openGroup[g] === undefined ? (narrowed || visible.length <= 12) : openGroup[g]);
 
+  // Delete drafts — one, or every draft shown. Asks first; a draft is unsent work, so
+  // nothing has been paid on it and it goes for good.
+  async function deleteDrafts(list) {
+    const drafts = list.filter((i) => i.approval_status === 'draft');
+    if (!drafts.length) return;
+    const total = drafts.reduce((t, i) => t + (Number(i.amount_invested) || 0), 0);
+    const what = drafts.length === 1 ? `the draft for ${drafts[0].name} (${fmtMoney(total)})` : `${drafts.length} drafts (${fmtMoney(total)})`;
+    if (!(await confirmDialog(`Delete ${what}? This can't be undone.`, { title: drafts.length === 1 ? 'Delete draft?' : 'Delete drafts?', confirmText: 'Delete', tone: 'danger' }))) return;
+    setDeleting(drafts.length === 1 ? 'Deleting draft…' : `Deleting ${drafts.length} drafts…`);
+    try {
+      const r = await apiFetch(CLUB1000_ENDPOINTS.investorBulkDelete, { method: 'POST', body: JSON.stringify({ ids: drafts.map((i) => i.id) }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { notify(errText(d, 'Could not delete.'), 'error'); return; }
+      const n = (d.deleted || []).length, kept = (d.refused || []).length;
+      notify(`${n} draft${n === 1 ? '' : 's'} deleted${kept ? ` · ${kept} could not be deleted` : ''}`, kept ? 'info' : 'success');
+      load();
+    } catch (e) {
+      notify(e.message || 'Could not delete.', 'error');
+    } finally { setDeleting(''); }
+  }
+
   if (!manager) return null;
 
   return (
@@ -382,6 +404,15 @@ export default function InvestorApprovalsPage() {
           <div className="c1a-total-amt">{fmtMoney(grandTotal)}</div>
         </div>
       )}
+      {tab === 'draft' && visible.length > 0 && (
+        <div className="c1a-draftbar">
+          <span>Drafts are unsent work — deleting one removes it for good.{narrowed ? ' Only the drafts shown (after your filters) are deleted.' : ''}</span>
+          <button type="button" className="nx-btn nx-btn-sm nx-btn-danger" onClick={() => deleteDrafts(visible)} disabled={!!deleting}>
+            <Icon name="trash" /> Delete {visible.length === 1 ? 'this draft' : `all ${visible.length} drafts shown`}
+          </button>
+        </div>
+      )}
+      {deleting && <div className="nx-modal-backdrop nx-busy"><Loader /><div>{deleting}</div></div>}
 
       {loading ? <div className="c1a-loading"><Loader label="Loading…" /></div> : visible.length === 0 ? (
         <div className="nx-card c1a-empty">{search ? 'No investors match your search.' : narrowed ? 'No investors match these filters.' : 'No investors here.'}</div>
@@ -460,7 +491,10 @@ export default function InvestorApprovalsPage() {
                         ? (inv.pending_loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id, true)}><Icon name="file" /> {isRedemption ? 'Redemption' : isRenewal ? 'Renewed' : 'Revised'} LOI</button>)
                         : (inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>)}
                       {inv.approval_status === 'draft' && (
-                        <button className="nx-btn nx-btn-sm nx-btn-secondary inv-draft-edit" onClick={() => setEditDraft(inv)}><Icon name="pencil" /> Edit &amp; Submit</button>
+                        <>
+                          <button className="nx-btn nx-btn-sm nx-btn-secondary inv-draft-edit" onClick={() => setEditDraft(inv)}><Icon name="pencil" /> Edit &amp; Submit</button>
+                          <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => deleteDrafts([inv])} disabled={!!deleting}><Icon name="trash" /> Delete draft</button>
+                        </>
                       )}
                       {inv.approval_status === 'approved' && can(user, 'club.investor.manage') && (
                         <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>

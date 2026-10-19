@@ -3730,6 +3730,8 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 /* Club 1000 Ledger: Statement PDF button row */
 .c1l-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .c1l-actions > span { font-size: 12px; color: var(--muted); }
+/* Club 1000 Approvals → Drafts: delete the drafts shown */
+.c1a-draftbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; color: var(--muted); }
 .nx-notif-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .nx-notif-row > span { font-size: 11px; font-weight: 700; color: rgba(var(--ink-rgb), 0.62); text-transform: uppercase; letter-spacing: .5px; }
 
