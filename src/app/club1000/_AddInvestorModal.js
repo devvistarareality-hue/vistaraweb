@@ -14,6 +14,7 @@ import { schedulePeriods, maturityWorking } from '../../lib/c1Periods';
 import ScheduleTable from './_ScheduleTable';
 import { errText } from '../../lib/apiError';
 import { earlierTerms } from '../../lib/c1History';
+import { schemeLabel } from '../../lib/c1Scheme';
 
 const SOURCE_LABELS = { referral: 'Referral', walk_in: 'Walk-in', website: 'Website', other: 'Other' };
 
@@ -506,7 +507,7 @@ export default function AddInvestorModal({ schemes: schemeList, prefillLead, dra
       <C1Section title="Scheme & dates">
         <C1Field label="Scheme" required hint={scheme ? `Min ticket ₹${Number(scheme.min_ticket_size).toLocaleString('en-IN')}` : null}>
           <select className="nx-input" value={form.scheme} onChange={(e) => selectScheme(e.target.value)} required>
-            {schemes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {schemes.map((s) => <option key={s.id} value={s.id}>{schemeLabel(s)}</option>)}
           </select>
         </C1Field>
         <C1Field label="Date of investment" required>

@@ -12,6 +12,7 @@ import Loader from '../../../components/Loader';
 import { onlyPresent } from '../../../lib/presentOptions';
 import { errText } from '../../../lib/apiError';
 import { C1Modal, C1Section, C1Field, C1Value, C1Error } from '../_Form';
+import { schemeLabel } from '../../../lib/c1Scheme';
 
 const STATUS_COLORS = {
   new: { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
@@ -112,7 +113,7 @@ function AddLeadModal({ schemes, assignees, manager, onClose, onCreated }) {
         <C1Field label="Scheme interest">
           <select className="nx-input" value={form.scheme_interest} onChange={upd('scheme_interest')}>
             <option value="">— None —</option>
-            {schemes.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+            {schemes.map((sc) => <option key={sc.id} value={sc.id}>{schemeLabel(sc)}</option>)}
           </select>
         </C1Field>
         <C1Field label="Amount interested (₹)"><input className="nx-input" type="number" step="0.01" value={form.amount_interested} onChange={upd('amount_interested')} /></C1Field>
