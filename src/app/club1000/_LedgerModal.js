@@ -10,7 +10,6 @@ import { printStatement } from '../m/[module]/_ar';
 
 import Loader from '../../components/Loader';
 import { errText } from '../../lib/apiError';
-import { openPendingUrl } from '../../lib/openSignedUrl';
 import { C1Modal, C1Error } from './_Form';
 
 const TYPE_COLOR = {
@@ -86,21 +85,6 @@ export default function LedgerModal({ investorId, onClose }) {
   const principalHint = term ? `${term.no === 0 ? 'invested' : 'renewed'} ${formatDMY(term.start)}`
     : first ? `${terms.length > 1 ? 'first invested' : 'invested'} ${formatDMY(first.start)}`
     : inv?.investment_date ? `invested ${formatDMY(inv.investment_date)}` : '';
-  // A term's own signed LOI — the running one, or an earlier term's kept copy.
-  async function openLoiAt(query) {
-    // The tab is opened before the fetch, not after it: a pop-up created once
-    // the signed URL has arrived is no longer tied to the click and the browser
-    // blocks it — which is why these buttons did nothing at all.
-    const tab = openPendingUrl();
-    const r = await apiFetch(`${CLUB1000_ENDPOINTS.investorLoiUrl(investorId)}${query}`).catch(() => null);
-    const d = r ? await r.json().catch(() => ({})) : {};
-    if (r?.ok && d.url) tab.show(d.url);
-    else { tab.cancel(); notify(errText(d, 'Could not open the LOI.'), 'error'); }
-  }
-  const openTermLoi = (t) => openLoiAt(t.current ? '' : `?term=${t.no}`);
-  // A redemption keeps its own signed LOI on the payout — the investor's copy
-  // is replaced by whatever is signed after it.
-  const openPayoutLoi = (e) => openLoiAt(`?payout=${e.payout_id}`);
   const rows = (data?.entries || []).filter((e) => {
     if (e.type === 'investment') return false;
     if (termSel === 'original') return (e.term ?? 0) === 0;
@@ -123,22 +107,6 @@ export default function LedgerModal({ investorId, onClose }) {
             <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
             <span>to give the investor — every term, payout and payment</span>
           </div>
-          {/* Every signed LOI of this investment, newest first — the original, each
-              revision, renewal and redemption — each one openable. */}
-          {(data?.lois || []).length > 0 && (
-            <div className="nx-card c1l-lois">
-              <div className="c1l-lois-head">LOIs · {data.lois.length}</div>
-              {data.lois.map((l) => (
-                <div key={l.i} className="c1l-loi">
-                  <div>
-                    <b>{l.label}</b>{l.current && <em className="c1l-loi-cur">current</em>}
-                    <small>{l.at ? formatDMY(String(l.at).slice(0, 10)) : '—'}{l.by ? ` · approved by ${l.by}` : ''}</small>
-                  </div>
-                  <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoiAt(`?loi=${l.i}`)}>Open</button>
-                </div>
-              ))}
-            </div>
-          )}
           {/* A redemption on a never-renewed investment still needs its tab, so
               the strip is not gated on the term count alone. */}
           {(terms.length > 1 || hasRedemptions) && (
@@ -158,23 +126,16 @@ export default function LedgerModal({ investorId, onClose }) {
               ))}
             </div>
           )}
-          {/* The signed paper for whatever the tab is showing: the original
-              term, each renewal, or each redemption. Previously only the one
-              selected term had a button, so there was no way to reach an
-              earlier renewal's LOI without hunting for it. */}
+          {/* LOIs are opened from the investor card's LOIs button, not here. */}
           {termSel === 'original' && originalTerm && (
             <div className="c1l-termline">
               {formatDMY(originalTerm.start)} → {formatDMY(originalTerm.maturity)} · principal {fmtMoney(originalTerm.principal)}
-              {originalTerm.has_loi
-                ? <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary c1l-termloi" onClick={() => openTermLoi(originalTerm)}>Original LOI</button>
-                : <span className="c1l-noloi"> · its signed LOI was not kept (renewed before LOIs were kept)</span>}
             </div>
           )}
           {termSel === 'renewals' && openRenewal && (
             <>
               {/* Picking a renewal opens that renewal — its figures and its
-                  payouts below. Its signed LOI is a button on its own line,
-                  rather than the chip itself firing a download. */}
+                  payouts below. */}
               <div className="c1l-loirow" role="tablist">
                 {renewals.map((t) => (
                   <button key={t.no} type="button" role="tab"
@@ -185,23 +146,8 @@ export default function LedgerModal({ investorId, onClose }) {
               </div>
               <div className="c1l-termline">
                 {formatDMY(openRenewal.start)} → {formatDMY(openRenewal.maturity)} · principal {fmtMoney(openRenewal.principal)}
-                {openRenewal.has_loi
-                  ? <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary c1l-termloi" onClick={() => openTermLoi(openRenewal)}>Signed LOI</button>
-                  : <span className="c1l-noloi"> · its signed LOI was not kept (renewed before LOIs were kept)</span>}
               </div>
             </>
-          )}
-          {termSel === 'redemptions' && (
-            <div className="c1l-loirow">
-              {rows.filter((e) => e.type === 'premature_redemption').map((e, i) => (e.has_loi ? (
-                <button key={e.payout_id} type="button" className="nx-btn nx-btn-sm nx-btn-secondary"
-                  onClick={() => openPayoutLoi(e)}>Redemption {i + 1} LOI · {formatDMY(e.due_date || e.date)}</button>
-              ) : (
-                <span key={e.payout_id} className="c1l-noloi">
-                  Redemption {i + 1} · {formatDMY(e.due_date || e.date)} · LOI not kept
-                </span>
-              )))}
-            </div>
           )}
           <div className="c1l-cards">
             {[

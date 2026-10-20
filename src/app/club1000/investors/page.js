@@ -20,8 +20,8 @@ import LedgerModal from '../_LedgerModal';
 import Icon from '../../../components/Icon';
 import { notify, confirmDialog, reasonDialog } from '../../../lib/notify';
 import Loader from '../../../components/Loader';
-import { openPendingUrl } from '../../../lib/openSignedUrl';
 import { errText } from '../../../lib/apiError';
+import LoisModal from '../_LoisModal';
 
 // The Status filter's choices (narrowed to those present, see onlyPresent).
 const PAYOUT_OPTIONS = [
@@ -64,6 +64,7 @@ export default function InvestorsPage() {
   const [addMoreFor, setAddMoreFor] = useState(null);     // a new investment for the same person
   const [selecting, setSelecting] = useState(false);     // pick several to delete at once
   const [picked, setPicked] = useState(() => new Set());
+  const [loisFor, setLoisFor] = useState(null);     // the investor whose LOIs are open
   const [bulkBusy, setBulkBusy] = useState(false);
   const [working, setWorking] = useState('');            // full-screen 'Sending…' while a request goes
   const [deletingId, setDeletingId] = useState(null);    // investor being deleted
@@ -161,15 +162,6 @@ export default function InvestorsPage() {
   useEffect(() => { if (ready) load(); },
     [ready, schemeFilter, statusFilter, search, bucket, payoutFilter, addedByFilter, range.from, range.to]);
 
-  async function openLoi(id) {
-    // Opened before the fetch: a pop-up created after an await is no longer
-    // tied to the click and the browser blocks it silently.
-    const tab = openPendingUrl();
-    const res = await apiFetch(CLUB1000_ENDPOINTS.investorLoiUrl(id));
-    const data = await res.json();
-    if (res.ok && data.url) tab.show(data.url);
-    else { tab.cancel(); notify(errText(data, 'Could not open the LOI.')); }
-  }
 
   // Undo the latest renewal — managers only. Payments already made in the renewed term
   // are named and asked about first.
@@ -425,7 +417,7 @@ export default function InvestorsPage() {
                     <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setLedgerFor(inv.id)}><Icon name="book" /> Ledger</button>
                     <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setHistoryFor(inv)}><Icon name="clock" /> History</button>
                     <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setPortfolioFor(inv.id)}><Icon name="users" /> Portfolio</button>
-                    {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoi(inv.id)}><Icon name="file" /> Signed LOI</button>}
+                    {inv.loi_document_url && <button className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => setLoisFor(inv)}><Icon name="file" /> LOIs</button>}
                     {inv.document_url && <a className="nx-btn nx-btn-sm nx-btn-secondary" href={inv.document_url} target="_blank" rel="noreferrer"><Icon name="clip" /> KYC</a>}
                     {/* Viewing on the left; what changes the investment on the right. */}
                     <span className="c1a-actions-gap" />
@@ -461,6 +453,7 @@ export default function InvestorsPage() {
       )}
       {showImport && <ImportInvestorsModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
       {historyFor && <HistoryModal investor={historyFor} onClose={() => setHistoryFor(null)} />}
+      {loisFor && <LoisModal investor={loisFor} onClose={() => setLoisFor(null)} />}
       {working && <div className="nx-modal-backdrop nx-busy"><Loader /><div>{working}</div></div>}
       {addMoreFor && (
         <AddInvestorModal schemes={schemes} prefillLead={morePrefill(addMoreFor)}
