@@ -101,10 +101,6 @@ export default function LedgerModal({ investorId, onClose }) {
   // A redemption keeps its own signed LOI on the payout — the investor's copy
   // is replaced by whatever is signed after it.
   const openPayoutLoi = (e) => openLoiAt(`?payout=${e.payout_id}`);
-  const currentTerm = terms.find((t) => t.current) || null;
-  // Whether this investment has had a redemption approved — the current signed
-  // LOI is then the one signed for it.
-  const redeemed = Number(inv?.redemption_count || 0) > 0;
   const rows = (data?.entries || []).filter((e) => {
     if (e.type === 'investment') return false;
     if (termSel === 'original') return (e.term ?? 0) === 0;
@@ -125,21 +121,24 @@ export default function LedgerModal({ investorId, onClose }) {
         <>
           <div className="c1l-actions">
             <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={statement}>Statement PDF</button>
-            {/* The running term's signed LOI, reachable whatever term is
-                selected. An approved redemption replaces the investment's LOI
-                with the one signed for it, so after a redemption this IS the
-                redemption LOI — which is why it is named for the last thing
-                signed rather than generically. Previously it could only be
-                opened by first picking a single term, so on "All terms" there
-                was no way to it at all. */}
-            {currentTerm?.has_loi && (
-              <button type="button" className="nx-btn nx-btn-md nx-btn-secondary"
-                onClick={() => openTermLoi(currentTerm)}>
-                {redeemed ? 'Redemption LOI' : 'Signed LOI'}
-              </button>
-            )}
             <span>to give the investor — every term, payout and payment</span>
           </div>
+          {/* Every signed LOI of this investment, newest first — the original, each
+              revision, renewal and redemption — each one openable. */}
+          {(data?.lois || []).length > 0 && (
+            <div className="nx-card c1l-lois">
+              <div className="c1l-lois-head">LOIs · {data.lois.length}</div>
+              {data.lois.map((l) => (
+                <div key={l.i} className="c1l-loi">
+                  <div>
+                    <b>{l.label}</b>{l.current && <em className="c1l-loi-cur">current</em>}
+                    <small>{l.at ? formatDMY(String(l.at).slice(0, 10)) : '—'}{l.by ? ` · approved by ${l.by}` : ''}</small>
+                  </div>
+                  <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => openLoiAt(`?loi=${l.i}`)}>Open</button>
+                </div>
+              ))}
+            </div>
+          )}
           {/* A redemption on a never-renewed investment still needs its tab, so
               the strip is not gated on the term count alone. */}
           {(terms.length > 1 || hasRedemptions) && (
