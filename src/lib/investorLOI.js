@@ -412,6 +412,7 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
       payable: e.redemption?.payable ?? e.amount,
       as_of: e.redemption?.redemption_date || e.due_date || e.date,
       bare: !e.redemption,
+      paid: e.status === 'paid',   // an approved redemption is owed until it is marked paid
     }));
     const all = [...earlier, { ...opts.redemption, as_of: opts.redemption.as_of }];
 
@@ -424,7 +425,7 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
         sf(WASH); doc.roundedRect(M, y - 4, CW, 9, 1.5, 1.5, 'F');
         sf(ORG); doc.roundedRect(M + 1.2, y - 2.5, 1.7, 6, 0.85, 0.85, 'F');
         st(MB); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
-        doc.text(`REDEMPTION ${idx + 1} · ${fmtDate(rd.as_of)} — paid out`, M + 6, y + 1.5);
+        doc.text(`REDEMPTION ${idx + 1} · ${fmtDate(rd.as_of)} — ${rd.paid ? 'paid out' : 'payable, not paid yet'}`, M + 6, y + 1.5);
         doc.text('Rs. ' + money(rd.payable), PW - M - 3, y + 1.5, { align: 'right' });
         y += 13;
         return;
@@ -433,7 +434,7 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
       const lines = [
         ['', 'Principal redeemed', R(rd.redeem_amount)],
         ['+', `Premature interest  (${rd.days_held} days x Rs. ${perDay})`, R(rd.premature_interest)],
-        ['=', last ? 'Total payable to the investor' : 'Paid out', R(rd.payable), 'total'],
+        ['=', last ? 'Total payable to the investor' : (rd.paid ? 'Paid out' : 'Payable to the investor (not paid yet)'), R(rd.payable), 'total'],
       ];
       const boxH = 9 + lines.length * 5.2 + 3;
       chk(boxH + 16);
