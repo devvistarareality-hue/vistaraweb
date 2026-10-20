@@ -3748,6 +3748,8 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1x-loi.k-revision .c1x-loi-ico { background: var(--warning-soft); color: var(--warning); }
 .c1x-loi.k-renewal .c1x-loi-ico { background: var(--success-soft); color: var(--success); }
 .c1x-loi.k-redemption .c1x-loi-ico { background: var(--danger-soft); color: var(--danger); }
+.c1x-loi.k-rejected { opacity: .8; }
+.c1x-loi.k-rejected .c1x-loi-ico { background: var(--surface-2); color: var(--muted); }
 .c1x-loi-main { flex: 1; min-width: 0; }
 .c1x-loi-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .c1x-loi-top b { font-size: 14px; color: var(--text); }

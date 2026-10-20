@@ -15,7 +15,7 @@ import Icon from '../../components/Icon';
 // Icon and kind wording per LOI.
 const KIND = {
   new: ['file', 'Original'], revision: ['pencil', 'Revision'], renewal: ['refresh', 'Renewal'],
-  redemption: ['exit', 'Redemption'], current: ['file', 'LOI'],
+  redemption: ['exit', 'Redemption'], rejected: ['x-circle', 'Rejected'], current: ['file', 'LOI'],
 };
 
 export default function LoisModal({ investor, onClose }) {
