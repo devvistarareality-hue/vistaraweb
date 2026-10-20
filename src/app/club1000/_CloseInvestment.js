@@ -50,14 +50,15 @@ function useSettlement(investorId, on, beforeRenewal = false) {
 }
 
 // The working for a proposed partial redemption, as of a date and an amount.
-function useRedeemQuote(investorId, amount, on) {
+function useRedeemQuote(investorId, amount, on, beforeRedemption = false) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
   useEffect(() => {
     if (!amount || Number(amount) <= 0) { setData(null); return undefined; }
     let alive = true;
     const t = setTimeout(() => {
-      apiFetch(CLUB1000_ENDPOINTS.investorRedeemQuote(investorId, amount, on))
+      // beforeRedemption: worked out as it stood before the latest redemption (Revise redemption).
+      apiFetch(`${CLUB1000_ENDPOINTS.investorRedeemQuote(investorId, amount, on)}${beforeRedemption ? '&before_redemption=1' : ''}`)
         .then(async (r) => {
           const d = await r.json().catch(() => ({}));
           if (!alive) return;
@@ -66,22 +67,49 @@ function useRedeemQuote(investorId, amount, on) {
         .catch(() => alive && setErr('Could not reach the server.'));
     }, 300);                                   // typing an amount should not spam the API
     return () => { alive = false; clearTimeout(t); };
-  }, [investorId, amount, on]);
+  }, [investorId, amount, on, beforeRedemption]);
   return [data, err];
 }
 
-export function RedeemModal({ investor, scheme, onClose, onDone }) {
+export function RedeemModal({ investor, scheme, onClose, onDone, revise = false }) {
   const issuer = useCurrentCompany();
   const today = todayIST();
   const [on, setOn] = useState(today);
   const [amount, setAmount] = useState(String(Number(investor.amount_invested) || ''));
   const [notes, setNotes] = useState('');
+  // revise: correcting the latest redemption itself (Revise LOI while the live LOI is a
+  // redemption's). It opens on that redemption's figures, worked out as the investment
+  // stood before it; on approval it is reversed and this corrected one applied.
+  const redN = Number(investor.redemption_count) || 0;
+  const [last, setLast] = useState(null);         // the redemption being corrected
+  const [revNo, setRevNo] = useState(1);
+  useEffect(() => {
+    if (!revise) return undefined;
+    let alive = true;
+    apiFetch(CLUB1000_ENDPOINTS.investorLedger(investor.id)).then(async (r) => {
+      const d = await r.json().catch(() => ({}));
+      if (!alive || !r.ok) return;
+      const reds = (d.entries || []).filter((e) => e.type === 'premature_redemption' && e.redemption)
+        .sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+      const l = reds[reds.length - 1];
+      if (!l) return;
+      setLast(l);
+      setAmount(String(Number(l.redemption.redeem_amount) || ''));
+      if (l.redemption.redemption_date) setOn(l.redemption.redemption_date);
+      if (l.paid_date) setPaidOn(l.paid_date);
+    }).catch(() => {});
+    apiFetch(CLUB1000_ENDPOINTS.investorLois(investor.id)).then(async (r) => {
+      const d = await r.json().catch(() => ({}));
+      if (alive && r.ok) setRevNo(1 + (d.lois || []).filter((x) => String(x.label).startsWith(`Redemption ${redN} · Revision`)).length);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [revise, investor.id, redN]);
   // Redeemed means handed over — when the money went to him (the redemption date
   // unless changed) and the UTR / cheque, so it is recorded as paid on approval.
   const [paidOn, setPaidOn] = useState('');
   const [paidNotes, setPaidNotes] = useState('');
   const paidDate = paidOn || on;
-  const [q, loadErr] = useRedeemQuote(investor.id, amount, on);
+  const [q, loadErr] = useRedeemQuote(investor.id, amount, on, revise);
   const [loiDone, setLoiDone] = useState(false);
   const [loiBusy, setLoiBusy] = useState(false);
   const [loiFile, setLoiFile] = useState(null);
@@ -112,10 +140,14 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
       // Always fetched now, not only for renewed investments: a first-term
       // investment can still have earlier redemptions to list.
       const past = await earlierTerms(investor.id);
+      // A revised redemption's own earlier version is not an earlier redemption.
+      const earlier = (past.redemptions || []).filter((r) => !(revise && last && r.payout_id === last.payout_id));
       await downloadInvestorLOI(continuing, scheme, {
         companyName: issuer.name, companyLogoUrl: issuer.logoUrl, redemption: q,
         ...(past.history?.length ? { history: past.history } : {}),
-        ...(past.redemptions?.length ? { pastRedemptions: past.redemptions } : {}),
+        ...(earlier.length ? { pastRedemptions: earlier } : {}),
+        // "REDEMPTION N · REVISION k"
+        ...(revise ? { revisionNo: (investor.revision_no || 0) + 1, termLabel: `Redemption ${redN}`, termRevision: revNo } : {}),
       });
       setLoiDone(true);
     } catch (_) {
@@ -132,7 +164,7 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
     setBusy(true); setErr('');
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeemRequest(investor.id), {
       method: 'POST',
-      body: JSON.stringify({ amount, redemption_date: on, notes, loi_file: loiFile, paid_date: paidDate, paid_notes: paidNotes }),
+      body: JSON.stringify({ amount, redemption_date: on, notes, loi_file: loiFile, paid_date: paidDate, paid_notes: paidNotes, ...(revise ? { revise_redemption: true } : {}) }),
     }).catch(() => null);
     setBusy(false);
     if (!res || !res.ok) {
@@ -146,7 +178,7 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
 
   const blocked = q && !q.can_redeem;
   return (
-    <C1Modal title="Redeem part of this investment"
+    <C1Modal title={revise ? `Revise Redemption ${redN} · Revision ${revNo}` : 'Redeem part of this investment'}
       sub={`${investor.name} · ${investor.scheme_name || ''}${investor.loi_no ? ` · ${investor.loi_no}` : ''}`}
       onClose={onClose} onSubmit={submit}
       footer={<>
@@ -158,7 +190,15 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
       <C1Error>{loadErr}</C1Error>
 
       <C1Section title="1 · How much is coming out">
-        <C1Field label="Currently invested"><C1Value>{rupee(investor.amount_invested)}</C1Value></C1Field>
+        {revise && (
+          <div className="nx-note info c1-error">
+            Correcting <b>Redemption {redN}</b>{last ? <> of {rupee(last.redemption.redeem_amount)} on {formatDMY(last.redemption.redemption_date)}</> : null}.
+            The figures are worked out as the investment stood before it. Once approved, it is replaced by this one.
+          </div>
+        )}
+        <C1Field label={revise ? 'Invested before this redemption' : 'Currently invested'}>
+          <C1Value>{rupee(revise && last ? Number(investor.amount_invested) + Number(last.redemption.redeem_amount || 0) : investor.amount_invested)}</C1Value>
+        </C1Field>
         <C1Field label="Amount to redeem (₹)" required hint="The principal being taken out — the rest stays invested">
           <input className="nx-input" type="text" inputMode="decimal" value={amount}
             onChange={(e) => setAmount(e.target.value)} />
