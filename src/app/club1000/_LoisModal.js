@@ -10,6 +10,13 @@ import { errText } from '../../lib/apiError';
 import { openPendingUrl } from '../../lib/openSignedUrl';
 import Loader from '../../components/Loader';
 import { C1Modal, C1Error } from './_Form';
+import Icon from '../../components/Icon';
+
+// Icon and kind wording per LOI.
+const KIND = {
+  new: ['file', 'Original'], revision: ['pencil', 'Revision'], renewal: ['refresh', 'Renewal'],
+  redemption: ['exit', 'Redemption'], current: ['file', 'LOI'],
+};
 
 export default function LoisModal({ investor, onClose }) {
   const [lois, setLois] = useState(null);
@@ -43,14 +50,21 @@ export default function LoisModal({ investor, onClose }) {
       {!lois && !err ? <Loader label="Loading…" /> : lois && lois.length === 0 ? (
         <div className="c1-help">No signed LOI is on record for this investment.</div>
       ) : lois && (
-        <div className="nx-card c1l-lois">
+        <div className="c1x-lois">
           {lois.map((l) => (
-            <div key={l.i} className="c1l-loi">
-              <div>
-                <b>{l.label}</b>{l.current && <em className="c1l-loi-cur">current</em>}
-                <small>{l.at ? formatDMY(String(l.at).slice(0, 10)) : '—'}{l.by ? ` · approved by ${l.by}` : ''}</small>
+            <div key={l.i} className={`c1x-loi k-${KIND[l.kind] ? l.kind : 'current'}${l.current ? ' is-cur' : ''}`}>
+              <span className="c1x-loi-ico"><Icon name={(KIND[l.kind] || KIND.current)[0]} /></span>
+              <div className="c1x-loi-main">
+                <div className="c1x-loi-top">
+                  <b>{l.label}</b>
+                  {l.current && <em>Current</em>}
+                </div>
+                <small>
+                  {(KIND[l.kind] || KIND.current)[1]} · {l.at ? formatDMY(String(l.at).slice(0, 10)) : '—'}
+                  {l.by ? ` · approved by ${l.by}` : ''}
+                </small>
               </div>
-              <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => open(l)}>Open</button>
+              <button type="button" className="nx-btn nx-btn-sm nx-btn-secondary" onClick={() => open(l)}><Icon name="file" /> Open</button>
             </div>
           ))}
         </div>

@@ -166,7 +166,7 @@ export default function LedgerModal({ investorId, onClose }) {
           <div className="nx-card c1l-table">
             <table className="nx-table">
               <thead>
-                <tr><th>Type</th><th className="num">Amount</th><th>Due date</th><th>Paid date</th><th>Status</th></tr>
+                <tr><th>Type</th><th className="num">Amount</th><th>Due date</th><th>Paid on</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {rows.length === 0 && (
@@ -198,6 +198,9 @@ export default function LedgerModal({ investorId, onClose }) {
                         {e.type === 'premature_redemption' && (
                           <div className="c1p-why">Redeemed on <b>{formatDMY(e.redemption?.redemption_date || e.due_date || e.date)}</b>{e.redemption?.days_held != null ? ` · held ${e.redemption.days_held} days` : ''}</div>
                         )}
+                        {e.maturity_split && (
+                          <div className="c1p-why">{fmtMoney(e.maturity_split.principal)} principal + <b>{fmtMoney(e.maturity_split.interest)} interest</b></div>
+                        )}
                         {e.period && (
                           <div className="c1p-why"><b>{e.period.label}</b> · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}</div>
                         )}
@@ -208,8 +211,8 @@ export default function LedgerModal({ investorId, onClose }) {
                         {fmtMoney(e.amount)}
                         {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && <div className="c1l-paid">Paid {fmtMoney(e.paid_amount)}</div>}
                       </td>
-                      <td>{formatDMY(e.due_date || e.date)}</td>
-                      <td className="c1l-muted">{e.paid_date ? formatDMY(e.paid_date) : '—'}</td>
+                      <td className="c1l-date">{formatDMY(e.due_date || e.date)}</td>
+                      <td className="c1l-date">{e.paid_date ? formatDMY(e.paid_date) : <span className="c1l-muted">—</span>}</td>
                       <td><Badge label={settled || st} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
                     </tr>
                     </Fragment>
