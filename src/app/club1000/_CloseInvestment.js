@@ -30,12 +30,14 @@ const typeLabel = (p) => (p.maturity_split
 const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
 // The settlement figures for one investor, as of a date.
-function useSettlement(investorId, on) {
+function useSettlement(investorId, on, beforeRenewal = false) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
   useEffect(() => {
     let alive = true;
-    apiFetch(CLUB1000_ENDPOINTS.investorSettlement(investorId, on))
+    // beforeRenewal: the figures as they stood before the latest renewal (Revise renewal).
+    const url = CLUB1000_ENDPOINTS.investorSettlement(investorId, on);
+    apiFetch(beforeRenewal ? `${url}${url.includes('?') ? '&' : '?'}before_renewal=1` : url)
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!alive) return;
@@ -43,7 +45,7 @@ function useSettlement(investorId, on) {
       })
       .catch(() => alive && setErr('Could not reach the server.'));
     return () => { alive = false; };
-  }, [investorId, on]);
+  }, [investorId, on, beforeRenewal]);
   return [data, err];
 }
 
@@ -346,8 +348,8 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
 // at-maturity scheme's interest inside the maturity payout) is paid to him or goes
 // into the renewal; money he takes beyond the interest is principal paid back;
 // money he adds is fresh money.
-export function RenewalSummary({ investorId, newAmount, onRenewal, payNow, onPayNow }) {
-  const [st] = useSettlement(investorId);
+export function RenewalSummary({ investorId, newAmount, onRenewal, payNow, onPayNow, beforeRenewal = false }) {
+  const [st] = useSettlement(investorId, undefined, beforeRenewal);
   const [how, setHow] = useState('');        // all | interest_out | take | more — '' = amount typed by hand
   const [take, setTake] = useState('');
   const [extra, setExtra] = useState('');

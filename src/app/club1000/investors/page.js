@@ -58,6 +58,9 @@ export default function InvestorsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [revising, setRevising] = useState(null);
   const [renewing, setRenewing] = useState(null);
+  const [reviseRenewal, setReviseRenewal] = useState(null);   // correcting the latest renewal itself
+  // The live LOI is a renewal's (renewed, nothing redeemed since): Revise LOI corrects that renewal.
+  const isRenewalLoi = (inv) => Number(inv.renewal_count || 0) > 0 && !Number(inv.redemption_count || 0);
   const [redeeming, setRedeeming] = useState(null);      // Redeem dialog (before maturity)
   const [historyFor, setHistoryFor] = useState(null);    // History dialog
   const [portfolioFor, setPortfolioFor] = useState(null); // the person's whole portfolio
@@ -422,7 +425,7 @@ export default function InvestorsPage() {
                     {/* Viewing on the left; what changes the investment on the right. */}
                     <span className="c1a-actions-gap" />
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setAddMoreFor(inv)} disabled={!schemes.length}>+ Add more</button>}
-                    {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => setRevising(inv)}>↻ Revise LOI</button>}
+                    {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => (isRenewalLoi(inv) ? setReviseRenewal(inv) : setRevising(inv))}>↻ Revise LOI</button>}
                     {manager && inv.renewal_count > 0 && !inv.pending_action && <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoRenewal(inv)}>↶ Undo renewal</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
@@ -472,6 +475,14 @@ export default function InvestorsPage() {
           investor={renewing}
           scheme={schemes.find((s) => String(s.id) === String(renewing.scheme))}
           onClose={() => setRenewing(null)}
+          onSaved={() => load()}
+        />
+      )}
+      {reviseRenewal && (
+        <RenewInvestorModal revise
+          investor={reviseRenewal}
+          scheme={schemes.find((s) => String(s.id) === String(reviseRenewal.scheme))}
+          onClose={() => setReviseRenewal(null)}
           onSaved={() => load()}
         />
       )}

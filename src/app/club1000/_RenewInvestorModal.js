@@ -122,9 +122,10 @@ const INTEREST_PAYOUT_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', mat
 
 // Every earlier term for the renewal LOI's history, from the Ledger's own term figures,
 // with the term ending now as the last row — what this renewal does with it.
-async function renewalHistory(investor, form) {
+async function renewalHistory(investor, form, beforeRenewal = false) {
   try {
-    const r = await apiFetch(CLUB1000_ENDPOINTS.investorLedger(investor.id));
+    // Revise renewal reads the terms as they stood before the latest renewal.
+    const r = await apiFetch(`${CLUB1000_ENDPOINTS.investorLedger(investor.id)}${beforeRenewal ? '?before_renewal=1' : ''}`);
     const d = r.ok ? await r.json() : null;
     const terms = d?.terms || [];
     const rows = terms.filter((t) => !t.current);
@@ -145,13 +146,33 @@ async function renewalHistory(investor, form) {
   } catch { return []; }
 }
 
-export default function RenewInvestorModal({ investor, scheme, onClose, onSaved }) {
+export default function RenewInvestorModal({ investor, scheme, onClose, onSaved, revise = false }) {
   // The issuer printed on the investor LOI — company-wise, never a constant.
   const issuer = useCurrentCompany();
+  // revise: correcting the latest renewal itself (Revise LOI while the live LOI is a
+  // renewal's). The form opens on that renewal's own terms; on approval the term goes
+  // back to before it and these corrected terms are applied in its place.
+  const renewalN = investor.renewal_count || 0;
+  const [before, setBefore] = useState(null);       // the investment as it was before that renewal
+  const [revNo, setRevNo] = useState(1);            // this is "Renewal N · Revision revNo"
+  const [beforeErr, setBeforeErr] = useState('');
+  useEffect(() => {
+    if (!revise) return undefined;
+    let alive = true;
+    apiFetch(`${CLUB1000_ENDPOINTS.investorLedger(investor.id)}?before_renewal=1`)
+      .then(async (r) => { const d = await r.json().catch(() => ({})); if (!alive) return; if (r.ok) setBefore(d.investor); else setBeforeErr(errText(d, 'This renewal cannot be revised.')); })
+      .catch(() => alive && setBeforeErr('Could not reach the server.'));
+    apiFetch(CLUB1000_ENDPOINTS.investorLois(investor.id))
+      .then(async (r) => { const d = await r.json().catch(() => ({})); if (!alive || !r.ok) return;
+        setRevNo(1 + (d.lois || []).filter((l) => String(l.label).startsWith(`Renewal ${renewalN} · Revision`)).length); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [revise, investor.id, renewalN]);
   const [form, setForm] = useState({
     // A renewal carries straight on from the term that ended: it starts on that
-    // term's maturity date (editable), not on the day the form is opened.
-    investment_date: investor.maturity_date || toISODate(new Date()),
+    // term's maturity date (editable), not on the day the form is opened. A revised
+    // renewal keeps its own date.
+    investment_date: (revise ? investor.investment_date : investor.maturity_date) || toISODate(new Date()),
     amount_invested: String(investor.amount_invested || ''),
     // The finished term's unpaid interest: '' (decided by the amount), 'pay' or 'reinvest'.
     interest_choice: '',
@@ -231,10 +252,15 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
       // maturity_date is explicitly overridden (not just spread from `investor`)
       // because renewing changes investment_date — the OLD investor.maturity_date
       // would otherwise leak through and understate/misdate the schedule's totals.
-      await downloadInvestorLOI({ ...investor, ...form, maturity_date: maturityPreview || null }, scheme, {
+      const term = { start: form.investment_date, maturity: maturityPreview, principal: form.amount_invested };
+      await downloadInvestorLOI({ ...investor, ...form, maturity_date: maturityPreview || null }, scheme, revise ? {
+        // "RENEWAL N · REVISION k" — the renewal it corrects, counted within that renewal.
+        revisionNo: nextRevisionNo, termLabel: `Renewal ${renewalN}`, termRevision: revNo, schedule,
+        companyName: issuer.name, companyLogoUrl: issuer.logoUrl,
+        history: await renewalHistory(investor, form, true), nextTerm: { label: `Renewal ${renewalN} · Revision ${revNo}`, ...term },
+      } : {
         renewalNo: nextRevisionNo, schedule, companyName: issuer.name, companyLogoUrl: issuer.logoUrl,
-        history: await renewalHistory(investor, form), nextTerm: { label: `Renewal ${(investor.renewal_count || 0) + 1}`,
-          start: form.investment_date, maturity: maturityPreview, principal: form.amount_invested },
+        history: await renewalHistory(investor, form), nextTerm: { label: `Renewal ${(investor.renewal_count || 0) + 1}`, ...term },
       });
       setLoiDone(true);
     } catch (_) {
@@ -257,7 +283,7 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
     }
     setBusy(true);
     try {
-      const payload = { ...form, loi_file: loiFile };
+      const payload = { ...form, loi_file: loiFile, ...(revise ? { revise_renewal: true } : {}) };
       if (!payload.interest_choice) delete payload.interest_choice;
       if (payload.interest_added === '') delete payload.interest_added;
       if (!payload.pay_now?.notes) delete payload.pay_now;
@@ -279,18 +305,27 @@ export default function RenewInvestorModal({ investor, scheme, onClose, onSaved 
   }
 
   return (
-    <C1Modal wide title="Renew Investment" badge={`R${nextRevisionNo}`} sub={`${investor.name} · ${investor.phone} · ${scheme?.name || ''}`}
+    <C1Modal wide title={revise ? `Revise Renewal ${renewalN}` : 'Renew Investment'} badge={revise ? `Revision ${revNo}` : `R${nextRevisionNo}`} sub={`${investor.name} · ${investor.phone} · ${scheme?.name || ''}`}
       onClose={onClose} onSubmit={submit}
       footer={<>
         <button type="button" className="nx-btn nx-btn-md nx-btn-secondary" onClick={onClose}>Cancel</button>
-        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !loiFile}>{busy ? <><span className="nx-spin" aria-hidden="true" /> Submitting…</> : 'Submit Renewal for Approval'}</button>
+        <button type="submit" className="nx-btn nx-btn-md nx-btn-warning" disabled={busy || !loiFile || !!beforeErr}>{busy ? <><span className="nx-spin" aria-hidden="true" /> Submitting…</> : (revise ? 'Submit Revised Renewal for Approval' : 'Submit Renewal for Approval')}</button>
       </>}>
       {busy && <div className="nx-modal-backdrop nx-busy"><Loader /><div>Submitting the renewal…</div></div>}
-      <div className="nx-note info c1-error">
-        This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — the amount can go up or down.
-      </div>
+      {revise ? (
+        beforeErr ? <div className="nx-note bad c1-error">{beforeErr}</div> : (
+          <div className="nx-note info c1-error">
+            Correcting <b>Renewal {renewalN}</b> (from {formatDMY(investor.investment_date)}){before ? <> — the term before it ended on {formatDMY(before.maturity_date)}</> : null}.
+            Change what was entered wrong below. Once approved, Renewal {renewalN} is replaced by these terms and the ended term is settled again from them.
+          </div>
+        )
+      ) : (
+        <div className="nx-note info c1-error">
+          This investment matured on {formatDMY(investor.maturity_date)}. Set the renewal terms below — the amount can go up or down.
+        </div>
+      )}
 
-      <RenewalSummary investorId={investor.id} newAmount={form.amount_invested}
+      <RenewalSummary investorId={investor.id} newAmount={form.amount_invested} beforeRenewal={revise}
         onRenewal={(r) => setForm((f) => ({ ...f, amount_invested: String(r.amount), interest_choice: r.interest_choice, interest_added: String(r.interest_added) }))}
         payNow={form.pay_now} onPayNow={(v) => setForm((f) => ({ ...f, pay_now: v }))} />
 
