@@ -70,6 +70,11 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
   const [on, setOn] = useState(today);
   const [amount, setAmount] = useState(String(Number(investor.amount_invested) || ''));
   const [notes, setNotes] = useState('');
+  // Redeemed means handed over — when the money went to him (the redemption date
+  // unless changed) and the UTR / cheque, so it is recorded as paid on approval.
+  const [paidOn, setPaidOn] = useState('');
+  const [paidNotes, setPaidNotes] = useState('');
+  const paidDate = paidOn || on;
   const [q, loadErr] = useRedeemQuote(investor.id, amount, on);
   const [loiDone, setLoiDone] = useState(false);
   const [loiBusy, setLoiBusy] = useState(false);
@@ -121,7 +126,7 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
     setBusy(true); setErr('');
     const res = await apiFetch(CLUB1000_ENDPOINTS.investorRedeemRequest(investor.id), {
       method: 'POST',
-      body: JSON.stringify({ amount, redemption_date: on, notes, loi_file: loiFile }),
+      body: JSON.stringify({ amount, redemption_date: on, notes, loi_file: loiFile, paid_date: paidDate, paid_notes: paidNotes }),
     }).catch(() => null);
     setBusy(false);
     if (!res || !res.ok) {
@@ -196,7 +201,19 @@ export function RedeemModal({ investor, scheme, onClose, onDone }) {
             )}
           </C1Section>
 
-          <C1Section title="4 · Sign off">
+          <C1Section title="4 · Paid to the investor">
+            <C1Field label="Paid on" required hint="When the money was handed over">
+              <input className="nx-input" type="date" max={today} min={on}
+                value={paidDate} onChange={(e) => setPaidOn(e.target.value)} />
+            </C1Field>
+            <C1Field label="UTR / cheque no." hint="Optional">
+              <input className="nx-input" value={paidNotes} onChange={(e) => setPaidNotes(e.target.value)}
+                placeholder="e.g. UTR 4521…" />
+            </C1Field>
+            <div className="c1-help">Once approved, {rupee(q.payable)} is recorded as paid to him on {formatDMY(paidDate)} — it does not show as owed in Payouts.</div>
+          </C1Section>
+
+          <C1Section title="5 · Sign off">
             <C1Field label="Reason / remarks">
               <input className="nx-input" value={notes} onChange={(e) => setNotes(e.target.value)}
                 placeholder="Why the investor is taking money out early" />
