@@ -198,6 +198,9 @@ export default function LedgerModal({ investorId, onClose }) {
                         {e.type === 'premature_redemption' && (
                           <div className="c1p-why">Redeemed on <b>{formatDMY(e.redemption?.redemption_date || e.due_date || e.date)}</b>{e.redemption?.days_held != null ? ` · held ${e.redemption.days_held} days` : ''}</div>
                         )}
+                        {e.carried && (
+                          <div className="c1p-why">Not a payment — {e.type === 'interest' ? 'added into' : 'renewed into'} the next term</div>
+                        )}
                         {e.maturity_split && (
                           <div className="c1p-why">{fmtMoney(e.maturity_split.principal)} principal + <b>{fmtMoney(e.maturity_split.interest)} interest</b></div>
                         )}
