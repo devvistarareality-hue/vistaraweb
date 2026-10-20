@@ -36,6 +36,13 @@ function Badge({ label, color }) {
   return <span className="c1l-badge" style={{ background: color.bg, color: color.fg }}>{label.replace(/_/g, ' ')}</span>;{/* inline-ok: colour per type/status */}
 }
 
+// How a renewal's money was made up: "₹80,00,000 principal + ₹32,00,000 interest + ₹88,00,000 new money".
+const madeOf = (t) => (t?.made_of ? [
+  `${fmtMoney(t.made_of.principal)} principal renewed`,
+  Number(t.made_of.interest) > 0 ? `${fmtMoney(t.made_of.interest)} interest added` : '',
+  Number(t.made_of.fresh) > 0 ? `${fmtMoney(t.made_of.fresh)} new money` : '',
+].filter(Boolean).join(' + ') : '');
+
 export default function LedgerModal({ investorId, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -146,6 +153,7 @@ export default function LedgerModal({ investorId, onClose }) {
               </div>
               <div className="c1l-termline">
                 {formatDMY(openRenewal.start)} → {formatDMY(openRenewal.maturity)} · principal {fmtMoney(openRenewal.principal)}
+                {openRenewal.made_of && <div className="c1l-madeof">= {madeOf(openRenewal)}</div>}
               </div>
             </>
           )}
@@ -190,7 +198,8 @@ export default function LedgerModal({ investorId, onClose }) {
                   return (
                     <Fragment key={i}>
                     {head && (
-                      <tr className="c1l-termrow"><td colSpan={5}>{head.label} · {formatDMY(head.start)} → {formatDMY(head.maturity)} · {fmtMoney(head.principal)}</td></tr>
+                      <tr className="c1l-termrow"><td colSpan={5}>{head.label} · {formatDMY(head.start)} → {formatDMY(head.maturity)} · {fmtMoney(head.principal)}
+                        {head.made_of && <div className="c1l-madeof">= {madeOf(head)}</div>}</td></tr>
                     )}
                     <tr>
                       <td>
