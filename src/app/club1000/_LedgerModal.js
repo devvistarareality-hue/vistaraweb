@@ -41,7 +41,10 @@ const madeOf = (t) => (t?.made_of ? [
   `${fmtMoney(t.made_of.principal)} principal renewed`,
   Number(t.made_of.interest) > 0 ? `${fmtMoney(t.made_of.interest)} interest added` : '',
   Number(t.made_of.fresh) > 0 ? `${fmtMoney(t.made_of.fresh)} new money` : '',
-].filter(Boolean).join(' + ') : '');
+].filter(Boolean).join(' + ') + [
+  Number(t.made_of.returned) > 0 ? ` · ${fmtMoney(t.made_of.returned)} principal paid back to him` : '',
+  Number(t.made_of.interest_paid) > 0 ? ` · ${fmtMoney(t.made_of.interest_paid)} interest paid to him` : '',
+].join('') : '');
 
 export default function LedgerModal({ investorId, onClose }) {
   const [data, setData] = useState(null);
@@ -188,8 +191,13 @@ export default function LedgerModal({ investorId, onClose }) {
                 {rows.map((e, i) => {
                   // Unpaid: Pending once its date has come, Upcoming before that.
                   const due = e.due_date || e.date;
-                  const settled = e.status === 'paid' ? settledTo(e.notes) : '';
-                  const st = settled ? 'settled'
+                  const settledRaw = e.status === 'paid' ? settledTo(e.notes) : '';
+                  // Handed to him at the renewal (not carried into it) — "Paid at Renewal N".
+                  const atRenewal = !!settledRaw && !e.carried && !/added to the principal/i.test(e.notes || '');
+                  const settled = atRenewal ? settledRaw.replace('Settled to', 'Paid at') : settledRaw;
+                  const redNo = e.type === 'premature_redemption'
+                    ? (data?.entries || []).filter((x) => x.type === 'premature_redemption' && String(x.due_date) <= String(e.due_date)).length : 0;
+                  const st = atRenewal ? 'paid' : settled ? 'settled'
                     : e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
                     : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
                   const grouped = termSel === 'all' || termSel === 'redemptions';
@@ -201,9 +209,16 @@ export default function LedgerModal({ investorId, onClose }) {
                       <tr className="c1l-termrow"><td colSpan={5}>{head.label} · {formatDMY(head.start)} → {formatDMY(head.maturity)} · {fmtMoney(head.principal)}
                         {head.made_of && <div className="c1l-madeof">= {madeOf(head)}</div>}</td></tr>
                     )}
+                    {e.type === 'premature_redemption' && e.redemption && (
+                      <tr className="c1l-redrow"><td colSpan={5}>
+                        Redemption {redNo} · {formatDMY(e.redemption.redemption_date || e.due_date)} — {fmtMoney(e.redemption.redeem_amount)} taken out of {(terms.find((t) => t.no === (e.term ?? 0))?.label || '').split(' · ')[0]}
+                        {e.redemption.remaining_principal != null ? ` · ${fmtMoney(e.redemption.remaining_principal)} stays invested` : ''}
+                      </td></tr>
+                    )}
                     <tr>
                       <td>
-                        <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
+                        <Badge label={atRenewal && e.type === 'maturity' ? 'Principal paid back' : e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
+                        {atRenewal && <div className="c1p-why">Paid to him at the renewal</div>}
                         {e.type === 'premature_redemption' && (
                           <div className="c1p-why">Redeemed on <b>{formatDMY(e.redemption?.redemption_date || e.due_date || e.date)}</b>{e.redemption?.days_held != null ? ` · held ${e.redemption.days_held} days` : ''}</div>
                         )}
