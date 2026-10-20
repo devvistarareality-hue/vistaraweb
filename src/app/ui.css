@@ -3752,6 +3752,10 @@ a.ard-money:hover { border-color: var(--blue-2); background: var(--surface); }
 .c1x-loi-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .c1x-loi-top b { font-size: 14px; color: var(--text); }
 .c1x-loi-top em { font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--success-soft); color: var(--success); }
+.c1x-loi-top em.miss { background: var(--danger-soft); color: var(--danger); }
+.c1x-loi-up { cursor: pointer; }
+.c1x-loi-up.is-busy { opacity: .7; pointer-events: none; }
+.c1x-loi-note { margin-bottom: 10px; font-size: 12.5px; }
 .c1x-loi-main small { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
 /* Club 1000 Ledger table — headings over their columns, figures aligned */
 .c1l-table .nx-table th { text-align: left; }
