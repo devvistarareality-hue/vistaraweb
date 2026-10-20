@@ -195,6 +195,9 @@ export default function LedgerModal({ investorId, onClose }) {
                     <tr>
                       <td>
                         <Badge label={e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
+                        {e.type === 'premature_redemption' && (
+                          <div className="c1p-why">Redeemed on <b>{formatDMY(e.redemption?.redemption_date || e.due_date || e.date)}</b>{e.redemption?.days_held != null ? ` · held ${e.redemption.days_held} days` : ''}</div>
+                        )}
                         {e.period && (
                           <div className="c1p-why"><b>{e.period.label}</b> · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}</div>
                         )}

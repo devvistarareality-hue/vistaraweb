@@ -255,7 +255,9 @@ export default function PayoutsPage() {
 // was paid (today unless changed) and its own remarks. Late ones start ticked.
 function PayModal({ row, today, onClose, onDone }) {
   const [lines, setLines] = useState(() => Object.fromEntries(row.pending.map((p) => [p.id, {
-    on: p.due_date < today, amount: String(Number(p.amount_due) || 0), date: today, notes: '',
+    on: p.due_date < today, amount: String(Number(p.amount_due) || 0),
+      // A redemption is handed over on its redemption date, not the day it is recorded.
+      date: p.payout_type === 'premature_redemption' && p.due_date && p.due_date <= today ? p.due_date : today, notes: '',
   }])));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');

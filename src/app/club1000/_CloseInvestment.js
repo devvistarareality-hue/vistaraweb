@@ -251,7 +251,9 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
 
   useEffect(() => {
     if (st && !lines) {
-      setLines(Object.fromEntries(st.pending.map((p) => [p.id, { on: true, amount: String(Number(p.amount_due) || 0), date: today, notes: '' }])));
+      setLines(Object.fromEntries(st.pending.map((p) => [p.id, { on: true, amount: String(Number(p.amount_due) || 0),
+      // A redemption is handed over on its redemption date, not the day it is recorded.
+      date: p.payout_type === 'premature_redemption' && p.due_date && p.due_date <= today ? p.due_date : today, notes: '' }])));
     }
   }, [st, lines, today]);
 
