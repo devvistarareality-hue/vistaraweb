@@ -24,6 +24,10 @@ import { C1Modal, C1Section, C1Error } from '../_Form';
 import DateFilter from '../../sales/_DateFilter';
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Premature redemption' };
+// An at-maturity payout is principal AND the term's interest in one payment.
+const typeLabel = (p) => (p.maturity_split
+  ? `Principal + interest · ${rupee(p.maturity_split.principal)} + ${rupee(p.maturity_split.interest)}`
+  : (TYPE_LABELS[p.payout_type] || p.payout_type));
 const DUE_SOON_DAYS = 30;
 const iso = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
@@ -206,7 +210,7 @@ export default function PayoutsPage() {
                     </div>
                     <div className="coll-fig">
                       <span>Next payout</span><b>{r.next ? rupee(r.next.amount_due) : '—'}</b>
-                      <small>{r.next ? `${formatDMY(r.next.due_date)} · ${TYPE_LABELS[r.next.payout_type] || r.next.payout_type}` : 'None scheduled'}</small>
+                      <small>{r.next ? `${formatDMY(r.next.due_date)} · ${typeLabel(r.next)}` : 'None scheduled'}</small>
                     </div>
                     <div className="coll-fig">
                       <span>Paid so far</span><b>{r.paidAmt ? rupee(r.paidAmt) : '—'}</b>
@@ -338,7 +342,7 @@ function PayModal({ row, today, onClose, onDone }) {
               <div key={p.id} className={`c1p-grid-row${l.on ? '' : ' off'}`}>
                 <input type="checkbox" checked={l.on} onChange={(e) => setLine(p.id, { on: e.target.checked })} aria-label="Pay this one" />
                 <span className="c1p-pay-what">
-                  <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
+                  <b>{typeLabel(p)}{p.period ? ` · ${p.period.label}` : ''}</b>
                   <span className={`c1p-pay-when${late ? ' late' : ''}`}>Due {formatDMY(p.due_date)}{late ? ' · late' : ''}</span>
                   {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
                 </span>
@@ -381,7 +385,7 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
   }
 
   async function remove(p) {
-    if (!(await confirmDialog(`Delete the ${rupee(p.paid_amount ?? p.amount_due)} payment of ${formatDMY(p.paid_date)}? ${TYPE_LABELS[p.payout_type] || p.payout_type}${p.period ? ` · ${p.period.label}` : ''} goes back to pending.`,
+    if (!(await confirmDialog(`Delete the ${rupee(p.paid_amount ?? p.amount_due)} payment of ${formatDMY(p.paid_date)}? ${typeLabel(p)}${p.period ? ` · ${p.period.label}` : ''} goes back to pending.`,
       { title: 'Delete payment?', confirmText: 'Delete', tone: 'danger' }))) return;
     setBusyId(p.id);
     const res = await apiFetch(CLUB1000_ENDPOINTS.payoutPayment(p.id), { method: 'DELETE' }).catch(() => null);
@@ -421,7 +425,7 @@ function PaidModal({ row, canUndo, onClose, onChanged }) {
               <div className={`c1pp-row${ed ? ' editing' : ''}`}>
                 <div className="c1pp-main">
                   <div className="c1pp-what">
-                    <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
+                    <b>{typeLabel(p)}{p.period ? ` · ${p.period.label}` : ''}</b>
                     {p.term_label ? <span className="c1p-term">{p.term_label}</span> : null}
                     <small>Due {formatDMY(p.due_date)}{p.period ? ` · ${p.period.days} days × ₹${Number(p.period.per_day).toLocaleString('en-IN')}` : ''}</small>
                     {(settledTo(p.notes) ? settledRemark(p.notes) : p.notes) ? <small className="c1pp-notes">Remarks: {settledTo(p.notes) ? settledRemark(p.notes) : p.notes}</small> : null}

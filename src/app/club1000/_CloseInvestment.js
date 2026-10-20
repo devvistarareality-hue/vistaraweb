@@ -23,6 +23,10 @@ import { earlierTerms } from '../../lib/c1History';
 import { useCurrentCompany } from '../../lib/currentCompany';
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Redemption' };
+// An at-maturity payout is principal AND the term's interest in one payment.
+const typeLabel = (p) => (p.maturity_split
+  ? `Principal + interest · ${rupee(p.maturity_split.principal)} + ${rupee(p.maturity_split.interest)}`
+  : (TYPE_LABELS[p.payout_type] || p.payout_type));
 const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
 // The settlement figures for one investor, as of a date.
@@ -305,7 +309,7 @@ export function MaturityPayoutModal({ investor, onClose, onDone }) {
                   <div key={p.id} className={`c1p-grid-row${l.on ? '' : ' off'}`}>
                     <input type="checkbox" checked={l.on} onChange={(e) => setLine(p.id, { on: e.target.checked })} aria-label="Pay this one now" />
                     <span className="c1p-pay-what">
-                      <b>{TYPE_LABELS[p.payout_type] || p.payout_type}{p.period ? ` · ${p.period.label}` : ''}</b>
+                      <b>{typeLabel(p)}{p.period ? ` · ${p.period.label}` : ''}</b>
                       <span className={`c1p-pay-when${late ? ' late' : ''}`}>Due {formatDMY(p.due_date)}{late ? ' · late' : ''}</span>
                       {p.period && <span className="c1p-why">{formatDMY(p.period.from)} – {formatDMY(p.period.to)} · {p.period.days} days × ₹{Number(p.period.per_day).toLocaleString('en-IN')}/day</span>}
                     </span>

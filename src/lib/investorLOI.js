@@ -118,7 +118,6 @@ function buildScheduleRows(investor, scheme, providedSchedule) {
   const principal = Number(investor.amount_invested) || 0;
   const pct = Number(investor.total_return_pct) || 0;
   const maturityDateStr = investor.maturity_date || addMonthsISO(investor.investment_date, scheme.tenure_months);
-  const totalValue = computeMaturityValue(investor, scheme);
   const isRecurring = investor.interest_payout === 'quarterly' || investor.interest_payout === 'monthly';
 
   let entries;
@@ -133,19 +132,22 @@ function buildScheduleRows(investor, scheme, providedSchedule) {
     const pers = schedulePeriods(draft, investor.investment_date, maturityDateStr, principal, pct, investor.interest_payout);
     entries = draft.map((e, i) => ({ ...e, amount_due: pers[i] ? pers[i].computed : 0 })).filter((e) => e.amount_due > 0);
     entries.push({ due_date: maturityDateStr, amount_due: principal, payout_type: 'maturity' });
-  } else {
-    // Maturity cadence — a single lump-sum instalment (principal + full return).
-    entries = [{ due_date: maturityDateStr, amount_due: totalValue, payout_type: 'maturity' }];
+  }
+  if (!isRecurring) {
+    // At maturity: one payment on the maturity date, shown as what it is made of —
+    // the term's interest and the principal returned — never as one row called
+    // "interest" holding both (₹5,80,000 read as interest on ₹5 L).
+    entries = maturityWorking(principal, pct, investor.investment_date, maturityDateStr).rows;
   }
 
   // The working behind each row: the period it pays for, its days, interest a day.
   const periods = isRecurring
     ? schedulePeriods(entries, investor.investment_date, maturityDateStr, principal, pct, investor.interest_payout)
-    : entries.map(() => maturityWorking(principal, pct, investor.investment_date, maturityDateStr).periods[0] || null);
+    : maturityWorking(principal, pct, investor.investment_date, maturityDateStr).periods;
   let n = 0;
   return entries.map((e, i) => {
     const amt = Number(e.amount_due) || 0;
-    const isPrincipalRow = e.payout_type === 'maturity' && isRecurring;
+    const isPrincipalRow = e.payout_type === 'maturity';
     if (!isPrincipalRow) n += 1;
     const per = periods[i];
     return {
