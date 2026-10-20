@@ -409,7 +409,11 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
     // about how it was arrived at. The earlier ones come from the working kept
     // on their payout; one approved before that was kept has no breakdown to
     // show, and says so rather than inventing figures.
-    const earlier = (opts.pastRedemptions || []).map((e) => ({
+    // The term the money comes out of — a redemption is its own step, taken from the
+    // running term (e.g. Renewal 3), not part of how that term was renewed.
+    const cur = opts.currentTerm || null;
+    const curName = cur ? String(cur.label || '').split(' · ')[0] : '';
+    const earlier = (opts.pastRedemptions || []).filter((e) => !cur || String(e.redemption?.redemption_date || e.due_date || e.date) >= String(cur.start)).map((e) => ({
       ...(e.redemption || {}),
       payable: e.redemption?.payable ?? e.amount,
       as_of: e.redemption?.redemption_date || e.due_date || e.date,
@@ -418,7 +422,35 @@ export function buildInvestorLOIPdf(jsPDF, investor, scheme, opts = {}) {
     }));
     const all = [...earlier, { ...opts.redemption, as_of: opts.redemption.as_of }];
 
-    secHead('Premature Redemption');
+    if (cur) {
+      const mo = cur.made_of;
+      const lines = mo ? [
+        ['', 'Principal renewed', R(mo.principal)],
+        ...(Number(mo.interest) > 0 ? [['+', 'Interest added from the previous term', R(mo.interest)]] : []),
+        ...(Number(mo.fresh) > 0 ? [['+', 'New money added', R(mo.fresh)]] : []),
+        ['=', `Invested in ${curName}`, R(mo.total), 'total'],
+      ] : [['=', `Invested in ${curName}`, R(cur.principal), 'total']];
+      secHead(`Current term · ${curName}`);
+      const boxH = 9 + lines.length * 5.2 + 3;
+      chk(boxH + 6);
+      sf(WASH); doc.roundedRect(M, y - 4.5, CW, boxH, 2, 2, 'F');
+      sd([206, 217, 235]); doc.setLineWidth(0.3); doc.roundedRect(M, y - 4.5, CW, boxH, 2, 2, 'S');
+      sf(MB2); doc.roundedRect(M, y - 4.5, 2.2, boxH, 1, 1, 'F');
+      st(MB); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(`${curName.toUpperCase()}  ·  ${fmtDate(cur.start)} to ${fmtDate(cur.maturity)}`, M + 6, y + 0.5);
+      y += 6;
+      const LX = M + 10, SX = M + 6, VX = PW - M - 6;
+      lines.forEach(([sign, label, val, kind]) => {
+        if (kind) { sd(MB2); doc.setLineWidth(0.4); doc.line(LX, y - 3.4, VX, y - 3.4); }
+        doc.setFontSize(kind ? 9 : 8.4); doc.setFont('helvetica', kind ? 'bold' : 'normal'); st(kind ? MB : DK);
+        if (sign) { st(sign === '+' ? [27, 122, 69] : MB); doc.text(sign, SX, y + 0.4); st(kind ? MB : DK); }
+        doc.text(label, LX, y + 0.4);
+        doc.text('Rs. ' + money(val), VX, y + 0.4, { align: 'right' });
+        y += 5.2;
+      });
+      y += 10;
+    }
+    secHead(cur ? `Premature Redemption from ${curName}` : 'Premature Redemption');
     all.forEach((rd, idx) => {
       const last = idx === all.length - 1;
       if (rd.bare) {

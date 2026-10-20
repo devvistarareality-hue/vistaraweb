@@ -144,6 +144,8 @@ export function RedeemModal({ investor, scheme, onClose, onDone, revise = false 
       const earlier = (past.redemptions || []).filter((r) => !(revise && last && r.payout_id === last.payout_id));
       await downloadInvestorLOI(continuing, scheme, {
         companyName: issuer.name, companyLogoUrl: issuer.logoUrl, redemption: q,
+        // the term the money comes out of (e.g. Renewal 3) — printed before the redemption
+        ...(past.current ? { currentTerm: past.current } : {}),
         ...(past.history?.length ? { history: past.history } : {}),
         ...(earlier.length ? { pastRedemptions: earlier } : {}),
         // "REDEMPTION N · REVISION k"
