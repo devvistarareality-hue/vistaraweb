@@ -22,6 +22,7 @@ import { errText } from '../../../lib/apiError';
 import LedgerModal from '../_LedgerModal';
 import { C1Modal, C1Section, C1Error } from '../_Form';
 import DateFilter from '../../sales/_DateFilter';
+import { payoutPart, hasPart } from '../../../lib/c1PayoutPart';
 
 const TYPE_LABELS = { interest: 'Interest', maturity: 'Principal', premature_redemption: 'Premature redemption' };
 // An at-maturity payout is principal AND the term's interest in one payment.
@@ -32,7 +33,8 @@ const DUE_SOON_DAYS = 30;
 const iso = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
 // One row per investor, built from their payouts.
-function byInvestor(payouts, today, soon) {
+function byInvestor(payouts, today, soon, kind = 'both') {
+  const part = (p) => payoutPart(p, kind);
   const map = new Map();
   for (const p of payouts) {
     let r = map.get(p.investor);
@@ -51,12 +53,12 @@ function byInvestor(payouts, today, soon) {
     r.schedulePaid = [...r.paid].sort(order);
     r.paid.sort((a, b) => String(b.paid_date || '').localeCompare(String(a.paid_date || '')));
     r.overdue = r.pending.filter((p) => p.due_date < today);
-    r.overdueAmt = r.overdue.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+    r.overdueAmt = r.overdue.reduce((t, p) => t + part(p), 0);
     r.next = r.pending.find((p) => p.due_date >= today) || null;
     r.dueSoon = r.pending.filter((p) => p.due_date >= today && p.due_date <= soon);
-    r.dueSoonAmt = r.dueSoon.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
-    r.pendingAmt = r.pending.reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
-    r.paidAmt = r.paid.reduce((t, p) => t + (Number(p.paid_amount ?? p.amount_due) || 0), 0);
+    r.dueSoonAmt = r.dueSoon.reduce((t, p) => t + part(p), 0);
+    r.pendingAmt = r.pending.reduce((t, p) => t + part(p), 0);
+    r.paidAmt = r.paid.reduce((t, p) => t + payoutPart(p, kind, 'paid_amount'), 0);
     r.daysLate = r.overdue.length
       ? Math.round((new Date(`${today}T00:00:00`) - new Date(`${r.overdue[0].due_date}T00:00:00`)) / 86400000) : 0;
   }
@@ -111,9 +113,9 @@ export default function PayoutsPage() {
   const inPeriod = (p) => {
     const d = String((p.status === 'paid' ? p.paid_date : p.due_date) || '').slice(0, 10);
     return (!range.from || d >= range.from) && (!range.to || d <= range.to)
-      && (kind === 'both' || (kind === 'interest' ? p.payout_type === 'interest' : p.payout_type !== 'interest'));
+      && hasPart(p, kind);
   };
-  const investors = useMemo(() => byInvestor((payouts || []).filter(inPeriod), today, soon),
+  const investors = useMemo(() => byInvestor((payouts || []).filter(inPeriod), today, soon, kind),
     [payouts, today, soon, range.from, range.to, kind]);
   const scoped = investors.filter((r) => (!onlyInv || r.id === onlyInv) && (!schemeSel.length || schemeSel.includes(r.scheme))
     && (!q.trim() || `${r.name} ${r.phone} ${r.loi_no}`.toLowerCase().includes(q.trim().toLowerCase())));
@@ -209,7 +211,7 @@ export default function PayoutsPage() {
                       <small>{r.overdue.length ? `${r.overdue.length} payout${r.overdue.length === 1 ? '' : 's'} · since ${formatDMY(r.overdue[0].due_date)}` : 'Nothing late'}</small>
                     </div>
                     <div className="coll-fig">
-                      <span>Next payout</span><b>{r.next ? rupee(r.next.amount_due) : '—'}</b>
+                      <span>Next payout</span><b>{r.next ? rupee(payoutPart(r.next, kind)) : '—'}</b>
                       <small>{r.next ? `${formatDMY(r.next.due_date)} · ${typeLabel(r.next)}` : 'None scheduled'}</small>
                     </div>
                     <div className="coll-fig">

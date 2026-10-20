@@ -9,6 +9,7 @@ import { CLUB1000_ENDPOINTS } from '../../constants/api';
 import { apiFetch } from '../../utils/apiFetch';
 import { rupee, inrShort } from '../../lib/inr';
 import { DashCard } from '../../components/Dash';
+import { payoutPart, hasPart } from '../../lib/c1PayoutPart';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const GRAINS = [['month', 'Month', 12], ['quarter', 'Quarter', 8], ['year', 'Year', 6]];
@@ -65,7 +66,7 @@ export default function PayoutsAhead({ schemeSel = [] }) {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   const { columns, schemes, max, total, stats } = useMemo(() => {
     const rows = (payouts || []).filter((p) => (!schemeSel.length || schemeSel.includes(p.scheme_name))
-      && (kind === 'both' || (kind === 'principal' ? p.payout_type !== 'interest' : p.payout_type === 'interest')));
+      && hasPart(p, kind));
     // Scheme order is fixed by name so a scheme keeps its colour as filters change.
     const names = [...new Set((payouts || []).map((p) => p.scheme_name || '—'))].sort();
     const n = GRAINS.find((g) => g[0] === grain)[2];
@@ -74,7 +75,7 @@ export default function PayoutsAhead({ schemeSel = [] }) {
       ...ahead.map((b) => ({ ...b, by: {}, sum: 0 }))];
     const byKey = Object.fromEntries(cols.map((c) => [c.key, c]));
     for (const p of rows) {
-      const amt = Number(p.amount_due) || 0;
+      const amt = payoutPart(p, kind);
       const col = p.due_date < today ? byKey.overdue : byKey[bucketOf(p.due_date, grain).key];
       if (!col) continue;   // beyond the window shown
       const s = p.scheme_name || '—';
@@ -85,11 +86,11 @@ export default function PayoutsAhead({ schemeSel = [] }) {
     const lastKey = ahead.length ? ahead[ahead.length - 1].key : null;
     const inWindow = (payouts || []).filter((p) => (!schemeSel.length || schemeSel.includes(p.scheme_name))
       && (p.due_date < today || (lastKey != null && bucketOf(p.due_date, grain).key <= lastKey)));
-    const sumOf = (f) => inWindow.filter(f).reduce((t, p) => t + (Number(p.amount_due) || 0), 0);
+    const sumOf = (k, f = () => true) => inWindow.filter(f).reduce((t, p) => t + payoutPart(p, k), 0);
     const stats = {
-      interest: sumOf((p) => p.payout_type === 'interest'),
-      principal: sumOf((p) => p.payout_type !== 'interest'),
-      overdue: sumOf((p) => p.due_date < today && (kind === 'both' || (kind === 'principal' ? p.payout_type !== 'interest' : p.payout_type === 'interest'))),
+      interest: sumOf('interest'),
+      principal: sumOf('principal'),
+      overdue: sumOf(kind, (p) => p.due_date < today),
     };
     const peak = Math.max(1, ...shown.map((c) => c.sum));
     return { columns: shown, schemes: names, max: niceMax(peak), total: shown.reduce((t, c) => t + c.sum, 0), stats };
