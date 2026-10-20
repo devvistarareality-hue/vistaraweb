@@ -137,11 +137,6 @@ export default function LedgerModal({ investorId, onClose }) {
             </div>
           )}
           {/* LOIs are opened from the investor card's LOIs button, not here. */}
-          {termSel === 'original' && originalTerm && (
-            <div className="c1l-termline">
-              {formatDMY(originalTerm.start)} → {formatDMY(originalTerm.maturity)} · principal {fmtMoney(originalTerm.principal)}
-            </div>
-          )}
           {termSel === 'renewals' && openRenewal && (
             <>
               {/* Picking a renewal opens that renewal — its figures and its
@@ -153,10 +148,6 @@ export default function LedgerModal({ investorId, onClose }) {
                     className={`nx-btn nx-btn-sm ${t.no === openRenewal.no ? 'nx-btn-primary' : 'nx-btn-secondary'}`}
                     onClick={() => setRenewalSel(t.no)}>{t.label}</button>
                 ))}
-              </div>
-              <div className="c1l-termline">
-                {formatDMY(openRenewal.start)} → {formatDMY(openRenewal.maturity)} · principal {fmtMoney(openRenewal.principal)}
-                {openRenewal.made_of && <div className="c1l-madeof">= {madeOf(openRenewal)}</div>}
               </div>
             </>
           )}
@@ -174,80 +165,87 @@ export default function LedgerModal({ investorId, onClose }) {
               </div>
             ))}
           </div>
-          <div className="nx-card c1l-table">
-            <table className="nx-table">
-              <thead>
-                <tr><th>Type</th><th className="num">Amount</th><th>Due date</th><th>Paid on</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 && (
-                  <tr><td colSpan={5} className="c1l-muted">
-                    {termSel === 'redemptions' ? 'Nothing has been redeemed early.'
-                      : termSel === 'renewals' ? 'No payouts in this renewal.'
-                      : termSel === 'original' ? 'No payouts in the original term.'
-                      : 'No payouts yet.'}
-                  </td></tr>
-                )}
-                {rows.map((e, i) => {
-                  // Unpaid: Pending once its date has come, Upcoming before that.
-                  const due = e.due_date || e.date;
-                  const settledRaw = e.status === 'paid' ? settledTo(e.notes) : '';
-                  // Handed to him at the renewal (not carried into it) — "Paid at Renewal N".
-                  const atRenewal = !!settledRaw && !e.carried && !/added to the principal/i.test(e.notes || '');
-                  const settled = atRenewal ? settledRaw.replace('Settled to', 'Paid at') : settledRaw;
-                  const redNo = e.type === 'premature_redemption'
-                    ? (data?.entries || []).filter((x) => x.type === 'premature_redemption' && String(x.due_date) <= String(e.due_date)).length : 0;
-                  const st = atRenewal ? 'paid' : settled ? 'settled'
-                    : e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
-                    : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
-                  const grouped = termSel === 'all' || termSel === 'redemptions';
-                  const head = grouped && terms.length > 1 && (i === 0 || (rows[i - 1].term ?? 0) !== (e.term ?? 0))
-                    ? terms.find((t) => t.no === (e.term ?? 0)) : null;
-                  return (
-                    <Fragment key={i}>
-                    {head && (
-                      <tr className="c1l-termrow"><td colSpan={5}>{head.label} · {formatDMY(head.start)} → {formatDMY(head.maturity)} · {fmtMoney(head.principal)}
-                        {head.made_of && <div className="c1l-madeof">= {madeOf(head)}</div>}</td></tr>
-                    )}
-                    {e.type === 'premature_redemption' && e.redemption && (
-                      <tr className="c1l-redrow"><td colSpan={5}>
-                        Redemption {redNo} · {formatDMY(e.redemption.redemption_date || e.due_date)} — {fmtMoney(e.redemption.redeem_amount)} taken out of {(terms.find((t) => t.no === (e.term ?? 0))?.label || '').split(' · ')[0]}
-                        {e.redemption.remaining_principal != null ? ` · ${fmtMoney(e.redemption.remaining_principal)} stays invested` : ''}
-                      </td></tr>
-                    )}
-                    <tr>
-                      <td>
-                        <Badge label={atRenewal && e.type === 'maturity' ? 'Principal paid back' : e.label} color={TYPE_COLOR[e.type] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
-                        {atRenewal && <div className="c1p-why">Paid to him at the renewal</div>}
-                        {e.type === 'premature_redemption' && (
-                          <div className="c1p-why">Redeemed on <b>{formatDMY(e.redemption?.redemption_date || e.due_date || e.date)}</b>{e.redemption?.days_held != null ? ` · held ${e.redemption.days_held} days` : ''}</div>
-                        )}
-                        {e.carried && (
-                          <div className="c1p-why">Not a payment — {e.type === 'interest' ? 'added into' : 'renewed into'} the next term</div>
-                        )}
-                        {e.maturity_split && (
-                          <div className="c1p-why">{fmtMoney(e.maturity_split.principal)} principal + <b>{fmtMoney(e.maturity_split.interest)} interest</b></div>
-                        )}
-                        {e.period && (
-                          <div className="c1p-why"><b>{e.period.label}</b> · {e.period.days} days × ₹{Number(e.period.per_day).toLocaleString('en-IN')}</div>
-                        )}
-                        {!!e.notes && !e.is_balance && (settled ? (settledRemark(e.notes) && <div className="c1l-note">{settledRemark(e.notes)}</div>)
-                          : <div className="c1l-note">{e.notes}</div>)}
-                      </td>
-                      <td className="num c1l-amt">
-                        {fmtMoney(e.amount)}
-                        {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && <div className="c1l-paid">Paid {fmtMoney(e.paid_amount)}</div>}
-                      </td>
-                      <td className="c1l-date">{formatDMY(e.due_date || e.date)}</td>
-                      <td className="c1l-date">{e.paid_date ? formatDMY(e.paid_date) : <span className="c1l-muted">—</span>}</td>
-                      <td><Badge label={settled || st} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} /></td>
-                    </tr>
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          {/* One block per term — how it started, the money that moved in it, and how it
+              ended. Money only carried into the next term is one line at the end, not rows. */}
+          {(() => {
+            const short = (t) => String(t?.label || '').split(' · ')[0];
+            const isCarry = (e) => e.carried || (e.status === 'paid' && /added to the principal/i.test(e.notes || ''));
+            // An investment with no term record yet reads as one Original term.
+            const all = terms.length ? terms : [{ no: 0, label: 'Original', start: inv?.investment_date, maturity: inv?.maturity_date, principal: inv?.amount_invested, current: true }];
+            const shown = termSel === 'original' ? all.filter((t) => t.no === 0)
+              : termSel === 'renewals' ? (openRenewal ? [openRenewal] : [])
+              : termSel === 'redemptions' ? all.filter((t) => rows.some((e) => (e.term ?? 0) === t.no))
+              : all;
+            if (!shown.length) {
+              return <div className="nx-card c1lt-empty">{termSel === 'redemptions' ? 'Nothing has been redeemed early.' : 'No payouts yet.'}</div>;
+            }
+            let redCount = 0;
+            return shown.map((t) => {
+              const next = all.find((x) => x.no === t.no + 1);
+              const pays = rows.filter((e) => (e.term ?? 0) === t.no && !isCarry(e));
+              const mo = t.made_of;
+              const nmo = next?.made_of;
+              return (
+                <div key={t.no} className={`nx-card c1lt${t.current ? ' is-cur' : ''}`}>
+                  <div className="c1lt-head">
+                    <div><b>{short(t)}</b> <span>{formatDMY(t.start)} → {formatDMY(t.maturity)}</span></div>
+                    <em className={t.current ? 'cur' : 'done'}>{t.current ? 'Current' : next ? `Renewed into ${short(next)}` : 'Ended'}</em>
+                  </div>
+                  <div className="c1lt-start">
+                    <span>{t.no === 0 ? 'Invested' : 'Started with'}</span><b>{fmtMoney(t.principal)}</b>
+                    {mo && <small>{madeOf(t)}</small>}
+                  </div>
+                  {pays.length > 0 && (
+                    <div className="c1lt-rows">
+                      {pays.map((e, i) => {
+                        const due = e.due_date || e.date;
+                        const settledRaw = e.status === 'paid' ? settledTo(e.notes) : '';
+                        const atRenewal = !!settledRaw;
+                        const st = atRenewal ? 'paid'
+                          : e.status === 'pending' ? (due > today ? 'upcoming' : 'pending')
+                          : e.status === 'paid' && e.paid_date && e.paid_date < due ? 'paid early' : e.status;
+                        const statusLabel = atRenewal ? settledRaw.replace('Settled to', 'Paid at') : st;
+                        const isRed = e.type === 'premature_redemption';
+                        if (isRed) redCount += 1;
+                        const title = isRed ? `Redemption ${redCount}` : atRenewal && e.type === 'maturity' ? 'Principal paid back'
+                          : e.type === 'maturity' ? (e.maturity_split ? 'Maturity · principal + interest' : 'Principal at maturity') : e.label;
+                        const sub = isRed && e.redemption
+                          ? `${fmtMoney(e.redemption.redeem_amount)} taken out of ${short(t)}${e.redemption.remaining_principal != null ? ` · ${fmtMoney(e.redemption.remaining_principal)} stays invested` : ''}`
+                          : atRenewal ? 'Paid to him at the renewal'
+                          : e.maturity_split ? `${fmtMoney(e.maturity_split.principal)} principal + ${fmtMoney(e.maturity_split.interest)} interest`
+                          : e.period ? `${e.period.label} · ${e.period.days} days × ₹${Number(e.period.per_day).toLocaleString('en-IN')}` : '';
+                        return (
+                          <div key={i} className={`c1lt-row${isRed ? ' is-red' : ''}`}>
+                            <div className="c1lt-what"><b>{title}</b>{sub ? <small>{sub}</small> : null}</div>
+                            <div className="c1lt-date">{formatDMY(due)}</div>
+                            <div className="c1lt-amt">{fmtMoney(e.amount)}
+                              {e.paid_amount != null && Number(e.paid_amount) !== Number(e.amount) && <small>paid {fmtMoney(e.paid_amount)}</small>}</div>
+                            <div className="c1lt-st"><Badge label={statusLabel} color={STATUS_COLOR[st] || { bg: 'var(--surface-2)', fg: 'var(--text-3)' }} />
+                              {e.paid_date && e.status === 'paid' ? <small>on {formatDMY(e.paid_date)}</small> : null}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {termSel !== 'redemptions' && (
+                    <div className="c1lt-end">
+                      {next ? (
+                        <>
+                          <span>At the end →</span>
+                          <b>{fmtMoney(Number(nmo?.principal || 0) + Number(nmo?.interest || 0))} carried into {short(next)}</b>
+                          {(Number(nmo?.returned) > 0 || Number(nmo?.interest_paid) > 0) && (
+                            <small>{[Number(nmo.interest_paid) > 0 ? `${fmtMoney(nmo.interest_paid)} interest` : '', Number(nmo.returned) > 0 ? `${fmtMoney(nmo.returned)} principal` : ''].filter(Boolean).join(' + ')} paid to him</small>
+                          )}
+                        </>
+                      ) : t.current ? (
+                        <><span>Running</span><b>matures {formatDMY(t.maturity)}</b></>
+                      ) : <span>Ended</span>}
+                    </div>
+                  )}
+                </div>
+              );
+            });
+          })()}
         </>
       )}
     </C1Modal>
