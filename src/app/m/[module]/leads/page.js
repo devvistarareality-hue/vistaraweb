@@ -345,6 +345,7 @@ function CpDetailsTab({ companyId }) {
   const [segmentF,  setSegmentF]  = useState('');
   const [typeF,     setTypeF]     = useState('');
   const [stageF,    setStageF]    = useState('');
+  const [firmF,     setFirmF]     = useState('');
   const [locationF, setLocationF] = useState('');
   const [addedByF,  setAddedByF]  = useState('');
   const [bucket,    setBucket]    = useState('');
@@ -371,6 +372,7 @@ function CpDetailsTab({ companyId }) {
     if (segmentF) params.set('segment', segmentF);
     if (typeF) params.set('cp_type', typeF);
     if (stageF) params.set('stage', stageF);
+    if (firmF) params.set('firm', firmF);
     if (locationF) params.set('location', locationF);
     if (addedByF) params.set('created_by', addedByF);
     if (bucket) params.set('bucket', bucket);
@@ -381,15 +383,15 @@ function CpDetailsTab({ companyId }) {
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => { setCps(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId, statusF, categoryF, segmentF, typeF, stageF, locationF, addedByF, bucket, range.from, range.to]);
+  }, [companyId, statusF, categoryF, segmentF, typeF, stageF, firmF, locationF, addedByF, bucket, range.from, range.to]);
 
   useEffect(() => { load(); }, [load]);
 
-  const narrowed = !!(statusF || categoryF || segmentF || typeF || stageF || locationF || addedByF || bucket
+  const narrowed = !!(statusF || categoryF || segmentF || typeF || stageF || firmF || locationF || addedByF || bucket
     || range.from || range.to || search.trim());
 
   function clearFilters() {
-    setStatusF(''); setCategoryF(''); setSegmentF(''); setTypeF(''); setStageF(''); setLocationF('');
+    setStatusF(''); setCategoryF(''); setSegmentF(''); setTypeF(''); setStageF(''); setFirmF(''); setLocationF('');
     setAddedByF(''); setBucket(''); setSearch('');
     setRange({ from: '', to: '' }); setDateKey((n) => n + 1);
   }
@@ -444,6 +446,12 @@ function CpDetailsTab({ companyId }) {
           <select className="nx-input cpd-sel" value={stageF} onChange={(e) => setStageF(e.target.value)}>
             <option value="">All Stages</option>
             {onlyPresent(STAGE_OPTIONS.filter((o) => o.value), fx('stages'), stageF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          {/* Built from the firms actually on the directory, so a firm typed
+              in today is in this list as soon as the page reloads. */}
+          <select className="nx-input cpd-sel" value={firmF} onChange={(e) => setFirmF(e.target.value)}>
+            <option value="">All Firms</option>
+            {(fx('firms') || []).map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
           <select className="nx-input cpd-sel" value={locationF} onChange={(e) => setLocationF(e.target.value)}>
             <option value="">All Locations</option>
