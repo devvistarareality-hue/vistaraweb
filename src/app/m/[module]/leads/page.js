@@ -16,22 +16,48 @@ const NAVY  = 'var(--text)';
 const BLUE  = 'var(--accent)';
 const RED   = 'var(--danger)';
 
+// The tiers a partner is graded into — Platinum / Gold / Diamond, which replaced
+// Premium / Normal / Referral. Blank is a real state: a partner nobody has graded.
 const CATEGORY_OPTIONS = [
-  { value: 'premium',  label: 'Premium' },
-  { value: 'normal',   label: 'Normal' },
-  { value: 'referral', label: 'Referral' },
+  { value: '',         label: '— Select —' },
+  { value: 'platinum', label: 'Platinum' },
+  { value: 'gold',     label: 'Gold' },
+  { value: 'diamond',  label: 'Diamond' },
 ];
-const CATEGORY_COLOR = {
-  premium:  { bg: 'var(--warning-soft)', color: 'var(--warning)' },
-  normal:   { bg: 'var(--accent-soft)', color: BLUE },
-  referral: { bg: 'var(--success-soft)', color: 'var(--success)' },
-};
+// Reuses the shared .nx-badge tones rather than carrying its own colours.
+const CATEGORY_TONE = { platinum: 'tone-muted', gold: 'tone-warn', diamond: 'tone-info' };
 const SEGMENT_OPTIONS = [
   { value: '', label: '— Select —' },
   { value: 'residential', label: 'Residential' },
   { value: 'industrial',  label: 'Industrial' },
   { value: 'both',        label: 'Both' },
 ];
+// The band a partner is dealt with on — a third axis, not a rename of the two
+// above: Category is how much they are worth to us, Segment is what they sell,
+// Type is the footing the relationship sits on. Mirrors CP_TYPE in sales/models.py.
+const CP_TYPE_OPTIONS = [
+  { value: '',  label: '— Select —' },
+  { value: 'A', label: 'A (Wholesale)' },
+  { value: 'B', label: 'B (Retail)' },
+  { value: 'C', label: 'C (Non CP)' },
+];
+// Reuses the shared .nx-badge tones rather than carrying its own colours.
+const CP_TYPE_TONE = { A: 'tone-info', B: 'tone-good', C: 'tone-muted' };
+// How warm the CP desk reads this partner. About the PARTNER, not about any lead
+// they brought — a lead's hot/warm/cold is its telecaller / STM status.
+// New is where a partner added from here on starts, without anyone choosing it.
+// The blank entry is only for the partners that predate the field — they are not
+// new arrivals, so they are shown as not set until somebody reads them.
+const STAGE_OPTIONS = [
+  { value: '',     label: '— Not set —' },
+  { value: 'new',  label: 'New' },
+  { value: 'hot',  label: 'Hot' },
+  { value: 'warm', label: 'Warm' },
+  { value: 'cold', label: 'Cold' },
+];
+// hot/warm/cold take the same colours they have everywhere else in Sales
+// (danger / warning / accent); New is deliberately quiet.
+const STAGE_TONE = { new: 'tone-muted', hot: 'tone-bad', warm: 'tone-warn', cold: 'tone-info' };
 
 // City is a broad dropdown (state-wide); Area stays free text for the actual
 // locality within it — every CP is Gujarat-based for now, so this is a flat
@@ -54,17 +80,29 @@ function fmtAdded(value) {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// An ungraded partner gets a plain dash, not a badge reading "—": most of the
+// directory is ungraded since the tiers changed, and 700 grey pills say nothing.
 function CategoryBadge({ category }) {
-  const c = CATEGORY_COLOR[category] || { bg: 'var(--surface-2)', color: 'var(--muted)' };
-  const label = CATEGORY_OPTIONS.find((o) => o.value === category)?.label || category || '—';
-  return (
-    <span className="nx-badge" style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: c.bg, color: c.color }}>
-      {label}
-    </span>
-  );
+  if (!category) return <span className="cpd-sub">—</span>;
+  const label = CATEGORY_OPTIONS.find((o) => o.value === category)?.label || category;
+  return <span className={`nx-badge ${CATEGORY_TONE[category] || 'tone-muted'}`}>{label}</span>;
 }
 
-const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: 'normal', segment: '', city: '', area: '', date_added: '', is_active: true };
+function StageBadge({ stage }) {
+  if (!stage) return <span className="cpd-sub">—</span>;
+  const label = STAGE_OPTIONS.find((o) => o.value === stage)?.label || stage;
+  return <span className={`nx-badge ${STAGE_TONE[stage] || 'tone-muted'}`}>{label}</span>;
+}
+
+// A partner's Type band, short on the list ('A') with the full wording as its
+// tooltip — the column is read down, and 'A (Wholesale)' on every row is noise.
+function CpTypeBadge({ cpType }) {
+  if (!cpType) return <span className="cpd-sub">—</span>;
+  const label = CP_TYPE_OPTIONS.find((o) => o.value === cpType)?.label || cpType;
+  return <span className={`nx-badge ${CP_TYPE_TONE[cpType] || 'tone-muted'}`} title={label}>{cpType}</span>;
+}
+
+const EMPTY_CP_FORM = { name: '', contact_no: '', firm_name: '', category: '', segment: '', cp_type: '', stage: 'new', city: '', area: '', date_added: '', is_active: true };
 
 // A partner's History tab: their own entries in the activity log (created, edited,
 // follow-ups and visits logged against them), newest first — like a lead's History.
@@ -105,8 +143,9 @@ function ChannelPartnerModal({ initial, onClose, onSaved, onDelete, companyId })
   const [checking, setChecking] = useState(false);
   const [form, setForm] = useState(initial ? {
     name: initial.name || '', contact_no: initial.contact_no || '',
-    firm_name: initial.firm_name || '', category: initial.category || 'normal',
-    segment: initial.segment || '', city: initial.city || '', area: initial.area || '',
+    firm_name: initial.firm_name || '', category: initial.category || '',
+    segment: initial.segment || '', cp_type: initial.cp_type || '',
+    stage: initial.stage || '', city: initial.city || '', area: initial.area || '',
     is_active: initial.is_active !== false,
   } : EMPTY_CP_FORM);
   const [cityOther, setCityOther] = useState(!!initial?.city && !GUJARAT_CITIES.includes(initial.city));
@@ -209,6 +248,11 @@ function ChannelPartnerModal({ initial, onClose, onSaved, onDelete, companyId })
             <label className="cpm-f cpm-wide"><span>Firm Name</span>
               <input className="nx-input" value={form.firm_name} onChange={(e) => setForm({ ...form, firm_name: e.target.value })} placeholder="e.g. Shah Realty" />
             </label>
+            <label className="cpm-f"><span>Type</span>
+              <select className="nx-input" value={form.cp_type} onChange={(e) => setForm({ ...form, cp_type: e.target.value })}>
+                {CP_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
             <label className="cpm-f"><span>Category</span>
               <select className="nx-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -217,6 +261,11 @@ function ChannelPartnerModal({ initial, onClose, onSaved, onDelete, companyId })
             <label className="cpm-f"><span>Segment</span>
               <select className="nx-input" value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value })}>
                 {SEGMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="cpm-f"><span>Stage</span>
+              <select className="nx-input" value={form.stage} onChange={(e) => setForm({ ...form, stage: e.target.value })}>
+                {STAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </label>
           </div>
@@ -294,6 +343,8 @@ function CpDetailsTab({ companyId }) {
   const [statusF,   setStatusF]   = useState('');
   const [categoryF, setCategoryF] = useState('');
   const [segmentF,  setSegmentF]  = useState('');
+  const [typeF,     setTypeF]     = useState('');
+  const [stageF,    setStageF]    = useState('');
   const [locationF, setLocationF] = useState('');
   const [addedByF,  setAddedByF]  = useState('');
   const [bucket,    setBucket]    = useState('');
@@ -318,6 +369,8 @@ function CpDetailsTab({ companyId }) {
     if (statusF) params.set('status', statusF);
     if (categoryF) params.set('category', categoryF);
     if (segmentF) params.set('segment', segmentF);
+    if (typeF) params.set('cp_type', typeF);
+    if (stageF) params.set('stage', stageF);
     if (locationF) params.set('location', locationF);
     if (addedByF) params.set('created_by', addedByF);
     if (bucket) params.set('bucket', bucket);
@@ -328,15 +381,15 @@ function CpDetailsTab({ companyId }) {
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => { setCps(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [companyId, statusF, categoryF, segmentF, locationF, addedByF, bucket, range.from, range.to]);
+  }, [companyId, statusF, categoryF, segmentF, typeF, stageF, locationF, addedByF, bucket, range.from, range.to]);
 
   useEffect(() => { load(); }, [load]);
 
-  const narrowed = !!(statusF || categoryF || segmentF || locationF || addedByF || bucket
+  const narrowed = !!(statusF || categoryF || segmentF || typeF || stageF || locationF || addedByF || bucket
     || range.from || range.to || search.trim());
 
   function clearFilters() {
-    setStatusF(''); setCategoryF(''); setSegmentF(''); setLocationF('');
+    setStatusF(''); setCategoryF(''); setSegmentF(''); setTypeF(''); setStageF(''); setLocationF('');
     setAddedByF(''); setBucket(''); setSearch('');
     setRange({ from: '', to: '' }); setDateKey((n) => n + 1);
   }
@@ -373,13 +426,24 @@ function CpDetailsTab({ companyId }) {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <select className="nx-input cpd-sel" value={categoryF} onChange={(e) => setCategoryF(e.target.value)}>
+          {/* Type and Category are two different gradings, so the pickers name
+              them apart — this one used to say "All Types" while filtering
+              Category, which now means something else. */}
+          <select className="nx-input cpd-sel" value={typeF} onChange={(e) => setTypeF(e.target.value)}>
             <option value="">All Types</option>
-            {onlyPresent(CATEGORY_OPTIONS, fx('categories'), categoryF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {onlyPresent(CP_TYPE_OPTIONS.filter((o) => o.value), fx('cp_types'), typeF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select className="nx-input cpd-sel" value={categoryF} onChange={(e) => setCategoryF(e.target.value)}>
+            <option value="">All Categories</option>
+            {onlyPresent(CATEGORY_OPTIONS.filter((o) => o.value), fx('categories'), categoryF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
           <select className="nx-input cpd-sel" value={segmentF} onChange={(e) => setSegmentF(e.target.value)}>
             <option value="">All Segments</option>
             {onlyPresent(SEGMENT_OPTIONS.filter((o) => o.value), fx('segments'), segmentF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select className="nx-input cpd-sel" value={stageF} onChange={(e) => setStageF(e.target.value)}>
+            <option value="">All Stages</option>
+            {onlyPresent(STAGE_OPTIONS.filter((o) => o.value), fx('stages'), stageF).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
           <select className="nx-input cpd-sel" value={locationF} onChange={(e) => setLocationF(e.target.value)}>
             <option value="">All Locations</option>
@@ -420,6 +484,10 @@ function CpDetailsTab({ companyId }) {
                 <th>Partner</th>
                 <th>Firm</th>
                 <th>Type</th>
+                {/* This column has always shown Category (with Segment under
+                    it); it was headed "Type" before Type existed as a field. */}
+                <th>Category</th>
+                <th>Stage</th>
                 <th>Location</th>
                 <th>Added</th>
                 <th>Status</th>
@@ -438,10 +506,12 @@ function CpDetailsTab({ companyId }) {
                     {/* The number is not on the list — it shows in the partner's details. */}
                     <td><div className="cpd-name">{cp.name}</div></td>
                     <td className="cpd-firm">{cp.firm_name || '—'}</td>
+                    <td><CpTypeBadge cpType={cp.cp_type} /></td>
                     <td>
                       <CategoryBadge category={cp.category} />
                       {seg && <div className="cpd-sub">{seg}</div>}
                     </td>
+                    <td><StageBadge stage={cp.stage} /></td>
                     <td className="cpd-place">{place || '—'}</td>
                     {/* When the partnership started. The Add form can backdate this,
                         so it is not always the row's creation timestamp. */}

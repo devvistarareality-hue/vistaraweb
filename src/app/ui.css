@@ -2737,7 +2737,8 @@ a.nx-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(v
 .cpd-actions { text-align: right; white-space: nowrap; }
 .cpd-edit { color: var(--accent); padding: 4px 8px; }
 .cpd-del { color: var(--danger); padding: 4px 8px; }
-@media (max-width: 900px) { .cpd-table { min-width: 820px; } }
+/* Ten columns since Type and Stage were added — 820px squeezed Location and Added. */
+@media (max-width: 900px) { .cpd-table { min-width: 960px; } }
 
 /* Channel Partner details modal (m/[module]/leads ChannelPartnerModal) — same look
    as the lead modal: hero header with name + number, fields in two columns. */
