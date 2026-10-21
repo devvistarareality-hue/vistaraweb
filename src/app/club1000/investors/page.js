@@ -429,7 +429,7 @@ export default function InvestorsPage() {
                     <span className="c1a-actions-gap" />
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-success-soft" onClick={() => setAddMoreFor(inv)} disabled={!schemes.length}>+ Add more</button>}
                     {can(user, 'club.investor.manage') && <button className="nx-btn nx-btn-sm nx-btn-soft" onClick={() => (isRedemptionLoi(inv) ? setReviseRedemption(inv) : isRenewalLoi(inv) ? setReviseRenewal(inv) : setRevising(inv))}>↻ Revise LOI</button>}
-                    {manager && inv.renewal_count > 0 && !inv.pending_action && <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoRenewal(inv)}>↶ Undo renewal</button>}
+                    {manager && inv.can_undo_renewal && !inv.pending_action && <button className="nx-btn nx-btn-sm nx-btn-danger-soft" onClick={() => undoRenewal(inv)}>↶ Undo renewal</button>}
                     {inv.is_matured ? (can(user, 'club.investor.manage') && <>
                       <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => setRenewing(inv)}>↻ Renew</button>
                       {manager && <button className="nx-btn nx-btn-sm c1-warn-btn" onClick={() => router.push(`/club1000/payouts?investor=${inv.id}`)}>Payout</button>}
